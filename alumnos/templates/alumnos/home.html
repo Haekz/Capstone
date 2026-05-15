@@ -1,307 +1,214 @@
 {% load static %}
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="{% static 'img/Logo.png' %}">
-    <!-- Bootstrap CSS (librerias)-->
-    <title>LBWUS</title>
-    {% load static %}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="{% static 'alumnos/css/bootstrap.min.css' %}">
-    <link rel="stylesheet" href="{% static 'alumnos/style/estilo.css' %}">
-    <script src="{% static 'alumnos/js/bootstrap.min.js' %}"></script>
+    <title>LBWUS | Learn Better With Us</title>
+    <link rel="icon" href="{% static 'alumnos/img/Logo.png' %}">
     
-</head>
-
-<body>
-      <!--Navbar-->
-      <nav class="navbar navbar-expand-lg fixed-top">
-        <div class="container-fluid">
-            <a class="navbar-brand me-auto" href="#">
-                {% load static %}
-                <img src="{% static 'alumnos/img/Logo.png' %}" alt="Logo" width="50px" class="d-inline-block align-text-top">                
-                LBWUS</a>
-            <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
-                <div class="offcanvas-header">
-                    <h5 class="offcanvas-title" id="offcanvasNavbarLabel">LBWUS</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-                </div>
-                <div class="offcanvas-body">
-                    <ul class="navbar-nav justify-content-center flex-grow-1 pe-3">
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2 active" aria-current="page" href="{% url 'home' %}">Inicio</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2" href="{% url 'planes' %}">Planes</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2" href="{% url 'servicios' %}">Servicios</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2" href="{% url 'nosotros' %}">Nosotros</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2" href="{% url 'contactos' %}">Contactos</a>
-                        </li>                        
-                    </ul>
-                </div>
-            </div>
-            <a href="" class="registrarse-button btn btn-primary">Registrarse</a>
-            <a href="{% url 'opcion_user' %}"class="login-button btn btn-secondary">Iniciar</a>
-            <!-- Botón para cambiar el tema con iconos -->
-            <button onclick="toggleTheme()" id="theme-toggler" class="btn btn-outline-light ms-2">
-                <i class="bi bi-sun"></i>  <!-- Icono predeterminado para el tema claro -->
-            </button>
-            <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar"
-                aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-        </div>
-    </nav>    
-<!--End Navbar-->
-
-<!--Carrusel-->
-<div id="carouselExampleControls" class="carousel slide" data-bs-ride="carousel">
-    <div class="carousel-inner">
-        <button type="button" data-bs-target="#carouselExampleControls" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
-        <button type="button" data-bs-target="#carouselExampleControls" data-bs-slide-to="1" aria-label="Slide 2"></button>
-        <button type="button" data-bs-target="#carouselExampleControls" data-bs-slide-to="2" aria-label="Slide 3"></button>
-    </div>
-    <div class="carousel-inner">
-        <div class="carousel-item active" data-bs-interval="5000">
-            {% load static %}
-            <img src="{% static 'alumnos/img/imge1.png' %}" class="d-block w-100" alt="...">
-            <div class="carousel-caption">
-                <h5>Bienvenido a LBWUS</h5>
-                <p>Apoyado por un equipo de profesionales experimentados, aquí es donde tus desafíos se transforman en victorias.</p>
-                <a href="{% url 'servicios' %}" class="btn btn-warning mt-3">Conocer más</a>
-            </div>
-        </div>
-        <div class="carousel-item">
-            {% load static %}
-            <img src="{% static 'alumnos/img/imge2.jpeg' %}" class="d-block w-100" alt="...">
-            <div class="carousel-caption">
-                <h5>Conoce nuestros planes</h5>
-                <p>Si estás interesado no esperes más ve el plan que más se adecue a tus necesidades.</p>
-                <a href="{% url 'planes' %}" class="btn btn-warning mt-3">Conocer más</a>
-            </div>
-        </div>
-        <div class="carousel-item">
-            {% load static %}
-            <img src="{% static 'alumnos/img/imge3.jpeg' %}" class="d-block w-100" alt="...">
-            <div class="carousel-caption">
-                <h5>¿Quiénes somos?</h5>
-                <p>Estás interesado en conocernos un poco más.</p>
-                <a href="{% url 'nosotros' %}" class="btn btn-warning mt-3">Pincha aquí</a>
-            </div>
-        </div>
-    </div>
-    <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleControls" data-bs-slide="prev">
-        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-        <span class="visually-hidden">Previous</span>
-    </button>
-    <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleControls" data-bs-slide="next">
-        <span class="carousel-control-next-icon" aria-hidden="true"></span>
-        <span class="visually-hidden">Next</span>
-    </button>
-</div>
-<!-- fin del carrusel-->
-
-    <!--Imagen e información -->
-
-    <section id="about" class="about section-padding">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-4 col-md-12 col-12">
-                    <div class="about-img">
-                        <img src="{% static 'alumnos/img/about.jpg' %}" alt="img" class="img-fluid">
-                    </div>
-                </div>
-                <div class="col-lg-8 col-md-12 col-12 ps-lg-5 mt-md-5">
-                    <h2>Learn better with us</h2>
-                    <p> En LBWUS nos preocupamos por ti, te contamos que tenemos más de 10.000 profesionales
-                        especialidados
-                        en todo el territorio nacional. Recuerda que nuestra pagina te contacta con aquellos
-                        profesionales
-                        que se encuentran más cerca de ti. ¡No sufras más! </p>
-                    <a href="{% url 'nosotros' %}" class="btn btn-warning"> Saber más</a>
-                </div>
-            </div>
-        </div>
-    </section>
-    <!--Fin de la imagem-->
-
-    <!-- Servicios -->
-    <section id="services" class="services section-padding">
-        <div class="container">
-            <!-- Título y descripción de la sección -->
-            <div class="row">
-                <div class="col-12 text-center pb-5">
-                    <h2 class="text-uppercase font-weight-bold">Nuestros Servicios</h2>
-                    <p class="text-secondary">Descubre las características únicas de nuestros planes de estudio y
-                        encuentra la opción perfecta para ti.</p>
-                </div>
-            </div>
-            <!-- Tarjetas de servicios -->
-            <div class="row">
-                <!-- Tarjeta del plan Básico -->
-                <div class="col-12 col-md-4">
-                    <div class="card text-white bg-dark text-center pb-2">
-                        <div class="card-body">
-                            <i class="bi bi-star-fill"></i>
-                            <h3 class="card-title">Plan Básico</h3>
-                            <p class="lead">Conéctate con educadores destacados y explora una enseñanza básica renovada.
-                                Aprovecha la flexibilidad de clases virtuales o presenciales y empodera tu aprendizaje
-                                desde la comodidad de tu hogar.<br><br></p>
-                        </div>
-                    </div>
-                </div>
-                <!-- Tarjeta del plan Medio -->
-                <div class="col-12 col-md-4">
-                    <div class="card text-white bg-dark text-center pb-2">
-                        <div class="card-body">
-                            <i class="bi bi-star-fill"></i>
-                            <h3 class="card-title">Plan Medio</h3>
-                            <p class="lead">Avanza hacia tus metas con nuestro plan intermedio, diseñado para adaptarse
-                                y responder a tus inquietudes educativas. Sea cual sea tu horario, nuestra metodología
-                                flexible se alinea con tu ritmo de vida.</p>
-                                <button class="btn btn-warning text-dark" onclick="location.href='{% url 'simulador' %}';">Simula aquí</button>
-                        </div>
-                    </div>
-                </div>
-                <!-- Tarjeta del plan Superior -->
-                <div class="col-12 col-md-4">
-                    <div class="card text-white bg-dark text-center pb-2">
-                        <div class="card-body">
-                            <i class="bi bi-star-fill"></i>
-                            <h3 class="card-title">Plan Superior</h3>
-                            <p class="lead">Alcanza la excelencia con nuestro plan superior, impartido por profesionales
-                                de renombre. Un puente hacia el éxito académico con clases online y presenciales que
-                                enriquecerán tu futuro profesional.<br><br></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-    <!-- Fin de Tarjetas de servicios -->
-    <section class="horario">
-        <div class="horario-info container">
-            <h2>Horario</h2>
-            <div class="horario-txt">
-                <h4>Dirección</h4>
-                <p>Los Florentinos 2012</p>
-                <p>Los Florentinos 2012</p>
-            </div>
-            <div class="horario-txt">
-                <h4>Horario</h4>
-                <p>Lunes a Viernes: 9am - 8pm</p>
-                <p>Sábado y Domingo: 11am - 7pm</p>
-            </div>
-            <div class="horario-txt">
-                <h4>Teléfono</h4>
-                <p>+56988888888</p>
-                <p>+56955555555</p>
-            </div>
-            <div class="socials">
-                <a href="#" class="social"><i class="fab fa-facebook-f"></i></a>
-                <a href="#" class="social"><i class="fab fa-instagram"></i></a>
-                <a href="#" class="social"><i the="fab fa-twitter"></i></a>
-            </div>
-        </div>
-    </section>
-
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
-    <section>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'alumnos/css/styles.css' %}?v=1.2">
+</head>
+<body>
+    <!-- Navbar -->
+    <header class="main-header">
+        <nav class="nav-container">
+            <div class="logo">
+                <img src="{% static 'alumnos/img/Logo.png' %}" alt="LBWUS Logo">
+                <span class="logo-text">LBWUS</span>
+            </div>
+            
+            <input type="checkbox" id="menu-toggle" class="menu-toggle">
+            <label for="menu-toggle" class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </label>
+
+            <ul class="nav-menu">
+                <li><a href="{% url 'home' %}" class="active">Inicio</a></li>
+                <li><a href="{% url 'nosotros' %}">Nosotros</a></li>
+                <li><a href="{% url 'servicios' %}">Servicios</a></li>
+                <li><a href="{% url 'planes' %}">Planes</a></li>
+                <li><a href="{% url 'contactos' %}">Contacto</a></li>
+                <!--<li class="mobile-only"><a href="{% url 'opcion_user' %}" class="btn-login-mobile">Iniciar Sesión</a></li>-->
+            </ul>
+
+            <div class="nav-actions">
+                <button onclick="toggleTheme()" id="theme-toggler" class="theme-btn">
+                    <i class="bi bi-sun"></i>
+                </button>
+                <a href="{% url 'opcion_user' %}" class="btn-secondary">Iniciar</a>
+                <a href="#" class="btn-primary">Registrarse</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section (Reemplaza al carrusel de Bootstrap) -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1 class="fade-in">Bienvenido a LBWUS</h1>
+            <p class="fade-in">Apoyado por un equipo de profesionales experimentados, aquí es donde tus desafíos se transforman en victorias.</p>
+            <div class="hero-btns fade-in">
+                <a href="{% url 'servicios' %}" class="btn-cta">Conocer más</a>
+                <a href="{% url 'planes' %}" class="btn-outline">Ver Planes</a>
+            </div>
         </div>
-        </div>
-        </div>
-        <iframe class="map"
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d212998.2997250683!2d-70.62983129999999!3d-33.47278795!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9662c5410425af2f%3A0x8475d53c400f0931!2sSantiago%2C%20Regi%C3%B3n%20Metropolitana!5e0!3m2!1ses-419!2scl!4v1716188053838!5m2!1ses-419!2scl"
-            width="100%" height="500" style="border:0;" allowfullscreen="" loading="lazy"
-            referrerpolicy="no-referrer-when-downgrade"></iframe>
+        <div class="hero-overlay"></div>
+        <img src="{% static 'alumnos/img/imge1.png' %}" alt="Hero Image" class="hero-bg">
     </section>
-    <footer class="footer">
-        <div class="container container-footer">
-            <div class="menu-footer">
-                <div class="contact-info">
-                    <p class="title-footer">Información de Contacto</p>
-                    <ul>
-                        <li class="infocontact">
-                            Dirección: Pacifico Norte 123 <br> Vernon Rockville, CT 06066
-                        </li>
-                        <li>Teléfono: 123-456-7890</li>
-                        <li>Email: teachers@lbwus.cl</li>
-                    </ul>
-                    <div class="social-icons">
-                        <span class="facebook">
-                            <i class="fa-brands fa-facebook-f"></i>
-                        </span>
-                        <span class="twitter">
-                            <i class="fa-brands fa-twitter"></i>
-                        </span>
-                        <span class="youtube">
-                            <i class="fa-brands fa-youtube"></i>
-                        </span>
-                        <span class="pinterest">
-                            <i class="fa-brands fa-pinterest-p"></i>
-                        </span>
-                        <span class="instagram">
-                            <i class="fa-brands fa-instagram"></i>
-                        </span>
-                    </div>
+
+    <!-- About Section -->
+    <section class="about-section">
+        <div class="container grid-2">
+            <div class="about-img">
+                <img src="{% static 'alumnos/img/about.jpg' %}" alt="About us">
+            </div>
+            <div class="about-text">
+                <span class="badge">Sobre nosotros</span>
+                <h2>Learn Better With Us</h2>
+                <p>En LBWUS nos preocupamos por ti, te contamos que tenemos más de 10.000 profesionales especialidados en todo el territorio nacional. Nuestra plataforma te conecta con los expertos más cercanos a tu ubicación. ¡No sufras más!</p>
+                <a href="{% url 'nosotros' %}" class="btn-text">Saber más <i class="bi bi-arrow-right"></i></a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section class="services-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>Nuestros Servicios</h2>
+                <p>Descubre las características únicas de nuestros planes de estudio.</p>
+            </div>
+            <div class="services-grid">
+                <!-- Card 1 -->
+                <div class="service-card">
+                    <div class="card-icon"><i class="bi bi-star-fill"></i></div>
+                    <h3>Plan Básico</h3>
+                    <p>Conéctate con educadores destacados y explora una enseñanza básica renovada. Clases virtuales o presenciales desde tu hogar.</p>
                 </div>
-    
-                <div class="information">
-                    <p class="title-footer">Información</p>
-                    <ul class="infofo">
-                        <li><a href="#">Acerca de Nosotros</a></li>
-                        <li><a href="#">Estado de tus contrataciones</a></li>
-                        <li><a href="#">Políticas de Privacidad</a></li>
-                        <li><a href="#">Términos y condiciones</a></li>
-                        <li><a href="#">Contáctanos</a></li>
-                    </ul>
+                <!-- Card 2 -->
+                <div class="service-card featured">
+                    <div class="card-icon"><i class="bi bi-lightning-fill"></i></div>
+                    <h3>Plan Medio</h3>
+                    <p>Avanza hacia tus metas con nuestro plan intermedio. Metodología flexible que se alinea con tu ritmo de vida.</p>
+                    <button class="btn-card" onclick="location.href='{% url 'simulador' %}';">Simula aquí</button>
                 </div>
-    
-                <div class="my-account">
-                    <p class="title-footer">Mi cuenta</p>
-                    <ul class="mi-cuenta">
-                        <li><a href="#">Mi cuenta</a></li>
-                        <li><a href="#">Historial de ordenes</a></li>
-                        <li><a href="#">Lista de deseos</a></li>
-                        <li><a href="#">Boletín</a></li>
-                        <li><a href="#">Reembolsos</a></li>
-                    </ul>
-                </div>
-    
-                <div class="newsletter">
-                    <p class="title-footer">Boletín informativo</p>
-                    <div class="content">
-                        <p>
-                            Suscríbete a nuestros boletines ahora y mantente al día con nuevas colecciones y ofertas exclusivas.
-                        </p>
-                        <input type="email" placeholder="Ingresa el correo aquí...">
-                        <button>Suscríbete</button>
-                    </div>
+                <!-- Card 3 -->
+                <div class="service-card">
+                    <div class="card-icon"><i class="bi bi-mortarboard-fill"></i></div>
+                    <h3>Plan Superior</h3>
+                    <p>Alcanza la excelencia con profesionales de renombre. Un puente hacia el éxito académico y tu futuro profesional.</p>
                 </div>
             </div>
-    
-            <div class="copyright">
-                <p>Desarrollando enseñanza para el mundo &copy; 2024</p>
+        </div>
+    </section>
+
+    <!-- Info Section (Horario y Mapa) -->
+    <section class="info-section">
+        <div class="container grid-2">
+            <div class="info-text">
+                <h2>Horario de Atención</h2>
+                <div class="info-item">
+                    <i class="bi bi-geo-alt"></i>
+                    <div>
+                        <h4>Dirección</h4>
+                        <p>Los Florentinos 2012, Santiago</p>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i class="bi bi-clock"></i>
+                    <div>
+                        <h4>Horario</h4>
+                        <p>Lun - Vie: 9am - 8pm | Sáb - Dom: 11am - 7pm</p>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i class="bi bi-telephone"></i>
+                    <div>
+                        <h4>Teléfono</h4>
+                        <p>+56 9 8888 8888 / +56 9 5555 5555</p>
+                    </div>
+                </div>
+                <div class="social-box">
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                </div>
             </div>
+            <div class="info-map">
+                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d212998.2997250683!2d-70.62983129999999!3d-33.47278795!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9662c5410425af2f%3A0x8475d53c400f0931!2sSantiago%2C%20Regi%C3%B3n%20Metropolitana!5e0!3m2!1ses-419!2scl!4v1716188053838!5m2!1ses-419!2scl" width="100%" height="400" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="container footer-grid">
+            <div class="footer-col">
+                <h3>Contacto</h3>
+                <p>Dirección: Pacifico Norte 123, Vernon Rockville, CT 06066</p>
+                <p>Tel: 123-456-7890</p>
+                <p>Email: teachers@lbwus.cl</p>
+            </div>
+            <div class="footer-col">
+                <h3>Información</h3>
+                <ul>
+                    <li><a href="#">Nosotros</a></li>
+                    <li><a href="#">Privacidad</a></li>
+                    <li><a href="#">Términos</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3>Newsletter</h3>
+                <div class="subscribe-box">
+                    <input type="email" placeholder="Tu email...">
+                    <button>OK</button>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 LBWUS - Desarrollando enseñanza para el mundo</p>
         </div>
     </footer>
-    
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
     <script src="{% static 'alumnos/java/main.js' %}"></script>
-    <script src="{% static 'alumnos/java/jquery.js' %}"></script>
-    <script
-	src="https://kit.fontawesome.com/81581fb069.js"
-	crossorigin="anonymous"
-	></script>
+    <script>
+        function toggleTheme() {
+            const body = document.body;
+            const themeBtn = document.getElementById('theme-toggler');
+            const icon = themeBtn.querySelector('i');
+
+            body.classList.toggle('dark-mode');
+
+            if (body.classList.contains('dark-mode')) {
+                icon.classList.replace('bi-sun', 'bi-moon-stars');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                icon.classList.replace('bi-moon-stars', 'bi-sun');
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+                const themeBtn = document.getElementById('theme-toggler');
+                if (themeBtn) {
+                    const icon = themeBtn.querySelector('i');
+                    if (icon) icon.classList.replace('bi-sun', 'bi-moon-stars');
+                }
+            }
+        });
+    </script>
 </body>
 </html>
