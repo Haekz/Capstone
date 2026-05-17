@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from .models import Alumno, Genero, Tutor
-from django.http import HttpResponse
+from .forms import AlumnoForm
+from django.http import HttpResponse, JsonResponse
 
 # Create your views here.
 
@@ -34,7 +35,17 @@ def opcion_user(request):
     return render(request, 'alumnos/opcion_user.html', context)
 
 def regis_alum(request):
-    context = {}
+    if request.method == 'POST':
+        form = AlumnoForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({"success": True, "message": "Alumno registrado exitosamente."})
+        else:
+            errors = form.errors.as_json()
+            return JsonResponse({"success": False, "message": "Error en los datos.", "errors": errors})
+    
+    form = AlumnoForm()
+    context = {'form': form}
     return render(request, 'alumnos/regis_alum.html', context)
 
 def regis_prof(request):

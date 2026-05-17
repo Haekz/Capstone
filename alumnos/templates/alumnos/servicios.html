@@ -1,224 +1,59 @@
+{% extends 'alumnos/base.html' %}
 {% load static %}
 
-<!DOCTYPE html>
-<html lang="en">
+{% block title %}LBWUS | Servicios{% endblock %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="{% static 'img/Logo.png' %}">
-    <!-- Bootstrap CSS (librerias)-->
-    <title>LBWUS</title>
-    {% load static %}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="{% static 'alumnos/css/bootstrap.min.css' %}">
-    <link rel="stylesheet" href="{% static 'alumnos/style/estilo.css' %}">
-    <script src="{% static 'alumnos/js/bootstrap.min.js' %}"></script>
-    
-</head>
-
-<body>
-      <!--Navbar-->
-      <nav class="navbar navbar-expand-lg fixed-top">
-        <div class="container-fluid">
-            <a class="navbar-brand me-auto" href="#">
-                {% load static %}
-                <img src="{% static 'alumnos/img/Logo.png' %}" alt="Logo" width="50px" class="d-inline-block align-text-top">                
-                LBWUS</a>
-            <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
-                <div class="offcanvas-header">
-                    <h5 class="offcanvas-title" id="offcanvasNavbarLabel">LBWUS</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-                </div>
-                <div class="offcanvas-body">
-                    <ul class="navbar-nav justify-content-center flex-grow-1 pe-3">
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2 active" aria-current="page" href="{% url 'home' %}">Inicio</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2" href="{% url 'planes' %}">Planes</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2" href="{% url 'servicios' %}">Servicios</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2" href="{% url 'nosotros' %}">Nosotros</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2" href="{% url 'contactos' %}">Contactos</a>
-                        </li>                        
-                    </ul>
-                </div>
-            </div>
-            <a href="" class="registrarse-button btn btn-primary">Registrarse</a>
-            <a href=""class="login-button btn btn-secondary">Iniciar</a>
-            <!-- Botón para cambiar el tema con iconos -->
-            <button onclick="toggleTheme()" id="theme-toggler" class="btn btn-outline-light ms-2">
-                <i class="bi bi-sun"></i>  <!-- Icono predeterminado para el tema claro -->
-            </button>
-            <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar"
-                aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-        </div>
-    </nav>    
-<!--End Navbar-->
-<div class="container">
-    <div class="row">
-        <div class="col-12 text-center">
-            <h2 style="margin-top: 100px; margin-bottom: 50px;">Nuestros Servicios</h2>
-        </div>
+{% block content %}
+<div class="cnt">
+    <div class="section-header" style="margin-top: 100px;">
+        <h2>Nuestros Servicios</h2>
+        <p>Expertos dedicados a cada etapa del aprendizaje.</p>
     </div>
-    <!-- Primera sección con imagen a la izquierda y texto a la derecha -->
-    <section id="about-left" class="about section-padding" style="background-image: linear-gradient(to right, #a7a7a7, #bdbdbd, #c9c9c9);">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-6 col-md-12 col-12">
-                    <!-- Imagen a la izquierda -->
-                    <div class="about-img">
-                        <img src="{% static 'alumnos/img/basica.jpeg' %}" alt="img" class="img-fluid">
-                    </div>
-                </div>
-                <div class="col-lg-6 col-md-12 col-12 ps-lg-5 mt-md-5">
-                    <h2>Profesores de Educación Básica:<br><br></h2>
-                    <p>Los profesores de educación básica están equipados para introducir a los estudiantes al
-                        mundo del conocimiento de una manera comprensiva y multifacética. Desde los principios de
-                        lectura y escritura, pasando por las operaciones matemáticas básicas, hasta las
-                        exploraciones
-                        iniciales en ciencias, historia y geografía, fomentan una base sólida. Además, incorporan la
-                        música y las artes plásticas para desarrollar habilidades creativas y expresivas en sus
-                        alumnos,
-                        fundamentales para el crecimiento integral.<br><br></p>
-                    <!-- Añadimos el botón aquí -->
-                    <button id="show-message-btn" class="btn btn-primary">Mostrar mensaje</button>
-                </div>
-            </div> 
+
+    <!-- Sección Educación Básica -->
+    <section class="about" style="background: #f8fafc; border-radius: 24px; padding: 60px; margin-bottom: 40px;">
+        <div class="grid-2">
+            <div class="about-img">
+                <img src="{% static 'alumnos/img/basica.jpeg' %}" alt="Educación Básica" style="width: 100%; border-radius: 16px;">
+            </div>
+            <div class="about-text">
+                <h2>Educación Básica</h2>
+                <p>Introducimos a los estudiantes al mundo del conocimiento de una manera comprensiva. Desde los principios de lectura y escritura hasta habilidades creativas en música y artes.</p>
+                <button class="btn-p">Ver más detalles</button>
+            </div>
         </div>
     </section>
 
-    <!-- Segunda sección con imagen a la derecha y texto a la izquierda -->
-    <section id="about-right-alt" class="about section-padding" style="background-image: linear-gradient(to left, #939393, #aeaeae, #c2c2c2);">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-6 col-md-12 col-12 pe-lg-5 mt-md-5">
-                    <h2>Profesores de Educación Media: <br><br></h2>
-                    <p>En la educación media, los profesores profundizan en asignaturas especializadas,
-                        preparando a los estudiantes para los desafíos académicos superiores y las decisiones vocacionales.
-                        Las ciencias se dividen en biología, química y física, ofreciendo un enfoque analítico y
-                        experimental. En humanidades, se exploran la literatura avanzada y los sucesos históricos
-                        claves, mientras que en matemáticas, se abordan desde el álgebra hasta el cálculo. Estos
-                        profesionales están comprometidos con desarrollar el pensamiento crítico y la
-                        independencia intelectual.<br><br></p>
-                </div>
-                <div class="col-lg-6 col-md-12 col-12">
-                    <div class="about-img">
-                        <img src="{% static 'alumnos/img/media.avif' %}" alt="img" class="img-fluid">
-                    </div>
-                </div>
+    <!-- Sección Educación Media -->
+    <section class="about" style="background: #f1f5f9; border-radius: 24px; padding: 60px; margin-bottom: 40px;">
+        <div class="grid-2">
+            <div class="about-text">
+                <h2>Educación Media</h2>
+                <p>Profundizamos en asignaturas especializadas, preparando a los estudiantes para desafíos superiores y decisiones vocacionales. Enfoque analítico en ciencias y humanidades.</p>
             </div>
-        </div> 
-    </section>
-
-    <!-- Tercera sección con imagen a la izquierda y texto a la derecha, similar a la primera -->
-    <section id="about-left-2" class="about section-padding" style="background-image: linear-gradient(to right, #a7a7a7, #bdbdbd, #c9c9c9);">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-6 col-md-12 col-12">
-                    <div class="about-img">
-                        <img src="{% static 'alumnos/img/superior.jpeg' %}" alt="img" class="img-fluid">
-                    </div>
-                </div>
-                <div class="col-lg-6 col-md-12 col-12 ps-lg-5 mt-md-5">
-                    <h2>Profesores de Educación Superior:<br><br></h2>
-                    <p>Los académicos de la educación superior son especialistas que imparten conocimientos
-                        avanzados y habilidades aplicadas en campos específicos como ingeniería, medicina,
-                        ciencias sociales, entre otros. Con una mezcla de teoría rigurosa y práctica profesional,
-                        preparan a los estudiantes para ingresar al mercado laboral o la investigación avanzada. La
-                        educación superior se enfoca en el desarrollo de competencias especializadas, la investigación
-                        innovadora y el análisis crítico, esencial para la contribución en sus respectivas
-                        disciplinas y la sociedad.<br><br></p>
-                </div>
-            </div>
-        </div> 
-    </section>
-</div>   
-<footer class="footer">
-    <div class="container container-footer">
-        <div class="menu-footer">
-            <div class="contact-info">
-                <p class="title-footer">Información de Contacto</p>
-                <ul>
-                    <li class="infocontact">
-                        Dirección: Pacifico Norte 123 <br> Vernon Rockville, CT 06066
-                    </li>
-                    <li>Teléfono: 123-456-7890</li>
-                    <li>Email: teachers@lbwus.cl</li>
-                </ul>
-                <div class="social-icons">
-                    <span class="facebook">
-                        <i class="fa-brands fa-facebook-f"></i>
-                    </span>
-                    <span class="twitter">
-                        <i class="fa-brands fa-twitter"></i>
-                    </span>
-                    <span class="youtube">
-                        <i class="fa-brands fa-youtube"></i>
-                    </span>
-                    <span class="pinterest">
-                        <i class="fa-brands fa-pinterest-p"></i>
-                    </span>
-                    <span class="instagram">
-                        <i class="fa-brands fa-instagram"></i>
-                    </span>
-                </div>
-            </div>
-
-            <div class="information">
-                <p class="title-footer">Información</p>
-                <ul class="infofo">
-                    <li><a href="#">Acerca de Nosotros</a></li>
-                    <li><a href="#">Estado de tus contrataciones</a></li>
-                    <li><a href="#">Políticas de Privacidad</a></li>
-                    <li><a href="#">Términos y condiciones</a></li>
-                    <li><a href="#">Contáctanos</a></li>
-                </ul>
-            </div>
-
-            <div class="my-account">
-                <p class="title-footer">Mi cuenta</p>
-                <ul class="mi-cuenta">
-                    <li><a href="#">Mi cuenta</a></li>
-                    <li><a href="#">Historial de ordenes</a></li>
-                    <li><a href="#">Lista de deseos</a></li>
-                    <li><a href="#">Boletín</a></li>
-                    <li><a href="#">Reembolsos</a></li>
-                </ul>
-            </div>
-
-            <div class="newsletter">
-                <p class="title-footer">Boletín informativo</p>
-                <div class="content">
-                    <p>
-                        Suscríbete a nuestros boletines ahora y mantente al día con nuevas colecciones y ofertas exclusivas.
-                    </p>
-                    <input type="email" placeholder="Ingresa el correo aquí...">
-                    <button>Suscríbete</button>
-                </div>
+            <div class="about-img">
+                <img src="{% static 'alumnos/img/media.avif' %}" alt="Educación Media" style="width: 100%; border-radius: 16px;">
             </div>
         </div>
+    </section>
 
-        <div class="copyright">
-            <p>Desarrollando enseñanza para el mundo &copy; 2024</p>
+    <!-- Sección Educación Superior -->
+    <section class="about" style="background: #f8fafc; border-radius: 24px; padding: 60px; margin-bottom: 100px;">
+        <div class="grid-2">
+            <div class="about-img">
+                <img src="{% static 'alumnos/img/superior.jpeg' %}" alt="Educación Superior" style="width: 100%; border-radius: 16px;">
+            </div>
+            <div class="about-text">
+                <h2>Educación Superior</h2>
+                <p>Académicos especialistas imparten conocimientos avanzados en ingeniería, medicina y ciencias sociales. Preparación directa para el mercado laboral y la investigación.</p>
+            </div>
         </div>
-    </div>
-</footer>
+    </section>
+</div>
+{% endblock %}
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="{% static 'alumnos/java/main.js' %}"></script>
-<script src="{% static 'alumnos/java/jquery.js' %}"></script>
-<script
-src="https://kit.fontawesome.com/81581fb069.js"
-crossorigin="anonymous"
-></script>
-</body>
-</html>
+{% block extra_js %}
+<script>
+    document.getElementById('nav-servicios').classList.add('active');
+</script>
+{% endblock %}

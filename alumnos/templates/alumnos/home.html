@@ -1,74 +1,30 @@
+{% extends 'alumnos/base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LBWUS | Learn Better With Us</title>
-    <link rel="icon" href="{% static 'alumnos/img/Logo.png' %}">
-    
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="{% static 'alumnos/css/styles.css' %}?v=1.2">
-</head>
-<body>
-    <!-- Navbar -->
-    <header class="main-header">
-        <nav class="nav-container">
-            <div class="logo">
-                <img src="{% static 'alumnos/img/Logo.png' %}" alt="LBWUS Logo">
-                <span class="logo-text">LBWUS</span>
-            </div>
-            
-            <input type="checkbox" id="menu-toggle" class="menu-toggle">
-            <label for="menu-toggle" class="hamburger">
-                <span></span>
-                <span></span>
-                <span></span>
-            </label>
 
-            <ul class="nav-menu">
-                <li><a href="{% url 'home' %}" class="active">Inicio</a></li>
-                <li><a href="{% url 'nosotros' %}">Nosotros</a></li>
-                <li><a href="{% url 'servicios' %}">Servicios</a></li>
-                <li><a href="{% url 'planes' %}">Planes</a></li>
-                <li><a href="{% url 'contactos' %}">Contacto</a></li>
-                <!--<li class="mobile-only"><a href="{% url 'opcion_user' %}" class="btn-login-mobile">Iniciar Sesión</a></li>-->
-            </ul>
+{% block title %}LBWUS | Inicio{% endblock %}
 
-            <div class="nav-actions">
-                <button onclick="toggleTheme()" id="theme-toggler" class="theme-btn">
-                    <i class="bi bi-sun"></i>
-                </button>
-                <a href="{% url 'opcion_user' %}" class="btn-secondary">Iniciar</a>
-                <a href="#" class="btn-primary">Registrarse</a>
-            </div>
-        </nav>
-    </header>
-
-    <!-- Hero Section (Reemplaza al carrusel de Bootstrap) -->
+{% block content %}
+    <!-- Hero Section -->
     <section class="hero">
         <div class="hero-content">
             <h1 class="fade-in">Bienvenido a LBWUS</h1>
             <p class="fade-in">Apoyado por un equipo de profesionales experimentados, aquí es donde tus desafíos se transforman en victorias.</p>
             <div class="hero-btns fade-in">
-                <a href="{% url 'servicios' %}" class="btn-cta">Conocer más</a>
+                <a href="{% url 'servicios' %}" class="btn-c">Conocer más</a>
                 <a href="{% url 'planes' %}" class="btn-outline">Ver Planes</a>
             </div>
         </div>
         <div class="hero-overlay"></div>
-        <img src="{% static 'alumnos/img/imge1.png' %}" alt="Hero Image" class="hero-bg">
+        <div class="hero-carousel">
+            <img src="{% static 'alumnos/img/imge1.png' %}" alt="Hero Image 1" class="hero-bg">
+            <img src="{% static 'alumnos/img/prueba1111.png' %}" alt="Hero Image 2" class="hero-bg">
+            <img src="{% static 'alumnos/img/prueba1183.png' %}" alt="Hero Image 3" class="hero-bg">
+        </div>
     </section>
 
     <!-- About Section -->
-    <section class="about-section">
-        <div class="container grid-2">
+    <section class="about">
+        <div class="cnt grid-2">
             <div class="about-img">
                 <img src="{% static 'alumnos/img/about.jpg' %}" alt="About us">
             </div>
@@ -82,8 +38,8 @@
     </section>
 
     <!-- Services Section -->
-    <section class="services-section">
-        <div class="container">
+    <section class="services">
+        <div class="cnt">
             <div class="section-header">
                 <h2>Nuestros Servicios</h2>
                 <p>Descubre las características únicas de nuestros planes de estudio.</p>
@@ -100,7 +56,7 @@
                     <div class="card-icon"><i class="bi bi-lightning-fill"></i></div>
                     <h3>Plan Medio</h3>
                     <p>Avanza hacia tus metas con nuestro plan intermedio. Metodología flexible que se alinea con tu ritmo de vida.</p>
-                    <button class="btn-card" onclick="location.href='{% url 'simulador' %}';">Simula aquí</button>
+                    <!--    <button class="btn-c" onclick="location.href='{% url 'simulador' %}';">Simula aquí</button>-->
                 </div>
                 <!-- Card 3 -->
                 <div class="service-card">
@@ -113,8 +69,8 @@
     </section>
 
     <!-- Info Section (Horario y Mapa) -->
-    <section class="info-section">
-        <div class="container grid-2">
+    <section class="info">
+        <div class="cnt grid-2">
             <div class="info-text">
                 <h2>Horario de Atención</h2>
                 <div class="info-item">
@@ -149,66 +105,10 @@
             </div>
         </div>
     </section>
+{% endblock %}  
 
-    <!-- Footer -->
-    <footer class="main-footer">
-        <div class="container footer-grid">
-            <div class="footer-col">
-                <h3>Contacto</h3>
-                <p>Dirección: Pacifico Norte 123, Vernon Rockville, CT 06066</p>
-                <p>Tel: 123-456-7890</p>
-                <p>Email: teachers@lbwus.cl</p>
-            </div>
-            <div class="footer-col">
-                <h3>Información</h3>
-                <ul>
-                    <li><a href="#">Nosotros</a></li>
-                    <li><a href="#">Privacidad</a></li>
-                    <li><a href="#">Términos</a></li>
-                </ul>
-            </div>
-            <div class="footer-col">
-                <h3>Newsletter</h3>
-                <div class="subscribe-box">
-                    <input type="email" placeholder="Tu email...">
-                    <button>OK</button>
-                </div>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2026 LBWUS - Desarrollando enseñanza para el mundo</p>
-        </div>
-    </footer>
-
-    <script src="{% static 'alumnos/java/main.js' %}"></script>
-    <script>
-        function toggleTheme() {
-            const body = document.body;
-            const themeBtn = document.getElementById('theme-toggler');
-            const icon = themeBtn.querySelector('i');
-
-            body.classList.toggle('dark-mode');
-
-            if (body.classList.contains('dark-mode')) {
-                icon.classList.replace('bi-sun', 'bi-moon-stars');
-                localStorage.setItem('theme', 'dark');
-            } else {
-                icon.classList.replace('bi-moon-stars', 'bi-sun');
-                localStorage.setItem('theme', 'light');
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const savedTheme = localStorage.getItem('theme');
-            if (savedTheme === 'dark') {
-                document.body.classList.add('dark-mode');
-                const themeBtn = document.getElementById('theme-toggler');
-                if (themeBtn) {
-                    const icon = themeBtn.querySelector('i');
-                    if (icon) icon.classList.replace('bi-sun', 'bi-moon-stars');
-                }
-            }
-        });
-    </script>
-</body>
-</html>
+{% block extra_js %}
+<script>
+    document.getElementById('nav-home').classList.add('active');
+</script>
+{% endblock %}

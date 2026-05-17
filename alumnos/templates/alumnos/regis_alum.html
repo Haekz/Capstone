@@ -1,206 +1,156 @@
+{% extends 'alumnos/base.html' %}
 {% load static %}
 
-<!DOCTYPE html>
-<html lang="en">
+{% block title %}LBWUS | Registro Alumno{% endblock %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="{% static 'img/Logo.png' %}">
-    <!-- Bootstrap CSS (librerias)-->
-    <title>LBWUS</title>
-    {% load static %}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="{% static 'alumnos/css/bootstrap.min.css' %}">
-    <link rel="stylesheet" href="{% static 'alumnos/style/estilo.css' %}">
-    <script src="{% static 'alumnos/js/bootstrap.min.js' %}"></script>
-
-</head>
+{% block extra_css %}
 <style>
-    body {
-        background: #a159d8;
-        background: linear-gradient(to right, #ff96ca, #c2b6f3);
-    }
-
-    .bg {
-        background-image: url("{% static 'alumnos/img/prueb1.jpeg' %}");
-        background-position: center center;
-
-    }
-
-    .container-login-custom-new {
+    .registration-container {
+        min-height: calc(100vh - var(--header-height));
         display: flex;
-        justify-content: center;
         align-items: center;
-        min-height: 100vh;
-        padding-top: 80px;
-        /* Para compensar la barra de navegación fija */
-        padding-bottom: 50px;
+        justify-content: center;
+        padding: 50px 20px;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    }
+    
+    .registration-card {
+        background: var(--white);
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+        display: grid;
+        grid-template-columns: 1fr 1.2fr;
+        max-width: 1000px;
+        width: 100%;
+        overflow: hidden;
+    }
 
+    .registration-img {
+        background: url("{% static 'alumnos/img/prueb1.jpeg' %}") center/cover no-repeat;
+    }
 
+    .registration-form-box {
+        padding: 50px;
+    }
+
+    .registration-form-box h2 {
+        margin-bottom: 30px;
+        text-align: center;
+        color: var(--text);
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        font-family: inherit;
+        transition: var(--transition);
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
+    }
+
+    @media (max-width: 768px) {
+        .registration-card {
+            grid-template-columns: 1fr;
+        }
+        .registration-img {
+            display: none;
+        }
     }
 </style>
+{% endblock %}
 
-<body>
-    <!--Navbar-->
-    <nav class="navbar navbar-expand-lg fixed-top">
-        <div class="container-fluid">
-            <a class="navbar-brand me-auto" href="#">
-                {% load static %}
-                <img src="{% static 'alumnos/img/Logo.png' %}" alt="Logo" width="50px"
-                    class="d-inline-block align-text-top">
-                LBWUS</a>
-            <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar"
-                aria-labelledby="offcanvasNavbarLabel">
-                <div class="offcanvas-header">
-                    <h5 class="offcanvas-title" id="offcanvasNavbarLabel">LBWUS</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+{% block content %}
+<div class="registration-container">
+    <div class="registration-card">
+        <div class="registration-img"></div>
+        <div class="registration-form-box">
+            <h2>Crear Cuenta de Alumno</h2>
+            
+            <form id="formAlumnosreg" action="{% url 'regis_alum' %}" method="POST">
+                {% csrf_token %}
+                
+                {% for field in form %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                    <div style="color: #ef4444; font-size: 0.8rem; margin-top: 4px;">
+                        {{ field.errors.0 }}
+                    </div>
+                    {% endif %}
                 </div>
-                <div class="offcanvas-body">
-                    <ul class="navbar-nav justify-content-center flex-grow-1 pe-3">
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2 active" aria-current="page" href="{% url 'home' %}">Inicio</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2" href="{% url 'planes' %}">Planes</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2" href="{% url 'servicios' %}">Servicios</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2" href="{% url 'nosotros' %}">Nosotros</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2" href="{% url 'contactos' %}">Contactos</a>
-                        </li>
-                    </ul>
+                {% endfor %}
+
+                <div style="margin-top: 30px;">
+                    <button type="submit" class="btn-p" style="width: 100%; padding: 14px;">Crear Cuenta</button>
                 </div>
-            </div>
-            <a href="" class="registrarse-button btn btn-primary">Registrarse</a>
-            <a href="{% url 'opcion_user' %}" class="login-button btn btn-secondary">Iniciar</a>
-            <!-- Botón para cambiar el tema con iconos -->
-            <button onclick="toggleTheme()" id="theme-toggler" class="btn btn-outline-light ms-2">
-                <i class="bi bi-sun"></i> <!-- Icono predeterminado para el tema claro -->
-            </button>
-            <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar"
-                aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-        </div>
-    </nav>
-    <!--End Navbar-->
-    <div class="container w-75 bg-primary mt-4 rounded shadow">
-        <div class="row align-items-stretch">
-            <div class="col bg d-none d-lg-block col-md-5 col-lg-5 col-xl-6 rounded"></div>
-            <div class="col bg-white p-5 rounded-end">
-                <h2 class="fw-bold text-center py-5">Crear Cuenta de Alumno</h2>
-                <!-- Formulario de registro de alumno -->
-                <form id="formAlumnosreg" action="{% url 'alumnos_reg' %}" method="POST">
-                    {% csrf_token %}
-                    <!-- Campos personalizados para el registro de alumno -->
-                    <div class="mb-4 w-100">
-                        <label for="rut" class="form-label">RUT</label>
-                        <input type="text" class="form-control" id="rut" name="rut" required>
-                        <div class="invalid-feedback">
-                            Por favor ingresa el RUT del alumno.
-                        </div>
-                    </div>
-                    <div class="mb-4 w-100">
-                        <label for="nombre" class="form-label">Nombre Completo</label>
-                        <input type="text" class="form-control" id="nombre" name="nombre" required>
-                        <div class="invalid-feedback">
-                            Por favor ingresa el nombre completo.
-                        </div>
-                    </div>
-                    <div class="mb-4 w-100">
-                        <label for="direccion" class="form-label">Dirección</label>
-                        <input type="text" class="form-control" id="direccion" name="direccion" required>
-                        <div class="invalid-feedback">
-                            Por favor ingresa la dirección.
-                        </div>
-                    </div>
-                    <div class="mb-4 w-100">
-                        <label for="fecha_nacimiento" class="form-label">Fecha de Nacimiento</label>
-                        <input type="date" class="form-control" id="fecha_nacimiento" name="fecha_nacimiento" required>
-                        <div class="invalid-feedback">
-                            Por favor ingresa la fecha de nacimiento.
-                        </div>
-                    </div>
-                    <div class="mb-4 w-100">
-                        <label for="correo_electronico" class="form-label">Correo Electrónico</label>
-                        <input type="email" class="form-control" id="email" name="correo_electronico" required>
-                        <div class="invalid-feedback">
-                            Por favor ingresa un correo electrónico válido.
-                        </div>
-                    </div>
-                    <div class="mb-4 w-100">
-                        <label for="telefono" class="form-label">Teléfono</label>
-                        <input type="text" class="form-control" id="telefono" name="telefono" pattern="[0-9]{9}"
-                            required>
-                        <div class="invalid-feedback">
-                            Por favor ingresa un número de teléfono válido.
-                        </div>
-                    </div>
-                    <div class="mb-4 w-100">
-                        <label for="nivel_educacion" class="form-label">Nivel de Educación</label>
-                        <select class="form-control" id="nivel_educacion" name="nivel_educacion">
-                            <option value="basica">Básica</option>
-                            <option value="media">Media</option>
-                            <option value="superior">Superior</option>
-                        </select>
-                    </div>
-                    <div class="mb-4 w-100">
-                        <label for="genero" class="form-label">Género</label>
-                        <select class="form-control" id="genero" name="genero">
-                            {% for genero in generos %}
-                            <option value="{{ genero.id_genero }}">{{ genero.descripcion }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <!-- Botón de enviar -->
-                    <div class="d-grid w-100">
-                        <button type="submit" class="btn btn-primary">Crear Cuenta</button>
-                    </div>
-                </form>
-                <!-- Enlace para iniciar sesión si ya tiene cuenta -->
-                <div class="my-3 text-center w-100">
-                    <span>¿Ya tienes cuenta? <a href="{% url 'login' %}">Inicia sesión aquí</a></span>
-                </div>
+            </form>
+
+            <div style="margin-top: 20px; text-align: center; font-size: 0.9rem;">
+                <span>¿Ya tienes cuenta? <a href="{% url 'opcion_user' %}" style="color: var(--primary); font-weight: 600;">Inicia sesión aquí</a></span>
             </div>
         </div>
     </div>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="{% static 'alumnos/java/main.js' %}"></script>
-    <script src="{% static 'alumnos/java/jquery.js' %}"></script>
-    <script src="https://kit.fontawesome.com/81581fb069.js" crossorigin="anonymous"></script>
-    <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-        document.getElementById('formAlumnosreg').addEventListener('submit', function (event) {
-            event.preventDefault();  // Evitar el envío normal del formulario
-            var formData = new FormData(this);
+</div>
+{% endblock %}
 
-            fetch(this.action, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                }
-            }).then(response => response.json())
-                .then(data => {
+{% block extra_js %}
+<script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.getElementById('formAlumnosreg').addEventListener('submit', function (event) {
+        event.preventDefault();
+        var formData = new FormData(this);
+
+        fetch(this.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        }).then(response => response.json())
+            .then(data => {
+                if (data.success) {
                     Swal.fire({
-                        title: 'Respuesta del Servidor',
+                        title: '¡Éxito!',
                         text: data.message,
-                        icon: data.success ? 'success' : 'error'
+                        icon: 'success',
+                        confirmButtonColor: '#a855f7'
+                    }).then(() => {
+                        window.location.href = "{% url 'home' %}";
                     });
-                }).catch(error => {
+                } else {
                     Swal.fire({
                         title: 'Error',
-                        text: 'Hubo un problema con la petición',
-                        icon: 'error'
+                        text: data.message,
+                        icon: 'error',
+                        confirmButtonColor: '#a855f7'
                     });
+                }
+            }).catch(error => {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Hubo un problema con la petición',
+                    icon: 'error',
+                    confirmButtonColor: '#a855f7'
                 });
-        });
-    </script>
-    </script>
-</body>
-</html>
+            });
+    });
+</script>
+{% endblock %}
