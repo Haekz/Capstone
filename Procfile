@@ -1,1 +1,1 @@
-web: python manage.py collectstatic --noinput && gunicorn lbwu.wsgi
+web: python manage.py collectstatic --noinput && gunicorn lbwus.wsgi
