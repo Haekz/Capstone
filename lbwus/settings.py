@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-(5vif7*6x25s&&b89y)#ly7=3a*bp0&_$9d^+xuap-3-oh3rdi
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['capstone-production-6097.up.railway.app']
+ALLOWED_HOSTS = ['capstone-production-eddd.up.railway.app']
 
 
 # Application definition
