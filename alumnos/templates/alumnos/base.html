@@ -1,50 +1,52 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}LBWUS | Learn Better With Us{% endblock %}</title>
     <link rel="icon" href="{% static 'alumnos/img/Logo.png' %}">
-    
+
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
-    
+
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    
+
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{% static 'alumnos/css/styles.css' %}?v=2.1">
     {% block extra_css %}{% endblock %}
 </head>
+
 <body class="{% block body_class %}{% endblock %}">
     <!-- Navbar -->
     <header class="header">
         <nav class="nav-box">
             <div class="logo">
-                <img src="{% static 'alumnos/img/Logo.png' %}" alt="LBWUS Logo"> 
+                <img src="{% static 'alumnos/img/Logo.png' %}" alt="LBWUS Logo">
                 <a href="{% url 'home' %}"><span class="logo-text">LBWUS</span></a>
             </div>
-            
-            <input type="checkbox" id="menu-toggle" class="menu-toggle">
 
+            <input type="checkbox" id="menu-toggle" class="menu-toggle">
+            
             <ul class="menu">
                 <li><a href="{% url 'home' %}" id="nav-home">Inicio</a></li>
                 <li><a href="{% url 'nosotros' %}" id="nav-nosotros">Nosotros</a></li>
                 <li><a href="{% url 'servicios' %}" id="nav-servicios">Servicios</a></li>
                 <li><a href="{% url 'planes' %}" id="nav-planes">Planes</a></li>
                 <li><a href="{% url 'contactos' %}" id="nav-contacto">Contacto</a></li>
-                <li class="mobile-only"><a href="{% url 'opcion_user' %}">Iniciar Sesión</a></li>
-                <li class="mobile-only"><a href="#">Registrarse</a></li>
+                <li class="mobile-only"><a href="{% url 'login' %}">Iniciar Sesión</a></li>
+                <li class="mobile-only"><a href="{% url 'opcion_user' %}">Registrarse</a></li>
             </ul>
 
             <div class="nav-actions">
                 <button onclick="toggleTheme()" id="theme-toggler" class="theme-btn">
                     <img src="{% static 'alumnos/img/dia-y-noche (1).png' %}" class="theme-icon" alt="Modo Día/Noche">
                 </button>
-                <a href="{% url 'opcion_user' %}" class="btn-s desktop-only">Iniciar</a>
-                <a href="#" class="btn-p desktop-only">Registrarse</a>
+                <a href="{% url 'login' %}" class="btn-s desktop-only">Iniciar</a>
+                <a href="{% url 'opcion_user' %}" class="btn-p desktop-only">Registrarse</a>
                 <label for="menu-toggle" class="hamburger">
                     <span></span><span></span><span></span>
                 </label>
@@ -113,4 +115,5 @@
     </script>
     {% block extra_js %}{% endblock %}
 </body>
+
 </html>

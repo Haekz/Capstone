@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-(5vif7*6x25s&&b89y)#ly7=3a*bp0&_$9d^+xuap-3-oh3rdi
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['capstone-production-eddd.up.railway.app']
+ALLOWED_HOSTS = ['capstone-production-eddd.up.railway.app', '127.0.0.1', 'localhost']
 
 
 # Application definition
@@ -84,12 +84,20 @@ import os
 import os
 import dj_database_url
 
-DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL'),
-        conn_max_age=600
-    )
-}
+if os.environ.get('DATABASE_URL'):
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=os.environ.get('DATABASE_URL'),
+            conn_max_age=600
+        )
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation

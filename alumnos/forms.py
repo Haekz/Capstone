@@ -7,7 +7,7 @@ class AlumnoForm(forms.ModelForm):
         fields = [
             'nombre', 'rut', 'nivel_educacion', 'direccion', 
             'fecha_nacimiento', 'correo_electronico', 'telefono', 
-            'genero', 'id_tutor'
+            'genero'
         ]
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre Completo'}),
