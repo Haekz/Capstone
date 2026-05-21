@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="{% static 'alumnos/css/styles.css' %}?v=2.1">
+    <link rel="stylesheet" href="{% static 'alumnos/css/styles.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
 
@@ -45,8 +45,9 @@
                 <button onclick="toggleTheme()" id="theme-toggler" class="theme-btn">
                     <img src="{% static 'alumnos/img/dia-y-noche (1).png' %}" class="theme-icon" alt="Modo Día/Noche">
                 </button>
-                <a href="{% url 'login' %}" class="btn-s desktop-only">Iniciar</a>
-                <a href="{% url 'opcion_user' %}" class="btn-p desktop-only">Registrarse</a>
+                {% block nav_cart %}{% endblock %}
+                <a href="{% url 'login' %}" class="btn-secundario desktop-only">Iniciar</a>
+                <a href="{% url 'opcion_user' %}" class="btn-principal desktop-only">Registrarse</a>
                 <label for="menu-toggle" class="hamburger">
                     <span></span><span></span><span></span>
                 </label>
@@ -60,7 +61,7 @@
 
     <!-- Footer -->
     <footer class="footer">
-        <div class="cnt footer-grid">
+        <div class="contenedor footer-grid">
             <div class="footer-col">
                 <h3>Contacto</h3>
                 <p>Dirección: Pacifico Norte 123, Vernon Rockville, CT 06066</p>
@@ -84,7 +85,7 @@
                 <h3>Newsletter</h3>
                 <div class="subscribe-box">
                     <input type="email" placeholder="Tu email...">
-                    <button class="btn-p">OK</button>
+                    <button class="btn-principal">OK</button>
                 </div>
             </div>
         </div>

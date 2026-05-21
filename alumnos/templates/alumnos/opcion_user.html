@@ -132,9 +132,9 @@
         Recuerda indicar quién se está registrando
     </div>
     <div class="btn-group">
-        <button class="btn btn-custom" onclick="location.href='{% url 'regis_prof' %}'">Profesor</button>
-        <button class="btn btn-custom" onclick="location.href='{% url 'regis_alum' %}'">Alumno</button>
-        <button class="btn btn-custom" onclick="location.href='{% url 'regis_tutor' %}'">Tutor</button>
+        <a class="btn btn-custom" href="{% url 'regis_prof' %}">Profesor</a>
+        <a class="btn btn-custom" href="{% url 'regis_alum' %}">Alumno</a>
+        <a class="btn btn-custom" href="{% url 'regis_tutor' %}">Tutor</a>
     </div>
 </div>
 <footer class="footer">

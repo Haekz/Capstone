@@ -36,6 +36,8 @@ body.dark-mode .header {
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+
+
 body.dark-mode .about,
 body.dark-mode .info {
     background: #0a0a0a;
@@ -63,7 +65,7 @@ body {
 /* =========================================
    LAYOUT & CONTAINERS
    ========================================= */
-.cnt {
+.contenedor {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 20px;
@@ -150,15 +152,22 @@ section {
 
 .menu a {
     text-decoration: none;
-    color: var(--text);
+    color: var(--white);
     font-weight: 500;
     font-size: 0.95rem;
+    padding: 8px 16px;
+    border-radius: 8px;
+    display: inline-block;
+    position: relative;
     transition: var(--transition);
 }
 
 .menu a:hover,
 .menu a.active {
-    color: var(--primary);
+    color: var(--white);
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+    z-index: 10;
 }
 
 .nav-actions {
@@ -199,9 +208,9 @@ body.dark-mode .theme-icon {
 /* =========================================
    BUTTONS
    ========================================= */
-.btn-p,
-.btn-s,
-.btn-c {
+.btn-principal,
+.btn-secundario,
+.btn-accion {
     padding: 10px 24px;
     border-radius: 50px;
     text-decoration: none;
@@ -213,27 +222,27 @@ body.dark-mode .theme-icon {
     display: inline-block;
 }
 
-.btn-p {
+.btn-principal {
     background-color: var(--primary);
     color: var(--white);
 }
 
-.btn-p:hover {
+.btn-principal:hover {
     background-color: var(--primary-dark);
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(168, 85, 247, 0.3);
 }
 
-.btn-s {
+.btn-secundario {
     background-color: #f3f4f6;
     color: var(--text);
 }
 
-.btn-s:hover {
+.btn-secundario:hover {
     background-color: #e5e7eb;
 }
 
-.btn-c {
+.btn-accion {
     background-color: var(--accent);
     color: var(--white);
     padding: 14px 32px;
@@ -598,6 +607,14 @@ body.dark-mode .theme-icon {
 
     .menu a {
         font-size: 1.25rem;
+        color: var(--text); /* Para que sea visible en fondo blanco de móvil */
+    }
+
+    .menu a:hover,
+    .menu a.active {
+        background: rgba(168, 85, 247, 0.1);
+        color: var(--primary);
+        transform: scale(1.05); /* Escala más suave en móvil */
     }
 
     .menu-toggle:checked~.menu {
@@ -618,8 +635,8 @@ body.dark-mode .theme-icon {
         transition: 0.3s;
     }
 
-    .nav-actions .btn-s,
-    .nav-actions .btn-p {
+    .nav-actions .btn-secundario,
+    .nav-actions .btn-principal {
         display: none;
     }
 }

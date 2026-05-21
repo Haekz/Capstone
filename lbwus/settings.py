@@ -80,8 +80,6 @@ WSGI_APPLICATION = 'lbwus.wsgi.application'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 import os
-
-import os
 import dj_database_url
 
 if os.environ.get('DATABASE_URL'):
@@ -135,6 +133,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [
+    BASE_DIR / 'lbwus' / 'static',
+]
 STATIC_ROOT = BASE_DIR/'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 

@@ -1,17 +1,71 @@
+{% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Iniciar Sesión - LBWUS</title>
+    <!-- Fuente personalizada -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Hoja de estilo personalizada (totalmente modificable en login.css) -->
+    <link rel="stylesheet" href="{% static 'login.css' %}">
 </head>
 <body>
-    <h2>Log In</h2>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Log In</button>
-    </form>
+
+    <div class="login-wrapper">
+        <div class="login-card">
+
+            <!-- Nombre de la app -->
+            <p class="login-brand">LBWUS</p>
+
+            <!-- Título principal -->
+            <h1 class="login-title">Bienvenido de vuelta!</h1>
+
+
+            <!-- Formulario -->
+            <form method="post" class="login-form">
+                {% csrf_token %}
+
+                {% if form.errors %}
+                <div class="login-error">
+                    Usuario o contraseña incorrectos.
+                </div>
+                {% endif %}
+
+                <!-- Campo usuario -->
+                <div class="login-field">
+                    <input type="text" name="username" id="id_username" class="login-input" placeholder="Usuario o correo" autofocus maxlength="254" required />
+                </div>
+
+                <!-- Campo contraseña -->
+                <div class="login-field">
+                    <input type="password" name="password" id="id_password" class="login-input" placeholder="Contraseña" required />
+                </div>
+
+                <!-- Botón iniciar sesión -->
+                <button type="submit" class="login-btn-primary">Iniciar Sesión</button>
+                <button type="button" class="login-btn-primary"onclick="location.href='{% url 'home' %}'">Volver al inicio</button>
+            </form>
+             <!-- Subtítulo con enlace de registro -->
+            <p class="login-subtitle">
+                ¿No tienes cuenta? <a href="{% url 'opcion_user' %}" class="login-link">Crea una cuenta ahora</a>.
+                <br>¡Es GRATIS! Toma menos de un minuto.
+            </p>
+
+            <!-- Botón de Google -->
+            <button type="button" class="login-btn-google">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google" width="18" />
+                Login with Google
+            </button>
+
+            <!-- Olvidé mi contraseña -->
+            <p class="login-footer">
+                ¿Olvidaste tu contraseña? <a href="#" class="login-link">Click aquí</a>
+            </p>
+
+        </div>
+    </div>
+
 </body>
 </html>

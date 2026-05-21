@@ -1,0 +1,720 @@
+/* =========================================
+   CONTAINER & LAYOUT
+   ========================================= */
+.planes-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 120px 20px 80px;
+}
+
+.planes-header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.planes-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 12px;
+}
+
+.planes-header p {
+    font-size: 1.1rem;
+    color: var(--text-light);
+}
+
+/* =========================================
+   PLAN CARDS GRID (GOOGLE ONE INSPIRED)
+   ========================================= */
+.planes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    align-items: stretch;
+}
+
+.plan-card {
+    background-color: var(--bg);
+    border: 2px solid #a159d8;
+    border-radius: 24px;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+body.dark-mode .plan-card {
+    border-color: #a159d8;
+    background-color: #0d0c0e;
+}
+
+.plan-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    border-color: var(--primary-dark);
+}
+
+body.dark-mode .plan-card:hover {
+    box-shadow: 0 8px 24px rgba(168, 85, 247, 0.15);
+}
+
+.plan-badge {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 6px 16px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-bottom: 20px;
+    align-self: flex-start;
+}
+
+body.dark-mode .plan-badge {
+    background-color: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+}
+
+.plan-badge-placeholder {
+    height: 32px;
+    margin-bottom: 20px;
+}
+
+.plan-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 15px;
+}
+
+.plan-price-box {
+    display: flex;
+    align-items: baseline;
+    margin-bottom: 4px;
+}
+
+.plan-price {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.plan-period {
+    font-size: 1.1rem;
+    color: var(--text-light);
+    margin-left: 4px;
+}
+
+.plan-billing-info {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    margin-bottom: 25px;
+}
+
+/* Button */
+.plan-btn-action {
+    display: block;
+    width: 100%;
+    padding: 12px 24px;
+    border-radius: 50px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-align: center;
+    border: 2px solid #a159d8;
+    background-color: #ffffff;
+    color: #a159d8;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 25px;
+}
+
+body.dark-mode .plan-btn-action {
+    background-color: #ffffff;
+    color: #a159d8;
+    border-color: #a159d8;
+}
+
+.plan-btn-action:hover {
+    background-color: var(--primary-dark);
+    color: #ffffff;
+    border-color: var(--primary-dark);
+}
+
+/* Divider */
+.plan-divider {
+    height: 1px;
+    background-color: rgba(0, 0, 0, 0.08);
+    margin-bottom: 25px;
+}
+
+body.dark-mode .plan-divider {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Features List */
+.plan-features-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 15px;
+}
+
+.plan-features-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.plan-features-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 0.95rem;
+    color: var(--text-light);
+    line-height: 1.4;
+}
+
+.check-icon {
+    color: #1a73e8;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+body.dark-mode .check-icon {
+    color: #60a5fa;
+}
+
+/* =========================================
+   CARRITO DROPDOWN STYLING
+   ========================================= */
+.submenu-cart {
+    position: relative;
+}
+
+.cart-btn {
+    background: transparent;
+    border: none;
+    color: var(--white);
+    font-size: 1.3rem;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.cart-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.carrito-dropdown {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 50px;
+    background-color: var(--bg);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border-radius: 12px;
+    padding: 20px;
+    min-width: 320px;
+    z-index: 1100;
+}
+
+body.dark-mode .carrito-dropdown {
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.cart-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+    color: var(--text);
+}
+
+.cart-table th {
+    text-align: left;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    color: var(--text-light);
+}
+
+body.dark-mode .cart-table th {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.cart-table td {
+    padding: 8px 0;
+}
+
+.btn-vaciar {
+    display: block;
+    text-align: center;
+    background-color: #ef4444;
+    color: white;
+    text-decoration: none;
+    padding: 10px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+    width: 100%;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-vaciar:hover {
+    background-color: #dc2626;
+}
+
+/* =========================================
+   MODAL INFO
+   ========================================= */
+.modal-info {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    backdrop-filter: blur(4px);
+}
+
+.modal-info-content {
+    background-color: var(--bg);
+    padding: 40px;
+    border-radius: 24px;
+    max-width: 500px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    animation: scaleUp 0.3s ease-out;
+}
+
+.modal-info-img {
+    width: 120px;
+    margin-bottom: 20px;
+}
+
+.modal-info h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 15px;
+}
+
+.modal-info p {
+    font-size: 0.95rem;
+    color: var(--text-light);
+    line-height: 1.5;
+    margin-bottom: 25px;
+}
+
+.modal-info-close {
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.modal-info-close:hover {
+    background-color: var(--primary-dark);
+}
+
+@keyframes scaleUp {
+    from {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* =========================================
+   PLANES EXTRA GRID (2 CARDS BELOW)
+   ========================================= */
+.planes-grid-extra {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    max-width: 800px;
+    margin: 50px auto 0;
+    align-items: stretch;
+}
+
+/* =========================================
+   CUSTOM PLAN BUILDER MODAL
+   ========================================= */
+.custom-builder-modal {
+    max-width: 800px !important;
+    width: 95% !important;
+    padding: 30px !important;
+    position: relative;
+}
+
+.close-builder-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: transparent;
+    border: none;
+    font-size: 1.8rem;
+    color: var(--text-light);
+    cursor: pointer;
+    line-height: 1;
+}
+
+.close-builder-btn:hover {
+    color: var(--text);
+}
+
+.builder-layout {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+    margin-top: 25px;
+    text-align: left;
+}
+
+.builder-controls {
+    flex: 1;
+    min-width: 280px;
+    max-height: 480px;
+    overflow-y: auto;
+    padding-right: 15px;
+}
+
+/* Estilo de la barra de scroll para los controles */
+.builder-controls::-webkit-scrollbar {
+    width: 6px;
+}
+
+.builder-controls::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 10px;
+}
+
+body.dark-mode .builder-controls::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.builder-controls::-webkit-scrollbar-thumb {
+    background: rgba(161, 89, 216, 0.3);
+    border-radius: 10px;
+}
+
+.builder-controls::-webkit-scrollbar-thumb:hover {
+    background: rgba(161, 89, 216, 0.5);
+}
+
+.builder-summary {
+    width: 300px;
+    background-color: rgba(161, 89, 216, 0.05);
+    border: 2px solid #a159d8;
+    border-radius: 16px;
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+}
+
+body.dark-mode .builder-summary {
+    background-color: rgba(161, 89, 216, 0.1);
+}
+
+.control-group {
+    margin-bottom: 22px;
+}
+
+.control-label {
+    display: block;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 8px;
+}
+
+/* Toggle Radio Button */
+.radio-toggle {
+    display: flex;
+    background-color: rgba(0, 0, 0, 0.05);
+    padding: 4px;
+    border-radius: 50px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+body.dark-mode .radio-toggle {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.radio-toggle input[type="radio"] {
+    display: none;
+}
+
+.radio-toggle label {
+    flex: 1;
+    text-align: center;
+    padding: 8px 16px;
+    border-radius: 50px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-light);
+    transition: all 0.2s ease;
+}
+
+.radio-toggle input[type="radio"]:checked + label {
+    background-color: #a159d8;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(161, 89, 216, 0.3);
+}
+
+/* Triple Toggle Radio */
+.radio-toggle-triple label {
+    flex: 1;
+}
+
+/* Chips Groups & Items */
+.chips-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.chip-item {
+    position: relative;
+}
+
+.chip-item input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.chip-item label {
+    display: inline-block;
+    padding: 6px 14px;
+    background-color: rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 30px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-light);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+body.dark-mode .chip-item label {
+    background-color: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.chip-item input[type="checkbox"]:checked + label {
+    background-color: rgba(161, 89, 216, 0.12);
+    border-color: #a159d8;
+    color: #a159d8;
+    font-weight: 600;
+}
+
+body.dark-mode .chip-item input[type="checkbox"]:checked + label {
+    background-color: rgba(161, 89, 216, 0.25);
+    color: #c084fc;
+    border-color: #c084fc;
+}
+
+.chip-item label:hover {
+    background-color: rgba(161, 89, 216, 0.05);
+    border-color: rgba(161, 89, 216, 0.3);
+}
+
+/* Inputs de texto del constructor */
+.builder-text-input {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    background-color: var(--bg);
+    color: var(--text);
+    outline: none;
+    font-size: 0.9rem;
+    transition: border-color 0.2s;
+}
+
+body.dark-mode .builder-text-input {
+    border-color: rgba(255, 255, 255, 0.15);
+    background-color: #1c1917;
+}
+
+.builder-text-input:focus {
+    border-color: #a159d8;
+}
+
+/* Range Sliders */
+.slider-dias, .slider-horas {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 6px;
+    border-radius: 5px;
+    background: rgba(0, 0, 0, 0.1);
+    outline: none;
+}
+
+body.dark-mode .slider-dias, body.dark-mode .slider-horas {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.slider-dias::-webkit-slider-thumb, .slider-horas::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #a159d8;
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+.slider-dias::-webkit-slider-thumb:hover, .slider-horas::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+/* Select */
+.builder-select {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    background-color: var(--bg);
+    color: var(--text);
+    outline: none;
+    font-size: 0.9rem;
+}
+
+body.dark-mode .builder-select {
+    border-color: rgba(255, 255, 255, 0.15);
+    background-color: #1c1917;
+}
+
+/* Checkbox group */
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.checkbox-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #a159d8;
+    cursor: pointer;
+}
+
+.checkbox-item label {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    cursor: pointer;
+}
+
+/* Summary Box */
+.summary-badge {
+    background-color: rgba(161, 89, 216, 0.15);
+    color: #a159d8;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 20px;
+    margin-bottom: 12px;
+}
+
+.summary-price-box {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.summary-price {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.summary-period {
+    font-size: 1rem;
+    color: var(--text-light);
+}
+
+.summary-details {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 20px 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 0.88rem;
+    color: var(--text);
+    border-top: 1px dashed rgba(0, 0, 0, 0.12);
+    padding-top: 15px;
+}
+
+body.dark-mode .summary-details {
+    border-top-color: rgba(255, 255, 255, 0.12);
+}
+
+.summary-details li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.summary-details li::before {
+    content: "•";
+    color: #a159d8;
+    font-weight: bold;
+    display: inline-block;
+    width: 1em;
+}
+
+/* Responsive modal rules */
+@media (max-width: 768px) {
+    .builder-layout {
+        flex-direction: column;
+    }
+    .builder-summary {
+        width: 100%;
+    }
+    .builder-controls {
+        max-height: 380px;
+        padding-right: 8px;
+    }
+}
