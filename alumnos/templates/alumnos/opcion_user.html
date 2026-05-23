@@ -1,216 +1,230 @@
+{% extends 'alumnos/base.html' %}
 {% load static %}
 
-<!DOCTYPE html>
-<html lang="en">
+{% block title %}LBWUS | Registro de Usuario{% endblock %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="{% static 'img/Logo.png' %}">
-    <!-- Bootstrap CSS (librerias)-->
-    <title>LBWUS</title>
-    {% load static %}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="{% static 'alumnos/css/bootstrap.min.css' %}">
-    <link rel="stylesheet" href="{% static 'alumnos/style/estilo.css' %}">
-    <script src="{% static 'alumnos/js/bootstrap.min.js' %}"></script>
-    
-</head>
+{% block extra_css %}
 <style>
-    .container {
+    /* Section Container with subtle radial glow using project's primary purple */
+    .selection-section {
+        padding: calc(var(--header-height) + 60px) 0 80px;
+        min-height: calc(100vh - 120px); /* Adjust to fill screen above footer */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(circle at top right, rgba(168, 85, 247, 0.05) 0%, transparent 60%),
+                    radial-gradient(circle at bottom left, rgba(245, 158, 11, 0.03) 0%, transparent 60%);
+        position: relative;
+    }
+
+    .selection-container {
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 24px;
+        text-align: center;
+    }
+
+    /* Modern header layout */
+    .selection-header {
+        margin-bottom: 60px;
+    }
+
+    .selection-header h1 {
+        font-size: clamp(2rem, 5vw, 2.75rem);
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 16px;
+        letter-spacing: -0.5px;
+    }
+
+    .selection-header p {
+        font-size: 1.1rem;
+        color: var(--text-light);
+        max-width: 600px;
+        margin: 0 auto;
+        line-height: 1.6;
+    }
+
+    /* Grid layout for 3 columns */
+    .selection-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 30px;
+        align-items: stretch;
+    }
+
+    /* Card styling with glassmorphism-like borders and smooth animation curves */
+    .selection-card {
+        background: var(--white);
+        border: 1px solid rgba(168, 85, 247, 0.12);
+        border-radius: 24px;
+        padding: 50px 30px 40px;
+        transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1), 
+                    border-color 0.3s ease, 
+                    box-shadow 0.4s ease;
         display: flex;
         flex-direction: column;
         align-items: center;
-        width: 100%; 
-        margin-top: 50px; 
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--shadow);
     }
-    .btn-group {
+
+    /* Glowing top bar on hover using project's purple */
+    .selection-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 5px;
+        background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .selection-card:hover::before {
+        opacity: 1;
+    }
+
+    .selection-card:hover {
+        transform: translateY(-10px);
+        border-color: var(--primary);
+        box-shadow: 0 20px 40px rgba(168, 85, 247, 0.12);
+    }
+
+    /* Interactive Icon Wrapper */
+    .icon-box {
+        width: 90px;
+        height: 90px;
+        border-radius: 22px;
+        background: rgba(168, 85, 247, 0.06);
+        color: var(--primary);
         display: flex;
-        width: 100%; 
-        justify-content: center; 
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        margin-bottom: 30px;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
-    .btn-custom {
-        font-size: 16px;
-        padding: 10px 20px;
-        margin: 0 10px;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        border-radius: 5px; 
-        transition: background-color 0.3s; 
+
+    .selection-card:hover .icon-box {
+        background: var(--primary);
+        color: var(--white);
+        transform: scale(1.1) rotate(8deg);
+        box-shadow: 0 10px 20px rgba(168, 85, 247, 0.25);
     }
-    .btn-custom:hover {
-        background-color: #0056b3; 
+
+    /* Card Typography */
+    .selection-card h2 {
+        font-size: 1.6rem;
+        font-weight: 700;
+        margin-bottom: 16px;
+        color: var(--text);
     }
-    .title {
-        font-size: 20px;
-        margin-bottom: 20px; 
+
+    .selection-card p {
+        font-size: 0.95rem;
+        color: var(--text-light);
+        line-height: 1.6;
+        margin-bottom: 35px;
+        flex-grow: 1;
+    }
+
+    /* Button / CTA inside cards */
+    .btn-card-select {
+        width: 100%;
+        padding: 14px 28px;
+        border-radius: 14px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: 2px solid var(--primary);
+        color: var(--primary);
+        background: transparent;
+        display: inline-block;
+    }
+
+    .selection-card:hover .btn-card-select {
+        background: var(--primary);
+        color: var(--white);
+        box-shadow: 0 6px 15px rgba(168, 85, 247, 0.2);
+        border-color: var(--primary);
+    }
+
+    /* Dark Mode Adjustments */
+    body.dark-mode .selection-card {
+        background: #111827; /* Matches --white in dark mode, but overriding to be safe */
+        border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    body.dark-mode .selection-card:hover {
+        border-color: var(--primary);
+        box-shadow: 0 20px 45px rgba(168, 85, 247, 0.22);
+    }
+
+    body.dark-mode .icon-box {
+        background: rgba(168, 85, 247, 0.12);
+    }
+
+    /* Responsive design for tablets and mobile */
+    @media (max-width: 992px) {
+        .selection-grid {
+            grid-template-columns: 1fr;
+            max-width: 480px;
+            margin: 0 auto;
+            gap: 30px;
+        }
+
+        .selection-section {
+            padding: calc(var(--header-height) + 40px) 0 60px;
+        }
     }
 </style>
-<body>
-    <!--Navbar-->
-    <nav class="navbar navbar-expand-lg fixed-top">
-      <div class="container-fluid">
-          <a class="navbar-brand me-auto" href="#">
-              {% load static %}
-              <img src="{% static 'alumnos/img/Logo.png' %}" alt="Logo" width="50px" class="d-inline-block align-text-top">                
-              LBWUS</a>
-          <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
-              <div class="offcanvas-header">
-                  <h5 class="offcanvas-title" id="offcanvasNavbarLabel">LBWUS</h5>
-                  <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-              </div>
-              <div class="offcanvas-body">
-                  <ul class="navbar-nav justify-content-center flex-grow-1 pe-3">
-                      <li class="nav-item">
-                          <a class="nav-link mx-lg-2 active" aria-current="page" href="{% url 'home' %}">Inicio</a>
-                      </li>
-                      <li class="nav-item">
-                          <a class="nav-link mx-lg-2" href="{% url 'planes' %}">Planes</a>
-                      </li>
-                      <li class="nav-item">
-                          <a class="nav-link mx-lg-2" href="{% url 'servicios' %}">Servicios</a>
-                      </li>
-                      <li class="nav-item">
-                          <a class="nav-link mx-lg-2" href="{% url 'nosotros' %}">Nosotros</a>
-                      </li>
-                      <li class="nav-item">
-                          <a class="nav-link mx-lg-2" href="{% url 'contactos' %}">Contactos</a>
-                      </li>                        
-                  </ul>
-              </div>
-          </div>
-          <a href="{% url 'opcion_user' %}" class="registrarse-button btn btn-primary">Registrarse</a>
-          <a href="{% url 'login' %}" class="login-button btn btn-secondary">Iniciar</a>
-          <!-- Botón para cambiar el tema con iconos -->
-          <button onclick="toggleTheme()" id="theme-toggler" class="btn btn-outline-light ms-2">
-              <i class="bi bi-sun"></i>  <!-- Icono predeterminado para el tema claro -->
-          </button>
-          <!-- Carrito de compras icono y desplegable -->
-          <div class="submenu">
-              <button class="btn btn-outline-light ms-2">
-                  <i class="bi bi-cart-fill"></i> <!-- Icono de carrito de Bootstrap -->
-              </button>
-              <div id="carrito"
-                  style="display: none; position: absolute; right: 0; background-color: white; padding: 20px; min-width: 300px; z-index: 1000;">
-                  <table id="lista-carrito" class="u-full-width">
-                      <thead>
-                          <tr>
-                              <th>Nombre</th>
-                              <th>Precio</th>
-                              <th>Cantidad</th>
-                              <th></th>
-                          </tr>
-                      </thead>
-                      <tbody></tbody>
-                  </table>
-                  <a href="#" id="vaciar-carrito" class="button u-full-width">Vaciar Carrito</a>
-              </div>
-          </div>
-          <!-- Fin Carrito -->
-          <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar"
-              aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
-              <span class="navbar-toggler-icon"></span>
-          </button>
-      </div>
-  </nav>    
-<!--End Navbar-->
-<div class="container-fluid px-0 my-5"> <!-- px-0 quita el padding en el eje x -->
-    <div class="row g-0"> <!-- g-0 quita el gutter (espacio entre columnas) -->
-        <div class="col-12 text-center">
-            <!-- Imagen que ocupa todo el ancho disponible -->
-            <img src="{% static 'alumnos/img/nosotros.jpeg' %}" class="img-fluid w-100" alt="Imagen completa">
-            <!-- La clase w-100 fuerza a la imagen a tomar el 100% del ancho de su contenedor -->
-            <div class="image-caption my-3">
-            </div>
+{% endblock %}
+
+{% block content %}
+<section class="selection-section">
+    <div class="selection-container">
+        <div class="selection-header">
+            <h1>Crea tu cuenta en LBWUS</h1>
+            <p>Selecciona el perfil que mejor se adapte a tu rol para comenzar a disfrutar de la mejor experiencia educativa.</p>
         </div>
-    </div>
-</div>
-<!-- fin de la Imagen -->
-<div class="container">
-    <div class="title">
-        Recuerda indicar quién se está registrando
-    </div>
-    <div class="btn-group">
-        <a class="btn btn-custom" href="{% url 'regis_prof' %}">Profesor</a>
-        <a class="btn btn-custom" href="{% url 'regis_alum' %}">Alumno</a>
-        <a class="btn btn-custom" href="{% url 'regis_tutor' %}">Tutor</a>
-    </div>
-</div>
-<footer class="footer">
-    <div class="container container-footer">
-        <div class="menu-footer">
-            <div class="contact-info">
-                <p class="title-footer">Información de Contacto</p>
-                <ul>
-                    <li class="infocontact">
-                        Dirección: Pacifico Norte 123 <br> Vernon Rockville, CT 06066
-                    </li>
-                    <li>Teléfono: 123-456-7890</li>
-                    <li>Email: teachers@lbwus.cl</li>
-                </ul>
-                <div class="social-icons">
-                    <span class="facebook">
-                        <i class="fa-brands fa-facebook-f"></i>
-                    </span>
-                    <span class="twitter">
-                        <i class="fa-brands fa-twitter"></i>
-                    </span>
-                    <span class="youtube">
-                        <i class="fa-brands fa-youtube"></i>
-                    </span>
-                    <span class="pinterest">
-                        <i class="fa-brands fa-pinterest-p"></i>
-                    </span>
-                    <span class="instagram">
-                        <i class="fa-brands fa-instagram"></i>
-                    </span>
+
+        <div class="selection-grid">
+            <!-- Card Alumno -->
+            <div class="selection-card">
+                <div class="icon-box">
+                    <i class="bi bi-mortarboard-fill"></i>
                 </div>
-            </div>
-            <div class="information">
-                <p class="title-footer">Información</p>
-                <ul class="infofo">
-                    <li><a href="#">Acerca de Nosotros</a></li>
-                    <li><a href="#">Estado de tus contrataciones</a></li>
-                    <li><a href="#">Políticas de Privacidad</a></li>
-                    <li><a href="#">Términos y condiciones</a></li>
-                    <li><a href="#">Contáctanos</a></li>
-                </ul>
+                <h2>Alumno</h2>
+                <p>Accede a tutorías personalizadas de alta calidad, simula exámenes oficiales, realiza un seguimiento de tu aprendizaje y conecta con los mejores expertos.</p>
+                <a href="{% url 'regis_alum' %}" class="btn-card-select">Registrarme como Alumno</a>
             </div>
 
-            <div class="my-account">
-                <p class="title-footer">Mi cuenta</p>
-                <ul class="mi-cuenta">
-                    <li><a href="#">Mi cuenta</a></li>
-                    <li><a href="#">Historial de ordenes</a></li>
-                    <li><a href="#">Lista de deseos</a></li>
-                    <li><a href="#">Boletín</a></li>
-                    <li><a href="#">Reembolsos</a></li>
-                </ul>
+            <!-- Card Profesor -->
+            <div class="selection-card">
+                <div class="icon-box">
+                    <i class="bi bi-person-workspace"></i>
+                </div>
+                <h2>Profesor</h2>
+                <p>Comparte tus conocimientos, publica tus cursos o especialidades, gestiona tus clases y define tus propios precios y horarios flexibles.</p>
+                <a href="{% url 'regis_prof' %}" class="btn-card-select">Registrarme como Profesor</a>
             </div>
 
-            <div class="newsletter">
-                <p class="title-footer">Boletín informativo</p>
-                <div class="content">
-                    <p>
-                        Suscríbete a nuestros boletines ahora y mantente al día con nuevas colecciones y ofertas exclusivas.
-                    </p>
-                    <input type="email" placeholder="Ingresa el correo aquí...">
-                    <button>Suscríbete</button>
+            <!-- Card Tutor -->
+            <div class="selection-card">
+                <div class="icon-box">
+                    <i class="bi bi-people-fill"></i>
                 </div>
+                <h2>Tutor</h2>
+                <p>Supervisa el progreso académico de tus representados, contrata planes de estudio y mantén comunicación directa y transparente con los profesores.</p>
+                <a href="{% url 'regis_tutor' %}" class="btn-card-select">Registrarme como Tutor</a>
             </div>
         </div>
-        <div class="copyright">
-            <p>Desarrollando enseñanza para el mundo &copy; 2024</p>
-        </div>
     </div>
-</footer>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="{% static 'alumnos/java/main.js' %}"></script>
-<script src="{% static 'alumnos/java/jquery.js' %}"></script>
-<script
-src="https://kit.fontawesome.com/81581fb069.js"
-crossorigin="anonymous"
-></script>
-</body>
-</html>
+</section>
+{% endblock %}

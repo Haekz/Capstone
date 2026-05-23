@@ -6,9 +6,12 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Iniciar Sesión - LBWUS</title>
-    <!-- Fuente personalizada -->
+    <link rel="icon" href="{% static 'alumnos/img/Logo.png' %}">
+    
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Hoja de estilo personalizada (totalmente modificable en login.css) -->
+    
+    <!-- Custom login stylesheet -->
     <link rel="stylesheet" href="{% static 'login.css' %}">
 </head>
 <body>
@@ -16,56 +19,74 @@
     <div class="login-wrapper">
         <div class="login-card">
 
-            <!-- Nombre de la app -->
-            <p class="login-brand">LBWUS</p>
+            <!-- Logo & Brand Link -->
+            <a href="{% url 'home' %}" class="logo-container">
+                <img src="{% static 'alumnos/img/Logo.png' %}" alt="LBWUS Logo">
+                <span class="login-brand">LBWUS</span>
+            </a>
 
-            <!-- Título principal -->
-            <h1 class="login-title">Bienvenido de vuelta!</h1>
+            <!-- Heading -->
+            <h1 class="login-title">¡Te damos la bienvenida!</h1>
+            <p class="login-tagline">Ingresa tus credenciales para continuar tu experiencia de aprendizaje.</p>
 
-
-            <!-- Formulario -->
+            <!-- Login Form -->
             <form method="post" class="login-form">
                 {% csrf_token %}
 
                 {% if form.errors %}
                 <div class="login-error">
-                    Usuario o contraseña incorrectos.
+                    <i class="bi bi-exclamation-triangle-fill"></i> Usuario o contraseña incorrectos.
                 </div>
                 {% endif %}
 
-                <!-- Campo usuario -->
+                <!-- Username Input -->
                 <div class="login-field">
                     <input type="text" name="username" id="id_username" class="login-input" placeholder="Usuario o correo" autofocus maxlength="254" required />
+                    <i class="bi bi-person-fill"></i>
                 </div>
 
-                <!-- Campo contraseña -->
+                <!-- Password Input -->
                 <div class="login-field">
                     <input type="password" name="password" id="id_password" class="login-input" placeholder="Contraseña" required />
+                    <i class="bi bi-lock-fill"></i>
                 </div>
 
-                <!-- Botón iniciar sesión -->
-                <button type="submit" class="login-btn-primary">Iniciar Sesión</button>
-                <button type="button" class="login-btn-primary"onclick="location.href='{% url 'home' %}'">Volver al inicio</button>
+                <!-- Form Actions -->
+                <button type="submit" class="btn-login-submit">Iniciar Sesión</button>
+                <button type="button" class="btn-login-secondary" onclick="location.href='{% url 'home' %}'">Volver al inicio</button>
             </form>
-             <!-- Subtítulo con enlace de registro -->
-            <p class="login-subtitle">
-                ¿No tienes cuenta? <a href="{% url 'opcion_user' %}" class="login-link">Crea una cuenta ahora</a>.
-                <br>¡Es GRATIS! Toma menos de un minuto.
-            </p>
 
-            <!-- Botón de Google -->
+            <!-- Divider -->
+            <div class="login-divider">o también</div>
+
+            <!-- Google Login Button -->
             <button type="button" class="login-btn-google">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google" width="18" />
-                Login with Google
+                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google Logo" width="18" />
+                Iniciar sesión con Google
             </button>
 
-            <!-- Olvidé mi contraseña -->
+            <!-- Registration Call to Action -->
+            <p class="login-subtitle">
+                ¿No tienes cuenta? <a href="{% url 'opcion_user' %}" class="login-link">Crea una cuenta ahora</a>.
+                <br>Es gratis y toma menos de un minuto.
+            </p>
+
+            <!-- Forgot Password Footer Link -->
             <p class="login-footer">
-                ¿Olvidaste tu contraseña? <a href="#" class="login-link">Click aquí</a>
+                ¿Olvidaste tu contraseña? <a href="#" class="login-link">Haz clic aquí</a>
             </p>
 
         </div>
     </div>
 
+    <!-- Theme synchronization script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+            }
+        });
+    </script>
 </body>
 </html>

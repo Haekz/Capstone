@@ -1,220 +1,503 @@
+{% extends 'alumnos/base.html' %}
 {% load static %}
 
-<!DOCTYPE html>
-<html lang="en">
+{% block title %}LBWUS | Contactos{% endblock %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="{% static 'img/Logo.png' %}">
-    <!-- Bootstrap CSS (librerias)-->
-    <title>LBWUS</title>
-    {% load static %}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="{% static 'alumnos/css/bootstrap.min.css' %}">
-    <link rel="stylesheet" href="{% static 'alumnos/style/estilo.css' %}">
-    <script src="{% static 'alumnos/js/bootstrap.min.js' %}"></script>
-    
-</head>
-<body>
-      <!--Navbar-->
-      <nav class="navbar navbar-expand-lg fixed-top">
-        <div class="container-fluid">
-            <a class="navbar-brand me-auto" href="#">
-                {% load static %}
-                <img src="{% static 'alumnos/img/Logo.png' %}" alt="Logo" width="50px" class="d-inline-block align-text-top">                
-                LBWUS</a>
-            <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
-                <div class="offcanvas-header">
-                    <h5 class="offcanvas-title" id="offcanvasNavbarLabel">LBWUS</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+{% block extra_css %}
+<style>
+    /* Section Container with subtle radial glow using project's primary purple */
+    .contact-section {
+        padding: calc(var(--header-height) + 60px) 0 60px;
+        min-height: calc(100vh - 120px);
+        background: radial-gradient(circle at top right, rgba(168, 85, 247, 0.04) 0%, transparent 60%),
+                    radial-gradient(circle at bottom left, rgba(245, 158, 11, 0.03) 0%, transparent 60%);
+        position: relative;
+    }
+
+    .contact-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 24px;
+    }
+
+    .contact-header {
+        text-align: center;
+        margin-bottom: 60px;
+    }
+
+    .contact-header h1 {
+        font-size: clamp(2rem, 5vw, 2.75rem);
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 16px;
+        letter-spacing: -0.5px;
+    }
+
+    .contact-header p {
+        font-size: 1.1rem;
+        color: var(--text-light);
+        max-width: 700px;
+        margin: 0 auto;
+        line-height: 1.6;
+    }
+
+    /* 2-Column Grid Layout */
+    .contact-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.2fr;
+        gap: 50px;
+        align-items: start;
+    }
+
+    /* Cards Style */
+    .contact-info-card, .contact-form-card {
+        background: var(--white);
+        border: 1px solid rgba(168, 85, 247, 0.12);
+        border-radius: 24px;
+        padding: 40px;
+        box-shadow: var(--shadow);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .contact-info-card:hover, .contact-form-card:hover {
+        box-shadow: 0 15px 35px rgba(168, 85, 247, 0.08);
+    }
+
+    .contact-info-card h2, .contact-form-card h2 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 20px;
+        position: relative;
+    }
+
+    .contact-info-card h2::after, .contact-form-card h2::after {
+        content: '';
+        position: absolute;
+        bottom: -8px;
+        left: 0;
+        width: 50px;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+        border-radius: 2px;
+    }
+
+    .contact-info-card > p {
+        color: var(--text-light);
+        margin-top: 20px;
+        margin-bottom: 35px;
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+
+    /* Info Details list */
+    .info-details-list {
+        display: flex;
+        flex-direction: column;
+        gap: 25px;
+    }
+
+    .info-detail-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 20px;
+        text-decoration: none;
+    }
+
+    .info-icon-wrapper {
+        width: 50px;
+        height: 50px;
+        border-radius: 14px;
+        background: rgba(168, 85, 247, 0.08);
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        flex-shrink: 0;
+        transition: all 0.3s ease;
+    }
+
+    .info-detail-item:hover .info-icon-wrapper {
+        background: var(--primary);
+        color: var(--white);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 10px rgba(168, 85, 247, 0.15);
+    }
+
+    .info-text-wrapper {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .info-text-wrapper span.label {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        color: var(--text-light);
+        margin-bottom: 3px;
+    }
+
+    .info-text-wrapper a, .info-text-wrapper p {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text);
+        text-decoration: none;
+        margin: 0;
+        transition: color 0.3s ease;
+    }
+
+    .info-text-wrapper a:hover {
+        color: var(--primary);
+    }
+
+    /* Social Icons Section inside Left Card */
+    .contact-socials-box {
+        margin-top: 40px;
+        padding-top: 30px;
+        border-top: 1px solid rgba(168, 85, 247, 0.1);
+    }
+
+    .contact-socials-box h4 {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 15px;
+    }
+
+    .contact-social-icons {
+        display: flex;
+        gap: 12px;
+    }
+
+    .contact-social-icons a {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: rgba(168, 85, 247, 0.05);
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(168, 85, 247, 0.1);
+    }
+
+    .contact-social-icons a:hover {
+        background: var(--primary);
+        color: var(--white);
+        transform: translateY(-3px);
+        box-shadow: 0 5px 12px rgba(168, 85, 247, 0.2);
+    }
+
+    /* Form Fields styling */
+    .form-card-title {
+        margin-bottom: 30px !important;
+    }
+
+    .contact-form .form-group {
+        margin-bottom: 22px;
+    }
+
+    .contact-form label {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--text);
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .contact-form .form-control {
+        width: 100%;
+        padding: 14px 18px;
+        border: 1px solid rgba(168, 85, 247, 0.18);
+        border-radius: 12px;
+        font-family: inherit;
+        background-color: transparent;
+        color: var(--text);
+        transition: all 0.3s ease;
+    }
+
+    .contact-form .form-control:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.12);
+        background-color: var(--white);
+    }
+
+    .contact-form textarea.form-control {
+        resize: none;
+    }
+
+    .contact-form .invalid-feedback {
+        font-size: 0.8rem;
+        color: #ef4444;
+        margin-top: 5px;
+    }
+
+    /* Dark Mode Adjustments */
+    body.dark-mode .contact-info-card,
+    body.dark-mode .contact-form-card {
+        background: #111827;
+        border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    body.dark-mode .info-icon-wrapper {
+        background: rgba(168, 85, 247, 0.15);
+    }
+
+    body.dark-mode .contact-form .form-control {
+        border-color: rgba(255, 255, 255, 0.15);
+        color: #f3f4f6;
+    }
+
+    body.dark-mode .contact-form .form-control:focus {
+        background-color: #030204;
+        border-color: var(--primary);
+    }
+
+    body.dark-mode .contact-social-icons a {
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--primary-dark);
+        border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    body.dark-mode .contact-social-icons a:hover {
+        background: var(--primary);
+        color: var(--white);
+    }
+
+    /* Illustrations Section */
+    .illustrations-section {
+        padding: 40px 0 80px;
+        background: transparent;
+    }
+
+    .illustrations-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 0 24px;
+    }
+
+    .illustrations-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 30px;
+    }
+
+    .illustration-card {
+        background: var(--white);
+        border-radius: 24px;
+        padding: 20px;
+        box-shadow: var(--shadow);
+        border: 1px solid rgba(168, 85, 247, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1), 
+                    box-shadow 0.4s ease, 
+                    border-color 0.3s ease;
+    }
+
+    .illustration-card:hover {
+        transform: translateY(-6px);
+        border-color: var(--primary);
+        box-shadow: 0 15px 30px rgba(168, 85, 247, 0.1);
+    }
+
+    .illustration-card img {
+        max-width: 100%;
+        height: 140px;
+        object-fit: contain;
+        transition: transform 0.4s ease;
+    }
+
+    .illustration-card:hover img {
+        transform: scale(1.05);
+    }
+
+    body.dark-mode .illustration-card {
+        background: #111827;
+        border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    @media (max-width: 992px) {
+        .contact-grid {
+            grid-template-columns: 1fr;
+            gap: 40px;
+        }
+
+        .illustrations-grid {
+            grid-template-columns: 1fr;
+            max-width: 400px;
+            margin: 0 auto;
+            gap: 25px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="contact-section">
+    <div class="contact-container">
+        <div class="contact-header">
+            <h1>Ponte en contacto con nosotros</h1>
+            <p>¿Tienes dudas, comentarios o deseas saber más sobre nuestros planes? Nuestro equipo está listo para ayudarte y responder tus consultas.</p>
+        </div>
+
+        <div class="contact-grid">
+            <!-- Left Column: Contact Information -->
+            <div class="contact-info-card">
+                <h2>Información</h2>
+                <p>Recuerda que siempre cuentas con nuestro apoyo. Contáctanos y nos informas sobre las dudas que puedas tener con respecto a nuestros servicios.</p>
+                
+                <div class="info-details-list">
+                    <!-- Phone -->
+                    <a href="tel:123456789" class="info-detail-item">
+                        <div class="info-icon-wrapper">
+                            <i class="bi bi-telephone-fill"></i>
+                        </div>
+                        <div class="info-text-wrapper">
+                            <span class="label">Llámanos</span>
+                            <p>123-456-7890</p>
+                        </div>
+                    </a>
+
+                    <!-- Email -->
+                    <a href="mailto:teachers@lbwus.cl" class="info-detail-item">
+                        <div class="info-icon-wrapper">
+                            <i class="bi bi-envelope-fill"></i>
+                        </div>
+                        <div class="info-text-wrapper">
+                            <span class="label">Envíanos un correo</span>
+                            <p>teachers@lbwus.cl</p>
+                        </div>
+                    </a>
+
+                    <!-- Address -->
+                    <div class="info-detail-item">
+                        <div class="info-icon-wrapper">
+                            <i class="bi bi-geo-alt-fill"></i>
+                        </div>
+                        <div class="info-text-wrapper">
+                            <span class="label">Ubicación</span>
+                            <p>Pacifico Norte 123, Vernon Rockville, CT</p>
+                        </div>
+                    </div>
+
+                    <!-- Horario -->
+                    <div class="info-detail-item">
+                        <div class="info-icon-wrapper">
+                            <i class="bi bi-clock-fill"></i>
+                        </div>
+                        <div class="info-text-wrapper">
+                            <span class="label">Horario de atención</span>
+                            <p>Lun - Vie: 9:00 AM - 8:00 PM</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="offcanvas-body">
-                    <ul class="navbar-nav justify-content-center flex-grow-1 pe-3">
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2 active" aria-current="page" href="{% url 'home' %}">Inicio</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2" href="{% url 'planes' %}">Planes</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2" href="{% url 'servicios' %}">Servicios</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2" href="{% url 'nosotros' %}">Nosotros</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2" href="{% url 'contactos' %}">Contactos</a>
-                        </li>                        
-                    </ul>
+
+                <!-- Social media -->
+                <div class="contact-socials-box">
+                    <h4>Síguenos en redes</h4>
+                    <div class="contact-social-icons">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
+                    </div>
                 </div>
             </div>
-            <a href="" class="registrarse-button btn btn-primary">Registrarse</a>
-            <a href=""class="login-button btn btn-secondary">Iniciar</a>
-            <!-- Botón para cambiar el tema con iconos -->
-            <button onclick="toggleTheme()" id="theme-toggler" class="btn btn-outline-light ms-2">
-                <i class="bi bi-sun"></i>  <!-- Icono predeterminado para el tema claro -->
-            </button>
-            <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar"
-                aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-        </div>
-    </nav>    
-<!--End Navbar-->
-<div class="container my-5">
-    <!-- Sección de contacto -->
-    <div class="row">
-        <!-- Información de contacto -->
-        <div class="col-md-6">
-            <div class="info-form" style="padding-top: 30px;">
-                <h2>Contáctanos</h2>
-                <p>Recuerda que siempre cuentas con nuestro apoyo. Contáctanos y nos informas sobre las dudas que
-                    puedas tener con respecto a nuestros servicios.</p>
-                <div class="mb-3">
-                    <a href="tel:123456789" class="d-block">
-                        <i class="fa fa-phone"></i> 123-456-789
-                    </a>
-                    <a href="mailto:teachers@lbwus.cl" class="d-block">
-                        <i class="fa fa-envelope"></i> teachers@lbwus.cl
-                    </a>
-                    <a href="#" class="d-block">
-                        <i class="fa fa-map-marker"></i> Santiago, Chile
-                    </a>
-                </div>
-            </div>
-        </div>
 
-        <!-- Formulario de contacto -->
-        <div class="col-md-6">
-            <div class="info-form" style="padding-top: 30px;">
-                <form id="contact-form" action="#" method="post" autocomplete="off" class="needs-validation"
-                    novalidate>
-                    <div class="mb-3">
-                        <label for="nombre" class="form-label">Nombre</label>
-                        <input type="text" class="form-control" id="nombre" name="nombre"
-                            placeholder="Ingresa tu nombre" required>
+            <!-- Right Column: Contact Form -->
+            <div class="contact-form-card">
+                <h2 class="form-card-title">Escríbenos</h2>
+                <form id="contact-form" autocomplete="off" class="contact-form needs-validation" novalidate>
+                    {% csrf_token %}
+                    
+                    <!-- Nombre -->
+                    <div class="form-group">
+                        <label for="nombre">Nombre Completo</label>
+                        <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Ingresa tu nombre completo" required>
                         <div class="invalid-feedback">
-                            Por favor ingresa tu nombre.
+                            Por favor, dinos tu nombre para poder saludarte.
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="email-contact" class="form-label">Correo Electrónico</label>
-                        <input type="email" class="form-control" id="email-contact" name="email"
-                            placeholder="Ingresa tu correo" required>
+
+                    <!-- Correo Electrónico -->
+                    <div class="form-group">
+                        <label for="email-contact">Correo Electrónico</label>
+                        <input type="email" class="form-control" id="email-contact" name="email" placeholder="ejemplo@correo.com" required>
                         <div class="invalid-feedback">
-                            Por favor ingresa un correo electrónico válido.
+                            Por favor, ingresa una dirección de correo válida para responderte.
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="mensaje" class="form-label">Mensaje</label>
-                        <textarea class="form-control" id="mensaje" name="mensaje" rows="3"
-                            placeholder="Ingresa tu mensaje" required></textarea>
+
+                    <!-- Mensaje -->
+                    <div class="form-group">
+                        <label for="mensaje">Tu Mensaje</label>
+                        <textarea class="form-control" id="mensaje" name="mensaje" rows="4" placeholder="¿En qué te podemos ayudar?" required></textarea>
                         <div class="invalid-feedback">
-                            Por favor ingresa tu mensaje.
+                            Por favor, redacta un mensaje para que sepamos tu consulta.
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-ms">Enviar Mensaje</button>
+
+                    <button type="submit" class="btn-principal btn-submit">Enviar Mensaje</button>
                 </form>
             </div>
         </div>
     </div>
-</div>
-  <!-- Caricaturas -->
-  <section class="about-services">
-    <div class="contenedor">
-        <div class="servicio-cont">
-            <div class="servicio-ind">
-                <img src= "{% static 'alumnos/img/ilustracion4.png' %}"  alt="">
+</section>
+
+<!-- Illustrations Section -->
+<section class="illustrations-section">
+    <div class="illustrations-container">
+        <div class="illustrations-grid">
+            <div class="illustration-card">
+                <img src="{% static 'alumnos/img/ilustracion4.png' %}" alt="Ilustración de Contacto 1">
             </div>
-            <div class="servicio-ind">
-                <img src="{% static 'alumnos/img/ilustracion1.png' %}"  alt="">
+            <div class="illustration-card">
+                <img src="{% static 'alumnos/img/ilustracion1.png' %}" alt="Ilustración de Contacto 2">
             </div>
-            <div class="servicio-ind">
-                <img src= "{% static 'alumnos/img/ilustracion3.jpeg' %}"  alt="">
+            <div class="illustration-card">
+                <img src="{% static 'alumnos/img/ilustracion3.jpeg' %}" alt="Ilustración de Contacto 3">
             </div>
         </div>
     </div>
 </section>
- <!-- Fin Caricaturas -->
-<!-- Inicio Footer -->
-<footer class="footer">
-    <div class="container container-footer">
-        <div class="menu-footer">
-            <div class="contact-info">
-                <p class="title-footer">Información de Contacto</p>
-                <ul>
-                    <li class="infocontact">
-                        Dirección: Pacifico Norte 123 <br> Vernon Rockville, CT 06066
-                    </li>
-                    <li>Teléfono: 123-456-7890</li>
-                    <li>Email: teachers@lbwus.cl</li>
-                </ul>
-                <div class="social-icons">
-                    <span class="facebook">
-                        <i class="fa-brands fa-facebook-f"></i>
-                    </span>
-                    <span class="twitter">
-                        <i class="fa-brands fa-twitter"></i>
-                    </span>
-                    <span class="youtube">
-                        <i class="fa-brands fa-youtube"></i>
-                    </span>
-                    <span class="pinterest">
-                        <i class="fa-brands fa-pinterest-p"></i>
-                    </span>
-                    <span class="instagram">
-                        <i class="fa-brands fa-instagram"></i>
-                    </span>
-                </div>
-            </div>
+{% endblock %}
 
-            <div class="information">
-                <p class="title-footer">Información</p>
-                <ul class="infofo">
-                    <li><a href="#">Acerca de Nosotros</a></li>
-                    <li><a href="#">Estado de tus contrataciones</a></li>
-                    <li><a href="#">Políticas de Privacidad</a></li>
-                    <li><a href="#">Términos y condiciones</a></li>
-                    <li><a href="#">Contáctanos</a></li>
-                </ul>
-            </div>
+{% block extra_js %}
+<script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.getElementById('nav-contacto').classList.add('active');
 
-            <div class="my-account">
-                <p class="title-footer">Mi cuenta</p>
-                <ul class="mi-cuenta">
-                    <li><a href="#">Mi cuenta</a></li>
-                    <li><a href="#">Historial de ordenes</a></li>
-                    <li><a href="#">Lista de deseos</a></li>
-                    <li><a href="#">Boletín</a></li>
-                    <li><a href="#">Reembolsos</a></li>
-                </ul>
-            </div>
-
-            <div class="newsletter">
-                <p class="title-footer">Boletín informativo</p>
-                <div class="content">
-                    <p>
-                        Suscríbete a nuestros boletines ahora y mantente al día con nuevas colecciones y ofertas exclusivas.
-                    </p>
-                    <input type="email" placeholder="Ingresa el correo aquí...">
-                    <button>Suscríbete</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="copyright">
-            <p>Desarrollando enseñanza para el mundo &copy; 2024</p>
-        </div>
-    </div>
-</footer>
-<!-- Fin Footer -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="{% static 'alumnos/java/main.js' %}"></script>
-<script src="{% static 'alumnos/java/jquery.js' %}"></script>
-<script
-src="https://kit.fontawesome.com/81581fb069.js"
-crossorigin="anonymous"
-></script>
-</body>
-</html>
+    // Bootstrap validation & Custom alerts
+    (function () {
+        'use strict'
+        var form = document.getElementById('contact-form')
+        form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+                event.preventDefault()
+                event.stopPropagation()
+            } else {
+                event.preventDefault()
+                Swal.fire({
+                    title: '¡Mensaje Enviado!',
+                    text: 'Gracias por contactarnos. Responderemos a tu consulta a la brevedad.',
+                    icon: 'success',
+                    confirmButtonColor: '#a855f7'
+                }).then(() => {
+                    form.reset()
+                    form.classList.remove('was-validated')
+                })
+            }
+            form.classList.add('was-validated')
+        }, false)
+    })()
+</script>
+{% endblock %}

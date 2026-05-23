@@ -79,3 +79,8 @@ def alumnos_reg(request):
     generos = Genero.objects.all()
     return render(request, 'alumnos/regis_alum.html', {'generos': generos})
 
+def alumno_pag1(request):
+    context = {}
+    return render(request, 'alumnos/Alumno_pag1.html', context)
+
+
