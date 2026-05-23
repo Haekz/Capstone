@@ -18,6 +18,7 @@
             <thead>
                 <tr>
                     <th>Nombre</th>
+                    <th>Pago</th>
                     <th>Precio</th>
                     <th>Cant.</th>
                     <th></th>
@@ -49,14 +50,15 @@
                     <span class="plan-period">/mes</span>
                 </div>
                 <p class="plan-billing-info">Facturación mensual</p>
-                <button class="plan-btn-action agregar-carrito" data-id="1">Agregar al Carrito</button>
+                <button class="plan-btn-action agregar-carrito" data-id="1">Contratar Plan</button>
                 
                 <div class="plan-divider"></div>
                 
                 <p class="plan-features-title">Beneficios incluidos:</p>
                 <ul class="plan-features-list">
                     <li><i class="bi bi-check-lg check-icon"></i> Clases online</li>
-                    <li><i class="bi bi-check-lg check-icon"></i> 1 día a la semana</li>
+                    <li><i class="bi bi-check-lg check-icon"></i> 3 clases a la semana</li>
+                    <li><i class="bi bi-check-lg check-icon"></i> Temas básicos de la asignatura</li>
                     <li><i class="bi bi-check-lg check-icon"></i> Material de apoyo</li>
                     <li><i class="bi bi-check-lg check-icon"></i> Dudas solo vía correo</li>
                     <li><i class="bi bi-check-lg check-icon"></i> Horarios Pre-definidos</li>
@@ -76,14 +78,15 @@
                     <span class="plan-period">/mes</span>
                 </div>
                 <p class="plan-billing-info">Facturación mensual</p>
-                <button class="plan-btn-action agregar-carrito" data-id="2">Agregar al Carrito</button>
+                <button class="plan-btn-action agregar-carrito" data-id="2">Contratar Plan</button>
                 
                 <div class="plan-divider"></div>
                 
                 <p class="plan-features-title">Beneficios incluidos:</p>
                 <ul class="plan-features-list">
                     <li><i class="bi bi-check-lg check-icon"></i> Clases online</li>
-                    <li><i class="bi bi-check-lg check-icon"></i> 2 días a la semana</li>
+                    <li><i class="bi bi-check-lg check-icon"></i> 4 clases a la semana</li>
+                    <li><i class="bi bi-check-lg check-icon"></i> Temas intermedios de la asignatura</li>
                     <li><i class="bi bi-check-lg check-icon"></i> Material de apoyo</li>
                     <li><i class="bi bi-check-lg check-icon"></i> Dudas solo vía correo</li>
                     <li><i class="bi bi-check-lg check-icon"></i> Horarios definidos</li>
@@ -103,14 +106,15 @@
                     <span class="plan-period">/mes</span>
                 </div>
                 <p class="plan-billing-info">Facturación mensual</p>
-                <button class="plan-btn-action agregar-carrito" data-id="3">Agregar al Carrito</button>
+                <button class="plan-btn-action agregar-carrito" data-id="3">Contratar Plan</button>
                 
                 <div class="plan-divider"></div>
                 
                 <p class="plan-features-title">Beneficios incluidos:</p>
                 <ul class="plan-features-list">
                     <li><i class="bi bi-check-lg check-icon"></i> Clases presenciales o online</li>
-                    <li><i class="bi bi-check-lg check-icon"></i> 4 días a la semana</li>
+                    <li><i class="bi bi-check-lg check-icon"></i> 5 clases a la semana</li>
+                    <li><i class="bi bi-check-lg check-icon"></i> Temas avanzados de la asignatura</li>
                     <li><i class="bi bi-check-lg check-icon"></i> Material de apoyo</li>
                     <li><i class="bi bi-check-lg check-icon"></i> Simulación de pruebas</li>
                     <li><i class="bi bi-check-lg check-icon"></i> Horario flexible</li>
@@ -356,7 +360,7 @@
                     <li id="sum-situacion">Reforzamiento Estándar</li>
                     <li id="sum-temas" style="display: none;">Temas: N/A</li>
                 </ul>
-                <button class="plan-btn-action" id="btn-agregar-custom" style="margin-bottom: 0;">Agregar al Carrito</button>
+                <button class="plan-btn-action" id="btn-agregar-custom" style="margin-bottom: 0;">Contratar Plan</button>
             </div>
         </div>
     </div>
@@ -367,7 +371,132 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="{% static 'alumnos/java/jquery.js' %}"></script>
 <script>
+    // =========================================
+    // PERÍODOS DE PAGO (multiplicadores sobre precio mensual)
+    // =========================================
+    const PERIODOS = [
+        { valor: 'mensual',   label: 'Mensual',   factor: 1     },
+        { valor: '3semanas',  label: '3 Semanas', factor: 0.75  },
+        { valor: '2semanas',  label: '2 Semanas', factor: 0.50  },
+        { valor: '1semana',   label: '1 Semana',  factor: 0.25  }
+    ];
+
+    function clpFmt(n) {
+        return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(n).replace('CLP','$').trim();
+    }
+
+    // Extrae el número de un string de precio como "$69.990" → 69990
+    function parsePrecio(str) {
+        return parseInt((str || '0').replace(/[^0-9]/g, ''), 10) || 0;
+    }
+
+    // =========================================
+    // CARRITO PROPIO (reemplaza main.js para planes.html)
+    // =========================================
+    let articulosCarrito = [];
+
+    function cargarCarrito() {
+        try { articulosCarrito = JSON.parse(localStorage.getItem('carrito')) || []; }
+        catch(e) { articulosCarrito = []; }
+        // Asegurar que cada ítem tenga periodo
+        articulosCarrito.forEach(a => { if (!a.periodo) a.periodo = 'mensual'; });
+    }
+
+    function guardarCarrito() {
+        localStorage.setItem('carrito', JSON.stringify(articulosCarrito));
+    }
+
+    function actualizarContador() {
+        const contador = document.querySelector('#contador-carrito');
+        if (contador) {
+            const total = articulosCarrito.reduce((s, a) => s + a.cantidad, 0);
+            contador.textContent = total;
+        }
+    }
+
+    function renderCarrito() {
+        const tbody = document.querySelector('#lista-carrito tbody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+
+        if (articulosCarrito.length === 0) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = '<td colspan="5" style="text-align:center;padding:12px;color:var(--text-light)">Sin planes en el carrito</td>';
+            tbody.appendChild(tr);
+        } else {
+            articulosCarrito.forEach(item => {
+                const precioBase = parsePrecio(item.precio);
+                const periodo    = item.periodo || 'mensual';
+                const factor     = (PERIODOS.find(p => p.valor === periodo) || PERIODOS[0]).factor;
+                const precioAjustado = Math.round(precioBase * factor);
+
+                const opcionesHtml = PERIODOS.map(p =>
+                    `<option value="${p.valor}" ${p.valor === periodo ? 'selected' : ''}>${p.label}</option>`
+                ).join('');
+
+                const tr = document.createElement('tr');
+                tr.setAttribute('data-id', item.id);
+                tr.innerHTML = `
+                    <td class="cart-item-name">${item.titulo}</td>
+                    <td>
+                        <select class="cart-periodo-select" data-id="${item.id}">
+                            ${opcionesHtml}
+                        </select>
+                    </td>
+                    <td class="cart-item-price">${clpFmt(precioAjustado)}</td>
+                    <td>${item.cantidad}</td>
+                    <td><button class="borrar-curso cart-remove-btn" data-id="${item.id}">✕</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Mostrar/ocultar carrito según contenido
+        const carritoEl = document.getElementById('carrito');
+        if (carritoEl) carritoEl.style.display = articulosCarrito.length > 0 ? 'block' : 'none';
+
+        actualizarContador();
+
+        // Listeners de selects de período
+        tbody.querySelectorAll('.cart-periodo-select').forEach(sel => {
+            sel.addEventListener('change', function() {
+                const id = this.getAttribute('data-id');
+                const item = articulosCarrito.find(a => a.id === id);
+                if (item) {
+                    item.periodo = this.value;
+                    guardarCarrito();
+                    renderCarrito();
+                }
+            });
+        });
+
+        // Listeners de botones de eliminar
+        tbody.querySelectorAll('.cart-remove-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const id = this.getAttribute('data-id');
+                articulosCarrito = articulosCarrito.filter(a => a.id !== id);
+                guardarCarrito();
+                renderCarrito();
+            });
+        });
+    }
+
+    function agregarAlCarrito(id, titulo, precio) {
+        const existe = articulosCarrito.find(a => a.id === id);
+        if (existe) {
+            existe.cantidad += 1;
+        } else {
+            articulosCarrito.push({ id, titulo, precio, cantidad: 1, periodo: 'mensual' });
+        }
+        guardarCarrito();
+        renderCarrito();
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
+        // Inicializar carrito
+        cargarCarrito();
+        renderCarrito();
+
         // Cierre del modal de bienvenida
         const modal = document.getElementById('welcome-modal');
         const closeBtn = document.getElementById('close-modal-btn');
@@ -387,10 +516,38 @@
                 carrito.style.display = carrito.style.display === 'none' || carrito.style.display === '' ? 'block' : 'none';
             });
             document.addEventListener('click', () => {
-                carrito.style.display = 'none';
+                if (carrito.style.display === 'block') carrito.style.display = 'none';
             });
             carrito.addEventListener('click', (e) => {
                 e.stopPropagation();
+            });
+        }
+
+        // Vaciar carrito
+        const vaciarBtn = document.getElementById('vaciar-carrito');
+        if (vaciarBtn) {
+            vaciarBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                articulosCarrito = [];
+                guardarCarrito();
+                renderCarrito();
+            });
+        }
+
+        // Interceptar clicks en "Contratar Plan" de los planes estándar
+        const listaCursos = document.getElementById('lista-cursos');
+        if (listaCursos) {
+            listaCursos.addEventListener('click', (e) => {
+                if (e.target.classList.contains('agregar-carrito')) {
+                    e.stopPropagation();
+                    const card = e.target.closest('.card');
+                    if (card) {
+                        const id     = e.target.getAttribute('data-id');
+                        const titulo = card.querySelector('h3') ? card.querySelector('h3').textContent.trim() : 'Plan';
+                        const precio = card.querySelector('span') ? card.querySelector('span').textContent.trim() : '$0';
+                        agregarAlCarrito(id, titulo, precio);
+                    }
+                }
             });
         }
 
@@ -638,25 +795,13 @@
             cb.addEventListener('change', calcularPlan);
         });
 
-        // Evento Agregar al Carrito (Puente al script main.js)
+        // Evento Contratar Plan Personalizado
         if (btnAgregarCustom) {
             btnAgregarCustom.addEventListener('click', (e) => {
                 e.preventDefault();
-                
-                // Actualizar la tarjeta oculta con los datos del plan personalizado
-                const hiddenPrice = document.getElementById('hidden-custom-price');
-                const hiddenBtn = document.getElementById('hidden-custom-add-btn');
-                
-                if (hiddenPrice && hiddenBtn) {
-                    // Traspasamos el precio calculado
-                    hiddenPrice.textContent = calcTotalPrice.textContent;
-                    
-                    // Cerramos el modal de diseño
-                    customModal.style.display = 'none';
-                    
-                    // Forzamos el click en el botón de agregar oculto para que main.js lo capture
-                    hiddenBtn.click();
-                }
+                const precio = calcTotalPrice ? calcTotalPrice.textContent.trim() : '$0';
+                agregarAlCarrito('5', 'Plan Personalizado', precio);
+                customModal.style.display = 'none';
             });
         }
     });

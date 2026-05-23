@@ -225,7 +225,7 @@ body.dark-mode .check-icon {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     border-radius: 12px;
     padding: 20px;
-    min-width: 320px;
+    min-width: 400px;
     z-index: 1100;
 }
 
@@ -254,7 +254,72 @@ body.dark-mode .cart-table th {
 }
 
 .cart-table td {
-    padding: 8px 0;
+    padding: 8px 4px;
+    vertical-align: middle;
+}
+
+/* Nombre del plan: truncar si es largo */
+.cart-item-name {
+    max-width: 120px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.85rem;
+}
+
+/* Precio ajustado */
+.cart-item-price {
+    font-weight: 700;
+    color: var(--text);
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+/* Select de período dentro del carrito */
+.cart-periodo-select {
+    width: 100%;
+    min-width: 90px;
+    padding: 4px 6px;
+    border-radius: 6px;
+    border: 1px solid #a159d8;
+    background-color: var(--bg);
+    color: var(--text);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23a159d8'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+    padding-right: 20px;
+}
+
+body.dark-mode .cart-periodo-select {
+    background-color: #1c1917;
+    border-color: #a159d8;
+}
+
+.cart-periodo-select:focus {
+    border-color: var(--primary-dark);
+}
+
+/* Botón eliminar */
+.cart-remove-btn {
+    background: none;
+    border: none;
+    color: #ef4444;
+    font-size: 0.95rem;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.cart-remove-btn:hover {
+    background-color: rgba(239, 68, 68, 0.1);
 }
 
 .btn-vaciar {

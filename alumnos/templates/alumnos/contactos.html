@@ -1,220 +1,162 @@
+{% extends 'alumnos/base.html' %}
 {% load static %}
 
-<!DOCTYPE html>
-<html lang="en">
+{% block title %}LBWUS | Contacto{% endblock %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="{% static 'img/Logo.png' %}">
-    <!-- Bootstrap CSS (librerias)-->
-    <title>LBWUS</title>
-    {% load static %}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="{% static 'alumnos/css/bootstrap.min.css' %}">
-    <link rel="stylesheet" href="{% static 'alumnos/style/estilo.css' %}">
-    <script src="{% static 'alumnos/js/bootstrap.min.js' %}"></script>
-    
-</head>
-<body>
-      <!--Navbar-->
-      <nav class="navbar navbar-expand-lg fixed-top">
-        <div class="container-fluid">
-            <a class="navbar-brand me-auto" href="#">
-                {% load static %}
-                <img src="{% static 'alumnos/img/Logo.png' %}" alt="Logo" width="50px" class="d-inline-block align-text-top">                
-                LBWUS</a>
-            <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
-                <div class="offcanvas-header">
-                    <h5 class="offcanvas-title" id="offcanvasNavbarLabel">LBWUS</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-                </div>
-                <div class="offcanvas-body">
-                    <ul class="navbar-nav justify-content-center flex-grow-1 pe-3">
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2 active" aria-current="page" href="{% url 'home' %}">Inicio</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2" href="{% url 'planes' %}">Planes</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2" href="{% url 'servicios' %}">Servicios</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2" href="{% url 'nosotros' %}">Nosotros</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2" href="{% url 'contactos' %}">Contactos</a>
-                        </li>                        
-                    </ul>
-                </div>
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'alumnos/css/contacto.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="contacto-container">
+
+    <!-- Encabezado de sección -->
+    <div class="contacto-header">
+        <h1>Contáctanos</h1>
+        <p>Recuerda que siempre cuentas con nuestro apoyo. Cuéntanos tus dudas sobre nuestros servicios y nos ponemos en contacto contigo a la brevedad.</p>
+    </div>
+
+    <!-- Grid: información + formulario -->
+    <div class="contacto-grid">
+
+        <!-- Panel de información de contacto -->
+        <div class="contacto-info">
+            <div>
+                <p class="contacto-info-title">Información de contacto</p>
+                <p class="contacto-info-desc">Puedes comunicarte con nosotros a través de cualquiera de los siguientes medios. Estaremos felices de ayudarte.</p>
             </div>
-            <a href="" class="registrarse-button btn btn-primary">Registrarse</a>
-            <a href=""class="login-button btn btn-secondary">Iniciar</a>
-            <!-- Botón para cambiar el tema con iconos -->
-            <button onclick="toggleTheme()" id="theme-toggler" class="btn btn-outline-light ms-2">
-                <i class="bi bi-sun"></i>  <!-- Icono predeterminado para el tema claro -->
-            </button>
-            <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar"
-                aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-        </div>
-    </nav>    
-<!--End Navbar-->
-<div class="container my-5">
-    <!-- Sección de contacto -->
-    <div class="row">
-        <!-- Información de contacto -->
-        <div class="col-md-6">
-            <div class="info-form" style="padding-top: 30px;">
-                <h2>Contáctanos</h2>
-                <p>Recuerda que siempre cuentas con nuestro apoyo. Contáctanos y nos informas sobre las dudas que
-                    puedas tener con respecto a nuestros servicios.</p>
-                <div class="mb-3">
-                    <a href="tel:123456789" class="d-block">
-                        <i class="fa fa-phone"></i> 123-456-789
-                    </a>
-                    <a href="mailto:teachers@lbwus.cl" class="d-block">
-                        <i class="fa fa-envelope"></i> teachers@lbwus.cl
-                    </a>
-                    <a href="#" class="d-block">
-                        <i class="fa fa-map-marker"></i> Santiago, Chile
-                    </a>
-                </div>
+
+            <div class="contacto-data-list">
+                <a href="tel:123456789" class="contacto-data-item">
+                    <div class="contacto-data-icon">
+                        <i class="bi bi-telephone-fill"></i>
+                    </div>
+                    <div class="contacto-data-text">
+                        <span class="contacto-data-label">Teléfono</span>
+                        <span class="contacto-data-value">123-456-789</span>
+                    </div>
+                </a>
+
+                <a href="mailto:teachers@lbwus.cl" class="contacto-data-item">
+                    <div class="contacto-data-icon">
+                        <i class="bi bi-envelope-fill"></i>
+                    </div>
+                    <div class="contacto-data-text">
+                        <span class="contacto-data-label">Correo electrónico</span>
+                        <span class="contacto-data-value">teachers@lbwus.cl</span>
+                    </div>
+                </a>
+
+                <a href="#" class="contacto-data-item">
+                    <div class="contacto-data-icon">
+                        <i class="bi bi-geo-alt-fill"></i>
+                    </div>
+                    <div class="contacto-data-text">
+                        <span class="contacto-data-label">Dirección</span>
+                        <span class="contacto-data-value">Santiago, Chile</span>
+                    </div>
+                </a>
             </div>
         </div>
 
         <!-- Formulario de contacto -->
-        <div class="col-md-6">
-            <div class="info-form" style="padding-top: 30px;">
-                <form id="contact-form" action="#" method="post" autocomplete="off" class="needs-validation"
-                    novalidate>
-                    <div class="mb-3">
-                        <label for="nombre" class="form-label">Nombre</label>
-                        <input type="text" class="form-control" id="nombre" name="nombre"
-                            placeholder="Ingresa tu nombre" required>
-                        <div class="invalid-feedback">
-                            Por favor ingresa tu nombre.
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="email-contact" class="form-label">Correo Electrónico</label>
-                        <input type="email" class="form-control" id="email-contact" name="email"
-                            placeholder="Ingresa tu correo" required>
-                        <div class="invalid-feedback">
-                            Por favor ingresa un correo electrónico válido.
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="mensaje" class="form-label">Mensaje</label>
-                        <textarea class="form-control" id="mensaje" name="mensaje" rows="3"
-                            placeholder="Ingresa tu mensaje" required></textarea>
-                        <div class="invalid-feedback">
-                            Por favor ingresa tu mensaje.
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-ms">Enviar Mensaje</button>
-                </form>
-            </div>
+        <div class="contacto-form-card">
+            <p class="contacto-form-title">Envíanos un mensaje</p>
+            <form id="contact-form" action="#" method="post" autocomplete="off" novalidate>
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="nombre">Nombre</label>
+                    <input
+                        type="text"
+                        class="form-input"
+                        id="nombre"
+                        name="nombre"
+                        placeholder="Ingresa tu nombre"
+                        required
+                    >
+                    <span class="form-error" id="err-nombre">Por favor ingresa tu nombre.</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="email-contact">Correo Electrónico</label>
+                    <input
+                        type="email"
+                        class="form-input"
+                        id="email-contact"
+                        name="email"
+                        placeholder="Ingresa tu correo"
+                        required
+                    >
+                    <span class="form-error" id="err-email">Por favor ingresa un correo válido.</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="mensaje">Mensaje</label>
+                    <textarea
+                        class="form-textarea"
+                        id="mensaje"
+                        name="mensaje"
+                        placeholder="Ingresa tu mensaje"
+                        required
+                    ></textarea>
+                    <span class="form-error" id="err-mensaje">Por favor ingresa tu mensaje.</span>
+                </div>
+
+                <button type="submit" class="btn-enviar" id="btn-enviar-contacto">
+                    <i class="bi bi-send-fill"></i> Enviar Mensaje
+                </button>
+            </form>
         </div>
     </div>
+
+    <!-- Ilustraciones -->
+    <div class="contacto-ilustraciones">
+        <div class="ilustraciones-grid">
+            <img src="{% static 'alumnos/img/ilustracion4.png' %}" alt="Ilustración apoyo educativo">
+            <img src="{% static 'alumnos/img/ilustracion1.png' %}" alt="Ilustración aprendizaje">
+            <img src="{% static 'alumnos/img/ilustracion3.jpeg' %}" alt="Ilustración colaboración">
+        </div>
+    </div>
+
 </div>
-  <!-- Caricaturas -->
-  <section class="about-services">
-    <div class="contenedor">
-        <div class="servicio-cont">
-            <div class="servicio-ind">
-                <img src= "{% static 'alumnos/img/ilustracion4.png' %}"  alt="">
-            </div>
-            <div class="servicio-ind">
-                <img src="{% static 'alumnos/img/ilustracion1.png' %}"  alt="">
-            </div>
-            <div class="servicio-ind">
-                <img src= "{% static 'alumnos/img/ilustracion3.jpeg' %}"  alt="">
-            </div>
-        </div>
-    </div>
-</section>
- <!-- Fin Caricaturas -->
-<!-- Inicio Footer -->
-<footer class="footer">
-    <div class="container container-footer">
-        <div class="menu-footer">
-            <div class="contact-info">
-                <p class="title-footer">Información de Contacto</p>
-                <ul>
-                    <li class="infocontact">
-                        Dirección: Pacifico Norte 123 <br> Vernon Rockville, CT 06066
-                    </li>
-                    <li>Teléfono: 123-456-7890</li>
-                    <li>Email: teachers@lbwus.cl</li>
-                </ul>
-                <div class="social-icons">
-                    <span class="facebook">
-                        <i class="fa-brands fa-facebook-f"></i>
-                    </span>
-                    <span class="twitter">
-                        <i class="fa-brands fa-twitter"></i>
-                    </span>
-                    <span class="youtube">
-                        <i class="fa-brands fa-youtube"></i>
-                    </span>
-                    <span class="pinterest">
-                        <i class="fa-brands fa-pinterest-p"></i>
-                    </span>
-                    <span class="instagram">
-                        <i class="fa-brands fa-instagram"></i>
-                    </span>
-                </div>
-            </div>
+{% endblock %}
 
-            <div class="information">
-                <p class="title-footer">Información</p>
-                <ul class="infofo">
-                    <li><a href="#">Acerca de Nosotros</a></li>
-                    <li><a href="#">Estado de tus contrataciones</a></li>
-                    <li><a href="#">Políticas de Privacidad</a></li>
-                    <li><a href="#">Términos y condiciones</a></li>
-                    <li><a href="#">Contáctanos</a></li>
-                </ul>
-            </div>
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('contact-form');
+        if (!form) return;
 
-            <div class="my-account">
-                <p class="title-footer">Mi cuenta</p>
-                <ul class="mi-cuenta">
-                    <li><a href="#">Mi cuenta</a></li>
-                    <li><a href="#">Historial de ordenes</a></li>
-                    <li><a href="#">Lista de deseos</a></li>
-                    <li><a href="#">Boletín</a></li>
-                    <li><a href="#">Reembolsos</a></li>
-                </ul>
-            </div>
+        // Validación inline en tiempo real
+        function validarCampo(input, errorEl, validFn) {
+            const ok = validFn(input.value);
+            input.classList.toggle('invalid', !ok);
+            errorEl.style.display = ok ? 'none' : 'block';
+            return ok;
+        }
 
-            <div class="newsletter">
-                <p class="title-footer">Boletín informativo</p>
-                <div class="content">
-                    <p>
-                        Suscríbete a nuestros boletines ahora y mantente al día con nuevas colecciones y ofertas exclusivas.
-                    </p>
-                    <input type="email" placeholder="Ingresa el correo aquí...">
-                    <button>Suscríbete</button>
-                </div>
-            </div>
-        </div>
+        const nombre   = document.getElementById('nombre');
+        const email    = document.getElementById('email-contact');
+        const mensaje  = document.getElementById('mensaje');
+        const errNombre  = document.getElementById('err-nombre');
+        const errEmail   = document.getElementById('err-email');
+        const errMensaje = document.getElementById('err-mensaje');
 
-        <div class="copyright">
-            <p>Desarrollando enseñanza para el mundo &copy; 2024</p>
-        </div>
-    </div>
-</footer>
-<!-- Fin Footer -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="{% static 'alumnos/java/main.js' %}"></script>
-<script src="{% static 'alumnos/java/jquery.js' %}"></script>
-<script
-src="https://kit.fontawesome.com/81581fb069.js"
-crossorigin="anonymous"
-></script>
-</body>
-</html>
+        const emailRx = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+
+        nombre.addEventListener('input',  () => validarCampo(nombre,  errNombre,  v => v.trim().length >= 2));
+        email.addEventListener('input',   () => validarCampo(email,   errEmail,   v => emailRx.test(v)));
+        mensaje.addEventListener('input', () => validarCampo(mensaje, errMensaje, v => v.trim().length > 0));
+
+        form.addEventListener('submit', (e) => {
+            const okNombre  = validarCampo(nombre,  errNombre,  v => v.trim().length >= 2);
+            const okEmail   = validarCampo(email,   errEmail,   v => emailRx.test(v));
+            const okMensaje = validarCampo(mensaje, errMensaje, v => v.trim().length > 0);
+
+            if (!okNombre || !okEmail || !okMensaje) {
+                e.preventDefault();
+            }
+        });
+    });
+</script>
+{% endblock %}
