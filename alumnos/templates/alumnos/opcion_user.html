@@ -1,24 +1,217 @@
-<!-- esta parte es de la pantalla donde el usuario elige si se registra como profesor, alumno o tutor -->
 {% extends 'alumnos/base.html' %}
 {% load static %}
 
-{% block title %}LBWUS | Opciones de Usuario{% endblock %}
+{% block title %}LBWUS | Registro de Usuario{% endblock %}
 
 {% block extra_css %}
-<link rel='stylesheet' href='{% static 'alumnos/css/opciones_user.css' %}'>
+<style>
+    /* esta parte es de la sección de selección de tipo de cuenta */
+    .selection-section {
+        padding: calc(var(--header-height) + 60px) 0 80px;
+        min-height: calc(100vh - 120px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(circle at top right, rgba(168, 85, 247, 0.05) 0%, transparent 60%),
+                    radial-gradient(circle at bottom left, rgba(245, 158, 11, 0.03) 0%, transparent 60%);
+    }
+
+    .selection-container {
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 24px;
+        text-align: center;
+    }
+
+    /* esta parte es del encabezado de la sección */
+    .selection-header { margin-bottom: 60px; }
+
+    .selection-header h1 {
+        font-size: clamp(2rem, 5vw, 2.75rem);
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 16px;
+        letter-spacing: -0.5px;
+    }
+
+    .selection-header p {
+        font-size: 1.1rem;
+        color: var(--text-light);
+        max-width: 600px;
+        margin: 0 auto;
+        line-height: 1.6;
+    }
+
+    /* esta parte es del grid de las 3 tarjetas */
+    .selection-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 30px;
+        align-items: stretch;
+    }
+
+    /* esta parte es de cada tarjeta de opción de registro */
+    .selection-card {
+        background: var(--white);
+        border: 1px solid rgba(168, 85, 247, 0.12);
+        border-radius: 24px;
+        padding: 50px 30px 40px;
+        transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1),
+                    border-color 0.3s ease,
+                    box-shadow 0.4s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+    }
+
+    /* esta parte es de la barrita morada que aparece arriba al hacer hover */
+    .selection-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 5px;
+        background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .selection-card:hover::before { opacity: 1; }
+
+    .selection-card:hover {
+        transform: translateY(-10px);
+        border-color: var(--primary);
+        box-shadow: 0 20px 40px rgba(168, 85, 247, 0.12);
+    }
+
+    /* esta parte es del cuadro de ícono de cada tarjeta */
+    .icon-box {
+        width: 90px;
+        height: 90px;
+        border-radius: 22px;
+        background: rgba(168, 85, 247, 0.06);
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        margin-bottom: 30px;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .selection-card:hover .icon-box {
+        background: var(--primary);
+        color: var(--white);
+        transform: scale(1.1) rotate(8deg);
+        box-shadow: 0 10px 20px rgba(168, 85, 247, 0.25);
+    }
+
+    /* esta parte es del texto dentro de cada tarjeta */
+    .selection-card h2 {
+        font-size: 1.6rem;
+        font-weight: 700;
+        margin-bottom: 16px;
+        color: var(--text);
+    }
+
+    .selection-card p {
+        font-size: 0.95rem;
+        color: var(--text-light);
+        line-height: 1.6;
+        margin-bottom: 35px;
+        flex-grow: 1;
+    }
+
+    /* esta parte es del botón de acción dentro de cada tarjeta */
+    .btn-card-select {
+        width: 100%;
+        padding: 14px 28px;
+        border-radius: 14px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: 2px solid var(--primary);
+        color: var(--primary);
+        background: transparent;
+        display: inline-block;
+    }
+
+    .selection-card:hover .btn-card-select {
+        background: var(--primary);
+        color: var(--white);
+        box-shadow: 0 6px 15px rgba(168, 85, 247, 0.2);
+    }
+
+    /* esta parte es de los ajustes de modo oscuro */
+    body.dark-mode .selection-card {
+        background: #111827;
+        border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    body.dark-mode .selection-card:hover {
+        border-color: var(--primary);
+        box-shadow: 0 20px 45px rgba(168, 85, 247, 0.22);
+    }
+
+    body.dark-mode .icon-box { background: rgba(168, 85, 247, 0.12); }
+
+    /* esta parte es del responsive para tablets y móviles */
+    @media (max-width: 992px) {
+        .selection-grid {
+            grid-template-columns: 1fr;
+            max-width: 480px;
+            margin: 0 auto;
+            gap: 30px;
+        }
+        .selection-section { padding: calc(var(--header-height) + 40px) 0 60px; }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-<section class='user-options-section'>
-    <h1 class='user-options-title'>Selecciona tu tipo de cuenta</h1>
-    <p class='user-options-subtitle'>Recuerda indicar quién se está registrando</p>
-    
-    <img src='{% static 'alumnos/img/nosotros.jpeg' %}' alt='Nosotros' class='user-options-image'>
-    
-    <div class='options-btn-group'>
-        <a href='{% url 'regis_prof' %}' class='options-btn'>Profesor</a>
-        <a href='{% url 'regis_alum' %}' class='options-btn'>Alumno</a>
-        <a href='{% url 'regis_tutor' %}' class='options-btn'>Administrador</a>
+<section class="selection-section">
+    <div class="selection-container">
+        <div class="selection-header">
+            <h1>Crea tu cuenta en LBWUS</h1>
+            <p>Selecciona el perfil que mejor se adapte a tu rol para comenzar a disfrutar de la mejor experiencia educativa.</p>
+        </div>
+
+        <div class="selection-grid">
+            <!-- esta parte es de la tarjeta para registrarse como Alumno -->
+            <div class="selection-card">
+                <div class="icon-box">
+                    <i class="bi bi-mortarboard-fill"></i>
+                </div>
+                <h2>Alumno</h2>
+                <p>Accede a tutorías personalizadas de alta calidad, simula exámenes oficiales, realiza un seguimiento de tu aprendizaje y conecta con los mejores expertos.</p>
+                <a href="{% url 'regis_alum' %}" class="btn-card-select">Registrarme como Alumno</a>
+            </div>
+
+            <!-- esta parte es de la tarjeta para registrarse como Profesor -->
+            <div class="selection-card">
+                <div class="icon-box">
+                    <i class="bi bi-person-workspace"></i>
+                </div>
+                <h2>Profesor</h2>
+                <p>Comparte tus conocimientos, publica tus cursos o especialidades, gestiona tus clases y define tus propios precios y horarios flexibles.</p>
+                <a href="{% url 'regis_prof' %}" class="btn-card-select">Registrarme como Profesor</a>
+            </div>
+
+            <!-- esta parte es de la tarjeta para registrarse como Administrador -->
+            <div class="selection-card">
+                <div class="icon-box">
+                    <i class="bi bi-shield-fill"></i>
+                </div>
+                <h2>Administrador</h2>
+                <p>Gestiona la plataforma, supervisa a profesores y alumnos, revisa reportes y mantén el control total del sistema LBWUS.</p>
+                <a href="{% url 'regis_tutor' %}" class="btn-card-select">Registrarme como Admin</a>
+            </div>
+        </div>
     </div>
 </section>
 {% endblock %}

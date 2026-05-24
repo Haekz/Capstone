@@ -1,0 +1,680 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LBWUS | Portal del Alumno</title>
+    <link rel="icon" href="{% static 'alumnos/img/Logo.png' %}">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'alumnos/css/alumn_1.css' %}">
+</head>
+<body>
+
+    <!-- Custom Standalone Navbar for Alumno -->
+    <nav class="custom-navbar">
+        <a href="{% url 'home' %}" class="logo">
+            <img src="{% static 'alumnos/img/Logo.png' %}" alt="LBWUS Logo">
+            <span class="logo-text">LBWUS</span>
+        </a>
+
+        <!-- Custom Navigation Links -->
+        <ul class="custom-nav-links">
+            <li><button class="nav-view-btn active" data-view="view-dashboard">Clases</button></li>
+            <li><button class="nav-view-btn" data-view="view-favorites">Profesores Favoritos</button></li>
+            <li><button class="nav-view-btn" data-view="view-profile">Mi Perfil</button></li>
+        </ul>
+
+        <div class="custom-nav-actions">
+            <!-- Theme Toggler -->
+            <button onclick="toggleTheme()" class="btn-theme-toggle" id="theme-toggler">
+                <i class="bi bi-sun-fill" id="theme-icon"></i>
+            </button>
+            <a href="{% url 'home' %}" class="btn-logout">Cerrar Sesión</a>
+        </div>
+    </nav>
+
+    <!-- Main Dashboard Layout -->
+    <div class="dashboard-layout">
+        <!-- Left Sidebar Menu -->
+        <aside class="sidebar-menu">
+            <ul class="sidebar-nav">
+                <li>
+                    <button class="sidebar-nav-item active sidebar-view-btn" data-view="view-dashboard">
+                        <i class="bi bi-grid-1x2-fill"></i>
+                        <span>Dashboard (Clases)</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="sidebar-nav-item" id="nav-open-interests">
+                        <i class="bi bi-star-fill"></i>
+                        <span>Temas de Interés</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="sidebar-nav-item sidebar-view-btn" data-view="view-favorites">
+                        <i class="bi bi-heart-fill"></i>
+                        <span>Profesores Favoritos</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="sidebar-nav-item sidebar-view-btn" data-view="view-profile">
+                        <i class="bi bi-person-fill"></i>
+                        <span>Mi Perfil</span>
+                    </button>
+                </li>
+            </ul>
+
+        </aside>
+
+        <!-- Right Scrollable Views Container -->
+        <main class="main-content">
+            
+            <!-- ── VIEW 1: DASHBOARD (CLASES) ── -->
+            <div class="dashboard-view active" id="view-dashboard">
+                <div class="main-dashboard-grid">
+                    <!-- Left Panel -->
+                    <div class="dashboard-left-panel">
+                        <!-- Welcome Banner -->
+                        <div class="welcome-banner">
+                            <div class="welcome-text">
+                                <h1>¡Hola de nuevo, Alumno!</h1>
+                                <p>Bienvenido a tu panel de control personalizado. Aquí podrás gestionar tu aprendizaje.</p>
+                            </div>
+                            <button class="btn-principal" id="dashboard-setup-btn" style="padding: 12px 24px;">Configurar Intereses</button>
+                        </div>
+
+                        <!-- Stats Widgets -->
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-icon"><i class="bi bi-clock-history"></i></div>
+                                <div class="stat-info">
+                                    <h3>12 hrs</h3>
+                                    <p>Clases Tomadas</p>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon"><i class="bi bi-calendar-event"></i></div>
+                                <div class="stat-info">
+                                    <h3>2 Pendientes</h3>
+                                    <p>Próximas Tutorías</p>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon"><i class="bi bi-star-half"></i></div>
+                                <div class="stat-info">
+                                    <h3>4.9</h3>
+                                    <p>Mi Calificación</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Content tabs section -->
+                        <div class="results-section">
+                            <h2>Tu Contenido Seleccionado</h2>
+                            
+                            <!-- Tabs Navigation -->
+                            <div class="dashboard-tabs">
+                                <button class="tab-btn active" data-tab="tab-profesores">
+                                    <i class="bi bi-person-workspace"></i> Profesores
+                                </button>
+                                <button class="tab-btn" data-tab="tab-tutores">
+                                    <i class="bi bi-people-fill"></i> Tutores
+                                </button>
+                                <button class="tab-btn" data-tab="tab-videos">
+                                    <i class="bi bi-play-circle-fill"></i> Clases en Video
+                                </button>
+                            </div>
+
+                            <!-- Tab Contents -->
+                            <div class="tab-content active" id="tab-profesores">
+                                <div class="teachers-list" id="dashboard-teachers-container">
+                                    <!-- Populated via JS -->
+                                </div>
+                            </div>
+
+                            <div class="tab-content" id="tab-tutores">
+                                <div class="teachers-list" id="dashboard-tutors-container">
+                                    <!-- Populated via JS -->
+                                </div>
+                            </div>
+
+                            <div class="tab-content" id="tab-videos">
+                                <div class="filtered-grid" id="dashboard-videos-container">
+                                    <!-- Populated via JS -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Panel (Pulsating Ad Offer Card) -->
+                    <div class="dashboard-right-panel">
+                        <a href="{% url 'planes' %}" class="promo-ad-card">
+                            <span class="promo-badge">Oferta Limitada</span>
+                            <h3>¡Lleva tu aprendizaje al máximo nivel!</h3>
+                            <p>Obtén acceso ilimitado a todos los profesores y tutores con un 30% de descuento en planes superiores.</p>
+                            <div class="btn-promo-cta">Ver Planes Disponibles</div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── VIEW 2: FAVORITE TEACHERS ── -->
+            <div class="dashboard-view" id="view-favorites">
+                <div class="results-section" style="max-width: 900px; margin: 0 auto;">
+                    <h2 style="margin-bottom: 10px;"><i class="bi bi-star-fill" style="color: var(--accent);"></i> Mis Profesores Favoritos</h2>
+                    <p style="color: var(--text-light); margin-bottom: 30px;">Aquí se muestran los profesores que has marcado con estrella para contactarlos fácilmente más adelante.</p>
+                    
+                    <div class="teachers-list" id="favorites-teachers-container">
+                        <!-- Populated via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── VIEW 3: PROFILE ── -->
+            <div class="dashboard-view" id="view-profile">
+                <div class="profile-card">
+                    <div class="profile-header">
+                        <div class="profile-avatar-large">A</div>
+                        <div class="profile-title-box">
+                            <h2>Perfil del Alumno</h2>
+                            <span class="plan-badge"><i class="bi bi-x-circle-fill"></i> Sin Plan Activo</span>
+                        </div>
+                    </div>
+
+                    <div class="profile-details-grid">
+                        <div class="profile-field">
+                            <label>Nombre Completo</label>
+                            <p>Alumno de Pruebas LBWUS</p>
+                        </div>
+                        <div class="profile-field">
+                            <label>Correo Electrónico</label>
+                            <p>alumno@lbwus.cl</p>
+                        </div>
+                        <div class="profile-field">
+                            <label>Nivel de Educación</label>
+                            <p>Educación Media</p>
+                        </div>
+                        <div class="profile-field">
+                            <label>Teléfono de Contacto</label>
+                            <p>+56 9 1234 5678</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Modal / Pestaña Emergente: Temas de Interés -->
+    <div class="modal-overlay" id="interests-modal">
+        <div class="topics-modal">
+            <button class="modal-close-btn" id="close-modal-btn"><i class="bi bi-x-lg"></i></button>
+            
+            <h2>Temas de Interés</h2>
+            <p class="subtitle">Selecciona tus áreas académicas favoritas. Filtraremos el panel general al aceptar.</p>
+            
+            <!-- Grid of Tags -->
+            <div class="topic-tag-grid" id="topic-tags-container">
+                <button class="topic-tag" data-topic="Matemáticas">Matemáticas</button>
+                <button class="topic-tag" data-topic="Física">Física</button>
+                <button class="topic-tag" data-topic="Química">Química</button>
+                <button class="topic-tag" data-topic="Biología">Biología</button>
+                <button class="topic-tag" data-topic="Lenguaje">Lenguaje</button>
+                <button class="topic-tag" data-topic="Inglés">Inglés</button>
+                <button class="topic-tag" data-topic="Historia">Historia</button>
+                <button class="topic-tag" data-topic="Programación">Programación</button>
+            </div>
+
+            <!-- Preview Section -->
+            <div class="teachers-container-title">
+                <span>Vista Previa de Profesores</span>
+                <span class="count-badge" id="teachers-count">0 encontrados</span>
+            </div>
+
+            <!-- Scrollable list of teachers (modal preview) -->
+            <div class="teachers-list" id="teachers-list-container">
+                <!-- Dynamically populated via JS -->
+            </div>
+
+            <!-- Accept Button (Filtra todo) -->
+            <button class="btn-principal" id="modal-accept-btn" style="width: 100%; padding: 14px; border-radius: 12px; font-weight: 700; margin-top: 10px;">
+                Aceptar y Filtrar Contenido
+            </button>
+        </div>
+    </div>
+
+    <!-- SweetAlert2 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- App Logic -->
+    <script>
+        // ── HAS PLAN LOCK VARIABLE (Default: false) ──
+        const hasPlan = false; 
+
+        // ── LIGHT/DARK MODE TOGGLING ──
+        const toggleTheme = () => {
+            const body = document.body;
+            body.classList.toggle('dark-mode');
+            
+            const themeIcon = document.getElementById('theme-icon');
+            if (body.classList.contains('dark-mode')) {
+                themeIcon.className = 'bi bi-moon-fill';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                themeIcon.className = 'bi bi-sun-fill';
+                localStorage.setItem('theme', 'light');
+            }
+        };
+
+        // Initialize Theme Mode
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+            document.getElementById('theme-icon').className = 'bi bi-moon-fill';
+        }
+
+        // ── MULTI-VIEW ROUTING (Dashboard, Favorites, Profile) ──
+        const viewBtns = document.querySelectorAll('.nav-view-btn, .sidebar-view-btn');
+        const views = document.querySelectorAll('.dashboard-view');
+
+        const switchView = (targetViewId) => {
+            // Remove active state from all buttons and views
+            viewBtns.forEach(btn => {
+                const viewAttr = btn.getAttribute('data-view');
+                if (viewAttr === targetViewId) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            views.forEach(view => {
+                if (view.id === targetViewId) {
+                    view.classList.add('active');
+                } else {
+                    view.classList.remove('active');
+                }
+            });
+
+            if (targetViewId === 'view-favorites') {
+                renderFavorites();
+            }
+        };
+
+        viewBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetViewId = btn.getAttribute('data-view');
+                switchView(targetViewId);
+            });
+        });
+
+        // ── INTERACTIVE MODAL CONTROLLER ──
+        const modalOverlay = document.getElementById('interests-modal');
+        const openModalBtn = document.getElementById('nav-open-interests');
+        const setupBtn = document.getElementById('dashboard-setup-btn');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const acceptModalBtn = document.getElementById('modal-accept-btn');
+
+        const openModal = () => {
+            modalOverlay.classList.add('open');
+            renderModalPreview();
+        };
+
+        const closeModal = () => {
+            modalOverlay.classList.remove('open');
+        };
+
+        const applyFiltersAndClose = () => {
+            const selectedTopics = getSelectedTopics();
+            localStorage.setItem('selected-topics', JSON.stringify(selectedTopics));
+            renderDashboardContent();
+            closeModal();
+        };
+
+        openModalBtn.addEventListener('click', openModal);
+        setupBtn.addEventListener('click', openModal);
+        closeModalBtn.addEventListener('click', closeModal);
+        acceptModalBtn.addEventListener('click', applyFiltersAndClose);
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) closeModal();
+        });
+
+        // First Login Auto-Open
+        const firstLoginDone = localStorage.getItem('first_login_done');
+        if (!firstLoginDone) {
+            setTimeout(() => {
+                openModal();
+                localStorage.setItem('first_login_done', 'true');
+            }, 800);
+        }
+
+        // ── DATA POOLS ──
+        // Teachers
+        const teachers = [
+            { id: 1, name: "Dr. Carlos Ruiz", specialties: ["Matemáticas", "Física"], distance: 0.8, rating: "4.9 ⭐", price: "$15.000", initial: "CR" },
+            { id: 2, name: "Lic. María José Valenzuela", specialties: ["Lenguaje", "Historia"], distance: 1.2, rating: "4.8 ⭐", price: "$12.000", initial: "MJ" },
+            { id: 3, name: "Ing. David Silva", specialties: ["Programación", "Matemáticas"], distance: 1.5, rating: "5.0 ⭐", price: "$18.000", initial: "DS" },
+            { id: 4, name: "Prof. Ana Contreras", specialties: ["Inglés"], distance: 2.1, rating: "4.7 ⭐", price: "$14.000", initial: "AC" },
+            { id: 5, name: "Dra. Lucía Méndez", specialties: ["Química", "Biología"], distance: 2.8, rating: "4.9 ⭐", price: "$16.000", initial: "LM" },
+            { id: 6, name: "Prof. Pedro Rojas", specialties: ["Física", "Química"], distance: 3.2, rating: "4.6 ⭐", price: "$13.000", initial: "PR" },
+            { id: 7, name: "Msc. Sofía Vergara", specialties: ["Inglés", "Historia"], distance: 4.0, rating: "4.8 ⭐", price: "$15.000", initial: "SV" }
+        ];
+
+        // Tutors
+        const tutors = [
+            { id: 101, name: "Tutor Juan Pablo", specialties: ["Matemáticas", "Programación"], distance: 1.1, rating: "4.9 ⭐", initial: "JP" },
+            { id: 102, name: "Tutora Camila Gómez", specialties: ["Inglés", "Lenguaje"], distance: 1.8, rating: "4.8 ⭐", initial: "CG" },
+            { id: 103, name: "Tutor Roberto Muñoz", specialties: ["Física", "Química"], distance: 2.4, rating: "4.7 ⭐", initial: "RM" },
+            { id: 104, name: "Tutora Patricia Soto", specialties: ["Biología"], distance: 3.1, rating: "4.6 ⭐", initial: "PS" }
+        ];
+
+        // Videos
+        const videos = [
+            { title: "Álgebra Básica: Resolución de Ecuaciones", specialty: "Matemáticas", teacher: "Carlos Ruiz", duration: "15 min" },
+            { title: "Leyes de la Termodinámica y Calor", specialty: "Física", teacher: "Pedro Rojas", duration: "22 min" },
+            { title: "Introducción a Python y Estructuras", specialty: "Programación", teacher: "David Silva", duration: "30 min" },
+            { title: "Gramática Inglesa Avanzada (Phrasal Verbs)", specialty: "Inglés", teacher: "Ana Contreras", duration: "18 min" },
+            { title: "Reacciones Químicas Orgánicas y Enlaces", specialty: "Química", teacher: "Lucía Méndez", duration: "25 min" },
+            { title: "Historia Universal: El Imperio Romano", specialty: "Historia", teacher: "Sofía Vergara", duration: "20 min" },
+            { title: "Célula Eucariota y Procariota: Estructura", specialty: "Biología", teacher: "Lucía Méndez", duration: "12 min" }
+        ];
+
+        // ── FAVORITES SYSTEM ──
+        let favoriteIds = JSON.parse(localStorage.getItem('favorite-teachers') || '[]');
+
+        const toggleFavorite = (teacherId, event) => {
+            event.stopPropagation(); // Evita clics no deseados en la tarjeta
+            
+            const index = favoriteIds.indexOf(teacherId);
+            if (index === -1) {
+                favoriteIds.push(teacherId);
+            } else {
+                favoriteIds.splice(index, 1);
+            }
+            
+            localStorage.setItem('favorite-teachers', JSON.stringify(favoriteIds));
+            
+            // Re-render
+            renderDashboardContent();
+            renderModalPreview();
+            renderFavorites();
+        };
+
+        const isFavorite = (teacherId) => favoriteIds.includes(teacherId);
+
+        // ── MANDATORY PLAN ACCESS VERIFICATION ──
+        const requestClassAccess = (teacherName) => {
+            if (!hasPlan) {
+                Swal.fire({
+                    title: '¡Suscripción Obligatoria!',
+                    text: `Para poder solicitar clases con ${teacherName} es obligatorio contar con un plan de LBWUS activo.`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ver Planes Disponibles',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: 'var(--primary)',
+                    cancelButtonColor: '#6b7280'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = "{% url 'planes' %}";
+                    }
+                });
+            } else {
+                Swal.fire({
+                    title: '¡Acceso Concedido!',
+                    text: `Redirigiendo al calendario del profesor ${teacherName}...`,
+                    icon: 'success',
+                    confirmButtonColor: 'var(--primary)'
+                });
+            }
+        };
+
+        // ── RESTORE INTERESTS FROM STORAGE ──
+        const savedTopics = JSON.parse(localStorage.getItem('selected-topics') || '[]');
+        const topicButtons = document.querySelectorAll('.topic-tag');
+        topicButtons.forEach(btn => {
+            const topic = btn.getAttribute('data-topic');
+            if (savedTopics.includes(topic)) {
+                btn.classList.add('selected');
+            }
+
+            btn.addEventListener('click', () => {
+                btn.classList.toggle('selected');
+                renderModalPreview();
+            });
+        });
+
+        function getSelectedTopics() {
+            const selected = [];
+            document.querySelectorAll('.topic-tag.selected').forEach(btn => {
+                selected.push(btn.getAttribute('data-topic'));
+            });
+            return selected;
+        }
+
+        // ── RENDERING METHODS ──
+
+        // Modal Preview list
+        function renderModalPreview() {
+            const selectedTopics = getSelectedTopics();
+            const container = document.getElementById('teachers-list-container');
+            const countBadge = document.getElementById('teachers-count');
+            container.innerHTML = '';
+
+            let filtered = teachers;
+            if (selectedTopics.length > 0) {
+                filtered = teachers.filter(t => 
+                    t.specialties.some(spec => selectedTopics.includes(spec))
+                );
+            }
+
+            filtered.sort((a, b) => a.distance - b.distance);
+            countBadge.innerText = `${filtered.length} encontrados`;
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-teachers-state">
+                        <i class="bi bi-person-fill-exclamation"></i>
+                        <p>Elige temas de interés arriba.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            filtered.forEach(t => {
+                const favClass = isFavorite(t.id) ? 'bi-star-fill' : 'bi-star';
+                const card = document.createElement('div');
+                card.className = 'teacher-card';
+                card.innerHTML = `
+                    <button class="teacher-star-btn" onclick="toggleFavorite(${t.id}, event)">
+                        <i class="${favClass}"></i>
+                    </button>
+                    <div class="teacher-avatar">${t.initial}</div>
+                    <div class="teacher-info">
+                        <h4>${t.name}</h4>
+                        <p class="teacher-specialty">${t.specialties.join(', ')}</p>
+                        <span class="teacher-rating">${t.rating}</span>
+                    </div>
+                    <div class="teacher-distance-box">
+                        <span class="teacher-distance"><i class="bi bi-geo-alt-fill"></i>${t.distance} km</span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Dashboard Content Tabs
+        function renderDashboardContent() {
+            const selectedTopics = getSelectedTopics();
+            
+            // 1. Teachers
+            const teachersContainer = document.getElementById('dashboard-teachers-container');
+            teachersContainer.innerHTML = '';
+            let filteredTeachers = teachers;
+            if (selectedTopics.length > 0) {
+                filteredTeachers = teachers.filter(t => 
+                    t.specialties.some(spec => selectedTopics.includes(spec))
+                );
+            }
+            filteredTeachers.sort((a, b) => a.distance - b.distance);
+            
+            if (filteredTeachers.length === 0) {
+                teachersContainer.innerHTML = `<div class="empty-teachers-state"><i class="bi bi-person-fill-exclamation"></i><p>No hay profesores para tus intereses.</p></div>`;
+            } else {
+                filteredTeachers.forEach(t => {
+                    const favClass = isFavorite(t.id) ? 'bi-star-fill' : 'bi-star';
+                    const card = document.createElement('div');
+                    card.className = 'teacher-card';
+                    card.innerHTML = `
+                        <button class="teacher-star-btn" onclick="toggleFavorite(${t.id}, event)">
+                            <i class="${favClass}"></i>
+                        </button>
+                        <div class="teacher-avatar">${t.initial}</div>
+                        <div class="teacher-info">
+                            <h4>${t.name}</h4>
+                            <p class="teacher-specialty">${t.specialties.join(', ')}</p>
+                            <span class="teacher-rating">${t.rating}</span>
+                        </div>
+                        <div class="teacher-distance-box">
+                            <span class="teacher-distance"><i class="bi bi-geo-alt-fill"></i>${t.distance} km</span>
+                            <button class="btn-contact-teacher" onclick="requestClassAccess('${t.name}')">Ver Horarios</button>
+                        </div>
+                    `;
+                    teachersContainer.appendChild(card);
+                });
+            }
+
+            // 2. Tutors
+            const tutorsContainer = document.getElementById('dashboard-tutors-container');
+            tutorsContainer.innerHTML = '';
+            let filteredTutors = tutors;
+            if (selectedTopics.length > 0) {
+                filteredTutors = tutors.filter(t => 
+                    t.specialties.some(spec => selectedTopics.includes(spec))
+                );
+            }
+            filteredTutors.sort((a, b) => a.distance - b.distance);
+            
+            if (filteredTutors.length === 0) {
+                tutorsContainer.innerHTML = `<div class="empty-teachers-state"><i class="bi bi-person-fill-exclamation"></i><p>No hay tutores para tus intereses.</p></div>`;
+            } else {
+                filteredTutors.forEach(t => {
+                    const card = document.createElement('div');
+                    card.className = 'teacher-card';
+                    card.innerHTML = `
+                        <div class="teacher-avatar">${t.initial}</div>
+                        <div class="teacher-info">
+                            <h4>${t.name}</h4>
+                            <p class="teacher-specialty">${t.specialties.join(', ')}</p>
+                            <span class="teacher-rating">${t.rating}</span>
+                        </div>
+                        <div class="teacher-distance-box">
+                            <span class="teacher-distance"><i class="bi bi-geo-alt-fill"></i>${t.distance} km</span>
+                            <button class="btn-contact-teacher" onclick="requestClassAccess('${t.name}')">Contactar</button>
+                        </div>
+                    `;
+                    tutorsContainer.appendChild(card);
+                });
+            }
+
+            // 3. Videos
+            const videosContainer = document.getElementById('dashboard-videos-container');
+            videosContainer.innerHTML = '';
+            let filteredVideos = videos;
+            if (selectedTopics.length > 0) {
+                filteredVideos = videos.filter(v => selectedTopics.includes(v.specialty));
+            }
+
+            if (filteredVideos.length === 0) {
+                videosContainer.innerHTML = `<div class="empty-teachers-state" style="grid-column: 1/-1;"><i class="bi bi-play-btn-fill"></i><p>No hay videos de clases para tus intereses.</p></div>`;
+            } else {
+                filteredVideos.forEach(v => {
+                    const card = document.createElement('div');
+                    card.className = 'video-card';
+                    card.innerHTML = `
+                        <div class="video-thumbnail">
+                            <div class="video-play-btn"><i class="bi bi-play-fill"></i></div>
+                        </div>
+                        <div class="video-info">
+                            <h4 class="video-title">${v.title}</h4>
+                            <span class="video-specialty">${v.specialty}</span>
+                            <div class="video-meta">
+                                <span><i class="bi bi-person-video"></i> ${v.teacher}</span>
+                                <span><i class="bi bi-clock"></i> ${v.duration}</span>
+                            </div>
+                        </div>
+                    `;
+                    videosContainer.appendChild(card);
+                });
+            }
+        }
+
+        // Favorites Tab
+        function renderFavorites() {
+            const container = document.getElementById('favorites-teachers-container');
+            container.innerHTML = '';
+
+            const favTeachers = teachers.filter(t => isFavorite(t.id));
+
+            if (favTeachers.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-teachers-state">
+                        <i class="bi bi-star"></i>
+                        <p>No has guardado profesores favoritos todavía. ¡Haz clic en la estrella de cualquier profesor en el panel de clases para guardarlo!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            favTeachers.forEach(t => {
+                const card = document.createElement('div');
+                card.className = 'teacher-card';
+                card.innerHTML = `
+                    <button class="teacher-star-btn" onclick="toggleFavorite(${t.id}, event)">
+                        <i class="bi bi-star-fill"></i>
+                    </button>
+                    <div class="teacher-avatar">${t.initial}</div>
+                    <div class="teacher-info">
+                        <h4>${t.name}</h4>
+                        <p class="teacher-specialty">${t.specialties.join(', ')}</p>
+                        <span class="teacher-rating">${t.rating}</span>
+                    </div>
+                    <div class="teacher-distance-box">
+                        <span class="teacher-distance"><i class="bi bi-geo-alt-fill"></i>${t.distance} km</span>
+                        <button class="btn-contact-teacher" onclick="requestClassAccess('${t.name}')">Ver Horarios</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Tab selection switching
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                tabButtons.forEach(b => b.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+
+                btn.classList.add('active');
+                const targetTab = btn.getAttribute('data-tab');
+                document.getElementById(targetTab).classList.add('active');
+            });
+        });
+
+        // Initialize Rendering
+        renderDashboardContent();
+        renderModalPreview();
+    </script>
+</body>
+</html>

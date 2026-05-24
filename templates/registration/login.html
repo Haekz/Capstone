@@ -6,165 +6,183 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Iniciar Sesión — LBWUS</title>
     <link rel="icon" href="{% static 'alumnos/img/Logo.png' %}">
+    <!-- esta parte es de los iconos de bootstrap -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <!-- esta parte es del css del login -->
     <link rel="stylesheet" href="{% static 'login.css' %}">
 </head>
 <body>
 
-<!-- esta parte es de la tarjeta principal del login -->
+<!-- esta parte es de la tarjeta del login -->
 <div class="card">
 
-    <!-- esta parte es del círculo morado con el ícono de usuario -->
+    <!-- esta parte es del círculo con el ícono de usuario -->
     <div class="avatar">
         <i class="bi bi-person-fill"></i>
     </div>
 
     <h1>Iniciar Sesión</h1>
-    <p>Ingresa tus datos para continuar</p>
+    <p class="sub">Bienvenido de vuelta a LBWUS</p>
 
-    <!-- esta parte es del formulario de login con usuario y contraseña -->
+    <!-- esta parte es del formulario principal con correo y contraseña -->
     <form method="post" action="{% url 'login' %}">
         {% csrf_token %}
 
         {% if form.errors %}
-        <div class="error-msg">
-            <i class="bi bi-exclamation-circle"></i>
-            Usuario o contraseña incorrectos.
+        <div class="error">
+            Usuario o contraseña incorrectos. Inténtalo de nuevo.
         </div>
         {% endif %}
 
-        <div class="field">
-            <i class="bi bi-person"></i>
+        <!-- esta parte es del campo de correo/usuario -->
+        <div class="campo">
+            <i class="bi bi-envelope-fill"></i>
             <input type="text" name="username" id="id_username"
-                placeholder="Usuario" required autocomplete="username">
+                placeholder="Correo o usuario" required autocomplete="username">
         </div>
 
-        <div class="field">
-            <i class="bi bi-lock"></i>
+        <!-- esta parte es del campo de contraseña -->
+        <div class="campo">
+            <i class="bi bi-lock-fill"></i>
             <input type="password" name="password" id="id_password"
                 placeholder="Contraseña" required autocomplete="current-password">
         </div>
 
-        <button type="submit" class="btn-login">Login</button>
+        <!-- esta parte es del link de olvidé mi contraseña -->
+        <div style="text-align:right; margin-top:-6px; margin-bottom:4px;">
+            <a href="{% url 'password_reset' %}" style="font-size:0.78rem; color:#a855f7; text-decoration:none; font-weight:500;">¿Olvidaste tu contraseña?</a>
+        </div>
+
+        <button type="submit" class="btn">Ingresar</button>
     </form>
 
-    <!-- esta parte es del separador para accesos de prof y admin -->
+    <!-- esta parte es del separador para los accesos de prof y admin -->
     <div class="sep">
         <div class="sep-line"></div>
         <span class="sep-text">Acceso especial</span>
         <div class="sep-line"></div>
     </div>
 
-    <div class="quick-links">
-        <button class="quick-link" onclick="abrirModal('profesor')">
+    <div class="links-extra">
+        <button class="link-extra" onclick="abrirModal('profesor')">
             <i class="bi bi-person-workspace"></i>
             <span>Soy Profesor</span>
             <i class="bi bi-chevron-right"></i>
         </button>
-        <button class="quick-link" onclick="abrirModal('admin')">
+        <button class="link-extra" onclick="abrirModal('admin')">
             <i class="bi bi-shield-fill"></i>
             <span>Soy Administrador</span>
             <i class="bi bi-chevron-right"></i>
         </button>
     </div>
 
-    <div class="footer-text">
-        ¿Sin cuenta? <a href="{% url 'opcion_user' %}">Regístrate gratis</a>
+    <!-- esta parte es del pie con el enlace al registro y el botón de volver al inicio -->
+    <div class="footer">
+        ¿No tienes cuenta? <a href="{% url 'opcion_user' %}">Regístrate gratis</a>
     </div>
+
+    <!-- esta parte es del botón para volver a la página de inicio -->
+    <a href="{% url 'home' %}" class="btn-home">
+        <i class="bi bi-house-fill"></i> Volver al inicio
+    </a>
+
 </div>
 
-<!-- esta parte es del modal para que ingresen los profesores -->
+<!-- esta parte es del modal de acceso para profesores -->
 <div class="modal-overlay" id="modal-profesor">
     <div class="modal-box">
         <button class="modal-close" onclick="cerrarModal('profesor')">
             <i class="bi bi-x-lg"></i>
         </button>
-        <div class="modal-avatar prof"><i class="bi bi-person-workspace"></i></div>
+        <div class="modal-avatar azul"><i class="bi bi-person-workspace"></i></div>
         <p class="modal-title">Acceso Profesor</p>
         <p class="modal-sub">Ingresa tu RUT o correo registrado</p>
         <form id="form-profesor">
             {% csrf_token %}
-            <div class="field">
-                <i class="bi bi-person-badge"></i>
-                <input type="text" id="prof-id" name="identificador"
-                    placeholder="ej. 12.345.678-9" required>
+            <div class="campo">
+                <i class="bi bi-person-badge-fill"></i>
+                <input type="text" id="prof-id" placeholder="ej. 12.345.678-9" required>
             </div>
-            <button type="submit" class="btn-modal prof">Ingresar</button>
+            <button type="submit" class="btn-modal azul">Ingresar</button>
         </form>
     </div>
 </div>
 
-<!-- esta parte es del modal para que ingresen los administradores -->
+<!-- esta parte es del modal de acceso para administradores -->
 <div class="modal-overlay" id="modal-admin">
     <div class="modal-box">
         <button class="modal-close" onclick="cerrarModal('admin')">
             <i class="bi bi-x-lg"></i>
         </button>
-        <div class="modal-avatar admin"><i class="bi bi-shield-fill"></i></div>
+        <div class="modal-avatar"><i class="bi bi-shield-fill"></i></div>
         <p class="modal-title">Acceso Administrador</p>
         <p class="modal-sub">Ingresa tu RUT o correo registrado</p>
         <form id="form-admin">
             {% csrf_token %}
-            <div class="field">
-                <i class="bi bi-shield"></i>
-                <input type="text" id="admin-id" name="identificador"
-                    placeholder="ej. 11.222.333-4" required>
+            <div class="campo">
+                <i class="bi bi-shield-lock-fill"></i>
+                <input type="text" id="admin-id" placeholder="ej. 11.222.333-4" required>
             </div>
-            <button type="submit" class="btn-modal admin">Ingresar</button>
+            <button type="submit" class="btn-modal morado">Ingresar</button>
         </form>
     </div>
 </div>
 
+<!-- esta parte es de sweetalert2 para las alertas bonitas -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    // esta parte es para abrir y cerrar modales
+    // esta parte es de abrir y cerrar los modales
     function abrirModal(tipo) {
         document.getElementById('modal-' + tipo).classList.add('open');
     }
     function cerrarModal(tipo) {
         document.getElementById('modal-' + tipo).classList.remove('open');
     }
+    // cerrar al hacer click fuera del cuadro
     document.querySelectorAll('.modal-overlay').forEach(o => {
         o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
     });
 
-    // esta parte es del submit del form de profesor via fetch
+    // esta parte es del submit del form de profesor por fetch
     document.getElementById('form-profesor').addEventListener('submit', function(e) {
         e.preventDefault();
         const btn = this.querySelector('button');
-        btn.disabled = true; btn.textContent = '...';
+        btn.disabled = true;
+        btn.textContent = '...';
         const fd = new FormData();
         fd.append('identificador', document.getElementById('prof-id').value);
         fd.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
         fetch("{% url 'login_prof' %}", { method: 'POST', body: fd })
         .then(r => r.json()).then(res => {
             if (res.success) {
-                Swal.fire({ icon:'success', title:'¡Bienvenido!', text: res.message, confirmButtonColor:'#3b82f6' })
+                Swal.fire({ icon: 'success', title: '¡Bienvenido!', text: res.message, confirmButtonColor: '#3b82f6' })
                 .then(() => window.location.href = "{% url 'panel_profesor' %}");
             } else {
-                Swal.fire({ icon:'error', title:'Error', text: res.message, confirmButtonColor:'#a855f7' });
-                btn.disabled = false; btn.textContent = 'Ingresar';
+                Swal.fire({ icon: 'error', title: 'Error', text: res.message, confirmButtonColor: '#a855f7' });
+                btn.disabled = false;
+                btn.textContent = 'Ingresar';
             }
         });
     });
 
-    // esta parte es del submit del form de admin via fetch
+    // esta parte es del submit del form de admin por fetch
     document.getElementById('form-admin').addEventListener('submit', function(e) {
         e.preventDefault();
         const btn = this.querySelector('button');
-        btn.disabled = true; btn.textContent = '...';
+        btn.disabled = true;
+        btn.textContent = '...';
         const fd = new FormData();
         fd.append('identificador', document.getElementById('admin-id').value);
         fd.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
         fetch("{% url 'login_admin' %}", { method: 'POST', body: fd })
         .then(r => r.json()).then(res => {
             if (res.success) {
-                Swal.fire({ icon:'success', title:'¡Acceso Concedido!', text: res.message, confirmButtonColor:'#a855f7' })
+                Swal.fire({ icon: 'success', title: '¡Acceso Concedido!', text: res.message, confirmButtonColor: '#a855f7' })
                 .then(() => window.location.href = "{% url 'dashboard_admin' %}");
             } else {
-                Swal.fire({ icon:'error', title:'Error', text: res.message, confirmButtonColor:'#a855f7' });
-                btn.disabled = false; btn.textContent = 'Ingresar';
+                Swal.fire({ icon: 'error', title: 'Error', text: res.message, confirmButtonColor: '#a855f7' });
+                btn.disabled = false;
+                btn.textContent = 'Ingresar';
             }
         });
     });

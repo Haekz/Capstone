@@ -1,162 +1,461 @@
 {% extends 'alumnos/base.html' %}
 {% load static %}
 
-{% block title %}LBWUS | Contacto{% endblock %}
+{% block title %}LBWUS | Contactos{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'alumnos/css/contacto.css' %}">
+<style>
+    /* esta parte es de la sección principal de contacto */
+    .contact-section {
+        padding: calc(var(--header-height) + 60px) 0 60px;
+        min-height: calc(100vh - 120px);
+        background: radial-gradient(circle at top right, rgba(168, 85, 247, 0.04) 0%, transparent 60%),
+                    radial-gradient(circle at bottom left, rgba(245, 158, 11, 0.03) 0%, transparent 60%);
+    }
+
+    .contact-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 24px;
+    }
+
+    /* esta parte es del encabezado de la sección de contacto */
+    .contact-header {
+        text-align: center;
+        margin-bottom: 60px;
+    }
+
+    .contact-header h1 {
+        font-size: clamp(2rem, 5vw, 2.75rem);
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 16px;
+        letter-spacing: -0.5px;
+    }
+
+    .contact-header p {
+        font-size: 1.1rem;
+        color: var(--text-light);
+        max-width: 700px;
+        margin: 0 auto;
+        line-height: 1.6;
+    }
+
+    /* esta parte es del grid de dos columnas (info + formulario) */
+    .contact-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.2fr;
+        gap: 50px;
+        align-items: start;
+    }
+
+    /* esta parte es de las tarjetas del panel de info y formulario */
+    .contact-info-card, .contact-form-card {
+        background: var(--white);
+        border: 1px solid rgba(168, 85, 247, 0.12);
+        border-radius: 24px;
+        padding: 40px;
+        box-shadow: var(--shadow);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .contact-info-card:hover, .contact-form-card:hover {
+        box-shadow: 0 15px 35px rgba(168, 85, 247, 0.08);
+    }
+
+    .contact-info-card h2, .contact-form-card h2 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 20px;
+        position: relative;
+    }
+
+    .contact-info-card h2::after, .contact-form-card h2::after {
+        content: '';
+        position: absolute;
+        bottom: -8px;
+        left: 0;
+        width: 50px;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+        border-radius: 2px;
+    }
+
+    .contact-info-card > p {
+        color: var(--text-light);
+        margin-top: 20px;
+        margin-bottom: 35px;
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+
+    /* esta parte es de la lista de datos de contacto */
+    .info-details-list {
+        display: flex;
+        flex-direction: column;
+        gap: 25px;
+    }
+
+    .info-detail-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 20px;
+        text-decoration: none;
+    }
+
+    .info-icon-wrapper {
+        width: 50px;
+        height: 50px;
+        border-radius: 14px;
+        background: rgba(168, 85, 247, 0.08);
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        flex-shrink: 0;
+        transition: all 0.3s ease;
+    }
+
+    .info-detail-item:hover .info-icon-wrapper {
+        background: var(--primary);
+        color: var(--white);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 10px rgba(168, 85, 247, 0.15);
+    }
+
+    .info-text-wrapper {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .info-text-wrapper span.label {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        color: var(--text-light);
+        margin-bottom: 3px;
+    }
+
+    .info-text-wrapper a, .info-text-wrapper p {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text);
+        text-decoration: none;
+        margin: 0;
+        transition: color 0.3s ease;
+    }
+
+    .info-text-wrapper a:hover { color: var(--primary); }
+
+    /* esta parte es de los iconos de redes sociales */
+    .contact-socials-box {
+        margin-top: 40px;
+        padding-top: 30px;
+        border-top: 1px solid rgba(168, 85, 247, 0.1);
+    }
+
+    .contact-socials-box h4 {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 15px;
+    }
+
+    .contact-social-icons {
+        display: flex;
+        gap: 12px;
+    }
+
+    .contact-social-icons a {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: rgba(168, 85, 247, 0.05);
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(168, 85, 247, 0.1);
+    }
+
+    .contact-social-icons a:hover {
+        background: var(--primary);
+        color: var(--white);
+        transform: translateY(-3px);
+        box-shadow: 0 5px 12px rgba(168, 85, 247, 0.2);
+    }
+
+    /* esta parte es del formulario de contacto */
+    .form-card-title { margin-bottom: 30px !important; }
+
+    .contact-form .form-group { margin-bottom: 22px; }
+
+    .contact-form label {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--text);
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .contact-form .form-control {
+        width: 100%;
+        padding: 14px 18px;
+        border: 1px solid rgba(168, 85, 247, 0.18);
+        border-radius: 12px;
+        font-family: inherit;
+        background-color: transparent;
+        color: var(--text);
+        transition: all 0.3s ease;
+    }
+
+    .contact-form .form-control:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.12);
+        background-color: var(--white);
+    }
+
+    .contact-form textarea.form-control { resize: none; }
+
+    .contact-form .invalid-feedback {
+        font-size: 0.8rem;
+        color: #ef4444;
+        margin-top: 5px;
+    }
+
+    /* esta parte es del modo oscuro para las tarjetas de contacto */
+    body.dark-mode .contact-info-card,
+    body.dark-mode .contact-form-card {
+        background: #111827;
+        border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    body.dark-mode .info-icon-wrapper { background: rgba(168, 85, 247, 0.15); }
+
+    body.dark-mode .contact-form .form-control {
+        border-color: rgba(255, 255, 255, 0.15);
+        color: #f3f4f6;
+    }
+
+    body.dark-mode .contact-form .form-control:focus {
+        background-color: #030204;
+        border-color: var(--primary);
+    }
+
+    body.dark-mode .contact-social-icons a {
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--primary-dark);
+        border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    body.dark-mode .contact-social-icons a:hover {
+        background: var(--primary);
+        color: var(--white);
+    }
+
+    /* esta parte es de la sección de ilustraciones decorativas */
+    .illustrations-section {
+        padding: 40px 0 80px;
+    }
+
+    .illustrations-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 0 24px;
+    }
+
+    .illustrations-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 30px;
+    }
+
+    .illustration-card {
+        background: var(--white);
+        border-radius: 24px;
+        padding: 20px;
+        box-shadow: var(--shadow);
+        border: 1px solid rgba(168, 85, 247, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.4s ease;
+    }
+
+    .illustration-card:hover {
+        transform: translateY(-6px);
+        border-color: var(--primary);
+        box-shadow: 0 15px 30px rgba(168, 85, 247, 0.1);
+    }
+
+    .illustration-card img {
+        max-width: 100%;
+        height: 140px;
+        object-fit: contain;
+        transition: transform 0.4s ease;
+    }
+
+    .illustration-card:hover img { transform: scale(1.05); }
+
+    body.dark-mode .illustration-card {
+        background: #111827;
+        border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    /* esta parte es del responsive para pantallas pequeñas */
+    @media (max-width: 992px) {
+        .contact-grid { grid-template-columns: 1fr; gap: 40px; }
+        .illustrations-grid { grid-template-columns: 1fr; max-width: 400px; margin: 0 auto; gap: 25px; }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="contacto-container">
+<section class="contact-section">
+    <div class="contact-container">
+        <div class="contact-header">
+            <h1>Ponte en contacto con nosotros</h1>
+            <p>¿Tienes dudas, comentarios o deseas saber más sobre nuestros planes? Nuestro equipo está listo para ayudarte.</p>
+        </div>
 
-    <!-- Encabezado de sección -->
-    <div class="contacto-header">
-        <h1>Contáctanos</h1>
-        <p>Recuerda que siempre cuentas con nuestro apoyo. Cuéntanos tus dudas sobre nuestros servicios y nos ponemos en contacto contigo a la brevedad.</p>
-    </div>
+        <div class="contact-grid">
+            <!-- esta parte es del panel izquierdo con información de contacto -->
+            <div class="contact-info-card">
+                <h2>Información</h2>
+                <p>Recuerda que siempre cuentas con nuestro apoyo. Contáctanos y nos informas sobre las dudas que puedas tener.</p>
 
-    <!-- Grid: información + formulario -->
-    <div class="contacto-grid">
+                <div class="info-details-list">
+                    <a href="tel:123456789" class="info-detail-item">
+                        <div class="info-icon-wrapper"><i class="bi bi-telephone-fill"></i></div>
+                        <div class="info-text-wrapper">
+                            <span class="label">Llámanos</span>
+                            <p>123-456-7890</p>
+                        </div>
+                    </a>
 
-        <!-- Panel de información de contacto -->
-        <div class="contacto-info">
-            <div>
-                <p class="contacto-info-title">Información de contacto</p>
-                <p class="contacto-info-desc">Puedes comunicarte con nosotros a través de cualquiera de los siguientes medios. Estaremos felices de ayudarte.</p>
+                    <a href="mailto:teachers@lbwus.cl" class="info-detail-item">
+                        <div class="info-icon-wrapper"><i class="bi bi-envelope-fill"></i></div>
+                        <div class="info-text-wrapper">
+                            <span class="label">Envíanos un correo</span>
+                            <p>teachers@lbwus.cl</p>
+                        </div>
+                    </a>
+
+                    <div class="info-detail-item">
+                        <div class="info-icon-wrapper"><i class="bi bi-geo-alt-fill"></i></div>
+                        <div class="info-text-wrapper">
+                            <span class="label">Ubicación</span>
+                            <p>Pacifico Norte 123, Santiago, Chile</p>
+                        </div>
+                    </div>
+
+                    <div class="info-detail-item">
+                        <div class="info-icon-wrapper"><i class="bi bi-clock-fill"></i></div>
+                        <div class="info-text-wrapper">
+                            <span class="label">Horario de atención</span>
+                            <p>Lun - Vie: 9:00 AM - 8:00 PM</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- esta parte es de los iconos de redes sociales -->
+                <div class="contact-socials-box">
+                    <h4>Síguenos en redes</h4>
+                    <div class="contact-social-icons">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
             </div>
 
-            <div class="contacto-data-list">
-                <a href="tel:123456789" class="contacto-data-item">
-                    <div class="contacto-data-icon">
-                        <i class="bi bi-telephone-fill"></i>
-                    </div>
-                    <div class="contacto-data-text">
-                        <span class="contacto-data-label">Teléfono</span>
-                        <span class="contacto-data-value">123-456-789</span>
-                    </div>
-                </a>
+            <!-- esta parte es del formulario para enviar un mensaje -->
+            <div class="contact-form-card">
+                <h2 class="form-card-title">Escríbenos</h2>
+                <form id="contact-form" autocomplete="off" class="contact-form needs-validation" novalidate>
+                    {% csrf_token %}
 
-                <a href="mailto:teachers@lbwus.cl" class="contacto-data-item">
-                    <div class="contacto-data-icon">
-                        <i class="bi bi-envelope-fill"></i>
+                    <div class="form-group">
+                        <label for="nombre">Nombre Completo</label>
+                        <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Ingresa tu nombre completo" required>
+                        <div class="invalid-feedback">Por favor, dinos tu nombre.</div>
                     </div>
-                    <div class="contacto-data-text">
-                        <span class="contacto-data-label">Correo electrónico</span>
-                        <span class="contacto-data-value">teachers@lbwus.cl</span>
-                    </div>
-                </a>
 
-                <a href="#" class="contacto-data-item">
-                    <div class="contacto-data-icon">
-                        <i class="bi bi-geo-alt-fill"></i>
+                    <div class="form-group">
+                        <label for="email-contact">Correo Electrónico</label>
+                        <input type="email" class="form-control" id="email-contact" name="email" placeholder="ejemplo@correo.com" required>
+                        <div class="invalid-feedback">Por favor, ingresa un correo válido.</div>
                     </div>
-                    <div class="contacto-data-text">
-                        <span class="contacto-data-label">Dirección</span>
-                        <span class="contacto-data-value">Santiago, Chile</span>
+
+                    <div class="form-group">
+                        <label for="mensaje">Tu Mensaje</label>
+                        <textarea class="form-control" id="mensaje" name="mensaje" rows="4" placeholder="¿En qué te podemos ayudar?" required></textarea>
+                        <div class="invalid-feedback">Por favor, escribe tu mensaje.</div>
                     </div>
-                </a>
+
+                    <button type="submit" class="btn-principal btn-submit">Enviar Mensaje</button>
+                </form>
             </div>
         </div>
+    </div>
+</section>
 
-        <!-- Formulario de contacto -->
-        <div class="contacto-form-card">
-            <p class="contacto-form-title">Envíanos un mensaje</p>
-            <form id="contact-form" action="#" method="post" autocomplete="off" novalidate>
-                {% csrf_token %}
-                <div class="form-group">
-                    <label for="nombre">Nombre</label>
-                    <input
-                        type="text"
-                        class="form-input"
-                        id="nombre"
-                        name="nombre"
-                        placeholder="Ingresa tu nombre"
-                        required
-                    >
-                    <span class="form-error" id="err-nombre">Por favor ingresa tu nombre.</span>
-                </div>
-
-                <div class="form-group">
-                    <label for="email-contact">Correo Electrónico</label>
-                    <input
-                        type="email"
-                        class="form-input"
-                        id="email-contact"
-                        name="email"
-                        placeholder="Ingresa tu correo"
-                        required
-                    >
-                    <span class="form-error" id="err-email">Por favor ingresa un correo válido.</span>
-                </div>
-
-                <div class="form-group">
-                    <label for="mensaje">Mensaje</label>
-                    <textarea
-                        class="form-textarea"
-                        id="mensaje"
-                        name="mensaje"
-                        placeholder="Ingresa tu mensaje"
-                        required
-                    ></textarea>
-                    <span class="form-error" id="err-mensaje">Por favor ingresa tu mensaje.</span>
-                </div>
-
-                <button type="submit" class="btn-enviar" id="btn-enviar-contacto">
-                    <i class="bi bi-send-fill"></i> Enviar Mensaje
-                </button>
-            </form>
+<!-- esta parte es de las ilustraciones decorativas de abajo -->
+<section class="illustrations-section">
+    <div class="illustrations-container">
+        <div class="illustrations-grid">
+            <div class="illustration-card">
+                <img src="{% static 'alumnos/img/ilustracion4.png' %}" alt="Ilustración apoyo educativo">
+            </div>
+            <div class="illustration-card">
+                <img src="{% static 'alumnos/img/ilustracion1.png' %}" alt="Ilustración aprendizaje">
+            </div>
+            <div class="illustration-card">
+                <img src="{% static 'alumnos/img/ilustracion3.jpeg' %}" alt="Ilustración colaboración">
+            </div>
         </div>
     </div>
-
-    <!-- Ilustraciones -->
-    <div class="contacto-ilustraciones">
-        <div class="ilustraciones-grid">
-            <img src="{% static 'alumnos/img/ilustracion4.png' %}" alt="Ilustración apoyo educativo">
-            <img src="{% static 'alumnos/img/ilustracion1.png' %}" alt="Ilustración aprendizaje">
-            <img src="{% static 'alumnos/img/ilustracion3.jpeg' %}" alt="Ilustración colaboración">
-        </div>
-    </div>
-
-</div>
+</section>
 {% endblock %}
 
 {% block extra_js %}
+<script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const form = document.getElementById('contact-form');
-        if (!form) return;
+    // esta parte es de marcar el link de contacto como activo en el nav
+    const navContacto = document.getElementById('nav-contacto');
+    if (navContacto) navContacto.classList.add('active');
 
-        // Validación inline en tiempo real
-        function validarCampo(input, errorEl, validFn) {
-            const ok = validFn(input.value);
-            input.classList.toggle('invalid', !ok);
-            errorEl.style.display = ok ? 'none' : 'block';
-            return ok;
-        }
-
-        const nombre   = document.getElementById('nombre');
-        const email    = document.getElementById('email-contact');
-        const mensaje  = document.getElementById('mensaje');
-        const errNombre  = document.getElementById('err-nombre');
-        const errEmail   = document.getElementById('err-email');
-        const errMensaje = document.getElementById('err-mensaje');
-
-        const emailRx = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
-
-        nombre.addEventListener('input',  () => validarCampo(nombre,  errNombre,  v => v.trim().length >= 2));
-        email.addEventListener('input',   () => validarCampo(email,   errEmail,   v => emailRx.test(v)));
-        mensaje.addEventListener('input', () => validarCampo(mensaje, errMensaje, v => v.trim().length > 0));
-
-        form.addEventListener('submit', (e) => {
-            const okNombre  = validarCampo(nombre,  errNombre,  v => v.trim().length >= 2);
-            const okEmail   = validarCampo(email,   errEmail,   v => emailRx.test(v));
-            const okMensaje = validarCampo(mensaje, errMensaje, v => v.trim().length > 0);
-
-            if (!okNombre || !okEmail || !okMensaje) {
-                e.preventDefault();
+    // esta parte es de la validación del formulario de contacto
+    (function () {
+        'use strict';
+        var form = document.getElementById('contact-form');
+        form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            } else {
+                event.preventDefault();
+                Swal.fire({
+                    title: '¡Mensaje Enviado!',
+                    text: 'Gracias por contactarnos. Responderemos a tu consulta a la brevedad.',
+                    icon: 'success',
+                    confirmButtonColor: '#a855f7'
+                }).then(() => {
+                    form.reset();
+                    form.classList.remove('was-validated');
+                });
             }
-        });
-    });
+            form.classList.add('was-validated');
+        }, false);
+    })();
 </script>
 {% endblock %}
