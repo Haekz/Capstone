@@ -1,13 +1,191 @@
+{% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
+    <!-- Metadatos del navegador y título de la página -->
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home-Iniciar Sesión</title>
+    <title>Sesión Cerrada — Admin LBWUS</title>
+    <link rel="icon" href="{% static 'alumnos/img/Logo.png' %}">
+    
+    <!-- Importación de iconos de Bootstrap e Inter de Google Fonts -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Estilos específicos para la pantalla de salida del sistema -->
+    <style>
+        /* Variables globales basadas en la paleta de colores del proyecto */
+        :root {
+            --primary: #a855f7;
+            --primary-hover: #9333ea;
+            --bg-main: #f4f6fc;
+            --bg-card: #ffffff;
+            --text-main: #1e1b2e;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --transition: all 0.25s ease;
+        }
+
+        /* Reseteo general de márgenes y caja */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* Tarjeta central del mensaje de salida */
+        .logout-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 40px 30px;
+            width: 100%;
+            max-width: 460px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.04);
+            animation: cardAppear 0.4s ease-out;
+        }
+
+        /* Animación para que la tarjeta aparezca suavemente */
+        @keyframes cardAppear {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Círculo contenedor del icono de seguridad */
+        .status-icon-wrapper {
+            width: 76px;
+            height: 76px;
+            background-color: rgba(168, 85, 247, 0.08);
+            color: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            margin: 0 auto 24px;
+        }
+
+        /* Título principal de aviso */
+        .logout-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 12px;
+        }
+
+        /* Mensaje informativo secundario */
+        .logout-text {
+            font-size: 0.92rem;
+            line-height: 1.6;
+            color: var(--text-muted);
+            margin-bottom: 30px;
+        }
+
+        /* Agrupador vertical para los botones de acción */
+        .actions-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* Botón principal (morado corporativo) */
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background-color: var(--primary);
+            color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 20px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 12px rgba(168, 85, 247, 0.15);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        /* Botón secundario (bordeado neutro) */
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background-color: transparent;
+            color: var(--text-muted);
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 20px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            border-color: var(--text-muted);
+        }
+    </style>
 </head>
 <body>
-    <h1>Página de Inicio</h1><br><br><br>
-    <a href="{% url 'login' %}">Iniciar Sesión</a>
+
+    <!-- Tarjeta informativa de cierre de sesión -->
+    <div class="logout-card">
+        
+        <!-- Icono de escudo de seguridad y salida -->
+        <div class="status-icon-wrapper">
+            <i class="bi bi-shield-check"></i>
+        </div>
+
+        <!-- Título descriptivo -->
+        <h1 class="logout-title">Sesión Cerrada</h1>
+
+        <!-- Mensaje de salida segura -->
+        <p class="logout-text">
+            Tu sesión en el panel administrativo de <strong>LBWUS</strong> ha finalizado con éxito. Ya puedes cerrar esta ventana con seguridad.
+        </p>
+
+        <!-- Botonera de acciones del usuario -->
+        <div class="actions-group">
+            <a href="{% url 'login' %}" class="btn-primary">
+                <i class="bi bi-box-arrow-in-right"></i>
+                Iniciar Sesión Otra Vez
+            </a>
+            <a href="{% url 'home' %}" class="btn-secondary">
+                <i class="bi bi-house-door-fill"></i>
+                Volver al Sitio Público
+            </a>
+        </div>
+        
+    </div>
+
 </body>
 </html>

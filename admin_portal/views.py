@@ -3,7 +3,7 @@ from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.decorators import login_required
 from alumnos.models import Alumno, Genero, Profesor, Tutor, Clase, Reporte
 
-# esta parte es del menu antiguo del admin - ahora redirige al nuevo dashboard
+# Vista del menú antiguo (ahora redirige automáticamente al nuevo panel de control)
 def menu(request):
     admin_id = request.session.get('admin_id')
     if admin_id:
@@ -12,7 +12,7 @@ def menu(request):
 
 
 
-# esta parte es del dashboard principal del administrador con todos los datos
+# Controlador principal del Dashboard de administración
 def dashboard_admin(request):
     # redirigir al login si no hay sesión de admin
     admin_id = request.session.get('admin_id')
@@ -21,7 +21,7 @@ def dashboard_admin(request):
 
     admin = get_object_or_404(Tutor, id_tutor=admin_id)
 
-    # esta parte es de recoger todos los datos para las estadísticas
+    # Consulta a la base de datos de los contadores y reportes del sistema
     alumnos = Alumno.objects.all()
     profesores = Profesor.objects.all()
     admins = Tutor.objects.all()
@@ -30,7 +30,7 @@ def dashboard_admin(request):
     reportes_recientes = todos_reportes[:5]
     reportes_pendientes = todos_reportes.filter(estado='pendiente').count()
 
-    # esta parte es de los últimos registros para mostrar en el resumen
+    # Trae los 3 registros más recientes de alumnos y profesores para la vista previa
     ultimos_alumnos = alumnos.order_by('-id_alumno')[:3]
     ultimos_profesores = profesores.order_by('-id_profesor')[:3]
 
@@ -52,7 +52,7 @@ def dashboard_admin(request):
     return render(request, 'admin_portal/dashboard_admin.html', context)
 
 
-# esta parte es para marcar un reporte como resuelto
+# Controlador para cambiar el estado de un reporte a 'resuelto'
 def resolver_reporte(request, pk):
     admin_id = request.session.get('admin_id')
     if not admin_id:

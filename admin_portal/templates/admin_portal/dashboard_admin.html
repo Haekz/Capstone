@@ -1,191 +1,216 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
-    <!-- esta parte es de los metadatos básicos de la página del panel admin -->
+    <!-- Datos técnicos y descripción del panel de control de LBWUS -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Panel de administración LBWUS - Gestión de usuarios y reportes">
     <title>Panel Admin - LBWUS</title>
     <link rel="icon" href="{% static 'alumnos/img/Logo.png' %}">
 
-    <!-- esta parte es de los iconos de Bootstrap y la fuente Inter de Google -->
+    <!-- Recursos externos: Iconos de Bootstrap y tipografía Inter -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
 
-    <!-- esta parte es de nuestros estilos personalizados del panel admin -->
+    <!-- Carga de la hoja de estilos principal del dashboard -->
     <link rel="stylesheet" href="{% static 'admin_portal/css/admin_panel.css' %}">
 </head>
+
 <body class="light-mode">
 
-<!-- esta parte es del layout principal que envuelve todo el panel -->
-<div class="admin-wrapper" id="admin-wrapper">
+    <!-- Estructura contenedora de toda la vista del panel -->
+    <div class="admin-wrapper" id="admin-wrapper">
 
-    <!-- =============================================
+        <!-- =============================================
          esta parte es del sidebar izquierdo con navegación
          ============================================= -->
-    <aside class="sidebar" id="sidebar">
+        <aside class="sidebar" id="sidebar">
 
-        <!-- esta parte es del logo y nombre arriba del sidebar -->
-        <a class="sidebar-brand" href="#">
-            <img src="{% static 'alumnos/img/Logo.png' %}" alt="Logo LBWUS">
-            <div class="sidebar-brand-text">
-                <span class="sidebar-brand-name">LBWUS</span>
-                <span class="sidebar-brand-role">Admin Portal</span>
+            <!-- Logotipo e identificación de la plataforma -->
+            <a class="sidebar-brand" href="#">
+                <img src="{% static 'alumnos/img/Logo.png' %}" alt="Logo LBWUS">
+                <div class="sidebar-brand-text">
+                    <span class="sidebar-brand-name">LBWUS</span>
+                    <span class="sidebar-brand-role">Admin Portal</span>
+                </div>
+            </a>
+
+            <!-- Ficha rápida del usuario administrador logueado -->
+            <div class="sidebar-user">
+                <div class="sidebar-user-avatar" id="user-avatar-initials">
+                    {{ admin.nombre|slice:":1"|upper }}
+                </div>
+                <div class="sidebar-user-info">
+                    <div class="sidebar-user-name">{{ admin.nombre }}</div>
+                    <div class="sidebar-user-role">Administrador</div>
+                </div>
             </div>
-        </a>
 
-        <!-- esta parte es del bloque del administrador logueado -->
-        <div class="sidebar-user">
-            <div class="sidebar-user-avatar" id="user-avatar-initials">
-                {{ admin.nombre|slice:":1"|upper }}
-            </div>
-            <div class="sidebar-user-info">
-                <div class="sidebar-user-name">{{ admin.nombre }}</div>
-                <div class="sidebar-user-role">Administrador</div>
-            </div>
-        </div>
+            <!-- Menú de opciones del sidebar izquierdo -->
+            <nav class="sidebar-nav">
+                <span class="nav-label">Principal</span>
 
-        <!-- esta parte es de los links de navegación dentro del sidebar -->
-        <nav class="sidebar-nav">
-            <span class="nav-label">Principal</span>
+                <button class="nav-item active" id="nav-resumen" onclick="showSection('resumen')">
+                    <i class="bi bi-grid-1x2-fill"></i>
+                    Resumen General
+                </button>
 
-            <button class="nav-item active" id="nav-resumen" onclick="showSection('resumen')">
-                <i class="bi bi-grid-1x2-fill"></i>
-                Resumen General
-            </button>
+                <button class="nav-item" id="nav-usuarios" onclick="showSection('usuarios')">
+                    <i class="bi bi-people-fill"></i>
+                    Gestión de Usuarios
+                </button>
 
-            <button class="nav-item" id="nav-usuarios" onclick="showSection('usuarios')">
-                <i class="bi bi-people-fill"></i>
-                Gestión de Usuarios
-            </button>
-
-            <button class="nav-item" id="nav-reportes" onclick="showSection('reportes')">
-                <i class="bi bi-flag-fill"></i>
-                Reportes
-                {% if reportes_pendientes > 0 %}
+                <button class="nav-item" id="nav-reportes" onclick="showSection('reportes')">
+                    <i class="bi bi-flag-fill"></i>
+                    Reportes
+                    {% if reportes_pendientes > 0 %}
                     <span class="nav-badge">{{ reportes_pendientes }}</span>
-                {% endif %}
-            </button>
+                    {% endif %}
+                </button>
 
-            <span class="nav-label">Herramientas</span>
+                <span class="nav-label">Herramientas</span>
 
-            <a class="nav-item" href="{% url 'crud' %}">
-                <i class="bi bi-person-plus-fill"></i>
-                Agregar Alumno
-            </a>
+                <button class="nav-item" id="nav-clases" onclick="showSection('clases')">
+                    <i class="bi bi-calendar3"></i>
+                    Clases / Horarios
+                </button>
 
-            <a class="nav-item" href="{% url 'planes_adm' %}">
-                <i class="bi bi-collection-fill"></i>
-                Gestionar Planes
-            </a>
+                <button class="nav-item" id="nav-finanzas" onclick="showSection('finanzas')">
+                    <i class="bi bi-wallet2"></i>
+                    Finanzas / Retiros
+                </button>
 
-            <a class="nav-item" href="{% url 'nosotros_adm' %}">
-                <i class="bi bi-info-circle-fill"></i>
-                Nosotros
-            </a>
+                <a class="nav-item" href="{% url 'planes_adm' %}">
+                    <i class="bi bi-collection-fill"></i>
+                    Gestionar Planes
+                </a>
 
-            <a class="nav-item" href="{% url 'contactos_adm' %}">
-                <i class="bi bi-telephone-fill"></i>
-                Contactos
-            </a>
-        </nav>
+                <a class="nav-item" href="{% url 'nosotros_adm' %}">
+                    <i class="bi bi-info-circle-fill"></i>
+                    Nosotros
+                </a>
 
-        <!-- esta parte es del botón de cerrar sesión pegado abajo del sidebar -->
-        <div class="sidebar-footer">
-            <a href="{% url 'home' %}" class="sidebar-logout">
-                <i class="bi bi-box-arrow-left"></i>
-                Cerrar Sesión
-            </a>
-        </div>
-    </aside>
+                <a class="nav-item" href="{% url 'contactos_adm' %}">
+                    <i class="bi bi-telephone-fill"></i>
+                    Contactos
+                </a>
 
-    <!-- =============================================
+                <span class="nav-label">Configuración</span>
+
+                <button class="nav-item" id="nav-ajustes" onclick="showSection('ajustes')">
+                    <i class="bi bi-gear-fill"></i>
+                    Ajustes
+                </button>
+            </nav>
+
+            <!-- Enlace para desloguearse y volver al inicio público -->
+            <div class="sidebar-footer">
+                <a href="{% url 'home' %}" class="sidebar-logout">
+                    <i class="bi bi-box-arrow-left"></i>
+                    Cerrar Sesión
+                </a>
+            </div>
+        </aside>
+
+        <!-- =============================================
          esta parte es del contenido principal a la derecha
          ============================================= -->
-    <main class="main-content">
+        <main class="main-content">
 
-        <!-- esta parte es de la barra superior con el título y acciones rápidas -->
-        <div class="topbar">
-            <div class="topbar-left">
-                <h1 id="section-title">Resumen General</h1>
-                <p id="section-subtitle">Bienvenido de vuelta, {{ admin.nombre }}</p>
-            </div>
-            <div class="topbar-right">
-                <!-- esta parte es del botón para cambiar entre modo oscuro y claro -->
+            <!-- Encabezado superior con título dinámico de la sección y acciones -->
+            <div class="topbar">
+                <div class="topbar-left">
+                    <h1 id="section-title">Resumen General</h1>
+                    <p id="section-subtitle">Bienvenido de vuelta, {{ admin.nombre }}</p>
+                </div>
+                <div class="topbar-right">
+                <!-- Botón de búsqueda flotante (Ctrl + K) -->
+                <button class="theme-btn" onclick="openSearchModal()" title="Buscar (Ctrl + K)">
+                    <i class="bi bi-search"></i>
+                </button>
+                <!-- Botón de notificaciones con punto indicador de pendientes -->
+                <button class="theme-btn" onclick="toggleNotifications()" title="Notificaciones" style="position:relative;">
+                    <i class="bi bi-bell-fill"></i>
+                    <span class="notification-badge-dot" id="notif-badge-dot"></span>
+                </button>
+                <!-- Botón toggle para alternar entre los modos visuales claro/oscuro -->
                 <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Cambiar tema">
                     <i class="bi bi-sun-fill" id="theme-icon"></i>
                 </button>
+                </div>
             </div>
-        </div>
 
-        <!-- =============================================
+            <!-- =============================================
              esta parte es del contenido que cambia según la sección activa
              ============================================= -->
-        <div class="page-content">
+            <div class="page-content">
 
-            <!-- ============ SECCIÓN: RESUMEN GENERAL ============ -->
-            <div class="admin-section active" id="section-resumen">
+                <!-- ============ SECCIÓN: RESUMEN GENERAL ============ -->
+                <div class="admin-section active" id="section-resumen">
 
-                <!-- esta parte es de las 4 tarjetas de estadísticas rápidas -->
-                <div class="stats-grid">
+                    <!-- Panel de indicadores rápidos (Alumnos, Profesores, Reportes y Clases) -->
+                    <div class="stats-grid">
 
-                    <div class="stat-card purple">
-                        <div class="stat-icon">
-                            <i class="bi bi-mortarboard-fill"></i>
+                        <div class="stat-card purple">
+                            <div class="stat-icon">
+                                <i class="bi bi-mortarboard-fill"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-value">{{ total_alumnos }}</div>
+                                <div class="stat-label">Alumnos Registrados</div>
+                                <div class="stat-change up"><i class="bi bi-arrow-up-short"></i> Total en el sistema
+                                </div>
+                            </div>
                         </div>
-                        <div class="stat-info">
-                            <div class="stat-value">{{ total_alumnos }}</div>
-                            <div class="stat-label">Alumnos Registrados</div>
-                            <div class="stat-change up"><i class="bi bi-arrow-up-short"></i> Total en el sistema</div>
-                        </div>
-                    </div>
 
-                    <div class="stat-card blue">
-                        <div class="stat-icon">
-                            <i class="bi bi-person-workspace"></i>
+                        <div class="stat-card blue">
+                            <div class="stat-icon">
+                                <i class="bi bi-person-workspace"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-value">{{ total_profesores }}</div>
+                                <div class="stat-label">Profesores Activos</div>
+                                <div class="stat-change up"><i class="bi bi-arrow-up-short"></i> Profesionales inscritos
+                                </div>
+                            </div>
                         </div>
-                        <div class="stat-info">
-                            <div class="stat-value">{{ total_profesores }}</div>
-                            <div class="stat-label">Profesores Activos</div>
-                            <div class="stat-change up"><i class="bi bi-arrow-up-short"></i> Profesionales inscritos</div>
-                        </div>
-                    </div>
 
-                    <div class="stat-card amber">
-                        <div class="stat-icon">
-                            <i class="bi bi-flag-fill"></i>
-                        </div>
-                        <div class="stat-info">
-                            <div class="stat-value">{{ reportes_pendientes }}</div>
-                            <div class="stat-label">Reportes Pendientes</div>
-                            {% if reportes_pendientes > 0 %}
-                                <div class="stat-change down"><i class="bi bi-exclamation-circle"></i> Requieren atención</div>
-                            {% else %}
+                        <div class="stat-card amber">
+                            <div class="stat-icon">
+                                <i class="bi bi-flag-fill"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-value">{{ reportes_pendientes }}</div>
+                                <div class="stat-label">Reportes Pendientes</div>
+                                {% if reportes_pendientes > 0 %}
+                                <div class="stat-change down"><i class="bi bi-exclamation-circle"></i> Requieren
+                                    atención</div>
+                                {% else %}
                                 <div class="stat-change up"><i class="bi bi-check-circle"></i> Todo resuelto</div>
-                            {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="stat-card green">
+                            <div class="stat-icon">
+                                <i class="bi bi-book-fill"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-value">{{ total_clases }}</div>
+                                <div class="stat-label">Clases Creadas</div>
+                                <div class="stat-change up"><i class="bi bi-arrow-up-short"></i> Clases en el sistema
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="stat-card green">
-                        <div class="stat-icon">
-                            <i class="bi bi-book-fill"></i>
-                        </div>
-                        <div class="stat-info">
-                            <div class="stat-value">{{ total_clases }}</div>
-                            <div class="stat-label">Clases Creadas</div>
-                            <div class="stat-change up"><i class="bi bi-arrow-up-short"></i> Clases en el sistema</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- esta parte es de la fila del medio con lista de usuarios y reportes recientes -->
-                <div class="middle-row">
-
-                    <!-- esta parte es de los últimos usuarios registrados -->
-                    <div class="panel">
+                    <!-- Panel de Últimos Registros (Ancho Completo) -->
+                    <div class="panel" style="margin-bottom: 28px;">
                         <div class="panel-header">
                             <span class="panel-title">
                                 <i class="bi bi-person-lines-fill"></i>
@@ -207,31 +232,42 @@
                                     <tr>
                                         <td>
                                             <div class="user-cell">
-                                                <div class="user-avatar-sm">{{ alumno.nombre|slice:":1"|upper }}</div>
+                                                <div class="user-avatar-sm">{{ alumno.nombre|slice:":1"|upper }}
+                                                </div>
                                                 <div>
                                                     <div class="user-cell-name">{{ alumno.nombre }}</div>
-                                                    <div class="user-cell-sub">{{ alumno.rut }}</div>
+
                                                 </div>
                                             </div>
                                         </td>
-                                        <td><span class="badge badge-alumno"><i class="bi bi-circle-fill" style="font-size:0.4rem;"></i> Alumno</span></td>
+                                        <td><span class="badge badge-alumno"><i class="bi bi-circle-fill"
+                                                    style="font-size:0.4rem;"></i> Alumno</span></td>
                                         <td>{{ alumno.correo_electronico }}</td>
                                     </tr>
                                     {% empty %}
-                                    <tr><td colspan="3"><div class="empty-state"><i class="bi bi-inbox"></i><p>Sin alumnos registrados</p></div></td></tr>
+                                    <tr>
+                                        <td colspan="3">
+                                            <div class="empty-state"><i class="bi bi-inbox"></i>
+                                                <p>Sin alumnos registrados</p>
+                                            </div>
+                                        </td>
+                                    </tr>
                                     {% endfor %}
                                     {% for prof in ultimos_profesores %}
                                     <tr>
                                         <td>
                                             <div class="user-cell">
-                                                <div class="user-avatar-sm" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">{{ prof.nombre|slice:":1"|upper }}</div>
+                                                <div class="user-avatar-sm"
+                                                    style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+                                                    {{ prof.nombre|slice:":1"|upper }}</div>
                                                 <div>
                                                     <div class="user-cell-name">{{ prof.nombre }}</div>
                                                     <div class="user-cell-sub">{{ prof.especialidad }}</div>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td><span class="badge badge-profesor"><i class="bi bi-circle-fill" style="font-size:0.4rem;"></i> Profesor</span></td>
+                                        <td><span class="badge badge-profesor"><i class="bi bi-circle-fill"
+                                                    style="font-size:0.4rem;"></i> Profesor</span></td>
                                         <td>{{ prof.correo_electronico }}</td>
                                     </tr>
                                     {% endfor %}
@@ -240,220 +276,302 @@
                         </div>
                     </div>
 
-                    <!-- esta parte es de los reportes recientes que llegaron -->
+                    <!-- Bloque intermedio que divide el gráfico SVG de crecimiento y los reportes pendientes -->
+                    <div class="middle-row">
+
+                        <!-- Panel del Gráfico SVG lineal animado (en columna) -->
+                        <div class="panel">
+                            <div class="panel-header">
+                                <span class="panel-title">
+                                    <i class="bi bi-bar-chart-line-fill"></i>
+                                    Crecimiento y Actividad (Últimos Meses)
+                                </span>
+                            </div>
+                            <div class="panel-body">
+                                <div class="chart-container">
+                                    <svg class="chart-svg" viewBox="0 0 600 220">
+                                        <!-- Líneas de cuadrícula horizontal -->
+                                        <line x1="50" y1="30" x2="550" y2="30" stroke="var(--border)" stroke-dasharray="4,4" />
+                                        <line x1="50" y1="80" x2="550" y2="80" stroke="var(--border)" stroke-dasharray="4,4" />
+                                        <line x1="50" y1="130" x2="550" y2="130" stroke="var(--border)" stroke-dasharray="4,4" />
+                                        <line x1="50" y1="180" x2="550" y2="180" stroke="var(--border)" />
+                                        
+                                        <!-- Valores del eje Y -->
+                                        <text x="25" y="34" fill="var(--text-muted)" font-size="10">40</text>
+                                        <text x="25" y="84" fill="var(--text-muted)" font-size="10">25</text>
+                                        <text x="25" y="134" fill="var(--text-muted)" font-size="10">10</text>
+                                        <text x="25" y="184" fill="var(--text-muted)" font-size="10">0</text>
+
+                                        <!-- Área sombreada debajo de la línea -->
+                                        <path class="chart-area-path" d="M 90 150 L 190 120 L 290 140 L 390 70 L 490 50 L 490 180 L 90 180 Z" fill="url(#chart-gradient)" opacity="0.15" />
+
+                                        <!-- Línea del gráfico continua -->
+                                        <path class="chart-line-path" d="M 90 150 L 190 120 L 290 140 L 390 70 L 490 50" fill="none" stroke="var(--primary)" stroke-width="4" stroke-linecap="round" />
+                                        
+                                        <!-- Nodos del gráfico interactivos -->
+                                        <circle class="chart-point" cx="90" cy="150" r="6" fill="var(--primary)" stroke="var(--bg-card)" stroke-width="2" />
+                                        <circle class="chart-point" cx="190" cy="120" r="6" fill="var(--primary)" stroke="var(--bg-card)" stroke-width="2" />
+                                        <circle class="chart-point" cx="290" cy="140" r="6" fill="var(--primary)" stroke="var(--bg-card)" stroke-width="2" />
+                                        <circle class="chart-point" cx="390" cy="70" r="6" fill="var(--primary)" stroke="var(--bg-card)" stroke-width="2" />
+                                        <circle class="chart-point" cx="490" cy="50" r="6" fill="var(--primary)" stroke="var(--bg-card)" stroke-width="2" />
+
+                                        <!-- Meses del eje X -->
+                                        <text x="90" y="204" fill="var(--text-muted)" font-size="11" text-anchor="middle">Feb</text>
+                                        <text x="190" y="204" fill="var(--text-muted)" font-size="11" text-anchor="middle">Mar</text>
+                                        <text x="290" y="204" fill="var(--text-muted)" font-size="11" text-anchor="middle">Abr</text>
+                                        <text x="390" y="204" fill="var(--text-muted)" font-size="11" text-anchor="middle">May</text>
+                                        <text x="490" y="204" fill="var(--text-muted)" font-size="11" text-anchor="middle">Jun</text>
+
+                                        <!-- Definición del degradado -->
+                                        <defs>
+                                            <linearGradient id="chart-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                                <stop offset="0%" stop-color="var(--primary)" />
+                                                <stop offset="100%" stop-color="transparent" />
+                                            </linearGradient>
+                                        </defs>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Reportes recibidos que aún no han sido procesados por el admin -->
+                        <div class="panel">
+                            <div class="panel-header">
+                                <span class="panel-title">
+                                    <i class="bi bi-flag-fill"></i>
+                                    Reportes Recientes
+                                </span>
+                                <button class="panel-action" onclick="showSection('reportes')">Ver todos →</button>
+                            </div>
+                            <div class="panel-body">
+                                {% for reporte in reportes_recientes %}
+                                <div class="report-item">
+                                    <div class="report-icon {{ reporte.remitente_tipo }}">
+                                        <i
+                                            class="bi bi-{% if reporte.remitente_tipo == 'profesor' %}person-workspace{% else %}mortarboard-fill{% endif %}"></i>
+                                    </div>
+                                    <div class="report-meta">
+                                        <div class="report-name">{{ reporte.remitente_nombre }}</div>
+                                        <div class="report-desc">{{ reporte.descripcion }}</div>
+                                        <div class="report-date">
+                                            <i class="bi bi-calendar3"></i>
+                                            {{ reporte.fecha_reporte|date:"d M Y" }}
+                                            &nbsp;·&nbsp;
+                                            <span class="badge badge-{{ reporte.remitente_tipo }}">{{
+                                                reporte.get_remitente_tipo_display }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="report-actions">
+                                        {% if reporte.estado == 'pendiente' %}
+                                        <a href="{% url 'resolver_reporte' reporte.id_reporte %}"
+                                            class="btn-action resolve" title="Marcar como resuelto">
+                                            <i class="bi bi-check-lg"></i>
+                                        </a>
+                                        {% else %}
+                                        <span class="badge badge-resuelto"><i class="bi bi-check-circle-fill"></i>
+                                            Resuelto</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <div class="empty-state">
+                                    <i class="bi bi-shield-check"></i>
+                                    <p>No hay reportes recientes</p>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- ============ SECCIÓN: GESTIÓN DE USUARIOS ============ -->
+                <div class="admin-section" id="section-usuarios">
+
                     <div class="panel">
-                        <div class="panel-header">
-                            <span class="panel-title">
-                                <i class="bi bi-flag-fill"></i>
-                                Reportes Recientes
-                            </span>
-                            <button class="panel-action" onclick="showSection('reportes')">Ver todos →</button>
+                        <!-- esta parte es de las pestañas para filtrar por tipo de usuario -->
+                        <div class="filter-tabs">
+                            <button class="filter-tab active" id="tab-alumnos" onclick="showUserTab('alumnos')">
+                                <i class="bi bi-mortarboard-fill"></i> Alumnos ({{ total_alumnos }})
+                            </button>
+                            <button class="filter-tab" id="tab-profesores" onclick="showUserTab('profesores')">
+                                <i class="bi bi-person-workspace"></i> Profesores ({{ total_profesores }})
+                            </button>
+                            <button class="filter-tab" id="tab-admins" onclick="showUserTab('admins')">
+                                <i class="bi bi-shield-fill"></i> Administradores ({{ total_admins }})
+                            </button>
                         </div>
-                        <div class="panel-body">
-                            {% for reporte in reportes_recientes %}
-                            <div class="report-item">
-                                <div class="report-icon {{ reporte.remitente_tipo }}">
-                                    <i class="bi bi-{% if reporte.remitente_tipo == 'profesor' %}person-workspace{% else %}mortarboard-fill{% endif %}"></i>
-                                </div>
-                                <div class="report-meta">
-                                    <div class="report-name">{{ reporte.remitente_nombre }}</div>
-                                    <div class="report-desc">{{ reporte.descripcion }}</div>
-                                    <div class="report-date">
-                                        <i class="bi bi-calendar3"></i>
-                                        {{ reporte.fecha_reporte|date:"d M Y" }}
-                                        &nbsp;·&nbsp;
-                                        <span class="badge badge-{{ reporte.remitente_tipo }}">{{ reporte.get_remitente_tipo_display }}</span>
-                                    </div>
-                                </div>
-                                <div class="report-actions">
-                                    {% if reporte.estado == 'pendiente' %}
-                                    <a href="{% url 'resolver_reporte' reporte.id_reporte %}" class="btn-action resolve" title="Marcar como resuelto">
-                                        <i class="bi bi-check-lg"></i>
-                                    </a>
-                                    {% else %}
-                                    <span class="badge badge-resuelto"><i class="bi bi-check-circle-fill"></i> Resuelto</span>
-                                    {% endif %}
-                                </div>
+
+                        <!-- esta parte es de la barra con buscador y botón de agregar -->
+                        <div class="users-toolbar">
+                            <div class="search-bar" style="flex:1; max-width:360px;">
+                                <i class="bi bi-search"></i>
+                                <input type="text" id="user-search" placeholder="Buscar por nombre, RUT o correo..."
+                                    oninput="filterUsers()">
                             </div>
-                            {% empty %}
-                            <div class="empty-state">
-                                <i class="bi bi-shield-check"></i>
-                                <p>No hay reportes recientes</p>
-                            </div>
-                            {% endfor %}
+                            <a href="{% url 'alumnos_Add' %}" class="btn-primary" id="add-user-btn">
+                                <i class="bi bi-person-plus-fill"></i>
+                                Agregar Usuario
+                            </a>
                         </div>
-                    </div>
 
-                </div>
-            </div>
-
-            <!-- ============ SECCIÓN: GESTIÓN DE USUARIOS ============ -->
-            <div class="admin-section" id="section-usuarios">
-
-                <div class="panel">
-                    <!-- esta parte es de las pestañas para filtrar por tipo de usuario -->
-                    <div class="filter-tabs">
-                        <button class="filter-tab active" id="tab-alumnos" onclick="showUserTab('alumnos')">
-                            <i class="bi bi-mortarboard-fill"></i> Alumnos ({{ total_alumnos }})
-                        </button>
-                        <button class="filter-tab" id="tab-profesores" onclick="showUserTab('profesores')">
-                            <i class="bi bi-person-workspace"></i> Profesores ({{ total_profesores }})
-                        </button>
-                        <button class="filter-tab" id="tab-admins" onclick="showUserTab('admins')">
-                            <i class="bi bi-shield-fill"></i> Administradores ({{ total_admins }})
-                        </button>
-                    </div>
-
-                    <!-- esta parte es de la barra con buscador y botón de agregar -->
-                    <div class="users-toolbar">
-                        <div class="search-bar" style="flex:1; max-width:360px;">
-                            <i class="bi bi-search"></i>
-                            <input type="text" id="user-search" placeholder="Buscar por nombre, RUT o correo..." oninput="filterUsers()">
+                        <!-- esta parte es de la tabla de alumnos -->
+                        <div id="users-alumnos" style="overflow-x:auto;">
+                            <table class="user-table" id="table-alumnos">
+                                <thead>
+                                    <tr>
+                                        <th>Alumno</th>
+                                        <th>RUT</th>
+                                        <th>Nivel</th>
+                                        <th>Correo</th>
+                                        <th>Teléfono</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for alumno in alumnos %}
+                                    <tr class="user-row" data-name="{{ alumno.nombre|lower }}"
+                                        data-rut="{{ alumno.rut }}" data-correo="{{ alumno.correo_electronico|lower }}">
+                                        <td>
+                                            <div class="user-cell">
+                                                <div class="user-avatar-sm">{{ alumno.nombre|slice:":1"|upper }}</div>
+                                                <div>
+                                                    <div class="user-cell-name">{{ alumno.nombre }}</div>
+                                                    <div class="user-cell-sub">{{ alumno.direccion|truncatechars:30 }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>{{ alumno.rut }}</td>
+                                        <td>
+                                            <span class="badge badge-alumno">{{ alumno.get_nivel_educacion_display }}</span>
+                                        </td>
+                                        <td>{{ alumno.correo_electronico }}</td>
+                                        <td>{{ alumno.telefono }}</td>
+                                        <td>
+                                            <div style="display:flex; gap:6px;">
+                                                <a href="{% url 'alumnos_findEdit' alumno.id_alumno %}"
+                                                    class="btn-action edit" title="Editar">
+                                                    <i class="bi bi-pencil-fill"></i>
+                                                </a>
+                                                <a href="{% url 'alumnos_del' alumno.id_alumno %}"
+                                                    class="btn-action delete" title="Eliminar"
+                                                    onclick="return confirm('¿Seguro que quieres eliminar a {{ alumno.nombre }}?')">
+                                                    <i class="bi bi-trash3-fill"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6">
+                                            <div class="empty-state">
+                                                <i class="bi bi-people"></i>
+                                                <p>No hay alumnos registrados todavía</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
                         </div>
-                        <a href="{% url 'alumnos_Add' %}" class="btn-primary" id="add-user-btn">
-                            <i class="bi bi-person-plus-fill"></i>
-                            Agregar Usuario
-                        </a>
-                    </div>
 
-                    <!-- esta parte es de la tabla de alumnos -->
-                    <div id="users-alumnos" style="overflow-x:auto;">
-                        <table class="user-table" id="table-alumnos">
-                            <thead>
-                                <tr>
-                                    <th>Alumno</th>
-                                    <th>RUT</th>
-                                    <th>Nivel</th>
-                                    <th>Correo</th>
-                                    <th>Teléfono</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for alumno in alumnos %}
-                                <tr class="user-row" data-name="{{ alumno.nombre|lower }}" data-rut="{{ alumno.rut }}" data-correo="{{ alumno.correo_electronico|lower }}">
-                                    <td>
-                                        <div class="user-cell">
-                                            <div class="user-avatar-sm">{{ alumno.nombre|slice:":1"|upper }}</div>
-                                            <div>
-                                                <div class="user-cell-name">{{ alumno.nombre }}</div>
-                                                <div class="user-cell-sub">{{ alumno.direccion|truncatechars:30 }}</div>
+                        <!-- esta parte es de la tabla de profesores (oculta por defecto) -->
+                        <div id="users-profesores" style="display:none; overflow-x:auto;">
+                            <table class="user-table" id="table-profesores">
+                                <thead>
+                                    <tr>
+                                        <th>Profesor</th>
+                                        <th>RUT</th>
+                                        <th>Especialidad</th>
+                                        <th>Correo</th>
+                                        <th>Teléfono</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for prof in profesores %}
+                                    <tr class="user-row" data-name="{{ prof.nombre|lower }}" data-rut="{{ prof.rut }}"
+                                        data-correo="{{ prof.correo_electronico|lower }}">
+                                        <td>
+                                            <div class="user-cell">
+                                                <div class="user-avatar-sm"
+                                                    style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">{{
+                                                    prof.nombre|slice:":1"|upper }}</div>
+                                                <div>
+                                                    <div class="user-cell-name">{{ prof.nombre }}</div>
+                                                    <div class="user-cell-sub">{{ prof.direccion|truncatechars:30 }}
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td>{{ alumno.rut }}</td>
-                                    <td>
-                                        <span class="badge badge-alumno">{{ alumno.get_nivel_educacion_display }}</span>
-                                    </td>
-                                    <td>{{ alumno.correo_electronico }}</td>
-                                    <td>{{ alumno.telefono }}</td>
-                                    <td>
-                                        <div style="display:flex; gap:6px;">
-                                            <a href="{% url 'alumnos_findEdit' alumno.id_alumno %}" class="btn-action edit" title="Editar">
-                                                <i class="bi bi-pencil-fill"></i>
-                                            </a>
-                                            <a href="{% url 'alumnos_del' alumno.id_alumno %}" class="btn-action delete" title="Eliminar"
-                                               onclick="return confirm('¿Seguro que quieres eliminar a {{ alumno.nombre }}?')">
-                                                <i class="bi bi-trash3-fill"></i>
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% empty %}
-                                <tr><td colspan="6">
-                                    <div class="empty-state">
-                                        <i class="bi bi-people"></i>
-                                        <p>No hay alumnos registrados todavía</p>
-                                    </div>
-                                </td></tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                                        </td>
+                                        <td>{{ prof.rut }}</td>
+                                        <td><span class="badge badge-profesor">{{ prof.especialidad }}</span></td>
+                                        <td>{{ prof.correo_electronico }}</td>
+                                        <td>{{ prof.telefono }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="5">
+                                            <div class="empty-state">
+                                                <i class="bi bi-person-workspace"></i>
+                                                <p>No hay profesores registrados todavía</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
 
-                    <!-- esta parte es de la tabla de profesores (oculta por defecto) -->
-                    <div id="users-profesores" style="display:none; overflow-x:auto;">
-                        <table class="user-table" id="table-profesores">
-                            <thead>
-                                <tr>
-                                    <th>Profesor</th>
-                                    <th>RUT</th>
-                                    <th>Especialidad</th>
-                                    <th>Correo</th>
-                                    <th>Teléfono</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for prof in profesores %}
-                                <tr class="user-row" data-name="{{ prof.nombre|lower }}" data-rut="{{ prof.rut }}" data-correo="{{ prof.correo_electronico|lower }}">
-                                    <td>
-                                        <div class="user-cell">
-                                            <div class="user-avatar-sm" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">{{ prof.nombre|slice:":1"|upper }}</div>
-                                            <div>
-                                                <div class="user-cell-name">{{ prof.nombre }}</div>
-                                                <div class="user-cell-sub">{{ prof.direccion|truncatechars:30 }}</div>
+                        <!-- esta parte es de la tabla de administradores (oculta por defecto) -->
+                        <div id="users-admins" style="display:none; overflow-x:auto;">
+                            <table class="user-table" id="table-admins">
+                                <thead>
+                                    <tr>
+                                        <th>Administrador</th>
+                                        <th>RUT</th>
+                                        <th>Correo</th>
+                                        <th>Teléfono</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for admin_user in admins %}
+                                    <tr class="user-row" data-name="{{ admin_user.nombre|lower }}"
+                                        data-rut="{{ admin_user.rut }}"
+                                        data-correo="{{ admin_user.correo_electronico|lower }}">
+                                        <td>
+                                            <div class="user-cell">
+                                                <div class="user-avatar-sm"
+                                                    style="background: linear-gradient(135deg, #f59e0b, #d97706);">{{
+                                                    admin_user.nombre|slice:":1"|upper }}</div>
+                                                <div>
+                                                    <div class="user-cell-name">{{ admin_user.nombre }}</div>
+                                                    <div class="user-cell-sub">{{ admin_user.direccion|truncatechars:30
+                                                        }}</div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td>{{ prof.rut }}</td>
-                                    <td><span class="badge badge-profesor">{{ prof.especialidad }}</span></td>
-                                    <td>{{ prof.correo_electronico }}</td>
-                                    <td>{{ prof.telefono }}</td>
-                                </tr>
-                                {% empty %}
-                                <tr><td colspan="5">
-                                    <div class="empty-state">
-                                        <i class="bi bi-person-workspace"></i>
-                                        <p>No hay profesores registrados todavía</p>
-                                    </div>
-                                </td></tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- esta parte es de la tabla de administradores (oculta por defecto) -->
-                    <div id="users-admins" style="display:none; overflow-x:auto;">
-                        <table class="user-table" id="table-admins">
-                            <thead>
-                                <tr>
-                                    <th>Administrador</th>
-                                    <th>RUT</th>
-                                    <th>Correo</th>
-                                    <th>Teléfono</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for admin_user in admins %}
-                                <tr class="user-row" data-name="{{ admin_user.nombre|lower }}" data-rut="{{ admin_user.rut }}" data-correo="{{ admin_user.correo_electronico|lower }}">
-                                    <td>
-                                        <div class="user-cell">
-                                            <div class="user-avatar-sm" style="background: linear-gradient(135deg, #f59e0b, #d97706);">{{ admin_user.nombre|slice:":1"|upper }}</div>
-                                            <div>
-                                                <div class="user-cell-name">{{ admin_user.nombre }}</div>
-                                                <div class="user-cell-sub">{{ admin_user.direccion|truncatechars:30 }}</div>
+                                        </td>
+                                        <td>{{ admin_user.rut }}</td>
+                                        <td>{{ admin_user.correo_electronico }}</td>
+                                        <td>{{ admin_user.telefono }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4">
+                                            <div class="empty-state">
+                                                <i class="bi bi-shield-lock"></i>
+                                                <p>No hay administradores registrados</p>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td>{{ admin_user.rut }}</td>
-                                    <td>{{ admin_user.correo_electronico }}</td>
-                                    <td>{{ admin_user.telefono }}</td>
-                                </tr>
-                                {% empty %}
-                                <tr><td colspan="4">
-                                    <div class="empty-state">
-                                        <i class="bi bi-shield-lock"></i>
-                                        <p>No hay administradores registrados</p>
-                                    </div>
-                                </td></tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- ============ SECCIÓN: REPORTES COMPLETOS ============ -->
+            <!-- ============ SECCIÓN: REPORTES ============ -->
             <div class="admin-section" id="section-reportes">
 
                 <div class="panel reports-full-panel">
@@ -462,7 +580,7 @@
                             <i class="bi bi-flag-fill"></i>
                             Todos los Reportes
                         </span>
-                        <!-- esta parte es del filtro por estado del reporte -->
+                        <!-- Filtro por estado del reporte -->
                         <div style="display:flex; gap:8px; flex-wrap:wrap;">
                             <button class="filter-tab active" style="border-radius:6px; border:1px solid var(--border);" onclick="filterReports('todos', this)">Todos</button>
                             <button class="filter-tab" style="border-radius:6px; border:1px solid var(--border);" onclick="filterReports('pendiente', this)">Pendientes</button>
@@ -470,7 +588,7 @@
                         </div>
                     </div>
 
-                    <!-- esta parte es de la barra de búsqueda de reportes -->
+                    <!-- Barra de búsqueda de reportes -->
                     <div class="users-toolbar">
                         <div class="search-bar" style="flex:1; max-width:400px;">
                             <i class="bi bi-search"></i>
@@ -525,7 +643,7 @@
                                             <i class="bi bi-check-lg"></i>
                                         </a>
                                         {% else %}
-                                        <span style="color:var(--text-muted); font-size:0.78rem;">—</span>
+                                        <span style="color:var(--text-muted); font-size:0.78rem;">-</span>
                                         {% endif %}
                                     </td>
                                 </tr>
@@ -543,116 +661,510 @@
                 </div>
             </div>
 
+            <!-- ============ SECCIÓN: CALENDARIO DE CLASES ============ -->
+            <div class="admin-section" id="section-clases">
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title"><i class="bi bi-calendar3"></i> Agenda Semanal de Clases</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="calendar-grid">
+                            <!-- Lunes -->
+                            <div class="calendar-day-col">
+                                <div class="calendar-header-day">Lunes</div>
+                                <div class="calendar-card basica">
+                                    <div class="class-time">09:00 - 10:30</div>
+                                    <div class="class-name">Matemáticas Básica</div>
+                                    <div class="class-info">Prof. Tanger · Alum. Jose</div>
+                                </div>
+                                <div class="calendar-card media">
+                                    <div class="class-time">14:00 - 15:30</div>
+                                    <div class="class-name">Lenguaje y Com.</div>
+                                    <div class="class-info">Prof. Tanger · Alum. Francheska</div>
+                                </div>
+                            </div>
+                            <!-- Martes -->
+                            <div class="calendar-day-col">
+                                <div class="calendar-header-day">Martes</div>
+                                <div class="calendar-card superior">
+                                    <div class="class-time">11:00 - 12:30</div>
+                                    <div class="class-name">Cálculo Diferencial</div>
+                                    <div class="class-info">Prof. Franco · Alum. Franco</div>
+                                </div>
+                            </div>
+                            <!-- Miércoles -->
+                            <div class="calendar-day-col">
+                                <div class="calendar-header-day">Miércoles</div>
+                                <div class="calendar-card basica">
+                                    <div class="class-time">09:00 - 10:30</div>
+                                    <div class="class-name">Matemáticas Básica</div>
+                                    <div class="class-info">Prof. Tanger · Alum. Jose</div>
+                                </div>
+                            </div>
+                            <!-- Jueves -->
+                            <div class="calendar-day-col">
+                                <div class="calendar-header-day">Jueves</div>
+                                <div class="calendar-card media">
+                                    <div class="class-time">15:00 - 16:30</div>
+                                    <div class="class-name">Física Mecánica</div>
+                                    <div class="class-info">Prof. Tanger · Alum. Francheska</div>
+                                </div>
+                            </div>
+                            <!-- Viernes -->
+                            <div class="calendar-day-col">
+                                <div class="calendar-header-day">Viernes</div>
+                                <div class="calendar-card superior">
+                                    <div class="class-time">16:00 - 17:30</div>
+                                    <div class="class-name">Programación Python</div>
+                                    <div class="class-info">Prof. Franco · Alum. Franco</div>
+                                </div>
+                            </div>
+                            <!-- Sábado -->
+                            <div class="calendar-day-col">
+                                <div class="calendar-header-day">Sábado</div>
+                                <div class="class-empty-state">No hay clases programadas</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============ SECCIÓN: FINANZAS Y RETIROS ============ -->
+            <div class="admin-section" id="section-finanzas">
+                <!-- Tarjetas financieras -->
+                <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 28px; gap: 20px;">
+                    <div class="stat-card purple">
+                        <div class="stat-card-inner">
+                            <div class="stat-info">
+                                <div class="stat-value">$180.000</div>
+                                <div class="stat-label">Ingresos Totales</div>
+                            </div>
+                            <div class="stat-icon" style="margin-left:auto;"><i class="bi bi-wallet2"></i></div>
+                        </div>
+                    </div>
+                    <div class="stat-card green">
+                        <div class="stat-card-inner">
+                            <div class="stat-info">
+                                <div class="stat-value">$135.000</div>
+                                <div class="stat-label">Retiros Pagados</div>
+                            </div>
+                            <div class="stat-icon" style="margin-left:auto;"><i class="bi bi-cash-coin"></i></div>
+                        </div>
+                    </div>
+                    <div class="stat-card amber">
+                        <div class="stat-card-inner">
+                            <div class="stat-info">
+                                <div class="stat-value">$45.000</div>
+                                <div class="stat-label">Retiros Pendientes</div>
+                            </div>
+                            <div class="stat-icon" style="margin-left:auto;"><i class="bi bi-clock-history"></i></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de solicitudes -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title"><i class="bi bi-card-list"></i> Solicitudes de Retiro</span>
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table class="user-table">
+                            <thead>
+                                <tr>
+                                    <th>Profesor</th>
+                                    <th>Monto</th>
+                                    <th>Fecha Solicitud</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <div class="user-cell">
+                                            <div class="user-avatar-sm" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">T</div>
+                                            <div class="user-cell-name">Tánger</div>
+                                        </div>
+                                    </td>
+                                    <td><strong>$45.000</strong></td>
+                                    <td>24/05/2026</td>
+                                    <td><span class="badge badge-pendiente"><i class="bi bi-clock-fill"></i> Pendiente</span></td>
+                                    <td>
+                                        <div style="display:flex; gap:6px;">
+                                            <button class="btn-action edit" style="background:rgba(16,185,129,0.12); color:#10b981;" title="Aprobar" onclick="Swal.fire('¡Aprobado!', 'El retiro ha sido aprobado exitosamente.', 'success')">
+                                                <i class="bi bi-check-lg"></i>
+                                            </button>
+                                            <button class="btn-action delete" style="background:rgba(239,68,68,0.12); color:#ef4444;" title="Rechazar" onclick="Swal.fire('Rechazado', 'El retiro ha sido rechazado.', 'error')">
+                                                <i class="bi bi-x-lg"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="user-cell">
+                                            <div class="user-avatar-sm" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">F</div>
+                                            <div class="user-cell-name">Franco</div>
+                                        </div>
+                                    </td>
+                                    <td><strong>$120.000</strong></td>
+                                    <td>18/05/2026</td>
+                                    <td><span class="badge badge-resuelto"><i class="bi bi-check-circle-fill"></i> Pagado</span></td>
+                                    <td><span style="color:var(--text-muted); font-size:0.8rem;">Completado</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============ SECCIÓN: PERFIL Y AJUSTES ============ -->
+            <div class="admin-section" id="section-ajustes">
+                <div class="panel" style="max-width: 720px;">
+                    <div class="panel-header">
+                        <span class="panel-title"><i class="bi bi-gear-fill"></i> Configuración del Administrador</span>
+                    </div>
+                    <div class="panel-body">
+                        <form id="formAjustes" onsubmit="event.preventDefault(); Swal.fire('Ajustes Guardados', 'Tu perfil ha sido actualizado.', 'success');">
+                            <div class="form-grid">
+                                <div class="form-field">
+                                    <label class="form-label">Nombre del Administrador</label>
+                                    <input type="text" class="form-input" value="{{ admin.nombre }}" required>
+                                </div>
+                                <div class="form-field">
+                                    <label class="form-label">RUT</label>
+                                    <input type="text" class="form-input" value="{{ admin.rut }}" required>
+                                </div>
+                                <div class="form-field">
+                                    <label class="form-label">Correo Electrónico</label>
+                                    <input type="email" class="form-input" value="{{ admin.correo_electronico }}" required>
+                                </div>
+                                <div class="form-field">
+                                    <label class="form-label">Teléfono</label>
+                                    <input type="text" class="form-input" value="{{ admin.telefono }}" required>
+                                </div>
+                                <div class="form-field">
+                                    <label class="form-label">Color de Acento del Panel</label>
+                                    <select class="form-input" id="accent-color-select" onchange="changeAccentColor()">
+                                        <option value="purple">Morado LBWUS (Defecto)</option>
+                                        <option value="blue">Azul Océano</option>
+                                        <option value="green">Verde Menta</option>
+                                    </select>
+                                </div>
+                                <div class="form-field">
+                                    <label class="form-label">Dirección</label>
+                                    <input type="text" class="form-input" value="{{ admin.direccion }}" required>
+                                </div>
+                            </div>
+                            <div style="margin-top:24px;">
+                                <button type="submit" class="btn-primary">
+                                    <i class="bi bi-save"></i> Guardar Configuración
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            </div>
+    <!-- Panel lateral deslizable de Notificaciones (Drawer) -->
+    <div class="notifications-drawer" id="notifications-drawer">
+        <div class="drawer-header">
+            <h2>Notificaciones</h2>
+            <button class="close-drawer-btn" onclick="toggleNotifications()">&times;</button>
         </div>
-        <!-- esta parte es de donde termina el contenido del panel -->
+        <div class="drawer-body">
+            <div class="notification-item unread" id="notif-1">
+                <div class="notification-icon purple">
+                    <i class="bi bi-person-plus-fill"></i>
+                </div>
+                <div class="notification-content">
+                    <p class="notification-title">Nuevo Alumno Registrado</p>
+                    <p class="notification-desc">El estudiante Jose se ha registrado en el Plan Básico.</p>
+                    <span class="notification-time">Hace 5 minutos</span>
+                </div>
+            </div>
+            <div class="notification-item unread" id="notif-2">
+                <div class="notification-icon blue">
+                    <i class="bi bi-cash-stack"></i>
+                </div>
+                <div class="notification-content">
+                    <p class="notification-title">Solicitud de Retiro</p>
+                    <p class="notification-desc">El profesor Tánger ha solicitado un retiro de $45.000.</p>
+                    <span class="notification-time">Hace 2 horas</span>
+                </div>
+            </div>
+            <div class="notification-item" id="notif-3">
+                <div class="notification-icon amber">
+                    <i class="bi bi-exclamation-circle-fill"></i>
+                </div>
+                <div class="notification-content">
+                    <p class="notification-title">Reporte Recibido</p>
+                    <p class="notification-desc">Se reportó un problema de conexión en la clase de Matemáticas.</p>
+                    <span class="notification-time">Ayer</span>
+                </div>
+            </div>
+        </div>
+        <div class="drawer-footer">
+            <button class="btn-clear-notifications" onclick="clearNotifications()">Marcar todas como leídas</button>
+        </div>
+    </div>
+
+    <!-- Modal de Búsqueda Global (Ctrl + K) -->
+    <div class="search-modal-backdrop" id="search-modal-backdrop" onclick="closeSearchModal()">
+        <div class="search-modal" onclick="event.stopPropagation()">
+            <div class="search-modal-header">
+                <i class="bi bi-search"></i>
+                <input type="text" class="search-modal-input" id="search-modal-input" placeholder="Buscar alumnos, profesores, reportes..." oninput="handleGlobalSearch()">
+                <span class="search-esc-badge">ESC</span>
+            </div>
+            <div class="search-modal-results" id="search-modal-results">
+                <div class="search-section-label">Sugerencias rápidas</div>
+                <div class="search-result-item" onclick="navigateFromSearch('usuarios')">
+                    <i class="bi bi-people"></i>
+                    <span>Gestión de Usuarios</span>
+                    <span class="search-result-type">Sección</span>
+                </div>
+                <div class="search-result-item" onclick="navigateFromSearch('reportes')">
+                    <i class="bi bi-flag"></i>
+                    <span>Reportes Pendientes</span>
+                    <span class="search-result-type">Sección</span>
+                </div>
+                <div class="search-result-item" onclick="navigateFromSearch('clases')">
+                    <i class="bi bi-calendar"></i>
+                    <span>Agenda de Clases</span>
+                    <span class="search-result-type">Sección</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Fin de la sección del contenido principal -->
     </main>
-</div>
+    </div>
 
-<!-- =============================================
-     esta parte es de todos los scripts del panel admin
-     ============================================= -->
-<script>
-    // esta parte es de la lógica para navegar entre secciones del panel
-    const sections = ['resumen', 'usuarios', 'reportes'];
+    <!-- Bloque de scripts JavaScript para el control dinámico del dashboard -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // Control de navegación AJAX-like entre las secciones principales
+        const sections = ['resumen', 'usuarios', 'reportes', 'clases', 'finanzas', 'ajustes'];
 
-    function showSection(name) {
-        sections.forEach(s => {
-            document.getElementById('section-' + s).classList.remove('active');
-            const navBtn = document.getElementById('nav-' + s);
-            if (navBtn) navBtn.classList.remove('active');
-        });
-        document.getElementById('section-' + name).classList.add('active');
-        const activeNav = document.getElementById('nav-' + name);
-        if (activeNav) activeNav.classList.add('active');
+        function showSection(name) {
+            sections.forEach(s => {
+                const secEl = document.getElementById('section-' + s);
+                if (secEl) secEl.classList.remove('active');
+                const navBtn = document.getElementById('nav-' + s);
+                if (navBtn) navBtn.classList.remove('active');
+            });
+            const targetSec = document.getElementById('section-' + name);
+            if (targetSec) targetSec.classList.add('active');
+            const activeNav = document.getElementById('nav-' + name);
+            if (activeNav) activeNav.classList.add('active');
 
-        const titles = {
-            resumen: ['Resumen General', 'Vista general del sistema LBWUS'],
-            usuarios: ['Gestión de Usuarios', 'Administra alumnos, profesores y administradores'],
-            reportes: ['Reportes', 'Revisa y resuelve los reportes del sistema']
-        };
-        document.getElementById('section-title').textContent = titles[name][0];
-        document.getElementById('section-subtitle').textContent = titles[name][1];
-    }
+            const titles = {
+                resumen: ['Resumen General', 'Vista general del sistema LBWUS'],
+                usuarios: ['Gestión de Usuarios', 'Administra alumnos, profesores y administradores'],
+                reportes: ['Reportes', 'Revisa y resuelve los reportes del sistema'],
+                clases: ['Agenda de Clases', 'Visualiza el horario semanal de clases de la plataforma'],
+                finanzas: ['Finanzas y Solicitudes', 'Administra los balances y retiros de fondos de profesores'],
+                ajustes: ['Ajustes de Perfil', 'Configura tus opciones personales y apariencia del panel']
+            };
+            document.getElementById('section-title').textContent = titles[name][0];
+            document.getElementById('section-subtitle').textContent = titles[name][1];
+            
+            // Cambiar hash en la URL
+            window.location.hash = name;
+        }
 
-    // esta parte es para cambiar entre las tabs de tipos de usuario
-    function showUserTab(tab) {
-        ['alumnos', 'profesores', 'admins'].forEach(t => {
-            document.getElementById('users-' + t).style.display = 'none';
-            document.getElementById('tab-' + t).classList.remove('active');
-        });
-        document.getElementById('users-' + tab).style.display = 'block';
-        document.getElementById('tab-' + tab).classList.add('active');
-        document.getElementById('user-search').value = '';
-    }
+        // Manejo de tabs secundarias dentro de la sección de Usuarios
+        function showUserTab(tab) {
+            ['alumnos', 'profesores', 'admins'].forEach(t => {
+                document.getElementById('users-' + t).style.display = 'none';
+                document.getElementById('tab-' + t).classList.remove('active');
+            });
+            document.getElementById('users-' + tab).style.display = 'block';
+            document.getElementById('tab-' + tab).classList.add('active');
+            document.getElementById('user-search').value = '';
+        }
 
-    // esta parte es para buscar usuarios mientras el admin escribe en el campo
-    function filterUsers() {
-        const query = document.getElementById('user-search').value.toLowerCase();
-        const activeTab = document.querySelector('[id^="users-"]:not([style*="display: none"])');
-        if (!activeTab) return;
-        const rows = activeTab.querySelectorAll('.user-row');
-        rows.forEach(row => {
-            const name = row.dataset.name || '';
-            const rut = row.dataset.rut || '';
-            const correo = row.dataset.correo || '';
-            row.style.display = (name.includes(query) || rut.includes(query) || correo.includes(query)) ? '' : 'none';
-        });
-    }
+        // Filtro interactivo de búsqueda de usuarios por texto
+        function filterUsers() {
+            const query = document.getElementById('user-search').value.toLowerCase();
+            const activeTab = document.querySelector('[id^="users-"]:not([style*="display: none"])');
+            if (!activeTab) return;
+            const rows = activeTab.querySelectorAll('.user-row');
+            rows.forEach(row => {
+                const name = row.dataset.name || '';
+                const rut = row.dataset.rut || '';
+                const correo = row.dataset.correo || '';
+                row.style.display = (name.includes(query) || rut.includes(query) || correo.includes(query)) ? '' : 'none';
+            });
+        }
 
-    // esta parte es para filtrar los reportes por estado (todos, pendiente, resuelto)
-    let activeReportFilter = 'todos';
+        // Filtro de reportes por su estado actual (pendiente, resuelto, etc)
+        let activeReportFilter = 'todos';
 
-    function filterReports(estado, btn) {
-        activeReportFilter = estado;
-        document.querySelectorAll('.report-row').forEach(row => {
-            if (estado === 'todos' || row.dataset.estado === estado) {
-                row.style.display = '';
+        function filterReports(estado, btn) {
+            activeReportFilter = estado;
+            document.querySelectorAll('.report-row').forEach(row => {
+                if (estado === 'todos' || row.dataset.estado === estado) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            // quitar activo de otros botones del filtro
+            btn.closest('.panel-header').querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            // re-aplicar búsqueda
+            filterReportRows();
+        }
+
+        // Buscador de reportes por nombre del remitente o descripción del caso
+        function filterReportRows() {
+            const query = document.getElementById('report-search').value.toLowerCase();
+            document.querySelectorAll('.report-row').forEach(row => {
+                const name = row.dataset.name || '';
+                const desc = row.dataset.desc || '';
+                const matchFilter = activeReportFilter === 'todos' || row.dataset.estado === activeReportFilter;
+                const matchSearch = name.includes(query) || desc.includes(query);
+                row.style.display = (matchFilter && matchSearch) ? '' : 'none';
+            });
+        }
+
+        // Acción del botón para conmutar entre los estilos de día y noche
+        const themeIcon = document.getElementById('theme-icon');
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+            themeIcon.className = isLight ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
+            localStorage.setItem('admin-theme', isLight ? 'light' : 'dark');
+        }
+
+        // Carga de la preferencia de tema guardada en el navegador al iniciar y soporte de Hash de URL
+        window.addEventListener('DOMContentLoaded', () => {
+            const saved = localStorage.getItem('admin-theme');
+            if (saved === 'dark') {
+                document.body.classList.remove('light-mode');
+                themeIcon.className = 'bi bi-moon-stars-fill';
             } else {
-                row.style.display = 'none';
+                document.body.classList.add('light-mode');
+                themeIcon.className = 'bi bi-sun-fill';
+            }
+
+            // Cargar sección activa basada en el hash de la URL
+            const hash = window.location.hash.replace('#', '');
+            if (sections.includes(hash)) {
+                showSection(hash);
             }
         });
-        // quitar activo de otros botones del filtro
-        btn.closest('.panel-header').querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        // re-aplicar búsqueda
-        filterReportRows();
-    }
 
-    // esta parte es para buscar dentro de los reportes por nombre o descripción
-    function filterReportRows() {
-        const query = document.getElementById('report-search').value.toLowerCase();
-        document.querySelectorAll('.report-row').forEach(row => {
-            const name = row.dataset.name || '';
-            const desc = row.dataset.desc || '';
-            const matchFilter = activeReportFilter === 'todos' || row.dataset.estado === activeReportFilter;
-            const matchSearch = name.includes(query) || desc.includes(query);
-            row.style.display = (matchFilter && matchSearch) ? '' : 'none';
-        });
-    }
-
-    // esta parte es del botón para cambiar entre modo oscuro y modo claro
-    const themeBtn = document.getElementById('theme-btn');
-    const themeIcon = document.getElementById('theme-icon');
-
-    function toggleTheme() {
-        document.body.classList.toggle('light-mode');
-        const isLight = document.body.classList.contains('light-mode');
-        themeIcon.className = isLight ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
-        localStorage.setItem('admin-theme', isLight ? 'light' : 'dark');
-    }
-
-    // esta parte es de recuperar el tema guardado del usuario al cargar la página
-    window.addEventListener('DOMContentLoaded', () => {
-        const saved = localStorage.getItem('admin-theme');
-        if (saved === 'dark') {
-            document.body.classList.remove('light-mode');
-            themeIcon.className = 'bi bi-moon-stars-fill';
-        } else {
-            document.body.classList.add('light-mode');
-            themeIcon.className = 'bi bi-sun-fill';
+        // Control del Panel Lateral de Notificaciones
+        function toggleNotifications() {
+            const drawer = document.getElementById('notifications-drawer');
+            drawer.classList.toggle('active');
         }
-    });
-</script>
 
+        function clearNotifications() {
+            document.querySelectorAll('.notification-item.unread').forEach(item => {
+                item.classList.remove('unread');
+            });
+            const badge = document.getElementById('notif-badge-dot');
+            if (badge) badge.style.display = 'none';
+        }
+
+        // Control del Modal de Búsqueda Global (Ctrl + K)
+        function openSearchModal() {
+            const backdrop = document.getElementById('search-modal-backdrop');
+            backdrop.classList.add('active');
+            const input = document.getElementById('search-modal-input');
+            input.value = '';
+            setTimeout(() => input.focus(), 100);
+        }
+
+        function closeSearchModal() {
+            const backdrop = document.getElementById('search-modal-backdrop');
+            backdrop.classList.remove('active');
+        }
+
+        // Activar buscador por atajo de teclado
+        window.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                openSearchModal();
+            }
+            if (e.key === 'Escape') {
+                closeSearchModal();
+            }
+        });
+
+        // Simular redirección desde la búsqueda global
+        function navigateFromSearch(section) {
+            closeSearchModal();
+            showSection(section);
+        }
+
+        // Simular filtrado básico en búsqueda global
+        function handleGlobalSearch() {
+            const query = document.getElementById('search-modal-input').value.toLowerCase();
+            const resultsBox = document.getElementById('search-modal-results');
+            
+            if (!query) {
+                resultsBox.innerHTML = `
+                    <div class="search-section-label">Sugerencias rápidas</div>
+                    <div class="search-result-item" onclick="navigateFromSearch('usuarios')">
+                        <i class="bi bi-people"></i>
+                        <span>Gestión de Usuarios</span>
+                        <span class="search-result-type">Sección</span>
+                    </div>
+                    <div class="search-result-item" onclick="navigateFromSearch('reportes')">
+                        <i class="bi bi-flag"></i>
+                        <span>Reportes Pendientes</span>
+                        <span class="search-result-type">Sección</span>
+                    </div>
+                    <div class="search-result-item" onclick="navigateFromSearch('clases')">
+                        <i class="bi bi-calendar"></i>
+                        <span>Agenda de Clases</span>
+                        <span class="search-result-type">Sección</span>
+                    </div>
+                `;
+                return;
+            }
+
+            // Simulación de búsqueda en tiempo real
+            resultsBox.innerHTML = `
+                <div class="search-section-label">Resultados encontrados</div>
+                <div class="search-result-item" onclick="navigateFromSearch('usuarios')">
+                    <i class="bi bi-person-fill"></i>
+                    <span>Francheska (Alumno)</span>
+                    <span class="search-result-type">Registro</span>
+                </div>
+                <div class="search-result-item" onclick="navigateFromSearch('usuarios')">
+                    <i class="bi bi-person-workspace"></i>
+                    <span>Franco (Profesor)</span>
+                    <span class="search-result-type">Registro</span>
+                </div>
+                <div class="search-result-item" onclick="navigateFromSearch('reportes')">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <span>Problema de Conexión</span>
+                    <span class="search-result-type">Reporte</span>
+                </div>
+            `;
+        }
+
+        // Función para cambiar color de acento del panel
+        function changeAccentColor() {
+            const color = document.getElementById('accent-color-select').value;
+            const colors = {
+                purple: ['#a855f7', '#9333ea'],
+                blue: ['#3b82f6', '#1d4ed8'],
+                green: ['#10b981', '#059669']
+            };
+            document.documentElement.style.setProperty('--primary', colors[color][0]);
+            document.documentElement.style.setProperty('--primary-dark', colors[color][1]);
+            Swal.fire('¡Color Actualizado!', 'El color de acento se aplicó temporalmente.', 'success');
+        }
+    </script>
 </body>
+
 </html>

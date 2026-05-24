@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <!-- esta parte es de los metadatos base de todas las páginas del admin -->
+    <!-- Metadatos básicos compartidos por todo el portal de administración -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Admin — LBWUS{% endblock %}</title>
@@ -10,14 +10,14 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- esta parte es del css principal del panel admin -->
+    <!-- Estilos específicos de la interfaz del administrador -->
     <link rel="stylesheet" href="{% static 'admin_portal/css/admin_panel.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
 <body class="light-mode">
 <div class="admin-wrapper">
 
-    <!-- esta parte es del sidebar izquierdo compartido en todas las páginas admin -->
+    <!-- Menú lateral izquierdo de navegación común -->
     <aside class="sidebar" id="sidebar">
 
         <a class="sidebar-brand" href="{% url 'dashboard_admin' %}">
@@ -28,7 +28,7 @@
             </div>
         </a>
 
-        <!-- esta parte es del bloque del admin logueado -->
+        <!-- Mini ficha del perfil del administrador que tiene la sesión activa -->
         <div class="sidebar-user">
             <div class="sidebar-user-avatar">
                 {{ admin.nombre|slice:":1"|upper|default:"A" }}
@@ -39,7 +39,7 @@
             </div>
         </div>
 
-        <!-- esta parte es de los links de navegación del sidebar -->
+        <!-- Enlaces principales del menú para navegar entre secciones -->
         <nav class="sidebar-nav">
             <span class="nav-label">Principal</span>
 
@@ -74,9 +74,26 @@
                 <i class="bi bi-telephone-fill"></i>
                 Contactos
             </a>
+
+            <span class="nav-label">Herramientas</span>
+
+            <a class="nav-item {% block nav_clases %}{% endblock %}" href="{% url 'dashboard_admin' %}#clases">
+                <i class="bi bi-calendar3"></i>
+                Clases / Horarios
+            </a>
+
+            <a class="nav-item {% block nav_finanzas %}{% endblock %}" href="{% url 'dashboard_admin' %}#finanzas">
+                <i class="bi bi-wallet2"></i>
+                Finanzas / Retiros
+            </a>
+
+            <a class="nav-item {% block nav_ajustes %}{% endblock %}" href="{% url 'dashboard_admin' %}#ajustes">
+                <i class="bi bi-gear-fill"></i>
+                Ajustes
+            </a>
         </nav>
 
-        <!-- esta parte es del botón de cerrar sesión abajo del sidebar -->
+        <!-- Botón para cerrar la sesión y salir al inicio público -->
         <div class="sidebar-footer">
             <a href="{% url 'home' %}" class="sidebar-logout">
                 <i class="bi bi-box-arrow-left"></i>
@@ -85,31 +102,114 @@
         </div>
     </aside>
 
-    <!-- esta parte es del área de contenido a la derecha del sidebar -->
+    <!-- Sección derecha donde renderizamos el contenido principal -->
     <main class="main-content">
 
-        <!-- esta parte es de la barra superior con título y botón de tema -->
+        <!-- Barra superior con el nombre de la sección y selector de tema -->
         <div class="topbar">
             <div class="topbar-left">
                 <h1>{% block page_title %}Panel Admin{% endblock %}</h1>
                 <p>{% block page_subtitle %}LBWUS — Panel de Administración{% endblock %}</p>
             </div>
             <div class="topbar-right">
+                <!-- Botón de búsqueda flotante (Ctrl + K) -->
+                <button class="theme-btn" onclick="openSearchModal()" title="Buscar (Ctrl + K)">
+                    <i class="bi bi-search"></i>
+                </button>
+                <!-- Botón de notificaciones con punto indicador de pendientes -->
+                <button class="theme-btn" onclick="toggleNotifications()" title="Notificaciones" style="position:relative;">
+                    <i class="bi bi-bell-fill"></i>
+                    <span class="notification-badge-dot" id="notif-badge-dot"></span>
+                </button>
+                <!-- Botón de alternar tema claro/oscuro -->
                 <button class="theme-btn" onclick="toggleTheme()" title="Cambiar tema">
                     <i class="bi bi-sun-fill" id="theme-icon"></i>
                 </button>
             </div>
         </div>
 
-        <!-- esta parte es del contenido específico de cada página -->
+        <!-- Contenedor donde se inserta el HTML dinámico de cada subpantalla -->
         <div class="page-content">
             {% block content %}{% endblock %}
         </div>
 
     </main>
+
+    <!-- Panel lateral deslizable de Notificaciones (Drawer) -->
+    <div class="notifications-drawer" id="notifications-drawer">
+        <div class="drawer-header">
+            <h2>Notificaciones</h2>
+            <button class="close-drawer-btn" onclick="toggleNotifications()">&times;</button>
+        </div>
+        <div class="drawer-body">
+            <div class="notification-item unread" id="notif-1">
+                <div class="notification-icon purple">
+                    <i class="bi bi-person-plus-fill"></i>
+                </div>
+                <div class="notification-content">
+                    <p class="notification-title">Nuevo Alumno Registrado</p>
+                    <p class="notification-desc">El estudiante Jose se ha registrado en el Plan Básico.</p>
+                    <span class="notification-time">Hace 5 minutos</span>
+                </div>
+            </div>
+            <div class="notification-item unread" id="notif-2">
+                <div class="notification-icon blue">
+                    <i class="bi bi-cash-stack"></i>
+                </div>
+                <div class="notification-content">
+                    <p class="notification-title">Solicitud de Retiro</p>
+                    <p class="notification-desc">El profesor Tánger ha solicitado un retiro de $45.000.</p>
+                    <span class="notification-time">Hace 2 horas</span>
+                </div>
+            </div>
+            <div class="notification-item" id="notif-3">
+                <div class="notification-icon amber">
+                    <i class="bi bi-exclamation-circle-fill"></i>
+                </div>
+                <div class="notification-content">
+                    <p class="notification-title">Reporte Recibido</p>
+                    <p class="notification-desc">Se reportó un problema de conexión en la clase de Matemáticas.</p>
+                    <span class="notification-time">Ayer</span>
+                </div>
+            </div>
+        </div>
+        <div class="drawer-footer">
+            <button class="btn-clear-notifications" onclick="clearNotifications()">Marcar todas como leídas</button>
+        </div>
+    </div>
+
+    <!-- Modal de Búsqueda Global (Ctrl + K) -->
+    <div class="search-modal-backdrop" id="search-modal-backdrop" onclick="closeSearchModal()">
+        <div class="search-modal" onclick="event.stopPropagation()">
+            <div class="search-modal-header">
+                <i class="bi bi-search"></i>
+                <input type="text" class="search-modal-input" id="search-modal-input" placeholder="Buscar alumnos, profesores, reportes..." oninput="handleGlobalSearch()">
+                <span class="search-esc-badge">ESC</span>
+            </div>
+            <div class="search-modal-results" id="search-modal-results">
+                <div class="search-section-label">Sugerencias rápidas</div>
+                <div class="search-result-item" onclick="navigateFromSearch('usuarios')">
+                    <i class="bi bi-people"></i>
+                    <span>Gestión de Usuarios</span>
+                    <span class="search-result-type">Sección</span>
+                </div>
+                <div class="search-result-item" onclick="navigateFromSearch('reportes')">
+                    <i class="bi bi-flag"></i>
+                    <span>Reportes Pendientes</span>
+                    <span class="search-result-type">Sección</span>
+                </div>
+                <div class="search-result-item" onclick="navigateFromSearch('clases')">
+                    <i class="bi bi-calendar"></i>
+                    <span>Agenda de Clases</span>
+                    <span class="search-result-type">Sección</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
-<!-- esta parte es del script del tema oscuro/claro compartido -->
+<!-- Script para controlar el cambio de interfaz (claro/oscuro) -->
 <script>
     function toggleTheme() {
         document.body.classList.toggle('light-mode');
@@ -117,18 +217,110 @@
         document.getElementById('theme-icon').className = isLight ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
         localStorage.setItem('admin-theme', isLight ? 'light' : 'dark');
     }
-    // esta parte es de aplicar el tema al cargar - modo claro por defecto
+    // Al cargar el documento, aplicamos el tema que esté guardado (por defecto claro)
     window.addEventListener('DOMContentLoaded', () => {
         const saved = localStorage.getItem('admin-theme');
         if (saved === 'dark') {
             document.body.classList.remove('light-mode');
             document.getElementById('theme-icon').className = 'bi bi-moon-stars-fill';
         } else {
-            // si no hay preferencia guardada o es 'light', modo claro
             document.body.classList.add('light-mode');
             document.getElementById('theme-icon').className = 'bi bi-sun-fill';
         }
     });
+
+    // Control del Panel Lateral de Notificaciones
+    function toggleNotifications() {
+        const drawer = document.getElementById('notifications-drawer');
+        drawer.classList.toggle('active');
+    }
+
+    function clearNotifications() {
+        document.querySelectorAll('.notification-item.unread').forEach(item => {
+            item.classList.remove('unread');
+        });
+        const badge = document.getElementById('notif-badge-dot');
+        if (badge) badge.style.display = 'none';
+    }
+
+    // Control del Modal de Búsqueda Global (Ctrl + K)
+    function openSearchModal() {
+        const backdrop = document.getElementById('search-modal-backdrop');
+        backdrop.classList.add('active');
+        const input = document.getElementById('search-modal-input');
+        input.value = '';
+        setTimeout(() => input.focus(), 100);
+    }
+
+    function closeSearchModal() {
+        const backdrop = document.getElementById('search-modal-backdrop');
+        backdrop.classList.remove('active');
+    }
+
+    // Activar buscador por atajo de teclado
+    window.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            openSearchModal();
+        }
+        if (e.key === 'Escape') {
+            closeSearchModal();
+        }
+    });
+
+    // Simular redirección al dashboard desde la búsqueda
+    function navigateFromSearch(section) {
+        closeSearchModal();
+        window.location.href = "{% url 'dashboard_admin' %}#" + section;
+    }
+
+    // Simular filtrado básico en búsqueda global
+    function handleGlobalSearch() {
+        const query = document.getElementById('search-modal-input').value.toLowerCase();
+        const resultsBox = document.getElementById('search-modal-results');
+        
+        if (!query) {
+            resultsBox.innerHTML = `
+                <div class="search-section-label">Sugerencias rápidas</div>
+                <div class="search-result-item" onclick="navigateFromSearch('usuarios')">
+                    <i class="bi bi-people"></i>
+                    <span>Gestión de Usuarios</span>
+                    <span class="search-result-type">Sección</span>
+                </div>
+                <div class="search-result-item" onclick="navigateFromSearch('reportes')">
+                    <i class="bi bi-flag"></i>
+                    <span>Reportes Pendientes</span>
+                    <span class="search-result-type">Sección</span>
+                </div>
+                <div class="search-result-item" onclick="navigateFromSearch('clases')">
+                    <i class="bi bi-calendar"></i>
+                    <span>Agenda de Clases</span>
+                    <span class="search-result-type">Sección</span>
+                </div>
+            `;
+            return;
+        }
+
+        // Simulación de búsqueda en tiempo real
+        resultsBox.innerHTML = `
+            <div class="search-section-label">Resultados encontrados</div>
+            <div class="search-result-item" onclick="navigateFromSearch('usuarios')">
+                <i class="bi bi-person-fill"></i>
+                <span>Francheska (Alumno)</span>
+                <span class="search-result-type">Registro</span>
+            </div>
+            <div class="search-result-item" onclick="navigateFromSearch('usuarios')">
+                <i class="bi bi-person-workspace"></i>
+                <span>Franco (Profesor)</span>
+                <span class="search-result-type">Registro</span>
+            </div>
+            <div class="search-result-item" onclick="navigateFromSearch('reportes')">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <span>Problema de Conexión</span>
+                <span class="search-result-type">Reporte</span>
+            </div>
+        `;
+    }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 {% block extra_js %}{% endblock %}
