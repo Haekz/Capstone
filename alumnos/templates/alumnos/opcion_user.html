@@ -1,4 +1,5 @@
-﻿{% extends 'alumnos/base.html' %}
+<!-- esta parte es de la pantalla donde el usuario elige si se registra como profesor, alumno o tutor -->
+{% extends 'alumnos/base.html' %}
 {% load static %}
 
 {% block title %}LBWUS | Opciones de Usuario{% endblock %}
@@ -17,7 +18,7 @@
     <div class='options-btn-group'>
         <a href='{% url 'regis_prof' %}' class='options-btn'>Profesor</a>
         <a href='{% url 'regis_alum' %}' class='options-btn'>Alumno</a>
-        <a href='{% url 'regis_tutor' %}' class='options-btn'>Tutor</a>
+        <a href='{% url 'regis_tutor' %}' class='options-btn'>Administrador</a>
     </div>
 </section>
 {% endblock %}

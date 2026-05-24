@@ -7,7 +7,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="{% static 'img/Logo.png' %}">
-    <!-- Bootstrap CSS (librerias)-->
+    <!-- esta parte es de cargar bootstrap y los iconos que usamos en toda la página -->
     <title>LBWUS</title>
     {% load static %}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -34,7 +34,7 @@
         align-items: center;
         min-height: 100vh;
         padding-top: 80px;
-        /* Para compensar la barra de navegación fija */
+        /* esta parte es de compensar el espacio que ocupa la barra de navegación fija arriba */
         padding-bottom: 50px;
 
 
@@ -42,7 +42,7 @@
 </style>
 
 <body>
-    <!--Navbar-->
+    <!-- esta parte es de la barra de navegación principal -->
     <nav class="navbar navbar-expand-lg fixed-top">
         <div class="container-fluid">
             <a class="navbar-brand me-auto" href="#">
@@ -78,9 +78,9 @@
             </div>
             <a href="" class="registrarse-button btn btn-primary">Registrarse</a>
             <a href="{% url 'opcion_user' %}" class="login-button btn btn-secondary">Iniciar</a>
-            <!-- Botón para cambiar el tema con iconos -->
+            <!-- esta parte es de el botón que cambia entre tema claro y oscuro -->
             <button onclick="toggleTheme()" id="theme-toggler" class="btn btn-outline-light ms-2">
-                <i class="bi bi-sun"></i> <!-- Icono predeterminado para el tema claro -->
+                <i class="bi bi-sun"></i> <!-- esta parte es de el ícono del sol que aparece por defecto en el tema claro -->
             </button>
             <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar"
                 aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
@@ -88,16 +88,16 @@
             </button>
         </div>
     </nav>
-    <!--End Navbar-->
+    <!-- esta parte es de donde termina la barra de navegación -->
     <div class="container w-75 bg-primary mt-4 rounded shadow">
         <div class="row align-items-stretch">
             <div class="col bg d-none d-lg-block col-md-5 col-lg-5 col-xl-6 rounded"></div>
             <div class="col bg-white p-5 rounded-end">
                 <h2 class="fw-bold text-center py-5">Crear Cuenta de Alumno</h2>
-                <!-- Formulario de registro de alumno -->
+                <!-- esta parte es de el formulario para registrar un alumno nuevo -->
                 <form id="formAlumnosAdd" action="{% url 'alumnos_Add' %}" method="POST">
                     {% csrf_token %}
-                    <!-- Campos personalizados para el registro de alumno -->
+                    <!-- esta parte es de los campos que hay que llenar con los datos del alumno -->
                     <div class="mb-4 w-100">
                         <label for="rut" class="form-label">RUT</label>
                         <input type="text" class="form-control" id="rut" name="rut" required>
@@ -157,12 +157,12 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <!-- Botón de enviar -->
+                    <!-- esta parte es de el botón para enviar y crear la cuenta del alumno -->
                     <div class="d-grid w-100">
                         <button type="submit" class="btn btn-primary">Crear Cuenta</button>
                     </div>
                 </form>
-                <!-- Enlace para iniciar sesión si ya tiene cuenta -->
+                <!-- esta parte es de el link por si el usuario ya tiene cuenta y quiere iniciar sesión -->
                 <div class="my-3 text-center w-100">
                     <span>¿Ya tienes cuenta? <a href="{% url 'home' %}">Inicia sesión aquí</a></span>
                 </div>

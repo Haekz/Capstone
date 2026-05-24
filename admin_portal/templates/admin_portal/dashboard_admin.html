@@ -1,0 +1,655 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <!-- esta parte es de los metadatos básicos de la página del panel admin -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Panel de administración LBWUS - Gestión de usuarios y reportes">
+    <title>Panel Admin - LBWUS</title>
+    <link rel="icon" href="{% static 'alumnos/img/Logo.png' %}">
+
+    <!-- esta parte es de los iconos de Bootstrap y la fuente Inter de Google -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- esta parte es de nuestros estilos personalizados del panel admin -->
+    <link rel="stylesheet" href="{% static 'admin_portal/css/admin_panel.css' %}">
+</head>
+<body>
+
+<!-- esta parte es del layout principal que envuelve todo el panel -->
+<div class="admin-wrapper" id="admin-wrapper">
+
+    <!-- =============================================
+         esta parte es del sidebar izquierdo con navegación
+         ============================================= -->
+    <aside class="sidebar" id="sidebar">
+
+        <!-- esta parte es del logo y nombre arriba del sidebar -->
+        <a class="sidebar-brand" href="#">
+            <img src="{% static 'alumnos/img/Logo.png' %}" alt="Logo LBWUS">
+            <div class="sidebar-brand-text">
+                <span class="sidebar-brand-name">LBWUS</span>
+                <span class="sidebar-brand-role">Admin Portal</span>
+            </div>
+        </a>
+
+        <!-- esta parte es del bloque del administrador logueado -->
+        <div class="sidebar-user">
+            <div class="sidebar-user-avatar" id="user-avatar-initials">
+                {{ admin.nombre|slice:":1"|upper }}
+            </div>
+            <div class="sidebar-user-info">
+                <div class="sidebar-user-name">{{ admin.nombre }}</div>
+                <div class="sidebar-user-role">Administrador</div>
+            </div>
+        </div>
+
+        <!-- esta parte es de los links de navegación dentro del sidebar -->
+        <nav class="sidebar-nav">
+            <span class="nav-label">Principal</span>
+
+            <button class="nav-item active" id="nav-resumen" onclick="showSection('resumen')">
+                <i class="bi bi-grid-1x2-fill"></i>
+                Resumen General
+            </button>
+
+            <button class="nav-item" id="nav-usuarios" onclick="showSection('usuarios')">
+                <i class="bi bi-people-fill"></i>
+                Gestión de Usuarios
+            </button>
+
+            <button class="nav-item" id="nav-reportes" onclick="showSection('reportes')">
+                <i class="bi bi-flag-fill"></i>
+                Reportes
+                {% if reportes_pendientes > 0 %}
+                    <span class="nav-badge">{{ reportes_pendientes }}</span>
+                {% endif %}
+            </button>
+
+            <span class="nav-label">Herramientas</span>
+
+            <a class="nav-item" href="{% url 'crud' %}">
+                <i class="bi bi-person-plus-fill"></i>
+                Agregar Alumno
+            </a>
+
+            <a class="nav-item" href="{% url 'planes_adm' %}">
+                <i class="bi bi-collection-fill"></i>
+                Gestionar Planes
+            </a>
+
+            <a class="nav-item" href="{% url 'nosotros_adm' %}">
+                <i class="bi bi-info-circle-fill"></i>
+                Nosotros
+            </a>
+
+            <a class="nav-item" href="{% url 'contactos_adm' %}">
+                <i class="bi bi-telephone-fill"></i>
+                Contactos
+            </a>
+        </nav>
+
+        <!-- esta parte es del botón de cerrar sesión pegado abajo del sidebar -->
+        <div class="sidebar-footer">
+            <a href="{% url 'home' %}" class="sidebar-logout">
+                <i class="bi bi-box-arrow-left"></i>
+                Cerrar Sesión
+            </a>
+        </div>
+    </aside>
+
+    <!-- =============================================
+         esta parte es del contenido principal a la derecha
+         ============================================= -->
+    <main class="main-content">
+
+        <!-- esta parte es de la barra superior con el título y acciones rápidas -->
+        <div class="topbar">
+            <div class="topbar-left">
+                <h1 id="section-title">Resumen General</h1>
+                <p id="section-subtitle">Bienvenido de vuelta, {{ admin.nombre }}</p>
+            </div>
+            <div class="topbar-right">
+                <!-- esta parte es del botón para cambiar entre modo oscuro y claro -->
+                <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Cambiar tema">
+                    <i class="bi bi-moon-stars-fill" id="theme-icon"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- =============================================
+             esta parte es del contenido que cambia según la sección activa
+             ============================================= -->
+        <div class="page-content">
+
+            <!-- ============ SECCIÓN: RESUMEN GENERAL ============ -->
+            <div class="admin-section active" id="section-resumen">
+
+                <!-- esta parte es de las 4 tarjetas de estadísticas rápidas -->
+                <div class="stats-grid">
+
+                    <div class="stat-card purple">
+                        <div class="stat-icon">
+                            <i class="bi bi-mortarboard-fill"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value">{{ total_alumnos }}</div>
+                            <div class="stat-label">Alumnos Registrados</div>
+                            <div class="stat-change up"><i class="bi bi-arrow-up-short"></i> Total en el sistema</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card blue">
+                        <div class="stat-icon">
+                            <i class="bi bi-person-workspace"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value">{{ total_profesores }}</div>
+                            <div class="stat-label">Profesores Activos</div>
+                            <div class="stat-change up"><i class="bi bi-arrow-up-short"></i> Profesionales inscritos</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card amber">
+                        <div class="stat-icon">
+                            <i class="bi bi-flag-fill"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value">{{ reportes_pendientes }}</div>
+                            <div class="stat-label">Reportes Pendientes</div>
+                            {% if reportes_pendientes > 0 %}
+                                <div class="stat-change down"><i class="bi bi-exclamation-circle"></i> Requieren atención</div>
+                            {% else %}
+                                <div class="stat-change up"><i class="bi bi-check-circle"></i> Todo resuelto</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="stat-card green">
+                        <div class="stat-icon">
+                            <i class="bi bi-book-fill"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value">{{ total_clases }}</div>
+                            <div class="stat-label">Clases Creadas</div>
+                            <div class="stat-change up"><i class="bi bi-arrow-up-short"></i> Clases en el sistema</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- esta parte es de la fila del medio con lista de usuarios y reportes recientes -->
+                <div class="middle-row">
+
+                    <!-- esta parte es de los últimos usuarios registrados -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <span class="panel-title">
+                                <i class="bi bi-person-lines-fill"></i>
+                                Últimos Registros
+                            </span>
+                            <button class="panel-action" onclick="showSection('usuarios')">Ver todos →</button>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table class="user-table">
+                                <thead>
+                                    <tr>
+                                        <th>Usuario</th>
+                                        <th>Tipo</th>
+                                        <th>Correo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for alumno in ultimos_alumnos %}
+                                    <tr>
+                                        <td>
+                                            <div class="user-cell">
+                                                <div class="user-avatar-sm">{{ alumno.nombre|slice:":1"|upper }}</div>
+                                                <div>
+                                                    <div class="user-cell-name">{{ alumno.nombre }}</div>
+                                                    <div class="user-cell-sub">{{ alumno.rut }}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td><span class="badge badge-alumno"><i class="bi bi-circle-fill" style="font-size:0.4rem;"></i> Alumno</span></td>
+                                        <td>{{ alumno.correo_electronico }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr><td colspan="3"><div class="empty-state"><i class="bi bi-inbox"></i><p>Sin alumnos registrados</p></div></td></tr>
+                                    {% endfor %}
+                                    {% for prof in ultimos_profesores %}
+                                    <tr>
+                                        <td>
+                                            <div class="user-cell">
+                                                <div class="user-avatar-sm" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">{{ prof.nombre|slice:":1"|upper }}</div>
+                                                <div>
+                                                    <div class="user-cell-name">{{ prof.nombre }}</div>
+                                                    <div class="user-cell-sub">{{ prof.especialidad }}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td><span class="badge badge-profesor"><i class="bi bi-circle-fill" style="font-size:0.4rem;"></i> Profesor</span></td>
+                                        <td>{{ prof.correo_electronico }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- esta parte es de los reportes recientes que llegaron -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <span class="panel-title">
+                                <i class="bi bi-flag-fill"></i>
+                                Reportes Recientes
+                            </span>
+                            <button class="panel-action" onclick="showSection('reportes')">Ver todos →</button>
+                        </div>
+                        <div class="panel-body">
+                            {% for reporte in reportes_recientes %}
+                            <div class="report-item">
+                                <div class="report-icon {{ reporte.remitente_tipo }}">
+                                    <i class="bi bi-{% if reporte.remitente_tipo == 'profesor' %}person-workspace{% else %}mortarboard-fill{% endif %}"></i>
+                                </div>
+                                <div class="report-meta">
+                                    <div class="report-name">{{ reporte.remitente_nombre }}</div>
+                                    <div class="report-desc">{{ reporte.descripcion }}</div>
+                                    <div class="report-date">
+                                        <i class="bi bi-calendar3"></i>
+                                        {{ reporte.fecha_reporte|date:"d M Y" }}
+                                        &nbsp;·&nbsp;
+                                        <span class="badge badge-{{ reporte.remitente_tipo }}">{{ reporte.get_remitente_tipo_display }}</span>
+                                    </div>
+                                </div>
+                                <div class="report-actions">
+                                    {% if reporte.estado == 'pendiente' %}
+                                    <a href="{% url 'resolver_reporte' reporte.id_reporte %}" class="btn-action resolve" title="Marcar como resuelto">
+                                        <i class="bi bi-check-lg"></i>
+                                    </a>
+                                    {% else %}
+                                    <span class="badge badge-resuelto"><i class="bi bi-check-circle-fill"></i> Resuelto</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="empty-state">
+                                <i class="bi bi-shield-check"></i>
+                                <p>No hay reportes recientes</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ============ SECCIÓN: GESTIÓN DE USUARIOS ============ -->
+            <div class="admin-section" id="section-usuarios">
+
+                <div class="panel">
+                    <!-- esta parte es de las pestañas para filtrar por tipo de usuario -->
+                    <div class="filter-tabs">
+                        <button class="filter-tab active" id="tab-alumnos" onclick="showUserTab('alumnos')">
+                            <i class="bi bi-mortarboard-fill"></i> Alumnos ({{ total_alumnos }})
+                        </button>
+                        <button class="filter-tab" id="tab-profesores" onclick="showUserTab('profesores')">
+                            <i class="bi bi-person-workspace"></i> Profesores ({{ total_profesores }})
+                        </button>
+                        <button class="filter-tab" id="tab-admins" onclick="showUserTab('admins')">
+                            <i class="bi bi-shield-fill"></i> Administradores ({{ total_admins }})
+                        </button>
+                    </div>
+
+                    <!-- esta parte es de la barra con buscador y botón de agregar -->
+                    <div class="users-toolbar">
+                        <div class="search-bar" style="flex:1; max-width:360px;">
+                            <i class="bi bi-search"></i>
+                            <input type="text" id="user-search" placeholder="Buscar por nombre, RUT o correo..." oninput="filterUsers()">
+                        </div>
+                        <a href="{% url 'alumnos_Add' %}" class="btn-primary" id="add-user-btn">
+                            <i class="bi bi-person-plus-fill"></i>
+                            Agregar Usuario
+                        </a>
+                    </div>
+
+                    <!-- esta parte es de la tabla de alumnos -->
+                    <div id="users-alumnos" style="overflow-x:auto;">
+                        <table class="user-table" id="table-alumnos">
+                            <thead>
+                                <tr>
+                                    <th>Alumno</th>
+                                    <th>RUT</th>
+                                    <th>Nivel</th>
+                                    <th>Correo</th>
+                                    <th>Teléfono</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for alumno in alumnos %}
+                                <tr class="user-row" data-name="{{ alumno.nombre|lower }}" data-rut="{{ alumno.rut }}" data-correo="{{ alumno.correo_electronico|lower }}">
+                                    <td>
+                                        <div class="user-cell">
+                                            <div class="user-avatar-sm">{{ alumno.nombre|slice:":1"|upper }}</div>
+                                            <div>
+                                                <div class="user-cell-name">{{ alumno.nombre }}</div>
+                                                <div class="user-cell-sub">{{ alumno.direccion|truncatechars:30 }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ alumno.rut }}</td>
+                                    <td>
+                                        <span class="badge badge-alumno">{{ alumno.get_nivel_educacion_display }}</span>
+                                    </td>
+                                    <td>{{ alumno.correo_electronico }}</td>
+                                    <td>{{ alumno.telefono }}</td>
+                                    <td>
+                                        <div style="display:flex; gap:6px;">
+                                            <a href="{% url 'alumnos_findEdit' alumno.id_alumno %}" class="btn-action edit" title="Editar">
+                                                <i class="bi bi-pencil-fill"></i>
+                                            </a>
+                                            <a href="{% url 'alumnos_del' alumno.id_alumno %}" class="btn-action delete" title="Eliminar"
+                                               onclick="return confirm('¿Seguro que quieres eliminar a {{ alumno.nombre }}?')">
+                                                <i class="bi bi-trash3-fill"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="6">
+                                    <div class="empty-state">
+                                        <i class="bi bi-people"></i>
+                                        <p>No hay alumnos registrados todavía</p>
+                                    </div>
+                                </td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- esta parte es de la tabla de profesores (oculta por defecto) -->
+                    <div id="users-profesores" style="display:none; overflow-x:auto;">
+                        <table class="user-table" id="table-profesores">
+                            <thead>
+                                <tr>
+                                    <th>Profesor</th>
+                                    <th>RUT</th>
+                                    <th>Especialidad</th>
+                                    <th>Correo</th>
+                                    <th>Teléfono</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for prof in profesores %}
+                                <tr class="user-row" data-name="{{ prof.nombre|lower }}" data-rut="{{ prof.rut }}" data-correo="{{ prof.correo_electronico|lower }}">
+                                    <td>
+                                        <div class="user-cell">
+                                            <div class="user-avatar-sm" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">{{ prof.nombre|slice:":1"|upper }}</div>
+                                            <div>
+                                                <div class="user-cell-name">{{ prof.nombre }}</div>
+                                                <div class="user-cell-sub">{{ prof.direccion|truncatechars:30 }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ prof.rut }}</td>
+                                    <td><span class="badge badge-profesor">{{ prof.especialidad }}</span></td>
+                                    <td>{{ prof.correo_electronico }}</td>
+                                    <td>{{ prof.telefono }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="5">
+                                    <div class="empty-state">
+                                        <i class="bi bi-person-workspace"></i>
+                                        <p>No hay profesores registrados todavía</p>
+                                    </div>
+                                </td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- esta parte es de la tabla de administradores (oculta por defecto) -->
+                    <div id="users-admins" style="display:none; overflow-x:auto;">
+                        <table class="user-table" id="table-admins">
+                            <thead>
+                                <tr>
+                                    <th>Administrador</th>
+                                    <th>RUT</th>
+                                    <th>Correo</th>
+                                    <th>Teléfono</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for admin_user in admins %}
+                                <tr class="user-row" data-name="{{ admin_user.nombre|lower }}" data-rut="{{ admin_user.rut }}" data-correo="{{ admin_user.correo_electronico|lower }}">
+                                    <td>
+                                        <div class="user-cell">
+                                            <div class="user-avatar-sm" style="background: linear-gradient(135deg, #f59e0b, #d97706);">{{ admin_user.nombre|slice:":1"|upper }}</div>
+                                            <div>
+                                                <div class="user-cell-name">{{ admin_user.nombre }}</div>
+                                                <div class="user-cell-sub">{{ admin_user.direccion|truncatechars:30 }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ admin_user.rut }}</td>
+                                    <td>{{ admin_user.correo_electronico }}</td>
+                                    <td>{{ admin_user.telefono }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="4">
+                                    <div class="empty-state">
+                                        <i class="bi bi-shield-lock"></i>
+                                        <p>No hay administradores registrados</p>
+                                    </div>
+                                </td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============ SECCIÓN: REPORTES COMPLETOS ============ -->
+            <div class="admin-section" id="section-reportes">
+
+                <div class="panel reports-full-panel">
+                    <div class="panel-header">
+                        <span class="panel-title">
+                            <i class="bi bi-flag-fill"></i>
+                            Todos los Reportes
+                        </span>
+                        <!-- esta parte es del filtro por estado del reporte -->
+                        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                            <button class="filter-tab active" style="border-radius:6px; border:1px solid var(--border);" onclick="filterReports('todos', this)">Todos</button>
+                            <button class="filter-tab" style="border-radius:6px; border:1px solid var(--border);" onclick="filterReports('pendiente', this)">Pendientes</button>
+                            <button class="filter-tab" style="border-radius:6px; border:1px solid var(--border);" onclick="filterReports('resuelto', this)">Resueltos</button>
+                        </div>
+                    </div>
+
+                    <!-- esta parte es de la barra de búsqueda de reportes -->
+                    <div class="users-toolbar">
+                        <div class="search-bar" style="flex:1; max-width:400px;">
+                            <i class="bi bi-search"></i>
+                            <input type="text" id="report-search" placeholder="Buscar por nombre o descripción..." oninput="filterReportRows()">
+                        </div>
+                    </div>
+
+                    <div style="overflow-x:auto;">
+                        <table class="user-table" id="table-reportes">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Remitente</th>
+                                    <th>Tipo</th>
+                                    <th>Descripción</th>
+                                    <th>Fecha</th>
+                                    <th>Estado</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for reporte in todos_reportes %}
+                                <tr class="report-row" data-estado="{{ reporte.estado }}" data-name="{{ reporte.remitente_nombre|lower }}" data-desc="{{ reporte.descripcion|lower }}">
+                                    <td style="color:var(--text-muted); font-size:0.78rem;">#{{ reporte.id_reporte }}</td>
+                                    <td>
+                                        <div class="user-cell">
+                                            <div class="report-icon {{ reporte.remitente_tipo }}" style="width:32px; height:32px; font-size:0.85rem;">
+                                                <i class="bi bi-{% if reporte.remitente_tipo == 'profesor' %}person-workspace{% else %}mortarboard-fill{% endif %}"></i>
+                                            </div>
+                                            <div class="user-cell-name">{{ reporte.remitente_nombre }}</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-{{ reporte.remitente_tipo }}">{{ reporte.get_remitente_tipo_display }}</span>
+                                    </td>
+                                    <td style="max-width:280px; color:var(--text-secondary);">
+                                        {{ reporte.descripcion|truncatechars:80 }}
+                                    </td>
+                                    <td style="color:var(--text-muted); font-size:0.8rem; white-space:nowrap;">
+                                        {{ reporte.fecha_reporte|date:"d/m/Y" }}
+                                    </td>
+                                    <td>
+                                        {% if reporte.estado == 'pendiente' %}
+                                            <span class="badge badge-pendiente"><i class="bi bi-clock-fill"></i> Pendiente</span>
+                                        {% else %}
+                                            <span class="badge badge-resuelto"><i class="bi bi-check-circle-fill"></i> Resuelto</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if reporte.estado == 'pendiente' %}
+                                        <a href="{% url 'resolver_reporte' reporte.id_reporte %}" class="btn-action resolve" title="Marcar como resuelto">
+                                            <i class="bi bi-check-lg"></i>
+                                        </a>
+                                        {% else %}
+                                        <span style="color:var(--text-muted); font-size:0.78rem;">—</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="7">
+                                    <div class="empty-state">
+                                        <i class="bi bi-shield-check"></i>
+                                        <p>No hay reportes en el sistema todavía</p>
+                                    </div>
+                                </td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <!-- esta parte es de donde termina el contenido del panel -->
+    </main>
+</div>
+
+<!-- =============================================
+     esta parte es de todos los scripts del panel admin
+     ============================================= -->
+<script>
+    // esta parte es de la lógica para navegar entre secciones del panel
+    const sections = ['resumen', 'usuarios', 'reportes'];
+
+    function showSection(name) {
+        sections.forEach(s => {
+            document.getElementById('section-' + s).classList.remove('active');
+            const navBtn = document.getElementById('nav-' + s);
+            if (navBtn) navBtn.classList.remove('active');
+        });
+        document.getElementById('section-' + name).classList.add('active');
+        const activeNav = document.getElementById('nav-' + name);
+        if (activeNav) activeNav.classList.add('active');
+
+        const titles = {
+            resumen: ['Resumen General', 'Vista general del sistema LBWUS'],
+            usuarios: ['Gestión de Usuarios', 'Administra alumnos, profesores y administradores'],
+            reportes: ['Reportes', 'Revisa y resuelve los reportes del sistema']
+        };
+        document.getElementById('section-title').textContent = titles[name][0];
+        document.getElementById('section-subtitle').textContent = titles[name][1];
+    }
+
+    // esta parte es para cambiar entre las tabs de tipos de usuario
+    function showUserTab(tab) {
+        ['alumnos', 'profesores', 'admins'].forEach(t => {
+            document.getElementById('users-' + t).style.display = 'none';
+            document.getElementById('tab-' + t).classList.remove('active');
+        });
+        document.getElementById('users-' + tab).style.display = 'block';
+        document.getElementById('tab-' + tab).classList.add('active');
+        document.getElementById('user-search').value = '';
+    }
+
+    // esta parte es para buscar usuarios mientras el admin escribe en el campo
+    function filterUsers() {
+        const query = document.getElementById('user-search').value.toLowerCase();
+        const activeTab = document.querySelector('[id^="users-"]:not([style*="display: none"])');
+        if (!activeTab) return;
+        const rows = activeTab.querySelectorAll('.user-row');
+        rows.forEach(row => {
+            const name = row.dataset.name || '';
+            const rut = row.dataset.rut || '';
+            const correo = row.dataset.correo || '';
+            row.style.display = (name.includes(query) || rut.includes(query) || correo.includes(query)) ? '' : 'none';
+        });
+    }
+
+    // esta parte es para filtrar los reportes por estado (todos, pendiente, resuelto)
+    let activeReportFilter = 'todos';
+
+    function filterReports(estado, btn) {
+        activeReportFilter = estado;
+        document.querySelectorAll('.report-row').forEach(row => {
+            if (estado === 'todos' || row.dataset.estado === estado) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+        // quitar activo de otros botones del filtro
+        btn.closest('.panel-header').querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        // re-aplicar búsqueda
+        filterReportRows();
+    }
+
+    // esta parte es para buscar dentro de los reportes por nombre o descripción
+    function filterReportRows() {
+        const query = document.getElementById('report-search').value.toLowerCase();
+        document.querySelectorAll('.report-row').forEach(row => {
+            const name = row.dataset.name || '';
+            const desc = row.dataset.desc || '';
+            const matchFilter = activeReportFilter === 'todos' || row.dataset.estado === activeReportFilter;
+            const matchSearch = name.includes(query) || desc.includes(query);
+            row.style.display = (matchFilter && matchSearch) ? '' : 'none';
+        });
+    }
+
+    // esta parte es del botón para cambiar entre modo oscuro y modo claro
+    const themeBtn = document.getElementById('theme-btn');
+    const themeIcon = document.getElementById('theme-icon');
+
+    function toggleTheme() {
+        document.body.classList.toggle('light-mode');
+        const isLight = document.body.classList.contains('light-mode');
+        themeIcon.className = isLight ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
+        localStorage.setItem('admin-theme', isLight ? 'light' : 'dark');
+    }
+
+    // esta parte es de recuperar el tema guardado del usuario al cargar la página
+    window.addEventListener('DOMContentLoaded', () => {
+        const saved = localStorage.getItem('admin-theme');
+        if (saved === 'light') {
+            document.body.classList.add('light-mode');
+            themeIcon.className = 'bi bi-sun-fill';
+        }
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,70 @@
+==========================================================================
+                      CONTEXTO DEL PROYECTO: LBWUS
+==========================================================================
+
+Este archivo sirve para guiar a cualquier Inteligencia Artificial o desarrollador
+que trabaje en este proyecto sobre su arquitectura, sus reglas de diseño y su
+filosofía de trabajo.
+
+--------------------------------------------------------------------------
+1. DESCRIPCIÓN GENERAL DEL PROYECTO
+--------------------------------------------------------------------------
+* Nombre: LBWUS (Learn Better With Us)
+* Tipo: Plataforma web universitaria de auto-aprendizaje colaborativo para alumnos,
+  profesores y tutores.
+* Framework: Django (Python).
+* Base de datos: SQLite para desarrollo local (db.sqlite3) y PostgreSQL en producción.
+
+--------------------------------------------------------------------------
+2. FILOSOFÍA DE DESARROLLO (LIMITACIONES Y REGLAS DE DISEÑO)
+--------------------------------------------------------------------------
+* SOLO HTML Y CSS (VANILLA CSS):
+  No se utilizan frameworks CSS complejos de configurar (como TailwindCSS). Se prefiere
+  escribir archivos .css tradicionales y cargarlos mediante {% static %}.
+  
+* CLASES SENCILLAS Y LEGIBLES:
+  Los nombres de las clases en el HTML deben ser planos, descriptivos y sumamente simples
+  para que el usuario pueda buscarlos y editarlos fácilmente en las hojas de estilo.
+  Evitar anidaciones excesivas o selectores complejos.
+  Ejemplos correctos: `.prof-card`, `.prof-input`, `.prof-btn`, `.panel-card`, `.panel-table`.
+
+* FÁCILMENTE MODIFICABLE:
+  El código de estilos debe estar estructurado para que una persona con conocimientos básicos
+  de HTML y CSS pueda modificar márgenes, colores, tipografías y tamaños de fuente sin esfuerzo.
+
+* SISTEMA DE COLORES Y MODO OSCURO:
+  El diseño utiliza variables CSS declaradas en `:root` (dentro de alumnos/static/alumnos/css/styles.css).
+  Variables principales:
+    * `--primary`: #a855f7 (Morado corporativo)
+    * `--primary-dark`: #9333ea
+    * `--accent`: #f59e0b (Amarillo/Naranja para CTAs)
+    * `--text`: #111827 (Texto oscuro)
+    * `--white`: #ffffff (Fondos claros)
+  El modo oscuro se maneja agregando la clase `body.dark-mode`. Cualquier hoja de estilo nueva
+  debe implementar selectores `body.dark-mode .clase` para asegurar que el texto siga siendo
+  legible y los colores coherentes al alternar el modo día/noche.
+
+--------------------------------------------------------------------------
+3. ESTRUCTURA DE APLICACIONES (APPS)
+--------------------------------------------------------------------------
+* alumnos:
+  Páginas públicas (Home, Nosotros, Planes, Servicios, Contactos, Simulador) y registro de alumnos.
+* admin_portal:
+  Portal y vistas de administración de alumnos (CRUD de alumnos protegido por autenticación Django).
+* user_profesor:
+  Registro y panel de profesores (`registro_profesor`, `panel_profesor`, `actualizar_perfil`).
+  Registro de tutores (`registro_tutor`, actualmente en desarrollo).
+
+--------------------------------------------------------------------------
+4. MODELO DE DATOS Y FLUJOS ESPECIALES
+--------------------------------------------------------------------------
+* Modelos Clave (alumnos/models.py):
+  `Genero`, `Tutor`, `Alumno`, `Profesor`, `Clase`, `Inscripcion`.
+  
+* Flujo de Acceso para Profesores (Passwordless):
+  El profesor no requiere una contraseña convencional para iniciar sesión. En su lugar:
+  * Registro Obligatorio: Al registrarse, debe rellenar todos los campos del formulario.
+  * Acceso Rápido: Para entrar al panel, ingresa su RUT o Correo Electrónico. Si existe el registro,
+    el backend guarda el ID del profesor en la sesión (`request.session['profesor_id']`) y
+    concede acceso directo a `/profesor/panel`.
+==========================================================================

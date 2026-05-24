@@ -1,75 +1,132 @@
+{% extends 'alumnos/base.html' %}
 {% load static %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="{% static 'img/Logo.png' %}">
-    <!-- Bootstrap CSS (librerias)-->
-    <title>LBWUS</title>
-    {% load static %}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="{% static 'alumnos/css/bootstrap.min.css' %}">
-    <link rel="stylesheet" href="{% static 'alumnos/style/estilo.css' %}">
-    <script src="{% static 'alumnos/js/bootstrap.min.js' %}"></script>
-    
-</head>
+{% block title %}LBWUS | Registro Administrador{% endblock %}
 
-<body>
-      <!--Navbar-->
-      <nav class="navbar navbar-expand-lg fixed-top">
-        <div class="container-fluid">
-            <a class="navbar-brand me-auto" href="#">
-                {% load static %}
-                <img src="{% static 'alumnos/img/Logo.png' %}" alt="Logo" width="50px" class="d-inline-block align-text-top">                
-                LBWUS</a>
-            <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
-                <div class="offcanvas-header">
-                    <h5 class="offcanvas-title" id="offcanvasNavbarLabel">LBWUS</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-                </div>
-                <div class="offcanvas-body">
-                    <ul class="navbar-nav justify-content-center flex-grow-1 pe-3">
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2 active" aria-current="page" href="{% url 'home' %}">Inicio</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2" href="{% url 'planes' %}">Planes</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2" href="{% url 'servicios' %}">Servicios</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2" href="{% url 'nosotros' %}">Nosotros</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2" href="{% url 'contactos' %}">Contactos</a>
-                        </li>                        
-                    </ul>
+{% block extra_css %}
+<!-- esta parte es de los estilos reutilizados del registro de profes, para mantener el mismo diseño premium -->
+<link rel="stylesheet" href="{% static 'regis_prof.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="prof-container">
+    <div class="prof-card">
+        
+        <!-- esta parte es de la cabecera indicando que es el registro del administrador -->
+        <div class="prof-tabs">
+            <button class="prof-tab active" style="width: 100%; cursor: default;">Registrarse como Administrador</button>
+        </div>
+
+        <div class="prof-forms-wrapper">
+            
+            <!-- esta parte es del formulario con todos los campos necesarios para registrar un admin -->
+            <div class="prof-form-box active">
+                <h2 class="prof-title">Crea tu Cuenta de Administrador</h2>
+                <p class="prof-subtitle">Todos los campos son obligatorios para gestionar la plataforma.</p>
+                
+                <form id="form-registro-admin" action="{% url 'regis_tutor' %}" method="POST" class="prof-form">
+                    {% csrf_token %}
+                    
+                    <div class="prof-group">
+                        <label for="nombre" class="prof-label">Nombre Completo</label>
+                        <input type="text" id="nombre" name="nombre" class="prof-input" placeholder="ej. Carlos Valenzuela" required maxlength="60">
+                    </div>
+
+                    <div class="prof-group-row">
+                        <div class="prof-group">
+                            <label for="rut" class="prof-label">RUT</label>
+                            <input type="text" id="rut" name="rut" class="prof-input" placeholder="12.345.678-9" required maxlength="12">
+                        </div>
+                        <div class="prof-group">
+                            <label for="direccion" class="prof-label">Dirección de Residencia</label>
+                            <input type="text" id="direccion" name="direccion" class="prof-input" placeholder="ej. Av. Providencia 1234" required maxlength="60">
+                        </div>
+                    </div>
+
+                    <div class="prof-group-row">
+                        <div class="prof-group">
+                            <label for="fecha_nacimiento" class="prof-label">Fecha de Nacimiento</label>
+                            <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" class="prof-input" required>
+                        </div>
+                        <div class="prof-group">
+                            <label for="genero" class="prof-label">Género</label>
+                            <select id="genero" name="genero" class="prof-select" required>
+                                <option value="" disabled selected>Seleccione...</option>
+                                {% for g in generos %}
+                                <option value="{{ g.id_genero }}">{{ g.descripcion }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="prof-group-row">
+                        <div class="prof-group">
+                            <label for="correo_electronico" class="prof-label">Correo Electrónico</label>
+                            <input type="email" id="correo_electronico" name="correo_electronico" class="prof-input" placeholder="admin@lbwus.cl" required maxlength="60">
+                        </div>
+                        <div class="prof-group">
+                            <label for="telefono" class="prof-label">Teléfono</label>
+                            <input type="tel" id="telefono" name="telefono" class="prof-input" placeholder="+56 9 8765 4321" required maxlength="20">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="prof-btn prof-btn-accent">Registrarse como Administrador</button>
+                </form>
+                
+                <div style="text-align: center; margin-top: 20px;">
+                    <a href="{% url 'login' %}" class="prof-link" style="color: var(--primary); font-weight: 600; text-decoration: none;">¿Ya tienes cuenta? Inicia sesión aquí</a>
                 </div>
             </div>
-            <a href="{% url 'opcion_user' %}" class="registrarse-button btn btn-primary">Registrarse</a>
-            <a href="{% url 'login' %}" class="login-button btn btn-secondary">Iniciar</a>
-            <!-- Botón para cambiar el tema con iconos -->
-            <button onclick="toggleTheme()" id="theme-toggler" class="btn btn-outline-light ms-2">
-                <i class="bi bi-sun"></i>  <!-- Icono predeterminado para el tema claro -->
-            </button>
-            <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar"
-                aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+
         </div>
-    </nav>    
-<!--End Navbar-->
+    </div>
+</div>
+{% endblock %}
 
+{% block extra_js %}
+<!-- esta parte es de sweetalert2 para mostrar alertas modernas y con buen estilo -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // esta parte es de mandar los datos de registro de admin por AJAX al backend
+    document.getElementById('form-registro-admin').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="{% static 'alumnos/java/main.js' %}"></script>
-<script src="{% static 'alumnos/java/jquery.js' %}"></script>
-<script
-src="https://kit.fontawesome.com/81581fb069.js"
-crossorigin="anonymous"
-></script>
-</body>
-</html>
+        fetch(this.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    title: '¡Registro Exitoso!',
+                    text: data.message,
+                    icon: 'success',
+                    confirmButtonColor: '#a855f7'
+                }).then(() => {
+                    window.location.href = "{% url 'menu' %}";
+                });
+            } else {
+                Swal.fire({
+                    title: 'Verifica los datos',
+                    text: data.message,
+                    icon: 'warning',
+                    confirmButtonColor: '#a855f7'
+                });
+            }
+        })
+        .catch(err => {
+            Swal.fire({
+                title: 'Error de conexión',
+                text: 'Hubo un error al procesar tu registro de administrador.',
+                icon: 'error',
+                confirmButtonColor: '#ef4444'
+            });
+        });
+    });
+</script>
+{% endblock %}

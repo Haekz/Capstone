@@ -1,4 +1,4 @@
-/* Estilos globales para todos los elementos HTML */
+/* esta parte es de los estilos que afectan a absolutamente todas las etiquetas HTML del sitio */
 * {
   margin:0;
   padding:0;
@@ -6,17 +6,17 @@
   font-family: sans-serif; /* Fuente genérica para toda la página */
 }
 
-/* Configuraciones Generales */
+/* esta parte es de los ajustes generales como el color de fondo claro por defecto */
 body {
   background: #f1fbff; /* Color de fondo claro para toda la página */
 }
 
-/* Clase para añadir padding uniforme a las secciones */
+/* esta parte es del padding uniforme para darle aire a todas las secciones de la página */
 .section-padding {
   padding: 100px 0; /* Padding superior e inferior para secciones */
 }
 
-/* Estilos para los subtítulos dentro del carrusel */
+/* esta parte es de las cajitas de texto flotantes del carrusel */
 .carousel-caption {
   bottom: 100px; /* Posición desde la parte inferior del carrusel */
   z-index: 10; /* Asegura que la capa de texto esté sobre la imagen */
@@ -51,7 +51,7 @@ body {
   z-index: 1; /* Asegura que esté detrás del texto */
 }
 
-/* Estilos para la barra de navegación (NAVBAR) */
+/* esta parte es de la barra de navegación principal (la navbar morada) */
 
 .navbar {
   background-color: #a159d8; /* Color de fondo púrpura */
@@ -73,7 +73,7 @@ body {
   margin-left: 10px; /* Margen a la izquierda del logo */
 }
 
-/* Botones de registro e inicio de sesión en la barra de navegación */
+/* esta parte es de los botones de login y registro que están en la cabecera */
 .registrarse-button,
 .login-button {
   color: #fff; /* Color de texto claro */
@@ -122,7 +122,7 @@ body {
   margin-left: 10px; /* Añade espacio entre los botones */
 }
 
-/* Estilos para el interruptor de navegación (hamburguesa en móviles) */
+/* esta parte es del botón hamburguesa que sale cuando estás en celular */
 .navbar-toggler {
   border: none; /* Sin bordes */
   font-size: 1.25rem; /* Tamaño grande de icono */
@@ -135,7 +135,7 @@ body {
   outline: none; /* Sin contorno */
 }
 
-/* Estilos para los enlaces de navegación */
+/* esta parte es de los links del menú y sus colores */
 .nav-link {
   color: #c3c2c2; /* Color de texto gris claro */
   font-weight: 500; /* Peso de fuente seminegrita */
@@ -154,7 +154,7 @@ body {
   font-size: 60px; 
 }
 
-/*         Modal        */
+/* esta parte es de las ventanas emergentes (los modales de información) */
 .modal {
   position: fixed; /* Fijo en toda la pantalla */
   top: 0; /* Desde la parte superior de la pantalla */
@@ -224,7 +224,7 @@ body {
 }
 
 
-/* Menú Horario Página */
+/* esta parte es del bloque que muestra la dirección y las horas de atención */
 
 .horario {
   background-color: #a159d8;
@@ -290,7 +290,7 @@ body {
   color: #fff;
 }
 
-/* NOSOTROS */
+/* esta parte es de la sección sobre nosotros y su estructura */
 
 main .sobre-nosotros{
   padding: 30px 0 150px 0;
@@ -334,7 +334,7 @@ main .sobre-nosotros{
   text-align: justify;
 }
 
-/* Galeria */
+/* esta parte es de la galería de fotos del portafolio con efectos hover */
 .portafolio{
   background: #f2f2f2;
   padding: 50px 0; /* Espacio adicional para separación */
@@ -426,7 +426,7 @@ main .sobre-nosotros{
   padding-top: 5px;
 }
 
-/*  Our team */
+/* esta parte es de la sección de nuestro equipo y las caras del staff */
 .about-services{
   background: #f2f2f2;
   padding-bottom: 30px;
@@ -457,7 +457,7 @@ main .sobre-nosotros{
   text-align: justify;
 }
 
-/*  Nos preocupas */
+/* esta parte es de recordarle al usuario que nos importa su aprendizaje */
 
 .about-services{
   background: #f1fbff;
@@ -491,7 +491,7 @@ main .sobre-nosotros{
   text-align: justify;
 }
 
-/* CONTACTOS */
+/* esta parte es de los formularios y campos para que nos envíen mensajes */
 
 .container {
   max-width: 1200px;
@@ -558,7 +558,7 @@ p {
   margin-right: 10px;
 }
 
-/*               FOOTER               */
+/* esta parte es del pie de página grandote con todas las redes sociales */
 
 .footer {
   background-color: #a159d8;
@@ -836,7 +836,7 @@ a:hover {
 }
 
 
-/* Conversor de Moneda */
+/* esta parte es de la sección que convierte monedas usando una API */
 
 .conversion-header {
   text-align: center;
@@ -896,7 +896,7 @@ a:hover {
 }
 
 
-/* Estilo del botón del carrito */
+/* esta parte es del botón del carrito de compras */
 
 .btn-cart {
   background-color: #007BFF; /* Azul, o el color que prefieras */
@@ -912,7 +912,7 @@ a:hover {
   cursor: pointer;
 }
 
-/* Estilos para el recuadro del carrito */
+/* esta parte es del menú flotante que muestra qué llevas en el carro */
 #carrito {
   display: none; /* Oculto por defecto */
   position: absolute;
@@ -1055,7 +1055,7 @@ a:hover {
   }
 }
 
-/* Ajustes de estilo del carrusel para tablets */
+/* esta parte es de los ajustes para que el carrusel se vea bien en tablets */
 @media only screen and (min-width: 768px) and (max-width: 991px) {
   .carousel-caption {
     bottom: center; /* Ajuste de la posición del texto del carrusel */
@@ -1065,7 +1065,7 @@ a:hover {
   }
 }
 
-/* Ajustes de estilo para móviles */
+/* esta parte es del responsive general para pantallas chicas de celular */
 @media only screen and (max-width: 767px) {
   .navbar-nav {
     text-align: center; /* Texto centrado para la navegación */
@@ -1085,7 +1085,7 @@ a:hover {
   }
 }
 
-/* Estilos para enlaces de navegación en escritorio */
+/* esta parte es de la rayita animada que se dibuja abajo del menú en computadores */
 @media (min-width: 991px) {
   .nav-link::before {
     content: ""; /* Contenido vacío para el pseudo-elemento */

@@ -71,4 +71,17 @@ class Inscripcion(models.Model):
         return f'{self.id_alumno.nombre} inscrito en {self.id_clase.nombre_curso}'
 
 
+class Reporte(models.Model):
+    id_reporte = models.AutoField(primary_key=True)
+    remitente_tipo = models.CharField(max_length=15, choices=[('alumno', 'Alumno'), ('profesor', 'Profesor')])
+    remitente_nombre = models.CharField(max_length=100)
+    descripcion = models.TextField()
+    fecha_reporte = models.DateField(auto_now_add=True)
+    estado = models.CharField(max_length=15, choices=[('pendiente', 'Pendiente'), ('resuelto', 'Resuelto')], default='pendiente')
+
+    def __str__(self):
+        return f"Reporte de {self.remitente_nombre} ({self.remitente_tipo})"
+
+
+
 

@@ -1,3 +1,4 @@
+/* esta parte es de los estilos del formulario de registro de alumnos, aquí se define el layout, la tarjeta, la imagen decorativa y los inputs del form */
 .registration-container {
     min-height: calc(100vh - var(--header-height));
     display: flex;

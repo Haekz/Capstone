@@ -1,0 +1,222 @@
+/* esta parte es de los estilos del formulario de registro e inicio de sesión del profesor - LBWUS */
+
+/* esta parte es del contenedor principal que centra la tarjeta de registro en la pantalla */
+.prof-container {
+    min-height: calc(100vh - var(--header-height));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 120px 20px 80px 20px;
+    background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%);
+    transition: var(--transition);
+}
+
+/* esta parte es del fondo en modo oscuro del contenedor */
+body.dark-mode .prof-container {
+    background: linear-gradient(135deg, #030204 0%, #0f172a 100%);
+}
+
+/* esta parte es de la tarjeta blanca principal que contiene todo el formulario */
+.prof-card {
+    background-color: var(--white);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    width: 100%;
+    max-width: 650px;
+    overflow: hidden;
+    transition: var(--transition);
+    border: 1px solid rgba(168, 85, 247, 0.1);
+}
+
+body.dark-mode .prof-card {
+    border-color: rgba(168, 85, 247, 0.2);
+}
+
+/* esta parte es de la barra de pestañas arriba de la tarjeta para elegir entre registrarse o entrar */
+.prof-tabs {
+    display: flex;
+    background-color: #f1f5f9;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+body.dark-mode .prof-tabs {
+    background-color: #1e293b;
+    border-bottom-color: #334155;
+}
+
+/* esta parte es de cada botón de pestaña individual */
+.prof-tab {
+    flex: 1;
+    padding: 16px 20px;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-light);
+    cursor: pointer;
+    transition: var(--transition);
+    text-align: center;
+}
+
+.prof-tab:hover {
+    color: var(--primary);
+    background-color: rgba(168, 85, 247, 0.05);
+}
+
+/* esta parte es de la pestaña activa que está seleccionada ahora mismo */
+.prof-tab.active {
+    color: var(--primary);
+    background-color: var(--white);
+    border-bottom: 3px solid var(--primary);
+}
+
+/* esta parte es del contenedor de los formularios dentro de la tarjeta */
+.prof-forms-wrapper {
+    padding: 40px;
+}
+
+/* esta parte es de cada formulario individualmente, están ocultos hasta que activas su pestaña */
+.prof-form-box {
+    display: none;
+    animation: fadeIn 0.4s ease forwards;
+}
+
+.prof-form-box.active {
+    display: block;
+}
+
+/* esta parte es de la animación de entrada cuando cambias de pestaña */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* esta parte es de los títulos y subtítulos dentro de cada formulario */
+.prof-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+}
+
+.prof-subtitle {
+    font-size: 0.95rem;
+    color: var(--text-light);
+    margin-bottom: 30px;
+}
+
+/* esta parte es del formulario que organiza los campos verticalmente */
+.prof-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* esta parte es de las filas dobles que ponen dos campos uno al lado del otro en pantallas grandes */
+.prof-group-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+/* esta parte es del agrupador de cada campo con su label e input */
+.prof-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* esta parte es de las etiquetas de los campos del formulario */
+.prof-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+/* esta parte es de los inputs y selects del formulario, búscala si quieres cambiar bordes o tamaños */
+.prof-input,
+.prof-select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    background-color: var(--white);
+    color: var(--text);
+    transition: var(--transition);
+    outline: none;
+}
+
+body.dark-mode .prof-input,
+body.dark-mode .prof-select {
+    border-color: #334155;
+    background-color: #0f172a;
+}
+
+/* esta parte es del efecto de focus cuando haces clic en un campo */
+.prof-input:focus,
+.prof-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.15);
+}
+
+/* esta parte es del texto fantasma dentro del input */
+.prof-input::placeholder {
+    color: #94a3b8;
+}
+
+/* esta parte es del botón principal de enviar el formulario */
+.prof-btn {
+    width: 100%;
+    padding: 14px 20px;
+    border: none;
+    border-radius: 50px;
+    background-color: var(--primary);
+    color: #ffffff;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    margin-top: 10px;
+    box-shadow: 0 4px 12px rgba(168, 85, 247, 0.2);
+}
+
+.prof-btn:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(168, 85, 247, 0.3);
+}
+
+.prof-btn:active {
+    transform: translateY(0);
+}
+
+/* esta parte es del botón de acceso rápido que usa el color naranja/acento en vez del morado */
+.prof-btn-accent {
+    background-color: var(--accent);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+}
+
+.prof-btn-accent:hover {
+    background-color: #d97706;
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.3);
+}
+
+/* esta parte es de la adaptación del formulario en pantallas chicas como celulares */
+@media (max-width: 600px) {
+    .prof-forms-wrapper {
+        padding: 24px;
+    }
+
+    .prof-group-row {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .prof-title {
+        font-size: 1.5rem;
+    }
+}

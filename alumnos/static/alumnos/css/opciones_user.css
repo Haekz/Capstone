@@ -1,4 +1,5 @@
-﻿.user-options-section {
+/* esta parte es de los estilos para la pantalla de selección de tipo de usuario (profesor, alumno o tutor) */
+.user-options-section {
     padding: 100px 20px;
     max-width: 1200px;
     margin: 0 auto;

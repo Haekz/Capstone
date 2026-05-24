@@ -1,14 +1,12 @@
-/* =========================================
-   VARIABLES Y RESET
-   ========================================= */
+/* esta parte es de las variables de diseño y el reset básico del navegador */
 :root {
     --primary: #a855f7;
-    /* Morado LBWUS */
+    /* esta parte es del morado insignia de la marca LBWUS */
     --primary-dark: #9333ea;
     --secondary: #1f2937;
-    /* Gris Oscuro */
+    /* esta parte es del color gris oscuro para el texto principal */
     --accent: #f59e0b;
-    /* Amarillo/Naranja para CTAs */
+    /* esta parte es del color de acento amarillo/naranja para botones llamativos */
     --bg: #ffffff;
     --text: #111827;
     --text-light: #6b7280;
@@ -18,19 +16,19 @@
     --header-height: 80px;
 }
 
-/* Colores para el Modo Oscuro */
+/* esta parte es de la paleta de colores cuando el usuario activa el modo oscuro */
 body.dark-mode {
     --bg: #030204;
-    /* Fondo Negro */
+    /* esta parte es del fondo bien oscuro del body */
     --text: #f3f4f6;
-    /* Texto Blanco */
+    /* esta parte es del color del texto en modo oscuro, casi blanco */
     --text-light: #9ca3af;
     --shadow: 0 4px 20px rgba(255, 255, 255, 0.05);
     --white: #111827;
-    /* Fondos que eran blancos ahora son oscuros */
+    /* esta parte es del color que antes era blanco y ahora pasa a ser gris bien oscuro */
 }
 
-/* Estilos específicos para el Modo Oscuro */
+/* esta parte es de los toques específicos de color para algunos bloques en modo noche */
 body.dark-mode .header {
     background: rgba(3, 2, 4, 0.85);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -62,9 +60,7 @@ body {
     overflow-x: hidden;
 }
 
-/* =========================================
-   LAYOUT & CONTAINERS
-   ========================================= */
+/* esta parte es de los contenedores generales, anchos de página, grillas y flexbox */
 .contenedor {
     max-width: 1200px;
     margin: 0 auto;
@@ -99,9 +95,7 @@ section {
     padding: 100px 0;
 }
 
-/* =========================================
-   HEADER & NAVBAR
-   ========================================= */
+/* esta parte es de la cabecera y el menú de navegación que siempre se queda flotando arriba */
 .header {
     height: var(--header-height);
     background: rgba(161, 89, 216, 0.85); /* #a159d8 with opacity */
@@ -200,14 +194,12 @@ section {
     transition: var(--transition);
 }
 
-/* Opcional: si quieres que la imagen cambie de apariencia en modo noche */
+/* esta parte es por si queremos meterle algún filtro de brillo a la imagen en modo oscuro */
 body.dark-mode .theme-icon {
     filter: brightness(0.8);
 }
 
-/* =========================================
-   BUTTONS
-   ========================================= */
+/* esta parte es de los botones redondeados y sus hover con sombritas bonitas */
 .btn-principal,
 .btn-secundario,
 .btn-accion {
@@ -264,9 +256,7 @@ body.dark-mode .theme-icon {
     color: var(--text);
 }
 
-/* =========================================
-   HERO SECTION
-   ========================================= */
+/* esta parte es de la primera sección grandota de bienvenida con las fotos de fondo */
 .hero {
     height: 100vh;
     position: relative;
@@ -337,9 +327,7 @@ body.dark-mode .theme-icon {
     justify-content: center;
 }
 
-/* =========================================
-   ABOUT SECTION
-   ========================================= */
+/* esta parte es de la sección sobre nosotros con la imagen a la izquierda y texto al lado */
 .about {
     background: #fafafa;
 }
@@ -382,9 +370,7 @@ body.dark-mode .theme-icon {
     gap: 12px;
 }
 
-/* =========================================
-   SERVICES SECTION
-   ========================================= */
+/* esta parte es de la grilla de servicios que tiene las 3 tarjetas de planes de estudio */
 .services {
     padding: 100px 0;
 }
@@ -432,7 +418,7 @@ body.dark-mode .theme-icon {
 .service-card.featured {
     background: var(--white);
     color: var(--text);
-    border: 2px solid var(--primary); /* Añadimos un borde para que destaque sobre el fondo si es blanco */
+    border: 2px solid var(--primary); /* esta parte es de ponerle un borde morado al plan destacado para que sobresalga */
 }
 
 .service-card.featured .card-icon {
@@ -450,9 +436,7 @@ body.dark-mode .theme-icon {
     cursor: pointer;
 }
 
-/* =========================================
-   INFO SECTION (MAP)
-   ========================================= */
+/* esta parte es de la sección de contacto, horarios de atención y el mapa embebido */
 .info {
     background: #f8fafc;
 }
@@ -494,18 +478,16 @@ body.dark-mode .theme-icon {
 }
 
 .social-box a:hover {
-    transform: translateY(-2px); /* Pequeño efecto visual extra */
+    transform: translateY(-2px); /* esta parte es del pequeño efecto de subir al pasar el mouse por encima */
 }
 
 .social-box a:active {
-    background: #00bfff; /* Celeste */
+    background: #00bfff; /* esta parte es del color celeste de fondo cuando haces clic */
     color: var(--white);
     transform: translateY(0);
 }
 
-/* =========================================
-   FOOTER
-   ========================================= */
+/* esta parte es del pie de página con sus columnas de links y el boletín de correo */
 .footer {
     background: #a159d8;
     color: rgba(255, 255, 255, 0.9); /* Ligeramente más opaco para mayor contraste con el nuevo fondo */
@@ -570,9 +552,7 @@ body.dark-mode .theme-icon {
     font-size: 0.9rem;
 }
 
-/* =========================================
-   RESPONSIVE MOBILE MENU
-   ========================================= */
+/* esta parte es del menú hamburguesa que se muestra en celulares y tablets pequeñas */
 .menu-toggle,
 .hamburger {
     display: none;
@@ -607,14 +587,14 @@ body.dark-mode .theme-icon {
 
     .menu a {
         font-size: 1.25rem;
-        color: var(--text); /* Para que sea visible en fondo blanco de móvil */
+        color: var(--text); /* esta parte es para que las letras se lean bien sobre el fondo claro del celular */
     }
 
     .menu a:hover,
     .menu a.active {
         background: rgba(168, 85, 247, 0.1);
         color: var(--primary);
-        transform: scale(1.05); /* Escala más suave en móvil */
+        transform: scale(1.05); /* esta parte es de una escala más suave para que no se vea tosco en celular */
     }
 
     .menu-toggle:checked~.menu {
@@ -641,9 +621,7 @@ body.dark-mode .theme-icon {
     }
 }
 
-/* =========================================
-   RESPONSIVE SECTIONS (MOBILE)
-   ========================================= */
+/* esta parte es del diseño adaptado para pantallas más chicas que 768px */
 @media (max-width: 768px) {
     section {
         padding: 60px 0;

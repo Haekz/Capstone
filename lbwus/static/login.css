@@ -1,208 +1,273 @@
-/* ==============================================================
-   login.css — Estilo minimalista tipo SaleSkip.
-   Totalmente personalizable. Modifica lo que necesites.
-   ============================================================== */
+/* esta parte es del login simple estilo tarjeta con colores de la plataforma */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-/* ── Variables ── */
-:root {
-    --primary: #1a1a2e;           /* Oscuro para botón principal */
-    --primary-hover: #16213e;
-    --accent: #a855f7;            /* Morado LBWUS – para links */
-    --accent-hover: #9333ea;
-    --bg: #ffffff;                /* Fondo blanco limpio */
-    --text: #111827;              /* Texto principal */
-    --text-light: #6b7280;        /* Texto secundario */
-    --border: #d1d5db;            /* Bordes de inputs */
-    --error-bg: #fef2f2;
-    --error-text: #dc2626;
-    --radius: 6px;
-    --transition: all 0.25s ease;
-}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ── Reset mínimo ── */
-*, *::before, *::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
-/* ── Body ── */
+/* esta parte es del fondo suave de la página */
 body {
-    font-family: 'Outfit', sans-serif;
-    background: var(--bg);
-    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    background: #f0eaf8;
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    -webkit-font-smoothing: antialiased;
 }
 
-/* ── Wrapper centrado ── */
-.login-wrapper {
-    width: 100%;
-    max-width: 500px;
-    padding: 3rem 1.5rem;
-}
-
-/* ── Tarjeta del login (contenedor con sombra y bordes curvos) ── */
-.login-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+/* esta parte es de la tarjeta blanca centrada */
+.card {
     background: #ffffff;
-    border-radius: 16px;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
-    padding: 2.5rem 2rem;
-}
-
-
-
-/* ── Nombre de la app (brand) ── */
-.login-brand {
-    font-size: 1rem;
-    font-weight: 600;
-    letter-spacing: 2px;
-    color: var(--text);
-    margin-bottom: 2rem;
-}
-
-/* ── Título "Welcome Back!" ── */
-.login-title {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: var(--text);
-    margin-bottom: 0.5rem;
+    border-radius: 24px;
+    padding: 48px 36px 40px;
+    width: 100%;
+    max-width: 380px;
+    margin: 20px;
+    box-shadow: 0 8px 40px rgba(168, 85, 247, 0.12);
     text-align: center;
 }
 
-/* ── Subtítulo ── */
-.login-subtitle {
-    font-size: 0.85rem;
-    color: var(--text-light);
-    text-align: center;
-    line-height: 1.5;
-    margin-bottom: 2rem;
-}
-
-/* ── Links (morado LBWUS) ── */
-.login-link {
-    color: var(--accent);
-    text-decoration: underline;
-    font-weight: 500;
-    transition: color 0.2s;
-}
-.login-link:hover {
-    color: var(--accent-hover);
-}
-
-/* ── Formulario ── */
-.login-form {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-}
-
-/* ── Campo de entrada (grupo) ── */
-.login-field {
-    width: 100%;
-    margin-bottom: 1rem;
-}
-
-/* ── Input — línea inferior como en la imagen ── */
-.login-input {
-    width: 100%;
-    padding: 0.85rem 0.25rem;
-    font-family: 'Outfit', sans-serif;
-    font-size: 0.95rem;
-    color: var(--text);
-    background: transparent;
-    border: none;
-    border-bottom: 1.5px solid var(--border);
-    outline: none;
-    transition: var(--transition);
-}
-.login-input::placeholder {
-    color: var(--text-light);
-    font-weight: 400;
-}
-.login-input:focus {
-    border-bottom-color: var(--accent);
-}
-
-/* ── Mensaje de error ── */
-.login-error {
-    width: 100%;
-    background: var(--error-bg);
-    color: var(--error-text);
-    font-size: 0.82rem;
-    padding: 0.6rem 0.85rem;
-    border-radius: var(--radius);
-    margin-bottom: 1rem;
-    text-align: center;
-}
-
-/* ── Botón principal (oscuro, lleno) ── */
-.login-btn-primary {
-    width: 100%;
-    padding: 0.85rem;
-    margin-top: 0.5rem;
-    font-family: 'Outfit', sans-serif;
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: #ffffff;
-    background: var(--primary);
-    border: 2px solid var(--primary);
-    border-radius: 50px;
-    cursor: pointer;
-    transition: var(--transition);
-}
-.login-btn-primary:hover {
-    background: var(--primary-hover);
-    border-color: var(--primary-hover);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-/* ── Botón de Google (outline) ── */
-.login-btn-google {
-    width: 100%;
-    padding: 0.85rem;
-    margin-top: 0.75rem;
-    font-family: 'Outfit', sans-serif;
-    font-size: 0.95rem;
-    font-weight: 500;
-    color: var(--text);
-    background: transparent;
-    border: 1.5px solid var(--border);
-    border-radius: 50px;
-    cursor: pointer;
+/* esta parte es del círculo con el ícono de usuario arriba */
+.avatar {
+    width: 72px;
+    height: 72px;
+    background: #a855f7;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
-    transition: var(--transition);
-}
-.login-btn-google:hover {
-    background: #f9fafb;
-    border-color: #9ca3af;
+    margin: 0 auto 28px;
+    box-shadow: 0 6px 20px rgba(168, 85, 247, 0.4);
 }
 
-/* ── Footer (olvidé contraseña) ── */
-.login-footer {
-    margin-top: 1.75rem;
+.avatar i {
+    font-size: 2rem;
+    color: #ffffff;
+}
+
+/* esta parte es del título del login */
+.card h1 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #1e1b2e;
+    margin-bottom: 6px;
+}
+
+.card p {
     font-size: 0.82rem;
-    color: var(--text-light);
+    color: #9ca3af;
+    margin-bottom: 28px;
+}
+
+/* esta parte es de los campos de texto con ícono */
+.field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #f5f0ff;
+    border: 1.5px solid #e9d5ff;
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.field:focus-within {
+    border-color: #a855f7;
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.12);
+}
+
+.field i {
+    color: #a855f7;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.field input {
+    border: none;
+    background: none;
+    outline: none;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.88rem;
+    color: #1e1b2e;
+    width: 100%;
+}
+
+.field input::placeholder {
+    color: #c4b5fd;
+}
+
+/* esta parte es del mensaje de error */
+.error-msg {
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    color: #e11d48;
+    font-size: 0.8rem;
+    border-radius: 10px;
+    padding: 9px 14px;
+    margin-bottom: 14px;
     text-align: center;
 }
 
-/* ── Responsive ── */
-@media (max-width: 480px) {
-    .login-wrapper {
-        padding: 1.5rem 1rem;
-    }
-    .login-title {
-        font-size: 1.5rem;
-    }
+/* esta parte es del botón de ingresar */
+.btn-login {
+    width: 100%;
+    padding: 14px;
+    margin-top: 6px;
+    background: #a855f7;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 16px rgba(168, 85, 247, 0.35);
 }
+
+.btn-login:hover {
+    background: #9333ea;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 22px rgba(168, 85, 247, 0.45);
+}
+
+.btn-login:active { transform: translateY(0); }
+
+/* esta parte es del separador de accesos alternativos */
+.sep {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 22px 0 16px;
+}
+
+.sep-line { flex: 1; height: 1px; background: #f0eaf8; }
+.sep-text  { font-size: 0.74rem; color: #c4b5fd; white-space: nowrap; }
+
+/* esta parte es de los dos links pequeños para prof y admin */
+.quick-links { display: flex; flex-direction: column; gap: 8px; }
+
+.quick-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: #faf5ff;
+    border: 1px solid #e9d5ff;
+    border-radius: 10px;
+    font-size: 0.82rem;
+    font-family: 'Inter', sans-serif;
+    color: #7c3aed;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+    text-align: left;
+    width: 100%;
+}
+
+.quick-link:hover {
+    background: #f3e8ff;
+    border-color: #a855f7;
+    color: #6d28d9;
+}
+
+.quick-link i { font-size: 0.95rem; }
+.quick-link span { flex: 1; }
+
+/* esta parte es del texto de registro abajo */
+.footer-text {
+    margin-top: 24px;
+    font-size: 0.8rem;
+    color: #9ca3af;
+}
+
+.footer-text a {
+    color: #a855f7;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.footer-text a:hover { text-decoration: underline; }
+
+/* esta parte es del modal que aparece al hacer clic en prof/admin */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.3);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay.open { display: flex; }
+
+.modal-box {
+    background: #fff;
+    border-radius: 20px;
+    padding: 36px 32px;
+    width: 100%;
+    max-width: 360px;
+    margin: 20px;
+    box-shadow: 0 16px 50px rgba(168,85,247,0.15);
+    position: relative;
+    animation: pop 0.25s ease;
+    text-align: center;
+}
+
+@keyframes pop {
+    from { transform: scale(0.94); opacity: 0; }
+    to   { transform: scale(1);    opacity: 1; }
+}
+
+.modal-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    font-size: 1.4rem;
+    color: #fff;
+}
+
+.modal-avatar.prof  { background: #3b82f6; box-shadow: 0 4px 14px rgba(59,130,246,0.4); }
+.modal-avatar.admin { background: #a855f7; box-shadow: 0 4px 14px rgba(168,85,247,0.4); }
+
+.modal-title { font-size: 1.1rem; font-weight: 700; color: #1e1b2e; margin-bottom: 4px; }
+.modal-sub   { font-size: 0.78rem; color: #9ca3af; margin-bottom: 22px; }
+
+.modal-close {
+    position: absolute;
+    top: 14px; right: 16px;
+    background: none; border: none;
+    color: #c4b5fd; font-size: 1.1rem;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.modal-close:hover { color: #7c3aed; }
+
+.btn-modal {
+    width: 100%;
+    padding: 13px;
+    margin-top: 6px;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #fff;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    transition: all 0.2s;
+}
+
+.btn-modal.prof  { background: #3b82f6; box-shadow: 0 4px 14px rgba(59,130,246,0.3); }
+.btn-modal.admin { background: #a855f7; box-shadow: 0 4px 14px rgba(168,85,247,0.3); }
+.btn-modal:hover { filter: brightness(1.08); transform: translateY(-1px); }

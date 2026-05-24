@@ -1,15 +1,19 @@
+<!-- esta parte es de la sección 'Sobre Nosotros' con la historia del equipo y los testimonios de los alumnos -->
 {% extends 'alumnos/base.html' %}
 {% load static %}
 
+<!-- esta parte es de la página de nosotros, hereda del base y carga los archivos estáticos -->
 {% block title %}LBWUS | Nosotros{% endblock %}
 
 {% block content %}
+<!-- esta parte es de la sección hero con la imagen de fondo y el título principal de la página -->
 <section class="hero-sub" style="height: 400px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; color: white;">
     <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1;"></div>
     <img src="{% static 'alumnos/img/nosotros.jpeg' %}" alt="Nosotros" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0;">
     <h1 style="position: relative; z-index: 2; font-size: 3rem;">Sobre Nosotros</h1>
 </section>
 
+<!-- esta parte es de la sección about con la descripción del equipo e imagen ilustrativa al lado -->
 <section class="about">
     <div class="contenedor grid-2">
         <div class="about-img">
@@ -26,6 +30,7 @@
     </div>
 </section>
 
+<!-- esta parte es de la galería de imágenes que muestra los proyectos y trabajos del equipo -->
 <section class="portfolio" style="background: #f2f2f2; padding: 100px 0;">
     <div class="contenedor">
         <div class="section-header">
@@ -49,6 +54,7 @@
     </div>
 </section>
 
+<!-- esta parte es de los testimonios de estudiantes que usaron el servicio de LBWUS -->
 <section class="testimonials" style="padding: 100px 0;">
     <div class="contenedor">
         <div class="section-header">
@@ -75,6 +81,7 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- esta parte es de el script que marca el enlace de nosotros como activo en el nav -->
 <script>
     document.getElementById('nav-nosotros').classList.add('active');
 </script>

@@ -1,0 +1,377 @@
+{% extends 'alumnos/base.html' %}
+{% load static %}
+
+{% block title %}LBWUS | Panel Profesor{% endblock %}
+
+{% block extra_css %}
+<!-- esta parte es de los estilos del panel del profe, cámbialos en panel.css si quieres retocar algo visual -->
+<link rel="stylesheet" href="{% static 'panel.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="prof-dashboard-layout">
+    
+    <!-- esta parte es del menú lateral del panel, aquí están los botones para navegar entre secciones -->
+    <aside class="prof-sidebar">
+        <div class="prof-sidebar-header">
+            <div class="prof-avatar">
+                <i class="bi bi-person-workspace"></i>
+            </div>
+            <h3 class="prof-sidebar-title">Docente</h3>
+            <span class="prof-sidebar-tag">{{ profesor.especialidad }}</span>
+        </div>
+        
+        <!-- esta parte es de la lista de opciones del menú lateral -->
+        <ul class="prof-sidebar-menu">
+            <li class="prof-menu-item active" id="menu-inicio" onclick="switchSection('inicio')">
+                <i class="bi bi-grid-1x2"></i> Inicio
+            </li>
+            <li class="prof-menu-item" id="menu-clases" onclick="switchSection('clases')">
+                <i class="bi bi-file-earmark-text"></i> Clases Solicitadas
+            </li>
+            <li class="prof-menu-item" id="menu-perfil" onclick="switchSection('perfil')">
+                <i class="bi bi-person-gear"></i> Personalizar Perfil
+            </li>
+            <li class="prof-menu-item" id="menu-saldo" onclick="switchSection('saldo')">
+                <i class="bi bi-cash-stack"></i> Saldo Generado
+            </li>
+        </ul>
+        
+        <!-- esta parte es del botón de cerrar sesión abajo del menú lateral -->
+        <div class="prof-sidebar-footer">
+            <a href="{% url 'logout_prof' %}" class="prof-logout-btn">
+                <i class="bi bi-box-arrow-left"></i> Cerrar Sesión
+            </a>
+        </div>
+    </aside>
+
+    <!-- esta parte es del área donde aparece el contenido según la sección que elijas en el menú -->
+    <main class="prof-content-area">
+        
+        <!-- esta parte es de la sección de inicio, la pantalla principal cuando entras al panel -->
+        <section id="sec-inicio" class="prof-section active">
+            <div class="prof-section-header">
+                <h1 class="prof-section-title">¡Bienvenido de vuelta, Prof. {{ profesor.nombre }}!</h1>
+                <p class="prof-section-subtitle">Este es el resumen de tus actividades del día de hoy.</p>
+            </div>
+
+            <!-- esta parte es de las tarjetas de métricas arriba del inicio, muestran el dinero del día y clases disponibles -->
+            <div class="prof-metrics-grid">
+                <div class="prof-metric-card">
+                    <div class="prof-metric-icon" style="color: var(--accent); background: rgba(245, 158, 11, 0.1);">
+                        <i class="bi bi-currency-dollar"></i>
+                    </div>
+                    <div class="prof-metric-info">
+                        <h3 class="prof-metric-val">{{ dinero_hoy }}</h3>
+                        <p class="prof-metric-label">Dinero Generado Hoy</p>
+                    </div>
+                </div>
+                
+                <div class="prof-metric-card">
+                    <div class="prof-metric-icon" style="color: var(--primary); background: rgba(168, 85, 247, 0.1);">
+                        <i class="bi bi-calendar-check"></i>
+                    </div>
+                    <div class="prof-metric-info">
+                        <h3 class="prof-metric-val">{{ clases_disponibles }}</h3>
+                        <p class="prof-metric-label">Clases Disponibles Restantes</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- esta parte es del grid del centro con la agenda del día y el gráfico -->
+            <div class="prof-dashboard-grid">
+                
+                <!-- esta parte es de la agenda de clases del día, muestra máximo 6 clases -->
+                <div class="prof-card">
+                    <h2 class="prof-card-title">Clases de Hoy <span class="prof-card-title-badge">Max. 6</span></h2>
+                    {% if clases_hoy %}
+                        <div class="prof-schedule-list">
+                            {% for ch in clases_hoy %}
+                            <div class="prof-schedule-item">
+                                <div class="prof-schedule-time">
+                                    <i class="bi bi-clock"></i> {{ ch.horario }}
+                                </div>
+                                <div class="prof-schedule-details">
+                                    <h4>{{ ch.nombre_curso }}</h4>
+                                    <p>Alumno: <strong>{{ ch.alumno }}</strong></p>
+                                </div>
+                                <div class="prof-schedule-status">
+                                    <span class="prof-badge prof-badge-{% if ch.modalidad == 'Online' or ch.modalidad == 'online' %}online{% else %}presencial{% endif %}">
+                                        {{ ch.modalidad }}
+                                    </span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="prof-empty-card">
+                            <i class="bi bi-calendar-x"></i>
+                            <p>No tienes clases programadas para el día de hoy.</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- esta parte es del gráfico de barras que muestra cuántas solicitudes tuvo el profe por mes -->
+                <div class="prof-card">
+                    <h2 class="prof-card-title">Rendimiento Mensual (Solicitudes)</h2>
+                    <p class="prof-card-subtitle">Cantidad de solicitudes recibidas en los últimos 5 meses.</p>
+                    
+                    <!-- esta parte es del contenedor del gráfico, las barras se dibujan solo con CSS -->
+                    <div class="prof-chart-container">
+                        <div class="prof-chart">
+                            {% for m in rendimiento_meses %}
+                            <div class="prof-chart-column">
+                                <div class="prof-chart-bar-wrapper">
+                                    <div class="prof-chart-bar" style="height: {{ m.porcentaje }}%;">
+                                        <span class="prof-chart-tooltip">{{ m.cantidad }} solic.</span>
+                                    </div>
+                                </div>
+                                <span class="prof-chart-label">{{ m.mes }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- esta parte es de la sección de clases solicitadas, muestra todos los alumnos inscritos -->
+        <section id="sec-clases" class="prof-section">
+            <div class="prof-section-header">
+                <h1 class="prof-section-title">Clases Solicitadas</h1>
+                <p class="prof-section-subtitle">Gestiona las solicitudes e inscripciones de alumnos en tus materias.</p>
+            </div>
+            
+            <div class="prof-card">
+                <h2 class="prof-card-title">Listado de Inscripciones Activas</h2>
+                {% if inscripciones %}
+                    <!-- esta parte es de la tabla con los alumnos inscritos y sus cursos -->
+                    <div class="prof-table-wrapper">
+                        <table class="prof-table">
+                            <thead>
+                                <tr>
+                                    <th>Alumno</th>
+                                    <th>Materia / Curso</th>
+                                    <th>Fecha de Solicitud</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ins in inscripciones %}
+                                <tr>
+                                    <td class="prof-table-bold">{{ ins.id_alumno.nombre }}</td>
+                                    <td>{{ ins.id_clase.nombre_curso }}</td>
+                                    <td>{{ ins.fecha_inscripcion|date:"d/m/Y" }}</td>
+                                    <td>
+                                        <span class="prof-badge prof-badge-online">Activo</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="prof-empty-card">
+                        <i class="bi bi-file-earmark-x"></i>
+                        <p>Aún no has recibido solicitudes de alumnos en el sistema.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- esta parte es de la sección para que el profe edite su propio perfil -->
+        <section id="sec-perfil" class="prof-section">
+            <div class="prof-section-header">
+                <h1 class="prof-section-title">Personalizar Perfil Profesor</h1>
+                <p class="prof-section-subtitle">Actualiza tus datos de contacto y tu especialidad docente.</p>
+            </div>
+
+            <div class="prof-card">
+                <h2 class="prof-card-title">Editar Información de Perfil</h2>
+                
+                <!-- esta parte es del formulario de edición de perfil, viene precargado con los datos actuales del profe -->
+                <form id="form-update-profile" action="{% url 'actualizar_perfil_prof' %}" method="POST" class="prof-form">
+                    {% csrf_token %}
+                    
+                    <div class="prof-form-group">
+                        <label for="prof-nombre" class="prof-form-label">Nombre Completo</label>
+                        <input type="text" id="prof-nombre" name="nombre" class="prof-form-input" value="{{ profesor.nombre }}" required>
+                    </div>
+
+                    <div class="prof-form-row">
+                        <div class="prof-form-group">
+                            <label for="prof-rut" class="prof-form-label">RUT</label>
+                            <input type="text" id="prof-rut" name="rut" class="prof-form-input" value="{{ profesor.rut }}" required>
+                        </div>
+                        <div class="prof-form-group">
+                            <label for="prof-especialidad" class="prof-form-label">Especialidad</label>
+                            <input type="text" id="prof-especialidad" name="especialidad" class="prof-form-input" value="{{ profesor.especialidad }}" required>
+                        </div>
+                    </div>
+
+                    <div class="prof-form-group">
+                        <label for="prof-direccion" class="prof-form-label">Dirección</label>
+                        <input type="text" id="prof-direccion" name="direccion" class="prof-form-input" value="{{ profesor.direccion }}" required>
+                    </div>
+
+                    <div class="prof-form-row">
+                        <div class="prof-form-group">
+                            <label for="prof-correo" class="prof-form-label">Correo Electrónico</label>
+                            <input type="email" id="prof-correo" name="correo_electronico" class="prof-form-input" value="{{ profesor.correo_electronico }}" required>
+                        </div>
+                        <div class="prof-form-group">
+                            <label for="prof-telefono" class="prof-form-label">Teléfono de Contacto</label>
+                            <input type="tel" id="prof-telefono" name="telefono" class="prof-form-input" value="{{ profesor.telefono }}" required>
+                        </div>
+                    </div>
+
+                    <div class="prof-form-group">
+                        <label for="prof-genero" class="prof-form-label">Género</label>
+                        <select id="prof-genero" name="genero" class="prof-form-select" required>
+                            {% for g in generos %}
+                            <option value="{{ g.id_genero }}" {% if g.id_genero == profesor.genero.id_genero %}selected{% endif %}>
+                                {{ g.descripcion }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <button type="submit" class="prof-form-btn">Guardar Cambios de Perfil</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- esta parte es de la sección de saldo, muestra cuánto dinero ha generado el profe -->
+        <section id="sec-saldo" class="prof-section">
+            <div class="prof-section-header">
+                <h1 class="prof-section-title">Saldo Generado</h1>
+                <p class="prof-section-subtitle">Visualiza y gestiona las ganancias de tus clases en LBWUS.</p>
+            </div>
+
+            <!-- esta parte es de las 3 tarjetas de balance: total, disponible y pendiente -->
+            <div class="prof-balance-grid">
+                <div class="prof-balance-card prof-balance-card-primary">
+                    <h4>Saldo Total Acumulado</h4>
+                    <h2>{{ saldo_total }}</h2>
+                    <p>Ganancias brutas generadas en la plataforma</p>
+                </div>
+                
+                <div class="prof-balance-card">
+                    <h4>Saldo Disponible</h4>
+                    <h2>{{ saldo_disponible }}</h2>
+                    <p>Monto listo para ser retirado a tu cuenta bancaria</p>
+                </div>
+
+                <div class="prof-balance-card">
+                    <h4>Comisiones y Pendientes</h4>
+                    <h2>{{ saldo_pendiente }}</h2>
+                    <p>Pendiente de validación o comisiones operativas</p>
+                </div>
+            </div>
+
+            <!-- esta parte es del botón para solicitar la transferencia de los fondos disponibles -->
+            <div class="prof-card" style="margin-top: 30px;">
+                <h2 class="prof-card-title">Solicitar Transferencia de Fondos</h2>
+                <p class="prof-card-subtitle">Solicita el depósito de tu saldo disponible. Las transferencias tardan de 24 a 48 horas hábiles en procesarse.</p>
+                
+                <div class="prof-withdraw-action-box">
+                    <button class="prof-form-btn prof-form-btn-accent" onclick="requestWithdrawal()">Solicitar Retiro de Fondos</button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- esta parte es de SweetAlert2, la librería de alertas animadas -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // esta parte es de la función que cambia qué sección se ve en el panel según el menú que elegiste
+    function switchSection(sectionId) {
+        document.querySelectorAll('.prof-menu-item').forEach(item => item.classList.remove('active'));
+        document.querySelectorAll('.prof-section').forEach(sec => sec.classList.remove('active'));
+
+        document.getElementById('menu-' + sectionId).classList.add('active');
+        document.getElementById('sec-' + sectionId).classList.add('active');
+        
+        // esta parte es para que recuerde en qué sección estabas si recargas la página
+        localStorage.setItem('prof_active_tab', sectionId);
+    }
+
+    // esta parte es para restaurar la última sección que el profe estaba viendo al recargar
+    document.addEventListener('DOMContentLoaded', () => {
+        const savedTab = localStorage.getItem('prof_active_tab');
+        if (savedTab && document.getElementById('menu-' + savedTab)) {
+            switchSection(savedTab);
+        }
+    });
+
+    // esta parte es del envío del formulario de actualización de perfil, no recarga la página
+    document.getElementById('form-update-profile').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+
+        fetch(this.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    title: '¡Actualizado!',
+                    text: data.message,
+                    icon: 'success',
+                    confirmButtonColor: '#a855f7'
+                }).then(() => {
+                    location.reload();
+                });
+            } else {
+                Swal.fire({
+                    title: 'Error al Guardar',
+                    text: data.message,
+                    icon: 'error',
+                    confirmButtonColor: '#ef4444'
+                });
+            }
+        })
+        .catch(err => {
+            Swal.fire({
+                title: 'Error de Red',
+                text: 'Hubo un problema de conexión para guardar los cambios.',
+                icon: 'error',
+                confirmButtonColor: '#ef4444'
+            });
+        });
+    });
+
+    // esta parte es de la función que simula la solicitud de retiro de fondos del profe
+    function requestWithdrawal() {
+        Swal.fire({
+            title: '¿Confirmas tu solicitud de retiro?',
+            text: "Se iniciará el proceso de transferencia de tu saldo disponible.",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#f59e0b',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Sí, solicitar retiro',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Solicitud Recibida',
+                    text: 'Tu solicitud de retiro está siendo procesada. Recibirás tu saldo en las próximas 48 horas hábiles.',
+                    icon: 'success',
+                    confirmButtonColor: '#a855f7'
+                });
+            }
+        });
+    }
+</script>
+{% endblock %}

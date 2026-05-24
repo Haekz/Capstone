@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="{% static 'alumnos/img/Logo.png' %}">
-    <!-- Bootstrap CSS (librerias)-->
+    <!-- esta parte es de los estilos de bootstrap y las librerías CSS del sitio -->
     <title>LBWUS</title>
     {% load static %}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -18,7 +18,7 @@
     
 </head>
 <body>
-    <!--Navbar-->
+    <!-- esta parte es de la barra de navegación principal -->
     <nav class="navbar navbar-expand-lg fixed-top">
         <div class="container-fluid">
             <a class="navbar-brand me-auto" href="#">
@@ -57,7 +57,7 @@
                             </a>
                             <div class="dropdown-menu" aria-labelledby="navbarDropdown4">
                                 {% if user.is_authenticated %}
-                                    <!-- Enlace de cierre de sesión utilizando un formulario -->
+                                    <!-- esta parte es del botón para salir de la sesión con un form oculto por seguridad -->
                                     <a class="dropdown-item" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Cerrar sesión</a>
                                     <form id="logout-form" action="{% url 'logout' %}" method="post" style="display: none;">
                                         {% csrf_token %}
@@ -68,9 +68,9 @@
                             </div>
                         </li>                        
 
-            <!-- Botón para cambiar el tema con iconos -->
+            <!-- esta parte es del botoncito flotante para cambiar entre modo luz y oscuro -->
             <button onclick="toggleTheme()" id="theme-toggler" class="btn btn-outline-light ms-2">
-                <i class="bi bi-sun"></i>  <!-- Icono predeterminado para el tema claro -->
+                <i class="bi bi-sun"></i>  <!-- esta parte es del dibujito del sol que sale por defecto en modo claro -->
             </button>
             <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar"
                 aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
@@ -78,8 +78,8 @@
             </button>
         </div>
     </nav>
-    <!--End Navbar-->
-    <!--Carrusel-->
+    <!-- esta parte es de cerrar la barra de navegación -->
+    <!-- esta parte es del carrusel con fotos grandes que van rotando solas -->
     <div id="carouselExampleControls" class="carousel slide" data-bs-ride="carousel">
         <div class="carousel-inner">
             <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="0" class="active"
@@ -129,8 +129,8 @@
             <span class="visually-hidden">Next</span>
         </button>
     </div>
-    <!-- fin del carrusel-->
-    <!--Imagen e información -->
+    <!-- esta parte es de cerrar el carrusel -->
+    <!-- esta parte es de la sección con imagen y texto informativo sobre nosotros -->
 
     <section id="about" class="about section-padding">
         <div class="container">
@@ -152,12 +152,12 @@
             </div>
         </div>
     </section>
-    <!--Fin de la imagem-->
+    <!-- esta parte es del texto sobre nosotros con una foto al lado -->
 
-    <!-- Servicios -->
+    <!-- esta parte es de la sección de servicios que ofrecemos -->
     <section id="services" class="services section-padding">
         <div class="container">
-            <!-- Título y descripción de la sección -->
+            <!-- esta parte es de las cajitas de los planes que ofrecemos -->
             <div class="row">
                 <div class="col-12 text-center pb-5">
                     <h2 class="text-uppercase font-weight-bold">Nuestros Servicios</h2>
@@ -165,9 +165,9 @@
                         encuentra la opción perfecta para ti.</p>
                 </div>
             </div>
-            <!-- Tarjetas de servicios -->
+            <!-- esta parte es de la fila donde se meten las tarjetas -->
             <div class="row">
-                <!-- Tarjeta del plan Básico -->
+                <!-- esta parte es de la tarjeta de servicio del Plan Básico -->
                 <div class="col-12 col-md-4">
                     <div class="card text-white bg-dark text-center pb-2">
                         <div class="card-body">
@@ -179,7 +179,7 @@
                         </div>
                     </div>
                 </div>
-                <!-- Tarjeta del plan Medio -->
+                <!-- esta parte es de la tarjeta de servicio del Plan Medio con el simulador -->
                 <div class="col-12 col-md-4">
                     <div class="card text-white bg-dark text-center pb-2">
                         <div class="card-body">
@@ -192,7 +192,7 @@
                         </div>
                     </div>
                 </div>
-                <!-- Tarjeta del plan Superior -->
+                <!-- esta parte es de la tarjeta de servicio del Plan Superior -->
                 <div class="col-12 col-md-4">
                     <div class="card text-white bg-dark text-center pb-2">
                         <div class="card-body">
@@ -207,7 +207,7 @@
             </div>
         </div>
     </section>
-    <!-- Fin de Tarjetas de servicios -->
+    <!-- esta parte es de cerrar el bloque de tarjetas de servicios -->
     <section class="horario">
         <div class="horario-info container">
             <h2>Horario</h2>
@@ -245,7 +245,7 @@
             width="100%" height="500" style="border:0;" allowfullscreen="" loading="lazy"
             referrerpolicy="no-referrer-when-downgrade"></iframe>
     </section>
-    <!--Inicio Footer-->
+    <!-- esta parte es de el footer con info de contacto y enlaces útiles -->
     <footer class="footer">
         <div class="container container-footer">
             <div class="menu-footer">
@@ -313,10 +313,11 @@
                 </p>
             </div>
         </div>
+    <!-- esta parte es de donde termina el pie de página de la web -->
     </footer>
 
 
-    <!--Fin Footer-->
+    <!-- esta parte es de cerrar el footer -->
     <script src="{% static 'js/bootstrap.min.js' %}"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="{% static 'java/main.js' %}"></script>

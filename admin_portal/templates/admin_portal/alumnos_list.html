@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="{% static 'alumnos/img/Logo.png' %}">
-    <!-- Bootstrap CSS (librerias)-->
+    <!-- esta parte es de los estilos de bootstrap y las hojas de estilos externas -->
     <title>LBWUS</title>
     {% load static %}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -39,7 +39,7 @@
 </head>
 
 <body>
-    <!--Navbar-->
+    <!-- esta parte es de la barra de navegación del panel de administración -->
     <nav class="navbar navbar-expand-lg fixed-top">
         <div class="container-fluid">
             <a class="navbar-brand me-auto" href="#">
@@ -81,7 +81,7 @@
                             </a>
                             <div class="dropdown-menu" aria-labelledby="navbarDropdown4">
                                 {% if user.is_authenticated %}
-                                <!-- Enlace de cierre de sesión utilizando un formulario -->
+                                <!-- esta parte es del botón de cierre de sesión mediante un formulario por debajo -->
                                 <a class="dropdown-item" href="#"
                                     onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Cerrar
                                     sesión</a>
@@ -94,9 +94,9 @@
                             </div>
                         </li>
 
-                        <!-- Botón para cambiar el tema con iconos -->
+                        <!-- esta parte es del botón flotante para alternar entre el modo claro y oscuro -->
                         <button onclick="toggleTheme()" id="theme-toggler" class="btn btn-outline-light ms-2">
-                            <i class="bi bi-sun"></i> <!-- Icono predeterminado para el tema claro -->
+                            <i class="bi bi-sun"></i> <!-- esta parte es del sol que se ve en el tema claro por defecto -->
                         </button>
                         <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas"
                             data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar"
@@ -105,7 +105,7 @@
                         </button>
                 </div>
     </nav>
-    <!--End Navbar-->
+    <!-- esta parte es del cierre de la barra de navegación -->
     <h1>Lista de Alumnos</h1>
     <div id="idMensajes">
         {% if mensaje %}
@@ -150,7 +150,7 @@
         </tbody>
         {% endif %}
     </table>
-    <!--Inicio Footer-->
+    <!-- esta parte es del pie de página con información del sitio y de contacto -->
     <footer class="footer">
         <div class="container container-footer">
             <div class="menu-footer">
@@ -220,7 +220,7 @@
             </div>
         </div>
     </footer>
-    <!--Fin Footer-->
+    <!-- esta parte es del cierre del pie de página -->
     <script src="{% static 'js/bootstrap.min.js' %}"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="{% static 'java/main.js' %}"></script>
