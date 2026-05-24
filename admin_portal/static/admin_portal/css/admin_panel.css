@@ -40,15 +40,17 @@
 
 /* esta parte es de modo claro (light mode) que sobreescribe las variables del root */
 body.light-mode {
-    --bg-main: #f0f2f8;
+    --bg-main: #f4f6fc;
     --bg-card: #ffffff;
-    --bg-sidebar: #1a1a2e;
-    --bg-hover: #e8eaf6;
+    --bg-sidebar: #ffffff;
+    --bg-hover: #f0eaf8;
     --border: #e2e8f0;
-    --border-light: #cbd5e1;
-    --text-primary: #1e293b;
+    --border-light: #c4b5fd;
+    --text-primary: #1e1b2e;
     --text-secondary: #475569;
     --text-muted: #94a3b8;
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 20px rgba(0,0,0,0.08);
 }
 
 /* esta parte es del reset base y tipografía del panel admin */
@@ -276,6 +278,52 @@ body {
 .sidebar-logout:hover {
     background: rgba(239,68,68,0.1);
     color: #ff6b6b;
+}
+
+/* esta parte es de los ajustes del sidebar en modo claro */
+body.light-mode .sidebar {
+    background: #ffffff;
+    border-right: 1px solid #e9d5ff;
+    box-shadow: 4px 0 20px rgba(168,85,247,0.06);
+}
+
+body.light-mode .sidebar-brand {
+    border-bottom-color: #f0eaf8;
+}
+
+body.light-mode .sidebar-user {
+    border-bottom-color: #f0eaf8;
+}
+
+body.light-mode .sidebar-footer {
+    border-top-color: #f0eaf8;
+}
+
+body.light-mode .nav-item {
+    color: #4b5563;
+}
+
+body.light-mode .nav-item:hover {
+    background: #f0eaf8;
+    color: #7c3aed;
+}
+
+body.light-mode .nav-item.active {
+    background: linear-gradient(135deg, rgba(168,85,247,0.12), rgba(168,85,247,0.04));
+    color: #7c3aed;
+    border-left: 3px solid #a855f7;
+}
+
+body.light-mode .nav-label {
+    color: #c4b5fd;
+}
+
+body.light-mode .sidebar-user-role {
+    color: #a855f7;
+}
+
+body.light-mode .sidebar-logout {
+    color: #ef4444;
 }
 
 /* ===========================
@@ -925,4 +973,107 @@ body {
 
 @media (max-width: 480px) {
     .stats-grid { grid-template-columns: 1fr; }
+}
+
+/* esta parte es del grid de dos columnas para los formularios de agregar/editar */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+}
+
+@media (max-width: 600px) {
+    .form-grid { grid-template-columns: 1fr; }
+}
+
+/* esta parte es de cada campo del formulario admin */
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+/* esta parte es de los inputs y selects dentro del formulario admin */
+.form-input {
+    background: var(--bg-main);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 11px 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.87rem;
+    color: var(--text-primary);
+    outline: none;
+    transition: var(--transition);
+    width: 100%;
+}
+
+.form-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(168,85,247,0.12);
+}
+
+.form-input::placeholder { color: var(--text-muted); }
+
+/* esta parte es del estado vacío de las tablas cuando no hay datos */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 40px;
+    color: var(--text-muted);
+}
+
+.empty-state i { font-size: 2.5rem; opacity: 0.4; }
+.empty-state p { font-size: 0.88rem; }
+
+/* esta parte es del badge de activo/inactivo */
+.badge-activo {
+    background: rgba(16,185,129,0.15);
+    color: #10b981;
+}
+
+/* esta parte es del stat-card-inner que agrupa ícono e info */
+.stat-card-inner {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+}
+
+/* esta parte es del subtítulo pequeño dentro de los stat cards */
+.stat-sub {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+/* esta parte es de los mini stats en la página nosotros */
+.stat-mini {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.84rem;
+}
+
+.stat-mini span { color: var(--text-muted); }
+.stat-mini strong { color: var(--text-primary); font-weight: 600; }
+
+/* esta parte es de los bloques de info en la página nosotros */
+.info-block {
+    background: var(--bg-main);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 20px;
 }

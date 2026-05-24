@@ -1,279 +1,63 @@
+{% extends 'admin_portal/base_admin.html' %}
 {% load static %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="{% static 'alumnos/img/Logo.png' %}">
-    <!-- Bootstrap CSS (librerias)-->
-    <title>LBWUS</title>
-    {% load static %}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="{% static 'alumnos/css/bootstrap.min.css' %}">
-    <link rel="stylesheet" href="{% static 'alumnos/style/estilo.css' %}">
-    <script src="{% static 'alumnos/js/bootstrap.min.js' %}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% block title %}Nosotros — Admin LBWUS{% endblock %}
+{% block page_title %}Información — Nosotros{% endblock %}
+{% block page_subtitle %}Vista interna de la sección "Nosotros" de la plataforma{% endblock %}
+{% block nav_nosotros %}active{% endblock %}
 
-    
-</head>
-<body>
-    <!--Navbar-->
-    <nav class="navbar navbar-expand-lg fixed-top">
-        <div class="container-fluid">
-            <a class="navbar-brand me-auto" href="#">
-                <img src="{% static 'alumnos/img/Logo.png' %}" alt="Logo" width="50px" class="d-inline-block align-text-top">
-                LBWUS
-            </a>
-            <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
-                <div class="offcanvas-header">
-                    <h5 class="offcanvas-title" id="offcanvasNavbarLabel">LBWUS</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-                </div>
-                <div class="offcanvas-body">
-                    <ul class="navbar-nav justify-content-center flex-grow-1 pe-3">
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2 active" aria-current="page" href="{% url 'menu' %}">Inicio</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2" href="{% url 'planes_adm' %}">Planes</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2" href="{% url 'crud' %}">Usuarios</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2" href="{% url 'nosotros_adm' %}">Nosotros</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2" href="{% url 'contactos_adm' %}">Contactos</a>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown4" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                {% if user.is_authenticated %}
-                                    {{ user.username }}
-                                {% else %}
-                                    Login
-                                {% endif %}
-                            </a>
-                            <div class="dropdown-menu" aria-labelledby="navbarDropdown4">
-                                {% if user.is_authenticated %}
-                                    <!-- Enlace de cierre de sesión utilizando un formulario -->
-                                    <a class="dropdown-item" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Cerrar sesión</a>
-                                    <form id="logout-form" action="{% url 'logout' %}" method="post" style="display: none;">
-                                        {% csrf_token %}
-                                    </form>
-                                {% else %}
-                                    <a class="dropdown-item" href="{% url 'login' %}">Iniciar sesión</a>
-                                {% endif %}
-                            </div>
-                        </li>                        
+{% block content %}
 
-            <!-- Botón para cambiar el tema con iconos -->
-            <button onclick="toggleTheme()" id="theme-toggler" class="btn btn-outline-light ms-2">
-                <i class="bi bi-sun"></i>  <!-- Icono predeterminado para el tema claro -->
-            </button>
-            <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar"
-                aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-        </div>
-    </nav>
-    <!--End Navbar-->
+<!-- esta parte es de la tarjeta con el resumen del equipo/misión -->
+<div class="panel">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-info-circle-fill"></i> Sobre LBWUS</span>
+    </div>
+    <div class="panel-body">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:28px;">
 
-    <div class="container-fluid px-0 my-5"> <!-- px-0 quita el padding en el eje x -->
-        <div class="row g-0"> <!-- g-0 quita el gutter (espacio entre columnas) -->
-            <div class="col-12 text-center">
-                <!-- Imagen que ocupa todo el ancho disponible -->
-                <img src="{% static 'alumnos/img/nosotros.jpeg' %}" class="img-fluid w-100" alt="Imagen completa">
-                <!-- La clase w-100 fuerza a la imagen a tomar el 100% del ancho de su contenedor -->
-                <div class="image-caption my-3">
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- fin de la Imagen -->
-    <div class="container">
-        <div class="row">
-            <div class="col-12 text-center">
-                <h2 style="margin-top: 50px; margin-bottom: 50px;">Nosotros</h2>
-            </div>
-        </div>
-        <section class="contenedor sobre-nosotros">
-            <div class="contenedor-sobre-nosotros">
-                <img src="{% static 'alumnos/img/ilustracion2.png' %}" alt="" class="imagen-about-us">
-                <div class="contenido-textos">
-                    <h3><span>1</span>Nuestro equipo</h3>
-                    <p>Nuestro equipo, formado por dos mujeres emprendedoras, busca apoyar a estudiantes y profesores al
-                        ofrecer oportunidades adicionales de ingreso. Esta iniciativa se centra en hacer una diferencia
-                        tangible en sus vidas.</p>
-                    <h3><span>2</span>La mejor atención</h3>
-                    <p>Más que un negocio, nuestro proyecto se dedica a cubrir necesidades humanas esenciales, lo que
-                        nos llena de orgullo. Estamos comprometidos con mejorar la comunidad de manera significativa y
-                        duradera.</p>
-                </div>
-            </div>
-        </section>
-        <section class="portafolio">
-            <div class="contenedor">
-                <div class="galeria-port">
-                    <div class="imagen-port">
-                        <img src="{% static 'alumnos/img/img1.webp' %}" alt="">
-                        <div class="hover-galeria">
-                            <img src="{% static 'alumnos/img/icono1.png' %}" alt="">
-                            <p>Nuestro trabajo</p>
-                        </div>
-                    </div>
-                    <div class="imagen-port">
-                        <img src="{% static 'alumnos/img/img8.jpg' %}" alt="">
-                        <div class="hover-galeria">
-                            <img src="{% static 'alumnos/img/icono1.png' %}" alt="">
-                            <p>Nuestro trabajo</p>
-                        </div>
-                    </div>
-                    <div class="imagen-port">
-                        <img src="{% static 'alumnos/img/img3.jpeg' %}" alt="">
-                        <div class="hover-galeria">
-                            <img src="{% static 'alumnos/img/icono1.png' %}" alt="">
-                            <p>Nuestro trabajo</p>
-                        </div>
-                    </div>
-                    <div class="imagen-port">
-                        <img src="{% static 'alumnos/img/img5.webp' %}" alt="">
-                        <div class="hover-galeria">
-                            <img src="{% static 'alumnos/img/icono1.png' %}" alt="">
-                            <p>Nuestro trabajo</p>
-                        </div>
-                    </div>
-                    <div class="imagen-port">
-                        <img src="{% static 'alumnos/img/Img4.webp' %}" alt="">
-                        <div class="hover-galeria">
-                            <img src="{% static 'alumnos/img/icono1.png' %}" alt="">
-                            <p>Nuestro trabajo</p>
-                        </div>
-                    </div>
-                    <div class="imagen-port">
-                        <img src="{% static 'alumnos/img/img1.jpg' %}" alt="">
-                        <div class="hover-galeria">
-                            <img src="{% static 'alumnos/img/icono1.png' %}" alt="">
-                            <p>Nuestro trabajo</p>
-                        </div>
-                    </div>
-                    <div class="imagen-port">
-                        <img src="{% static 'alumnos/img/img6.jpg' %}" alt="">
-                        <div class="hover-galeria">
-                            <img src="{% static 'alumnos/img/icono1.png' %}" alt="">
-                            <p>Nuestro trabajo</p>
-                        </div>
-                    </div>
-                    <div class="imagen-port">
-                        <img src="{% static 'alumnos/img/img7.jpeg' %}" alt="">
-                        <div class="hover-galeria">
-                            <img src="{% static 'alumnos/img/icono1.png' %}" alt="">
-                            <p>Nuestro trabajo</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-        </section>
-        <section class="clientes contenedor">
-            <div class="cards">
-                <div class="card">
-                    <img src="{% static 'alumnos/img/face1.webp' %}" alt="">
-                    <div class="contenido-texto-card">
-                        <h5>Maria Oliva</h5>
-                        <p>Excelente servicio, gracias a LBWUS la carrera se me hizo mucho más fácil!</p>
-                    </div>
-                </div>
-                <div class="card">
-                    <img src="{% static 'alumnos/img/face2.jpg' %}" alt="">
-                    <div class="contenido-texto-card">
-                        <h5>Vanessa Stil</h5>
-                        <p>Estoy muy conforme con el servicio de LBWUS, una empresa comprometida con sus estudiantes.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </div>
-    </div>
-    <!--Inicio Footer-->
-    <footer class="footer">
-        <div class="container container-footer">
-            <div class="menu-footer">
-                <div class="contact-info">
-                    <p class="title-footer">Información de Contacto</p>
-                    <ul>
-                        <li class="infocontact">
-                            Dirección: Pacifico Norte 123 <br> Vernon Rockville, CT 06066
-                        </li>
-                        <li>Teléfono: 123-456-7890</li>
-                        <li>Email: teachers@lbwus.cl</li>
-                    </ul>
-                    <div class="social-icons">
-                        <span class="facebook">
-                            <i class="fa-brands fa-facebook-f"></i>
-                        </span>
-                        <span class="twitter">
-                            <i class="fa-brands fa-twitter"></i>
-                        </span>
-                        <span class="youtube">
-                            <i class="fa-brands fa-youtube"></i>
-                        </span>
-                        <span class="pinterest">
-                            <i class="fa-brands fa-pinterest-p"></i>
-                        </span>
-                        <span class="instagram">
-                            <i class="fa-brands fa-instagram"></i>
-                        </span>
-                    </div>
-                </div>
-                <div class="information">
-                    <p class="title-footer">Información</p>
-                    <ul class="infofo">
-                        <li><a href="#">Acerca de Nosotros</a></li>
-                        <li><a href="#">Estado de tus contrataciones</a></li>
-                        <li><a href="#">Políticas de Privacidad</a></li>
-                        <li><a href="#">Términos y condiciones</a></li>
-                        <li><a href="#">Contáctanos</a></li>
-                    </ul>
-                </div>
-                <div class="my-account">
-                    <p class="title-footer">Mi cuenta</p>
-                    <ul class="mi-cuenta">
-                        <li><a href="#">Mi cuenta</a></li>
-                        <li><a href="#">Historial de órdenes</a></li>
-                        <li><a href="#">Lista de deseos</a></li>
-                        <li><a href="#">Boletín</a></li>
-                        <li><a href="#">Reembolsos</a></li>
-                    </ul>
-                </div>
-                <div class="newsletter">
-                    <p class="title-footer">Boletín informativo</p>
-                    <div class="content">
-                        <p>
-                            Suscríbete a nuestros boletines ahora y mantente al día con nuevas colecciones y ofertas
-                            exclusivas.
-                        </p>
-                        <input type="email" placeholder="Ingresa el correo aquí...">
-                        <button>Suscríbete</button>
-                    </div>
-                </div>
-            </div>
-            <div class="copyright">
-                <p>
-                    Desarrollando enseñanza para el mundo &copy; 2024
+            <div class="info-block">
+                <h3 style="color:var(--primary); font-size:1rem; font-weight:700; margin-bottom:8px;">
+                    <i class="bi bi-bullseye"></i> Misión
+                </h3>
+                <p style="color:var(--text-secondary); font-size:0.88rem; line-height:1.7;">
+                    Ofrecer educación de calidad y accesible a todos los estudiantes de Chile, conectándolos con los mejores profesores particulares en cualquier nivel educativo.
                 </p>
             </div>
+
+            <div class="info-block">
+                <h3 style="color:#f59e0b; font-size:1rem; font-weight:700; margin-bottom:8px;">
+                    <i class="bi bi-eye-fill"></i> Visión
+                </h3>
+                <p style="color:var(--text-secondary); font-size:0.88rem; line-height:1.7;">
+                    Ser la plataforma educativa número uno en Chile, transformando la forma en que los estudiantes aprenden y los profesores enseñan.
+                </p>
+            </div>
+
+            <div class="info-block">
+                <h3 style="color:#10b981; font-size:1rem; font-weight:700; margin-bottom:8px;">
+                    <i class="bi bi-gem"></i> Valores
+                </h3>
+                <ul style="color:var(--text-secondary); font-size:0.88rem; line-height:2; padding-left:16px;">
+                    <li>Excelencia educativa</li>
+                    <li>Accesibilidad e inclusión</li>
+                    <li>Transparencia</li>
+                    <li>Compromiso con el aprendizaje</li>
+                </ul>
+            </div>
+
+            <div class="info-block">
+                <h3 style="color:#3b82f6; font-size:1rem; font-weight:700; margin-bottom:8px;">
+                    <i class="bi bi-bar-chart-fill"></i> Datos del equipo
+                </h3>
+                <div style="display:flex; flex-direction:column; gap:10px; margin-top:4px;">
+                    <div class="stat-mini"><span>Fundación</span><strong>2024</strong></div>
+                    <div class="stat-mini"><span>Sede</span><strong>Santiago, Chile</strong></div>
+                    <div class="stat-mini"><span>Contacto</span><strong>teachers@lbwus.cl</strong></div>
+                </div>
+            </div>
         </div>
-    </footer>
+    </div>
+</div>
 
-
-    <!--Fin Footer-->
-    <script src="{% static 'js/bootstrap.min.js' %}"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="{% static 'java/main.js' %}"></script>
-    <script src="https://kit.fontawesome.com/81581fb069.js" crossorigin="anonymous"></script>
-</body>
-
-</html>
+{% endblock %}

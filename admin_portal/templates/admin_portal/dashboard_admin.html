@@ -18,7 +18,7 @@
     <!-- esta parte es de nuestros estilos personalizados del panel admin -->
     <link rel="stylesheet" href="{% static 'admin_portal/css/admin_panel.css' %}">
 </head>
-<body>
+<body class="light-mode">
 
 <!-- esta parte es del layout principal que envuelve todo el panel -->
 <div class="admin-wrapper" id="admin-wrapper">
@@ -116,7 +116,7 @@
             <div class="topbar-right">
                 <!-- esta parte es del botón para cambiar entre modo oscuro y claro -->
                 <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Cambiar tema">
-                    <i class="bi bi-moon-stars-fill" id="theme-icon"></i>
+                    <i class="bi bi-sun-fill" id="theme-icon"></i>
                 </button>
             </div>
         </div>
@@ -644,7 +644,10 @@
     // esta parte es de recuperar el tema guardado del usuario al cargar la página
     window.addEventListener('DOMContentLoaded', () => {
         const saved = localStorage.getItem('admin-theme');
-        if (saved === 'light') {
+        if (saved === 'dark') {
+            document.body.classList.remove('light-mode');
+            themeIcon.className = 'bi bi-moon-stars-fill';
+        } else {
             document.body.classList.add('light-mode');
             themeIcon.className = 'bi bi-sun-fill';
         }

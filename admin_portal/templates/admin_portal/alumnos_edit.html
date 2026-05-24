@@ -1,44 +1,108 @@
-<!-- esta parte es de la pantalla para editar los datos de un alumno, acá van el formulario con sus campos y el botón para guardar los cambios -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Actualizar Datos de Alumno</title>
-</head>
-<body>
-    <div style="text-align: center;">
-        {% if alumno %}
-            <h2>Formulario para Actualizar Datos de Alumno</h2><br>
-            <form action="{% url 'alumnos_Update' alumno.id_alumno %}" method="POST">
-                {% csrf_token %}
-                <pre>Rut:           <input type="text" name="rut" value="{{ alumno.rut }}" readonly></pre>
-                <pre>Nombre:        <input type="text" name="nombre" value="{{ alumno.nombre }}"></pre>
-                <pre>Nivel Educación:<select name="nivel_educacion">
-                                    {% for choice in Alumno.NIVEL_EDUCACION_CHOICES %}
-                                        <option value="{{ choice.0 }}" {% if choice.0 = alumno.nivel_educacion %}selected{% endif %}>{{ choice.1 }}</option>
-                                    {% endfor %}
-                                    </select></pre>
-                <pre>Fecha Nac.:    <input type="date" name="fecha_nacimiento" value="{{ alumno.fecha_nacimiento|date:'Y-m-d' }}"></pre>
-                <pre>Género:        <select name="genero">
-                                    {% for genero in generos %}
-                                        <option value="{{ genero.id_genero }}" {% if genero.id_genero = alumno.genero.id_genero %}selected{% endif %}>{{ genero.descripcion }}</option>
-                                    {% endfor %}
-                                    </select></pre>
-                <pre>Teléfono:      <input type="text" name="telefono" value="{{ alumno.telefono }}"></pre>
-                <pre>Email:         <input type="email" name="correo_electronico" value="{{ alumno.correo_electronico }}"></pre>
-                <pre>Dirección:     <input type="text" name="direccion" value="{{ alumno.direccion }}"></pre>
-                <input type="submit" value="Actualizar">
-            </form> <br><br>
-        {% endif %}
-        <div id="idMensajes">
-            {% if mensaje %}
-                {{ mensaje }}
-            {% endif %}
-        </div>
-        <br><br>
-        <a href="{% url 'crud' %}"> Volver </a>
+{% extends 'admin_portal/base_admin.html' %}
+{% load static %}
+
+{% block title %}Editar Alumno — Admin LBWUS{% endblock %}
+{% block page_title %}Editar Alumno{% endblock %}
+{% block page_subtitle %}Modifica los datos del alumno seleccionado{% endblock %}
+{% block nav_usuarios %}active{% endblock %}
+
+{% block content %}
+
+<div class="panel" style="max-width:720px;">
+    <div class="panel-header">
+        <span class="panel-title">
+            <i class="bi bi-pencil-square"></i>
+            Editando: {{ alumno.nombre }}
+        </span>
+        <a href="{% url 'crud' %}" class="panel-action">
+            <i class="bi bi-arrow-left"></i> Volver al listado
+        </a>
     </div>
-</body>
-</html>
+    <div class="panel-body">
+
+        <!-- esta parte es del formulario de edición del alumno con sus datos precargados -->
+        <form id="formEditAlumno" action="{% url 'alumnos_Update' %}" method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="id_alumno" value="{{ alumno.id_alumno }}">
+
+            <div class="form-grid">
+                <div class="form-field">
+                    <label class="form-label">RUT</label>
+                    <input type="text" class="form-input" name="rut" value="{{ alumno.rut }}" required>
+                </div>
+                <div class="form-field">
+                    <label class="form-label">Nombre Completo</label>
+                    <input type="text" class="form-input" name="nombre" value="{{ alumno.nombre }}" required>
+                </div>
+                <div class="form-field">
+                    <label class="form-label">Dirección</label>
+                    <input type="text" class="form-input" name="direccion" value="{{ alumno.direccion }}" required>
+                </div>
+                <div class="form-field">
+                    <label class="form-label">Fecha de Nacimiento</label>
+                    <input type="date" class="form-input" name="fecha_nacimiento" value="{{ alumno.fecha_nacimiento|date:'Y-m-d' }}" required>
+                </div>
+                <div class="form-field">
+                    <label class="form-label">Correo Electrónico</label>
+                    <input type="email" class="form-input" name="correo_electronico" value="{{ alumno.correo_electronico }}" required>
+                </div>
+                <div class="form-field">
+                    <label class="form-label">Teléfono</label>
+                    <input type="text" class="form-input" name="telefono" value="{{ alumno.telefono }}" required>
+                </div>
+                <div class="form-field">
+                    <label class="form-label">Nivel de Educación</label>
+                    <select class="form-input" name="nivel_educacion">
+                        <option value="basica" {% if alumno.nivel_educacion == 'basica' %}selected{% endif %}>Básica</option>
+                        <option value="media"  {% if alumno.nivel_educacion == 'media'  %}selected{% endif %}>Media</option>
+                        <option value="superior" {% if alumno.nivel_educacion == 'superior' %}selected{% endif %}>Superior</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label class="form-label">Género</label>
+                    <select class="form-input" name="genero">
+                        {% for genero in generos %}
+                        <option value="{{ genero.id_genero }}" {% if alumno.genero.id_genero == genero.id_genero %}selected{% endif %}>
+                            {{ genero.descripcion }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div style="margin-top:24px; display:flex; gap:12px;">
+                <button type="submit" class="btn-primary">
+                    <i class="bi bi-check-lg"></i> Guardar Cambios
+                </button>
+                <a href="{% url 'crud' %}" class="btn-primary" style="background:var(--bg-hover); color:var(--text-secondary); box-shadow:none;">
+                    Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // esta parte es de enviar el formulario de edición por AJAX
+    document.getElementById('formEditAlumno').addEventListener('submit', function(e) {
+        e.preventDefault();
+        fetch(this.action, {
+            method: 'POST',
+            body: new FormData(this),
+            headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value }
+        })
+        .then(r => r.text())
+        .then(msg => {
+            Swal.fire({
+                icon: 'success',
+                title: '¡Actualizado!',
+                text: 'Los datos del alumno fueron guardados correctamente.',
+                confirmButtonColor: '#a855f7'
+            }).then(() => window.location.href = "{% url 'crud' %}");
+        });
+    });
+</script>
+{% endblock %}

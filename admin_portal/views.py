@@ -3,9 +3,13 @@ from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.decorators import login_required
 from alumnos.models import Alumno, Genero, Profesor, Tutor, Clase, Reporte
 
-# esta parte es del menú clásico del admin (se mantiene por si se usa en otros lados)
+# esta parte es del menu antiguo del admin - ahora redirige al nuevo dashboard
 def menu(request):
-    return render(request, 'admin_portal/menu.html', {})
+    admin_id = request.session.get('admin_id')
+    if admin_id:
+        return redirect('dashboard_admin')
+    return redirect('login')
+
 
 
 # esta parte es del dashboard principal del administrador con todos los datos

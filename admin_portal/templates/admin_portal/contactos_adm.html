@@ -1,268 +1,88 @@
+{% extends 'admin_portal/base_admin.html' %}
 {% load static %}
 
-<!DOCTYPE html>
-<html lang="en">
+{% block title %}Contactos — Admin LBWUS{% endblock %}
+{% block page_title %}Mensajes de Contacto{% endblock %}
+{% block page_subtitle %}Revisión de los mensajes enviados por usuarios desde la web{% endblock %}
+{% block nav_contactos %}active{% endblock %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="{% static 'alumnos/img/Logo.png' %}">
-    <!-- Bootstrap CSS (librerias)-->
-    <title>LBWUS</title>
-    {% load static %}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="{% static 'alumnos/css/bootstrap.min.css' %}">
-    <link rel="stylesheet" href="{% static 'alumnos/style/estilo.css' %}">
-    <script src="{% static 'alumnos/js/bootstrap.min.js' %}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% block content %}
 
-
-</head>
-<style>
-    .section-fullscreen {
-        min-height: 100vh;
-        /* Esto asegura que la sección tenga al menos el alto de la pantalla */
-        display: flex;
-        align-items: center;
-        /* Centra el contenido verticalmente */
-        justify-content: center;
-        /* Centra el contenido horizontalmente */
-    }
-
-    .about-img {
-        max-width: 50%;
-        /* Ajusta esto según necesites */
-    }
-
-    @media (max-width: 768px) {
-        .about-img {
-            max-width: 100%;
-            margin-bottom: 20px;
-            /* Espacio entre la imagen y el texto en dispositivos móviles */
-        }
-    }
-</style>
-
-<body>
-    <!--Navbar-->
-    <nav class="navbar navbar-expand-lg fixed-top">
-        <div class="container-fluid">
-            <a class="navbar-brand me-auto" href="#">
-                <img src="{% static 'alumnos/img/Logo.png' %}" alt="Logo" width="50px"
-                    class="d-inline-block align-text-top">
-                LBWUS
-            </a>
-            <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar"
-                aria-labelledby="offcanvasNavbarLabel">
-                <div class="offcanvas-header">
-                    <h5 class="offcanvas-title" id="offcanvasNavbarLabel">LBWUS</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-                </div>
-                <div class="offcanvas-body">
-                    <ul class="navbar-nav justify-content-center flex-grow-1 pe-3">
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2 active" aria-current="page" href="{% url 'menu' %}">Inicio</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2" href="{% url 'planes_adm' %}">Planes</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2" href="{% url 'crud' %}">Usuarios</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2" href="{% url 'nosotros_adm' %}">Nosotros</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2" href="{% url 'contactos_adm' %}">Contactos</a>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown4" role="button"
-                                data-bs-toggle="dropdown" aria-expanded="false">
-                                {% if user.is_authenticated %}
-                                {{ user.username }}
-                                {% else %}
-                                Login
-                                {% endif %}
-                            </a>
-                            <div class="dropdown-menu" aria-labelledby="navbarDropdown4">
-                                {% if user.is_authenticated %}
-                                <!-- Enlace de cierre de sesión utilizando un formulario -->
-                                <a class="dropdown-item" href="#"
-                                    onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Cerrar
-                                    sesión</a>
-                                <form id="logout-form" action="{% url 'logout' %}" method="post" style="display: none;">
-                                    {% csrf_token %}
-                                </form>
-                                {% else %}
-                                <a class="dropdown-item" href="{% url 'login' %}">Iniciar sesión</a>
-                                {% endif %}
-                            </div>
-                        </li>
-
-                        <!-- Botón para cambiar el tema con iconos -->
-                        <button onclick="toggleTheme()" id="theme-toggler" class="btn btn-outline-light ms-2">
-                            <i class="bi bi-sun"></i> <!-- Icono predeterminado para el tema claro -->
-                        </button>
-                        <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas"
-                            data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar"
-                            aria-label="Toggle navigation">
-                            <span class="navbar-toggler-icon"></span>
-                        </button>
-                </div>
-    </nav>
-    <!--End Navbar-->
-    <div class="container my-5">
-        <!-- Sección de contacto -->
-        <div class="row">
-            <!-- Información de contacto -->
-            <div class="col-md-6">
-                <div class="info-form" style="padding-top: 30px;">
-                    <h2>Contáctanos</h2>
-                    <p>Recuerda que siempre cuentas con nuestro apoyo. Contáctanos y nos informas sobre las dudas que
-                        puedas tener con respecto a nuestros servicios.</p>
-                    <div class="mb-3">
-                        <a href="tel:123456789" class="d-block">
-                            <i class="fa fa-phone"></i> 123-456-789
-                        </a>
-                        <a href="mailto:teachers@lbwus.cl" class="d-block">
-                            <i class="fa fa-envelope"></i> teachers@lbwus.cl
-                        </a>
-                        <a href="#" class="d-block">
-                            <i class="fa fa-map-marker"></i> Santiago, Chile
-                        </a>
-                    </div>
-                </div>
+<!-- esta parte es de los datos de contacto del negocio -->
+<div class="stats-grid" style="grid-template-columns:repeat(3,1fr);">
+    <div class="stat-card">
+        <div class="stat-card-inner">
+            <div class="stat-info">
+                <div class="stat-label">Teléfono</div>
+                <div class="stat-value" style="font-size:1.1rem;">123-456-7890</div>
             </div>
-
-            <!-- Formulario de contacto -->
-            <div class="col-md-6">
-                <div class="info-form" style="padding-top: 30px;">
-                    <form id="contact-form" action="#" method="post" autocomplete="off" class="needs-validation"
-                        novalidate>
-                        <div class="mb-3">
-                            <label for="nombre" class="form-label">Nombre</label>
-                            <input type="text" class="form-control" id="nombre" name="nombre"
-                                placeholder="Ingresa tu nombre" required>
-                            <div class="invalid-feedback">
-                                Por favor ingresa tu nombre.
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="email-contact" class="form-label">Correo Electrónico</label>
-                            <input type="email" class="form-control" id="email-contact" name="email"
-                                placeholder="Ingresa tu correo" required>
-                            <div class="invalid-feedback">
-                                Por favor ingresa un correo electrónico válido.
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="mensaje" class="form-label">Mensaje</label>
-                            <textarea class="form-control" id="mensaje" name="mensaje" rows="3"
-                                placeholder="Ingresa tu mensaje" required></textarea>
-                            <div class="invalid-feedback">
-                                Por favor ingresa tu mensaje.
-                            </div>
-                        </div>
-                        <button type="submit" class="btn btn-ms">Enviar Mensaje</button>
-                    </form>
-                </div>
+            <div class="stat-icon" style="background:rgba(16,185,129,0.12); color:#10b981;">
+                <i class="bi bi-telephone-fill"></i>
             </div>
         </div>
     </div>
-    <!-- Caricaturas -->
-    <section class="about-services">
-        <div class="contenedor">
-            <div class="servicio-cont">
-                <div class="servicio-ind">
-                    <img src="{% static 'alumnos/img/ilustracion4.png' %}" alt="">
-                </div>
-                <div class="servicio-ind">
-                    <img src="{% static 'alumnos/img/ilustracion1.png' %}" alt="">
-                </div>
-                <div class="servicio-ind">
-                    <img src="{% static 'alumnos/img/ilustracion3.jpeg' %}" alt="">
-                </div>
+    <div class="stat-card">
+        <div class="stat-card-inner">
+            <div class="stat-info">
+                <div class="stat-label">Correo</div>
+                <div class="stat-value" style="font-size:1rem;">teachers@lbwus.cl</div>
+            </div>
+            <div class="stat-icon" style="background:rgba(168,85,247,0.12); color:#a855f7;">
+                <i class="bi bi-envelope-fill"></i>
             </div>
         </div>
-    </section>
-    <!-- Fin Caricaturas -->
-
-    <!--Inicio Footer-->
-    <footer class="footer">
-        <div class="container container-footer">
-            <div class="menu-footer">
-                <div class="contact-info">
-                    <p class="title-footer">Información de Contacto</p>
-                    <ul>
-                        <li class="infocontact">
-                            Dirección: Pacifico Norte 123 <br> Vernon Rockville, CT 06066
-                        </li>
-                        <li>Teléfono: 123-456-7890</li>
-                        <li>Email: teachers@lbwus.cl</li>
-                    </ul>
-                    <div class="social-icons">
-                        <span class="facebook">
-                            <i class="fa-brands fa-facebook-f"></i>
-                        </span>
-                        <span class="twitter">
-                            <i class="fa-brands fa-twitter"></i>
-                        </span>
-                        <span class="youtube">
-                            <i class="fa-brands fa-youtube"></i>
-                        </span>
-                        <span class="pinterest">
-                            <i class="fa-brands fa-pinterest-p"></i>
-                        </span>
-                        <span class="instagram">
-                            <i class="fa-brands fa-instagram"></i>
-                        </span>
-                    </div>
-                </div>
-                <div class="information">
-                    <p class="title-footer">Información</p>
-                    <ul class="infofo">
-                        <li><a href="#">Acerca de Nosotros</a></li>
-                        <li><a href="#">Estado de tus contrataciones</a></li>
-                        <li><a href="#">Políticas de Privacidad</a></li>
-                        <li><a href="#">Términos y condiciones</a></li>
-                        <li><a href="#">Contáctanos</a></li>
-                    </ul>
-                </div>
-                <div class="my-account">
-                    <p class="title-footer">Mi cuenta</p>
-                    <ul class="mi-cuenta">
-                        <li><a href="#">Mi cuenta</a></li>
-                        <li><a href="#">Historial de órdenes</a></li>
-                        <li><a href="#">Lista de deseos</a></li>
-                        <li><a href="#">Boletín</a></li>
-                        <li><a href="#">Reembolsos</a></li>
-                    </ul>
-                </div>
-                <div class="newsletter">
-                    <p class="title-footer">Boletín informativo</p>
-                    <div class="content">
-                        <p>
-                            Suscríbete a nuestros boletines ahora y mantente al día con nuevas colecciones y ofertas
-                            exclusivas.
-                        </p>
-                        <input type="email" placeholder="Ingresa el correo aquí...">
-                        <button>Suscríbete</button>
-                    </div>
-                </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-inner">
+            <div class="stat-info">
+                <div class="stat-label">Dirección</div>
+                <div class="stat-value" style="font-size:1rem;">Santiago, Chile</div>
             </div>
-            <div class="copyright">
-                <p>
-                    Desarrollando enseñanza para el mundo &copy; 2024
-                </p>
+            <div class="stat-icon" style="background:rgba(245,158,11,0.12); color:#f59e0b;">
+                <i class="bi bi-geo-alt-fill"></i>
             </div>
         </div>
-    </footer>
+    </div>
+</div>
 
-    <!--Fin Footer-->
-    <script src="{% static 'js/bootstrap.min.js' %}"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="{% static 'java/main.js' %}"></script>
-    <script src="https://kit.fontawesome.com/81581fb069.js" crossorigin="anonymous"></script>
-</body>
+<!-- esta parte es de la tabla de mensajes recibidos por el formulario web -->
+<div class="panel" style="margin-top:28px;">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-chat-dots-fill"></i> Mensajes Recibidos</span>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Correo</th>
+                    <th>Mensaje</th>
+                    <th>Fecha</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if mensajes %}
+                    {% for msg in mensajes %}
+                    <tr>
+                        <td>{{ msg.nombre }}</td>
+                        <td>{{ msg.correo }}</td>
+                        <td>{{ msg.mensaje|truncatechars:60 }}</td>
+                        <td style="color:var(--text-muted); font-size:0.8rem;">{{ msg.fecha }}</td>
+                        <td><span class="badge badge-activo">Recibido</span></td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                <tr><td colspan="5">
+                    <div class="empty-state">
+                        <i class="bi bi-chat-dots"></i>
+                        <p>No hay mensajes de contacto aún</p>
+                    </div>
+                </td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
 
-</html>
+{% endblock %}
