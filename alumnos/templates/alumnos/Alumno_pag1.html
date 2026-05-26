@@ -27,9 +27,16 @@
         </a>
 
         <!-- Custom Navigation Links -->
+        <!-- esta parte es de los botones de navegacion de arriba -->
         <ul class="custom-nav-links">
-            <li><button class="nav-view-btn active" data-view="view-dashboard">Clases</button></li>
-            <li><button class="nav-view-btn" data-view="view-favorites">Profesores Favoritos</button></li>
+            <li><button class="nav-view-btn active" data-view="view-dashboard">Dashboard</button></li>
+            <li><button class="nav-view-btn" data-view="view-my-classes">Mis Clases</button></li>
+            <li><button class="nav-view-btn" data-view="view-favorites">Favoritos</button></li>
+            <li><button class="nav-view-btn" data-view="view-courses">Cursos</button></li>
+            <li><button class="nav-view-btn" data-view="view-inbox">Buzón de Dudas</button></li>
+            <li><button class="nav-view-btn" data-view="view-progress">Progreso</button></li>
+            <li><button class="nav-view-btn" data-view="view-plans">Planes</button></li>
+            <li><button class="nav-view-btn" data-view="view-support">Soporte</button></li>
             <li><button class="nav-view-btn" data-view="view-profile">Mi Perfil</button></li>
         </ul>
 
@@ -63,6 +70,43 @@
                     <button class="sidebar-nav-item sidebar-view-btn" data-view="view-favorites">
                         <i class="bi bi-heart-fill"></i>
                         <span>Profesores Favoritos</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="sidebar-nav-item sidebar-view-btn" data-view="view-my-classes">
+                        <i class="bi bi-journal-bookmark-fill"></i>
+                        <span>Mis Clases</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="sidebar-nav-item sidebar-view-btn" data-view="view-support">
+                        <i class="bi bi-envelope-paper-fill"></i>
+                        <span>Soporte / Reportes</span>
+                    </button>
+                </li>
+                <!-- esta parte es de los botones premium del menu del costado -->
+                <li>
+                    <button class="sidebar-nav-item sidebar-view-btn" data-view="view-courses">
+                        <i class="bi bi-play-circle-fill"></i>
+                        <span>Cursos Premium</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="sidebar-nav-item sidebar-view-btn" data-view="view-inbox">
+                        <i class="bi bi-chat-text-fill"></i>
+                        <span>Buzón de Dudas</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="sidebar-nav-item sidebar-view-btn" data-view="view-progress">
+                        <i class="bi bi-bar-chart-line-fill"></i>
+                        <span>Informe de Progreso</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="sidebar-nav-item sidebar-view-btn" data-view="view-plans">
+                        <i class="bi bi-credit-card-fill"></i>
+                        <span>Planes de Suscripción</span>
                     </button>
                 </li>
                 <li>
@@ -120,6 +164,14 @@
                         <!-- Content tabs section -->
                         <div class="results-section">
                             <h2>Tu Contenido Seleccionado</h2>
+
+                            <!-- Barra de Búsqueda -->
+                            <div class="dashboard-search-container" style="margin-bottom: 20px;">
+                                <div class="search-input-wrapper">
+                                    <i class="bi bi-search search-icon"></i>
+                                    <input type="text" id="dashboard-search-input" placeholder="Buscar profesor, tutor o especialidad (ej. Matemáticas, Carlos)..." onkeyup="renderDashboardContent()">
+                                </div>
+                            </div>
                             
                             <!-- Tabs Navigation -->
                             <div class="dashboard-tabs">
@@ -157,12 +209,12 @@
 
                     <!-- Right Panel (Pulsating Ad Offer Card) -->
                     <div class="dashboard-right-panel">
-                        <a href="{% url 'planes' %}" class="promo-ad-card">
+                        <div class="promo-ad-card" onclick="switchView('view-plans')" style="cursor: pointer;">
                             <span class="promo-badge">Oferta Limitada</span>
                             <h3>¡Lleva tu aprendizaje al máximo nivel!</h3>
                             <p>Obtén acceso ilimitado a todos los profesores y tutores con un 30% de descuento en planes superiores.</p>
                             <div class="btn-promo-cta">Ver Planes Disponibles</div>
-                        </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -175,6 +227,598 @@
                     
                     <div class="teachers-list" id="favorites-teachers-container">
                         <!-- Populated via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── VIEW 4: MY CLASSES ── -->
+            <div class="dashboard-view" id="view-my-classes">
+                <div class="results-section" style="max-width: 900px; margin: 0 auto;">
+                    <h2 style="margin-bottom: 10px;"><i class="bi bi-journal-bookmark-fill" style="color: var(--primary);"></i> Mis Clases y Horarios</h2>
+                    <p style="color: var(--text-light); margin-bottom: 30px;">Gestiona tus clases programadas y revisa el historial de tus clases completadas.</p>
+                    
+                    <!-- Upcoming Classes -->
+                    <div class="classes-subsection" style="margin-bottom: 40px;">
+                        <h3 class="subsection-title"><i class="bi bi-calendar-check-fill"></i> Clases Próximas</h3>
+                        <div class="classes-grid" id="upcoming-classes-container">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+                    
+                    <!-- Past Classes -->
+                    <div class="classes-subsection">
+                        <h3 class="subsection-title"><i class="bi bi-clock-history"></i> Historial de Clases</h3>
+                        <div class="classes-table-container">
+                            <table class="classes-table">
+                                <thead>
+                                    <tr>
+                                        <th>Profesor/Tutor</th>
+                                        <th>Materia</th>
+                                        <th>Fecha y Hora</th>
+                                        <th>Duración</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="past-classes-container">
+                                    <!-- Populated via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── VIEW 5: SUPPORT / REPORTS ── -->
+            <div class="dashboard-view" id="view-support">
+                <div class="results-section" style="max-width: 900px; margin: 0 auto;">
+                    <h2 style="margin-bottom: 10px;"><i class="bi bi-envelope-paper-fill" style="color: var(--primary);"></i> Soporte y Reportes</h2>
+                    <p style="color: var(--text-light); margin-bottom: 30px;">¿Tienes algún problema con la plataforma o una tutoría? Envía un reporte a nuestro equipo de soporte.</p>
+                    
+                    <div class="support-grid">
+                        <!-- Submit Ticket Form -->
+                        <div class="support-form-card">
+                            <h3>Crear Nuevo Reporte</h3>
+                            <form id="support-ticket-form" onsubmit="submitSupportReport(event)">
+                                <div class="form-group">
+                                    <label for="support-category">Categoría del Reporte</label>
+                                    <select id="support-category" required>
+                                        <option value="" disabled selected>Selecciona una opción...</option>
+                                        <option value="Plataforma / Técnico">Problema Técnico / Plataforma</option>
+                                        <option value="Clase / Horario">Problema con una Clase / Horario</option>
+                                        <option value="Pago / Finanzas">Pagos / Suscripción</option>
+                                        <option value="Profesor / Tutor">Comportamiento de Profesor / Tutor</option>
+                                        <option value="Otro">Otro asunto</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="support-subject">Asunto</label>
+                                    <input type="text" id="support-subject" placeholder="Ej. No puedo unirme a la clase de Matemáticas" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="support-description">Descripción del problema</label>
+                                    <textarea id="support-description" rows="5" placeholder="Describe detalladamente lo sucedido para poder ayudarte..." required></textarea>
+                                </div>
+                                <button type="submit" class="btn-principal" style="width: 100%; border-radius: 12px; padding: 14px;">
+                                    <i class="bi bi-send-fill" style="margin-right: 8px;"></i>Enviar Reporte
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <!-- Tickets List -->
+                        <div class="support-list-card">
+                            <h3>Mis Reportes Enviados</h3>
+                            <div class="tickets-list-container" id="tickets-list-container">
+                                <!-- Populated via JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        </div>
+        <!-- ── VIEW 7: CURSOS PREMIUM (PREMIUM) ── -->
+        <!-- esta parte es de los cursos premium de los alumnos -->
+        <div class="dashboard-view" id="view-courses">
+            <div class="results-section" style="max-width: 1200px; margin: 0 auto; padding: 0 15px;">
+                
+                <!-- Contenido de Cursos (Desbloqueado) -->
+                <!-- esta parte es del catalogo con los carruseles de cursos -->
+                <div class="courses-wrapper-content" id="courses-unlocked-content">
+                    
+                    <div class="courses-catalog-header" style="margin-bottom: 30px;">
+                        <h2 style="font-size: 2.2rem; font-weight: 800; color: var(--text); margin-bottom: 8px;">Catálogo de Cursos Premium</h2>
+                        <p style="color: var(--text-light); font-size: 1.05rem;">Aprende a tu propio ritmo con clases interactivas y material exclusivo de tecnología y desarrollo.</p>
+                    </div>
+
+                    <!-- Fila 1: Popular Python -->
+                    <div class="courses-carousel-section" style="margin-bottom: 45px; position: relative;">
+                        <div class="courses-cat-header" style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                                <h3 style="font-size: 1.45rem; font-weight: 800; color: var(--text); margin: 0;">Popular entre Desarrolladores/as Python</h3>
+                                <a href="#" class="btn-edit-profession" style="font-size: 0.88rem; font-weight: 700; color: var(--primary); text-decoration: none;">Editar profesión</a>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span class="badge-new-cat" style="background-color: #d1fae5; color: #065f46; font-size: 0.78rem; font-weight: 700; padding: 4px 10px; border-radius: 6px;">Nuevo</span>
+                                <span style="font-size: 0.85rem; color: var(--text-light);">Inspirado en tus selecciones</span>
+                            </div>
+                        </div>
+
+                        <div class="courses-carousel-wrapper" style="position: relative;">
+                            <div class="courses-carousel-track" id="carousel-python-track">
+                                <!-- Se rellena con JS -->
+                            </div>
+                            <button class="carousel-nav-btn next" onclick="scrollCoursesCarousel('python-track', 'right')">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                            <button class="carousel-nav-btn prev" onclick="scrollCoursesCarousel('python-track', 'left')" style="display: none;">
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Fila 2: Cursos en tendencia -->
+                    <div class="courses-carousel-section" style="margin-bottom: 45px; position: relative;">
+                        <div class="courses-cat-header" style="margin-bottom: 15px;">
+                            <h3 style="font-size: 1.45rem; font-weight: 800; color: var(--text); margin: 0;">Cursos en tendencia</h3>
+                        </div>
+
+                        <div class="courses-carousel-wrapper" style="position: relative;">
+                            <div class="courses-carousel-track" id="carousel-trend-track">
+                                <!-- Se rellena con JS -->
+                            </div>
+                            <button class="carousel-nav-btn next" onclick="scrollCoursesCarousel('trend-track', 'right')">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                            <button class="carousel-nav-btn prev" onclick="scrollCoursesCarousel('trend-track', 'left')" style="display: none;">
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ── VIEW 8: BUZÓN DE DUDAS (PREMIUM) ── -->
+        <!-- esta parte es del chat o buzon de dudas premium -->
+        <div class="dashboard-view" id="view-inbox">
+            <div class="results-section" style="max-width: 1000px; margin: 0 auto;">
+                
+                <!-- Pantalla de Bloqueo Premium -->
+                <div class="premium-lock-overlay" id="lock-inbox">
+                    <div class="lock-card">
+                        <div class="lock-icon-wrapper">
+                            <i class="bi bi-lock-fill"></i>
+                        </div>
+                        <h2>Función Premium Exclusiva</h2>
+                        <p>Resuelve tus dudas directamente con tus profesores preferidos. Esta función requiere una suscripción premium activa (Plan Medio, Superior o Personalizado).</p>
+                        <button class="btn-principal" onclick="switchView('view-plans')">Ver Planes Disponibles</button>
+                    </div>
+                </div>
+
+                <!-- Contenido del Buzón (Desbloqueado) -->
+                <div class="inbox-wrapper-content" id="inbox-unlocked-content" style="display: none;">
+                    <div style="margin-bottom: 25px;">
+                        <h2><i class="bi bi-chat-text-fill" style="color: var(--primary);"></i> Buzón de Dudas</h2>
+                        <p style="color: var(--text-light); font-size: 0.95rem;">Resuelve tus dudas académicas directamente con tus profesores favoritos.</p>
+                    </div>
+                    
+                    <div class="inbox-layout">
+                        <!-- Panel Izquierdo: Lista de Chats -->
+                        <div class="chat-sidebar">
+                            <div class="chat-sidebar-header">
+                                <i class="bi bi-search"></i>
+                                <input type="text" id="chat-search-input" placeholder="Buscar profesor..." oninput="filterChatContacts()">
+                            </div>
+                            <div class="chat-contacts-list" id="chat-contacts-list">
+                                <!-- Se rellena con JS -->
+                            </div>
+                        </div>
+                        
+                        <!-- Panel Derecho: Conversación activa -->
+                        <div class="chat-main">
+                            <div class="chat-header" id="chat-active-header">
+                                <!-- Se rellena con JS -->
+                            </div>
+                            <div class="chat-messages-container" id="chat-messages-container">
+                                <!-- Se rellena con JS -->
+                            </div>
+                            <div class="chat-typing-status" id="chat-typing-status" style="display: none;">
+                                <div class="typing-indicator">
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
+                                </div>
+                                <span id="chat-typing-text">Profesor escribiendo...</span>
+                            </div>
+                            <form class="chat-input-area" id="chat-send-form" onsubmit="sendMessageToTeacher(event)">
+                                <input type="text" id="chat-msg-input" placeholder="Escribe tu consulta académica..." required autocomplete="off">
+                                <button type="submit" class="btn-chat-send"><i class="bi bi-send-fill"></i></button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── VIEW 9: INFORME DE PROGRESO (PREMIUM) ── -->
+        <!-- esta parte es del reporte de notas y avance premium -->
+        <div class="dashboard-view" id="view-progress">
+            <div class="results-section" style="max-width: 1000px; margin: 0 auto;">
+                
+                <!-- Pantalla de Bloqueo Premium -->
+                <div class="premium-lock-overlay" id="lock-progress">
+                    <div class="lock-card">
+                        <div class="lock-icon-wrapper">
+                            <i class="bi bi-lock-fill"></i>
+                        </div>
+                        <h2>Función Premium Exclusiva</h2>
+                        <p>Obtén análisis detallados de tu avance, horas de estudio y la retroalimentación de tus tutores. Esta función requiere una suscripción premium activa (Plan Medio, Superior o Personalizado).</p>
+                        <button class="btn-principal" onclick="switchView('view-plans')">Ver Planes Disponibles</button>
+                    </div>
+                </div>
+
+                <!-- Contenido de Progreso (Desbloqueado) -->
+                <div class="progress-wrapper-content" id="progress-unlocked-content" style="display: none;">
+                    <div style="margin-bottom: 25px;">
+                        <h2><i class="bi bi-bar-chart-line-fill" style="color: var(--primary);"></i> Mi Informe de Progreso</h2>
+                        <p style="color: var(--text-light); font-size: 0.95rem;">Revisa tus estadísticas de estudio, horas dedicadas y el feedback de tus tutores.</p>
+                    </div>
+                    
+                    <!-- Resumen de Estadísticas -->
+                    <div class="progress-stats-grid">
+                        <div class="progress-stat-card">
+                            <div class="stat-icon" style="background: rgba(168, 85, 247, 0.1); color: var(--primary);"><i class="bi bi-hourglass-split"></i></div>
+                            <div class="stat-info">
+                                <h4 id="progress-stat-hours">36.5 hrs</h4>
+                                <p>Tiempo de Estudio Total</p>
+                            </div>
+                        </div>
+                        <div class="progress-stat-card">
+                            <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;"><i class="bi bi-check-circle-fill"></i></div>
+                            <div class="stat-info">
+                                <h4 id="progress-stat-classes">24</h4>
+                                <p>Clases Completadas</p>
+                            </div>
+                        </div>
+                        <div class="progress-stat-card">
+                            <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--accent);"><i class="bi bi-journal-check"></i></div>
+                            <div class="stat-info">
+                                <h4 id="progress-stat-subjects">4</h4>
+                                <p>Ramos Cursados</p>
+                            </div>
+                        </div>
+                        <div class="progress-stat-card">
+                            <div class="stat-icon" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;"><i class="bi bi-star-fill"></i></div>
+                            <div class="stat-info">
+                                <h4 id="progress-stat-rating">4.9</h4>
+                                <p>Promedio Feedback</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-details-grid">
+                        <!-- Avance por ramo -->
+                        <div class="progress-details-card">
+                            <h3>Avance por Ramo</h3>
+                            <div class="progress-subject-list" id="progress-subject-list">
+                                <!-- Se rellena con JS -->
+                            </div>
+                        </div>
+                        
+                        <!-- Gráfico de tendencia SVG -->
+                        <div class="progress-details-card">
+                            <h3>Horas de Estudio Semanales</h3>
+                            <div class="chart-container" style="height: 220px; position: relative;">
+                                <svg class="progress-chart-svg" viewBox="0 0 500 200" style="width: 100%; height: 100%;">
+                                    <defs>
+                                        <linearGradient id="chart-grad" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stop-color="var(--primary)" stop-opacity="0.3"/>
+                                            <stop offset="100%" stop-color="var(--primary)" stop-opacity="0.0"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <!-- Líneas de fondo -->
+                                    <line x1="40" y1="20" x2="480" y2="20" stroke="rgba(168, 85, 247, 0.08)" stroke-width="1"/>
+                                    <line x1="40" y1="70" x2="480" y2="70" stroke="rgba(168, 85, 247, 0.08)" stroke-width="1"/>
+                                    <line x1="40" y1="120" x2="480" y2="120" stroke="rgba(168, 85, 247, 0.08)" stroke-width="1"/>
+                                    <line x1="40" y1="170" x2="480" y2="170" stroke="rgba(168, 85, 247, 0.08)" stroke-width="1"/>
+                                    
+                                    <!-- Trazado del gráfico -->
+                                    <path d="M 40 170 Q 110 120 180 140 T 320 60 T 460 30" fill="none" stroke="var(--primary)" stroke-width="4" stroke-linecap="round" class="chart-line-path"/>
+                                    <path d="M 40 170 Q 110 120 180 140 T 320 60 T 460 30 L 460 170 L 40 170 Z" fill="url(#chart-grad)"/>
+                                    
+                                    <!-- Puntos -->
+                                    <circle cx="40" cy="170" r="5" fill="var(--primary)"/>
+                                    <circle cx="110" cy="120" r="5" fill="var(--accent)"/>
+                                    <circle cx="180" cy="140" r="5" fill="var(--primary)"/>
+                                    <circle cx="320" cy="60" r="5" fill="var(--accent)"/>
+                                    <circle cx="460" cy="30" r="5" fill="var(--primary)"/>
+                                    
+                                    <!-- Textos -->
+                                    <text x="40" y="190" fill="var(--text-light)" font-size="10" text-anchor="middle">Sem 1</text>
+                                    <text x="110" y="190" fill="var(--text-light)" font-size="10" text-anchor="middle">Sem 2</text>
+                                    <text x="180" y="190" fill="var(--text-light)" font-size="10" text-anchor="middle">Sem 3</text>
+                                    <text x="320" y="190" fill="var(--text-light)" font-size="10" text-anchor="middle">Sem 4</text>
+                                    <text x="460" y="190" fill="var(--text-light)" font-size="10" text-anchor="middle">Hoy</text>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Retroalimentación de docentes -->
+                    <div class="progress-feedback-section" style="margin-top: 30px;">
+                        <h3>Comentarios y Observaciones del Equipo Docente</h3>
+                        <div class="feedback-list-container" id="feedback-list-container">
+                            <!-- Se rellena con JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ventana Modal para Ver Detalles del Curso -->
+        <!-- esta parte es de la ventana emergente para ver detalles de cursos -->
+        <div class="custom-modal-overlay" id="course-detail-modal">
+            <div class="custom-modal-card" style="max-width: 550px;">
+                <div class="custom-modal-header">
+                    <h3 id="detail-course-title" style="margin: 0; font-weight: 800; font-size: 1.35rem; color: var(--text);">Detalles del Curso</h3>
+                    <button class="close-modal-btn" onclick="closeCourseDetailModal()">&times;</button>
+                </div>
+                <div class="custom-modal-body">
+                    <div id="detail-course-banner" style="height: 180px; border-radius: 12px; margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; font-size: 2.2rem; font-weight: 800; text-align: center; padding: 20px; text-shadow: 0 4px 8px rgba(0,0,0,0.3);">
+                        <!-- Se llena con JS -->
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap;" id="detail-course-badges">
+                        <!-- Badges premium / bestseller -->
+                    </div>
+                    <p style="color: var(--text-light); font-size: 0.95rem; line-height: 1.6; margin-bottom: 20px;" id="detail-course-desc">
+                        <!-- Descripcion del curso -->
+                    </p>
+                    <div style="border-top: 1px solid rgba(168, 85, 247, 0.1); padding-top: 15px; margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <span style="color: var(--text-light); font-size: 0.9rem;">Instructor:</span>
+                            <strong id="detail-course-author" style="color: var(--text);"></strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <span style="color: var(--text-light); font-size: 0.9rem;">Valoración:</span>
+                            <span id="detail-course-rating" style="color: var(--text); font-weight: 700;"></span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color: var(--text-light); font-size: 0.9rem;">Precio del Curso:</span>
+                            <div>
+                                <span id="detail-course-price" style="font-size: 1.35rem; font-weight: 800; color: var(--primary); margin-right: 8px;"></span>
+                                <span id="detail-course-oldprice" style="text-decoration: line-through; color: var(--text-light); font-size: 0.95rem;"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn-principal" onclick="startCourseLearning()" style="width: 100%; border-radius: 12px; padding: 14px;">
+                        <i class="bi bi-play-fill" style="margin-right: 8px;"></i>Iniciar Aprendizaje
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ventana Modal para Reproducir Clases en Video -->
+        <!-- esta parte es de la ventana emergente para ver las clases grabadas en video -->
+        <div class="custom-modal-overlay" id="course-video-modal">
+            <div class="custom-modal-card" style="max-width: 1000px; width: 95%; padding: 25px;">
+                <div class="custom-modal-header" style="margin-bottom: 15px;">
+                    <h3 style="margin: 0; font-size: 1.3rem; font-weight: 800; color: var(--text);">
+                        <i class="bi bi-play-btn-fill" style="color: var(--primary); margin-right: 8px;"></i>
+                        <span id="video-modal-title">Reproductor de Curso</span>
+                    </h3>
+                    <button class="close-modal-btn" onclick="closeCourseVideoModal()">&times;</button>
+                </div>
+                <div class="custom-modal-body">
+                    
+                    <!-- Grid principal de reproduccion -->
+                    <!-- esta parte es del reproductor de video con las lecciones al costado -->
+                    <div class="video-layout-grid">
+                        
+                        <!-- Columna Izquierda: Reproductor -->
+                        <div class="video-player-column">
+                            <div class="video-player-wrapper">
+                                <video id="course-html5-video" controls poster="{% static 'alumnos/img/Logo.png' %}" style="width: 100%; height: 100%; border-radius: 12px; background: #000; outline: none;">
+                                    <source id="video-player-source" src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" type="video/mp4">
+                                    Tu navegador no soporta reproducción de video.
+                                </video>
+                            </div>
+                            
+                            <!-- Pestañas informativas bajo el video -->
+                            <!-- esta parte es de la seccion de descargas de guias pdf bajo el video -->
+                            <div class="video-info-tabs" style="margin-top: 15px;">
+                                <div class="video-tab-nav" style="display: flex; gap: 10px; border-bottom: 1px solid rgba(168, 85, 247, 0.1); padding-bottom: 10px; margin-bottom: 15px;">
+                                    <button class="video-tab-btn active" onclick="switchVideoTab('tab-video-desc')">Descripción</button>
+                                    <button class="video-tab-btn" onclick="switchVideoTab('tab-video-files')">Material Descargable</button>
+                                    <button class="video-tab-btn" onclick="switchVideoTab('tab-video-tutor')">Preguntar al Tutor</button>
+                                </div>
+                                <div class="video-tab-content active" id="tab-video-desc">
+                                    <p style="font-size: 0.9rem; color: var(--text-light); line-height: 1.6;" id="video-course-longdesc">
+                                        Bienvenido a esta lección práctica. Aquí cubriremos los fundamentos prácticos de la materia, analizaremos el código de ejemplo y te guiaremos paso a paso para resolver las principales problemáticas de la industria.
+                                    </p>
+                                </div>
+                                <div class="video-tab-content" id="tab-video-files" style="display: none;">
+                                    <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px;">
+                                        <li>
+                                            <a href="#" onclick="downloadMockResource(event, 'Guia_Teorica_Conceptos.pdf')" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; border-radius: 8px; border: 1px solid rgba(168, 85, 247, 0.1); background: rgba(168, 85, 247, 0.01); color: var(--text); text-decoration: none; font-size: 0.88rem;">
+                                                <span><i class="bi bi-file-earmark-pdf-fill" style="color: #ef4444; margin-right: 8px;"></i> Guía Teórica de Conceptos.pdf</span>
+                                                <i class="bi bi-download"></i>
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="#" onclick="downloadMockResource(event, 'Ejercicios_Practicos_Resueltos.pdf')" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; border-radius: 8px; border: 1px solid rgba(168, 85, 247, 0.1); background: rgba(168, 85, 247, 0.01); color: var(--text); text-decoration: none; font-size: 0.88rem;">
+                                                <span><i class="bi bi-file-earmark-pdf-fill" style="color: #ef4444; margin-right: 8px;"></i> Ejercicios Prácticos Resueltos.pdf</span>
+                                                <i class="bi bi-download"></i>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="video-tab-content" id="tab-video-tutor" style="display: none;">
+                                    <p style="font-size: 0.9rem; color: var(--text-light); line-height: 1.6; margin-bottom: 12px;">
+                                        ¿Tienes alguna duda sobre esta clase en video? Escríbele directamente a tu tutor favorito en el Buzón de Dudas.
+                                    </p>
+                                    <button class="btn-principal" onclick="openChatFromVideo()" style="border-radius: 8px; padding: 8px 16px; font-size: 0.85rem;">
+                                        <i class="bi bi-chat-text-fill" style="margin-right: 6px;"></i>Ir al Buzón de Dudas
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Columna Derecha: Lista de Lecciones -->
+                        <div class="video-playlist-column">
+                            <h4 style="margin: 0 0 12px 0; font-size: 0.95rem; font-weight: 800; color: var(--text);">Lecciones del Curso</h4>
+                            <div class="video-lessons-list" id="video-lessons-list">
+                                <!-- Se rellena con JS -->
+                            </div>
+                        </div>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+
+        <!-- ── VIEW 6: AVAILABLE PLANS ── -->
+            <div class="dashboard-view" id="view-plans">
+                <div class="results-section" style="max-width: 1000px; margin: 0 auto;">
+                    <div class="planes-header" style="text-align: center; margin-bottom: 40px;">
+                        <h2 style="font-size: 2.2rem; font-weight: 800; color: var(--text); margin-bottom: 10px;">Elige el plan ideal para ti</h2>
+                        <p style="color: var(--text-light); font-size: 1.1rem; max-width: 600px; margin: 0 auto;">Todos nuestros planes están diseñados para brindarte el mejor acompañamiento en tu aprendizaje.</p>
+                    </div>
+
+                    <!-- Planes Estándar Grid -->
+                    <div class="plans-showcase-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; margin-bottom: 50px;">
+                        
+                        <!-- Tarjeta Plan Básico -->
+                        <div class="plan-card-display">
+                            <div class="plan-card-body">
+                                <h3 class="plan-title" style="font-size: 1.4rem; font-weight: 700; color: var(--text); margin-bottom: 15px;">Plan Básico</h3>
+                                <div class="plan-price-box" style="margin-bottom: 15px;">
+                                    <span class="plan-price" style="font-size: 2.2rem; font-weight: 800; color: var(--primary);">$69.990</span>
+                                    <span class="plan-period" style="color: var(--text-light); font-size: 0.95rem;">/mes</span>
+                                </div>
+                                <p class="plan-billing-info" style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 20px;">Facturación mensual</p>
+                                <button class="btn-principal" onclick="buyPlan('Plan Básico', 69990)" style="width: 100%; border-radius: 12px; padding: 12px; margin-bottom: 25px;">Contratar Plan</button>
+                                
+                                <div style="border-top: 1px solid rgba(168, 85, 247, 0.1); margin-bottom: 20px;"></div>
+                                
+                                <p class="plan-features-title" style="font-weight: 700; font-size: 0.9rem; color: var(--text); margin-bottom: 12px;">Beneficios incluidos:</p>
+                                <ul class="plan-features-list" style="list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem; color: var(--text-light);">
+                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Clases online</li>
+                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> 3 clases a la semana</li>
+                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Temas básicos de asignatura</li>
+                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Material de apoyo</li>
+                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Dudas vía correo</li>
+                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Horarios Pre-definidos</li>
+                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> 1 ramo</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Tarjeta Plan Medio (Destacado) -->
+                        <div class="plan-card-display featured" style="position: relative; border: 2.5px solid var(--primary); transform: scale(1.03); box-shadow: 0 15px 35px rgba(168, 85, 247, 0.15);">
+                            <span style="position: absolute; top: -15px; left: 50%; transform: translateX(-50%); background-color: var(--accent); color: var(--text); font-size: 0.75rem; font-weight: 800; padding: 4px 14px; border-radius: 50px; text-transform: uppercase; letter-spacing: 0.5px;">Destacado</span>
+                            <div class="plan-card-body">
+                                <h3 class="plan-title" style="font-size: 1.4rem; font-weight: 700; color: var(--text); margin-bottom: 15px; margin-top: 10px;">Plan Medio</h3>
+                                <div class="plan-price-box" style="margin-bottom: 15px;">
+                                    <span class="plan-price" style="font-size: 2.2rem; font-weight: 800; color: var(--primary);">$139.990</span>
+                                    <span class="plan-period" style="color: var(--text-light); font-size: 0.95rem;">/mes</span>
+                                </div>
+                                <p class="plan-billing-info" style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 20px;">Facturación mensual</p>
+                                <button class="btn-principal" onclick="buyPlan('Plan Medio', 139990)" style="width: 100%; border-radius: 12px; padding: 12px; margin-bottom: 25px; background-color: var(--primary);">Contratar Plan</button>
+                                
+                                <div style="border-top: 1px solid rgba(168, 85, 247, 0.1); margin-bottom: 20px;"></div>
+                                
+                                <p class="plan-features-title" style="font-weight: 700; font-size: 0.9rem; color: var(--text); margin-bottom: 12px;">Beneficios incluidos:</p>
+                                <ul class="plan-features-list" style="list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem; color: var(--text-light);">
+                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Clases online</li>
+                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> 4 clases a la semana</li>
+                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Temas intermedios</li>
+                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Material de apoyo</li>
+                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Dudas vía correo</li>
+                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Horarios definidos</li>
+                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> 1 a 2 ramos</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Tarjeta Plan Superior -->
+                        <div class="plan-card-display">
+                            <div class="plan-card-body">
+                                <h3 class="plan-title" style="font-size: 1.4rem; font-weight: 700; color: var(--text); margin-bottom: 15px;">Plan Superior</h3>
+                                <div class="plan-price-box" style="margin-bottom: 15px;">
+                                    <span class="plan-price" style="font-size: 2.2rem; font-weight: 800; color: var(--primary);">$189.990</span>
+                                    <span class="plan-period" style="color: var(--text-light); font-size: 0.95rem;">/mes</span>
+                                </div>
+                                <p class="plan-billing-info" style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 20px;">Facturación mensual</p>
+                                <button class="btn-principal" onclick="buyPlan('Plan Superior', 189990)" style="width: 100%; border-radius: 12px; padding: 12px; margin-bottom: 25px;">Contratar Plan</button>
+                                
+                                <div style="border-top: 1px solid rgba(168, 85, 247, 0.1); margin-bottom: 20px;"></div>
+                                
+                                <p class="plan-features-title" style="font-weight: 700; font-size: 0.9rem; color: var(--text); margin-bottom: 12px;">Beneficios incluidos:</p>
+                                <ul class="plan-features-list" style="list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem; color: var(--text-light);">
+                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Clases presenciales u online</li>
+                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> 5 clases a la semana</li>
+                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Temas avanzados</li>
+                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Material de apoyo</li>
+                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Simulación de pruebas</li>
+                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Horario flexible</li>
+                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> 2 a 3 ramos</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div style="border-top: 1.5px solid rgba(168, 85, 247, 0.1); margin: 50px 0 40px 0;"></div>
+
+                    <div class="planes-header" style="text-align: center; margin-bottom: 30px;">
+                        <h3 style="font-size: 1.6rem; font-weight: 800; color: var(--text); margin-bottom: 10px;">Planes Especiales y Flexibles</h3>
+                        <p style="color: var(--text-light); font-size: 1rem;">¿Buscas una solución a tu medida? Revisa nuestras opciones alternativas.</p>
+                    </div>
+
+                    <div class="plans-special-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px;">
+                        
+                        <!-- Tarjeta Material Específico -->
+                        <div class="plan-card-display">
+                            <div class="plan-card-body">
+                                <h3 class="plan-title" style="font-size: 1.3rem; font-weight: 700; color: var(--text); margin-bottom: 15px;">Material Específico</h3>
+                                <div class="plan-price-box" style="margin-bottom: 15px;">
+                                    <span class="plan-price" style="font-size: 2rem; font-weight: 800; color: var(--primary);">Clase a Clase</span>
+                                </div>
+                                <p class="plan-billing-info" style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 20px;">Pago directo por clase al profesor</p>
+                                <button class="btn-principal" onclick="switchView('view-dashboard')" style="width: 100%; border-radius: 12px; padding: 12px; margin-bottom: 25px;">Consultar Profesores</button>
+                                
+                                <div style="border-top: 1px solid rgba(168, 85, 247, 0.1); margin-bottom: 20px;"></div>
+                                
+                                <ul class="plan-features-list" style="list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem; color: var(--text-light);">
+                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Pago directo al profesor por clase</li>
+                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Enfocado en 1 o 2 temas específicos</li>
+                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Valores definidos por cada profesor</li>
+                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Material focalizado en tus dudas</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Tarjeta Plan Personalizado -->
+                        <div class="plan-card-display">
+                            <div class="plan-card-body">
+                                <h3 class="plan-title" style="font-size: 1.3rem; font-weight: 700; color: var(--text); margin-bottom: 15px;">Plan Personalizado</h3>
+                                <div class="plan-price-box" style="margin-bottom: 15px;">
+                                    <span class="plan-price" style="font-size: 2rem; font-weight: 800; color: var(--primary);">A Medida</span>
+                                </div>
+                                <p class="plan-billing-info" style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 20px;">Valores según tus selecciones</p>
+                                <button class="btn-principal" onclick="openPlanCustomizer()" style="width: 100%; border-radius: 12px; padding: 12px; margin-bottom: 25px; background-color: var(--accent); color: var(--text);">Diseñar mi Plan</button>
+                                
+                                <div style="border-top: 1px solid rgba(168, 85, 247, 0.1); margin-bottom: 20px;"></div>
+                                
+                                <ul class="plan-features-list" style="list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem; color: var(--text-light);">
+                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Diseña tu propio horario y días</li>
+                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Ajusta la cantidad de ramos</li>
+                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Elige modalidad online o presencial</li>
+                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Añade o quita simulaciones de pruebas</li>
+                                </ul>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -206,6 +850,53 @@
                         <div class="profile-field">
                             <label>Teléfono de Contacto</label>
                             <p>+56 9 1234 5678</p>
+                        </div>
+                    </div>
+
+                    <!-- Historial de Pagos y Transacciones -->
+                    <div class="profile-transactions-section" style="margin-top: 40px; border-top: 1px solid rgba(168, 85, 247, 0.1); padding-top: 30px;">
+                        <h3 style="margin-bottom: 20px; font-size: 1.25rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 8px;">
+                            <i class="bi bi-credit-card-2-front-fill" style="color: var(--primary);"></i> Historial de Pagos y Transacciones
+                        </h3>
+                        <div class="classes-table-container">
+                            <table class="classes-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID Transacción</th>
+                                        <th>Plan / Concepto</th>
+                                        <th>Fecha</th>
+                                        <th>Monto</th>
+                                        <th>Método</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>TX-99812</code></td>
+                                        <td>Plan LBWUS Inicial - Mensual</td>
+                                        <td>15 Mayo, 2026</td>
+                                        <td>$19.990</td>
+                                        <td>Webpay (Crédito)</td>
+                                        <td><span class="tx-badge success">Aprobado</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>TX-99540</code></td>
+                                        <td>Clase Particular - David Silva</td>
+                                        <td>12 Mayo, 2026</td>
+                                        <td>$18.000</td>
+                                        <td>Webpay (Débito)</td>
+                                        <td><span class="tx-badge success">Aprobado</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>TX-99031</code></td>
+                                        <td>Plan LBWUS Inicial - Mensual (Intento)</td>
+                                        <td>15 Abril, 2026</td>
+                                        <td>$19.990</td>
+                                        <td>Webpay (Crédito)</td>
+                                        <td><span class="tx-badge failed">Rechazado</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -252,14 +943,113 @@
         </div>
     </div>
 
+    <!-- Modal Diseñador de Plan Personalizado (Sobrepuesto) -->
+    <div class="modal-overlay" id="custom-plan-modal">
+        <div class="topics-modal" style="max-width: 800px; max-height: 90vh;">
+            <button class="modal-close-btn" id="close-builder-btn"><i class="bi bi-x-lg"></i></button>
+            <h2>Diseña tu Plan a Medida</h2>
+            <p class="subtitle">Personaliza cada aspecto de tu reforzamiento y calcula tu valor mensual inmediatamente.</p>
+            
+            <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; overflow-y: auto; padding-right: 5px; flex-grow: 1; margin-bottom: 15px;">
+                <!-- Controles Interactivos -->
+                <div class="builder-controls" style="display: flex; flex-direction: column; gap: 15px;">
+                    <!-- Modalidad -->
+                    <div class="form-group">
+                        <label>Modalidad de Clases</label>
+                        <select id="builder-modalidad">
+                            <option value="online" selected>Online (Reforzamiento virtual)</option>
+                            <option value="presencial">Presencial (+ $25.000 de base)</option>
+                            <option value="grabado">Clases Grabadas (Acceso al material)</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Horas semanales -->
+                    <div class="form-group">
+                        <label id="builder-horas-label">Horas semanales: 2 horas</label>
+                        <input type="range" id="builder-horas" min="1" max="20" value="2" style="width:100%; accent-color: var(--primary);">
+                    </div>
+
+                    <!-- Días de la semana -->
+                    <div class="form-group">
+                        <label>Días preferidos</label>
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                            <label style="display:flex; align-items:center; gap:4px; font-size:0.85rem; font-weight:600; padding:6px 12px; border:1px solid rgba(168,85,247,0.15); border-radius:8px; cursor:pointer;"><input type="checkbox" name="builder-dias" value="Lunes" checked> Lu</label>
+                            <label style="display:flex; align-items:center; gap:4px; font-size:0.85rem; font-weight:600; padding:6px 12px; border:1px solid rgba(168,85,247,0.15); border-radius:8px; cursor:pointer;"><input type="checkbox" name="builder-dias" value="Martes"> Ma</label>
+                            <label style="display:flex; align-items:center; gap:4px; font-size:0.85rem; font-weight:600; padding:6px 12px; border:1px solid rgba(168,85,247,0.15); border-radius:8px; cursor:pointer;"><input type="checkbox" name="builder-dias" value="Miércoles" checked> Mi</label>
+                            <label style="display:flex; align-items:center; gap:4px; font-size:0.85rem; font-weight:600; padding:6px 12px; border:1px solid rgba(168,85,247,0.15); border-radius:8px; cursor:pointer;"><input type="checkbox" name="builder-dias" value="Jueves"> Ju</label>
+                            <label style="display:flex; align-items:center; gap:4px; font-size:0.85rem; font-weight:600; padding:6px 12px; border:1px solid rgba(168,85,247,0.15); border-radius:8px; cursor:pointer;"><input type="checkbox" name="builder-dias" value="Viernes" checked> Vi</label>
+                        </div>
+                    </div>
+                    
+                    <!-- Asignaturas -->
+                    <div class="form-group">
+                        <label>Asignaturas (Ramos)</label>
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <label style="display:flex; align-items:center; gap:6px; font-size:0.85rem; cursor:pointer;"><input type="checkbox" name="builder-ramos" value="Matemáticas" checked> Matemáticas</label>
+                            <label style="display:flex; align-items:center; gap:6px; font-size:0.85rem; cursor:pointer;"><input type="checkbox" name="builder-ramos" value="Física"> Física</label>
+                            <label style="display:flex; align-items:center; gap:6px; font-size:0.85rem; cursor:pointer;"><input type="checkbox" name="builder-ramos" value="Lenguaje"> Lenguaje</label>
+                            <label style="display:flex; align-items:center; gap:6px; font-size:0.85rem; cursor:pointer;"><input type="checkbox" name="builder-ramos" value="Inglés"> Inglés</label>
+                        </div>
+                    </div>
+
+                    <!-- Nivel del Profesor -->
+                    <div class="form-group">
+                        <label>Nivel de Profesor</label>
+                        <select id="builder-profesor">
+                            <option value="junior">Estudiante Tutor (Junior)</option>
+                            <option value="senior" selected>Profesor Profesional (Senior)</option>
+                            <option value="master">Experto Académico (Master/PhD)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Resumen de Costos -->
+                <div style="background-color: var(--primary-light); border: 1px solid rgba(168,85,247,0.15); border-radius: 16px; padding: 25px; display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+                    <div>
+                        <div style="display: inline-block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; background-color: var(--accent); color: var(--text); padding: 4px 10px; border-radius: 6px; margin-bottom: 10px;" id="builder-badge">¡Muy Económico!</div>
+                        <div style="margin-bottom: 20px;">
+                            <span style="font-size: 2.5rem; font-weight: 800; color: var(--primary);" id="builder-total-price">$40.000</span>
+                            <span style="color: var(--text-light); font-size: 1rem;">/mes</span>
+                        </div>
+                        <ul style="list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem; color: var(--text); border-top: 1px solid rgba(168,85,247,0.1); padding-top: 15px;">
+                            <li id="sum-builder-modalidad">Modalidad: Online</li>
+                            <li id="sum-builder-horas">Horas: 2 hrs semanales</li>
+                            <li id="sum-builder-dias">Días: Lu, Mi, Vi</li>
+                            <li id="sum-builder-ramos">Asignaturas: Matemáticas</li>
+                            <li id="sum-builder-profesor">Profesor: Senior</li>
+                        </ul>
+                    </div>
+                    <button class="btn-principal" onclick="buyCustomPlan()" style="width: 100%; border-radius: 12px; padding: 14px; margin-top: 20px;">Contratar Plan Personalizado</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- SweetAlert2 CDN -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <!-- App Logic -->
     <script>
-        // ── HAS PLAN LOCK VARIABLE (Default: false) ──
-        const hasPlan = false; 
+        // ── HAS PLAN LOCK VARIABLE ──
+        let hasPlan = localStorage.getItem('hasPlan') === 'true'; 
+        let activePlanName = localStorage.getItem('activePlanName') || '';
 
+        const updatePlanUI = () => {
+            const planBadge = document.querySelector('.profile-title-box .plan-badge');
+            if (planBadge) {
+                if (hasPlan) {
+                    planBadge.innerHTML = `<i class="bi bi-check-circle-fill" style="color: #10b981;"></i> Plan Activo: ${activePlanName}`;
+                    planBadge.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
+                    planBadge.style.color = '#10b981';
+                    planBadge.style.borderColor = 'rgba(16, 185, 129, 0.2)';
+                } else {
+                    planBadge.innerHTML = `<i class="bi bi-x-circle-fill"></i> Sin Plan Activo`;
+                    planBadge.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                    planBadge.style.color = '#ef4444';
+                    planBadge.style.borderColor = 'rgba(239, 68, 68, 0.2)';
+                }
+            }
+        };
         // ── LIGHT/DARK MODE TOGGLING ──
         const toggleTheme = () => {
             const body = document.body;
@@ -282,7 +1072,114 @@
             document.getElementById('theme-icon').className = 'bi bi-moon-fill';
         }
 
-        // ── MULTI-VIEW ROUTING (Dashboard, Favorites, Profile) ──
+        // ── DATA POOLS ──
+        // Teachers
+        const teachers = [
+            { id: 1, name: "Dr. Carlos Ruiz", specialties: ["Matemáticas", "Física"], distance: 0.8, rating: "4.9 ⭐", price: "$15.000", initial: "CR" },
+            { id: 2, name: "Lic. María José Valenzuela", specialties: ["Lenguaje", "Historia"], distance: 1.2, rating: "4.8 ⭐", price: "$12.000", initial: "MJ" },
+            { id: 3, name: "Ing. David Silva", specialties: ["Programación", "Matemáticas"], distance: 1.5, rating: "5.0 ⭐", price: "$18.000", initial: "DS" },
+            { id: 4, name: "Prof. Ana Contreras", specialties: ["Inglés"], distance: 2.1, rating: "4.7 ⭐", price: "$14.000", initial: "AC" },
+            { id: 5, name: "Dra. Lucía Méndez", specialties: ["Química", "Biología"], distance: 2.8, rating: "4.9 ⭐", price: "$16.000", initial: "LM" },
+            { id: 6, name: "Prof. Pedro Rojas", specialties: ["Física", "Química"], distance: 3.2, rating: "4.6 ⭐", price: "$13.000", initial: "PR" },
+            { id: 7, name: "Msc. Sofía Vergara", specialties: ["Inglés", "Historia"], distance: 4.0, rating: "4.8 ⭐", price: "$15.000", initial: "SV" }
+        ];
+
+        // Tutors
+        const tutors = [
+            { id: 101, name: "Tutor Juan Pablo", specialties: ["Matemáticas", "Programación"], distance: 1.1, rating: "4.9 ⭐", initial: "JP" },
+            { id: 102, name: "Tutora Camila Gómez", specialties: ["Inglés", "Lenguaje"], distance: 1.8, rating: "4.8 ⭐", initial: "CG" },
+            { id: 103, name: "Tutor Roberto Muñoz", specialties: ["Física", "Química"], distance: 2.4, rating: "4.7 ⭐", initial: "RM" },
+            { id: 104, name: "Tutora Patricia Soto", specialties: ["Biología"], distance: 3.1, rating: "4.6 ⭐", initial: "PS" }
+        ];
+
+        // Videos
+        const videos = [
+            { title: "Álgebra Básica: Resolución de Ecuaciones", specialty: "Matemáticas", teacher: "Carlos Ruiz", duration: "15 min" },
+            { title: "Leyes de la Termodinámica y Calor", specialty: "Física", teacher: "Pedro Rojas", duration: "22 min" },
+            { title: "Introducción a Python y Estructuras", specialty: "Programación", teacher: "David Silva", duration: "30 min" },
+            { title: "Gramática Inglesa Avanzada (Phrasal Verbs)", specialty: "Inglés", teacher: "Ana Contreras", duration: "18 min" },
+            { title: "Reacciones Químicas Orgánicas y Enlaces", specialty: "Química", teacher: "Lucía Méndez", duration: "25 min" },
+            { title: "Historia Universal: El Imperio Romano", specialty: "Historia", teacher: "Sofía Vergara", duration: "20 min" },
+            { title: "Célula Eucariota y Procariota: Estructura", specialty: "Biología", teacher: "Lucía Méndez", duration: "12 min" }
+        ];
+
+        // Classes data pool (Mock)
+        const myClasses = [
+            {
+                id: 1,
+                teacherName: "Dr. Carlos Ruiz",
+                specialty: "Matemáticas",
+                type: "Profesor",
+                datetime: "27 de Mayo, 2026 - 16:00",
+                duration: "60 min",
+                status: "upcoming",
+                videoUrl: "https://meet.google.com/mock-class-room-xyz"
+            },
+            {
+                id: 2,
+                teacherName: "Tutora Camila Gómez",
+                specialty: "Inglés",
+                type: "Tutor",
+                datetime: "29 de Mayo, 2026 - 11:30",
+                duration: "45 min",
+                status: "upcoming",
+                videoUrl: "https://meet.google.com/mock-class-room-abc"
+            },
+            {
+                id: 3,
+                teacherName: "Lic. María José Valenzuela",
+                specialty: "Lenguaje",
+                type: "Profesor",
+                datetime: "20 de Mayo, 2026 - 15:00",
+                duration: "60 min",
+                status: "completed"
+            },
+            {
+                id: 4,
+                teacherName: "Ing. David Silva",
+                specialty: "Programación",
+                type: "Profesor",
+                datetime: "15 de Mayo, 2026 - 18:30",
+                duration: "90 min",
+                status: "completed"
+            },
+            {
+                id: 5,
+                teacherName: "Tutor Juan Pablo",
+                specialty: "Matemáticas",
+                type: "Tutor",
+                datetime: "12 de Mayo, 2026 - 10:00",
+                duration: "60 min",
+                status: "completed"
+            }
+        ];
+
+        // Support Tickets pool (Mock)
+        const myReports = [
+            {
+                id: "TKT-4890",
+                category: "Pago / Finanzas",
+                subject: "Error al intentar registrar pago",
+                description: "La transacción de Webpay fue procesada pero mi cuenta sigue apareciendo sin plan activo.",
+                status: "Resuelto",
+                statusClass: "status-resolved",
+                date: "2026-05-18",
+                response: "Hola Alumno. Revisamos tu transacción de Webpay y hemos acreditado tu suscripción mensual. Tu cuenta ya está activa."
+            },
+            {
+                id: "TKT-5211",
+                category: "Plataforma / Técnico",
+                subject: "Falla de cámara en video clases",
+                description: "Durante la tutoría de ayer no pude encender mi cámara dentro de la plataforma.",
+                status: "Pendiente",
+                statusClass: "status-pending",
+                date: "2026-05-24",
+                response: null
+            }
+        ];
+
+        // ── MULTI-VIEW ROUTING (Dashboard, Favorites, Profile, Classes, Support, Premium Views) ──
+        // esta parte es del enrutamiento de las diferentes vistas de la app
         const viewBtns = document.querySelectorAll('.nav-view-btn, .sidebar-view-btn');
         const views = document.querySelectorAll('.dashboard-view');
 
@@ -305,8 +1202,36 @@
                 }
             });
 
+            // Control de vistas Premium
+            const isPremium = hasPlan && activePlanName !== 'Plan Básico';
+            
+            const checkPremiumView = (viewId, lockId, contentId, renderFn) => {
+                if (targetViewId === viewId) {
+                    const lockEl = document.getElementById(lockId);
+                    const contentEl = document.getElementById(contentId);
+                    if (isPremium) {
+                        if (lockEl) lockEl.style.display = 'none';
+                        if (contentEl) contentEl.style.display = 'block';
+                        if (renderFn) renderFn();
+                    } else {
+                        if (lockEl) lockEl.style.display = 'flex';
+                        if (contentEl) contentEl.style.display = 'none';
+                    }
+                }
+            };
+
+            if (targetViewId === 'view-courses') {
+                renderCoursesView();
+            }
+            checkPremiumView('view-inbox', 'lock-inbox', 'inbox-unlocked-content', renderInboxView);
+            checkPremiumView('view-progress', 'lock-progress', 'progress-unlocked-content', renderProgressView);
+
             if (targetViewId === 'view-favorites') {
                 renderFavorites();
+            } else if (targetViewId === 'view-my-classes') {
+                renderMyClasses();
+            } else if (targetViewId === 'view-support') {
+                renderMyReports();
             }
         };
 
@@ -340,13 +1265,15 @@
             closeModal();
         };
 
-        openModalBtn.addEventListener('click', openModal);
-        setupBtn.addEventListener('click', openModal);
-        closeModalBtn.addEventListener('click', closeModal);
-        acceptModalBtn.addEventListener('click', applyFiltersAndClose);
-        modalOverlay.addEventListener('click', (e) => {
-            if (e.target === modalOverlay) closeModal();
-        });
+        if (openModalBtn) openModalBtn.addEventListener('click', openModal);
+        if (setupBtn) setupBtn.addEventListener('click', openModal);
+        if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
+        if (acceptModalBtn) acceptModalBtn.addEventListener('click', applyFiltersAndClose);
+        if (modalOverlay) {
+            modalOverlay.addEventListener('click', (e) => {
+                if (e.target === modalOverlay) closeModal();
+            });
+        }
 
         // First Login Auto-Open
         const firstLoginDone = localStorage.getItem('first_login_done');
@@ -356,37 +1283,6 @@
                 localStorage.setItem('first_login_done', 'true');
             }, 800);
         }
-
-        // ── DATA POOLS ──
-        // Teachers
-        const teachers = [
-            { id: 1, name: "Dr. Carlos Ruiz", specialties: ["Matemáticas", "Física"], distance: 0.8, rating: "4.9 ⭐", price: "$15.000", initial: "CR" },
-            { id: 2, name: "Lic. María José Valenzuela", specialties: ["Lenguaje", "Historia"], distance: 1.2, rating: "4.8 ⭐", price: "$12.000", initial: "MJ" },
-            { id: 3, name: "Ing. David Silva", specialties: ["Programación", "Matemáticas"], distance: 1.5, rating: "5.0 ⭐", price: "$18.000", initial: "DS" },
-            { id: 4, name: "Prof. Ana Contreras", specialties: ["Inglés"], distance: 2.1, rating: "4.7 ⭐", price: "$14.000", initial: "AC" },
-            { id: 5, name: "Dra. Lucía Méndez", specialties: ["Química", "Biología"], distance: 2.8, rating: "4.9 ⭐", price: "$16.000", initial: "LM" },
-            { id: 6, name: "Prof. Pedro Rojas", specialties: ["Física", "Química"], distance: 3.2, rating: "4.6 ⭐", price: "$13.000", initial: "PR" },
-            { id: 7, name: "Msc. Sofía Vergara", specialties: ["Inglés", "Historia"], distance: 4.0, rating: "4.8 ⭐", price: "$15.000", initial: "SV" }
-        ];
-
-        // Tutors
-        const tutors = [
-            { id: 101, name: "Tutor Juan Pablo", specialties: ["Matemáticas", "Programación"], distance: 1.1, rating: "4.9 ⭐", initial: "JP" },
-            { id: 102, name: "Tutora Camila Gómez", specialties: ["Inglés", "Lenguaje"], distance: 1.8, rating: "4.8 ⭐", initial: "CG" },
-            { id: 103, name: "Tutor Roberto Muñoz", specialties: ["Física", "Química"], distance: 2.4, rating: "4.7 ⭐", initial: "RM" },
-            { id: 104, name: "Tutora Patricia Soto", specialties: ["Biología"], distance: 3.1, rating: "4.6 ⭐", initial: "PS" }
-        ];
-
-        // Videos
-        const videos = [
-            { title: "Álgebra Básica: Resolución de Ecuaciones", specialty: "Matemáticas", teacher: "Carlos Ruiz", duration: "15 min" },
-            { title: "Leyes de la Termodinámica y Calor", specialty: "Física", teacher: "Pedro Rojas", duration: "22 min" },
-            { title: "Introducción a Python y Estructuras", specialty: "Programación", teacher: "David Silva", duration: "30 min" },
-            { title: "Gramática Inglesa Avanzada (Phrasal Verbs)", specialty: "Inglés", teacher: "Ana Contreras", duration: "18 min" },
-            { title: "Reacciones Químicas Orgánicas y Enlaces", specialty: "Química", teacher: "Lucía Méndez", duration: "25 min" },
-            { title: "Historia Universal: El Imperio Romano", specialty: "Historia", teacher: "Sofía Vergara", duration: "20 min" },
-            { title: "Célula Eucariota y Procariota: Estructura", specialty: "Biología", teacher: "Lucía Méndez", duration: "12 min" }
-        ];
 
         // ── FAVORITES SYSTEM ──
         let favoriteIds = JSON.parse(localStorage.getItem('favorite-teachers') || '[]');
@@ -425,7 +1321,7 @@
                     cancelButtonColor: '#6b7280'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        window.location.href = "{% url 'planes' %}";
+                        switchView('view-plans');
                     }
                 });
             } else {
@@ -468,6 +1364,7 @@
             const selectedTopics = getSelectedTopics();
             const container = document.getElementById('teachers-list-container');
             const countBadge = document.getElementById('teachers-count');
+            if (!container) return;
             container.innerHTML = '';
 
             let filtered = teachers;
@@ -478,7 +1375,7 @@
             }
 
             filtered.sort((a, b) => a.distance - b.distance);
-            countBadge.innerText = `${filtered.length} encontrados`;
+            if (countBadge) countBadge.innerText = `${filtered.length} encontrados`;
 
             if (filtered.length === 0) {
                 container.innerHTML = `
@@ -512,115 +1409,143 @@
             });
         }
 
-        // Dashboard Content Tabs
+        // Dashboard Content Tabs (supports search query)
         function renderDashboardContent() {
             const selectedTopics = getSelectedTopics();
+            const searchInput = document.getElementById('dashboard-search-input');
+            const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
             
             // 1. Teachers
             const teachersContainer = document.getElementById('dashboard-teachers-container');
-            teachersContainer.innerHTML = '';
-            let filteredTeachers = teachers;
-            if (selectedTopics.length > 0) {
-                filteredTeachers = teachers.filter(t => 
-                    t.specialties.some(spec => selectedTopics.includes(spec))
-                );
-            }
-            filteredTeachers.sort((a, b) => a.distance - b.distance);
-            
-            if (filteredTeachers.length === 0) {
-                teachersContainer.innerHTML = `<div class="empty-teachers-state"><i class="bi bi-person-fill-exclamation"></i><p>No hay profesores para tus intereses.</p></div>`;
-            } else {
-                filteredTeachers.forEach(t => {
-                    const favClass = isFavorite(t.id) ? 'bi-star-fill' : 'bi-star';
-                    const card = document.createElement('div');
-                    card.className = 'teacher-card';
-                    card.innerHTML = `
-                        <button class="teacher-star-btn" onclick="toggleFavorite(${t.id}, event)">
-                            <i class="${favClass}"></i>
-                        </button>
-                        <div class="teacher-avatar">${t.initial}</div>
-                        <div class="teacher-info">
-                            <h4>${t.name}</h4>
-                            <p class="teacher-specialty">${t.specialties.join(', ')}</p>
-                            <span class="teacher-rating">${t.rating}</span>
-                        </div>
-                        <div class="teacher-distance-box">
-                            <span class="teacher-distance"><i class="bi bi-geo-alt-fill"></i>${t.distance} km</span>
-                            <button class="btn-contact-teacher" onclick="requestClassAccess('${t.name}')">Ver Horarios</button>
-                        </div>
-                    `;
-                    teachersContainer.appendChild(card);
-                });
+            if (teachersContainer) {
+                teachersContainer.innerHTML = '';
+                let filteredTeachers = teachers;
+                if (selectedTopics.length > 0) {
+                    filteredTeachers = filteredTeachers.filter(t => 
+                        t.specialties.some(spec => selectedTopics.includes(spec))
+                    );
+                }
+                if (searchQuery) {
+                    filteredTeachers = filteredTeachers.filter(t => 
+                        t.name.toLowerCase().includes(searchQuery) ||
+                        t.specialties.some(spec => spec.toLowerCase().includes(searchQuery))
+                    );
+                }
+                filteredTeachers.sort((a, b) => a.distance - b.distance);
+                
+                if (filteredTeachers.length === 0) {
+                    teachersContainer.innerHTML = `<div class="empty-teachers-state"><i class="bi bi-person-fill-exclamation"></i><p>No hay profesores que coincidan con tu búsqueda.</p></div>`;
+                } else {
+                    filteredTeachers.forEach(t => {
+                        const favClass = isFavorite(t.id) ? 'bi-star-fill' : 'bi-star';
+                        const card = document.createElement('div');
+                        card.className = 'teacher-card';
+                        card.innerHTML = `
+                            <button class="teacher-star-btn" onclick="toggleFavorite(${t.id}, event)">
+                                <i class="${favClass}"></i>
+                            </button>
+                            <div class="teacher-avatar">${t.initial}</div>
+                            <div class="teacher-info">
+                                <h4>${t.name}</h4>
+                                <p class="teacher-specialty">${t.specialties.join(', ')}</p>
+                                <span class="teacher-rating">${t.rating}</span>
+                            </div>
+                            <div class="teacher-distance-box">
+                                <span class="teacher-distance"><i class="bi bi-geo-alt-fill"></i>${t.distance} km</span>
+                                <button class="btn-contact-teacher" onclick="requestClassAccess('${t.name}')">Ver Horarios</button>
+                            </div>
+                        `;
+                        teachersContainer.appendChild(card);
+                    });
+                }
             }
 
             // 2. Tutors
             const tutorsContainer = document.getElementById('dashboard-tutors-container');
-            tutorsContainer.innerHTML = '';
-            let filteredTutors = tutors;
-            if (selectedTopics.length > 0) {
-                filteredTutors = tutors.filter(t => 
-                    t.specialties.some(spec => selectedTopics.includes(spec))
-                );
-            }
-            filteredTutors.sort((a, b) => a.distance - b.distance);
-            
-            if (filteredTutors.length === 0) {
-                tutorsContainer.innerHTML = `<div class="empty-teachers-state"><i class="bi bi-person-fill-exclamation"></i><p>No hay tutores para tus intereses.</p></div>`;
-            } else {
-                filteredTutors.forEach(t => {
-                    const card = document.createElement('div');
-                    card.className = 'teacher-card';
-                    card.innerHTML = `
-                        <div class="teacher-avatar">${t.initial}</div>
-                        <div class="teacher-info">
-                            <h4>${t.name}</h4>
-                            <p class="teacher-specialty">${t.specialties.join(', ')}</p>
-                            <span class="teacher-rating">${t.rating}</span>
-                        </div>
-                        <div class="teacher-distance-box">
-                            <span class="teacher-distance"><i class="bi bi-geo-alt-fill"></i>${t.distance} km</span>
-                            <button class="btn-contact-teacher" onclick="requestClassAccess('${t.name}')">Contactar</button>
-                        </div>
-                    `;
-                    tutorsContainer.appendChild(card);
-                });
+            if (tutorsContainer) {
+                tutorsContainer.innerHTML = '';
+                let filteredTutors = tutors;
+                if (selectedTopics.length > 0) {
+                    filteredTutors = filteredTutors.filter(t => 
+                        t.specialties.some(spec => selectedTopics.includes(spec))
+                    );
+                }
+                if (searchQuery) {
+                    filteredTutors = filteredTutors.filter(t => 
+                        t.name.toLowerCase().includes(searchQuery) ||
+                        t.specialties.some(spec => spec.toLowerCase().includes(searchQuery))
+                    );
+                }
+                filteredTutors.sort((a, b) => a.distance - b.distance);
+                
+                if (filteredTutors.length === 0) {
+                    tutorsContainer.innerHTML = `<div class="empty-teachers-state"><i class="bi bi-person-fill-exclamation"></i><p>No hay tutores que coincidan con tu búsqueda.</p></div>`;
+                } else {
+                    filteredTutors.forEach(t => {
+                        const card = document.createElement('div');
+                        card.className = 'teacher-card';
+                        card.innerHTML = `
+                            <div class="teacher-avatar">${t.initial}</div>
+                            <div class="teacher-info">
+                                <h4>${t.name}</h4>
+                                <p class="teacher-specialty">${t.specialties.join(', ')}</p>
+                                <span class="teacher-rating">${t.rating}</span>
+                            </div>
+                            <div class="teacher-distance-box">
+                                <span class="teacher-distance"><i class="bi bi-geo-alt-fill"></i>${t.distance} km</span>
+                                <button class="btn-contact-teacher" onclick="requestClassAccess('${t.name}')">Contactar</button>
+                            </div>
+                        `;
+                        tutorsContainer.appendChild(card);
+                    });
+                }
             }
 
             // 3. Videos
             const videosContainer = document.getElementById('dashboard-videos-container');
-            videosContainer.innerHTML = '';
-            let filteredVideos = videos;
-            if (selectedTopics.length > 0) {
-                filteredVideos = videos.filter(v => selectedTopics.includes(v.specialty));
-            }
+            if (videosContainer) {
+                videosContainer.innerHTML = '';
+                let filteredVideos = videos;
+                if (selectedTopics.length > 0) {
+                    filteredVideos = filteredVideos.filter(v => selectedTopics.includes(v.specialty));
+                }
+                if (searchQuery) {
+                    filteredVideos = filteredVideos.filter(v => 
+                        v.title.toLowerCase().includes(searchQuery) ||
+                        v.specialty.toLowerCase().includes(searchQuery) ||
+                        v.teacher.toLowerCase().includes(searchQuery)
+                    );
+                }
 
-            if (filteredVideos.length === 0) {
-                videosContainer.innerHTML = `<div class="empty-teachers-state" style="grid-column: 1/-1;"><i class="bi bi-play-btn-fill"></i><p>No hay videos de clases para tus intereses.</p></div>`;
-            } else {
-                filteredVideos.forEach(v => {
-                    const card = document.createElement('div');
-                    card.className = 'video-card';
-                    card.innerHTML = `
-                        <div class="video-thumbnail">
-                            <div class="video-play-btn"><i class="bi bi-play-fill"></i></div>
-                        </div>
-                        <div class="video-info">
-                            <h4 class="video-title">${v.title}</h4>
-                            <span class="video-specialty">${v.specialty}</span>
-                            <div class="video-meta">
-                                <span><i class="bi bi-person-video"></i> ${v.teacher}</span>
-                                <span><i class="bi bi-clock"></i> ${v.duration}</span>
+                if (filteredVideos.length === 0) {
+                    videosContainer.innerHTML = `<div class="empty-teachers-state" style="grid-column: 1/-1;"><i class="bi bi-play-btn-fill"></i><p>No hay videos de clases que coincidan con tu búsqueda.</p></div>`;
+                } else {
+                    filteredVideos.forEach(v => {
+                        const card = document.createElement('div');
+                        card.className = 'video-card';
+                        card.innerHTML = `
+                            <div class="video-thumbnail">
+                                <div class="video-play-btn"><i class="bi bi-play-fill"></i></div>
                             </div>
-                        </div>
-                    `;
-                    videosContainer.appendChild(card);
-                });
+                            <div class="video-info">
+                                <h4 class="video-title">${v.title}</h4>
+                                <span class="video-specialty">${v.specialty}</span>
+                                <div class="video-meta">
+                                    <span><i class="bi bi-person-video"></i> ${v.teacher}</span>
+                                    <span><i class="bi bi-clock"></i> ${v.duration}</span>
+                                </div>
+                            </div>
+                        `;
+                        videosContainer.appendChild(card);
+                    });
+                }
             }
         }
 
         // Favorites Tab
         function renderFavorites() {
             const container = document.getElementById('favorites-teachers-container');
+            if (!container) return;
             container.innerHTML = '';
 
             const favTeachers = teachers.filter(t => isFavorite(t.id));
@@ -657,6 +1582,183 @@
             });
         }
 
+        // ── CLASSES RENDERING ──
+        function renderMyClasses() {
+            const upcomingContainer = document.getElementById('upcoming-classes-container');
+            const pastContainer = document.getElementById('past-classes-container');
+            
+            if (upcomingContainer) upcomingContainer.innerHTML = '';
+            if (pastContainer) pastContainer.innerHTML = '';
+            
+            const upcoming = myClasses.filter(c => c.status === 'upcoming');
+            const past = myClasses.filter(c => c.status === 'completed');
+            
+            // Render upcoming
+            if (upcomingContainer) {
+                if (upcoming.length === 0) {
+                    upcomingContainer.innerHTML = `
+                        <div class="empty-teachers-state" style="grid-column: 1/-1;">
+                            <i class="bi bi-calendar-x"></i>
+                            <p>No tienes clases programadas próximamente.</p>
+                        </div>
+                    `;
+                } else {
+                    upcoming.forEach(c => {
+                        const card = document.createElement('div');
+                        card.className = 'class-item-card';
+                        card.innerHTML = `
+                            <div class="class-card-header">
+                                <span class="class-badge">${c.specialty}</span>
+                                <span class="class-status-badge">Próxima</span>
+                            </div>
+                            <div class="class-card-body">
+                                <h4>${c.teacherName}</h4>
+                                <p class="class-teacher-type">${c.type}</p>
+                                <div class="class-info-item">
+                                    <i class="bi bi-calendar-event"></i>
+                                    <span>${c.datetime}</span>
+                                </div>
+                                <div class="class-info-item">
+                                    <i class="bi bi-clock"></i>
+                                    <span>Duración: ${c.duration}</span>
+                                </div>
+                            </div>
+                            <button class="btn-join-class" onclick="joinVideoCall('${c.teacherName}', '${c.videoUrl}')">
+                                <i class="bi bi-camera-video-fill"></i> Unirse a la Clase
+                            </button>
+                        `;
+                        upcomingContainer.appendChild(card);
+                    });
+                }
+            }
+            
+            // Render past
+            if (pastContainer) {
+                if (past.length === 0) {
+                    pastContainer.innerHTML = `
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: var(--text-light); padding: 30px;">
+                                No hay historial de clases completadas.
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    past.forEach(c => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td><strong>${c.teacherName}</strong> <span style="font-size:0.8rem; color:var(--text-light);">(${c.type})</span></td>
+                            <td><span class="video-specialty" style="margin-bottom:0;">${c.specialty}</span></td>
+                            <td>${c.datetime}</td>
+                            <td>${c.duration}</td>
+                            <td><span class="status-badge-completed"><i class="bi bi-check-circle-fill"></i> Completada</span></td>
+                        `;
+                        pastContainer.appendChild(tr);
+                    });
+                }
+            }
+        }
+
+        // Mock join video call
+        function joinVideoCall(teacherName, url) {
+            Swal.fire({
+                title: 'Conectando a la Clase',
+                text: `Te estás uniendo a la clase en video de ${teacherName}...`,
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: 'Abrir Videollamada',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#6b7280'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.open(url, '_blank');
+                }
+            });
+        }
+
+        // ── SUPPORT RENDERING ──
+        function renderMyReports() {
+            const container = document.getElementById('tickets-list-container');
+            if (!container) return;
+            container.innerHTML = '';
+            
+            if (myReports.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-teachers-state">
+                        <i class="bi bi-chat-left-text"></i>
+                        <p>No has enviado ningún reporte de soporte todavía.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            myReports.forEach(r => {
+                const item = document.createElement('div');
+                item.className = 'ticket-item';
+                
+                let responseHTML = '';
+                if (r.response) {
+                    responseHTML = `
+                        <div class="ticket-response" style="margin-top: 10px;">
+                            <strong>Respuesta del Soporte:</strong>
+                            <p>${r.response}</p>
+                        </div>
+                    `;
+                } else {
+                    responseHTML = `
+                        <div class="ticket-response" style="margin-top: 10px; background-color: rgba(245, 158, 11, 0.05); border-left-color: var(--accent);">
+                            <i class="bi bi-hourglass-split"></i> En espera de revisión por el equipo de soporte.
+                        </div>
+                    `;
+                }
+                
+                item.innerHTML = `
+                    <div class="ticket-header" style="margin-bottom: 8px;">
+                        <span class="ticket-id" style="font-family: monospace;">${r.id}</span>
+                        <span class="ticket-badge ${r.statusClass}">${r.status}</span>
+                    </div>
+                    <div class="ticket-subject" style="margin-bottom: 4px;"><strong>${r.subject}</strong></div>
+                    <div class="ticket-meta" style="margin-bottom: 8px; font-size: 0.8rem; color: var(--text-light);">Categoría: <strong>${r.category}</strong> | Fecha: ${r.date}</div>
+                    <div class="ticket-description" style="margin-bottom: 8px;">${r.description}</div>
+                    ${responseHTML}
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // Submit support ticket form handler
+        const submitSupportReport = (event) => {
+            event.preventDefault();
+            const category = document.getElementById('support-category').value;
+            const subject = document.getElementById('support-subject').value;
+            const description = document.getElementById('support-description').value;
+            
+            const newTicketId = "TKT-" + Math.floor(1000 + Math.random() * 9000);
+            const newTicket = {
+                id: newTicketId,
+                category: category,
+                subject: subject,
+                description: description,
+                status: "Pendiente",
+                statusClass: "status-pending",
+                date: new Date().toISOString().split('T')[0],
+                response: null
+            };
+            
+            myReports.unshift(newTicket); // Add to the top
+            renderMyReports();
+            
+            // Clear form
+            document.getElementById('support-ticket-form').reset();
+            
+            Swal.fire({
+                title: '¡Reporte Enviado!',
+                text: `Tu ticket ${newTicketId} ha sido registrado exitosamente y será atendido a la brevedad.`,
+                icon: 'success',
+                confirmButtonColor: 'var(--primary)'
+            });
+        };
+
         // Tab selection switching
         const tabButtons = document.querySelectorAll('.tab-btn');
         const tabContents = document.querySelectorAll('.tab-content');
@@ -668,13 +1770,888 @@
 
                 btn.classList.add('active');
                 const targetTab = btn.getAttribute('data-tab');
-                document.getElementById(targetTab).classList.add('active');
+                const targetEl = document.getElementById(targetTab);
+                if (targetEl) targetEl.classList.add('active');
             });
         });
+
+        // ── PLANS SYSTEM (Simulate buy and customizer) ──
+        function buyPlan(planName, price) {
+            Swal.fire({
+                title: 'Procesando Pago',
+                text: `Conectándote con Transbank Webpay para contratar ${planName}...`,
+                icon: 'info',
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                willOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            setTimeout(() => {
+                hasPlan = true;
+                activePlanName = planName;
+                localStorage.setItem('hasPlan', 'true');
+                localStorage.setItem('activePlanName', planName);
+                
+                // Add transaction history record dynamically
+                const tbody = document.querySelector('.profile-transactions-section table tbody');
+                if (tbody) {
+                    const tr = document.createElement('tr');
+                    const txId = "TX-" + Math.floor(99000 + Math.random() * 1000);
+                    const dateStr = new Date().toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' });
+                    const priceStr = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(price).replace('CLP','$').trim();
+                    
+                    tr.innerHTML = `
+                        <td><code>${txId}</code></td>
+                        <td>${planName}</td>
+                        <td>${dateStr}</td>
+                        <td>${priceStr}</td>
+                        <td>Webpay (Débito)</td>
+                        <td><span class="tx-badge success">Aprobado</span></td>
+                    `;
+                    tbody.insertBefore(tr, tbody.firstChild);
+                }
+
+                updatePlanUI();
+
+                Swal.fire({
+                    title: '¡Suscripción Exitosa!',
+                    text: `Felicidades, has contratado el ${planName}. Ahora puedes reservar clases con cualquier profesor o tutor.`,
+                    icon: 'success',
+                    confirmButtonColor: 'var(--primary)'
+                }).then(() => {
+                    switchView('view-dashboard');
+                });
+            }, 2000);
+        }
+
+        // ── CUSTOM PLAN CUSTOMIZER ──
+        const openPlanCustomizer = () => {
+            const modal = document.getElementById('custom-plan-modal');
+            if (modal) {
+                modal.classList.add('open');
+                calculateCustomPrice();
+            }
+        };
+
+        const closePlanCustomizer = () => {
+            const modal = document.getElementById('custom-plan-modal');
+            if (modal) modal.classList.remove('open');
+        };
+
+        const closeBuilderBtn = document.getElementById('close-builder-btn');
+        if (closeBuilderBtn) {
+            closeBuilderBtn.addEventListener('click', closePlanCustomizer);
+        }
+
+        // Bind events for customizer options
+        const customizerInputs = [
+            'builder-modalidad',
+            'builder-horas',
+            'builder-profesor'
+        ];
+        customizerInputs.forEach(id => {
+            document.getElementById(id)?.addEventListener('change', calculateCustomPrice);
+            document.getElementById(id)?.addEventListener('input', calculateCustomPrice);
+        });
+
+        document.querySelectorAll('input[name="builder-dias"]').forEach(cb => {
+            cb.addEventListener('change', calculateCustomPrice);
+        });
+        document.querySelectorAll('input[name="builder-ramos"]').forEach(cb => {
+            cb.addEventListener('change', calculateCustomPrice);
+        });
+
+        function calculateCustomPrice() {
+            let total = 25000; // Base cost
+            
+            const modality = document.getElementById('builder-modalidad')?.value || 'online';
+            const hours = parseInt(document.getElementById('builder-horas')?.value) || 2;
+            const level = document.getElementById('builder-profesor')?.value || 'senior';
+            
+            // 1. Modality base costs
+            if (modality === 'presencial') total += 25000;
+            if (modality === 'grabado') total -= 10000;
+            
+            // 2. Hourly rates
+            let rate = 8000;
+            if (modality === 'presencial') rate = 12000;
+            if (modality === 'grabado') rate = 5000;
+            total += hours * rate * 4; // Monthly calculation
+            
+            // 3. Level rates
+            if (level === 'senior') total += 20000;
+            if (level === 'master') total += 50000;
+            
+            // 4. Days checked
+            const daysChecked = document.querySelectorAll('input[name="builder-dias"]:checked').length;
+            total += daysChecked * 5000;
+            
+            // 5. Subjects checked
+            const subjectsChecked = document.querySelectorAll('input[name="builder-ramos"]:checked').length;
+            total += subjectsChecked * 8000;
+            
+            // Display price formatted
+            const priceFormatted = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(total).replace('CLP','$').trim();
+            const priceEl = document.getElementById('builder-total-price');
+            if (priceEl) priceEl.innerText = priceFormatted;
+            
+            // Update labels
+            const hoursLabel = document.getElementById('builder-horas-label');
+            if (hoursLabel) hoursLabel.innerText = `Horas semanales: ${hours} ${hours === 1 ? 'hora' : 'horas'}`;
+            
+            // Update lists
+            const selectedDays = Array.from(document.querySelectorAll('input[name="builder-dias"]:checked')).map(cb => cb.value);
+            const selectedRamos = Array.from(document.querySelectorAll('input[name="builder-ramos"]:checked')).map(cb => cb.value);
+            
+            const sumMod = document.getElementById('sum-builder-modalidad');
+            const sumHor = document.getElementById('sum-builder-horas');
+            const sumDias = document.getElementById('sum-builder-dias');
+            const sumRamos = document.getElementById('sum-builder-ramos');
+            const sumProf = document.getElementById('sum-builder-profesor');
+            
+            if (sumMod) sumMod.innerText = `Modalidad: ${modality.charAt(0).toUpperCase() + modality.slice(1)}`;
+            if (sumHor) sumHor.innerText = `Horas: ${hours} ${hours === 1 ? 'hora' : 'horas'} semanales`;
+            if (sumDias) sumDias.innerText = `Días: ${selectedDays.length > 0 ? selectedDays.join(', ') : 'Ninguno'}`;
+            if (sumRamos) sumRamos.innerText = `Ramos: ${selectedRamos.length > 0 ? selectedRamos.join(', ') : 'Ninguno'}`;
+            if (sumProf) sumProf.innerText = `Profesor: ${level.charAt(0).toUpperCase() + level.slice(1)}`;
+            
+            // Update badge category
+            const badge = document.getElementById('builder-badge');
+            if (badge) {
+                if (total < 70000) {
+                    badge.innerText = "¡Muy Económico!";
+                    badge.style.backgroundColor = "var(--accent)";
+                    badge.style.color = "var(--text)";
+                } else if (total >= 70000 && total <= 140000) {
+                    badge.innerText = "Balanceado";
+                    badge.style.backgroundColor = "var(--primary)";
+                    badge.style.color = "var(--white)";
+                } else {
+                    badge.innerText = "Premium / Avanzado";
+                    badge.style.backgroundColor = "#ef4444";
+                    badge.style.color = "var(--white)";
+                }
+            }
+        }
+
+        function buyCustomPlan() {
+            const priceStr = document.getElementById('builder-total-price')?.innerText || '$40.000';
+            const price = parseInt(priceStr.replace(/[^0-9]/g, ''), 10) || 40000;
+            
+            closePlanCustomizer();
+            buyPlan('Plan Personalizado', price);
+        }
+
+        function buyCustomPlan() {
+            const priceStr = document.getElementById('builder-total-price')?.innerText || '$40.000';
+            const price = parseInt(priceStr.replace(/[^0-9]/g, ''), 10) || 40000;
+            
+            closePlanCustomizer();
+            buyPlan('Plan Personalizado', price);
+        }
+
+        // ── LÓGICA DE LAS VISTAS PREMIUM ──
+
+        // esta parte es de los datos iniciales de los cursos
+        const coursesData = {
+            python: [
+                {
+                    id: 'py-1',
+                    title: "Universidad Python - Cero a Experto - Actualizado (+114 hrs)",
+                    author: "Global Mentoring Ing. Ubaldo Acosta...",
+                    rating: 4.7,
+                    reviews: 22861,
+                    price: 14690,
+                    oldPrice: 21090,
+                    badges: ["premium"],
+                    color: "linear-gradient(135deg, #1e293b 0%, #3b82f6 100%)",
+                    icon: "bi-filetype-py"
+                },
+                {
+                    id: 'py-2',
+                    title: "Curso Completo de Claude Code: Crea Aplicaciones con IA",
+                    author: "Santiago Hernández",
+                    rating: 4.8,
+                    reviews: 311,
+                    price: 6990,
+                    oldPrice: 9990,
+                    badges: ["premium", "bestseller"],
+                    color: "linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%)",
+                    icon: "bi-cpu"
+                },
+                {
+                    id: 'py-3',
+                    title: "Complete 2026 Python Bootcamp: Learn Python from...",
+                    author: "Haris Ali Khan",
+                    rating: 4.6,
+                    reviews: 14467,
+                    price: 13090,
+                    oldPrice: 14590,
+                    badges: ["premium", "bestseller"],
+                    color: "linear-gradient(135deg, #0f766e 0%, #10b981 100%)",
+                    icon: "bi-terminal"
+                },
+                {
+                    id: 'py-4',
+                    title: "Python Mega Course: Build 20 Real-World Apps and AI Agents",
+                    author: "Ardit Sulce",
+                    rating: 4.6,
+                    reviews: 73282,
+                    price: 19590,
+                    oldPrice: 26090,
+                    badges: ["premium"],
+                    color: "linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)",
+                    icon: "bi-rocket-takeoff"
+                },
+                {
+                    id: 'py-5',
+                    title: "Learn Python Programming - Beginner to Master",
+                    author: "Abdul Bari",
+                    rating: 4.7,
+                    reviews: 14213,
+                    price: 14690,
+                    oldPrice: 20990,
+                    badges: ["premium"],
+                    color: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+                    icon: "bi-code-slash"
+                }
+            ],
+            trend: [
+                {
+                    id: 'tr-1',
+                    title: "n8n + MCP: Automatización y agentes de IA inteligentes",
+                    author: "Fernando Herrera, [d/t] - DevTalles",
+                    rating: 4.7,
+                    reviews: 3385,
+                    price: 10190,
+                    oldPrice: 11290,
+                    badges: ["premium", "bestseller"],
+                    color: "linear-gradient(135deg, #374151 0%, #111827 100%)",
+                    icon: "bi-gear-fill"
+                },
+                {
+                    id: 'tr-2',
+                    title: "Curso Completo de IA Generativa: ChatGPT, Midjourney...",
+                    author: "Santiago Hernández",
+                    rating: 4.7,
+                    reviews: 10679,
+                    price: 12090,
+                    oldPrice: 16190,
+                    badges: ["premium", "bestseller"],
+                    color: "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)",
+                    icon: "bi-robot"
+                },
+                {
+                    id: 'tr-3',
+                    title: "Excel TOTAL en 30 Días - Excel completo de Cero a Avanzado",
+                    author: "Federico Garay, Escuela Directa",
+                    rating: 4.8,
+                    reviews: 44194,
+                    price: 12490,
+                    oldPrice: 19290,
+                    badges: ["premium", "bestseller"],
+                    color: "linear-gradient(135deg, #047857 0%, #10b981 100%)",
+                    icon: "bi-file-earmark-spreadsheet"
+                },
+                {
+                    id: 'tr-4',
+                    title: "React: De cero a experto",
+                    author: "Fernando Herrera, [d/t] - DevTalles",
+                    rating: 4.8,
+                    reviews: 26868,
+                    price: 10190,
+                    oldPrice: 14590,
+                    badges: ["premium", "bestseller"],
+                    color: "linear-gradient(135deg, #0891b2 0%, #0284c7 100%)",
+                    icon: "bi-diagram-3"
+                },
+                {
+                    id: 'tr-5',
+                    title: "Curso Microsoft Copilot 365. IA Generativa en Microsoft 365",
+                    author: "Ivan Alsigo",
+                    rating: 4.6,
+                    reviews: 5581,
+                    price: 11490,
+                    oldPrice: 17690,
+                    badges: ["premium", "bestseller"],
+                    color: "linear-gradient(135deg, #be185d 0%, #db2777 100%)",
+                    icon: "bi-microsoft"
+                }
+            ]
+        };
+
+        // esta parte es del renderizado del catalogo de cursos en el carrusel
+        function renderCoursesView() {
+            const renderTrack = (trackId, courses) => {
+                const track = document.getElementById(trackId);
+                if (!track) return;
+                track.innerHTML = '';
+                
+                courses.forEach(c => {
+                    const card = document.createElement('div');
+                    card.className = 'course-card';
+                    card.onclick = () => openCourseDetailModal(c);
+                    
+                    let badgeHtml = '';
+                    if (c.badges.includes('premium')) {
+                        badgeHtml += `<span class="badge-premium"><i class="bi bi-shield-fill"></i> Premium</span>`;
+                    }
+                    if (c.badges.includes('bestseller')) {
+                        badgeHtml += `<span class="badge-bestseller">Lo más vendido</span>`;
+                    }
+                    
+                    const filledStars = Math.floor(c.rating);
+                    let starsHtml = '';
+                    for (let i = 0; i < 5; i++) {
+                        if (i < filledStars) {
+                            starsHtml += `<i class="bi bi-star-fill text-warning"></i>`;
+                        } else {
+                            starsHtml += `<i class="bi bi-star text-muted"></i>`;
+                        }
+                    }
+                    
+                    const formattedPrice = new Intl.NumberFormat('es-CL').format(c.price);
+                    const formattedOldPrice = new Intl.NumberFormat('es-CL').format(c.oldPrice);
+                    const formattedReviews = new Intl.NumberFormat('es-CL').format(c.reviews);
+                    const formattedRating = c.rating.toString().replace('.', ',');
+                    
+                    card.innerHTML = `
+                        <div class="course-thumb-box" style="background: ${c.color};">
+                            <i class="bi ${c.icon}"></i>
+                        </div>
+                        <div class="course-card-body">
+                            <h4 class="course-title" title="${c.title}">${c.title}</h4>
+                            <span class="course-author">${c.author}</span>
+                            <div class="course-rating-row">
+                                <span class="rating-val">${formattedRating}</span>
+                                <span class="stars-box">${starsHtml}</span>
+                                <span class="review-count">(${formattedReviews})</span>
+                            </div>
+                            <div class="course-price-row">
+                                <span class="price-now">${formattedPrice} CLP$</span>
+                                <span class="price-was">${formattedOldPrice} CLP$</span>
+                            </div>
+                            <div class="course-badges-container">
+                                ${badgeHtml}
+                            </div>
+                        </div>
+                    `;
+                    track.appendChild(card);
+                });
+            };
+            
+            renderTrack('carousel-python-track', coursesData.python);
+            renderTrack('carousel-trend-track', coursesData.trend);
+        }
+
+        // esta parte es del movimiento de carrusel horizontal con los chevrons
+        function scrollCoursesCarousel(trackId, direction) {
+            const track = document.getElementById('carousel-' + trackId);
+            if (!track) return;
+            
+            const scrollAmount = 600;
+            if (direction === 'left') {
+                track.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+            } else {
+                track.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+            }
+            
+            setTimeout(() => {
+                const wrapper = track.closest('.courses-carousel-wrapper');
+                if (!wrapper) return;
+                const prevBtn = wrapper.querySelector('.carousel-nav-btn.prev');
+                const nextBtn = wrapper.querySelector('.carousel-nav-btn.next');
+                
+                if (prevBtn) {
+                    prevBtn.style.display = track.scrollLeft > 10 ? 'flex' : 'none';
+                }
+                if (nextBtn) {
+                    const hasMoreScroll = track.scrollWidth - track.clientWidth - track.scrollLeft > 10;
+                    nextBtn.style.display = hasMoreScroll ? 'flex' : 'none';
+                }
+            }, 350);
+        }
+
+        // esta parte es para abrir y cerrar la ventana con detalles del curso
+        let selectedCourse = null;
+
+        function openCourseDetailModal(course) {
+            selectedCourse = course;
+            const modal = document.getElementById('course-detail-modal');
+            if (!modal) return;
+            
+            document.getElementById('detail-course-title').innerText = course.title;
+            
+            const banner = document.getElementById('detail-course-banner');
+            if (banner) {
+                banner.style.background = course.color;
+                banner.innerHTML = `<i class="bi ${course.icon}" style="font-size: 3.5rem;"></i>`;
+            }
+            
+            const badgesContainer = document.getElementById('detail-course-badges');
+            if (badgesContainer) {
+                badgesContainer.innerHTML = '';
+                if (course.badges.includes('premium')) {
+                    badgesContainer.innerHTML += `<span class="badge-premium" style="display:inline-flex; align-items:center; gap:5px; background:var(--primary); color:white; padding:4px 10px; border-radius:6px; font-size:0.8rem; font-weight:700;"><i class="bi bi-shield-fill"></i> Premium</span>`;
+                }
+                if (course.badges.includes('bestseller')) {
+                    badgesContainer.innerHTML += `<span class="badge-bestseller" style="background:#ccfbf1; color:#0f766e; padding:4px 10px; border-radius:6px; font-size:0.8rem; font-weight:700;">Lo más vendido</span>`;
+                }
+            }
+            
+            document.getElementById('detail-course-desc').innerText = `Domina esta tecnología a través de un plan de estudio guiado, clases grabadas en alta definición y proyectos prácticos del mundo real creados por expertos en la materia.`;
+            document.getElementById('detail-course-author').innerText = course.author;
+            document.getElementById('detail-course-rating').innerText = `${course.rating.toString().replace('.', ',')} ★ (${new Intl.NumberFormat('es-CL').format(course.reviews)} valoraciones)`;
+            
+            document.getElementById('detail-course-price').innerText = `${new Intl.NumberFormat('es-CL').format(course.price)} CLP$`;
+            document.getElementById('detail-course-oldprice').innerText = `${new Intl.NumberFormat('es-CL').format(course.oldPrice)} CLP$`;
+            
+            modal.classList.add('open');
+        }
+
+        function closeCourseDetailModal() {
+            const modal = document.getElementById('course-detail-modal');
+            if (modal) modal.classList.remove('open');
+        }
+
+        // esta parte es de la simulacion de carga de clase premium
+        function startCourseLearning() {
+            if (!selectedCourse) return;
+            closeCourseDetailModal();
+            
+            if (!hasPlan) {
+                Swal.fire({
+                    title: '¡Suscripción Requerida!',
+                    text: `Para ver las clases en video de "${selectedCourse.title}" necesitas tener un plan activo.`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ver Planes Disponibles',
+                    cancelButtonText: 'Más tarde',
+                    confirmButtonColor: 'var(--primary)',
+                    cancelButtonColor: '#6b7280'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        switchView('view-plans');
+                    }
+                });
+            } else {
+                openCourseVideoModal(selectedCourse);
+            }
+        }
+
+        // esta parte es de los datos de lecciones por curso
+        const courseLessons = {
+            'py-1': [
+                { title: "Clase 1: Introducción a la Universidad Python", duration: "12:15", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" },
+                { title: "Clase 2: Configuración del Entorno en Windows", duration: "10:45", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4" },
+                { title: "Clase 3: Hola Mundo y Variables Básicas", duration: "08:30", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4" },
+                { title: "Clase 4: Operadores Aritméticos y Lógicos", duration: "15:20", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4" },
+                { title: "Clase 5: Sentencias de Control en Python", duration: "18:40", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4" }
+            ],
+            'py-2': [
+                { title: "Clase 1: Bienvenidos a Python y Django", duration: "15:10", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" },
+                { title: "Clase 2: Creando nuestra primera App con Django", duration: "20:30", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4" },
+                { title: "Clase 3: Vistas, URLs y Templates básicos", duration: "14:15", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4" },
+                { title: "Clase 4: Modelos y Base de Datos (SQLite)", duration: "25:40", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4" }
+            ],
+            'tr-1': [
+                { title: "Clase 1: Introducción a n8n y MCP", duration: "18:25", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" },
+                { title: "Clase 2: Conectando Nodos y Flujos Simples", duration: "22:15", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4" },
+                { title: "Clase 3: Integración de Agentes con MCP", duration: "30:10", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4" }
+            ]
+        };
+
+        // esta parte es de la reproduccion del video y lecciones
+        function openCourseVideoModal(course) {
+            const modal = document.getElementById('course-video-modal');
+            if (!modal) return;
+            
+            document.getElementById('video-modal-title').innerText = `Reproduciendo: ${course.title}`;
+            
+            const lessons = courseLessons[course.id] || [
+                { title: "Clase 1: Introducción y Fundamentos", duration: "10:00", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" },
+                { title: "Clase 2: Configuración Inicial del Proyecto", duration: "12:30", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4" },
+                { title: "Clase 3: Desarrollo Práctico del Módulo", duration: "15:45", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4" },
+                { title: "Clase 4: Pruebas y Despliegue", duration: "14:20", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4" }
+            ];
+            
+            const playlistEl = document.getElementById('video-lessons-list');
+            if (playlistEl) {
+                playlistEl.innerHTML = '';
+                lessons.forEach((lesson, index) => {
+                    const item = document.createElement('div');
+                    item.className = `playlist-item ${index === 0 ? 'active' : ''}`;
+                    item.onclick = () => selectVideoLesson(index, lessons);
+                    item.innerHTML = `
+                        <div class="playlist-item-left">
+                            <span class="lesson-num">${index + 1}</span>
+                            <div class="lesson-details">
+                                <span class="lesson-title" title="${lesson.title}">${lesson.title}</span>
+                                <span class="lesson-duration"><i class="bi bi-clock"></i> ${lesson.duration}</span>
+                            </div>
+                        </div>
+                        <div class="playlist-item-right">
+                            <i class="bi bi-play-circle-fill"></i>
+                        </div>
+                    `;
+                    playlistEl.appendChild(item);
+                });
+            }
+            
+            const videoEl = document.getElementById('course-html5-video');
+            if (videoEl && lessons.length > 0) {
+                videoEl.src = lessons[0].url;
+                videoEl.load();
+                videoEl.play().catch(e => console.log("Auto-play prevented", e));
+            }
+            
+            switchVideoTab('tab-video-desc');
+            modal.classList.add('open');
+        }
+
+        // esta parte es de cerrar el reproductor
+        function closeCourseVideoModal() {
+            const modal = document.getElementById('course-video-modal');
+            if (modal) {
+                modal.classList.remove('open');
+            }
+            const videoEl = document.getElementById('course-html5-video');
+            if (videoEl) {
+                videoEl.pause();
+            }
+        }
+
+        // esta parte es para seleccionar la leccion
+        function selectVideoLesson(index, lessons) {
+            const playlistItems = document.querySelectorAll('#video-lessons-list .playlist-item');
+            playlistItems.forEach((item, idx) => {
+                if (idx === index) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+            
+            const videoEl = document.getElementById('course-html5-video');
+            if (videoEl && lessons[index]) {
+                videoEl.src = lessons[index].url;
+                videoEl.load();
+                videoEl.play().catch(e => console.log("Error loading video lesson", e));
+            }
+        }
+
+        // esta parte es del cambio de pestañas bajo el video
+        function switchVideoTab(tabId) {
+            const tabButtons = document.querySelectorAll('.video-tab-btn');
+            const tabContents = document.querySelectorAll('.video-tab-content');
+            
+            tabButtons.forEach(btn => {
+                const text = btn.innerText.trim();
+                const isTarget = (tabId === 'tab-video-desc' && text === 'Descripción') ||
+                                 (tabId === 'tab-video-files' && text === 'Material Descargable') ||
+                                 (tabId === 'tab-video-tutor' && text === 'Preguntar al Tutor');
+                
+                if (isTarget) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            tabContents.forEach(content => {
+                if (content.id === tabId) {
+                    content.style.display = 'block';
+                } else {
+                    content.style.display = 'none';
+                }
+            });
+        }
+
+        // esta parte es de abrir el chat desde el video
+        function openChatFromVideo() {
+            closeCourseVideoModal();
+            switchView('view-inbox');
+        }
+
+        // esta parte es para simular la descarga de recursos
+        function downloadMockResource(event, fileName) {
+            event.preventDefault();
+            Swal.fire({
+                title: 'Descargando Recurso',
+                text: `Se está iniciando la descarga del archivo: ${fileName}`,
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        }
+
+        // esta parte es de los datos iniciales del chat
+        let activeChats = [
+            {
+                teacherId: 1,
+                teacherName: "Dr. Carlos Ruiz",
+                specialty: "Matemáticas",
+                initials: "CR",
+                messages: [
+                    { sender: "teacher", text: "Hola Alumno, ¿cómo te fue con los ejercicios de derivadas?", time: "Ayer" },
+                    { sender: "student", text: "Hola Profesor, me costó un poco la regla de la cadena.", time: "Ayer" },
+                    { sender: "teacher", text: "No te preocupes. Lo revisamos con calma en nuestra próxima sesión.", time: "18:30" }
+                ]
+            },
+            {
+                teacherId: 3,
+                teacherName: "Ing. David Silva",
+                specialty: "Programación",
+                initials: "DS",
+                messages: [
+                    { sender: "teacher", text: "Recuerda subir tu código al repositorio antes de la clase de Python.", time: "Hace 2 días" },
+                    { sender: "student", text: "Sí, ya lo subí. ¿Podría revisarlo hoy?", time: "Hace 2 días" },
+                    { sender: "teacher", text: "Listo, le daré una mirada antes de conectarnos.", time: "Hace 1 día" }
+                ]
+            },
+            {
+                teacherId: 101,
+                teacherName: "Tutor Juan Pablo",
+                specialty: "Física",
+                initials: "JP",
+                messages: [
+                    { sender: "student", text: "Hola Juan Pablo, ¿tienes algún material extra para vectores?", time: "Hace 3 días" },
+                    { sender: "teacher", text: "Claro! Te acabo de adjuntar una guía de ejercicios en el portal de recursos.", time: "Hace 3 días" }
+                ]
+            }
+        ];
+
+        let currentChatTeacherId = 1;
+
+        // esta parte es del renderizado de la lista de chats y mensajes
+        function renderInboxView() {
+            const contactListEl = document.getElementById('chat-contacts-list');
+            if (!contactListEl) return;
+            contactListEl.innerHTML = '';
+            
+            activeChats.forEach(chat => {
+                const lastMsg = chat.messages[chat.messages.length - 1];
+                const isActive = chat.teacherId === currentChatTeacherId;
+                
+                const item = document.createElement('div');
+                item.className = `chat-contact-item ${isActive ? 'active' : ''}`;
+                item.onclick = () => {
+                    currentChatTeacherId = chat.teacherId;
+                    renderInboxView();
+                };
+                
+                item.innerHTML = `
+                    <div class="contact-avatar">${chat.initials}</div>
+                    <div class="contact-info">
+                        <div class="contact-name-row">
+                            <span class="contact-name">${chat.teacherName}</span>
+                            <span class="contact-time">${lastMsg ? lastMsg.time : ''}</span>
+                        </div>
+                        <div class="contact-meta">${chat.specialty}</div>
+                        <div class="contact-last-msg">${lastMsg ? lastMsg.text : ''}</div>
+                    </div>
+                `;
+                contactListEl.appendChild(item);
+            });
+            
+            const activeChat = activeChats.find(c => c.teacherId === currentChatTeacherId);
+            const chatHeaderEl = document.getElementById('chat-active-header');
+            const chatMessagesEl = document.getElementById('chat-messages-container');
+            
+            if (activeChat && chatHeaderEl && chatMessagesEl) {
+                chatHeaderEl.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div class="contact-avatar" style="width: 42px; height: 42px; font-size: 0.95rem;">${activeChat.initials}</div>
+                        <div>
+                            <h4 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text);">${activeChat.teacherName}</h4>
+                            <span style="font-size: 0.8rem; color: #10b981;"><i class="bi bi-circle-fill" style="font-size: 0.5rem; margin-right: 4px; vertical-align: middle;"></i> En línea</span>
+                        </div>
+                    </div>
+                `;
+                
+                chatMessagesEl.innerHTML = '';
+                activeChat.messages.forEach(msg => {
+                    const bubble = document.createElement('div');
+                    bubble.className = `message-row ${msg.sender === 'student' ? 'sent' : 'received'}`;
+                    bubble.innerHTML = `
+                        <div class="message-bubble">
+                            <p>${msg.text}</p>
+                            <span class="msg-time">${msg.time}</span>
+                        </div>
+                    `;
+                    chatMessagesEl.appendChild(bubble);
+                });
+                
+                chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+            }
+        }
+
+        // esta parte es del envio de mensajes y respuestas del bot
+        function sendMessageToTeacher(event) {
+            event.preventDefault();
+            const inputEl = document.getElementById('chat-msg-input');
+            if (!inputEl) return;
+            const text = inputEl.value.trim();
+            if (!text) return;
+            
+            const activeChat = activeChats.find(c => c.teacherId === currentChatTeacherId);
+            if (!activeChat) return;
+            
+            const nowTime = new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+            
+            activeChat.messages.push({
+                sender: "student",
+                text: text,
+                time: nowTime
+            });
+            
+            inputEl.value = '';
+            renderInboxView();
+            
+            const typingStatusEl = document.getElementById('chat-typing-status');
+            if (typingStatusEl) {
+                typingStatusEl.style.display = 'flex';
+                const chatMessagesEl = document.getElementById('chat-messages-container');
+                if (chatMessagesEl) chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+            }
+            
+            setTimeout(() => {
+                if (typingStatusEl) typingStatusEl.style.display = 'none';
+                
+                const responses = [
+                    "¡Entendido! Lo revisaremos a fondo en nuestra tutoría.",
+                    "Hola, gracias por tu consulta. Acabo de revisar tu duda, te recomiendo repasar el material de apoyo previo.",
+                    "Excelente pregunta. Apunta esa duda para que la resolvamos paso a paso con la pizarra interactiva.",
+                    "Muy bien planteado. Te sugiero investigar la fórmula alternativa que vimos la semana pasada.",
+                    "Perfecto. Nos conectamos a la hora programada y lo detallamos."
+                ];
+                const randomReply = responses[Math.floor(Math.random() * responses.length)];
+                
+                activeChat.messages.push({
+                    sender: "teacher",
+                    text: randomReply,
+                    time: new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })
+                });
+                
+                renderInboxView();
+            }, 1800);
+        }
+
+        function filterChatContacts() {
+            const query = document.getElementById('chat-search-input')?.value.toLowerCase() || '';
+            const items = document.querySelectorAll('.chat-contact-item');
+            items.forEach(item => {
+                const name = item.querySelector('.contact-name')?.innerText.toLowerCase() || '';
+                const meta = item.querySelector('.contact-meta')?.innerText.toLowerCase() || '';
+                if (name.includes(query) || meta.includes(query)) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
+        // esta parte es del reporte del progreso del estudiante
+        let subjectProgress = [
+            { name: "Matemáticas (Álgebra y Cálculo)", progress: 85, color: "var(--primary)" },
+            { name: "Programación (Python y Web)", progress: 95, color: "#10b981" },
+            { name: "Física (Mecánica y Ondas)", progress: 60, color: "#3b82f6" },
+            { name: "Lenguaje y Comunicación", progress: 75, color: "var(--accent)" }
+        ];
+        
+        let teacherFeedback = [
+            {
+                teacherName: "Dr. Carlos Ruiz",
+                date: "24 May 2026",
+                initials: "CR",
+                subject: "Cálculo y Derivadas",
+                text: "El estudiante demuestra excelente comprensión de la teoría de límites. Se recomienda practicar más ejercicios de la regla de la cadena para ganar fluidez operacional."
+            },
+            {
+                teacherName: "Tutor Juan Pablo",
+                date: "18 May 2026",
+                initials: "JP",
+                subject: "Física Vectores",
+                text: "Buen desempeño en la descomposición de vectores bidimensionales. Quedó pendiente revisar el método analítico en tres dimensiones para la siguiente tutoría."
+            },
+            {
+                teacherName: "Ing. David Silva",
+                date: "12 May 2026",
+                initials: "DS",
+                subject: "Algoritmos en Python",
+                text: "Domina a la perfección las estructuras de control condicionales e iterativas. Su código está limpio y bien documentado. Próximo paso: Introducción a la Programación Orientada a Objetos."
+            }
+        ];
+
+        function renderProgressView() {
+            const progressListEl = document.getElementById('progress-subject-list');
+            if (progressListEl) {
+                progressListEl.innerHTML = '';
+                subjectProgress.forEach(sub => {
+                    const item = document.createElement('div');
+                    item.className = 'progress-subject-item';
+                    item.innerHTML = `
+                        <div class="subject-progress-header">
+                            <span class="subject-progress-name">${sub.name}</span>
+                            <span class="subject-progress-pct">${sub.progress}%</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" style="width: ${sub.progress}%; background-color: ${sub.color};"></div>
+                        </div>
+                    `;
+                    progressListEl.appendChild(item);
+                });
+            }
+            
+            const feedbackListEl = document.getElementById('feedback-list-container');
+            if (feedbackListEl) {
+                feedbackListEl.innerHTML = '';
+                teacherFeedback.forEach(f => {
+                    const card = document.createElement('div');
+                    card.className = 'feedback-card-item';
+                    card.innerHTML = `
+                        <div class="feedback-card-header">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div class="contact-avatar" style="width: 36px; height: 36px; font-size: 0.85rem; background: rgba(168, 85, 247, 0.1); color: var(--primary);">${f.initials}</div>
+                                <div>
+                                    <h5 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--text);">${f.teacherName}</h5>
+                                    <span style="font-size: 0.75rem; color: var(--text-light);">${f.subject}</span>
+                                </div>
+                            </div>
+                            <span style="font-size: 0.8rem; color: var(--text-light);">${f.date}</span>
+                        </div>
+                        <p style="margin: 0; font-size: 0.9rem; color: var(--text-light); line-height: 1.5; font-style: italic;">"${f.text}"</p>
+                    `;
+                    feedbackListEl.appendChild(card);
+                });
+            }
+        }
+
+        // Exponer funciones globalmente para manejadores onclick inline en HTML
+        window.switchView = switchView;
+        window.toggleTheme = toggleTheme;
+        window.toggleFavorite = toggleFavorite;
+        window.requestClassAccess = requestClassAccess;
+        window.openPlanCustomizer = openPlanCustomizer;
+        window.scrollCoursesCarousel = scrollCoursesCarousel;
+        window.openCourseDetailModal = openCourseDetailModal;
+        window.closeCourseDetailModal = closeCourseDetailModal;
+        window.startCourseLearning = startCourseLearning;
+        window.sendMessageToTeacher = sendMessageToTeacher;
+        window.filterChatContacts = filterChatContacts;
+        window.openCourseVideoModal = openCourseVideoModal;
+        window.closeCourseVideoModal = closeCourseVideoModal;
+        window.selectVideoLesson = selectVideoLesson;
+        window.switchVideoTab = switchVideoTab;
+        window.openChatFromVideo = openChatFromVideo;
+        window.downloadMockResource = downloadMockResource;
 
         // Initialize Rendering
         renderDashboardContent();
         renderModalPreview();
+        updatePlanUI();
     </script>
 </body>
 </html>
