@@ -1,0 +1,53 @@
+{% load static %}
+<!-- esta parte es de la sala de streaming y transmisiones en vivo -->
+<section id="sec-streaming" class="prof-section">
+    <div class="prof-section-header">
+        <h1 class="prof-section-title">Sala de Streaming Docente</h1>
+        <p class="prof-section-subtitle">Inicia tutorías grupales o graba lecciones en vivo directamente desde tu navegador.</p>
+    </div>
+
+    <div class="profe-studio-container">
+        <!-- esta parte es de la columna izquierda donde se muestra la consola de video de transmisión -->
+        <div class="profe-studio-main">
+            <div class="profe-studio-screen">
+                <video id="profe-webcam-stream" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover; background: #0c0f17; border-radius: 16px; transform: scaleX(-1);">
+                </video>
+                <!-- esta parte es del indicador o placa superpuesta que parpadea indicando si estamos transmitiendo en vivo o grabando -->
+                <div class="profe-studio-live-badge" id="profe-live-badge" style="display: none;">
+                    <span class="profe-blink-dot"></span> EN VIVO
+                </div>
+                <!-- esta parte es del marcador de posición que se muestra cuando la señal de cámara está apagada o inactiva -->
+                <div class="profe-studio-placeholder" id="profe-camera-placeholder">
+                    <i class="bi bi-camera-video-off-fill" style="font-size: 3.5rem; color: rgba(255,255,255,0.15);"></i>
+                    <p style="color: var(--text-light); margin-top: 10px; font-size: 0.9rem;">Señal de video inactiva. Presiona Iniciar Transmisión para encender la cámara.</p>
+                </div>
+            </div>
+
+            <!-- esta parte es de los botones de control para silenciar micrófono, apagar cámara, compartir pantalla y transmitir -->
+            <div class="profe-studio-controls">
+                <button class="profe-studio-btn" id="btn-toggle-mic" onclick="toggleStudioMic()" disabled>
+                    <i class="bi bi-mic-fill" id="icon-studio-mic"></i>
+                </button>
+                <button class="profe-studio-btn" id="btn-toggle-video" onclick="toggleStudioVideo()" disabled>
+                    <i class="bi bi-camera-video-fill" id="icon-studio-video"></i>
+                </button>
+                <button class="profe-studio-btn" id="btn-toggle-share" onclick="toggleStudioShare()" disabled>
+                    <i class="bi bi-display" id="icon-studio-share"></i>
+                </button>
+                <button class="prof-form-btn" id="btn-toggle-stream" onclick="toggleStreamingSession()" style="width: auto; padding: 12px 28px; background: #10b981;">
+                    <i class="bi bi-play-fill" style="margin-right: 6px;"></i> Iniciar Transmisión
+                </button>
+            </div>
+        </div>
+
+        <!-- esta parte es de la columna derecha donde está el chat de la clase en vivo para interactuar con los alumnos -->
+        <div class="profe-studio-sidebar">
+            <div class="profe-studio-chat-header">
+                <i class="bi bi-chat-text-fill" style="color: var(--primary);"></i> Chat de la Clase
+            </div>
+            <div class="profe-studio-chat-messages" id="profe-studio-chat-container">
+                <div class="profe-studio-sys-msg" id="profe-studio-sys-msg">Conexión inactiva. Inicia la transmisión para habilitar el chat de alumnos.</div>
+            </div>
+        </div>
+    </div>
+</section>

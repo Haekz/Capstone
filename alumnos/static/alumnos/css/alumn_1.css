@@ -2395,3 +2395,81 @@ body.dark-mode .playlist-item.active {
     border-bottom-color: var(--primary);
 }
 
+/* esta parte es de los estilos para las ventanas modales emergentes */
+.custom-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.custom-modal-overlay.open {
+    opacity: 1;
+    visibility: visible;
+}
+
+.custom-modal-card {
+    background-color: var(--white);
+    border-radius: 24px;
+    border: 1px solid rgba(168, 85, 247, 0.16);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transform: scale(0.9);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    overflow: hidden;
+    padding: 30px;
+}
+
+body.dark-mode .custom-modal-card {
+    background-color: #111827;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.custom-modal-overlay.open .custom-modal-card {
+    transform: scale(1);
+}
+
+.custom-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(168, 85, 247, 0.1);
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+body.dark-mode .custom-modal-header {
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.close-modal-btn {
+    background: transparent;
+    border: none;
+    font-size: 1.8rem;
+    color: var(--text-light);
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.2s;
+}
+
+.close-modal-btn:hover {
+    color: var(--primary);
+}
+
+.custom-modal-body {
+    overflow-y: auto;
+    max-height: 75vh;
+}
+

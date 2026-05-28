@@ -1,0 +1,196 @@
+/* =============================================
+   esta parte es del módulo de streaming (STUDIO)
+   ============================================= */
+
+/* esta parte es de la estructura de cuadrícula del contenedor de la sala de streaming */
+.profe-studio-container {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 25px;
+    margin-top: 15px;
+}
+
+@media (max-width: 900px) {
+    .profe-studio-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+.profe-studio-main {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.profe-studio-screen {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: #0c0f17;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+}
+
+.profe-studio-live-badge {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background: #ef4444;
+    color: var(--white);
+    font-weight: 800;
+    font-size: 0.78rem;
+    padding: 5px 12px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
+}
+
+.profe-blink-dot {
+    width: 7px;
+    height: 7px;
+    background-color: var(--white);
+    border-radius: 50%;
+    display: inline-block;
+    animation: profe-blink-anim 1s infinite alternate;
+}
+
+@keyframes profe-blink-anim {
+    from { opacity: 0.3; }
+    to { opacity: 1; }
+}
+
+.profe-studio-placeholder {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    text-align: center;
+}
+
+.profe-studio-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    background: var(--white);
+    border: 1px solid rgba(168, 85, 247, 0.08);
+    border-radius: 16px;
+    padding: 15px;
+    box-shadow: var(--shadow);
+}
+
+body.dark-mode .profe-studio-controls {
+    background: #111827;
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.profe-studio-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid rgba(168, 85, 247, 0.1);
+    background: rgba(168, 85, 247, 0.02);
+    color: var(--text);
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+body.dark-mode .profe-studio-btn {
+    border-color: rgba(255, 255, 255, 0.05);
+    background: #1f2937;
+    color: #ffffff;
+}
+
+.profe-studio-btn:hover:not([disabled]) {
+    background: rgba(168, 85, 247, 0.08);
+    transform: scale(1.05);
+}
+
+.profe-studio-btn[disabled] {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+/* esta parte es de la barra lateral que contiene el chat en vivo del directo */
+.profe-studio-sidebar {
+    background: var(--white);
+    border: 1px solid rgba(168, 85, 247, 0.08);
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    height: 480px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+body.dark-mode .profe-studio-sidebar {
+    background: #111827;
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.profe-studio-chat-header {
+    padding: 15px;
+    font-weight: 800;
+    font-size: 0.9rem;
+    border-bottom: 1px solid rgba(168, 85, 247, 0.08);
+    color: var(--text);
+}
+
+body.dark-mode .profe-studio-chat-header {
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.profe-studio-chat-messages {
+    flex-grow: 1;
+    padding: 15px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.profe-studio-sys-msg {
+    font-size: 0.78rem;
+    color: var(--text-light);
+    text-align: center;
+    padding: 20px;
+    font-style: italic;
+    line-height: 1.5;
+}
+
+.profe-studio-chat-msg {
+    background: rgba(168, 85, 247, 0.02);
+    border: 1px solid rgba(168, 85, 247, 0.05);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+
+body.dark-mode .profe-studio-chat-msg {
+    background: rgba(255, 255, 255, 0.02);
+    border-color: rgba(255, 255, 255, 0.02);
+}
+
+.profe-studio-chat-msg strong {
+    color: var(--primary);
+    margin-right: 4px;
+}
+
+.profe-studio-chat-msg span {
+    color: var(--text);
+}

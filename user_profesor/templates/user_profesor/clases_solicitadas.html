@@ -1,0 +1,44 @@
+{% load static %}
+<!-- esta parte es de la sección de clases solicitadas, muestra todos los alumnos inscritos -->
+<section id="sec-clases" class="prof-section">
+    <div class="prof-section-header">
+        <h1 class="prof-section-title">Clases Solicitadas</h1>
+        <p class="prof-section-subtitle">Gestiona las solicitudes e inscripciones de alumnos en tus materias.</p>
+    </div>
+    
+    <div class="prof-card">
+        <h2 class="prof-card-title">Listado de Inscripciones Activas</h2>
+        {% if inscripciones %}
+            <!-- esta parte es de la tabla con los alumnos inscritos y sus cursos -->
+            <div class="prof-table-wrapper">
+                <table class="prof-table">
+                    <thead>
+                        <tr>
+                            <th>Alumno</th>
+                            <th>Materia / Curso</th>
+                            <th>Fecha de Solicitud</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ins in inscripciones %}
+                        <tr>
+                            <td class="prof-table-bold">{{ ins.id_alumno.nombre }}</td>
+                            <td>{{ ins.id_clase.nombre_curso }}</td>
+                            <td>{{ ins.fecha_inscripcion|date:"d/m/Y" }}</td>
+                            <td>
+                                <span class="prof-badge prof-badge-online">Activo</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="prof-empty-card">
+                <i class="bi bi-file-earmark-x"></i>
+                <p>Aún no has recibido solicitudes de alumnos en el sistema.</p>
+            </div>
+        {% endif %}
+    </div>
+</section>

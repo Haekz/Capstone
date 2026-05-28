@@ -6,6 +6,9 @@
 {% block extra_css %}
 <!-- esta parte es de los estilos del panel del profe, cámbialos en panel.css si quieres retocar algo visual -->
 <link rel="stylesheet" href="{% static 'panel.css' %}">
+<link rel="stylesheet" href="{% static 'clases_solicitadas.css' %}">
+<link rel="stylesheet" href="{% static 'videos.css' %}">
+<link rel="stylesheet" href="{% static 'clases_en_vivo.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -28,6 +31,15 @@
             </li>
             <li class="prof-menu-item" id="menu-clases" onclick="switchSection('clases')">
                 <i class="bi bi-file-earmark-text"></i> Clases Solicitadas
+            </li>
+            <li class="prof-menu-item" id="menu-buzon" onclick="switchSection('buzon')">
+                <i class="bi bi-chat-dots-fill"></i> Buzón de Alumnos
+            </li>
+            <li class="prof-menu-item" id="menu-grabaciones" onclick="switchSection('grabaciones')">
+                <i class="bi bi-play-circle-fill"></i> Clases Grabadas
+            </li>
+            <li class="prof-menu-item" id="menu-streaming" onclick="switchSection('streaming')">
+                <i class="bi bi-camera-video-fill"></i> Sala de Streaming
             </li>
             <li class="prof-menu-item" id="menu-perfil" onclick="switchSection('perfil')">
                 <i class="bi bi-person-gear"></i> Personalizar Perfil
@@ -137,48 +149,7 @@
         </section>
 
         <!-- esta parte es de la sección de clases solicitadas, muestra todos los alumnos inscritos -->
-        <section id="sec-clases" class="prof-section">
-            <div class="prof-section-header">
-                <h1 class="prof-section-title">Clases Solicitadas</h1>
-                <p class="prof-section-subtitle">Gestiona las solicitudes e inscripciones de alumnos en tus materias.</p>
-            </div>
-            
-            <div class="prof-card">
-                <h2 class="prof-card-title">Listado de Inscripciones Activas</h2>
-                {% if inscripciones %}
-                    <!-- esta parte es de la tabla con los alumnos inscritos y sus cursos -->
-                    <div class="prof-table-wrapper">
-                        <table class="prof-table">
-                            <thead>
-                                <tr>
-                                    <th>Alumno</th>
-                                    <th>Materia / Curso</th>
-                                    <th>Fecha de Solicitud</th>
-                                    <th>Estado</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for ins in inscripciones %}
-                                <tr>
-                                    <td class="prof-table-bold">{{ ins.id_alumno.nombre }}</td>
-                                    <td>{{ ins.id_clase.nombre_curso }}</td>
-                                    <td>{{ ins.fecha_inscripcion|date:"d/m/Y" }}</td>
-                                    <td>
-                                        <span class="prof-badge prof-badge-online">Activo</span>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <div class="prof-empty-card">
-                        <i class="bi bi-file-earmark-x"></i>
-                        <p>Aún no has recibido solicitudes de alumnos en el sistema.</p>
-                    </div>
-                {% endif %}
-            </div>
-        </section>
+        {% include 'user_profesor/clases_solicitadas.html' %}
 
         <!-- esta parte es de la sección para que el profe edite su propio perfil -->
         <section id="sec-perfil" class="prof-section">
@@ -281,6 +252,49 @@
             </div>
         </section>
 
+        <!-- esta parte es del chat o buzon de consultas de alumnos -->
+        <section id="sec-buzon" class="prof-section">
+            <div class="prof-section-header">
+                <h1 class="prof-section-title">Buzón de Alumnos</h1>
+                <p class="prof-section-subtitle">Resuelve las dudas académicas y mantén contacto directo con tus estudiantes.</p>
+            </div>
+            
+            <div class="profe-chat-container">
+                <!-- Panel izquierdo: lista de chats -->
+                <div class="profe-chat-sidebar">
+                    <div class="profe-chat-search">
+                        <i class="bi bi-search"></i>
+                        <input type="text" id="profe-chat-search-input" placeholder="Buscar alumno..." oninput="filterAlumnChats()">
+                    </div>
+                    <div class="profe-chat-list" id="profe-chat-list-el">
+                        <!-- Se rellena con JS -->
+                    </div>
+                </div>
+                
+                <!-- Panel derecho: chat activo -->
+                <div class="profe-chat-main">
+                    <div class="profe-chat-header" id="profe-chat-active-header">
+                        <!-- Se rellena con JS -->
+                    </div>
+                    <div class="profe-chat-history" id="profe-chat-messages-container">
+                        <!-- Se rellena con JS -->
+                    </div>
+                    <form class="profe-chat-input-box" onsubmit="sendTeacherMessage(event)">
+                        <input type="text" id="profe-chat-input-el" placeholder="Escribe tu respuesta al alumno..." required autocomplete="off">
+                        <button type="submit" class="profe-chat-send-btn"><i class="bi bi-send-fill"></i></button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- esta parte es de la videoteca y gestion de clases grabadas -->
+        {% include 'user_profesor/videos.html' %}
+
+        <!-- esta parte es de la sala de streaming y transmisiones en vivo -->
+        {% include 'user_profesor/clases_en_vivo.html' %}
+
+
+
     </main>
 </div>
 {% endblock %}
@@ -289,6 +303,54 @@
 <!-- esta parte es de SweetAlert2, la librería de alertas animadas -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+    // esta parte es de la simulacion de datos del chat docente
+    let studentChats = [
+        {
+            studentId: 10,
+            studentName: "Juan Pérez",
+            courseName: "Universidad Python",
+            initials: "JP",
+            unread: true,
+            messages: [
+                { sender: "student", text: "Hola Profesor, tengo una duda con la Clase 3 de variables.", time: "21:10" }
+            ]
+        },
+        {
+            studentId: 11,
+            studentName: "Sofía Rojas",
+            courseName: "Python Django Web",
+            initials: "SR",
+            unread: false,
+            messages: [
+                { sender: "teacher", text: "Hola Sofía. Sí, el ORM de Django maneja la sincronización automáticamente.", time: "Ayer" },
+                { sender: "student", text: "¡Buenísimo! Me quedó clarísimo, gracias.", time: "Ayer" }
+            ]
+        },
+        {
+            studentId: 12,
+            studentName: "Lucas Altamirano",
+            courseName: "Automatizaciones n8n + MCP",
+            initials: "LA",
+            unread: false,
+            messages: [
+                { sender: "student", text: "Profesor, ¿puedo conectar más de un servidor MCP local a n8n?", time: "Hace 2 días" },
+                { sender: "teacher", text: "Sí, Lucas. Solo debes configurar las variables de entorno de cada contenedor.", time: "Hace 2 días" }
+            ]
+        }
+    ];
+
+    let currentStudentChatId = 10;
+
+    // esta parte es de los videos grabados por el docente
+    let teacherVideos = [
+        { id: 1, title: "Clase 1: Introducción a la Universidad Python", duration: "12:15", course: "Universidad Python", courseId: "py-1", views: 420, date: "15 May 2026" },
+        { id: 2, title: "Clase 2: Configuración del Entorno en Windows", duration: "10:45", course: "Universidad Python", courseId: "py-1", views: 310, date: "16 May 2026" },
+        { id: 3, title: "Clase 3: Hola Mundo y Variables Básicas", duration: "08:30", course: "Universidad Python", courseId: "py-1", views: 250, date: "18 May 2026" },
+        { id: 4, title: "Clase 1: Bienvenidos a Python y Django", duration: "15:10", course: "Python Django Web", courseId: "py-2", views: 180, date: "20 May 2026" },
+        { id: 5, title: "Clase 1: Introducción a n8n y MCP", duration: "18:25", course: "Automatizaciones n8n + MCP", courseId: "tr-1", views: 158, date: "22 May 2026" },
+        { id: 6, title: "Clase 2: Conectando Nodos y Flujos Simples", duration: "22:15", course: "Automatizaciones n8n + MCP", courseId: "tr-1", views: 110, date: "24 May 2026" }
+    ];
+
     // esta parte es de la función que cambia qué sección se ve en el panel según el menú que elegiste
     function switchSection(sectionId) {
         document.querySelectorAll('.prof-menu-item').forEach(item => item.classList.remove('active'));
@@ -299,6 +361,13 @@
         
         // esta parte es para que recuerde en qué sección estabas si recargas la página
         localStorage.setItem('prof_active_tab', sectionId);
+
+        // esta parte es de la inicializacion de sub-vistas
+        if (sectionId === 'buzon') {
+            renderTeacherInbox();
+        } else if (sectionId === 'grabaciones') {
+            renderTeacherVideos();
+        }
     }
 
     // esta parte es para restaurar la última sección que el profe estaba viendo al recargar
@@ -373,5 +442,436 @@
             }
         });
     }
+
+    // esta parte es del renderizado de la bandeja de mensajes docente
+    function renderTeacherInbox() {
+        const chatListEl = document.getElementById('profe-chat-list-el');
+        if (!chatListEl) return;
+        chatListEl.innerHTML = '';
+        
+        studentChats.forEach(chat => {
+            const lastMsg = chat.messages[chat.messages.length - 1];
+            const isActive = chat.studentId === currentStudentChatId;
+            
+            const item = document.createElement('div');
+            item.className = `profe-chat-item ${isActive ? 'active' : ''} ${chat.unread ? 'unread' : ''}`;
+            item.onclick = () => {
+                chat.unread = false;
+                currentStudentChatId = chat.studentId;
+                renderTeacherInbox();
+            };
+            
+            item.innerHTML = `
+                <div class="profe-chat-avatar">${chat.initials}</div>
+                <div class="profe-chat-info">
+                    <div class="profe-chat-title-row">
+                        <span class="profe-chat-student-name">${chat.studentName}</span>
+                        <span class="profe-chat-time">${lastMsg ? lastMsg.time : ''}</span>
+                    </div>
+                    <div class="profe-chat-course-label">${chat.courseName}</div>
+                    <div class="profe-chat-last-msg">${lastMsg ? lastMsg.text : ''}</div>
+                </div>
+            `;
+            chatListEl.appendChild(item);
+        });
+        
+        const activeChat = studentChats.find(c => c.studentId === currentStudentChatId);
+        const headerEl = document.getElementById('profe-chat-active-header');
+        const msgsEl = document.getElementById('profe-chat-messages-container');
+        
+        if (activeChat && headerEl && msgsEl) {
+            headerEl.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div class="profe-chat-avatar" style="width: 40px; height: 40px; font-size: 0.9rem;">${activeChat.initials}</div>
+                    <div>
+                        <h4 style="margin: 0; font-size: 1rem; font-weight: 700; color: var(--text);">${activeChat.studentName}</h4>
+                        <span style="font-size: 0.75rem; color: var(--text-light);">${activeChat.courseName}</span>
+                    </div>
+                </div>
+            `;
+            
+            msgsEl.innerHTML = '';
+            activeChat.messages.forEach(msg => {
+                const bubble = document.createElement('div');
+                bubble.className = `profe-chat-bubble-row ${msg.sender === 'teacher' ? 'sent' : 'received'}`;
+                bubble.innerHTML = `
+                    <div class="profe-chat-bubble">
+                        <p>${msg.text}</p>
+                        <span class="profe-chat-msg-time">${msg.time}</span>
+                    </div>
+                `;
+                msgsEl.appendChild(bubble);
+            });
+            msgsEl.scrollTop = msgsEl.scrollHeight;
+        }
+    }
+
+    // esta parte es del envio de mensaje del docente
+    function sendTeacherMessage(event) {
+        event.preventDefault();
+        const inputEl = document.getElementById('profe-chat-input-el');
+        if (!inputEl) return;
+        const text = inputEl.value.trim();
+        if (!text) return;
+        
+        const activeChat = studentChats.find(c => c.studentId === currentStudentChatId);
+        if (!activeChat) return;
+        
+        const nowTime = new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+        
+        activeChat.messages.push({
+            sender: "teacher",
+            text: text,
+            time: nowTime
+        });
+        
+        inputEl.value = '';
+        renderTeacherInbox();
+    }
+
+    // esta parte es para filtrar los chats de alumnos
+    function filterAlumnChats() {
+        const query = document.getElementById('profe-chat-search-input')?.value.toLowerCase() || '';
+        const items = document.querySelectorAll('.profe-chat-item');
+        items.forEach(item => {
+            const name = item.querySelector('.profe-chat-student-name')?.innerText.toLowerCase() || '';
+            const course = item.querySelector('.profe-chat-course-label')?.innerText.toLowerCase() || '';
+            if (name.includes(query) || course.includes(query)) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    }
+
+    // esta parte es del renderizado del catalogo de videos docente
+    function renderTeacherVideos() {
+        const gridEl = document.getElementById('profe-cursos-grid-el');
+        if (!gridEl) return;
+        gridEl.innerHTML = '';
+        
+        // esta parte es de actualizar el número de lecciones totales que se muestran en el indicador superior de estadísticas
+        const counterEl = document.getElementById('profe-stat-videos-count');
+        if (counterEl) counterEl.innerText = `${teacherVideos.length} Lecciones`;
+
+        teacherVideos.forEach(video => {
+            const card = document.createElement('div');
+            card.className = 'profe-cursos-card';
+            card.innerHTML = `
+                <div class="profe-cursos-thumb">
+                    <i class="bi bi-play-circle-fill"></i>
+                    <span class="profe-cursos-badge-duration">${video.duration}</span>
+                </div>
+                <div class="profe-cursos-body">
+                    <h4 class="profe-cursos-title" title="${video.title}">${video.title}</h4>
+                    <span class="profe-cursos-category">${video.course}</span>
+                    <div class="profe-cursos-meta">
+                        <span><i class="bi bi-eye"></i> ${video.views} vistas</span>
+                        <span><i class="bi bi-calendar"></i> ${video.date}</span>
+                    </div>
+                    <button class="profe-cursos-delete-btn" onclick="deleteTeacherVideo(${video.id})">
+                        <i class="bi bi-trash3-fill"></i> Eliminar Clase
+                    </button>
+                </div>
+            `;
+            gridEl.appendChild(card);
+        });
+    }
+
+    // esta parte es para abrir y cerrar el modal de carga de videos
+    function openUploadModal() {
+        const modal = document.getElementById('profe-upload-modal');
+        if (modal) modal.classList.add('open');
+    }
+
+    function closeUploadModal() {
+        const modal = document.getElementById('profe-upload-modal');
+        if (modal) modal.classList.remove('open');
+    }
+
+    // esta parte es para simular la carga y publicacion de un video
+    function submitUploadedVideo(event) {
+        event.preventDefault();
+        const title = document.getElementById('upload-title').value.trim();
+        const duration = document.getElementById('upload-duration').value.trim();
+        const courseSelect = document.getElementById('upload-course');
+        const courseText = courseSelect.options[courseSelect.selectedIndex].text;
+        const courseId = courseSelect.value;
+        
+        Swal.fire({
+            title: 'Subiendo Clase',
+            text: 'Subiendo archivo de video e indexando lección...',
+            icon: 'info',
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            timer: 2000,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        }).then(() => {
+            const newVideo = {
+                id: Date.now(),
+                title: title,
+                duration: duration,
+                course: courseText,
+                courseId: courseId,
+                views: 0,
+                date: new Date().toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' })
+            };
+            
+            teacherVideos.unshift(newVideo);
+            closeUploadModal();
+            renderTeacherVideos();
+            
+            // esta parte es de resetear y limpiar los campos del formulario de subida de video
+            document.getElementById('profe-video-upload-form').reset();
+            
+            Swal.fire({
+                title: '¡Clase Publicada!',
+                text: 'La lección ya se encuentra disponible para los alumnos inscritos.',
+                icon: 'success',
+                confirmButtonColor: '#a855f7'
+            });
+        });
+    }
+
+    // esta parte es de eliminar una clase grabada
+    function deleteTeacherVideo(videoId) {
+        Swal.fire({
+            title: '¿Eliminar lección?',
+            text: "Esta acción no se puede deshacer y los alumnos perderán acceso al video.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                teacherVideos = teacherVideos.filter(v => v.id !== videoId);
+                renderTeacherVideos();
+                Swal.fire({
+                    title: 'Eliminado',
+                    text: 'La lección ha sido retirada del catálogo.',
+                    icon: 'success',
+                    confirmButtonColor: '#a855f7'
+                });
+            }
+        });
+    }
+
+    // esta parte es de la simulacion del streaming en vivo
+    let isStreaming = false;
+    let webcamMediaStream = null;
+    let mockChatInterval = null;
+
+    function toggleStreamingSession() {
+        const btnStream = document.getElementById('btn-toggle-stream');
+        const liveBadge = document.getElementById('profe-live-badge');
+        const cameraPlaceholder = document.getElementById('profe-camera-placeholder');
+        const videoEl = document.getElementById('profe-webcam-stream');
+        const sysMsg = document.getElementById('profe-studio-sys-msg');
+        
+        const btnMic = document.getElementById('btn-toggle-mic');
+        const btnVideo = document.getElementById('btn-toggle-video');
+        const btnShare = document.getElementById('btn-toggle-share');
+
+        if (!isStreaming) {
+            // esta parte es de iniciar la transmisión y conectar la señal en vivo del profesor
+            Swal.fire({
+                title: 'Iniciando Transmisión',
+                text: 'Estableciendo conexión y solicitando acceso a dispositivos multimedia...',
+                icon: 'info',
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                timer: 1500,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            }).then(() => {
+                isStreaming = true;
+                btnStream.innerHTML = '<i class="bi bi-stop-fill" style="margin-right: 6px;"></i> Finalizar Directo';
+                btnStream.style.background = '#ef4444';
+                liveBadge.style.display = 'flex';
+                cameraPlaceholder.style.display = 'none';
+                
+                // esta parte es de habilitar los botones de los controles del dispositivo (micrófono, cámara, compartir pantalla)
+                btnMic.removeAttribute('disabled');
+                btnVideo.removeAttribute('disabled');
+                btnShare.removeAttribute('disabled');
+                
+                if (sysMsg) sysMsg.style.display = 'none';
+
+                // esta parte es de pedir permisos al navegador para capturar el video y audio de la cámara web del profesor
+                navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+                    .then(stream => {
+                        webcamMediaStream = stream;
+                        videoEl.srcObject = stream;
+                    })
+                    .catch(err => {
+                        console.warn("No se pudo acceder a la camara web:", err);
+                        // esta parte es para reproducir un video de respaldo animado en bucle si no se concede acceso a la cámara física
+                        videoEl.poster = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerBlazes.jpg";
+                        videoEl.src = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4";
+                        videoEl.loop = true;
+                        videoEl.srcObject = null;
+                        videoEl.play();
+                    });
+                
+                // esta parte es de arrancar el chat simulado de los alumnos saludando en vivo
+                startMockStudentLiveChat();
+                
+                Swal.fire({
+                    title: '¡Al Aire!',
+                    text: 'La transmisión ha comenzado con éxito. Tus alumnos ya se están uniendo.',
+                    icon: 'success',
+                    confirmButtonColor: '#10b981'
+                });
+            });
+        } else {
+            // esta parte es de finalizar y detener la transmisión en vivo del profesor
+            isStreaming = false;
+            btnStream.innerHTML = '<i class="bi bi-play-fill" style="margin-right: 6px;"></i> Iniciar Transmisión';
+            btnStream.style.background = '#10b981';
+            liveBadge.style.display = 'none';
+            cameraPlaceholder.style.display = 'flex';
+            
+            // esta parte es de bloquear e inhabilitar los controles de los dispositivos multimedia
+            btnMic.setAttribute('disabled', 'true');
+            btnVideo.setAttribute('disabled', 'true');
+            btnShare.setAttribute('disabled', 'true');
+            
+            // esta parte es de apagar la cámara web liberando los canales de audio y video
+            if (webcamMediaStream) {
+                webcamMediaStream.getTracks().forEach(track => track.stop());
+                webcamMediaStream = null;
+            }
+            videoEl.srcObject = null;
+            videoEl.src = '';
+            videoEl.pause();
+            
+            // esta parte es de detener el intervalo del chat simulado de los alumnos en vivo
+            clearInterval(mockChatInterval);
+            const chatContainer = document.getElementById('profe-studio-chat-container');
+            if (chatContainer) {
+                chatContainer.innerHTML = '<div class="profe-studio-sys-msg" id="profe-studio-sys-msg">Conexión inactiva. Inicia la transmisión para habilitar el chat de alumnos.</div>';
+            }
+            
+            Swal.fire({
+                title: 'Transmisión Finalizada',
+                text: 'La señal ha sido desconectada y se ha guardado el informe de asistencia.',
+                icon: 'info',
+                confirmButtonColor: '#a855f7'
+            });
+        }
+    }
+
+    // esta parte es de los botones de alternar dispositivos
+    let isStudioMicActive = true;
+    let isStudioVideoActive = true;
+    let isStudioShareActive = false;
+
+    function toggleStudioMic() {
+        isStudioMicActive = !isStudioMicActive;
+        const icon = document.getElementById('icon-studio-mic');
+        const btn = document.getElementById('btn-toggle-mic');
+        if (isStudioMicActive) {
+            icon.className = 'bi bi-mic-fill';
+            btn.style.background = '';
+        } else {
+            icon.className = 'bi bi-mic-mute-fill';
+            btn.style.background = '#ef4444';
+        }
+        if (webcamMediaStream) {
+            webcamMediaStream.getAudioTracks().forEach(track => track.enabled = isStudioMicActive);
+        }
+    }
+
+    function toggleStudioVideo() {
+        isStudioVideoActive = !isStudioVideoActive;
+        const icon = document.getElementById('icon-studio-video');
+        const btn = document.getElementById('btn-toggle-video');
+        const placeholder = document.getElementById('profe-camera-placeholder');
+        if (isStudioVideoActive) {
+            icon.className = 'bi bi-camera-video-fill';
+            btn.style.background = '';
+            if (isStreaming && !webcamMediaStream) {
+                document.getElementById('profe-webcam-stream').play();
+            }
+        } else {
+            icon.className = 'bi bi-camera-video-off-fill';
+            btn.style.background = '#ef4444';
+            if (isStreaming && !webcamMediaStream) {
+                document.getElementById('profe-webcam-stream').pause();
+            }
+        }
+        if (webcamMediaStream) {
+            webcamMediaStream.getVideoTracks().forEach(track => track.enabled = isStudioVideoActive);
+        }
+    }
+
+    function toggleStudioShare() {
+        isStudioShareActive = !isStudioShareActive;
+        const icon = document.getElementById('icon-studio-share');
+        const btn = document.getElementById('btn-toggle-share');
+        if (isStudioShareActive) {
+            icon.className = 'bi bi-display-fill';
+            btn.style.background = '#3b82f6';
+            Swal.fire({
+                title: 'Compartiendo Pantalla',
+                text: 'La ventana seleccionada está siendo transmitida a la sala.',
+                icon: 'info',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        } else {
+            icon.className = 'bi bi-display';
+            btn.style.background = '';
+        }
+    }
+
+    // esta parte es de la simulacion del chat de los alumnos en vivo
+    function startMockStudentLiveChat() {
+        const chatContainer = document.getElementById('profe-studio-chat-container');
+        if (!chatContainer) return;
+        
+        const mockMessages = [
+            { name: "Juan Pérez", text: "¡Hola profesor! Qué bueno que comenzó el directo." },
+            { name: "Sofía Rojas", text: "Buenas noches, se escucha y se ve súper bien." },
+            { name: "Lucas Altamirano", text: "Buenas. ¿Vamos a ver el despliegue hoy?" },
+            { name: "Sofía Rojas", text: "Tengo una duda con los servicios REST." },
+            { name: "Juan Pérez", text: "Profesor, ¿dejará la clase grabada al terminar?" },
+            { name: "Lucas Altamirano", text: "Excelente clase, muchas gracias." }
+        ];
+        
+        let index = 0;
+        mockChatInterval = setInterval(() => {
+            if (index < mockMessages.length) {
+                const msg = mockMessages[index];
+                const msgEl = document.createElement('div');
+                msgEl.className = 'profe-studio-chat-msg';
+                msgEl.innerHTML = `<strong>${msg.name}:</strong> <span>${msg.text}</span>`;
+                chatContainer.appendChild(msgEl);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+                index++;
+            }
+        }, 4000);
+    }
+
+    // esta parte es de exponer todas nuestras funciones interactivas al ámbito global window para que funcionen con los eventos onclick
+    window.switchSection = switchSection;
+    window.requestWithdrawal = requestWithdrawal;
+    window.renderTeacherInbox = renderTeacherInbox;
+    window.sendTeacherMessage = sendTeacherMessage;
+    window.filterAlumnChats = filterAlumnChats;
+    window.renderTeacherVideos = renderTeacherVideos;
+    window.openUploadModal = openUploadModal;
+    window.closeUploadModal = closeUploadModal;
+    window.submitUploadedVideo = submitUploadedVideo;
+    window.deleteTeacherVideo = deleteTeacherVideo;
+    window.toggleStreamingSession = toggleStreamingSession;
+    window.toggleStudioMic = toggleStudioMic;
+    window.toggleStudioVideo = toggleStudioVideo;
+    window.toggleStudioShare = toggleStudioShare;
 </script>
 {% endblock %}

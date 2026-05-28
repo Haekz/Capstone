@@ -1,0 +1,42 @@
+/* esta parte es de las tablas de inscripciones en la sección de clases solicitadas */
+.prof-table-wrapper {
+    overflow-x: auto;
+    width: 100%;
+}
+
+.prof-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.prof-table th {
+    padding: 14px 16px;
+    font-weight: 600;
+    color: var(--text-light);
+    border-bottom: 2px solid #e2e8f0;
+    font-size: 0.9rem;
+}
+
+body.dark-mode .prof-table th {
+    border-bottom-color: #334155;
+}
+
+.prof-table td {
+    padding: 16px;
+    border-bottom: 1px solid #f1f5f9;
+    color: var(--text);
+    font-size: 0.95rem;
+}
+
+body.dark-mode .prof-table td {
+    border-bottom-color: #1e293b;
+}
+
+.prof-table tr:last-child td {
+    border-bottom: none;
+}
+
+.prof-table-bold {
+    font-weight: 700;
+}
