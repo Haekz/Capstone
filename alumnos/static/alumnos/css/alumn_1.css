@@ -1351,6 +1351,24 @@ body.dark-mode .form-group textarea {
     background-color: #1f2937;
 }
 
+/* esta parte es de los estilos para evitar que los checkboxes y radio buttons dentro de form-groups se deformen o tomen 100% de ancho */
+.form-group input[type="checkbox"],
+.form-group input[type="radio"],
+body.dark-mode .form-group input[type="checkbox"],
+body.dark-mode .form-group input[type="radio"] {
+    width: 16px !important;
+    height: 16px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background-color: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    flex-shrink: 0 !important;
+    cursor: pointer !important;
+}
+
+
 .form-group select:focus, 
 .form-group input:focus, 
 .form-group textarea:focus {
@@ -2472,4 +2490,359 @@ body.dark-mode .custom-modal-header {
     overflow-y: auto;
     max-height: 75vh;
 }
+
+/* esta parte es de los estilos del modal interactivo premium del constructor de planes a medida */
+.custom-builder-modal {
+    max-width: 800px !important;
+    width: 95% !important;
+    padding: 30px !important;
+    position: relative;
+}
+
+.close-builder-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: transparent;
+    border: none;
+    font-size: 1.8rem;
+    color: var(--text-light);
+    cursor: pointer;
+    line-height: 1;
+}
+
+.close-builder-btn:hover {
+    color: var(--text);
+}
+
+.builder-layout {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+    margin-top: 25px;
+    text-align: left;
+}
+
+.builder-controls {
+    flex: 1;
+    min-width: 280px;
+    max-height: 480px;
+    overflow-y: auto;
+    padding-right: 15px;
+}
+
+/* Estilo de la barra de scroll para los controles */
+.builder-controls::-webkit-scrollbar {
+    width: 6px;
+}
+
+.builder-controls::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 10px;
+}
+
+body.dark-mode .builder-controls::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.builder-controls::-webkit-scrollbar-thumb {
+    background: rgba(161, 89, 216, 0.3);
+    border-radius: 10px;
+}
+
+.builder-controls::-webkit-scrollbar-thumb:hover {
+    background: rgba(161, 89, 216, 0.5);
+}
+
+.builder-summary {
+    width: 300px;
+    background-color: rgba(161, 89, 216, 0.05);
+    border: 2px solid #a159d8;
+    border-radius: 16px;
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+}
+
+body.dark-mode .builder-summary {
+    background-color: rgba(161, 89, 216, 0.1);
+}
+
+.control-group {
+    margin-bottom: 22px;
+}
+
+.control-label {
+    display: block;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 8px;
+}
+
+/* Toggle Radio Button */
+.radio-toggle {
+    display: flex;
+    background-color: rgba(0, 0, 0, 0.05);
+    padding: 4px;
+    border-radius: 50px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+body.dark-mode .radio-toggle {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.radio-toggle input[type="radio"] {
+    display: none !important;
+}
+
+.radio-toggle label {
+    flex: 1;
+    text-align: center;
+    padding: 8px 16px;
+    border-radius: 50px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-light);
+    transition: all 0.2s ease;
+}
+
+.radio-toggle input[type="radio"]:checked + label {
+    background-color: #a159d8;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(161, 89, 216, 0.3);
+}
+
+/* Triple Toggle Radio */
+.radio-toggle-triple label {
+    flex: 1;
+}
+
+/* Chips Groups & Items */
+.chips-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.chip-item {
+    position: relative;
+}
+
+.chip-item input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.chip-item label {
+    display: inline-block;
+    padding: 6px 14px;
+    background-color: rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 30px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-light);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+body.dark-mode .chip-item label {
+    background-color: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.chip-item input[type="checkbox"]:checked + label {
+    background-color: rgba(161, 89, 216, 0.12);
+    border-color: #a159d8;
+    color: #a159d8;
+    font-weight: 600;
+}
+
+body.dark-mode .chip-item input[type="checkbox"]:checked + label {
+    background-color: rgba(161, 89, 216, 0.25);
+    color: #c084fc;
+    border-color: #c084fc;
+}
+
+.chip-item label:hover {
+    background-color: rgba(161, 89, 216, 0.05);
+    border-color: rgba(161, 89, 216, 0.3);
+}
+
+/* Inputs de texto del constructor */
+.builder-text-input {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    background-color: var(--bg);
+    color: var(--text);
+    outline: none;
+    font-size: 0.9rem;
+    transition: border-color 0.2s;
+}
+
+body.dark-mode .builder-text-input {
+    border-color: rgba(255, 255, 255, 0.15);
+    background-color: #1c1917;
+}
+
+.builder-text-input:focus {
+    border-color: #a159d8;
+}
+
+/* Range Sliders */
+.slider-dias, .slider-horas {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 6px;
+    border-radius: 5px;
+    background: rgba(0, 0, 0, 0.1);
+    outline: none;
+}
+
+body.dark-mode .slider-dias, body.dark-mode .slider-horas {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.slider-dias::-webkit-slider-thumb, .slider-horas::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #a159d8;
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+.slider-dias::-webkit-slider-thumb:hover, .slider-horas::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+/* Select */
+.builder-select {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    background-color: var(--bg);
+    color: var(--text);
+    outline: none;
+    font-size: 0.9rem;
+}
+
+body.dark-mode .builder-select {
+    border-color: rgba(255, 255, 255, 0.15);
+    background-color: #1c1917;
+}
+
+/* Checkbox group */
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.checkbox-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #a159d8;
+    cursor: pointer;
+}
+
+.checkbox-item label {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    cursor: pointer;
+}
+
+/* Summary Box */
+.summary-badge {
+    background-color: rgba(161, 89, 216, 0.15);
+    color: #a159d8;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 20px;
+    margin-bottom: 12px;
+}
+
+.summary-price-box {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.summary-price {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.summary-period {
+    font-size: 1rem;
+    color: var(--text-light);
+}
+
+.summary-details {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 20px 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 0.88rem;
+    color: var(--text);
+    border-top: 1px dashed rgba(0, 0, 0, 0.12);
+    padding-top: 15px;
+}
+
+body.dark-mode .summary-details {
+    border-top-color: rgba(255, 255, 255, 0.12);
+}
+
+.summary-details li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.summary-details li::before {
+    content: "•";
+    color: #a159d8;
+    font-weight: bold;
+    display: inline-block;
+    width: 1em;
+}
+
+/* Responsive modal rules */
+@media (max-width: 768px) {
+    .builder-layout {
+        flex-direction: column;
+    }
+    .builder-summary {
+        width: 100%;
+    }
+    .builder-controls {
+        max-height: 380px;
+        padding-right: 8px;
+    }
+}
+
 

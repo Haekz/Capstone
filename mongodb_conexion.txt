@@ -1,0 +1,60 @@
+========================================================================
+LBWUS - INSTRUCCIONES PARA RECONECTAR MONGODB ATLAS Y MONGOENGINE
+========================================================================
+
+Si deseas volver a activar la conexión a MongoDB Atlas en el futuro, sigue estos sencillos pasos:
+
+------------------------------------------------------------------------
+Paso 1: Agregar la librería en requirements.txt
+------------------------------------------------------------------------
+Abre el archivo `requirements.txt` y añade de nuevo `mongoengine` al final de la lista de dependencias:
+```
+mongoengine
+```
+
+Y luego instala la librería localmente con:
+```bash
+pip install mongoengine
+```
+
+------------------------------------------------------------------------
+Paso 2: Insertar la configuración de conexión en settings.py
+------------------------------------------------------------------------
+Abre `lbwus/settings.py` e inserta el siguiente bloque de código justo después del bloque de configuración `DATABASES` (alrededor de la línea 100):
+
+```python
+# esta parte es de la conexión a la base de datos MongoDB usando mongoengine
+import mongoengine
+import dns.resolver
+
+# esta parte es de forzar el uso de servidores DNS rápidos de Google y Cloudflare para resolver la dirección de Atlas al instante
+try:
+    dns.resolver.default_resolver = dns.resolver.Resolver(configure=False)
+    dns.resolver.default_resolver.nameservers = ['8.8.8.8', '1.1.1.1']
+except Exception:
+    pass
+
+mongodb_url = os.environ.get('MONGODB_URL')
+if not mongodb_url:
+    # esta parte es de definir la cadena de conexión por defecto apuntando a MongoDB Atlas si no se encuentra configurada en el entorno
+    mongodb_url = 'mongodb+srv://bnicovani_db_user:2wXrpi6t825GcsnZ@cluster-lbwus.qbwxtsa.mongodb.net/?appName=Cluster-lbwus'
+
+# esta parte es de iniciar la conexión a MongoDB con un tiempo máximo de espera de 5 segundos para que no bloquee el inicio del servidor
+mongoengine.connect(host=mongodb_url, serverSelectionTimeoutMS=5000)
+```
+
+------------------------------------------------------------------------
+Paso 3: Configurar las Variables de Entorno en Producción (Railway)
+------------------------------------------------------------------------
+Cuando despliegues de nuevo a producción (Railway), recuerda agregar la variable de entorno en tu panel de control de Railway:
+- **Nombre de la Variable:** `MONGODB_URL`
+- **Valor:** `mongodb+srv://bnicovani_db_user:2wXrpi6t825GcsnZ@cluster-lbwus.qbwxtsa.mongodb.net/?appName=Cluster-lbwus`
+
+------------------------------------------------------------------------
+Paso 4: Validar
+------------------------------------------------------------------------
+Puedes corroborar que todo se conecte correctamente en el servidor ejecutando el chequeo general de Django:
+```bash
+python manage.py check
+```
+Y luego puedes iniciar tu servidor local normalmente con `python manage.py runserver`.
