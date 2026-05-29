@@ -48,23 +48,34 @@ filosofía de trabajo.
 3. ESTRUCTURA DE APLICACIONES (APPS)
 --------------------------------------------------------------------------
 * alumnos:
-  Páginas públicas (Home, Nosotros, Planes, Servicios, Contactos, Simulador) y registro de alumnos.
+  Páginas públicas (Home, Nosotros, Planes, Servicios, Contactos, Simulador, Selección de tipo de usuario) e inicio de sesión y registro de alumnos.
 * admin_portal:
-  Portal y vistas de administración de alumnos (CRUD de alumnos protegido por autenticación Django).
+  Panel de administración central (`dashboard_admin`), CRUD de alumnos (`crud`, `alumnos_Add`, `alumnos_del`, `alumnos_findEdit`, `alumnos_Update`), gestión de contenidos de páginas administrativas y resolución de reportes (`resolver_reporte`). Protegido por sesión de administrador (`admin_id`).
 * user_profesor:
-  Registro y panel de profesores (`registro_profesor`, `panel_profesor`, `actualizar_perfil`).
-  Registro de tutores (`registro_tutor`, actualmente en desarrollo).
+  Registro, inicio de sesión passwordless y panel de profesores (`registro_profesor`, `login_profesor`, `panel_profesor`, `actualizar_perfil`).
+  Registro e inicio de sesión passwordless para administradores/tutores usando el modelo `Tutor` (`registro_tutor`, `login_admin`), el cual guarda `admin_id` en la sesión para dar acceso a `admin_portal`.
 
 --------------------------------------------------------------------------
 4. MODELO DE DATOS Y FLUJOS ESPECIALES
 --------------------------------------------------------------------------
 * Modelos Clave (alumnos/models.py):
-  `Genero`, `Tutor`, `Alumno`, `Profesor`, `Clase`, `Inscripcion`.
+  `Genero`, `Tutor`, `Alumno`, `Profesor`, `Clase`, `Inscripcion`, `Reporte`.
   
 * Flujo de Acceso para Profesores (Passwordless):
-  El profesor no requiere una contraseña convencional para iniciar sesión. En su lugar:
-  * Registro Obligatorio: Al registrarse, debe rellenar todos los campos del formulario.
-  * Acceso Rápido: Para entrar al panel, ingresa su RUT o Correo Electrónico. Si existe el registro,
-    el backend guarda el ID del profesor en la sesión (`request.session['profesor_id']`) y
-    concede acceso directo a `/profesor/panel`.
+  El profesor no requiere contraseña convencional. Para iniciar sesión:
+  * Registro Obligatorio: Rellena el formulario con sus datos.
+  * Acceso Rápido: Ingresa su RUT o Correo. Si existe, se guarda su ID en la sesión (`request.session['profesor_id']`) y accede al panel del profesor.
+
+* Flujo de Acceso para Administradores (Passwordless):
+  El administrador (modelo `Tutor`) se registra y accede con su RUT o Correo Electrónico. Si existe, se guarda el ID de Tutor en la sesión (`request.session['admin_id']`) y accede a `/admin_portal/dashboard/`.
+
+* Gestión de Reportes:
+  Los usuarios pueden reportar incidencias mediante el modelo `Reporte`. El administrador puede verlos en su dashboard y cambiarlos a estado 'resuelto' en `/admin_portal/resolver_reporte/<id>/`.
+
+--------------------------------------------------------------------------
+5. DESPLIEGUE Y ENTORNO
+--------------------------------------------------------------------------
+* Entorno Local: Utiliza SQLite (`db.sqlite3`) para el desarrollo local rápido.
+* Entorno de Producción: Desplegado en Railway (`capstone-production-eddd.up.railway.app`). Configurado para usar PostgreSQL dinámicamente mediante la variable `DATABASE_URL` y WhiteNoise para servir archivos estáticos de forma eficiente.
 ==========================================================================
+

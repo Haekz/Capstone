@@ -161,20 +161,26 @@ document.addEventListener('DOMContentLoaded', function() {
     const contadorCarrito = document.querySelector('#contador-carrito');
     let articulosCarrito = cargarCarritoDeLocalStorage();
 
-    actualizarCarrito();
+    if (tbody) {
+        actualizarCarrito();
+    }
 
-    listaCursos.addEventListener('click', function(e) {
-        if (e.target.classList.contains('agregar-carrito')) {
-            const cursoCard = e.target.closest('.card');
-            agregarCursoAlCarrito(cursoCard);
-        }
-    });
+    if (listaCursos) {
+        listaCursos.addEventListener('click', function(e) {
+            if (e.target.classList.contains('agregar-carrito')) {
+                const cursoCard = e.target.closest('.card');
+                agregarCursoAlCarrito(cursoCard);
+            }
+        });
+    }
 
-    tbody.addEventListener('click', function(e) {
-        if (e.target.classList.contains('borrar-curso')) {
-            eliminarCursoDelCarrito(e.target);
-        }
-    });
+    if (tbody) {
+        tbody.addEventListener('click', function(e) {
+            if (e.target.classList.contains('borrar-curso')) {
+                eliminarCursoDelCarrito(e.target);
+            }
+        });
+    }
 
     function agregarCursoAlCarrito(curso) {
         const infoCurso = {
@@ -203,24 +209,31 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function actualizarCarrito() {
         limpiarHTML();
-        articulosCarrito.forEach(curso => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${curso.titulo}</td>
-                <td>${curso.precio}</td>
-                <td>${curso.cantidad}</td>
-                <td><button class="borrar-curso" data-id="${curso.id}">X</button></td>
-            `;
-            tbody.appendChild(row);
-        });
+        if (tbody) {
+            articulosCarrito.forEach(curso => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${curso.titulo}</td>
+                    <td>${curso.precio}</td>
+                    <td>${curso.cantidad}</td>
+                    <td><button class="borrar-curso" data-id="${curso.id}">X</button></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
         actualizarContadorCarrito();
         // Mostrar el carrito si hay artículos
-        document.getElementById('carrito').style.display = articulosCarrito.length > 0 ? 'block' : 'none';
+        const carritoEl = document.getElementById('carrito');
+        if (carritoEl) {
+            carritoEl.style.display = articulosCarrito.length > 0 ? 'block' : 'none';
+        }
     }
 
     function limpiarHTML() {
-        while (tbody.firstChild) {
-            tbody.removeChild(tbody.firstChild);
+        if (tbody) {
+            while (tbody.firstChild) {
+                tbody.removeChild(tbody.firstChild);
+            }
         }
     }
 
@@ -234,7 +247,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function actualizarContadorCarrito() {
         const totalArticulos = articulosCarrito.reduce((total, curso) => total + curso.cantidad, 0);
-        contadorCarrito.textContent = totalArticulos;
+        if (contadorCarrito) {
+            contadorCarrito.textContent = totalArticulos;
+        }
     }
 });
 

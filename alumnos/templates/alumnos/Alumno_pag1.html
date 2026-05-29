@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="{% static 'alumnos/css/alumn_1.css' %}">
+    <link rel="stylesheet" href="{% static 'alumnos/css/alumn_1.css' %}?v=1.2">
 </head>
 <body>
 
@@ -945,81 +945,164 @@
 
     <!-- Modal Diseñador de Plan Personalizado (Sobrepuesto) -->
     <div class="modal-overlay" id="custom-plan-modal">
-        <div class="topics-modal" style="max-width: 800px; max-height: 90vh;">
-            <button class="modal-close-btn" id="close-builder-btn"><i class="bi bi-x-lg"></i></button>
-            <h2>Diseña tu Plan a Medida</h2>
-            <p class="subtitle">Personaliza cada aspecto de tu reforzamiento y calcula tu valor mensual inmediatamente.</p>
+        <div class="topics-modal custom-builder-modal" style="max-width: 800px; max-height: 90vh;">
+            <button class="close-builder-btn" id="close-builder-btn">&times;</button>
+            <h2 style="font-size: 1.8rem; font-weight: 700; color: var(--text); margin-bottom: 5px;">Diseña tu Plan a Medida</h2>
+            <p style="color: var(--text-light); font-size: 0.95rem; margin-bottom: 10px;">Personaliza cada aspecto de tu reforzamiento y calcula tu valor mensual inmediatamente.</p>
             
-            <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; overflow-y: auto; padding-right: 5px; flex-grow: 1; margin-bottom: 15px;">
+            <div class="builder-layout">
                 <!-- Controles Interactivos -->
-                <div class="builder-controls" style="display: flex; flex-direction: column; gap: 15px;">
+                <div class="builder-controls">
                     <!-- Modalidad -->
-                    <div class="form-group">
-                        <label>Modalidad de Clases</label>
-                        <select id="builder-modalidad">
-                            <option value="online" selected>Online (Reforzamiento virtual)</option>
-                            <option value="presencial">Presencial (+ $25.000 de base)</option>
-                            <option value="grabado">Clases Grabadas (Acceso al material)</option>
-                        </select>
+                    <div class="control-group">
+                        <label class="control-label">Modalidad de Clases</label>
+                        <div class="radio-toggle radio-toggle-triple">
+                            <input type="radio" id="mode-online" name="modalidad" value="online" checked>
+                            <label for="mode-online">Online</label>
+                            
+                            <input type="radio" id="mode-presencial" name="modalidad" value="presencial">
+                            <label for="mode-presencial">Presencial</label>
+
+                            <input type="radio" id="mode-grabado" name="modalidad" value="grabado">
+                            <label for="mode-grabado">Grabado</label>
+                        </div>
                     </div>
                     
                     <!-- Horas semanales -->
-                    <div class="form-group">
-                        <label id="builder-horas-label">Horas semanales: 2 horas</label>
-                        <input type="range" id="builder-horas" min="1" max="20" value="2" style="width:100%; accent-color: var(--primary);">
+                    <div class="control-group">
+                        <label class="control-label" id="label-horas">Horas semanales: 2 horas</label>
+                        <input type="range" id="input-horas" min="1" max="20" value="2" class="slider-horas">
                     </div>
 
                     <!-- Días de la semana -->
-                    <div class="form-group">
-                        <label>Días preferidos</label>
-                        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                            <label style="display:flex; align-items:center; gap:4px; font-size:0.85rem; font-weight:600; padding:6px 12px; border:1px solid rgba(168,85,247,0.15); border-radius:8px; cursor:pointer;"><input type="checkbox" name="builder-dias" value="Lunes" checked> Lu</label>
-                            <label style="display:flex; align-items:center; gap:4px; font-size:0.85rem; font-weight:600; padding:6px 12px; border:1px solid rgba(168,85,247,0.15); border-radius:8px; cursor:pointer;"><input type="checkbox" name="builder-dias" value="Martes"> Ma</label>
-                            <label style="display:flex; align-items:center; gap:4px; font-size:0.85rem; font-weight:600; padding:6px 12px; border:1px solid rgba(168,85,247,0.15); border-radius:8px; cursor:pointer;"><input type="checkbox" name="builder-dias" value="Miércoles" checked> Mi</label>
-                            <label style="display:flex; align-items:center; gap:4px; font-size:0.85rem; font-weight:600; padding:6px 12px; border:1px solid rgba(168,85,247,0.15); border-radius:8px; cursor:pointer;"><input type="checkbox" name="builder-dias" value="Jueves"> Ju</label>
-                            <label style="display:flex; align-items:center; gap:4px; font-size:0.85rem; font-weight:600; padding:6px 12px; border:1px solid rgba(168,85,247,0.15); border-radius:8px; cursor:pointer;"><input type="checkbox" name="builder-dias" value="Viernes" checked> Vi</label>
+                    <div class="control-group">
+                        <label class="control-label">Días de la semana preferidos</label>
+                        <div class="chips-group" id="dias-chips">
+                            <div class="chip-item">
+                                <input type="checkbox" id="day-lunes" name="dias" value="Lunes" checked>
+                                <label for="day-lunes">Lu</label>
+                            </div>
+                            <div class="chip-item">
+                                <input type="checkbox" id="day-martes" name="dias" value="Martes">
+                                <label for="day-martes">Ma</label>
+                            </div>
+                            <div class="chip-item">
+                                <input type="checkbox" id="day-miercoles" name="dias" value="Miércoles">
+                                <label for="day-miercoles">Mi</label>
+                            </div>
+                            <div class="chip-item">
+                                <input type="checkbox" id="day-jueves" name="dias" value="Jueves">
+                                <label for="day-jueves">Ju</label>
+                            </div>
+                            <div class="chip-item">
+                                <input type="checkbox" id="day-viernes" name="dias" value="Viernes" checked>
+                                <label for="day-viernes">Vi</label>
+                            </div>
+                            <div class="chip-item">
+                                <input type="checkbox" id="day-sabado" name="dias" value="Sábado">
+                                <label for="day-sabado">Sá</label>
+                            </div>
+                            <div class="chip-item">
+                                <input type="checkbox" id="day-domingo" name="dias" value="Domingo">
+                                <label for="day-domingo">Do</label>
+                            </div>
                         </div>
                     </div>
                     
                     <!-- Asignaturas -->
-                    <div class="form-group">
-                        <label>Asignaturas (Ramos)</label>
-                        <div style="display: flex; flex-direction: column; gap: 6px;">
-                            <label style="display:flex; align-items:center; gap:6px; font-size:0.85rem; cursor:pointer;"><input type="checkbox" name="builder-ramos" value="Matemáticas" checked> Matemáticas</label>
-                            <label style="display:flex; align-items:center; gap:6px; font-size:0.85rem; cursor:pointer;"><input type="checkbox" name="builder-ramos" value="Física"> Física</label>
-                            <label style="display:flex; align-items:center; gap:6px; font-size:0.85rem; cursor:pointer;"><input type="checkbox" name="builder-ramos" value="Lenguaje"> Lenguaje</label>
-                            <label style="display:flex; align-items:center; gap:6px; font-size:0.85rem; cursor:pointer;"><input type="checkbox" name="builder-ramos" value="Inglés"> Inglés</label>
+                    <div class="control-group">
+                        <label class="control-label">Asignaturas (Ramos)</label>
+                        <div class="chips-group" id="asignaturas-chips">
+                            <div class="chip-item">
+                                <input type="checkbox" id="subject-mate" name="asignaturas" value="Matemáticas" checked>
+                                <label for="subject-mate">Matemáticas</label>
+                            </div>
+                            <div class="chip-item">
+                                <input type="checkbox" id="subject-fisica" name="asignaturas" value="Física">
+                                <label for="subject-fisica">Física</label>
+                            </div>
+                            <div class="chip-item">
+                                <input type="checkbox" id="subject-quimica" name="asignaturas" value="Química">
+                                <label for="subject-quimica">Química</label>
+                            </div>
+                            <div class="chip-item">
+                                <input type="checkbox" id="subject-lengua" name="asignaturas" value="Lenguaje">
+                                <label for="subject-lengua">Lenguaje</label>
+                            </div>
+                            <div class="chip-item">
+                                <input type="checkbox" id="subject-ingles" name="asignaturas" value="Inglés">
+                                <label for="subject-ingles">Inglés</label>
+                            </div>
+                            <div class="chip-item">
+                                <input type="checkbox" id="subject-prog" name="asignaturas" value="Programación">
+                                <label for="subject-prog">Programación</label>
+                            </div>
+                            <div class="chip-item">
+                                <input type="checkbox" id="subject-otro" name="asignaturas" value="Otro">
+                                <label for="subject-otro">Otro</label>
+                            </div>
+                        </div>
+                        <div id="custom-subject-container" style="display: none; margin-top: 10px;">
+                            <input type="text" id="input-custom-subject" placeholder="Escribe la asignatura (ej. Historia)" class="builder-text-input">
                         </div>
                     </div>
 
+                    <!-- Temas a tratar -->
+                    <div class="control-group">
+                        <label class="control-label" for="input-temas">Temas específicos a tratar</label>
+                        <input type="text" id="input-temas" placeholder="Ej: Álgebra lineal, Mecánica clásica, etc." class="builder-text-input">
+                    </div>
+
                     <!-- Nivel del Profesor -->
-                    <div class="form-group">
-                        <label>Nivel de Profesor</label>
-                        <select id="builder-profesor">
+                    <div class="control-group">
+                        <label class="control-label" for="input-profesor">Nivel del Profesor</label>
+                        <select id="input-profesor" class="builder-select">
                             <option value="junior">Estudiante Tutor (Junior)</option>
                             <option value="senior" selected>Profesor Profesional (Senior)</option>
                             <option value="master">Experto Académico (Master/PhD)</option>
                         </select>
                     </div>
+
+                    <!-- Lugar de Clases (Condicional para Presencial) -->
+                    <div class="control-group" id="lugar-container" style="display: none;">
+                        <label class="control-label" for="input-lugar">Lugar de Clases Presenciales</label>
+                        <select id="input-lugar" class="builder-select">
+                            <option value="sede" selected>En Sede LBWUS (Sin costo extra)</option>
+                            <option value="domicilio">A Domicilio (+ $20.000)</option>
+                            <option value="publico">Lugar Público (Biblioteca, Café) (+ $10.000)</option>
+                        </select>
+                    </div>
+
+                    <!-- Situación del Alumno -->
+                    <div class="control-group">
+                        <label class="control-label" for="input-situacion">Situación del Alumno</label>
+                        <select id="input-situacion" class="builder-select">
+                            <option value="estandar" selected>Reforzamiento Estándar</option>
+                            <option value="examen">Preparación Examen Final (+ $15.000)</option>
+                            <option value="nivelacion">Nivelación Intensiva (+ $30.000)</option>
+                            <option value="nee">Necesidades Educativas Especiales (NEE) (+ $25.000)</option>
+                        </select>
+                    </div>
                 </div>
                 
-                <!-- Resumen de Costos -->
-                <div style="background-color: var(--primary-light); border: 1px solid rgba(168,85,247,0.15); border-radius: 16px; padding: 25px; display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
-                    <div>
-                        <div style="display: inline-block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; background-color: var(--accent); color: var(--text); padding: 4px 10px; border-radius: 6px; margin-bottom: 10px;" id="builder-badge">¡Muy Económico!</div>
-                        <div style="margin-bottom: 20px;">
-                            <span style="font-size: 2.5rem; font-weight: 800; color: var(--primary);" id="builder-total-price">$40.000</span>
-                            <span style="color: var(--text-light); font-size: 1rem;">/mes</span>
-                        </div>
-                        <ul style="list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem; color: var(--text); border-top: 1px solid rgba(168,85,247,0.1); padding-top: 15px;">
-                            <li id="sum-builder-modalidad">Modalidad: Online</li>
-                            <li id="sum-builder-horas">Horas: 2 hrs semanales</li>
-                            <li id="sum-builder-dias">Días: Lu, Mi, Vi</li>
-                            <li id="sum-builder-ramos">Asignaturas: Matemáticas</li>
-                            <li id="sum-builder-profesor">Profesor: Senior</li>
-                        </ul>
+                <!-- Resumen de Costos y Compra -->
+                <div class="builder-summary">
+                    <div class="summary-badge" id="summary-price-badge">¡Muy Económico!</div>
+                    <div class="summary-price-box">
+                        <span class="summary-price" id="calc-total-price">$40.000</span>
+                        <span class="summary-period">/mes</span>
                     </div>
-                    <button class="btn-principal" onclick="buyCustomPlan()" style="width: 100%; border-radius: 12px; padding: 14px; margin-top: 20px;">Contratar Plan Personalizado</button>
+                    <ul class="summary-details">
+                        <li id="sum-modalidad">Modalidad: Online</li>
+                        <li id="sum-horas">2 horas semanales</li>
+                        <li id="sum-dias">Días: Lunes, Viernes</li>
+                        <li id="sum-asignaturas">Asignaturas: Matemáticas</li>
+                        <li id="sum-profesor">Profesor: Senior</li>
+                        <li id="sum-lugar" style="display: none;">Lugar: En Sede</li>
+                        <li id="sum-situacion">Situación: Reforzamiento Estándar</li>
+                        <li id="sum-temas" style="display: none;">Temas: </li>
+                    </ul>
+                    <button class="btn-principal" onclick="buyCustomPlan()" style="width: 100%; border-radius: 12px; padding: 14px; margin-top: 20px;">Contratar Plan</button>
                 </div>
             </div>
         </div>
@@ -1831,7 +1914,7 @@
             const modal = document.getElementById('custom-plan-modal');
             if (modal) {
                 modal.classList.add('open');
-                calculateCustomPrice();
+                calcularPlan(); // Calcular valor por defecto al abrir
             }
         };
 
@@ -1845,107 +1928,235 @@
             closeBuilderBtn.addEventListener('click', closePlanCustomizer);
         }
 
-        // Bind events for customizer options
-        const customizerInputs = [
-            'builder-modalidad',
-            'builder-horas',
-            'builder-profesor'
-        ];
-        customizerInputs.forEach(id => {
-            document.getElementById(id)?.addEventListener('change', calculateCustomPrice);
-            document.getElementById(id)?.addEventListener('input', calculateCustomPrice);
-        });
+        // Elementos interactivos del formulario
+        const radioOnline = document.getElementById('mode-online');
+        const radioPresencial = document.getElementById('mode-presencial');
+        const radioGrabado = document.getElementById('mode-grabado');
+        const inputHoras = document.getElementById('input-horas');
+        const labelHoras = document.getElementById('label-horas');
+        const inputCustomSubject = document.getElementById('input-custom-subject');
+        const customSubjectContainer = document.getElementById('custom-subject-container');
+        const inputTemas = document.getElementById('input-temas');
+        const inputProfesor = document.getElementById('input-profesor');
+        const inputLugar = document.getElementById('input-lugar');
+        const lugarContainer = document.getElementById('lugar-container');
+        const inputSituacion = document.getElementById('input-situacion');
 
-        document.querySelectorAll('input[name="builder-dias"]').forEach(cb => {
-            cb.addEventListener('change', calculateCustomPrice);
-        });
-        document.querySelectorAll('input[name="builder-ramos"]').forEach(cb => {
-            cb.addEventListener('change', calculateCustomPrice);
-        });
+        // Elementos de resumen y precio
+        const calcTotalPrice = document.getElementById('calc-total-price');
+        const summaryBadge = document.getElementById('summary-price-badge');
+        const sumModalidad = document.getElementById('sum-modalidad');
+        const sumHoras = document.getElementById('sum-horas');
+        const sumDias = document.getElementById('sum-dias');
+        const sumAsignaturas = document.getElementById('sum-asignaturas');
+        const sumProfesor = document.getElementById('sum-profesor');
+        const sumLugar = document.getElementById('sum-lugar');
+        const sumSituacion = document.getElementById('sum-situacion');
+        const sumTemas = document.getElementById('sum-temas');
 
-        function calculateCustomPrice() {
-            let total = 25000; // Base cost
+        function calcularPlan() {
+            let total = 0;
             
-            const modality = document.getElementById('builder-modalidad')?.value || 'online';
-            const hours = parseInt(document.getElementById('builder-horas')?.value) || 2;
-            const level = document.getElementById('builder-profesor')?.value || 'senior';
-            
-            // 1. Modality base costs
-            if (modality === 'presencial') total += 25000;
-            if (modality === 'grabado') total -= 10000;
-            
-            // 2. Hourly rates
-            let rate = 8000;
-            if (modality === 'presencial') rate = 12000;
-            if (modality === 'grabado') rate = 5000;
-            total += hours * rate * 4; // Monthly calculation
-            
-            // 3. Level rates
-            if (level === 'senior') total += 20000;
-            if (level === 'master') total += 50000;
-            
-            // 4. Days checked
-            const daysChecked = document.querySelectorAll('input[name="builder-dias"]:checked').length;
-            total += daysChecked * 5000;
-            
-            // 5. Subjects checked
-            const subjectsChecked = document.querySelectorAll('input[name="builder-ramos"]:checked').length;
-            total += subjectsChecked * 8000;
-            
-            // Display price formatted
-            const priceFormatted = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(total).replace('CLP','$').trim();
-            const priceEl = document.getElementById('builder-total-price');
-            if (priceEl) priceEl.innerText = priceFormatted;
-            
-            // Update labels
-            const hoursLabel = document.getElementById('builder-horas-label');
-            if (hoursLabel) hoursLabel.innerText = `Horas semanales: ${hours} ${hours === 1 ? 'hora' : 'horas'}`;
-            
-            // Update lists
-            const selectedDays = Array.from(document.querySelectorAll('input[name="builder-dias"]:checked')).map(cb => cb.value);
-            const selectedRamos = Array.from(document.querySelectorAll('input[name="builder-ramos"]:checked')).map(cb => cb.value);
-            
-            const sumMod = document.getElementById('sum-builder-modalidad');
-            const sumHor = document.getElementById('sum-builder-horas');
-            const sumDias = document.getElementById('sum-builder-dias');
-            const sumRamos = document.getElementById('sum-builder-ramos');
-            const sumProf = document.getElementById('sum-builder-profesor');
-            
-            if (sumMod) sumMod.innerText = `Modalidad: ${modality.charAt(0).toUpperCase() + modality.slice(1)}`;
-            if (sumHor) sumHor.innerText = `Horas: ${hours} ${hours === 1 ? 'hora' : 'horas'} semanales`;
-            if (sumDias) sumDias.innerText = `Días: ${selectedDays.length > 0 ? selectedDays.join(', ') : 'Ninguno'}`;
-            if (sumRamos) sumRamos.innerText = `Ramos: ${selectedRamos.length > 0 ? selectedRamos.join(', ') : 'Ninguno'}`;
-            if (sumProf) sumProf.innerText = `Profesor: ${level.charAt(0).toUpperCase() + level.slice(1)}`;
-            
-            // Update badge category
-            const badge = document.getElementById('builder-badge');
-            if (badge) {
-                if (total < 70000) {
-                    badge.innerText = "¡Muy Económico!";
-                    badge.style.backgroundColor = "var(--accent)";
-                    badge.style.color = "var(--text)";
-                } else if (total >= 70000 && total <= 140000) {
-                    badge.innerText = "Balanceado";
-                    badge.style.backgroundColor = "var(--primary)";
-                    badge.style.color = "var(--white)";
+            // 1. Modalidad
+            let modalidad = 'online';
+            if (radioPresencial && radioPresencial.checked) {
+                modalidad = 'presencial';
+            } else if (radioGrabado && radioGrabado.checked) {
+                modalidad = 'grabado';
+            }
+
+            let baseCost = 20000;
+            let hourRate = 8000;
+            if (modalidad === 'presencial') {
+                baseCost = 45000;
+                hourRate = 12000;
+                if (lugarContainer) lugarContainer.style.display = 'block';
+                if (sumLugar) sumLugar.style.display = 'list-item';
+            } else {
+                if (lugarContainer) lugarContainer.style.display = 'none';
+                if (sumLugar) sumLugar.style.display = 'none';
+            }
+            if (modalidad === 'grabado') {
+                baseCost = 10000;
+                hourRate = 5000;
+            }
+
+            total += baseCost;
+            if (sumModalidad) {
+                sumModalidad.textContent = `Modalidad: ${modalidad.charAt(0).toUpperCase() + modalidad.slice(1)}`;
+            }
+
+            // 2. Horas semanales
+            const horas = parseInt(inputHoras.value) || 1;
+            if (labelHoras) {
+                labelHoras.textContent = `Horas semanales: ${horas} ${horas === 1 ? 'hora' : 'horas'}`;
+            }
+            if (sumHoras) {
+                sumHoras.textContent = `${horas} ${horas === 1 ? 'hora' : 'horas'} semanales`;
+            }
+            total += horas * hourRate;
+
+            // 3. Días de la semana
+            const selectedDays = [];
+            const checkboxesDays = document.querySelectorAll('#dias-chips input[type="checkbox"]');
+            checkboxesDays.forEach(cb => {
+                if (cb.checked) {
+                    selectedDays.push(cb.value);
+                }
+            });
+            const numDays = selectedDays.length;
+            if (numDays > 1) {
+                total += (numDays - 1) * 5000;
+            }
+            if (sumDias) {
+                sumDias.textContent = `Días: ${selectedDays.length > 0 ? selectedDays.join(', ') : 'Ninguno'}`;
+            }
+
+            // 4. Asignaturas (Ramos)
+            const selectedSubjects = [];
+            const checkboxesSubjects = document.querySelectorAll('#asignaturas-chips input[type="checkbox"]');
+            let hasOtro = false;
+            checkboxesSubjects.forEach(cb => {
+                if (cb.checked) {
+                    if (cb.value === 'Otro') {
+                        hasOtro = true;
+                    } else {
+                        selectedSubjects.push(cb.value);
+                    }
+                }
+            });
+
+            if (customSubjectContainer) {
+                if (hasOtro) {
+                    customSubjectContainer.style.display = 'block';
+                    const customValue = inputCustomSubject.value.trim();
+                    if (customValue) {
+                        selectedSubjects.push(customValue);
+                    } else {
+                        selectedSubjects.push('Otro');
+                    }
                 } else {
-                    badge.innerText = "Premium / Avanzado";
-                    badge.style.backgroundColor = "#ef4444";
-                    badge.style.color = "var(--white)";
+                    customSubjectContainer.style.display = 'none';
+                }
+            }
+
+            const numSubjects = selectedSubjects.length;
+            if (numSubjects > 1) {
+                total += (numSubjects - 1) * 10000;
+            }
+            if (sumAsignaturas) {
+                sumAsignaturas.textContent = `Asignaturas: ${selectedSubjects.length > 0 ? selectedSubjects.join(', ') : 'Ninguna'}`;
+            }
+
+            // 5. Profesor
+            const profesorVal = inputProfesor.value;
+            let labelProfesor = 'Junior';
+            if (profesorVal === 'senior') {
+                total += 25000;
+                labelProfesor = 'Senior';
+            } else if (profesorVal === 'master') {
+                total += 60000;
+                labelProfesor = 'Experto (Master/PhD)';
+            }
+            if (sumProfesor) {
+                sumProfesor.textContent = `Profesor: ${labelProfesor}`;
+            }
+
+            // 6. Lugar (si es presencial)
+            if (modalidad === 'presencial' && inputLugar) {
+                const lugarVal = inputLugar.value;
+                let labelLugar = 'En Sede';
+                if (lugarVal === 'domicilio') {
+                    total += 20000;
+                    labelLugar = 'A Domicilio';
+                } else if (lugarVal === 'publico') {
+                    total += 10000;
+                    labelLugar = 'Lugar Público';
+                }
+                if (sumLugar) {
+                    sumLugar.textContent = `Lugar: ${labelLugar}`;
+                }
+            }
+
+            // 7. Situación Especial
+            const situacionVal = inputSituacion.value;
+            let labelSituacion = 'Reforzamiento Estándar';
+            if (situacionVal === 'examen') {
+                total += 15000;
+                labelSituacion = 'Examen Final';
+            } else if (situacionVal === 'nivelacion') {
+                total += 30000;
+                labelSituacion = 'Nivelación Intensiva';
+            } else if (situacionVal === 'nee') {
+                total += 25000;
+                labelSituacion = 'NEE';
+            }
+            if (sumSituacion) {
+                sumSituacion.textContent = `Situación: ${labelSituacion}`;
+            }
+
+            // 8. Temas a tratar
+            const temasVal = inputTemas.value.trim();
+            if (sumTemas) {
+                if (temasVal) {
+                    sumTemas.style.display = 'list-item';
+                    sumTemas.textContent = `Temas: ${temasVal}`;
+                } else {
+                    sumTemas.style.display = 'none';
+                }
+            }
+
+            // Formatear precio total
+            const formattedTotal = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(total);
+            if (calcTotalPrice) {
+                calcTotalPrice.textContent = formattedTotal.replace('CLP', '$').trim();
+            }
+
+            // Actualizar etiqueta del presupuesto
+            if (summaryBadge) {
+                if (total < 60000) {
+                    summaryBadge.textContent = "¡Muy Económico!";
+                    summaryBadge.style.backgroundColor = "rgba(74, 222, 128, 0.15)";
+                    summaryBadge.style.color = "#16a34a";
+                } else if (total >= 60000 && total <= 120000) {
+                    summaryBadge.textContent = "Balanceado";
+                    summaryBadge.style.backgroundColor = "rgba(59, 130, 246, 0.15)";
+                    summaryBadge.style.color = "#2563eb";
+                } else if (total > 120000 && total <= 180000) {
+                    summaryBadge.textContent = "Plan Avanzado";
+                    summaryBadge.style.backgroundColor = "rgba(245, 158, 11, 0.15)";
+                    summaryBadge.style.color = "#d97706";
+                } else {
+                    summaryBadge.textContent = "¡Excesivamente Caro (Premium)!";
+                    summaryBadge.style.backgroundColor = "rgba(239, 68, 68, 0.15)";
+                    summaryBadge.style.color = "#dc2626";
                 }
             }
         }
 
-        function buyCustomPlan() {
-            const priceStr = document.getElementById('builder-total-price')?.innerText || '$40.000';
-            const price = parseInt(priceStr.replace(/[^0-9]/g, ''), 10) || 40000;
-            
-            closePlanCustomizer();
-            buyPlan('Plan Personalizado', price);
-        }
+        // Asignar listeners para actualizar dinámicamente
+        const inputsToBind = [
+            radioOnline, radioPresencial, radioGrabado, inputHoras,
+            inputCustomSubject, inputTemas, inputProfesor, inputLugar, inputSituacion
+        ];
+        
+        inputsToBind.forEach(el => {
+            if (el) {
+                el.addEventListener('input', calcularPlan);
+                el.addEventListener('change', calcularPlan);
+            }
+        });
+
+        // Listeners para checkboxes de chips
+        document.querySelectorAll('#dias-chips input[type="checkbox"]').forEach(cb => {
+            cb.addEventListener('change', calcularPlan);
+        });
+        document.querySelectorAll('#asignaturas-chips input[type="checkbox"]').forEach(cb => {
+            cb.addEventListener('change', calcularPlan);
+        });
 
         function buyCustomPlan() {
-            const priceStr = document.getElementById('builder-total-price')?.innerText || '$40.000';
+            const priceStr = document.getElementById('calc-total-price')?.innerText || '$40.000';
             const price = parseInt(priceStr.replace(/[^0-9]/g, ''), 10) || 40000;
             
             closePlanCustomizer();
