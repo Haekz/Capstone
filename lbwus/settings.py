@@ -42,6 +42,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',          
+    'allauth',                       
+    'allauth.account',                
+    'allauth.socialaccount',          
+    'allauth.socialaccount.providers.google',  
     'alumnos',
     'admin_portal',
     'user_profesor',
@@ -50,14 +55,24 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # ✅ Solo esta línea, borrar la otra
+    'whitenoise.middleware.WhiteNoiseMiddleware',  
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
+
+SITE_ID = 1
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+SOCIALACCOUNT_LOGIN_ON_GET = True
 
 ROOT_URLCONF = 'lbwus.urls'
 
@@ -102,24 +117,7 @@ else:
         }
     }
 
-# esta parte es de la conexión a la base de datos MongoDB usando mongoengine
-import mongoengine
-import dns.resolver
 
-# esta parte es de forzar el uso de servidores DNS rápidos de Google y Cloudflare para resolver la dirección de Atlas al instante
-try:
-    dns.resolver.default_resolver = dns.resolver.Resolver(configure=False)
-    dns.resolver.default_resolver.nameservers = ['8.8.8.8', '1.1.1.1']
-except Exception:
-    pass
-
-mongodb_url = os.environ.get('MONGODB_URL')
-if not mongodb_url:
-    # esta parte es de definir la cadena de conexión por defecto apuntando a MongoDB Atlas si no se encuentra configurada en el entorno
-    mongodb_url = 'mongodb+srv://bnicovani_db_user:2wXrpi6t825GcsnZ@cluster-lbwus.qbwxtsa.mongodb.net/?appName=Cluster-lbwus'
-
-# esta parte es de iniciar la conexión a MongoDB con un tiempo máximo de espera de 5 segundos para que no bloquee el inicio del servidor
-mongoengine.connect(host=mongodb_url, serverSelectionTimeoutMS=5000)
 
 
 

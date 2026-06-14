@@ -342,6 +342,31 @@ body.dark-mode .cart-periodo-select {
     background-color: #dc2626;
 }
 
+/* Botón Ir a Pagar del carrito */
+.carrito-dropdown .btn-pagar {
+    display: block;
+    width: 100%;
+    margin-top: 8px;
+    padding: 11px 14px;
+    background: #a855f7;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: #fff;
+    text-decoration: none;
+    text-align: center;
+    letter-spacing: 0.5px;
+    box-sizing: border-box;
+    transition: background 0.2s, transform 0.15s;
+}
+
+.carrito-dropdown .btn-pagar:hover {
+    background: #9333ea;
+    transform: translateY(-1px);
+    color: #fff;
+}
+
 /* =========================================
    MODAL INFO
    ========================================= */
@@ -410,6 +435,7 @@ body.dark-mode .cart-periodo-select {
         transform: scale(0.9);
         opacity: 0;
     }
+
     to {
         transform: scale(1);
         opacity: 1;
@@ -551,7 +577,7 @@ body.dark-mode .radio-toggle {
     transition: all 0.2s ease;
 }
 
-.radio-toggle input[type="radio"]:checked + label {
+.radio-toggle input[type="radio"]:checked+label {
     background-color: #a159d8;
     color: #ffffff;
     box-shadow: 0 2px 8px rgba(161, 89, 216, 0.3);
@@ -600,14 +626,14 @@ body.dark-mode .chip-item label {
     border-color: rgba(255, 255, 255, 0.08);
 }
 
-.chip-item input[type="checkbox"]:checked + label {
+.chip-item input[type="checkbox"]:checked+label {
     background-color: rgba(161, 89, 216, 0.12);
     border-color: #a159d8;
     color: #a159d8;
     font-weight: 600;
 }
 
-body.dark-mode .chip-item input[type="checkbox"]:checked + label {
+body.dark-mode .chip-item input[type="checkbox"]:checked+label {
     background-color: rgba(161, 89, 216, 0.25);
     color: #c084fc;
     border-color: #c084fc;
@@ -641,7 +667,8 @@ body.dark-mode .builder-text-input {
 }
 
 /* Range Sliders */
-.slider-dias, .slider-horas {
+.slider-dias,
+.slider-horas {
     width: 100%;
     -webkit-appearance: none;
     height: 6px;
@@ -650,11 +677,13 @@ body.dark-mode .builder-text-input {
     outline: none;
 }
 
-body.dark-mode .slider-dias, body.dark-mode .slider-horas {
+body.dark-mode .slider-dias,
+body.dark-mode .slider-horas {
     background: rgba(255, 255, 255, 0.1);
 }
 
-.slider-dias::-webkit-slider-thumb, .slider-horas::-webkit-slider-thumb {
+.slider-dias::-webkit-slider-thumb,
+.slider-horas::-webkit-slider-thumb {
     -webkit-appearance: none;
     width: 20px;
     height: 20px;
@@ -664,7 +693,8 @@ body.dark-mode .slider-dias, body.dark-mode .slider-horas {
     transition: transform 0.1s;
 }
 
-.slider-dias::-webkit-slider-thumb:hover, .slider-horas::-webkit-slider-thumb:hover {
+.slider-dias::-webkit-slider-thumb:hover,
+.slider-horas::-webkit-slider-thumb:hover {
     transform: scale(1.2);
 }
 
@@ -775,11 +805,46 @@ body.dark-mode .summary-details {
     .builder-layout {
         flex-direction: column;
     }
+
     .builder-summary {
         width: 100%;
     }
+
     .builder-controls {
         max-height: 380px;
         padding-right: 8px;
+    }
+}
+
+/* ===== Carrito responsive en móvil ===== */
+@media (max-width: 600px) {
+    .carrito-dropdown {
+        position: fixed;
+        top: calc(var(--header-height) + 8px);
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
+        width: 92vw;
+        min-width: 0;          /* anula el min-width: 400px */
+        max-width: 92vw;
+    }
+
+    /* tabla más compacta para que quepa */
+    .cart-table {
+        font-size: 0.78rem;
+    }
+
+    .cart-table th,
+    .cart-table td {
+        padding: 6px 3px;
+    }
+
+    .cart-item-name {
+        max-width: 80px;
+    }
+
+    .cart-periodo-select {
+        min-width: 0;          /* anula el min-width: 90px */
+        font-size: 0.72rem;
     }
 }

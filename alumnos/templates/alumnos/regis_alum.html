@@ -11,33 +11,29 @@
 {% block content %}
 <div class="registration-container">
     <div class="registration-card">
-        <div class="registration-img"></div>
         <div class="registration-form-box">
             <h2>Crear Cuenta de Alumno</h2>
-            
+            <p class="registration-subtitle">Completa tus datos para empezar a aprender con nosotros.</p>
+
             <form id="formAlumnosreg" action="{% url 'regis_alum' %}" method="POST">
                 {% csrf_token %}
-                
+
                 {% for field in form %}
                 <div class="form-group">
                     <label for="{{ field.id_for_label }}">{{ field.label }}</label>
                     {{ field }}
                     {% if field.errors %}
-                    <div style="color: #ef4444; font-size: 0.8rem; margin-top: 4px;">
-                        {{ field.errors.0 }}
-                    </div>
+                    <div class="field-error">{{ field.errors.0 }}</div>
                     {% endif %}
                 </div>
                 {% endfor %}
 
-                <div style="margin-top: 30px;">
-                    <button type="submit" class="btn-principal" style="width: 100%; padding: 14px;">Crear Cuenta</button>
-                </div>
+                <button type="submit" class="btn-principal">Crear Cuenta</button>
             </form>
 
-            <div style="margin-top: 20px; text-align: center; font-size: 0.9rem;">
-                <span>¿Ya tienes cuenta? <a href="{% url 'login' %}" style="color: var(--primary); font-weight: 600;">Inicia sesión aquí</a></span>
-            </div>
+            <p class="registration-login-link">
+                ¿Ya tienes cuenta? <a href="{% url 'login' %}">Inicia sesión aquí</a>
+            </p>
         </div>
     </div>
 </div>
