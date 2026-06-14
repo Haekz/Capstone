@@ -1,6 +1,5 @@
-#from django.conf.urls import url
 from django.urls import path
-from .views import home, contactos, nosotros, planes, servicios, simulador, opcion_user, regis_alum, alumnos_reg, alumno_pag1, pago, confirmacion
+from .views import home, contactos, nosotros, planes, servicios, simulador, opcion_user, regis_alum, alumnos_reg, alumno_pag1, pago, confirmacion, iniciar_webpay
 
 urlpatterns = [
     path('', home, name='home'),
@@ -15,5 +14,5 @@ urlpatterns = [
     path('alumno_home', alumno_pag1, name='alumno_pag1'),
     path('pago', pago, name='pago'),
     path('confirmacion', confirmacion, name='confirmacion'),
+    path('iniciar-webpay/', iniciar_webpay, name='iniciar_webpay'),
 ]
-

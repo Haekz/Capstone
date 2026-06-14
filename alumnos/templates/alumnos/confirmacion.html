@@ -8,115 +8,61 @@
 {% endblock %}
 
 {% block content %}
-
 <div class="confirmacion-wrapper">
-    <div class="confirmacion-card">
+    <div class="confirmacion-card {% if aprobado %}is-success{% else %}is-error{% endif %}">
 
-        <!-- Ícono de éxito animado -->
-        <div class="check-circle">
-            <i class="bi bi-check-lg"></i>
-        </div>
-
+        {% if aprobado %}
+        <div class="check-circle"><i class="bi bi-check-lg"></i></div>
         <h2 class="conf-titulo">¡Pago Exitoso!</h2>
         <p class="conf-sub">Tu compra ha sido procesada correctamente.</p>
 
-        <!-- Badge número de orden -->
         <div class="conf-orden-badge">
             <span class="conf-orden-label">Número de Orden</span>
-            <span class="conf-orden-num" id="conf-orden-num">#LB——</span>
+            <span class="conf-orden-num">#{{ orden }}</span>
         </div>
 
-        <!-- Detalles de la transacción -->
         <div class="conf-detalles">
-            <div class="conf-detalle-row">
-                <span>Fecha</span>
-                <span id="conf-fecha">—</span>
-            </div>
-            <div class="conf-detalle-row">
-                <span>Titular</span>
-                <span id="conf-titular">—</span>
-            </div>
-            <div class="conf-detalle-row">
-                <span>Cuotas</span>
-                <span id="conf-cuotas">—</span>
-            </div>
+            <div class="conf-detalle-row"><span>Fecha</span><span>{{ fecha|default:"—" }}</span></div>
+            <div class="conf-detalle-row"><span>Cód. Autorización</span><span>{{ codigo_autorizacion|default:"—" }}</span></div>
+            <div class="conf-detalle-row"><span>Tarjeta</span><span>**** {{ tarjeta|default:"----" }}</span></div>
         </div>
 
-        <!-- Items comprados -->
-        <div class="conf-items" id="conf-items">
-            <!-- Poblado por JS desde sessionStorage -->
+        <div class="conf-items">
+            {% for item in items %}
+            <div class="conf-item-row">
+                <span>{{ item.titulo }} &times;{{ item.cantidad }}</span>
+                <span>{{ item.precio }}</span>
+            </div>
+            {% endfor %}
         </div>
 
-        <!-- Total -->
         <div class="conf-total-row">
             <span>Total Pagado</span>
-            <span class="conf-total-monto" id="conf-total">$0</span>
+            <span class="conf-total-monto">{{ monto }}</span>
         </div>
 
-        <!-- Acciones -->
         <div class="conf-acciones">
-            <a href="{% url 'home' %}" class="btn-conf-home">
-                <i class="bi bi-house-fill"></i> Ir al Inicio
-            </a>
-            <a href="{% url 'planes' %}" class="btn-conf-planes">
-                <i class="bi bi-grid-fill"></i> Ver más Planes
-            </a>
+            <a href="{% url 'home' %}" class="btn-conf-home"><i class="bi bi-house-fill"></i> Ir al Inicio</a>
+            <a href="{% url 'planes' %}" class="btn-conf-planes"><i class="bi bi-grid-fill"></i> Ver más Planes</a>
         </div>
+
+        {% else %}
+        <div class="check-circle check-circle-error"><i class="bi bi-x-lg"></i></div>
+        <h2 class="conf-titulo">{% if anulado %}Pago Anulado{% else %}Pago Rechazado{% endif %}</h2>
+        <p class="conf-sub">
+            {% if anulado %}Cancelaste el pago en Webpay. No se realizó ningún cargo.
+            {% else %}La transacción no pudo completarse. Revisa los datos de tu tarjeta o intenta con otro medio de pago.{% endif %}
+        </p>
+        <div class="conf-acciones">
+            <a href="{% url 'pago' %}" class="btn-conf-home"><i class="bi bi-arrow-counterclockwise"></i> Intentar de nuevo</a>
+            <a href="{% url 'planes' %}" class="btn-conf-planes"><i class="bi bi-grid-fill"></i> Volver a los planes</a>
+        </div>
+        {% endif %}
 
     </div>
 </div>
 
-<script>
-    function clpFmt(n) {
-        return new Intl.NumberFormat('es-CL', {
-            style: 'currency', currency: 'CLP', minimumFractionDigits: 0
-        }).format(n).replace('CLP', '$').trim();
-    }
-
-    function parsePrecio(str) {
-        return parseInt((str || '0').replace(/[^0-9]/g, ''), 10) || 0;
-    }
-
-    const PERIODOS = [
-        { valor: 'mensual',   label: 'Mensual',   factor: 1    },
-        { valor: '3semanas',  label: '3 Semanas', factor: 0.75 },
-        { valor: '2semanas',  label: '2 Semanas', factor: 0.50 },
-        { valor: '1semana',   label: '1 Semana',  factor: 0.25 }
-    ];
-
-    const cuotasMap = {
-        '1': 'Sin cuotas', '3': '3 cuotas s/i',
-        '6': '6 cuotas s/i', '12': '12 cuotas'
-    };
-
-    let orden = null;
-    try { orden = JSON.parse(sessionStorage.getItem('ultima_orden')); }
-    catch(e) {}
-
-    if (orden) {
-        document.getElementById('conf-orden-num').textContent  = '#' + orden.numero;
-        document.getElementById('conf-fecha').textContent      = orden.fecha;
-        document.getElementById('conf-titular').textContent    = orden.titular;
-        document.getElementById('conf-cuotas').textContent     = cuotasMap[orden.cuotas] || 'Sin cuotas';
-        document.getElementById('conf-total').textContent      = clpFmt(orden.total);
-
-        const itemsEl = document.getElementById('conf-items');
-        orden.items.forEach(item => {
-            const base   = parsePrecio(item.precio);
-            const factor = (PERIODOS.find(p => p.valor === (item.periodo || 'mensual')) || PERIODOS[0]).factor;
-            const precio = Math.round(base * factor) * item.cantidad;
-
-            const div = document.createElement('div');
-            div.className = 'conf-item-row';
-            div.innerHTML = `
-                <span>${item.titulo} &times;${item.cantidad}</span>
-                <span>${clpFmt(precio)}</span>
-            `;
-            itemsEl.appendChild(div);
-        });
-
-        sessionStorage.removeItem('ultima_orden');
-    }
-</script>
-
+{% if aprobado %}
+<script>localStorage.removeItem('carrito');</script>
+{% endif %}
 {% endblock %}

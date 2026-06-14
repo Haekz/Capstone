@@ -27,26 +27,53 @@ body {
 
 /* esta parte es de la tarjeta blanca del login */
 .card {
+    position: relative;
+    overflow: hidden;
     background: #ffffff;
     border-radius: 20px;
     padding: 44px 36px 36px;
     width: 100%;
     max-width: 380px;
     margin: 20px;
-    box-shadow: 0 4px 30px rgba(168, 85, 247, 0.1);
+    box-shadow: 0 20px 50px rgba(76, 29, 149, 0.25);
     text-align: center;
+    animation: cardIn 0.5s ease both;
+}
+
+/* barra de color superior */
+.card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, #7c3aed, #a855f7, #c4b5fd);
+}
+
+@keyframes cardIn {
+    from {
+        opacity: 0;
+        transform: translateY(18px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* esta parte es del círculo morado con el ícono arriba */
 .avatar {
     width: 70px;
     height: 70px;
-    background: #a855f7;
+    background: linear-gradient(135deg, #a855f7, #7c3aed);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     margin: 0 auto 24px;
+    box-shadow: 0 8px 22px rgba(124, 58, 237, 0.4);
 }
 
 .avatar i {
@@ -123,7 +150,7 @@ body {
     width: 100%;
     padding: 14px;
     margin-top: 4px;
-    background: #a855f7;
+    background: linear-gradient(135deg, #a855f7, #7c3aed);
     border: none;
     border-radius: 10px;
     font-family: 'Inter', sans-serif;
@@ -133,7 +160,14 @@ body {
     text-transform: uppercase;
     color: #ffffff;
     cursor: pointer;
-    transition: background 0.2s, transform 0.15s;
+    box-shadow: 0 4px 14px rgba(168, 85, 247, 0.3);
+    transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+
+.btn:hover {
+    background: linear-gradient(135deg, #9333ea, #6b21a8);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(168, 85, 247, 0.42);
 }
 
 .btn:hover {
@@ -352,6 +386,7 @@ body {
 .btn-home:hover {
     color: #a855f7;
 }
+
 /* esta parte es del botón de iniciar con Google */
 .btn-google {
     display: flex;
@@ -375,4 +410,22 @@ body {
     background: #faf5ff;
     border-color: #a855f7;
     box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.08);
+}
+
+/* botón mostrar/ocultar contraseña */
+.toggle-pass {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #c4b5fd;
+    font-size: 1rem;
+    padding: 0;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    transition: color 0.2s;
+}
+
+.toggle-pass:hover {
+    color: #a855f7;
 }

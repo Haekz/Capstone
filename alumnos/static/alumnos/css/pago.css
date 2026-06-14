@@ -12,7 +12,7 @@
     padding: 120px 24px 60px;
     max-width: 980px;
     margin: 0 auto;
-    min-height: 100vh;          
+    min-height: 100vh;
 }
 
 /* =====================================================
@@ -35,10 +35,19 @@
     color: #fff;
 }
 
-.resumen-header i  { font-size: 1.2rem; }
-.resumen-header h2 { font-size: 1rem; font-weight: 700; margin: 0; }
+.resumen-header i {
+    font-size: 1.2rem;
+}
 
-.resumen-items { padding: 6px 20px; }
+.resumen-header h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.resumen-items {
+    padding: 6px 20px;
+}
 
 .resumen-item {
     display: flex;
@@ -48,14 +57,40 @@
     border-bottom: 1px solid #f5f0ff;
 }
 
-.resumen-item:last-child { border-bottom: none; }
+.resumen-item:last-child {
+    border-bottom: none;
+}
 
-.resumen-item-info   { display: flex; flex-direction: column; gap: 3px; }
-.resumen-item-nombre { font-size: 0.87rem; font-weight: 600; color: #1e1b2e; }
-.resumen-item-periodo{ font-size: 0.74rem; color: #a0a3b1; }
-.resumen-item-precio { font-size: 0.87rem; font-weight: 700; color: #7c3aed; white-space: nowrap; padding-left: 12px; }
+.resumen-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
 
-.resumen-divider { height: 1px; background: #f5f0ff; margin: 0 20px; }
+.resumen-item-nombre {
+    font-size: 0.87rem;
+    font-weight: 600;
+    color: #1e1b2e;
+}
+
+.resumen-item-periodo {
+    font-size: 0.74rem;
+    color: #a0a3b1;
+}
+
+.resumen-item-precio {
+    font-size: 0.87rem;
+    font-weight: 700;
+    color: #7c3aed;
+    white-space: nowrap;
+    padding-left: 12px;
+}
+
+.resumen-divider {
+    height: 1px;
+    background: #f5f0ff;
+    margin: 0 20px;
+}
 
 .resumen-total-row {
     display: flex;
@@ -67,7 +102,10 @@
     color: #1e1b2e;
 }
 
-.resumen-total-precio { color: #7c3aed; font-size: 1.1rem; }
+.resumen-total-precio {
+    color: #7c3aed;
+    font-size: 1.1rem;
+}
 
 .resumen-seguridad {
     display: flex;
@@ -81,7 +119,9 @@
     font-weight: 500;
 }
 
-.resumen-seguridad i { font-size: 0.85rem; }
+.resumen-seguridad i {
+    font-size: 0.85rem;
+}
 
 .link-volver-planes {
     display: flex;
@@ -95,8 +135,14 @@
     transition: color 0.2s;
 }
 
-.link-volver-planes:hover { color: #7c3aed; }
-.link-centro { justify-content: center; margin-top: 16px; }
+.link-volver-planes:hover {
+    color: #7c3aed;
+}
+
+.link-centro {
+    justify-content: center;
+    margin-top: 16px;
+}
 
 /* =====================================================
    PANEL DERECHO — WEBPAY PLUS
@@ -146,13 +192,21 @@
     align-items: center;
     gap: 6px;
     font-size: 0.75rem;
-    color: rgba(255,255,255,0.8);
+    color: rgba(255, 255, 255, 0.8);
 }
 
-.error-header-right { color: #fbbf24; }
-.error-header-right i { color: #fbbf24; }
+.error-header-right {
+    color: #fbbf24;
+}
 
-.webpay-body { padding: 24px; flex: 1; }
+.error-header-right i {
+    color: #fbbf24;
+}
+
+.webpay-body {
+    padding: 24px;
+    flex: 1;
+}
 
 .webpay-merchant {
     font-size: 0.78rem;
@@ -165,7 +219,9 @@
 }
 
 /* ---- Campos del formulario ---- */
-.campo-pago { margin-bottom: 16px; }
+.campo-pago {
+    margin-bottom: 16px;
+}
 
 .campo-pago label {
     display: block;
@@ -192,7 +248,11 @@
     box-shadow: 0 0 0 3px rgba(0, 55, 100, 0.08);
 }
 
-.campo-icon { color: #94a3b8; font-size: 0.95rem; flex-shrink: 0; }
+.campo-icon {
+    color: #94a3b8;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+}
 
 .campo-pago-inner input,
 .campo-pago-inner select {
@@ -206,8 +266,14 @@
     letter-spacing: 0.5px;
 }
 
-.campo-pago-inner input::placeholder { color: #cbd5e1; letter-spacing: 0; }
-.campo-pago-inner select { cursor: pointer; }
+.campo-pago-inner input::placeholder {
+    color: #cbd5e1;
+    letter-spacing: 0;
+}
+
+.campo-pago-inner select {
+    cursor: pointer;
+}
 
 /* Indicador de marca de tarjeta */
 .card-brand {
@@ -220,8 +286,15 @@
     transition: all 0.2s;
 }
 
-.brand-visa { color: #1a1f71; background: #eef2ff; }
-.brand-mc   { color: #eb001b; background: #fff0f0; }
+.brand-visa {
+    color: #1a1f71;
+    background: #eef2ff;
+}
+
+.brand-mc {
+    color: #eb001b;
+    background: #fff0f0;
+}
 
 /* Tooltip CVV */
 .cvv-hint {
@@ -266,9 +339,20 @@
     transition: background 0.2s, transform 0.15s;
 }
 
-.btn-webpay:hover   { background: #00508f; transform: translateY(-1px); }
-.btn-webpay:active  { transform: translateY(0); }
-.btn-webpay:disabled{ opacity: 0.6; cursor: not-allowed; transform: none; }
+.btn-webpay:hover {
+    background: #00508f;
+    transform: translateY(-1px);
+}
+
+.btn-webpay:active {
+    transform: translateY(0);
+}
+
+.btn-webpay:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
 
 /* Nota de tarjeta de prueba */
 .test-hint {
@@ -279,8 +363,13 @@
     line-height: 1.5;
 }
 
-.test-hint i { margin-right: 4px; }
-.test-hint strong { color: #64748b; }
+.test-hint i {
+    margin-right: 4px;
+}
+
+.test-hint strong {
+    color: #64748b;
+}
 
 /* Footer del panel Webpay */
 .webpay-footer {
@@ -293,7 +382,11 @@
     margin-top: auto;
 }
 
-.tb-badge { display: flex; align-items: center; gap: 6px; }
+.tb-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
 
 .tb-icon {
     width: 22px;
@@ -309,9 +402,17 @@
     letter-spacing: 0.5px;
 }
 
-.tb-text { font-size: 0.72rem; font-weight: 800; color: #003764; letter-spacing: 0.3px; }
+.tb-text {
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: #003764;
+    letter-spacing: 0.3px;
+}
 
-.webpay-cards { display: flex; gap: 5px; }
+.webpay-cards {
+    display: flex;
+    gap: 5px;
+}
 
 .card-chip {
     font-size: 0.6rem;
@@ -321,9 +422,20 @@
     letter-spacing: 0.5px;
 }
 
-.visa-chip { background: #1a1f71; color: #fff; }
-.mc-chip   { background: #eb001b; color: #fff; }
-.rc-chip   { background: #003764; color: #fff; }
+.visa-chip {
+    background: #1a1f71;
+    color: #fff;
+}
+
+.mc-chip {
+    background: #eb001b;
+    color: #fff;
+}
+
+.rc-chip {
+    background: #003764;
+    color: #fff;
+}
 
 /* =====================================================
    OVERLAY DE PROCESAMIENTO
@@ -340,7 +452,9 @@
     justify-content: center;
 }
 
-.processing-box { text-align: center; }
+.processing-box {
+    text-align: center;
+}
 
 .spinner {
     width: 54px;
@@ -352,7 +466,11 @@
     margin: 0 auto 20px;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
 
 .processing-title {
     font-size: 1.1rem;
@@ -361,7 +479,10 @@
     margin-bottom: 6px;
 }
 
-.processing-sub { font-size: 0.82rem; color: #94a3b8; }
+.processing-sub {
+    font-size: 0.82rem;
+    color: #94a3b8;
+}
 
 /* =====================================================
    PANEL DE ERROR (rechazo)
@@ -385,7 +506,10 @@
     font-size: 1.8rem;
 }
 
-.error-wrap { background: #fef2f2; color: #dc2626; }
+.error-wrap {
+    background: #fef2f2;
+    color: #dc2626;
+}
 
 .result-title {
     font-size: 1.2rem;
@@ -418,17 +542,20 @@
     transition: background 0.2s, transform 0.15s;
 }
 
-.btn-reintentar:hover { background: #00508f; transform: translateY(-1px); }
+.btn-reintentar:hover {
+    background: #00508f;
+    transform: translateY(-1px);
+}
 
 /* =====================================================
    PÁGINA DE CONFIRMACIÓN
    ===================================================== */
-   .confirmacion-wrapper {
+.confirmacion-wrapper {
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 120px 24px 48px;          
+    padding: 120px 24px 48px;
 }
 
 .confirmacion-card {
@@ -456,8 +583,15 @@
 }
 
 @keyframes popIn {
-    from { transform: scale(0); opacity: 0; }
-    to   { transform: scale(1); opacity: 1; }
+    from {
+        transform: scale(0);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 
 .conf-titulo {
@@ -498,7 +632,10 @@
     letter-spacing: 1.5px;
 }
 
-.conf-detalles { text-align: left; margin-bottom: 20px; }
+.conf-detalles {
+    text-align: left;
+    margin-bottom: 20px;
+}
 
 .conf-detalle-row {
     display: flex;
@@ -509,7 +646,10 @@
     color: #6b7280;
 }
 
-.conf-detalle-row span:last-child { font-weight: 600; color: #1e1b2e; }
+.conf-detalle-row span:last-child {
+    font-weight: 600;
+    color: #1e1b2e;
+}
 
 .conf-items {
     text-align: left;
@@ -528,8 +668,14 @@
     border-bottom: 1px solid #f0eaf8;
 }
 
-.conf-item-row:last-child { border-bottom: none; }
-.conf-item-row span:last-child { font-weight: 600; color: #7c3aed; }
+.conf-item-row:last-child {
+    border-bottom: none;
+}
+
+.conf-item-row span:last-child {
+    font-weight: 600;
+    color: #7c3aed;
+}
 
 .conf-total-row {
     display: flex;
@@ -542,9 +688,17 @@
     margin-bottom: 28px;
 }
 
-.conf-total-monto { color: #16a34a; font-size: 1.15rem; }
+.conf-total-monto {
+    color: #16a34a;
+    font-size: 1.15rem;
+}
 
-.conf-acciones { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.conf-acciones {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
 
 .btn-conf-home {
     display: inline-flex;
@@ -560,7 +714,11 @@
     transition: background 0.2s, transform 0.15s;
 }
 
-.btn-conf-home:hover { background: #9333ea; transform: translateY(-1px); color: #fff; }
+.btn-conf-home:hover {
+    background: #9333ea;
+    transform: translateY(-1px);
+    color: #fff;
+}
 
 .btn-conf-planes {
     display: inline-flex;
@@ -577,21 +735,342 @@
     transition: background 0.2s, border-color 0.2s;
 }
 
-.btn-conf-planes:hover { background: #ede9fe; border-color: #a855f7; }
+.btn-conf-planes:hover {
+    background: #ede9fe;
+    border-color: #a855f7;
+}
 
 /* =====================================================
    RESPONSIVIDAD
    ===================================================== */
-   @media (max-width: 720px) {
+@media (max-width: 720px) {
     .pago-wrapper {
         flex-direction: column;
-        padding: 90px 16px 48px;      
+        padding: 90px 16px 48px;
     }
 
-    .resumen-panel { flex: none; width: 100%; }
-    .webpay-panel  { max-width: 100%; }
-    .campo-row     { grid-template-columns: 1fr; }
-    .conf-acciones { flex-direction: column; }
+    .resumen-panel {
+        flex: none;
+        width: 100%;
+    }
 
-    .confirmacion-card { padding: 36px 20px; }
+    .webpay-panel {
+        max-width: 100%;
+    }
+
+    .campo-row {
+        grid-template-columns: 1fr;
+    }
+
+    .conf-acciones {
+        flex-direction: column;
+    }
+
+    .confirmacion-card {
+        padding: 36px 20px;
+    }
+}
+
+/* Intro redirección Webpay */
+.webpay-intro {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 18px;
+}
+
+.webpay-intro i {
+    color: #003764;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.webpay-intro p {
+    font-size: 0.82rem;
+    color: #4b5563;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Botón quitar ítem del resumen */
+.resumen-item-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.resumen-item-remove {
+    background: none;
+    border: none;
+    color: #cbd5e1;
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 0 2px;
+    transition: color 0.2s;
+}
+
+.resumen-item-remove:hover {
+    color: #ef4444;
+}
+
+/* Círculo de error en confirmación */
+.check-circle-error {
+    background: linear-gradient(135deg, #dc2626, #f87171);
+}
+
+/* =====================================================
+   MODO OSCURO — pago y confirmación
+   ===================================================== */
+
+/* Fondo con brillos suaves (morado + azul Transbank), ya no negro plano */
+body.dark-mode .pago-wrapper::before,
+body.dark-mode .confirmacion-wrapper::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at 15% 8%, rgba(124, 58, 237, 0.16), transparent 45%),
+        radial-gradient(circle at 85% 92%, rgba(0, 80, 143, 0.14), transparent 45%);
+}
+
+/* Tarjetas en oscuro */
+body.dark-mode .resumen-panel,
+body.dark-mode .webpay-panel,
+body.dark-mode .confirmacion-card {
+    background: #1b1430;
+    box-shadow: 0 8px 36px rgba(0, 0, 0, 0.55);
+}
+
+body.dark-mode .resumen-item {
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+body.dark-mode .resumen-item-nombre {
+    color: #ede9fe;
+}
+
+body.dark-mode .resumen-item-periodo {
+    color: #9b8bbd;
+}
+
+body.dark-mode .resumen-divider {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+body.dark-mode .resumen-total-row {
+    color: #f5f3ff;
+}
+
+body.dark-mode .resumen-seguridad {
+    background: rgba(22, 163, 74, 0.12);
+    border-top-color: rgba(22, 163, 74, 0.25);
+    color: #4ade80;
+}
+
+/* Panel Webpay en oscuro (el header azul ya funciona en ambos modos) */
+body.dark-mode .webpay-intro {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .webpay-intro p {
+    color: #c9bfe0;
+}
+
+body.dark-mode .webpay-footer {
+    background: rgba(255, 255, 255, 0.03);
+    border-top-color: rgba(255, 255, 255, 0.06);
+}
+
+body.dark-mode .tb-text {
+    color: #93c5fd;
+}
+
+body.dark-mode .test-hint {
+    color: #9b8bbd;
+}
+
+body.dark-mode .test-hint strong {
+    color: #c9bfe0;
+}
+
+/* Confirmación en oscuro */
+body.dark-mode .conf-titulo {
+    color: #f5f3ff;
+}
+
+body.dark-mode .conf-orden-badge {
+    background: rgba(124, 58, 237, 0.12);
+    border-color: rgba(124, 58, 237, 0.32);
+}
+
+body.dark-mode .conf-orden-num {
+    color: #c4b5fd;
+}
+
+body.dark-mode .conf-detalle-row {
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+    color: #9b8bbd;
+}
+
+body.dark-mode .conf-detalle-row span:last-child {
+    color: #ede9fe;
+}
+
+body.dark-mode .conf-items {
+    background: rgba(124, 58, 237, 0.08);
+}
+
+body.dark-mode .conf-item-row {
+    color: #c9bfe0;
+    border-bottom-color: rgba(255, 255, 255, 0.05);
+}
+
+body.dark-mode .conf-item-row span:last-child {
+    color: #c4b5fd;
+}
+
+body.dark-mode .conf-total-row {
+    color: #f5f3ff;
+    border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .btn-conf-planes {
+    background: rgba(124, 58, 237, 0.14);
+    color: #c4b5fd;
+    border-color: rgba(124, 58, 237, 0.32);
+}
+
+body.dark-mode .btn-conf-planes:hover {
+    background: rgba(124, 58, 237, 0.24);
+    border-color: #a855f7;
+}
+
+/* =====================================================
+   SELECTOR DE CANTIDAD (+ / −) en el resumen
+   ===================================================== */
+.resumen-stepper {
+    display: inline-flex;
+    align-items: center;
+    margin-top: 7px;
+    border: 1px solid #e9d5ff;
+    border-radius: 8px;
+    overflow: hidden;
+    width: fit-content;
+}
+
+.stepper-btn {
+    width: 26px;
+    height: 26px;
+    border: none;
+    background: #f5f0ff;
+    color: #7c3aed;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+}
+
+.stepper-btn:hover {
+    background: #ede9fe;
+}
+
+.stepper-qty {
+    min-width: 30px;
+    text-align: center;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #1e1b2e;
+}
+
+body.dark-mode .resumen-stepper {
+    border-color: rgba(124, 58, 237, 0.35);
+}
+
+body.dark-mode .stepper-btn {
+    background: rgba(124, 58, 237, 0.16);
+    color: #c4b5fd;
+}
+
+body.dark-mode .stepper-btn:hover {
+    background: rgba(124, 58, 237, 0.28);
+}
+
+body.dark-mode .stepper-qty {
+    color: #ede9fe;
+}
+
+/* =====================================================
+   REALCE pantallas ÉXITO / RECHAZO
+   ===================================================== */
+.confirmacion-card {
+    position: relative;
+    overflow: hidden;
+}
+
+/* Barra superior de color según el estado */
+.confirmacion-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+}
+
+.confirmacion-card.is-success::before {
+    background: linear-gradient(90deg, #16a34a, #4ade80, #86efac);
+}
+
+.confirmacion-card.is-error::before {
+    background: linear-gradient(90deg, #dc2626, #f87171, #fca5a5);
+}
+
+/* Anillo pulsante alrededor del ícono */
+.check-circle {
+    position: relative;
+}
+
+.check-circle::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    animation: pulseRingOk 2.2s ease-out infinite;
+}
+
+@keyframes pulseRingOk {
+    0% {
+        box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.45);
+    }
+
+    100% {
+        box-shadow: 0 0 0 20px rgba(22, 163, 74, 0);
+    }
+}
+
+.check-circle-error::after {
+    animation: pulseRingErr 2.2s ease-out infinite;
+}
+
+@keyframes pulseRingErr {
+    0% {
+        box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.45);
+    }
+
+    100% {
+        box-shadow: 0 0 0 20px rgba(220, 38, 38, 0);
+    }
 }

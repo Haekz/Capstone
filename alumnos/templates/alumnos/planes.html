@@ -7,33 +7,6 @@
 <link rel="stylesheet" href="{% static 'alumnos/css/planes.css' %}">
 {% endblock %}
 
-{% block nav_cart %}
-<!-- Carrito de compras icono y desplegable -->
-<div class="submenu-cart">
-    <button class="cart-btn" id="cart-button">
-        <i class="bi bi-cart-fill"></i>
-    </button>
-    <div id="carrito" class="carrito-dropdown">
-        <table id="lista-carrito" class="cart-table">
-            <thead>
-                <tr>
-                    <th>Nombre</th>
-                    <th>Pago</th>
-                    <th>Precio</th>
-                    <th>Cant.</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-        <a href="#" id="vaciar-carrito" class="btn-vaciar">Vaciar Carrito</a>
-        <a href="{% url 'pago' %}" class="btn-pagar" id="btn-ir-pago" style="display:none;">
-            <i class="bi bi-credit-card-fill"></i> Ir a Pagar
-        </a>
-    </div>
-</div>
-{% endblock %}
-
 {% block content %}
 <div class="planes-container">
     <div class="planes-header">
@@ -380,134 +353,7 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="{% static 'alumnos/java/jquery.js' %}"></script>
 <script>
-    // =========================================
-    // PERÍODOS DE PAGO (multiplicadores sobre precio mensual)
-    // =========================================
-    const PERIODOS = [
-        { valor: 'mensual', label: 'Mensual', factor: 1 },
-        { valor: '3semanas', label: '3 Semanas', factor: 0.75 },
-        { valor: '2semanas', label: '2 Semanas', factor: 0.50 },
-        { valor: '1semana', label: '1 Semana', factor: 0.25 }
-    ];
-
-    function clpFmt(n) {
-        return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(n).replace('CLP', '$').trim();
-    }
-
-    // Extrae el número de un string de precio como "$69.990" → 69990
-    function parsePrecio(str) {
-        return parseInt((str || '0').replace(/[^0-9]/g, ''), 10) || 0;
-    }
-
-    // =========================================
-    // CARRITO PROPIO (reemplaza main.js para planes.html)
-    // =========================================
-    let articulosCarrito = [];
-
-    function cargarCarrito() {
-        try { articulosCarrito = JSON.parse(localStorage.getItem('carrito')) || []; }
-        catch (e) { articulosCarrito = []; }
-        // Asegurar que cada ítem tenga periodo
-        articulosCarrito.forEach(a => { if (!a.periodo) a.periodo = 'mensual'; });
-    }
-
-    function guardarCarrito() {
-        localStorage.setItem('carrito', JSON.stringify(articulosCarrito));
-    }
-
-    function actualizarContador() {
-        const contador = document.querySelector('#contador-carrito');
-        if (contador) {
-            const total = articulosCarrito.reduce((s, a) => s + a.cantidad, 0);
-            contador.textContent = total;
-        }
-    }
-
-    function renderCarrito() {
-        const tbody = document.querySelector('#lista-carrito tbody');
-        if (!tbody) return;
-        tbody.innerHTML = '';
-
-        if (articulosCarrito.length === 0) {
-            const tr = document.createElement('tr');
-            tr.innerHTML = '<td colspan="5" style="text-align:center;padding:12px;color:var(--text-light)">Sin planes en el carrito</td>';
-            tbody.appendChild(tr);
-        } else {
-            articulosCarrito.forEach(item => {
-                const precioBase = parsePrecio(item.precio);
-                const periodo = item.periodo || 'mensual';
-                const factor = (PERIODOS.find(p => p.valor === periodo) || PERIODOS[0]).factor;
-                const precioAjustado = Math.round(precioBase * factor);
-
-                const opcionesHtml = PERIODOS.map(p =>
-                    `<option value="${p.valor}" ${p.valor === periodo ? 'selected' : ''}>${p.label}</option>`
-                ).join('');
-
-                const tr = document.createElement('tr');
-                tr.setAttribute('data-id', item.id);
-                tr.innerHTML = `
-                    <td class="cart-item-name">${item.titulo}</td>
-                    <td>
-                        <select class="cart-periodo-select" data-id="${item.id}">
-                            ${opcionesHtml}
-                        </select>
-                    </td>
-                    <td class="cart-item-price">${clpFmt(precioAjustado)}</td>
-                    <td>${item.cantidad}</td>
-                    <td><button class="borrar-curso cart-remove-btn" data-id="${item.id}">✕</button></td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        // Mostrar/ocultar carrito según contenido
-        const carritoEl = document.getElementById('carrito');
-        if (carritoEl) carritoEl.style.display = articulosCarrito.length > 0 ? 'block' : 'none';
-
-        actualizarContador();
-        const btnPagar = document.getElementById('btn-ir-pago');
-        if (btnPagar) btnPagar.style.display = articulosCarrito.length > 0 ? 'block' : 'none';
-
-        // Listeners de selects de período
-        tbody.querySelectorAll('.cart-periodo-select').forEach(sel => {
-            sel.addEventListener('change', function () {
-                const id = this.getAttribute('data-id');
-                const item = articulosCarrito.find(a => a.id === id);
-                if (item) {
-                    item.periodo = this.value;
-                    guardarCarrito();
-                    renderCarrito();
-                }
-            });
-        });
-
-        // Listeners de botones de eliminar
-        tbody.querySelectorAll('.cart-remove-btn').forEach(btn => {
-            btn.addEventListener('click', function () {
-                const id = this.getAttribute('data-id');
-                articulosCarrito = articulosCarrito.filter(a => a.id !== id);
-                guardarCarrito();
-                renderCarrito();
-            });
-        });
-    }
-
-    function agregarAlCarrito(id, titulo, precio) {
-        const existe = articulosCarrito.find(a => a.id === id);
-        if (existe) {
-            existe.cantidad += 1;
-        } else {
-            articulosCarrito.push({ id, titulo, precio, cantidad: 1, periodo: 'mensual' });
-        }
-        guardarCarrito();
-        renderCarrito();
-    }
-
     document.addEventListener('DOMContentLoaded', () => {
-        // Inicializar carrito
-        cargarCarrito();
-        renderCarrito();
-
         // Cierre del modal de bienvenida
         const modal = document.getElementById('welcome-modal');
         const closeBtn = document.getElementById('close-modal-btn');
@@ -515,33 +361,6 @@
             closeBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 modal.style.display = 'none';
-            });
-        }
-
-        // Mostrar / Ocultar carrito de compras
-        const cartButton = document.getElementById('cart-button');
-        const carrito = document.getElementById('carrito');
-        if (cartButton && carrito) {
-            cartButton.addEventListener('click', (e) => {
-                e.stopPropagation();
-                carrito.style.display = carrito.style.display === 'none' || carrito.style.display === '' ? 'block' : 'none';
-            });
-            document.addEventListener('click', () => {
-                if (carrito.style.display === 'block') carrito.style.display = 'none';
-            });
-            carrito.addEventListener('click', (e) => {
-                e.stopPropagation();
-            });
-        }
-
-        // Vaciar carrito
-        const vaciarBtn = document.getElementById('vaciar-carrito');
-        if (vaciarBtn) {
-            vaciarBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                articulosCarrito = [];
-                guardarCarrito();
-                renderCarrito();
             });
         }
 
@@ -569,11 +388,10 @@
         const openBuilderBtn = document.getElementById('open-builder-btn');
         const closeBuilderBtn = document.getElementById('close-builder-btn');
 
-        // Abrir y cerrar modal del constructor
         if (openBuilderBtn && customModal) {
             openBuilderBtn.addEventListener('click', () => {
                 customModal.style.display = 'flex';
-                calcularPlan(); // Calcular valor por defecto al abrir
+                calcularPlan();
             });
         }
         if (closeBuilderBtn && customModal) {
@@ -582,7 +400,6 @@
             });
         }
 
-        // Elementos interactivos del formulario
         const radioOnline = document.getElementById('mode-online');
         const radioPresencial = document.getElementById('mode-presencial');
         const radioGrabado = document.getElementById('mode-grabado');
@@ -596,7 +413,6 @@
         const lugarContainer = document.getElementById('lugar-container');
         const inputSituacion = document.getElementById('input-situacion');
 
-        // Elementos de resumen y precio
         const calcTotalPrice = document.getElementById('calc-total-price');
         const summaryBadge = document.getElementById('summary-price-badge');
         const sumModalidad = document.getElementById('sum-modalidad');
@@ -612,7 +428,6 @@
         function calcularPlan() {
             let total = 0;
 
-            // 1. Modalidad
             let modalidad = 'online';
             if (radioPresencial && radioPresencial.checked) {
                 modalidad = 'presencial';
@@ -641,7 +456,6 @@
                 sumModalidad.textContent = `Modalidad: ${modalidad.charAt(0).toUpperCase() + modalidad.slice(1)}`;
             }
 
-            // 2. Horas semanales
             const horas = parseInt(inputHoras.value) || 1;
             if (labelHoras) {
                 labelHoras.textContent = `Horas semanales: ${horas} ${horas === 1 ? 'hora' : 'horas'}`;
@@ -651,121 +465,69 @@
             }
             total += horas * hourRate;
 
-            // 3. Días de la semana
             const selectedDays = [];
-            const checkboxesDays = document.querySelectorAll('#dias-chips input[type="checkbox"]');
-            checkboxesDays.forEach(cb => {
-                if (cb.checked) {
-                    selectedDays.push(cb.value);
-                }
+            document.querySelectorAll('#dias-chips input[type="checkbox"]').forEach(cb => {
+                if (cb.checked) selectedDays.push(cb.value);
             });
             const numDays = selectedDays.length;
-            if (numDays > 1) {
-                total += (numDays - 1) * 5000;
-            }
+            if (numDays > 1) total += (numDays - 1) * 5000;
             if (sumDias) {
                 sumDias.textContent = `Días: ${selectedDays.length > 0 ? selectedDays.join(', ') : 'Ninguno'}`;
             }
 
-            // 4. Asignaturas (Ramos)
             const selectedSubjects = [];
-            const checkboxesSubjects = document.querySelectorAll('#asignaturas-chips input[type="checkbox"]');
             let hasOtro = false;
-            checkboxesSubjects.forEach(cb => {
+            document.querySelectorAll('#asignaturas-chips input[type="checkbox"]').forEach(cb => {
                 if (cb.checked) {
-                    if (cb.value === 'Otro') {
-                        hasOtro = true;
-                    } else {
-                        selectedSubjects.push(cb.value);
-                    }
+                    if (cb.value === 'Otro') hasOtro = true;
+                    else selectedSubjects.push(cb.value);
                 }
             });
-
             if (customSubjectContainer) {
                 if (hasOtro) {
                     customSubjectContainer.style.display = 'block';
                     const customValue = inputCustomSubject.value.trim();
-                    if (customValue) {
-                        selectedSubjects.push(customValue);
-                    } else {
-                        selectedSubjects.push('Otro');
-                    }
+                    selectedSubjects.push(customValue || 'Otro');
                 } else {
                     customSubjectContainer.style.display = 'none';
                 }
             }
-
             const numSubjects = selectedSubjects.length;
-            if (numSubjects > 1) {
-                total += (numSubjects - 1) * 10000;
-            }
+            if (numSubjects > 1) total += (numSubjects - 1) * 10000;
             if (sumAsignaturas) {
                 sumAsignaturas.textContent = `Asignaturas: ${selectedSubjects.length > 0 ? selectedSubjects.join(', ') : 'Ninguna'}`;
             }
 
-            // 5. Profesor
             const profesorVal = inputProfesor.value;
             let labelProfesor = 'Junior';
-            if (profesorVal === 'senior') {
-                total += 25000;
-                labelProfesor = 'Senior';
-            } else if (profesorVal === 'master') {
-                total += 60000;
-                labelProfesor = 'Experto (Master/PhD)';
-            }
-            if (sumProfesor) {
-                sumProfesor.textContent = `Profesor: ${labelProfesor}`;
-            }
+            if (profesorVal === 'senior') { total += 25000; labelProfesor = 'Senior'; }
+            else if (profesorVal === 'master') { total += 60000; labelProfesor = 'Experto (Master/PhD)'; }
+            if (sumProfesor) sumProfesor.textContent = `Profesor: ${labelProfesor}`;
 
-            // 6. Lugar (si es presencial)
             if (modalidad === 'presencial' && inputLugar) {
                 const lugarVal = inputLugar.value;
                 let labelLugar = 'En Sede';
-                if (lugarVal === 'domicilio') {
-                    total += 20000;
-                    labelLugar = 'A Domicilio';
-                } else if (lugarVal === 'publico') {
-                    total += 10000;
-                    labelLugar = 'Lugar Público';
-                }
-                if (sumLugar) {
-                    sumLugar.textContent = `Lugar: ${labelLugar}`;
-                }
+                if (lugarVal === 'domicilio') { total += 20000; labelLugar = 'A Domicilio'; }
+                else if (lugarVal === 'publico') { total += 10000; labelLugar = 'Lugar Público'; }
+                if (sumLugar) sumLugar.textContent = `Lugar: ${labelLugar}`;
             }
 
-            // 7. Situación Especial
             const situacionVal = inputSituacion.value;
             let labelSituacion = 'Reforzamiento Estándar';
-            if (situacionVal === 'examen') {
-                total += 15000;
-                labelSituacion = 'Examen Final';
-            } else if (situacionVal === 'nivelacion') {
-                total += 30000;
-                labelSituacion = 'Nivelación Intensiva';
-            } else if (situacionVal === 'nee') {
-                total += 25000;
-                labelSituacion = 'NEE';
-            }
-            if (sumSituacion) {
-                sumSituacion.textContent = `Situación: ${labelSituacion}`;
-            }
+            if (situacionVal === 'examen') { total += 15000; labelSituacion = 'Examen Final'; }
+            else if (situacionVal === 'nivelacion') { total += 30000; labelSituacion = 'Nivelación Intensiva'; }
+            else if (situacionVal === 'nee') { total += 25000; labelSituacion = 'NEE'; }
+            if (sumSituacion) sumSituacion.textContent = `Situación: ${labelSituacion}`;
 
-            // 8. Temas a tratar
             const temasVal = inputTemas.value.trim();
             if (sumTemas) {
-                if (temasVal) {
-                    sumTemas.style.display = 'list-item';
-                    sumTemas.textContent = `Temas: ${temasVal}`;
-                } else {
-                    sumTemas.style.display = 'none';
-                }
+                if (temasVal) { sumTemas.style.display = 'list-item'; sumTemas.textContent = `Temas: ${temasVal}`; }
+                else { sumTemas.style.display = 'none'; }
             }
 
-            // Formatear precio total
             const formattedTotal = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(total);
             calcTotalPrice.textContent = formattedTotal.replace('CLP', '$').trim();
 
-            // Actualizar etiqueta del presupuesto
             if (total < 60000) {
                 summaryBadge.textContent = "¡Muy Económico!";
                 summaryBadge.style.backgroundColor = "rgba(74, 222, 128, 0.15)";
@@ -785,28 +547,19 @@
             }
         }
 
-        // Asignar listeners para actualizar dinámicamente
         const inputsToBind = [
             radioOnline, radioPresencial, radioGrabado, inputHoras,
             inputCustomSubject, inputTemas, inputProfesor, inputLugar, inputSituacion
         ];
-
         inputsToBind.forEach(el => {
             if (el) {
                 el.addEventListener('input', calcularPlan);
                 el.addEventListener('change', calcularPlan);
             }
         });
+        document.querySelectorAll('#dias-chips input[type="checkbox"]').forEach(cb => cb.addEventListener('change', calcularPlan));
+        document.querySelectorAll('#asignaturas-chips input[type="checkbox"]').forEach(cb => cb.addEventListener('change', calcularPlan));
 
-        // Listeners para checkboxes de chips
-        document.querySelectorAll('#dias-chips input[type="checkbox"]').forEach(cb => {
-            cb.addEventListener('change', calcularPlan);
-        });
-        document.querySelectorAll('#asignaturas-chips input[type="checkbox"]').forEach(cb => {
-            cb.addEventListener('change', calcularPlan);
-        });
-
-        // Evento Contratar Plan Personalizado
         if (btnAgregarCustom) {
             btnAgregarCustom.addEventListener('click', (e) => {
                 e.preventDefault();
