@@ -25,7 +25,12 @@ SECRET_KEY = 'django-insecure-(5vif7*6x25s&&b89y)#ly7=3a*bp0&_$9d^+xuap-3-oh3rdi
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['capstone-production-eddd.up.railway.app', '127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['lbwus.xyz', '*.up.railway.app', 'localhost', '127.0.0.1']
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://lbwus.xyz',
+    'https://capstone-production-eddd.up.railway.app'
+]
 
 
 # Application definition
@@ -112,24 +117,7 @@ else:
         }
     }
 
-# esta parte es de la conexión a la base de datos MongoDB usando mongoengine
-import mongoengine
-import dns.resolver
 
-# esta parte es de forzar el uso de servidores DNS rápidos de Google y Cloudflare para resolver la dirección de Atlas al instante
-try:
-    dns.resolver.default_resolver = dns.resolver.Resolver(configure=False)
-    dns.resolver.default_resolver.nameservers = ['8.8.8.8', '1.1.1.1']
-except Exception:
-    pass
-
-mongodb_url = os.environ.get('MONGODB_URL')
-if not mongodb_url:
-    # esta parte es de definir la cadena de conexión por defecto apuntando a MongoDB Atlas si no se encuentra configurada en el entorno
-    mongodb_url = 'mongodb+srv://bnicovani_db_user:2wXrpi6t825GcsnZ@cluster-lbwus.qbwxtsa.mongodb.net/?appName=Cluster-lbwus'
-
-# esta parte es de iniciar la conexión a MongoDB con un tiempo máximo de espera de 5 segundos para que no bloquee el inicio del servidor
-mongoengine.connect(host=mongodb_url, serverSelectionTimeoutMS=5000)
 
 
 
