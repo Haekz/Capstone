@@ -1,0 +1,159 @@
+{% extends 'alumnos/base.html' %}
+{% load static %}
+
+{% block title %}LBWUS | Pago Seguro{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'alumnos/css/pago.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="pago-wrapper">
+
+    <div class="resumen-panel">
+        <div class="resumen-header">
+            <i class="bi bi-bag-check-fill"></i>
+            <h2>Resumen del Pedido</h2>
+        </div>
+        <div id="resumen-items" class="resumen-items"></div>
+        <div class="resumen-divider"></div>
+        <div class="resumen-total-row">
+            <span>Total a pagar</span>
+            <span class="resumen-total-precio" id="resumen-total-precio">$0</span>
+        </div>
+        <div class="resumen-seguridad">
+            <i class="bi bi-shield-check-fill"></i>
+            <span>Pago 100% seguro con Transbank</span>
+        </div>
+        <a href="{% url 'planes' %}" class="link-volver-planes">
+            <i class="bi bi-arrow-left"></i> Volver a los planes
+        </a>
+    </div>
+
+    <div class="webpay-panel">
+        <div class="webpay-header">
+            <div class="webpay-logo-area">
+                <span class="webpay-logo-text">WEBPAY</span>
+                <span class="webpay-logo-plus">Plus</span>
+            </div>
+            <div class="webpay-header-right">
+                <i class="bi bi-lock-fill"></i>
+                <span>Pago Seguro</span>
+            </div>
+        </div>
+        <div class="webpay-body">
+            <p class="webpay-merchant">
+                <i class="bi bi-shop"></i> LBWUS — Plataforma Educativa
+            </p>
+
+            <div class="webpay-intro">
+                <i class="bi bi-credit-card-2-front"></i>
+                <p>Serás redirigido a la plataforma segura de <strong>Webpay Plus</strong> para completar tu pago con tarjeta de crédito, débito o prepago.</p>
+            </div>
+
+            <form id="form-iniciar" action="{% url 'iniciar_webpay' %}" method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="amount" id="input-amount">
+                <input type="hidden" name="carrito" id="input-carrito">
+                <button type="submit" class="btn-webpay">
+                    <i class="bi bi-lock-fill"></i>
+                    Pagar <span id="btn-total-text">$0</span> con Webpay
+                </button>
+            </form>
+
+            <p class="test-hint">
+                <i class="bi bi-info-circle"></i>
+                Prueba: VISA <strong>4051 8856 0044 6623</strong> (aprueba) o
+                <strong>5186 0595 5959 0568</strong> (rechaza), CVV 123. Banco: RUT 11.111.111-1, clave 123.
+            </p>
+
+            <div class="webpay-footer">
+                <div class="tb-badge">
+                    <span class="tb-icon">TB</span>
+                    <span class="tb-text">Transbank</span>
+                </div>
+                <div class="webpay-cards">
+                    <span class="card-chip visa-chip">VISA</span>
+                    <span class="card-chip mc-chip">MC</span>
+                    <span class="card-chip rc-chip">Redcompra</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const PERIODOS = [
+        { valor: 'mensual', label: 'Mensual', factor: 1 },
+        { valor: '3semanas', label: '3 Semanas', factor: 0.75 },
+        { valor: '2semanas', label: '2 Semanas', factor: 0.50 },
+        { valor: '1semana', label: '1 Semana', factor: 0.25 }
+    ];
+    const clpFmt = n => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(n).replace('CLP', '$').trim();
+    const parsePrecio = s => parseInt((s || '0').replace(/[^0-9]/g, ''), 10) || 0;
+
+    let carrito = [];
+    try { carrito = JSON.parse(localStorage.getItem('carrito')) || []; } catch (e) { carrito = []; }
+    if (carrito.length === 0) window.location.href = "{% url 'planes' %}";
+
+    function calcularTotal() {
+        return carrito.reduce((s, it) => {
+            const f = (PERIODOS.find(p => p.valor === (it.periodo || 'mensual')) || PERIODOS[0]).factor;
+            return s + Math.round(parsePrecio(it.precio) * f) * it.cantidad;
+        }, 0);
+    }
+
+    function render() {
+        const cont = document.getElementById('resumen-items');
+        cont.innerHTML = '';
+        carrito.forEach((it, idx) => {
+            const pObj = PERIODOS.find(p => p.valor === (it.periodo || 'mensual')) || PERIODOS[0];
+            const precio = Math.round(parsePrecio(it.precio) * pObj.factor) * it.cantidad;
+            const div = document.createElement('div');
+            div.className = 'resumen-item';
+            div.innerHTML = `
+                <div class="resumen-item-info">
+                    <span class="resumen-item-nombre">${it.titulo}</span>
+                    <span class="resumen-item-periodo">${pObj.label}</span>
+                    <div class="resumen-stepper">
+                        <button class="stepper-btn" data-act="dec" data-idx="${idx}" title="Quitar uno">&minus;</button>
+                        <span class="stepper-qty">${it.cantidad}</span>
+                        <button class="stepper-btn" data-act="inc" data-idx="${idx}" title="Agregar uno">+</button>
+                    </div>
+                </div>
+                <div class="resumen-item-right">
+                    <span class="resumen-item-precio">${clpFmt(precio)}</span>
+                    <button class="resumen-item-remove" data-idx="${idx}" title="Quitar">&times;</button>
+                </div>`;
+            cont.appendChild(div);
+        });
+        const total = calcularTotal();
+        document.getElementById('resumen-total-precio').textContent = clpFmt(total);
+        document.getElementById('btn-total-text').textContent = clpFmt(total);
+        document.getElementById('input-amount').value = total;
+        document.getElementById('input-carrito').value = JSON.stringify(carrito);
+
+        // Botones + / − para editar la cantidad de cada plan
+        cont.querySelectorAll('.stepper-btn').forEach(b => {
+            b.addEventListener('click', () => {
+                const i = parseInt(b.dataset.idx);
+                if (b.dataset.act === 'inc') carrito[i].cantidad++;
+                else carrito[i].cantidad = Math.max(1, carrito[i].cantidad - 1);
+                localStorage.setItem('carrito', JSON.stringify(carrito));
+                render();
+            });
+        });
+
+        // Botón × para quitar el plan completo
+        cont.querySelectorAll('.resumen-item-remove').forEach(b => {
+            b.addEventListener('click', () => {
+                carrito.splice(parseInt(b.dataset.idx), 1);
+                localStorage.setItem('carrito', JSON.stringify(carrito));
+                if (carrito.length === 0) { window.location.href = "{% url 'planes' %}"; return; }
+                render();
+            });
+        });
+    }
+    render();
+</script>
+{% endblock %}

@@ -1,12 +1,24 @@
 /* esta parte es del login simple con la paleta del proyecto */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
 
 /* esta parte es del fondo lavanda suave */
 body {
     font-family: 'Inter', sans-serif;
     background: #f0eaf8;
+    background-image:
+        linear-gradient(rgba(10, 8, 20, 0.62), rgba(10, 8, 20, 0.62)),
+        url('/static/alumnos/img/fondo_login.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -15,26 +27,53 @@ body {
 
 /* esta parte es de la tarjeta blanca del login */
 .card {
+    position: relative;
+    overflow: hidden;
     background: #ffffff;
     border-radius: 20px;
     padding: 44px 36px 36px;
     width: 100%;
     max-width: 380px;
     margin: 20px;
-    box-shadow: 0 4px 30px rgba(168, 85, 247, 0.1);
+    box-shadow: 0 20px 50px rgba(76, 29, 149, 0.25);
     text-align: center;
+    animation: cardIn 0.5s ease both;
+}
+
+/* barra de color superior */
+.card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, #7c3aed, #a855f7, #c4b5fd);
+}
+
+@keyframes cardIn {
+    from {
+        opacity: 0;
+        transform: translateY(18px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* esta parte es del círculo morado con el ícono arriba */
 .avatar {
     width: 70px;
     height: 70px;
-    background: #a855f7;
+    background: linear-gradient(135deg, #a855f7, #7c3aed);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     margin: 0 auto 24px;
+    box-shadow: 0 8px 22px rgba(124, 58, 237, 0.4);
 }
 
 .avatar i {
@@ -91,7 +130,9 @@ body {
     width: 100%;
 }
 
-.campo input::placeholder { color: #c4b5fd; }
+.campo input::placeholder {
+    color: #c4b5fd;
+}
 
 /* esta parte es del mensaje de error */
 .error {
@@ -109,7 +150,7 @@ body {
     width: 100%;
     padding: 14px;
     margin-top: 4px;
-    background: #a855f7;
+    background: linear-gradient(135deg, #a855f7, #7c3aed);
     border: none;
     border-radius: 10px;
     font-family: 'Inter', sans-serif;
@@ -119,11 +160,24 @@ body {
     text-transform: uppercase;
     color: #ffffff;
     cursor: pointer;
-    transition: background 0.2s, transform 0.15s;
+    box-shadow: 0 4px 14px rgba(168, 85, 247, 0.3);
+    transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
 }
 
-.btn:hover { background: #9333ea; transform: translateY(-1px); }
-.btn:active { transform: translateY(0); }
+.btn:hover {
+    background: linear-gradient(135deg, #9333ea, #6b21a8);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(168, 85, 247, 0.42);
+}
+
+.btn:hover {
+    background: #9333ea;
+    transform: translateY(-1px);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
 
 /* esta parte es del texto pequeño de abajo */
 .footer {
@@ -138,7 +192,9 @@ body {
     text-decoration: none;
 }
 
-.footer a:hover { text-decoration: underline; }
+.footer a:hover {
+    text-decoration: underline;
+}
 
 /* esta parte es del separador y los links de prof/admin */
 .sep {
@@ -148,10 +204,23 @@ body {
     margin: 20px 0 14px;
 }
 
-.sep-line { flex: 1; height: 1px; background: #f0eaf8; }
-.sep-text { font-size: 0.73rem; color: #c4b5fd; white-space: nowrap; }
+.sep-line {
+    flex: 1;
+    height: 1px;
+    background: #f0eaf8;
+}
 
-.links-extra { display: flex; flex-direction: column; gap: 8px; }
+.sep-text {
+    font-size: 0.73rem;
+    color: #c4b5fd;
+    white-space: nowrap;
+}
+
+.links-extra {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
 
 .link-extra {
     display: flex;
@@ -171,9 +240,18 @@ body {
     transition: background 0.2s, border-color 0.2s;
 }
 
-.link-extra:hover { background: #f3e8ff; border-color: #a855f7; }
-.link-extra i { color: #a855f7; }
-.link-extra span { flex: 1; }
+.link-extra:hover {
+    background: #f3e8ff;
+    border-color: #a855f7;
+}
+
+.link-extra i {
+    color: #a855f7;
+}
+
+.link-extra span {
+    flex: 1;
+}
 
 /* esta parte es del modal de acceso especial */
 .modal-overlay {
@@ -187,7 +265,9 @@ body {
     justify-content: center;
 }
 
-.modal-overlay.open { display: flex; }
+.modal-overlay.open {
+    display: flex;
+}
 
 .modal-box {
     background: #fff;
@@ -203,8 +283,15 @@ body {
 }
 
 @keyframes pop {
-    from { transform: scale(0.95); opacity: 0; }
-    to   { transform: scale(1);    opacity: 1; }
+    from {
+        transform: scale(0.95);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 
 .modal-avatar {
@@ -220,20 +307,38 @@ body {
     background: #a855f7;
 }
 
-.modal-avatar.azul { background: #3b82f6; }
+.modal-avatar.azul {
+    background: #3b82f6;
+}
 
-.modal-title { font-size: 1rem; font-weight: 700; color: #1e1b2e; margin-bottom: 4px; }
-.modal-sub   { font-size: 0.77rem; color: #a0a3b1; margin-bottom: 20px; }
+.modal-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1e1b2e;
+    margin-bottom: 4px;
+}
+
+.modal-sub {
+    font-size: 0.77rem;
+    color: #a0a3b1;
+    margin-bottom: 20px;
+}
 
 .modal-close {
     position: absolute;
-    top: 14px; right: 16px;
-    background: none; border: none;
-    color: #c4b5fd; font-size: 1rem;
+    top: 14px;
+    right: 16px;
+    background: none;
+    border: none;
+    color: #c4b5fd;
+    font-size: 1rem;
     cursor: pointer;
     transition: color 0.2s;
 }
-.modal-close:hover { color: #7c3aed; }
+
+.modal-close:hover {
+    color: #7c3aed;
+}
 
 .btn-modal {
     width: 100%;
@@ -251,9 +356,18 @@ body {
     transition: filter 0.2s, transform 0.15s;
 }
 
-.btn-modal.morado { background: #a855f7; }
-.btn-modal.azul   { background: #3b82f6; }
-.btn-modal:hover  { filter: brightness(1.1); transform: translateY(-1px); }
+.btn-modal.morado {
+    background: #a855f7;
+}
+
+.btn-modal.azul {
+    background: #3b82f6;
+}
+
+.btn-modal:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
 
 /* esta parte es del link de volver al inicio */
 .btn-home {
@@ -269,4 +383,49 @@ body {
     transition: color 0.2s;
 }
 
-.btn-home:hover { color: #a855f7; }
+.btn-home:hover {
+    color: #a855f7;
+}
+
+/* esta parte es del botón de iniciar con Google */
+.btn-google {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px 14px;
+    background: #ffffff;
+    border: 1.5px solid #e9d5ff;
+    border-radius: 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #1e1b2e;
+    text-decoration: none;
+    transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.btn-google:hover {
+    background: #faf5ff;
+    border-color: #a855f7;
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.08);
+}
+
+/* botón mostrar/ocultar contraseña */
+.toggle-pass {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #c4b5fd;
+    font-size: 1rem;
+    padding: 0;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    transition: color 0.2s;
+}
+
+.toggle-pass:hover {
+    color: #a855f7;
+}
