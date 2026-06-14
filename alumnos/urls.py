@@ -1,6 +1,6 @@
 #from django.conf.urls import url
 from django.urls import path
-from .views import home, contactos, nosotros, planes, servicios, simulador, opcion_user, regis_alum, alumnos_reg, alumno_pag1
+from .views import home, contactos, nosotros, planes, servicios, simulador, opcion_user, regis_alum, alumnos_reg, alumno_pag1, pago, confirmacion
 
 urlpatterns = [
     path('', home, name='home'),
@@ -13,5 +13,7 @@ urlpatterns = [
     path('registro_alumno', regis_alum, name='regis_alum'),
     path('alumnos_reg', alumnos_reg, name='alumnos_reg'),
     path('alumno_home', alumno_pag1, name='alumno_pag1'),
+    path('pago', pago, name='pago'),
+    path('confirmacion', confirmacion, name='confirmacion'),
 ]
 

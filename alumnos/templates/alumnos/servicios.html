@@ -5,18 +5,20 @@
 
 {% block content %}
 <div class="contenedor">
-    <div class="section-header" style="margin-top: 100px;">
+    <div class="section-header services-intro">
+        <span class="badge">Lo que ofrecemos</span>
         <h2>Nuestros Servicios</h2>
         <p>Expertos dedicados a cada etapa del aprendizaje.</p>
     </div>
 
-    <!-- esta parte es de la sección de educación básica con la descripción y la imagen descriptiva -->
-    <section class="about" style="background: #f8fafc; border-radius: 24px; padding: 60px; margin-bottom: 40px;">
+    <!-- Educación Básica -->
+    <section class="service-block">
         <div class="grid-2">
             <div class="about-img">
-                <img src="{% static 'alumnos/img/basica.jpeg' %}" alt="Educación Básica" style="width: 100%; border-radius: 16px;">
+                <img src="{% static 'alumnos/img/basica.jpeg' %}" alt="Educación Básica">
             </div>
             <div class="about-text">
+                <span class="service-eyebrow">Nivel inicial</span>
                 <h2>Educación Básica</h2>
                 <p>Introducimos a los estudiantes al mundo del conocimiento de una manera comprensiva. Desde los principios de lectura y escritura hasta habilidades creativas en música y artes.</p>
                 <button class="btn-principal">Ver más detalles</button>
@@ -24,26 +26,28 @@
         </div>
     </section>
 
-    <!-- esta parte es de la sección de educación media con su descripción correspondiente -->
-    <section class="about" style="background: #f1f5f9; border-radius: 24px; padding: 60px; margin-bottom: 40px;">
+    <!-- Educación Media -->
+    <section class="service-block">
         <div class="grid-2">
             <div class="about-text">
+                <span class="service-eyebrow">Nivel intermedio</span>
                 <h2>Educación Media</h2>
                 <p>Profundizamos en asignaturas especializadas, preparando a los estudiantes para desafíos superiores y decisiones vocacionales. Enfoque analítico en ciencias y humanidades.</p>
             </div>
             <div class="about-img">
-                <img src="{% static 'alumnos/img/media.avif' %}" alt="Educación Media" style="width: 100%; border-radius: 16px;">
+                <img src="{% static 'alumnos/img/media.avif' %}" alt="Educación Media">
             </div>
         </div>
     </section>
 
-    <!-- esta parte es de la sección de educación superior para alumnos universitarios y profesionales -->
-    <section class="about" style="background: #f8fafc; border-radius: 24px; padding: 60px; margin-bottom: 100px;">
+    <!-- Educación Superior -->
+    <section class="service-block">
         <div class="grid-2">
             <div class="about-img">
-                <img src="{% static 'alumnos/img/superior.jpeg' %}" alt="Educación Superior" style="width: 100%; border-radius: 16px;">
+                <img src="{% static 'alumnos/img/superior.jpeg' %}" alt="Educación Superior">
             </div>
             <div class="about-text">
+                <span class="service-eyebrow">Nivel avanzado</span>
                 <h2>Educación Superior</h2>
                 <p>Académicos especialistas imparten conocimientos avanzados en ingeniería, medicina y ciencias sociales. Preparación directa para el mercado laboral y la investigación.</p>
             </div>

@@ -83,4 +83,8 @@ def alumno_pag1(request):
     context = {}
     return render(request, 'alumnos/Alumno_pag1.html', context)
 
+def pago(request):
+    return render(request, 'alumnos/pago.html', {})
 
+def confirmacion(request):
+    return render(request, 'alumnos/confirmacion.html', {})

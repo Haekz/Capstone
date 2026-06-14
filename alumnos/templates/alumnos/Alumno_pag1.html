@@ -41,6 +41,12 @@
         </ul>
 
         <div class="custom-nav-actions">
+            <!-- Hamburger (solo móvil) -->
+            <button class="hamburger-btn" id="hamburger-btn" aria-label="Abrir menú">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
             <!-- Theme Toggler -->
             <button onclick="toggleTheme()" class="btn-theme-toggle" id="theme-toggler">
                 <i class="bi bi-sun-fill" id="theme-icon"></i>
@@ -48,6 +54,9 @@
             <a href="{% url 'home' %}" class="btn-logout">Cerrar Sesión</a>
         </div>
     </nav>
+
+    <!-- Overlay oscuro para el sidebar en móvil -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
     <!-- Main Dashboard Layout -->
     <div class="dashboard-layout">
@@ -1239,8 +1248,35 @@
             btn.addEventListener('click', () => {
                 const targetViewId = btn.getAttribute('data-view');
                 switchView(targetViewId);
+                if (window.innerWidth <= 900) closeSidebar();
             });
         });
+
+        // ── HAMBURGER MENU ──
+        const hamburgerBtn = document.getElementById('hamburger-btn');
+        const sidebarMenu = document.querySelector('.sidebar-menu');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+        const openSidebar = () => {
+            sidebarMenu.classList.add('active');
+            hamburgerBtn.classList.add('open');
+            sidebarOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        };
+
+        const closeSidebar = () => {
+            sidebarMenu.classList.remove('active');
+            hamburgerBtn.classList.remove('open');
+            sidebarOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        };
+
+        const toggleSidebar = () => {
+            sidebarMenu.classList.contains('active') ? closeSidebar() : openSidebar();
+        };
+
+        if (hamburgerBtn) hamburgerBtn.addEventListener('click', toggleSidebar);
+        if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeSidebar);
 
         // ── INTERACTIVE MODAL CONTROLLER ──
         const modalOverlay = document.getElementById('interests-modal');

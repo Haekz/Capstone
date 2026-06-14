@@ -1,0 +1,365 @@
+{% extends 'alumnos/base.html' %}
+{% load static %}
+
+{% block title %}LBWUS | Pago Seguro{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'alumnos/css/pago.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<!-- =========================================
+     OVERLAY DE PROCESAMIENTO (cubre toda la pantalla)
+     ========================================= -->
+<div class="processing-overlay" id="processing-overlay" style="display:none;">
+    <div class="processing-box">
+        <div class="spinner"></div>
+        <p class="processing-title">Procesando pago...</p>
+        <p class="processing-sub">Por favor no cierres esta ventana</p>
+    </div>
+</div>
+
+<!-- =========================================
+     LAYOUT PRINCIPAL
+     ========================================= -->
+<div class="pago-wrapper">
+
+    <!-- ---- Panel izquierdo: resumen del pedido ---- -->
+    <div class="resumen-panel">
+        <div class="resumen-header">
+            <i class="bi bi-bag-check-fill"></i>
+            <h2>Resumen del Pedido</h2>
+        </div>
+        <div id="resumen-items" class="resumen-items">
+            <!-- Poblado por JS desde localStorage -->
+        </div>
+        <div class="resumen-divider"></div>
+        <div class="resumen-total-row">
+            <span>Total a pagar</span>
+            <span class="resumen-total-precio" id="resumen-total-precio">$0</span>
+        </div>
+        <div class="resumen-seguridad">
+            <i class="bi bi-shield-check-fill"></i>
+            <span>Pago 100% seguro con Transbank</span>
+        </div>
+        <a href="{% url 'planes' %}" class="link-volver-planes">
+            <i class="bi bi-arrow-left"></i> Volver a los planes
+        </a>
+    </div>
+
+    <!-- ---- Panel derecho: formulario Webpay Plus ---- -->
+    <div class="webpay-panel" id="panel-formulario">
+        <div class="webpay-header">
+            <div class="webpay-logo-area">
+                <span class="webpay-logo-text">WEBPAY</span>
+                <span class="webpay-logo-plus">Plus</span>
+            </div>
+            <div class="webpay-header-right">
+                <i class="bi bi-lock-fill"></i>
+                <span>Pago Seguro</span>
+            </div>
+        </div>
+
+        <div class="webpay-body">
+            <p class="webpay-merchant">
+                <i class="bi bi-shop"></i>
+                LBWUS — Plataforma Educativa
+            </p>
+
+            <form id="form-pago" novalidate>
+
+                <!-- Número de tarjeta -->
+                <div class="campo-pago">
+                    <label for="card-number">Número de Tarjeta</label>
+                    <div class="campo-pago-inner">
+                        <i class="bi bi-credit-card campo-icon"></i>
+                        <input type="text" id="card-number"
+                            placeholder="0000 0000 0000 0000"
+                            maxlength="19" autocomplete="cc-number" inputmode="numeric">
+                        <span class="card-brand" id="card-brand"></span>
+                    </div>
+                </div>
+
+                <!-- Nombre del titular -->
+                <div class="campo-pago">
+                    <label for="card-name">Nombre del Titular</label>
+                    <div class="campo-pago-inner">
+                        <i class="bi bi-person-fill campo-icon"></i>
+                        <input type="text" id="card-name"
+                            placeholder="Como aparece en la tarjeta"
+                            autocomplete="cc-name">
+                    </div>
+                </div>
+
+                <!-- Vencimiento y CVV -->
+                <div class="campo-row">
+                    <div class="campo-pago">
+                        <label for="card-expiry">Vencimiento</label>
+                        <div class="campo-pago-inner">
+                            <i class="bi bi-calendar2-fill campo-icon"></i>
+                            <input type="text" id="card-expiry"
+                                placeholder="MM/AA" maxlength="5"
+                                autocomplete="cc-exp" inputmode="numeric">
+                        </div>
+                    </div>
+                    <div class="campo-pago">
+                        <label for="card-cvv">
+                            CVV
+                            <span class="cvv-hint" title="Los 3 dígitos al reverso de tu tarjeta">?</span>
+                        </label>
+                        <div class="campo-pago-inner">
+                            <i class="bi bi-shield-lock-fill campo-icon"></i>
+                            <input type="password" id="card-cvv"
+                                placeholder="•••" maxlength="4"
+                                autocomplete="cc-csc" inputmode="numeric">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cuotas -->
+                <div class="campo-pago">
+                    <label for="card-cuotas">Cuotas</label>
+                    <div class="campo-pago-inner">
+                        <i class="bi bi-list-ol campo-icon"></i>
+                        <select id="card-cuotas">
+                            <option value="1">Sin cuotas (pago total)</option>
+                            <option value="3">3 cuotas sin interés</option>
+                            <option value="6">6 cuotas sin interés</option>
+                            <option value="12">12 cuotas</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-webpay" id="btn-pagar">
+                    <i class="bi bi-lock-fill"></i>
+                    Pagar <span id="btn-total-text">$0</span>
+                </button>
+
+                <p class="test-hint">
+                    <i class="bi bi-info-circle"></i>
+                    Demo: usa <strong>4000 0000 0000 0002</strong> para simular un rechazo
+                </p>
+
+            </form>
+
+            <div class="webpay-footer">
+                <div class="tb-badge">
+                    <span class="tb-icon">TB</span>
+                    <span class="tb-text">Transbank</span>
+                </div>
+                <div class="webpay-cards">
+                    <span class="card-chip visa-chip">VISA</span>
+                    <span class="card-chip mc-chip">MC</span>
+                    <span class="card-chip rc-chip">Redcompra</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ---- Panel de error (reemplaza al formulario en caso de rechazo) ---- -->
+    <div class="webpay-panel" id="panel-error" style="display:none;">
+        <div class="webpay-header">
+            <div class="webpay-logo-area">
+                <span class="webpay-logo-text">WEBPAY</span>
+                <span class="webpay-logo-plus">Plus</span>
+            </div>
+            <div class="webpay-header-right error-header-right">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <span>Transacción Rechazada</span>
+            </div>
+        </div>
+        <div class="webpay-body result-body">
+            <div class="result-icon-wrap error-wrap">
+                <i class="bi bi-x-lg"></i>
+            </div>
+            <h3 class="result-title">Pago Rechazado</h3>
+            <p class="result-sub">
+                La transacción no pudo completarse. Verifica los datos de tu tarjeta
+                o usa otro medio de pago.
+            </p>
+            <button class="btn-reintentar" id="btn-reintentar">
+                <i class="bi bi-arrow-counterclockwise"></i> Intentar de nuevo
+            </button>
+            <a href="{% url 'planes' %}" class="link-volver-planes link-centro">
+                <i class="bi bi-arrow-left"></i> Volver a los planes
+            </a>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // =========================================
+    // UTILIDADES
+    // =========================================
+    const PERIODOS = [
+        { valor: 'mensual',   label: 'Mensual',   factor: 1    },
+        { valor: '3semanas',  label: '3 Semanas', factor: 0.75 },
+        { valor: '2semanas',  label: '2 Semanas', factor: 0.50 },
+        { valor: '1semana',   label: '1 Semana',  factor: 0.25 }
+    ];
+
+    function clpFmt(n) {
+        return new Intl.NumberFormat('es-CL', {
+            style: 'currency', currency: 'CLP', minimumFractionDigits: 0
+        }).format(n).replace('CLP', '$').trim();
+    }
+
+    function parsePrecio(str) {
+        return parseInt((str || '0').replace(/[^0-9]/g, ''), 10) || 0;
+    }
+
+    // =========================================
+    // CARGAR CARRITO DESDE localStorage
+    // =========================================
+    let carrito = [];
+    try { carrito = JSON.parse(localStorage.getItem('carrito')) || []; }
+    catch(e) { carrito = []; }
+
+    // Si el carrito está vacío, redirigir a planes
+    if (carrito.length === 0) {
+        window.location.href = "{% url 'planes' %}";
+    }
+
+    function calcularTotal() {
+        return carrito.reduce((sum, item) => {
+            const base   = parsePrecio(item.precio);
+            const factor = (PERIODOS.find(p => p.valor === (item.periodo || 'mensual')) || PERIODOS[0]).factor;
+            return sum + Math.round(base * factor) * item.cantidad;
+        }, 0);
+    }
+
+    // =========================================
+    // POBLAR RESUMEN DEL PEDIDO
+    // =========================================
+    function poblarResumen() {
+        const container = document.getElementById('resumen-items');
+        container.innerHTML = '';
+
+        carrito.forEach(item => {
+            const base    = parsePrecio(item.precio);
+            const periodo = item.periodo || 'mensual';
+            const pObj    = PERIODOS.find(p => p.valor === periodo) || PERIODOS[0];
+            const precio  = Math.round(base * pObj.factor);
+
+            const div = document.createElement('div');
+            div.className = 'resumen-item';
+            div.innerHTML = `
+                <div class="resumen-item-info">
+                    <span class="resumen-item-nombre">${item.titulo}</span>
+                    <span class="resumen-item-periodo">${pObj.label} &times; ${item.cantidad}</span>
+                </div>
+                <span class="resumen-item-precio">${clpFmt(precio * item.cantidad)}</span>
+            `;
+            container.appendChild(div);
+        });
+
+        const total = calcularTotal();
+        document.getElementById('resumen-total-precio').textContent = clpFmt(total);
+        document.getElementById('btn-total-text').textContent       = clpFmt(total);
+    }
+
+    poblarResumen();
+
+    // =========================================
+    // FORMATEO AUTOMÁTICO DE INPUTS
+    // =========================================
+    const cardInput   = document.getElementById('card-number');
+    const expiryInput = document.getElementById('card-expiry');
+    const brandEl     = document.getElementById('card-brand');
+
+    cardInput.addEventListener('input', function () {
+        const raw   = this.value.replace(/\D/g, '').substring(0, 16);
+        this.value  = raw.replace(/(.{4})/g, '$1 ').trim();
+
+        if (raw.startsWith('4')) {
+            brandEl.textContent = 'VISA';
+            brandEl.className   = 'card-brand brand-visa';
+        } else if (raw.startsWith('5')) {
+            brandEl.textContent = 'MC';
+            brandEl.className   = 'card-brand brand-mc';
+        } else {
+            brandEl.textContent = '';
+            brandEl.className   = 'card-brand';
+        }
+    });
+
+    expiryInput.addEventListener('input', function () {
+        const raw  = this.value.replace(/\D/g, '').substring(0, 4);
+        this.value = raw.length >= 3 ? raw.substring(0, 2) + '/' + raw.substring(2) : raw;
+    });
+
+    // =========================================
+    // SUBMIT DEL FORMULARIO
+    // =========================================
+    document.getElementById('form-pago').addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const num  = cardInput.value.replace(/\s/g, '');
+        const name = document.getElementById('card-name').value.trim();
+        const exp  = expiryInput.value;
+        const cvv  = document.getElementById('card-cvv').value;
+
+        if (num.length < 16) {
+            Swal.fire({ icon: 'warning', title: 'Número incompleto',
+                text: 'Ingresa los 16 dígitos de la tarjeta.', confirmButtonColor: '#003764' });
+            return;
+        }
+        if (!name) {
+            Swal.fire({ icon: 'warning', title: 'Falta el nombre',
+                text: 'Ingresa el nombre del titular.', confirmButtonColor: '#003764' });
+            return;
+        }
+        if (exp.length < 5) {
+            Swal.fire({ icon: 'warning', title: 'Fecha incompleta',
+                text: 'Ingresa la fecha de vencimiento (MM/AA).', confirmButtonColor: '#003764' });
+            return;
+        }
+        if (cvv.length < 3) {
+            Swal.fire({ icon: 'warning', title: 'CVV incompleto',
+                text: 'Ingresa el código de seguridad de la tarjeta.', confirmButtonColor: '#003764' });
+            return;
+        }
+
+        document.getElementById('btn-pagar').disabled = true;
+        document.getElementById('processing-overlay').style.display = 'flex';
+
+        // Simular procesamiento (3 segundos)
+        setTimeout(() => {
+            document.getElementById('processing-overlay').style.display = 'none';
+
+            // Tarjeta de rechazo de prueba
+            if (num === '4000000000000002') {
+                document.getElementById('panel-formulario').style.display = 'none';
+                document.getElementById('panel-error').style.display      = 'block';
+            } else {
+                // Guardar orden en sessionStorage antes de limpiar el carrito
+                const orden = {
+                    numero:  'LB' + Math.floor(Math.random() * 900000 + 100000),
+                    items:   carrito,
+                    total:   calcularTotal(),
+                    fecha:   new Date().toLocaleDateString('es-CL'),
+                    titular: name,
+                    cuotas:  document.getElementById('card-cuotas').value
+                };
+                sessionStorage.setItem('ultima_orden', JSON.stringify(orden));
+                localStorage.removeItem('carrito');
+                window.location.href = "{% url 'confirmacion' %}";
+            }
+        }, 3000);
+    });
+
+    // Reintentar después de un rechazo
+    document.getElementById('btn-reintentar').addEventListener('click', () => {
+        document.getElementById('panel-error').style.display      = 'none';
+        document.getElementById('panel-formulario').style.display = 'block';
+        document.getElementById('form-pago').reset();
+        brandEl.textContent = '';
+        brandEl.className   = 'card-brand';
+        document.getElementById('btn-pagar').disabled = false;
+    });
+</script>
+
+{% endblock %}

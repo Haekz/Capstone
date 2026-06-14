@@ -27,6 +27,9 @@
             <tbody></tbody>
         </table>
         <a href="#" id="vaciar-carrito" class="btn-vaciar">Vaciar Carrito</a>
+        <a href="{% url 'pago' %}" class="btn-pagar" id="btn-ir-pago" style="display:none;">
+            <i class="bi bi-credit-card-fill"></i> Ir a Pagar
+        </a>
     </div>
 </div>
 {% endblock %}
@@ -51,9 +54,9 @@
                 </div>
                 <p class="plan-billing-info">Facturación mensual</p>
                 <button class="plan-btn-action agregar-carrito" data-id="1">Contratar Plan</button>
-                
+
                 <div class="plan-divider"></div>
-                
+
                 <p class="plan-features-title">Beneficios incluidos:</p>
                 <ul class="plan-features-list">
                     <li><i class="bi bi-check-lg check-icon"></i> Clases online</li>
@@ -79,9 +82,9 @@
                 </div>
                 <p class="plan-billing-info">Facturación mensual</p>
                 <button class="plan-btn-action agregar-carrito" data-id="2">Contratar Plan</button>
-                
+
                 <div class="plan-divider"></div>
-                
+
                 <p class="plan-features-title">Beneficios incluidos:</p>
                 <ul class="plan-features-list">
                     <li><i class="bi bi-check-lg check-icon"></i> Clases online</li>
@@ -107,9 +110,9 @@
                 </div>
                 <p class="plan-billing-info">Facturación mensual</p>
                 <button class="plan-btn-action agregar-carrito" data-id="3">Contratar Plan</button>
-                
+
                 <div class="plan-divider"></div>
-                
+
                 <p class="plan-features-title">Beneficios incluidos:</p>
                 <ul class="plan-features-list">
                     <li><i class="bi bi-check-lg check-icon"></i> Clases presenciales o online</li>
@@ -148,12 +151,13 @@
                     <span class="plan-price">Variable</span>
                 </div>
                 <p class="plan-billing-info">Pago directo por clase al profesor</p>
-                
+
                 <!-- Redirecciona a contacto ya que requiere coordinación y cotización directa -->
-                <a href="{% url 'contactos' %}" class="plan-btn-action" style="text-decoration: none;">Consultar Profesores</a>
-                
+                <a href="{% url 'contactos' %}" class="plan-btn-action" style="text-decoration: none;">Consultar
+                    Profesores</a>
+
                 <div class="plan-divider"></div>
-                
+
                 <p class="plan-features-title">Características del plan:</p>
                 <ul class="plan-features-list">
                     <li><i class="bi bi-check-lg check-icon"></i> Pago clase a clase directamente al profesor</li>
@@ -175,9 +179,9 @@
                 </div>
                 <p class="plan-billing-info">Valores según tus selecciones</p>
                 <button class="plan-btn-action" id="open-builder-btn">Diseñar mi Plan</button>
-                
+
                 <div class="plan-divider"></div>
-                
+
                 <p class="plan-features-title">Características del plan:</p>
                 <ul class="plan-features-list">
                     <li><i class="bi bi-check-lg check-icon"></i> Diseña tu propio horario y cantidad de días</li>
@@ -196,7 +200,9 @@
     <div class="modal-info-content">
         <img src="{% static 'alumnos/img/Rocket Boy.png' %}" class="modal-info-img" alt="Rocket Boy">
         <h2>¡Bienvenido a nuestra sección de planes!</h2>
-        <p>Estamos aquí para asegurar una experiencia fluida y sin complicaciones. Si tienes preguntas, te recordamos que puedes visitar nuestra sección línea de atención telefónica para ayudarte más eficientemente. Explora nuestros planes y descubre cómo podemos apoyarte en tu educación.</p>
+        <p>Estamos aquí para asegurar una experiencia fluida y sin complicaciones. Si tienes preguntas, te recordamos
+            que puedes visitar nuestra sección línea de atención telefónica para ayudarte más eficientemente. Explora
+            nuestros planes y descubre cómo podemos apoyarte en tu educación.</p>
         <button class="modal-info-close" id="close-modal-btn">Entendido</button>
     </div>
 </section>
@@ -207,7 +213,7 @@
         <button class="close-builder-btn" id="close-builder-btn">&times;</button>
         <h2>Diseña tu Plan a Medida</h2>
         <p>Personaliza cada aspecto de tu aprendizaje sin límites y calcula tu valor mensual inmediatamente.</p>
-        
+
         <div class="builder-layout">
             <!-- Controles Interactivos -->
             <div class="builder-controls">
@@ -217,7 +223,7 @@
                     <div class="radio-toggle radio-toggle-triple">
                         <input type="radio" id="mode-online" name="modalidad" value="online" checked>
                         <label for="mode-online">Online</label>
-                        
+
                         <input type="radio" id="mode-presencial" name="modalidad" value="presencial">
                         <label for="mode-presencial">Presencial</label>
 
@@ -225,7 +231,7 @@
                         <label for="mode-grabado">Grabado</label>
                     </div>
                 </div>
-                
+
                 <!-- Horas semanales (Range Slider) -->
                 <div class="control-group">
                     <label class="control-label" id="label-horas">Horas semanales: 2 horas</label>
@@ -266,7 +272,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Asignaturas (Chips de selección) -->
                 <div class="control-group">
                     <label class="control-label">Asignaturas (Ramos)</label>
@@ -301,14 +307,16 @@
                         </div>
                     </div>
                     <div id="custom-subject-container" style="display: none; margin-top: 10px;">
-                        <input type="text" id="input-custom-subject" placeholder="Escribe la asignatura (ej. Historia)" class="builder-text-input">
+                        <input type="text" id="input-custom-subject" placeholder="Escribe la asignatura (ej. Historia)"
+                            class="builder-text-input">
                     </div>
                 </div>
 
                 <!-- Temas a tratar -->
                 <div class="control-group">
                     <label class="control-label" for="input-temas">Temas específicos a tratar</label>
-                    <input type="text" id="input-temas" placeholder="Ej: Álgebra lineal, Mecánica clásica, etc." class="builder-text-input">
+                    <input type="text" id="input-temas" placeholder="Ej: Álgebra lineal, Mecánica clásica, etc."
+                        class="builder-text-input">
                 </div>
 
                 <!-- Nivel del Profesor -->
@@ -342,7 +350,7 @@
                     </select>
                 </div>
             </div>
-            
+
             <!-- Resumen de Costos y Compra -->
             <div class="builder-summary">
                 <div class="summary-badge" id="summary-price-badge">¡Muy Económico!</div>
@@ -360,7 +368,8 @@
                     <li id="sum-situacion">Reforzamiento Estándar</li>
                     <li id="sum-temas" style="display: none;">Temas: N/A</li>
                 </ul>
-                <button class="plan-btn-action" id="btn-agregar-custom" style="margin-bottom: 0;">Contratar Plan</button>
+                <button class="plan-btn-action" id="btn-agregar-custom" style="margin-bottom: 0;">Contratar
+                    Plan</button>
             </div>
         </div>
     </div>
@@ -375,14 +384,14 @@
     // PERÍODOS DE PAGO (multiplicadores sobre precio mensual)
     // =========================================
     const PERIODOS = [
-        { valor: 'mensual',   label: 'Mensual',   factor: 1     },
-        { valor: '3semanas',  label: '3 Semanas', factor: 0.75  },
-        { valor: '2semanas',  label: '2 Semanas', factor: 0.50  },
-        { valor: '1semana',   label: '1 Semana',  factor: 0.25  }
+        { valor: 'mensual', label: 'Mensual', factor: 1 },
+        { valor: '3semanas', label: '3 Semanas', factor: 0.75 },
+        { valor: '2semanas', label: '2 Semanas', factor: 0.50 },
+        { valor: '1semana', label: '1 Semana', factor: 0.25 }
     ];
 
     function clpFmt(n) {
-        return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(n).replace('CLP','$').trim();
+        return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(n).replace('CLP', '$').trim();
     }
 
     // Extrae el número de un string de precio como "$69.990" → 69990
@@ -397,7 +406,7 @@
 
     function cargarCarrito() {
         try { articulosCarrito = JSON.parse(localStorage.getItem('carrito')) || []; }
-        catch(e) { articulosCarrito = []; }
+        catch (e) { articulosCarrito = []; }
         // Asegurar que cada ítem tenga periodo
         articulosCarrito.forEach(a => { if (!a.periodo) a.periodo = 'mensual'; });
     }
@@ -426,8 +435,8 @@
         } else {
             articulosCarrito.forEach(item => {
                 const precioBase = parsePrecio(item.precio);
-                const periodo    = item.periodo || 'mensual';
-                const factor     = (PERIODOS.find(p => p.valor === periodo) || PERIODOS[0]).factor;
+                const periodo = item.periodo || 'mensual';
+                const factor = (PERIODOS.find(p => p.valor === periodo) || PERIODOS[0]).factor;
                 const precioAjustado = Math.round(precioBase * factor);
 
                 const opcionesHtml = PERIODOS.map(p =>
@@ -456,10 +465,12 @@
         if (carritoEl) carritoEl.style.display = articulosCarrito.length > 0 ? 'block' : 'none';
 
         actualizarContador();
+        const btnPagar = document.getElementById('btn-ir-pago');
+        if (btnPagar) btnPagar.style.display = articulosCarrito.length > 0 ? 'block' : 'none';
 
         // Listeners de selects de período
         tbody.querySelectorAll('.cart-periodo-select').forEach(sel => {
-            sel.addEventListener('change', function() {
+            sel.addEventListener('change', function () {
                 const id = this.getAttribute('data-id');
                 const item = articulosCarrito.find(a => a.id === id);
                 if (item) {
@@ -472,7 +483,7 @@
 
         // Listeners de botones de eliminar
         tbody.querySelectorAll('.cart-remove-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
+            btn.addEventListener('click', function () {
                 const id = this.getAttribute('data-id');
                 articulosCarrito = articulosCarrito.filter(a => a.id !== id);
                 guardarCarrito();
@@ -506,7 +517,7 @@
                 modal.style.display = 'none';
             });
         }
-        
+
         // Mostrar / Ocultar carrito de compras
         const cartButton = document.getElementById('cart-button');
         const carrito = document.getElementById('carrito');
@@ -542,7 +553,7 @@
                     e.stopPropagation();
                     const card = e.target.closest('.card');
                     if (card) {
-                        const id     = e.target.getAttribute('data-id');
+                        const id = e.target.getAttribute('data-id');
                         const titulo = card.querySelector('h3') ? card.querySelector('h3').textContent.trim() : 'Plan';
                         const precio = card.querySelector('span') ? card.querySelector('span').textContent.trim() : '$0';
                         agregarAlCarrito(id, titulo, precio);
@@ -600,7 +611,7 @@
 
         function calcularPlan() {
             let total = 0;
-            
+
             // 1. Modalidad
             let modalidad = 'online';
             if (radioPresencial && radioPresencial.checked) {
@@ -779,7 +790,7 @@
             radioOnline, radioPresencial, radioGrabado, inputHoras,
             inputCustomSubject, inputTemas, inputProfesor, inputLugar, inputSituacion
         ];
-        
+
         inputsToBind.forEach(el => {
             if (el) {
                 el.addEventListener('input', calcularPlan);
