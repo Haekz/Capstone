@@ -1,6 +1,6 @@
 import json
 import random
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponse
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
@@ -113,6 +113,87 @@ def alumnos_reg(request):
 def alumno_pag1(request):
     context = {}
     return render(request, 'alumnos/Alumno_pag1.html', context)
+
+
+# --- Vistas CRUD reubicadas desde admin_portal ---
+def crud(request):
+    alumnos = Alumno.objects.all()
+    context = {'alumnos': alumnos}
+    return render(request, 'admin_portal/alumnos_list.html', context)
+
+def alumnos_Add(request):
+    if request.method == 'POST':
+        try:
+            nombre = request.POST['nombre']
+            rut = request.POST['rut']
+            nivel_educacion = request.POST['nivel_educacion']
+            direccion = request.POST['direccion']
+            fecha_nacimiento = request.POST['fecha_nacimiento']
+            correo_electronico = request.POST['correo_electronico']
+            telefono = request.POST['telefono']
+            genero_id = request.POST['genero']
+
+            genero = Genero.objects.get(id_genero=genero_id)
+
+            Alumno.objects.create(
+                nombre=nombre,
+                rut=rut,
+                nivel_educacion=nivel_educacion,
+                direccion=direccion,
+                fecha_nacimiento=fecha_nacimiento,
+                correo_electronico=correo_electronico,
+                telefono=telefono,
+                genero=genero
+            )
+            return JsonResponse({"success": True, "message": "Alumno registrado exitosamente."})
+        except Exception as e:
+            return JsonResponse({"success": False, "message": str(e)})
+
+    generos = Genero.objects.all()
+    return render(request, 'admin_portal/alumnos_add.html', {'generos': generos})
+
+def alumnos_findEdit(request, pk):
+    try:
+        alumno = Alumno.objects.get(id_alumno=pk)  # Usamos id_alumno en lugar de rut
+        generos = Genero.objects.all()
+        context = {'alumno': alumno, 'generos': generos}
+        return render(request, 'admin_portal/alumnos_edit.html', context)
+    except Alumno.DoesNotExist:
+        context = {'mensaje': "Error, ID no existe..."}
+        return render(request, 'admin_portal/alumnos_list.html', context)
+
+
+def alumnos_del(request, pk):
+    try:
+        alumno = Alumno.objects.get(id_alumno=pk)  # Usamos id_alumno en lugar de rut
+        alumno.delete()
+        mensaje = "Bien, datos eliminados..."
+    except Alumno.DoesNotExist:
+        mensaje = "Error, ID no existe..."
+    alumnos = Alumno.objects.all()
+    context = {'alumnos': alumnos, 'mensaje': mensaje}
+    return render(request, 'admin_portal/alumnos_list.html', context)
+
+
+def alumnos_Update(request):
+    if request.method == 'POST':
+        id_alumno = request.POST.get('id_alumno')
+        alumno = get_object_or_404(Alumno, id_alumno=id_alumno)
+
+        alumno.nombre = request.POST.get('nombre')
+        alumno.rut = request.POST.get('rut')
+        alumno.nivel_educacion = request.POST.get('nivel_educacion')
+        alumno.direccion = request.POST.get('direccion')
+        alumno.fecha_nacimiento = request.POST.get('fecha_nacimiento')
+        alumno.correo_electronico = request.POST.get('correo_electronico')
+        alumno.telefono = request.POST.get('telefono')
+        genero_id = request.POST.get('genero')
+        alumno.genero = Genero.objects.get(id_genero=genero_id)
+
+        alumno.save()
+        return HttpResponse("OK, datos actualizados.")  # Confirmación simple en lugar de redirección
+    else:
+        return HttpResponse("Solicitud inválida.", status=400)
 
 
 # ============================================================
