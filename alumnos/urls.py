@@ -1,9 +1,8 @@
-#from django.conf.urls import url
 from django.urls import path
 from .views import (
     home, contactos, nosotros, planes, servicios, simulador, opcion_user, 
     regis_alum, alumnos_reg, alumno_pag1, crud, alumnos_Add, alumnos_del, 
-    alumnos_findEdit, alumnos_Update
+    alumnos_findEdit, alumnos_Update, pago, confirmacion, iniciar_webpay
 )
 
 urlpatterns = [
@@ -24,5 +23,7 @@ urlpatterns = [
     path('alumnos_del/<str:pk>/', alumnos_del, name='alumnos_del'),
     path('alumnos_findEdit/<str:pk>/', alumnos_findEdit, name='alumnos_findEdit'),
     path('alumnos_Update', alumnos_Update, name='alumnos_Update'),
+    path('pago', pago, name='pago'),
+    path('confirmacion', confirmacion, name='confirmacion'),
+    path('iniciar-webpay/', iniciar_webpay, name='iniciar_webpay'),
 ]
-

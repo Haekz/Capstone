@@ -4,108 +4,123 @@
 {% block title %}LBWUS | Inicio{% endblock %}
 
 {% block content %}
-    <!-- esta parte es de la sección principal con el carrusel de fondo y el mensaje de bienvenida -->
-    <section class="hero">
-        <div class="hero-content">
-            <h1 class="fade-in">Bienvenido a LBWUS</h1>
-            <p class="fade-in">Apoyado por un equipo de profesionales experimentados, aquí es donde tus desafíos se transforman en victorias.</p>
-            <div class="hero-btns fade-in">
-                <a href="{% url 'servicios' %}" class="btn-accion">Conocer más</a>
-                <a href="{% url 'planes' %}" class="btn-outline">Ver Planes</a>
-            </div>
+<!-- esta parte es de la sección principal con el carrusel de fondo y el mensaje de bienvenida -->
+<section class="hero">
+    <div class="hero-content">
+        <span class="hero-eyebrow"><i class="bi bi-stars"></i> Más de 10.000 profesionales a tu alcance</span>
+        <h1 class="fade-in">Bienvenido a <span class="hero-accent">LBWUS</span></h1>
+        <p class="fade-in">Apoyado por un equipo de profesionales experimentados, aquí es donde tus desafíos se
+            transforman en victorias.</p>
+        <div class="hero-btns fade-in">
+            <a href="{% url 'servicios' %}" class="btn-accion">Conocer más</a>
+            <a href="{% url 'planes' %}" class="btn-outline">Ver Planes</a>
         </div>
-        <div class="hero-overlay"></div>
-        <div class="hero-carousel">
-            <img src="{% static 'alumnos/img/imge1.png' %}" alt="Hero Image 1" class="hero-bg">
-            <img src="{% static 'alumnos/img/prueba1111.png' %}" alt="Hero Image 2" class="hero-bg">
-            <img src="{% static 'alumnos/img/prueba1183.png' %}" alt="Hero Image 3" class="hero-bg">
-        </div>
-    </section>
+    </div>
 
-    <!-- esta parte es de la sección de quiénes somos con la imagen y el texto de la empresa -->
-    <section class="about">
-        <div class="contenedor grid-2">
-            <div class="about-img">
-                <img src="{% static 'alumnos/img/about.jpg' %}" alt="About us">
-            </div>
-            <div class="about-text">
-                <span class="badge">Sobre nosotros</span>
-                <h2>Learn Better With Us</h2>
-                <p>En LBWUS nos preocupamos por ti, te contamos que tenemos más de 10.000 profesionales especialidados en todo el territorio nacional. Nuestra plataforma te conecta con los expertos más cercanos a tu ubicación. ¡No sufras más!</p>
-                <a href="{% url 'nosotros' %}" class="btn-text">Saber más <i class="bi bi-arrow-right"></i></a>
-            </div>
-        </div>
-    </section>
+    <!-- Indicadores del carrusel -->
+    <div class="hero-dots">
+        <span></span><span></span><span></span>
+    </div>
 
-    <!-- esta parte es de la sección de servicios que muestra los 3 planes disponibles en tarjetas -->
-    <section class="services">
-        <div class="contenedor">
-            <div class="section-header">
-                <h2>Nuestros Servicios</h2>
-                <p>Descubre las características únicas de nuestros planes de estudio.</p>
-            </div>
-            <div class="services-grid">
-                <!-- esta parte es de la tarjeta del plan básico -->
-                <div class="service-card">
-                    <div class="card-icon"><i class="bi bi-star-fill"></i></div>
-                    <h3>Plan Básico</h3>
-                    <p>Conéctate con educadores destacados y explora una enseñanza básica renovada. Clases virtuales o presenciales desde tu hogar.</p>
-                </div>
-                <!-- esta parte es de la tarjeta del plan medio, la que tiene el borde morado -->
-                <div class="service-card featured">
-                    <div class="card-icon"><i class="bi bi-lightning-fill"></i></div>
-                    <h3>Plan Medio</h3>
-                    <p>Avanza hacia tus metas con nuestro plan intermedio. Metodología flexible que se alinea con tu ritmo de vida.</p>
-                    <!--    <button class="btn-accion" onclick="location.href='{% url 'simulador' %}';">Simula aquí</button>-->
-                </div>
-                <!-- esta parte es de la tarjeta del plan superior -->
-                <div class="service-card">
-                    <div class="card-icon"><i class="bi bi-mortarboard-fill"></i></div>
-                    <h3>Plan Superior</h3>
-                    <p>Alcanza la excelencia con profesionales de renombre. Un puente hacia el éxito académico y tu futuro profesional.</p>
-                </div>
-            </div>
-        </div>
-    </section>
+    <!-- Indicador de scroll -->
+    <div class="hero-scroll">
+        <span class="hero-scroll-mouse"><span class="hero-scroll-wheel"></span></span>
+    </div>
 
-    <!-- esta parte es de la sección de horario con el mapa embebido de Google Maps -->
-    <section class="info">
-        <div class="contenedor grid-2">
-            <div class="info-text">
-                <h2>Horario de Atención</h2>
-                <div class="info-item">
-                    <i class="bi bi-geo-alt"></i>
-                    <div>
-                        <h4>Dirección</h4>
-                        <p>Los Florentinos 2012, Santiago</p>
-                    </div>
-                </div>
-                <div class="info-item">
-                    <i class="bi bi-clock"></i>
-                    <div>
-                        <h4>Horario</h4>
-                        <p>Lun - Vie: 9am - 8pm | Sáb - Dom: 11am - 7pm</p>
-                    </div>
-                </div>
-                <div class="info-item">
-                    <i class="bi bi-telephone"></i>
-                    <div>
-                        <h4>Teléfono</h4>
-                        <p>+56 9 8888 8888 / +56 9 5555 5555</p>
-                    </div>
-                </div>
-                <div class="social-box">
-                    <a href="#"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#"><i class="fab fa-instagram"></i></a>
-                    <a href="#"><i class="fab fa-twitter"></i></a>
-                </div>
+    <div class="hero-overlay"></div>
+    <div class="hero-carousel">
+        <img src="{% static 'alumnos/img/imge1.png' %}" alt="Hero Image 1" class="hero-bg">
+        <img src="{% static 'alumnos/img/prueba1111.png' %}" alt="Hero Image 2" class="hero-bg">
+        <img src="{% static 'alumnos/img/prueba1183.png' %}" alt="Hero Image 3" class="hero-bg">
+    </div>
+</section>
+
+<!-- esta parte es de la sección de quiénes somos con la imagen y el texto de la empresa -->
+<section class="about">
+    <div class="contenedor grid-2">
+        <div class="about-img">
+            <img src="{% static 'alumnos/img/about.jpg' %}" alt="About us">
+        </div>
+        <div class="about-text">
+            <span class="badge">Sobre nosotros</span>
+            <h2>Learn Better With Us</h2>
+            <p>En LBWUS nos preocupamos por ti, te contamos que tenemos más de 10.000 profesionales especialidados en
+                todo el territorio nacional. Nuestra plataforma te conecta con los expertos más cercanos a tu ubicación.
+                ¡No sufras más!</p>
+            <a href="{% url 'nosotros' %}" class="btn-text">Saber más <i class="bi bi-arrow-right"></i></a>
+        </div>
+    </div>
+</section>
+
+<!-- esta parte es de la sección de servicios que muestra los 3 planes disponibles en tarjetas -->
+<section class="services">
+    <div class="contenedor">
+        <div class="section-header">
+            <h2>Nuestros Servicios</h2>
+            <p>Descubre las características únicas de nuestros planes de estudio.</p>
+        </div>
+        <div class="services-grid">
+            <!-- esta parte es de la tarjeta del plan básico -->
+            <div class="service-card">
+                <div class="card-icon"><i class="bi bi-star-fill"></i></div>
+                <h3>Plan Básico</h3>
+                <p>Conéctate con educadores destacados y explora una enseñanza básica renovada. Clases virtuales o
+                    presenciales desde tu hogar.</p>
             </div>
-            <div class="info-map">
-                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d212998.2997250683!2d-70.62983129999999!3d-33.47278795!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9662c5410425af2f%3A0x8475d53c400f0931!2sSantiago%2C%20Regi%C3%B3n%20Metropolitana!5e0!3m2!1ses-419!2scl!4v1716188053838!5m2!1ses-419!2scl" width="100%" height="400" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+            <!-- esta parte es de la tarjeta del plan medio, la que tiene el borde morado -->
+            <div class="service-card featured">
+                <div class="card-icon"><i class="bi bi-lightning-fill"></i></div>
+                <h3>Plan Medio</h3>
+                <p>Avanza hacia tus metas con nuestro plan intermedio. Metodología flexible que se alinea con tu ritmo
+                    de vida.</p>
+                <!--    <button class="btn-accion" onclick="location.href='{% url 'simulador' %}';">Simula aquí</button>-->
+            </div>
+            <!-- esta parte es de la tarjeta del plan superior -->
+            <div class="service-card">
+                <div class="card-icon"><i class="bi bi-mortarboard-fill"></i></div>
+                <h3>Plan Superior</h3>
+                <p>Alcanza la excelencia con profesionales de renombre. Un puente hacia el éxito académico y tu futuro
+                    profesional.</p>
             </div>
         </div>
-    </section>
-{% endblock %}  
+    </div>
+</section>
+
+<!-- esta parte es de la sección de horario con el mapa embebido de Google Maps -->
+<section class="info">
+    <div class="contenedor grid-2">
+        <div class="info-text">
+            <h2>Horario de Atención</h2>
+            <div class="info-item">
+                <i class="bi bi-geo-alt"></i>
+                <div>
+                    <h4>Dirección</h4>
+                    <p>Los Florentinos 2012, Santiago</p>
+                </div>
+            </div>
+            <div class="info-item">
+                <i class="bi bi-clock"></i>
+                <div>
+                    <h4>Horario</h4>
+                    <p>Lun - Vie: 9am - 8pm | Sáb - Dom: 11am - 7pm</p>
+                </div>
+            </div>
+            <div class="info-item">
+                <i class="bi bi-telephone"></i>
+                <div>
+                    <h4>Teléfono</h4>
+                    <p>+56 9 8888 8888 / +56 9 5555 5555</p>
+                </div>
+            </div>
+        </div>
+        <div class="info-map">
+            <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d212998.2997250683!2d-70.62983129999999!3d-33.47278795!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9662c5410425af2f%3A0x8475d53c400f0931!2sSantiago%2C%20Regi%C3%B3n%20Metropolitana!5e0!3m2!1ses-419!2scl!4v1716188053838!5m2!1ses-419!2scl"
+                width="100%" height="400" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+        </div>
+    </div>
+</section>
+{% endblock %}
 
 {% block extra_js %}
 <script>

@@ -1,8 +1,39 @@
+import json
+import random
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
+from django.urls import reverse
+from django.views.decorators.csrf import csrf_exempt
 from .models import Alumno, Genero, Tutor
 from .forms import AlumnoForm
-from django.http import HttpResponse, JsonResponse
+
+# ===== Transbank (Webpay Plus - ambiente de integración) =====
+from transbank.webpay.webpay_plus.transaction import Transaction
+from transbank.common.options import WebpayOptions
+from transbank.common.integration_commerce_codes import IntegrationCommerceCodes
+from transbank.common.integration_api_keys import IntegrationApiKeys
+from transbank.common.integration_type import IntegrationType
+
+PERIODOS = {'mensual': 1, '3semanas': 0.75, '2semanas': 0.50, '1semana': 0.25}
+
+
+def _tx():
+    return Transaction(WebpayOptions(
+        IntegrationCommerceCodes.WEBPAY_PLUS,
+        IntegrationApiKeys.WEBPAY,
+        IntegrationType.TEST,
+    ))
+
+
+def _clp(n):
+    return '$' + f'{int(n):,}'.replace(',', '.')
+
+
+def _precio_item(item):
+    base = int(''.join(c for c in str(item.get('precio', '0')) if c.isdigit()) or 0)
+    factor = PERIODOS.get(item.get('periodo', 'mensual'), 1)
+    return round(base * factor) * int(item.get('cantidad', 1))
+
 
 # Create your views here.
 
@@ -43,7 +74,7 @@ def regis_alum(request):
         else:
             errors = form.errors.as_json()
             return JsonResponse({"success": False, "message": "Error en los datos.", "errors": errors})
-    
+
     form = AlumnoForm()
     context = {'form': form}
     return render(request, 'alumnos/regis_alum.html', context)
@@ -165,3 +196,78 @@ def alumnos_Update(request):
         return HttpResponse("Solicitud inválida.", status=400)
 
 
+# ============================================================
+#  PAGO CON WEBPAY PLUS (Transbank)
+# ============================================================
+
+def pago(request):
+    return render(request, 'alumnos/pago.html', {})
+
+
+def iniciar_webpay(request):
+    if request.method != 'POST':
+        return redirect('planes')
+
+    try:
+        amount = int(request.POST.get('amount', '0'))
+    except ValueError:
+        amount = 0
+
+    carrito_json = request.POST.get('carrito', '[]')
+    if amount < 350:
+        return redirect('planes')
+
+    buy_order = 'LB' + str(random.randrange(1000000, 9999999))
+    session_id = 'S' + str(random.randrange(1000000, 9999999))
+    return_url = request.build_absolute_uri(reverse('confirmacion'))
+
+    response = _tx().create(buy_order, session_id, amount, return_url)
+
+    request.session['orden_pendiente'] = {
+        'buy_order': buy_order,
+        'carrito': carrito_json,
+    }
+
+    return render(request, 'alumnos/redirect_webpay.html', {
+        'url': response['url'],
+        'token': response['token'],
+    })
+
+
+@csrf_exempt
+def confirmacion(request):
+    token = request.GET.get('token_ws') or request.POST.get('token_ws')
+    tbk_token = request.GET.get('TBK_TOKEN') or request.POST.get('TBK_TOKEN')
+
+    orden = request.session.pop('orden_pendiente', {})
+    try:
+        carrito = json.loads(orden.get('carrito', '[]'))
+    except (ValueError, TypeError):
+        carrito = []
+
+    items = [{
+        'titulo': it.get('titulo', ''),
+        'cantidad': it.get('cantidad', 1),
+        'precio': _clp(_precio_item(it)),
+    } for it in carrito]
+
+    ctx = {'items': items}
+
+    if token:
+        resp = _tx().commit(token)
+        aprobado = resp.get('response_code') == 0 and resp.get('status') == 'AUTHORIZED'
+        card = resp.get('card_detail') or {}
+        ctx.update({
+            'aprobado': aprobado,
+            'orden': resp.get('buy_order', orden.get('buy_order', '')),
+            'monto': _clp(resp.get('amount', 0)),
+            'codigo_autorizacion': resp.get('authorization_code', ''),
+            'tarjeta': card.get('card_number', ''),
+            'fecha': resp.get('transaction_date', ''),
+        })
+    elif tbk_token:
+        ctx.update({'aprobado': False, 'anulado': True})
+    else:
+        return redirect('planes')
+
+    return render(request, 'alumnos/confirmacion.html', ctx)

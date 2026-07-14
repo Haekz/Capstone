@@ -7,12 +7,16 @@
 
 {% block content %}
 <!-- esta parte es de la sección hero con la imagen de fondo y el título principal de la página -->
-<section class="hero-sub" style="height: 400px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; color: white;">
-    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1;"></div>
-    <img src="{% static 'alumnos/img/nosotros.jpeg' %}" alt="Nosotros" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0;">
-    <h1 style="position: relative; z-index: 2; font-size: 3rem;">Sobre Nosotros</h1>
+<!-- esta parte es del hero secundario con imagen de fondo, etiqueta, título y subtítulo -->
+<section class="hero-sub">
+    <img src="{% static 'alumnos/img/nosotros.jpeg' %}" alt="Nosotros" class="hero-sub-bg">
+    <div class="hero-sub-overlay"></div>
+    <div class="hero-sub-content">
+        <span class="hero-sub-tag">Quiénes somos</span>
+        <h1>Sobre Nosotros</h1>
+        <p>Conoce al equipo y la pasión que hay detrás de LBWUS.</p>
+    </div>
 </section>
-
 <!-- esta parte es de la sección about con la descripción del equipo e imagen ilustrativa al lado -->
 <section class="about">
     <div class="contenedor grid-2">
@@ -22,16 +26,19 @@
         <div class="about-text">
             <span class="badge">Nuestro equipo</span>
             <h2>Pasión por la enseñanza</h2>
-            <p>Nuestro equipo, formado por dos mujeres emprendedoras, busca apoyar a estudiantes y profesores al ofrecer oportunidades adicionales de ingreso. Esta iniciativa se centra en hacer una diferencia tangible en sus vidas.</p>
-            
+            <p>Nuestro equipo, formado por dos mujeres emprendedoras, busca apoyar a estudiantes y profesores al ofrecer
+                oportunidades adicionales de ingreso. Esta iniciativa se centra en hacer una diferencia tangible en sus
+                vidas.</p>
+
             <span class="badge">La mejor atención</span>
-            <p>Más que un negocio, nuestro proyecto se dedica a cubrir necesidades humanas esenciales, lo que nos llena de orgullo. Estamos comprometidos con mejorar la comunidad de manera significativa y duradera.</p>
+            <p>Más que un negocio, nuestro proyecto se dedica a cubrir necesidades humanas esenciales, lo que nos llena
+                de orgullo. Estamos comprometidos con mejorar la comunidad de manera significativa y duradera.</p>
         </div>
     </div>
 </section>
 
 <!-- esta parte es de la galería de imágenes que muestra los proyectos y trabajos del equipo -->
-<section class="portfolio" style="background: #f2f2f2; padding: 100px 0;">
+<section class="portfolio">
     <div class="contenedor">
         <div class="section-header">
             <h2>Nuestro Trabajo</h2>
@@ -39,16 +46,20 @@
         </div>
         <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
             <div class="img-card" style="position: relative; overflow: hidden; border-radius: 12px; height: 200px;">
-                <img src="{% static 'alumnos/img/img1.webp' %}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
+                <img src="{% static 'alumnos/img/img1.webp' %}" alt=""
+                    style="width: 100%; height: 100%; object-fit: cover;">
             </div>
             <div class="img-card" style="position: relative; overflow: hidden; border-radius: 12px; height: 200px;">
-                <img src="{% static 'alumnos/img/img8.jpg' %}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
+                <img src="{% static 'alumnos/img/img8.jpg' %}" alt=""
+                    style="width: 100%; height: 100%; object-fit: cover;">
             </div>
             <div class="img-card" style="position: relative; overflow: hidden; border-radius: 12px; height: 200px;">
-                <img src="{% static 'alumnos/img/img3.jpeg' %}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
+                <img src="{% static 'alumnos/img/img3.jpeg' %}" alt=""
+                    style="width: 100%; height: 100%; object-fit: cover;">
             </div>
             <div class="img-card" style="position: relative; overflow: hidden; border-radius: 12px; height: 200px;">
-                <img src="{% static 'alumnos/img/img5.webp' %}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
+                <img src="{% static 'alumnos/img/img5.webp' %}" alt=""
+                    style="width: 100%; height: 100%; object-fit: cover;">
             </div>
         </div>
     </div>
@@ -62,14 +73,16 @@
         </div>
         <div class="grid-2">
             <div class="service-card" style="display: flex; gap: 20px; text-align: left; align-items: center;">
-                <img src="{% static 'alumnos/img/face1.webp' %}" alt="Maria" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;">
+                <img src="{% static 'alumnos/img/face1.webp' %}" alt="Maria"
+                    style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;">
                 <div>
                     <h3>Maria Oliva</h3>
                     <p>"Excelente servicio, gracias a LBWUS la carrera se me hizo mucho más fácil!"</p>
                 </div>
             </div>
             <div class="service-card" style="display: flex; gap: 20px; text-align: left; align-items: center;">
-                <img src="{% static 'alumnos/img/face2.jpg' %}" alt="Vanessa" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;">
+                <img src="{% static 'alumnos/img/face2.jpg' %}" alt="Vanessa"
+                    style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;">
                 <div>
                     <h3>Vanessa Stil</h3>
                     <p>"Estoy muy conforme con el servicio de LBWUS, una empresa comprometida con sus estudiantes."</p>

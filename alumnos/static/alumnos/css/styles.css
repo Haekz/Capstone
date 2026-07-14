@@ -30,11 +30,9 @@ body.dark-mode {
 
 /* esta parte es de los toques específicos de color para algunos bloques en modo noche */
 body.dark-mode .header {
-    background: rgba(3, 2, 4, 0.85);
+    background: linear-gradient(120deg, #241640 0%, #34215c 50%, #241640 100%);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
-
-
 
 body.dark-mode .about,
 body.dark-mode .info {
@@ -44,6 +42,46 @@ body.dark-mode .info {
 body.dark-mode .service-card {
     background: #111827;
     border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* ===== Arreglos de contraste para modo oscuro ===== */
+
+/* Links del navbar: deben seguir blancos sobre el header oscuro */
+body.dark-mode .menu a,
+body.dark-mode .menu a:hover,
+body.dark-mode .menu a.active {
+    color: #ffffff;
+}
+
+/* "Registrarse": texto blanco sobre el botón morado */
+body.dark-mode .btn-principal {
+    color: #ffffff;
+    background-color: #7e22ce;
+}
+
+body.dark-mode .btn-principal:hover {
+    background-color: #6b21a8;
+}
+
+/* Footer en modo oscuro: morado profundo en vez del morado brillante */
+body.dark-mode .footer {
+    background: linear-gradient(120deg, #241640 0%, #34215c 50%, #241640 100%);
+}
+
+/* "Iniciar": su fondo es claro, así que el texto va oscuro */
+body.dark-mode .btn-secundario {
+    color: #111827;
+}
+
+/* Hero: el texto y los botones van sobre imágenes oscuras → siempre blancos */
+body.dark-mode .hero,
+body.dark-mode .hero .btn-accion,
+body.dark-mode .hero .btn-outline {
+    color: #ffffff;
+}
+
+body.dark-mode .hero .btn-outline {
+    border-color: #ffffff;
 }
 
 * {
@@ -98,7 +136,7 @@ section {
 /* esta parte es de la cabecera y el menú de navegación que siempre se queda flotando arriba */
 .header {
     height: var(--header-height);
-    background: rgba(161, 89, 216, 0.85); /* #a159d8 with opacity */
+    background: linear-gradient(120deg, #8e3ff0 0%, #a855f7 50%, #bd7af2 100%);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     position: fixed;
@@ -108,6 +146,23 @@ section {
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
     display: flex;
     align-items: center;
+}
+
+/* Navbar translúcido (efecto vidrio) al hacer scroll hacia abajo */
+.header.scrolled {
+    background: linear-gradient(120deg,
+            rgba(142, 63, 240, 0.72) 0%,
+            rgba(168, 85, 247, 0.72) 50%,
+            rgba(189, 122, 242, 0.72) 100%);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+body.dark-mode .header.scrolled {
+    background: linear-gradient(120deg,
+            rgba(36, 22, 64, 0.72) 0%,
+            rgba(52, 33, 92, 0.72) 50%,
+            rgba(36, 22, 64, 0.72) 100%);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
 .nav-box {
@@ -134,14 +189,25 @@ section {
 .logo-text {
     font-size: 1.5rem;
     font-weight: 700;
-    color: var(--text);
+    color: #ffffff;
     letter-spacing: -0.5px;
+    transition: var(--transition);
+}
+
+.logo a {
+    text-decoration: none;
+}
+
+.logo a:hover .logo-text {
+    color: #111827;
 }
 
 .menu {
     display: flex;
     list-style: none;
     gap: 30px;
+    flex: 1;
+    justify-content: center;
 }
 
 .menu a {
@@ -189,14 +255,18 @@ section {
 }
 
 .theme-icon {
-    height: 45px;
-    width: auto;
+    font-size: 1.6rem;
+    line-height: 1;
+    color: #ffffff;
     transition: var(--transition);
 }
 
-/* esta parte es por si queremos meterle algún filtro de brillo a la imagen en modo oscuro */
+.theme-btn:hover .theme-icon {
+    color: #111827;
+}
+
 body.dark-mode .theme-icon {
-    filter: brightness(0.8);
+    color: #f3f4f6;
 }
 
 /* esta parte es de los botones redondeados y sus hover con sombritas bonitas */
@@ -281,16 +351,40 @@ body.dark-mode .theme-icon {
     animation: fadeCarousel 15s infinite;
 }
 
-.hero-carousel img:nth-child(1) { animation-delay: 0s; }
-.hero-carousel img:nth-child(2) { animation-delay: 5s; }
-.hero-carousel img:nth-child(3) { animation-delay: 10s; }
+.hero-carousel img:nth-child(1) {
+    animation-delay: 0s;
+}
+
+.hero-carousel img:nth-child(2) {
+    animation-delay: 5s;
+}
+
+.hero-carousel img:nth-child(3) {
+    animation-delay: 10s;
+}
 
 @keyframes fadeCarousel {
-    0% { opacity: 0; }
-    10% { opacity: 1; }
-    33.33% { opacity: 1; }
-    43.33% { opacity: 0; }
-    100% { opacity: 0; }
+    0% {
+        opacity: 0;
+        transform: scale(1.05);
+    }
+
+    10% {
+        opacity: 1;
+    }
+
+    33.33% {
+        opacity: 1;
+    }
+
+    43.33% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 0;
+        transform: scale(1.22);
+    }
 }
 
 .hero-overlay {
@@ -299,7 +393,9 @@ body.dark-mode .theme-icon {
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.7));
+    background:
+        radial-gradient(circle at 50% 35%, rgba(126, 34, 206, 0.28), transparent 60%),
+        linear-gradient(to bottom, rgba(8, 4, 16, 0.55) 0%, rgba(8, 4, 16, 0.42) 42%, rgba(8, 4, 16, 0.82) 100%);
     z-index: -1;
 }
 
@@ -309,22 +405,177 @@ body.dark-mode .theme-icon {
 }
 
 .hero-content h1 {
-    font-size: clamp(2.5rem, 8vw, 4.5rem);
-    font-weight: 700;
-    margin-bottom: 20px;
-    line-height: 1.1;
+    font-size: clamp(2.25rem, 4.5vw, 3.4rem);
+    font-weight: 800;
+    margin-bottom: 18px;
+    line-height: 1.15;
+    letter-spacing: -1px;
 }
 
 .hero-content p {
-    font-size: 1.25rem;
-    margin-bottom: 40px;
-    opacity: 0.9;
+    font-size: 1.1rem;
+    max-width: 560px;
+    margin: 0 auto 36px;
+    opacity: 0.92;
+    line-height: 1.6;
 }
 
 .hero-btns {
     display: flex;
     gap: 20px;
     justify-content: center;
+}
+
+/* =========================================
+   HERO — mejoras visuales del carrusel
+   ========================================= */
+
+/* Etiqueta sobre el título */
+.hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    padding: 8px 18px;
+    border-radius: 50px;
+    margin-bottom: 22px;
+    animation: heroFadeUp 0.8s ease both;
+}
+
+.hero-eyebrow i {
+    color: var(--accent);
+    font-size: 0.95rem;
+}
+
+/* Palabra destacada del título con degradado dorado */
+.hero-accent {
+    background: linear-gradient(135deg, #fde68a 0%, #f59e0b 55%, #fb923c 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+}
+
+.hero-content h1 {
+    text-shadow: 0 2px 24px rgba(0, 0, 0, 0.35);
+}
+
+@keyframes heroFadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(22px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Indicadores (puntos) del carrusel */
+.hero-dots {
+    position: absolute;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 3;
+}
+
+.hero-dots span {
+    width: 9px;
+    height: 9px;
+    border-radius: 50px;
+    background: rgba(255, 255, 255, 0.45);
+    animation: heroDot 15s infinite;
+}
+
+.hero-dots span:nth-child(1) {
+    animation-delay: 0s;
+}
+
+.hero-dots span:nth-child(2) {
+    animation-delay: 5s;
+}
+
+.hero-dots span:nth-child(3) {
+    animation-delay: 10s;
+}
+
+@keyframes heroDot {
+    0% {
+        background: #fff;
+        width: 30px;
+    }
+
+    30% {
+        background: #fff;
+        width: 30px;
+    }
+
+    40% {
+        background: rgba(255, 255, 255, 0.45);
+        width: 9px;
+    }
+
+    100% {
+        background: rgba(255, 255, 255, 0.45);
+        width: 9px;
+    }
+}
+
+/* Indicador de scroll (mouse animado) */
+.hero-scroll {
+    position: absolute;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3;
+}
+
+.hero-scroll-mouse {
+    display: block;
+    width: 24px;
+    height: 38px;
+    border: 2px solid rgba(255, 255, 255, 0.6);
+    border-radius: 14px;
+    position: relative;
+}
+
+.hero-scroll-wheel {
+    position: absolute;
+    top: 7px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 8px;
+    background: #fff;
+    border-radius: 2px;
+    animation: heroScroll 1.6s ease-in-out infinite;
+}
+
+@keyframes heroScroll {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, 0);
+    }
+
+    30% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(-50%, 12px);
+    }
 }
 
 /* esta parte es de la sección sobre nosotros con la imagen a la izquierda y texto al lado */
@@ -405,6 +656,7 @@ body.dark-mode .theme-icon {
     transform: translateY(-10px);
     border-color: var(--primary);
 }
+
 .card-icon {
     font-size: 2.5rem;
     color: var(--primary);
@@ -418,7 +670,8 @@ body.dark-mode .theme-icon {
 .service-card.featured {
     background: var(--white);
     color: var(--text);
-    border: 2px solid var(--primary); /* esta parte es de ponerle un borde morado al plan destacado para que sobresalga */
+    border: 2px solid var(--primary);
+    /* esta parte es de ponerle un borde morado al plan destacado para que sobresalga */
 }
 
 .service-card.featured .card-icon {
@@ -464,33 +717,41 @@ body.dark-mode .theme-icon {
 }
 
 .social-box a {
-    width: 45px;
-    height: 45px;
-    background: #007bff;
+    width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    color: var(--white);
+    color: #ffffff;
+    font-size: 1.15rem;
     text-decoration: none;
-    box-shadow: var(--shadow);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
     transition: var(--transition);
 }
 
-.social-box a:hover {
-    transform: translateY(-2px); /* esta parte es del pequeño efecto de subir al pasar el mouse por encima */
+.social-fb {
+    background: #1877f2;
 }
 
-.social-box a:active {
-    background: #00bfff; /* esta parte es del color celeste de fondo cuando haces clic */
-    color: var(--white);
-    transform: translateY(0);
+.social-ig {
+    background: radial-gradient(circle at 30% 107%,
+            #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285aeb 90%);
+}
+
+.social-x {
+    background: #000000;
+}
+
+.social-box a:hover {
+    transform: translateY(-3px) scale(1.06);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.28);
 }
 
 /* esta parte es del pie de página con sus columnas de links y el boletín de correo */
 .footer {
-    background: #a159d8;
-    color: rgba(255, 255, 255, 0.9); /* Ligeramente más opaco para mayor contraste con el nuevo fondo */
+    background: linear-gradient(120deg, #8e3ff0 0%, #a855f7 50%, #bd7af2 100%);
+    color: rgba(255, 255, 255, 0.9);
     padding: 80px 0 30px;
 }
 
@@ -515,13 +776,14 @@ body.dark-mode .theme-icon {
 }
 
 .footer-col a {
-    color: inherit;
+    color: rgba(255, 255, 255, 0.85);
     text-decoration: none;
     transition: var(--transition);
 }
 
 .footer-col a:hover {
-    color: white;
+    color: #ffffff;
+    padding-left: 5px;
 }
 
 .subscribe-box {
@@ -537,12 +799,19 @@ body.dark-mode .theme-icon {
 }
 
 .subscribe-box button {
-    padding: 10px 20px;
-    background: var(--primary);
-    color: white;
+    padding: 12px 22px;
+    background: var(--accent);
+    color: #ffffff;
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
+    font-weight: 700;
     cursor: pointer;
+    transition: var(--transition);
+}
+
+.subscribe-box button:hover {
+    background: #d97706;
+    transform: translateY(-2px);
 }
 
 .footer-bottom {
@@ -550,6 +819,150 @@ body.dark-mode .theme-icon {
     padding-top: 30px;
     text-align: center;
     font-size: 0.9rem;
+}
+
+/* Galería "Nuestro Trabajo" */
+.portfolio {
+    background: #f2f2f2;
+    padding: 100px 0;
+}
+
+/* Mismo fondo oscuro que usan las otras secciones en modo noche */
+body.dark-mode .portfolio {
+    background: #0a0a0a;
+}
+
+/* ===== Hero secundario (cabecera de páginas internas: Nosotros, etc.) ===== */
+.hero-sub {
+    position: relative;
+    height: 420px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #ffffff;
+    overflow: hidden;
+    padding-top: var(--header-height);
+}
+
+.hero-sub-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+}
+
+.hero-sub-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(126, 34, 206, 0.55) 0%, rgba(15, 10, 25, 0.78) 100%);
+    z-index: 1;
+}
+
+.hero-sub-content {
+    position: relative;
+    z-index: 2;
+    padding: 0 20px;
+}
+
+.hero-sub-tag {
+    display: inline-block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 6px 16px;
+    border-radius: 50px;
+    margin-bottom: 18px;
+    backdrop-filter: blur(4px);
+}
+
+.hero-sub h1 {
+    font-size: clamp(2.2rem, 5vw, 3.4rem);
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1.1;
+    margin-bottom: 14px;
+}
+
+.hero-sub p {
+    font-size: 1.1rem;
+    max-width: 540px;
+    margin: 0 auto;
+    opacity: 0.92;
+    line-height: 1.6;
+}
+
+/* ===== Página de Servicios ===== */
+
+/* Encabezado */
+.services-intro {
+    margin-top: 120px;
+}
+
+.services-intro .badge {
+    margin-bottom: 14px;
+}
+
+/* Tarjeta de cada servicio */
+.service-block {
+    background: #f8fafc;
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    border-radius: 24px;
+    padding: 60px;
+    margin-bottom: 40px;
+    transition: var(--transition);
+}
+
+.service-block:last-child {
+    margin-bottom: 100px;
+}
+
+.service-block:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.07);
+}
+
+/* Versión oscura de la tarjeta */
+body.dark-mode .service-block {
+    background: #111827;
+    border-color: rgba(255, 255, 255, 0.07);
+}
+
+body.dark-mode .service-block:hover {
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+}
+
+/* Imagen con sombra */
+.service-block .about-img img {
+    width: 100%;
+    border-radius: 16px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+}
+
+/* Etiqueta pequeña sobre cada título */
+.service-eyebrow {
+    display: inline-block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--primary);
+    margin-bottom: 10px;
+}
+
+.service-block .about-text h2 {
+    margin-bottom: 14px;
+}
+
+/* Separa el botón del párrafo en las tarjetas de servicio */
+.service-block .btn-principal {
+    margin-top: 24px;
 }
 
 /* esta parte es del menú hamburguesa que se muestra en celulares y tablets pequeñas */
@@ -576,6 +989,7 @@ body.dark-mode .theme-icon {
         background: var(--bg);
         flex-direction: column;
         align-items: center;
+        justify-content: flex-start;
         padding-top: 50px;
         transition: 0.4s ease;
         z-index: 999;
@@ -587,14 +1001,16 @@ body.dark-mode .theme-icon {
 
     .menu a {
         font-size: 1.25rem;
-        color: var(--text); /* esta parte es para que las letras se lean bien sobre el fondo claro del celular */
+        color: var(--text);
+        /* esta parte es para que las letras se lean bien sobre el fondo claro del celular */
     }
 
     .menu a:hover,
     .menu a.active {
         background: rgba(168, 85, 247, 0.1);
         color: var(--primary);
-        transform: scale(1.05); /* esta parte es de una escala más suave para que no se vea tosco en celular */
+        transform: scale(1.05);
+        /* esta parte es de una escala más suave para que no se vea tosco en celular */
     }
 
     .menu-toggle:checked~.menu {
@@ -628,12 +1044,12 @@ body.dark-mode .theme-icon {
     }
 
     .hero-content h1 {
-        font-size: 2.5rem;
+        font-size: 2.1rem;
     }
 
     .hero-content p {
-        font-size: 1.1rem;
-        margin-bottom: 30px;
+        font-size: 1rem;
+        margin-bottom: 28px;
     }
 
     .hero-btns {
@@ -684,5 +1100,234 @@ body.dark-mode .theme-icon {
 
     .subscribe-box {
         flex-direction: column;
+    }
+}
+
+/* =========================================
+   CARRITO EN EL NAVBAR (global)
+   ========================================= */
+.submenu-cart {
+    position: relative;
+}
+
+.cart-btn {
+    position: relative;
+    background: transparent;
+    border: none;
+    color: var(--white);
+    font-size: 1.3rem;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.cart-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Ícono blanco también en modo oscuro */
+body.dark-mode .cart-btn {
+    color: #fff;
+}
+
+/* Contador de productos (burbuja) */
+.cart-count {
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    min-width: 17px;
+    height: 17px;
+    padding: 0 4px;
+    background: #ff5f00;
+    color: #fff;
+    font-size: 0.62rem;
+    font-weight: 800;
+    line-height: 1;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 0 2px rgba(40, 22, 70, 0.35);
+}
+
+.carrito-dropdown {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 50px;
+    background-color: var(--bg);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border-radius: 12px;
+    padding: 20px;
+    min-width: 400px;
+    z-index: 1100;
+}
+
+body.dark-mode .carrito-dropdown {
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.cart-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+    color: var(--text);
+}
+
+.cart-table th {
+    text-align: left;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    color: var(--text-light);
+}
+
+body.dark-mode .cart-table th {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.cart-table td {
+    padding: 8px 4px;
+    vertical-align: middle;
+}
+
+.cart-item-name {
+    max-width: 120px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.85rem;
+}
+
+.cart-item-price {
+    font-weight: 700;
+    color: var(--text);
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+.cart-periodo-select {
+    width: 100%;
+    min-width: 90px;
+    padding: 4px 6px;
+    border-radius: 6px;
+    border: 1px solid #a159d8;
+    background-color: var(--bg);
+    color: var(--text);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23a159d8'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+    padding-right: 20px;
+}
+
+body.dark-mode .cart-periodo-select {
+    background-color: #1c1917;
+    border-color: #a159d8;
+}
+
+.cart-periodo-select:focus {
+    border-color: var(--primary-dark);
+}
+
+.cart-remove-btn {
+    background: none;
+    border: none;
+    color: #ef4444;
+    font-size: 0.95rem;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.cart-remove-btn:hover {
+    background-color: rgba(239, 68, 68, 0.1);
+}
+
+.btn-vaciar {
+    display: block;
+    text-align: center;
+    background-color: #ef4444;
+    color: white;
+    text-decoration: none;
+    padding: 10px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+    width: 100%;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-vaciar:hover {
+    background-color: #dc2626;
+}
+
+.carrito-dropdown .btn-pagar {
+    display: block;
+    width: 100%;
+    margin-top: 8px;
+    padding: 11px 14px;
+    background: #a855f7;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: #fff;
+    text-decoration: none;
+    text-align: center;
+    letter-spacing: 0.5px;
+    box-sizing: border-box;
+    transition: background 0.2s, transform 0.15s;
+}
+
+.carrito-dropdown .btn-pagar:hover {
+    background: #9333ea;
+    transform: translateY(-1px);
+    color: #fff;
+}
+
+@media (max-width: 600px) {
+    .carrito-dropdown {
+        position: fixed;
+        top: calc(var(--header-height) + 8px);
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
+        width: 92vw;
+        min-width: 0;
+        max-width: 92vw;
+    }
+
+    .cart-table {
+        font-size: 0.78rem;
+    }
+
+    .cart-table th,
+    .cart-table td {
+        padding: 6px 3px;
+    }
+
+    .cart-item-name {
+        max-width: 80px;
+    }
+
+    .cart-periodo-select {
+        min-width: 0;
+        font-size: 0.72rem;
     }
 }
