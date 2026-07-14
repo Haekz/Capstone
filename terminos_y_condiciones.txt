@@ -1,0 +1,122 @@
+================================================================================
+          TÉRMINOS Y CONDICIONES DE USO DE LA PLATAFORMA - LBWUS
+                       (Learn Better With Us)
+================================================================================
+
+Bienvenido a LBWUS (Learn Better With Us). Los siguientes Términos y Condiciones
+(en adelante, los "Términos") regulan el acceso y uso de la plataforma web y 
+servicios móviles (en adelante, la "Plataforma"), de propiedad de LBWUS.
+
+Al registrarse como usuario, adquirir un plan de estudios o hacer uso de 
+cualquiera de los servicios ofrecidos en la Plataforma, usted acepta y se obliga 
+a cumplir con la totalidad de las cláusulas aquí descritas. Si no está de 
+acuerdo con estos Términos, deberá abstenerse de utilizar los servicios.
+
+--------------------------------------------------------------------------------
+1. DEFINICIONES
+--------------------------------------------------------------------------------
+- "Plataforma": Sitio web, portal del alumno, portal del profesor, servicios y 
+  aplicaciones proporcionadas por LBWUS.
+- "Usuario/Alumno": Persona natural registrada que hace uso de la Plataforma para 
+  buscar, cotizar, contratar y recibir clases o asesorías académicas.
+- "Profesor/Tutor": Profesional de la educación o estudiante avanzado que 
+  ofrece y dicta clases a través de la Plataforma.
+- "Clases": Sesiones de reforzamiento académico en distintas modalidades 
+  (online, presencial o material grabado) coordinadas mediante la Plataforma.
+
+--------------------------------------------------------------------------------
+2. DESCRIPCIÓN DEL SERVICIO
+--------------------------------------------------------------------------------
+LBWUS es una plataforma tecnológica interactiva que conecta a Alumnos con 
+Profesores y Tutores especializados para facilitar el reforzamiento académico.
+El servicio incluye:
+- Herramientas de búsqueda y filtrado de docentes según áreas de especialidad.
+- Constructor de Planes Personalizados ("Diseña tu Plan a Medida").
+- Aulas virtuales con enlaces a videollamadas, salas de streaming interactivo 
+  y sistemas de descarga de material de estudio.
+- Pasarela integrada de pagos en línea.
+
+--------------------------------------------------------------------------------
+3. REGISTRO DE CUENTAS Y SEGURIDAD
+--------------------------------------------------------------------------------
+- Para hacer uso del servicio, el Alumno debe registrar una cuenta única aportando 
+  datos verídicos y actualizados (nombre completo, correo electrónico y contraseña).
+- En caso de menores de edad, el registro y la contratación de planes debe ser 
+  supervisado y autorizado por su padre, madre o tutor legal.
+- El usuario es el único responsable de resguardar la confidencialidad de sus 
+  credenciales de acceso. Cualquier actividad realizada desde su cuenta se 
+  asumirá como autorizada por el titular.
+
+--------------------------------------------------------------------------------
+4. PLANES, TARIFAS Y CONDICIONES DE PAGO
+--------------------------------------------------------------------------------
+LBWUS ofrece diferentes modalidades de contratación de planes de estudio:
+- **Planes Estándar:** Básico, Medio y Superior, con horas y condiciones fijas.
+- **Planes Personalizados:** Cotizados a través de nuestro constructor virtual 
+  según la modalidad, horas semanales, cantidad de asignaturas, nivel del 
+  profesor, lugar físico (sede o domicilio) y situaciones especiales (NEE).
+
+Condiciones de Facturación:
+- Todos los valores se expresan en pesos chilenos (CLP) e incluyen los impuestos 
+  legales correspondientes.
+- Los pagos se procesan a través de la pasarela integrada compatible con 
+  Transbank Webpay.
+- La suscripción se realiza de manera mensual. El no pago oportuno de la 
+  tarifa mensual conllevará la suspensión temporal del acceso a la reserva de 
+  clases y el material exclusivo de la Plataforma.
+
+--------------------------------------------------------------------------------
+5. POLÍTICAS DE CANCELACIÓN Y REPROGRAMACIÓN
+--------------------------------------------------------------------------------
+- **Aviso de Inasistencia (Alumno):** Si un alumno no puede asistir a una clase 
+  agendada, deberá dar aviso al Profesor a través de la Plataforma con al menos 
+  24 horas de anticipación. De lo contrario, la sesión se considerará como dictada 
+  y no será reembolsable ni reprogramable.
+- **Inasistencia del Profesor:** Si el Profesor cancela una sesión, esta deberá 
+  ser reprogramada de común acuerdo con el Alumno sin costo adicional.
+
+--------------------------------------------------------------------------------
+6. NORMAS DE CONDUCTA Y USO ADECUADO
+--------------------------------------------------------------------------------
+Tanto Alumnos como Profesores se comprometen a interactuar bajo un marco de 
+respeto mutuo y decoro. Queda estrictamente prohibido:
+- Utilizar lenguaje ofensivo, discriminatorio o acosador en los chats académicos 
+  y videollamadas.
+- Utilizar la Plataforma para fines comerciales ajenos al reforzamiento escolar.
+- Intentar vulnerar la seguridad, realizar spam o extraer código fuente de la 
+  Plataforma.
+
+--------------------------------------------------------------------------------
+7. PROPIEDAD INTELECTUAL
+--------------------------------------------------------------------------------
+- Todo el contenido de la Plataforma (logotipos, código de programación, diseños, 
+  estilos CSS, íconos y textos) es propiedad exclusiva de LBWUS y está protegido 
+  por leyes de propiedad intelectual chilenas e internacionales.
+- El material de estudio descargado (guías, diapositivas y videos de clases 
+  grabadas) se proporciona únicamente para el uso personal y educativo del Alumno, 
+  estando prohibida su distribución comercial o su publicación en redes externas.
+
+--------------------------------------------------------------------------------
+8. LIMITACIÓN DE RESPONSABILIDAD
+--------------------------------------------------------------------------------
+- LBWUS provee las herramientas tecnológicas de conexión pedagógica, pero no 
+  garantiza resultados de aprobación académica específicos en colegios o 
+  universidades, los cuales dependen del desempeño individual del Alumno.
+- LBWUS no se hace responsable por fallas técnicas ajenas (cortes de suministro 
+  eléctrico, fallas en la red de internet del usuario o problemas de hardware) 
+  que dificulten la realización de clases online.
+
+--------------------------------------------------------------------------------
+9. MODIFICACIONES Y LEGISLACIÓN APLICABLE
+--------------------------------------------------------------------------------
+- LBWUS se reserva el derecho a modificar estos Términos en cualquier momento. 
+  Las actualizaciones serán publicadas en la Plataforma y entrarán en vigencia 
+  de manera inmediata.
+- Para todos los efectos legales, estos Términos se rigen bajo las leyes de la 
+  República de Chile. Cualquier disputa se someterá a la jurisdicción de los 
+  Tribunales de Justicia ordinarios.
+
+================================================================================
+       Si tiene alguna duda o consulta, puede contactar al equipo de 
+                    soporte técnico a través de la Plataforma.
+================================================================================
