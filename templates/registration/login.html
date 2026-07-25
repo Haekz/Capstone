@@ -28,9 +28,9 @@
     <form method="post" action="{% url 'login' %}">
         {% csrf_token %}
 
-        {% if form.errors %}
+        {% if form.errors or error %}
         <div class="error">
-            Usuario o contraseña incorrectos. Inténtalo de nuevo.
+            {{ error|default:"Usuario o contraseña incorrectos. Inténtalo de nuevo." }}
         </div>
         {% endif %}
 

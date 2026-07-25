@@ -45,7 +45,7 @@
             <button onclick="toggleTheme()" class="btn-theme-toggle" id="theme-toggler">
                 <i class="bi bi-sun-fill" id="theme-icon"></i>
             </button>
-            <a href="{% url 'home' %}" class="btn-logout">Cerrar Sesión</a>
+            <a href="{% url 'logout_alumno' %}" class="btn-logout">Cerrar Sesión</a>
         </div>
     </nav>
 
@@ -130,7 +130,7 @@
                         <!-- Welcome Banner -->
                         <div class="welcome-banner">
                             <div class="welcome-text">
-                                <h1>¡Hola de nuevo, Alumno!</h1>
+                                <h1>¡Hola de nuevo, {{ alumno.nombre }}!</h1>
                                 <p>Bienvenido a tu panel de control personalizado. Aquí podrás gestionar tu aprendizaje.</p>
                             </div>
                             <button class="btn-principal" id="dashboard-setup-btn" style="padding: 12px 24px;">Configurar Intereses</button>
@@ -827,7 +827,7 @@
             <div class="dashboard-view" id="view-profile">
                 <div class="profile-card">
                     <div class="profile-header">
-                        <div class="profile-avatar-large">A</div>
+                        <div class="profile-avatar-large">{{ alumno.nombre|slice:":1"|upper }}</div>
                         <div class="profile-title-box">
                             <h2>Perfil del Alumno</h2>
                             <span class="plan-badge"><i class="bi bi-x-circle-fill"></i> Sin Plan Activo</span>
@@ -837,19 +837,19 @@
                     <div class="profile-details-grid">
                         <div class="profile-field">
                             <label>Nombre Completo</label>
-                            <p>Alumno de Pruebas LBWUS</p>
+                            <p>{{ alumno.nombre }}</p>
                         </div>
                         <div class="profile-field">
                             <label>Correo Electrónico</label>
-                            <p>alumno@lbwus.cl</p>
+                            <p>{{ alumno.correo_electronico }}</p>
                         </div>
                         <div class="profile-field">
                             <label>Nivel de Educación</label>
-                            <p>Educación Media</p>
+                            <p>{{ alumno.get_nivel_educacion_display }}</p>
                         </div>
                         <div class="profile-field">
                             <label>Teléfono de Contacto</label>
-                            <p>+56 9 1234 5678</p>
+                            <p>{{ alumno.telefono|default:"No registrado" }}</p>
                         </div>
                     </div>
 

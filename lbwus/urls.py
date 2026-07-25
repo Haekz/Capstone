@@ -1,7 +1,7 @@
 
 from django.contrib import admin
 from django.urls import path, include
-from alumnos.views import home
+from alumnos.views import home, custom_login
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -10,5 +10,6 @@ urlpatterns = [
     path('alumnos/', include('alumnos.urls')),
     path('admin_portal/', include('admin_portal.urls')),
     path('profesor/', include('user_profesor.urls')),
+    path('accounts/login/', custom_login, name='login'),
     path('accounts/', include('django.contrib.auth.urls')),
 ]

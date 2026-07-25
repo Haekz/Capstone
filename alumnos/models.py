@@ -33,6 +33,7 @@ class Alumno(models.Model):
     telefono = models.CharField(max_length=20, blank=True)
     genero = models.ForeignKey(Genero, on_delete=models.SET_NULL, null=True)  
     id_tutor = models.ForeignKey(Tutor, on_delete=models.SET_NULL, null=True)
+    password = models.CharField(max_length=128, blank=True, null=True)
 
     def __str__(self):
         return self.nombre
