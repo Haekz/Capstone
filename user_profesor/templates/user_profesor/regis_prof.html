@@ -76,14 +76,25 @@
                         </div>
                     </div>
 
+                    <div class="prof-group-row">
+                        <div class="prof-group">
+                            <label for="password" class="prof-label">Contraseña</label>
+                            <input type="password" id="password" name="password" class="prof-input" placeholder="Mínimo 6 caracteres" required minlength="6">
+                        </div>
+                        <div class="prof-group">
+                            <label for="confirm_password" class="prof-label">Confirmar Contraseña</label>
+                            <input type="password" id="confirm_password" name="confirm_password" class="prof-input" placeholder="Repite la contraseña" required minlength="6">
+                        </div>
+                    </div>
+
                     <button type="submit" class="prof-btn">Registrarse y Entrar</button>
                 </form>
             </div>
 
             <!-- esta parte es del formulario de acceso rápido, aparece cuando el profe ya está registrado y solo quiere entrar -->
             <div id="box-login" class="prof-form-box">
-                <h2 class="prof-title">Acceso Rápido para Profesores</h2>
-                <p class="prof-subtitle">Entra directamente a tu panel sin contraseña. Debes estar registrado previamente.</p>
+                <h2 class="prof-title">Acceso para Profesores</h2>
+                <p class="prof-subtitle">Ingresa tus credenciales para acceder a tu panel de control.</p>
                 
                 <form id="form-login-prof" action="{% url 'login_prof' %}" method="POST" class="prof-form">
                     {% csrf_token %}
@@ -91,6 +102,11 @@
                     <div class="prof-group">
                         <label for="identificador" class="prof-label">RUT o Correo Electrónico</label>
                         <input type="text" id="identificador" name="identificador" class="prof-input" placeholder="ej. 12.345.678-9 o correo@ejemplo.com" required>
+                    </div>
+
+                    <div class="prof-group">
+                        <label for="login_password" class="prof-label">Contraseña</label>
+                        <input type="password" id="login_password" name="password" class="prof-input" placeholder="Ingresa tu contraseña" required>
                     </div>
 
                     <button type="submit" class="prof-btn prof-btn-accent">Ingresar al Panel</button>

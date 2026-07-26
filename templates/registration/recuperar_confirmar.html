@@ -1,0 +1,52 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nueva Contraseña — LBWUS</title>
+    <link class="icon" href="{% static 'alumnos/img/Logo.png' %}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{% static 'recuperar.css' %}">
+</head>
+<body>
+    <div class="card">
+        <div class="avatar">
+            <i class="bi bi-shield-lock-fill"></i>
+        </div>
+        {% if validlink %}
+            <h1>Nueva Contraseña</h1>
+            <p class="sub">Por favor, introduce tu nueva contraseña dos veces.</p>
+
+            <form method="post">
+                {% csrf_token %}
+                
+                {% if form.errors %}
+                <div class="error">
+                    Por favor, corrige los errores a continuación.
+                </div>
+                {% endif %}
+
+                {% for field in form %}
+                <div class="campo">
+                    <i class="bi bi-lock-fill"></i>
+                    <input type="password" name="{{ field.name }}" id="{{ field.id_for_label }}" placeholder="{{ field.label }}" required>
+                </div>
+                {% if field.errors %}
+                <div style="color: #be123c; font-size: 0.75rem; margin-top: -8px; margin-bottom: 12px; text-align: left;">
+                    {{ field.errors.0 }}
+                </div>
+                {% endif %}
+                {% endfor %}
+
+                <button type="submit" class="btn">Guardar</button>
+            </form>
+        {% else %}
+            <h1>Enlace Inválido</h1>
+            <p class="sub" style="margin-bottom: 24px; line-height: 1.4;">El enlace de restablecimiento de contraseña no es válido o ha expirado. Por favor, solicita uno nuevo.</p>
+
+            <a href="{% url 'password_reset' %}" class="btn" style="text-decoration:none; display:inline-block; line-height:1;">Solicitar Nuevo</a>
+        {% endif %}
+    </div>
+</body>
+</html>

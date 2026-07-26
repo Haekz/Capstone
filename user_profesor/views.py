@@ -15,13 +15,22 @@ def regis_prof(request):
             correo_electronico = request.POST.get('correo_electronico', '').strip()
             telefono = request.POST.get('telefono', '').strip()
             genero_id = request.POST.get('genero', '').strip()
+            password = request.POST.get('password', '').strip()
+            confirm_password = request.POST.get('confirm_password', '').strip()
 
             # Validar que todos los campos obligatorios estén presentes
-            if not all([nombre, rut, especialidad, direccion, fecha_nacimiento, correo_electronico, telefono, genero_id]):
+            if not all([nombre, rut, especialidad, direccion, fecha_nacimiento, correo_electronico, telefono, genero_id, password, confirm_password]):
                 return JsonResponse({"success": False, "message": "Todos los campos del registro son obligatorios."})
+
+            if password != confirm_password:
+                return JsonResponse({"success": False, "message": "Las contraseñas no coinciden."})
+
+            if len(password) < 6:
+                return JsonResponse({"success": False, "message": "La contraseña debe tener al menos 6 caracteres."})
 
             genero = get_object_or_404(Genero, id_genero=genero_id)
 
+            from django.contrib.auth.hashers import make_password
             # Crear el registro del Profesor
             profesor = Profesor.objects.create(
                 nombre=nombre,
@@ -31,7 +40,8 @@ def regis_prof(request):
                 fecha_nacimiento=fecha_nacimiento,
                 correo_electronico=correo_electronico,
                 telefono=telefono,
-                genero=genero
+                genero=genero,
+                password=make_password(password)
             )
 
             # Iniciar sesión automáticamente (guardar ID en la sesión)
@@ -52,16 +62,18 @@ def regis_prof(request):
 def login_prof(request):
     if request.method == 'POST':
         identificador = request.POST.get('identificador', '').strip()
+        password = request.POST.get('password', '').strip()
         
-        if not identificador:
-            return JsonResponse({"success": False, "message": "Por favor ingrese su RUT o Correo Electrónico."})
+        if not identificador or not password:
+            return JsonResponse({"success": False, "message": "Por favor ingrese todos los campos."})
 
         # Buscar profesor por Correo Electrónico o por RUT
-        profesor = Profesor.objects.filter(correo_electronico=identificador).first()
+        profesor = Profesor.objects.filter(correo_electronico__iexact=identificador).first()
         if not profesor:
-            profesor = Profesor.objects.filter(rut=identificador).first()
+            profesor = Profesor.objects.filter(rut__iexact=identificador).first()
 
-        if profesor:
+        from django.contrib.auth.hashers import check_password
+        if profesor and profesor.password and check_password(password, profesor.password):
             # Guardar ID en la sesión
             request.session['profesor_id'] = profesor.id_profesor
             return JsonResponse({
@@ -71,7 +83,7 @@ def login_prof(request):
         else:
             return JsonResponse({
                 "success": False, 
-                "message": "No se encontró ningún profesor registrado con esos datos. Es obligatorio registrarse primero."
+                "message": "Credenciales inválidas. Por favor verifique sus datos."
             })
 
     return redirect('regis_prof')
@@ -210,12 +222,21 @@ def regis_tutor(request):
             correo_electronico = request.POST.get('correo_electronico', '').strip()
             telefono = request.POST.get('telefono', '').strip()
             genero_id = request.POST.get('genero', '').strip()
+            password = request.POST.get('password', '').strip()
+            confirm_password = request.POST.get('confirm_password', '').strip()
 
-            if not all([nombre, rut, direccion, fecha_nacimiento, correo_electronico, telefono, genero_id]):
+            if not all([nombre, rut, direccion, fecha_nacimiento, correo_electronico, telefono, genero_id, password, confirm_password]):
                 return JsonResponse({"success": False, "message": "Todos los campos son obligatorios para registrarse."})
+
+            if password != confirm_password:
+                return JsonResponse({"success": False, "message": "Las contraseñas no coinciden."})
+
+            if len(password) < 6:
+                return JsonResponse({"success": False, "message": "La contraseña debe tener al menos 6 caracteres."})
 
             genero = get_object_or_404(Genero, id_genero=genero_id)
 
+            from django.contrib.auth.hashers import make_password
             tutor = Tutor.objects.create(
                 nombre=nombre,
                 rut=rut,
@@ -223,7 +244,8 @@ def regis_tutor(request):
                 fecha_nacimiento=fecha_nacimiento,
                 correo_electronico=correo_electronico,
                 telefono=telefono,
-                genero=genero
+                genero=genero,
+                password=make_password(password)
             )
 
             # esta parte es de guardar la sesión de administrador

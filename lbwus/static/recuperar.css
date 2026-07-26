@@ -1,0 +1,157 @@
+/* esta parte es del login simple con la paleta del proyecto */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* esta parte es del fondo lavanda suave */
+body {
+    font-family: 'Inter', sans-serif;
+    background: #f0eaf8;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* esta parte es de la tarjeta blanca del login */
+.card {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 44px 36px 36px;
+    width: 100%;
+    max-width: 380px;
+    margin: 20px;
+    box-shadow: 0 4px 30px rgba(168, 85, 247, 0.1);
+    text-align: center;
+}
+
+/* esta parte es del círculo morado con el ícono arriba */
+.avatar {
+    width: 70px;
+    height: 70px;
+    background: #a855f7;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+}
+
+.avatar i {
+    font-size: 1.9rem;
+    color: #ffffff;
+}
+
+/* esta parte es del título y subtítulo */
+.card h1 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #1e1b2e;
+    margin-bottom: 6px;
+}
+
+.card .sub {
+    font-size: 0.82rem;
+    color: #a0a3b1;
+    margin-bottom: 28px;
+}
+
+/* esta parte es de los inputs con fondo morado claro */
+.campo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #f5f0ff;
+    border: 1.5px solid #e9d5ff;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    text-align: left;
+}
+
+.campo:focus-within {
+    border-color: #a855f7;
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
+}
+
+.campo i {
+    color: #a855f7;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.campo input {
+    border: none;
+    background: none;
+    outline: none;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.88rem;
+    color: #1e1b2e;
+    width: 100%;
+}
+
+.campo input::placeholder { color: #c4b5fd; }
+
+/* esta parte es del mensaje de error */
+.error {
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    color: #be123c;
+    font-size: 0.8rem;
+    border-radius: 8px;
+    padding: 9px 12px;
+    margin-bottom: 14px;
+}
+
+/* esta parte es del botón de ingresar / enviar */
+.btn {
+    width: 100%;
+    padding: 14px;
+    margin-top: 4px;
+    background: #a855f7;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #ffffff;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+}
+
+.btn:hover { background: #9333ea; transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+
+/* esta parte es del texto pequeño de abajo */
+.footer {
+    margin-top: 22px;
+    font-size: 0.8rem;
+    color: #a0a3b1;
+}
+
+.footer a {
+    color: #a855f7;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.footer a:hover { text-decoration: underline; }
+
+/* esta parte es del link de volver al inicio */
+.btn-home {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 14px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #9ca3af;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.btn-home:hover { color: #a855f7; }

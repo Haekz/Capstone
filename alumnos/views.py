@@ -121,6 +121,26 @@ def custom_login(request):
                     request.session['admin_id'] = primer_tutor.id_tutor
             return redirect('dashboard_admin')
 
+        # 1.5 Intentar autenticar contra Tutor/Administrador registrado en la base de datos
+        tutores = Tutor.objects.filter(correo_electronico__iexact=username)
+        if not tutores.exists():
+            tutores = Tutor.objects.filter(rut__iexact=username)
+
+        for tutor in tutores:
+            if tutor.password and check_password(password, tutor.password):
+                request.session['admin_id'] = tutor.id_tutor
+                return redirect('dashboard_admin')
+
+        # 1.8 Intentar autenticar contra Profesor registrado en la base de datos
+        profesores = Profesor.objects.filter(correo_electronico__iexact=username)
+        if not profesores.exists():
+            profesores = Profesor.objects.filter(rut__iexact=username)
+
+        for profesor in profesores:
+            if profesor.password and check_password(password, profesor.password):
+                request.session['profesor_id'] = profesor.id_profesor
+                return redirect('panel_profesor')
+
         # 2. Intentar autenticar contra Alumno (insensible a mayúsculas/minúsculas y tolerando duplicados)
         alumnos = Alumno.objects.filter(correo_electronico__iexact=username)
         if not alumnos.exists():

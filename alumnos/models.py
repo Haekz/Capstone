@@ -18,6 +18,7 @@ class Tutor(models.Model):
     correo_electronico = models.EmailField(max_length=60)
     telefono = models.CharField(max_length=20, blank=True)
     genero = models.ForeignKey(Genero, on_delete=models.SET_NULL, null=True)
+    password = models.CharField(max_length=128, blank=True, null=True)
 
     def __str__(self):
         return self.nombre
@@ -48,6 +49,7 @@ class Profesor(models.Model):
     correo_electronico = models.EmailField(max_length=60)
     telefono = models.CharField(max_length=20)
     genero = models.ForeignKey(Genero, on_delete=models.SET_NULL, null=True)
+    password = models.CharField(max_length=128, blank=True, null=True)
 
     def __str__(self):
         return self.nombre
