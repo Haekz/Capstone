@@ -28,6 +28,27 @@ def regis_prof(request):
             if len(password) < 6:
                 return JsonResponse({"success": False, "message": "La contraseña debe tener al menos 6 caracteres."})
 
+            from alumnos.utils import validar_rut_chileno, usuario_existe
+            from datetime import datetime, date
+            
+            if not validar_rut_chileno(rut):
+                return JsonResponse({"success": False, "message": "El RUT ingresado no es válido."})
+                
+            error_msg = usuario_existe(rut, correo_electronico)
+            if error_msg:
+                return JsonResponse({"success": False, "message": error_msg})
+                
+            try:
+                fnac = datetime.strptime(fecha_nacimiento, '%Y-%m-%d').date()
+                today = date.today()
+                if fnac >= today:
+                    return JsonResponse({"success": False, "message": "La fecha de nacimiento no puede ser actual ni futura."})
+                age = today.year - fnac.year - ((today.month, today.day) < (fnac.month, fnac.day))
+                if age < 18:
+                    return JsonResponse({"success": False, "message": "Debes ser mayor o igual a 18 años para registrarte como profesor."})
+            except ValueError:
+                return JsonResponse({"success": False, "message": "Formato de fecha inválido."})
+
             genero = get_object_or_404(Genero, id_genero=genero_id)
 
             from django.contrib.auth.hashers import make_password
@@ -233,6 +254,27 @@ def regis_tutor(request):
 
             if len(password) < 6:
                 return JsonResponse({"success": False, "message": "La contraseña debe tener al menos 6 caracteres."})
+
+            from alumnos.utils import validar_rut_chileno, usuario_existe
+            from datetime import datetime, date
+            
+            if not validar_rut_chileno(rut):
+                return JsonResponse({"success": False, "message": "El RUT ingresado no es válido."})
+                
+            error_msg = usuario_existe(rut, correo_electronico)
+            if error_msg:
+                return JsonResponse({"success": False, "message": error_msg})
+                
+            try:
+                fnac = datetime.strptime(fecha_nacimiento, '%Y-%m-%d').date()
+                today = date.today()
+                if fnac >= today:
+                    return JsonResponse({"success": False, "message": "La fecha de nacimiento no puede ser actual ni futura."})
+                age = today.year - fnac.year - ((today.month, today.day) < (fnac.month, fnac.day))
+                if age < 18:
+                    return JsonResponse({"success": False, "message": "Debes ser mayor o igual a 18 años para registrarte como administrador."})
+            except ValueError:
+                return JsonResponse({"success": False, "message": "Formato de fecha inválido."})
 
             genero = get_object_or_404(Genero, id_genero=genero_id)
 

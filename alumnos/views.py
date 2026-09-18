@@ -1,3 +1,4 @@
+from alumnos.models import Profesor
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.contrib.auth import authenticate, login as auth_login

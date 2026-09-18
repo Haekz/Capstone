@@ -65,6 +65,14 @@ class AlumnoForm(forms.ModelForm):
 
         return fecha
 
+    def clean_rut(self):
+        rut = self.cleaned_data.get('rut')
+        if rut:
+            from .utils import validar_rut_chileno
+            if not validar_rut_chileno(rut):
+                raise forms.ValidationError("El RUT ingresado no es válido.")
+        return rut
+
     def clean(self):
         cleaned_data = super().clean()
         password = cleaned_data.get("password")
@@ -72,8 +80,17 @@ class AlumnoForm(forms.ModelForm):
 
         if password and confirm_password and password != confirm_password:
             raise forms.ValidationError({"confirm_password": "Las contraseñas no coinciden."})
+            
+        rut = cleaned_data.get("rut")
+        correo = cleaned_data.get("correo_electronico")
+        
+        if rut and correo:
+            from .utils import usuario_existe
+            error_msg = usuario_existe(rut, correo)
+            if error_msg:
+                raise forms.ValidationError(error_msg)
+                
         return cleaned_data
-
     def save(self, commit=True):
         alumno = super().save(commit=False)
         password = self.cleaned_data.get('password')
