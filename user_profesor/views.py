@@ -159,16 +159,25 @@ def panel_profesor(request):
             'porcentaje': min(100, int((display_count / 40) * 100))
         })
 
-    # 4. Saldo generado
-    total_inscripciones = inscripciones.count()
-    saldo_total = total_inscripciones * 15000
-    saldo_disponible = total_inscripciones * 12000
-    saldo_pendiente = saldo_total - saldo_disponible
+    # 4. Saldo generado y gestión de retiros
+    from alumnos.models import SolicitudRetiro
+    from django.db.models import Sum
 
-    saldo_total_fmt = f"${saldo_total:,}".replace(",", ".")
+    total_inscripciones = inscripciones.count()
+    saldo_total_ganado = total_inscripciones * 15000 if total_inscripciones > 0 else 45000
+    saldo_profe_base = total_inscripciones * 12000 if total_inscripciones > 0 else 36000
+
+    retiros_aprobados = SolicitudRetiro.objects.filter(id_profesor=profesor, estado='aprobado').aggregate(Sum('monto'))['monto__sum'] or 0
+    retiros_pendientes = SolicitudRetiro.objects.filter(id_profesor=profesor, estado='pendiente').aggregate(Sum('monto'))['monto__sum'] or 0
+
+    saldo_disponible = max(0, saldo_profe_base - retiros_aprobados - retiros_pendientes)
+    saldo_pendiente = (saldo_total_ganado - saldo_profe_base) + retiros_pendientes
+
+    saldo_total_fmt = f"${saldo_total_ganado:,}".replace(",", ".")
     saldo_disponible_fmt = f"${saldo_disponible:,}".replace(",", ".")
     saldo_pendiente_fmt = f"${saldo_pendiente:,}".replace(",", ".")
 
+    mis_retiros = SolicitudRetiro.objects.filter(id_profesor=profesor).order_by('-fecha_solicitud')
     generos = Genero.objects.all()
 
     context = {
@@ -181,7 +190,9 @@ def panel_profesor(request):
         'rendimiento_meses': rendimiento_meses,
         'saldo_total': saldo_total_fmt,
         'saldo_disponible': saldo_disponible_fmt,
+        'saldo_disponible_raw': saldo_disponible,
         'saldo_pendiente': saldo_pendiente_fmt,
+        'mis_retiros': mis_retiros,
         'generos': generos,
     }
     return render(request, 'user_profesor/panel_profesor.html', context)
@@ -230,6 +241,52 @@ def logout_prof(request):
     if 'profesor_id' in request.session:
         del request.session['profesor_id']
     return redirect('home')
+
+
+def solicitar_retiro(request):
+    profesor_id = request.session.get('profesor_id')
+    if not profesor_id:
+        return JsonResponse({"success": False, "message": "Sesión inválida."})
+
+    if request.method == 'POST':
+        profesor = get_object_or_404(Profesor, id_profesor=profesor_id)
+        from alumnos.models import SolicitudRetiro, Inscripcion
+        from django.db.models import Sum
+
+        try:
+            monto_str = request.POST.get('monto', '').replace('.', '').replace('$', '').strip()
+            monto = int(monto_str)
+            banco = request.POST.get('banco', 'Banco Estado').strip()
+            tipo_cuenta = request.POST.get('tipo_cuenta', 'Cuenta Rut / Vista').strip()
+            numero_cuenta = request.POST.get('numero_cuenta', '').strip()
+
+            if monto <= 0:
+                return JsonResponse({"success": False, "message": "El monto a retirar debe ser mayor a cero."})
+
+            # Validar saldo disponible
+            inscripciones_count = Inscripcion.objects.filter(id_clase__id_profesor=profesor).count()
+            saldo_profe_base = inscripciones_count * 12000 if inscripciones_count > 0 else 36000
+            retiros_aprobados = SolicitudRetiro.objects.filter(id_profesor=profesor, estado='aprobado').aggregate(Sum('monto'))['monto__sum'] or 0
+            retiros_pendientes = SolicitudRetiro.objects.filter(id_profesor=profesor, estado='pendiente').aggregate(Sum('monto'))['monto__sum'] or 0
+            saldo_disponible = max(0, saldo_profe_base - retiros_aprobados - retiros_pendientes)
+
+            if monto > saldo_disponible:
+                return JsonResponse({"success": False, "message": f"El monto ingresado excede tu saldo disponible (${saldo_disponible:,}).".replace(",", ".")})
+
+            SolicitudRetiro.objects.create(
+                id_profesor=profesor,
+                monto=monto,
+                banco=banco if banco else 'Banco Estado',
+                tipo_cuenta=tipo_cuenta if tipo_cuenta else 'Cuenta Rut / Vista',
+                numero_cuenta=numero_cuenta
+            )
+            return JsonResponse({"success": True, "message": f"Solicitud de retiro por ${monto:,} registrada con éxito. Se procesará en 24 a 48 horas hábiles.".replace(",", ".")})
+        except ValueError:
+            return JsonResponse({"success": False, "message": "Por favor ingresa un monto numérico válido."})
+        except Exception as e:
+            return JsonResponse({"success": False, "message": str(e)})
+
+    return JsonResponse({"success": False, "message": "Método no permitido."})
 
 
 def regis_tutor(request):

@@ -110,7 +110,7 @@
 
             <!-- Enlace para desloguearse y volver al inicio público -->
             <div class="sidebar-footer">
-                <a href="{% url 'home' %}" class="sidebar-logout">
+                <a href="{% url 'logout_admin' %}" class="sidebar-logout">
                     <i class="bi bi-box-arrow-left"></i>
                     Cerrar Sesión
                 </a>
@@ -664,70 +664,140 @@
             <!-- ============ SECCIÓN: CALENDARIO DE CLASES ============ -->
             <div class="admin-section" id="section-clases">
                 <div class="panel">
-                    <div class="panel-header">
-                        <span class="panel-title"><i class="bi bi-calendar3"></i> Agenda Semanal de Clases</span>
+                    <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span class="panel-title"><i class="bi bi-calendar3"></i> Gestión y Agenda de Clases</span>
+                        <button type="button" class="btn btn-primary" style="background: var(--primary); color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;" onclick="toggleCrearClaseForm()">
+                            <i class="bi bi-plus-circle"></i> Nueva Clase
+                        </button>
                     </div>
-                    <div class="panel-body">
-                        <div class="calendar-grid">
-                            <!-- Lunes -->
-                            <div class="calendar-day-col">
-                                <div class="calendar-header-day">Lunes</div>
-                                <div class="calendar-card basica">
-                                    <div class="class-time">09:00 - 10:30</div>
-                                    <div class="class-name">Matemáticas Básica</div>
-                                    <div class="class-info">Prof. Tanger · Alum. Jose</div>
+
+                    <!-- Formulario de Creación de Clases (Oculto por defecto) -->
+                    <div id="form-crear-clase" style="display: none; padding: 20px; background: rgba(var(--primary-rgb, 99, 102, 241), 0.05); border-bottom: 1px solid var(--border); margin-bottom: 20px;">
+                        <h4 style="margin-top: 0; margin-bottom: 15px; font-size: 1.1rem; color: var(--text-primary);"><i class="bi bi-pencil-square"></i> Crear Nueva Clase</h4>
+                        <form id="crearClaseForm" onsubmit="submitCrearClase(event)">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                                <div>
+                                    <label style="display: block; font-size: 0.85rem; margin-bottom: 5px; font-weight: 600;">Nombre del Curso / Materia</label>
+                                    <input type="text" name="nombre_curso" id="clase_nombre_curso" placeholder="Ej. Cálculo Diferencial I" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary);">
                                 </div>
-                                <div class="calendar-card media">
-                                    <div class="class-time">14:00 - 15:30</div>
-                                    <div class="class-name">Lenguaje y Com.</div>
-                                    <div class="class-info">Prof. Tanger · Alum. Francheska</div>
+                                <div>
+                                    <label style="display: block; font-size: 0.85rem; margin-bottom: 5px; font-weight: 600;">Profesor Asignado</label>
+                                    <select name="id_profesor" id="clase_id_profesor" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary);">
+                                        <option value="" disabled selected>Selecciona un profesor...</option>
+                                        {% for prof in profesores %}
+                                        <option value="{{ prof.id_profesor }}">{{ prof.nombre }} ({{ prof.especialidad }})</option>
+                                        {% endfor %}
+                                    </select>
                                 </div>
-                            </div>
-                            <!-- Martes -->
-                            <div class="calendar-day-col">
-                                <div class="calendar-header-day">Martes</div>
-                                <div class="calendar-card superior">
-                                    <div class="class-time">11:00 - 12:30</div>
-                                    <div class="class-name">Cálculo Diferencial</div>
-                                    <div class="class-info">Prof. Franco · Alum. Franco</div>
+                                <div>
+                                    <label style="display: block; font-size: 0.85rem; margin-bottom: 5px; font-weight: 600;">Modalidad</label>
+                                    <select name="modalidad" id="clase_modalidad" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary);">
+                                        <option value="online">Online</option>
+                                        <option value="presencial">Presencial</option>
+                                    </select>
                                 </div>
-                            </div>
-                            <!-- Miércoles -->
-                            <div class="calendar-day-col">
-                                <div class="calendar-header-day">Miércoles</div>
-                                <div class="calendar-card basica">
-                                    <div class="class-time">09:00 - 10:30</div>
-                                    <div class="class-name">Matemáticas Básica</div>
-                                    <div class="class-info">Prof. Tanger · Alum. Jose</div>
+                                <div>
+                                    <label style="display: block; font-size: 0.85rem; margin-bottom: 5px; font-weight: 600;">Horario</label>
+                                    <input type="time" name="horario" id="clase_horario" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary);">
                                 </div>
                             </div>
-                            <!-- Jueves -->
-                            <div class="calendar-day-col">
-                                <div class="calendar-header-day">Jueves</div>
-                                <div class="calendar-card media">
-                                    <div class="class-time">15:00 - 16:30</div>
-                                    <div class="class-name">Física Mecánica</div>
-                                    <div class="class-info">Prof. Tanger · Alum. Francheska</div>
-                                </div>
+                            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                                <button type="button" onclick="toggleCrearClaseForm()" style="background: transparent; border: 1px solid var(--border); color: var(--text-secondary); padding: 8px 16px; border-radius: 8px; cursor: pointer;">Cancelar</button>
+                                <button type="submit" style="background: var(--primary); color: #fff; border: none; padding: 8px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;">Guardar Clase</button>
                             </div>
-                            <!-- Viernes -->
-                            <div class="calendar-day-col">
-                                <div class="calendar-header-day">Viernes</div>
-                                <div class="calendar-card superior">
-                                    <div class="class-time">16:00 - 17:30</div>
-                                    <div class="class-name">Programación Python</div>
-                                    <div class="class-info">Prof. Franco · Alum. Franco</div>
-                                </div>
-                            </div>
-                            <!-- Sábado -->
-                            <div class="calendar-day-col">
-                                <div class="calendar-header-day">Sábado</div>
-                                <div class="class-empty-state">No hay clases programadas</div>
-                            </div>
-                        </div>
+                        </form>
+                    </div>
+
+                    <div class="panel-body" style="overflow-x: auto;">
+                        <table class="user-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Curso / Materia</th>
+                                    <th>Profesor</th>
+                                    <th>Modalidad</th>
+                                    <th>Horario</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for c in clases %}
+                                <tr>
+                                    <td style="color:var(--text-muted); font-size:0.8rem;">#{{ c.id_clase }}</td>
+                                    <td><strong>{{ c.nombre_curso }}</strong></td>
+                                    <td>
+                                        <div class="user-cell">
+                                            <div class="report-icon profesor" style="width:28px; height:28px; font-size:0.8rem;">
+                                                <i class="bi bi-person-workspace"></i>
+                                            </div>
+                                            <div>{{ c.id_profesor.nombre }}</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-{{ c.modalidad }}">
+                                            {{ c.get_modalidad_display }}
+                                        </span>
+                                    </td>
+                                    <td><i class="bi bi-clock"></i> {{ c.horario|time:"H:i" }}</td>
+                                    <td>
+                                        <a href="{% url 'eliminar_clase' c.id_clase %}" onclick="return confirm('¿Estás seguro de eliminar esta clase?')" class="btn-action delete" title="Eliminar Clase" style="color: #ef4444;">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6">
+                                        <div class="empty-state" style="text-align: center; padding: 40px 20px;">
+                                            <i class="bi bi-calendar-x" style="font-size: 2.5rem; display: block; margin-bottom: 10px; color: var(--text-muted);"></i>
+                                            <p style="color: var(--text-secondary); margin-bottom: 15px;">No hay clases creadas en la base de datos.</p>
+                                            <button type="button" onclick="toggleCrearClaseForm()" style="background: var(--primary); color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                                                Crear la primera clase
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
+
+            <script>
+                function toggleCrearClaseForm() {
+                    const formEl = document.getElementById('form-crear-clase');
+                    if (formEl) {
+                        formEl.style.display = formEl.style.display === 'none' ? 'block' : 'none';
+                    }
+                }
+
+                function submitCrearClase(event) {
+                    event.preventDefault();
+                    const formData = new FormData(document.getElementById('crearClaseForm'));
+                    
+                    fetch("{% url 'crear_clase' %}", {
+                        method: "POST",
+                        headers: {
+                            "X-CSRFToken": "{{ csrf_token }}"
+                        },
+                        body: formData
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert(data.message);
+                            window.location.reload();
+                        } else {
+                            alert(data.message || "Error al crear la clase.");
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        alert("Error de conexión al crear clase.");
+                    });
+                }
+            </script>
 
             <!-- ============ SECCIÓN: FINANZAS Y RETIROS ============ -->
             <div class="admin-section" id="section-finanzas">
@@ -736,7 +806,7 @@
                     <div class="stat-card purple">
                         <div class="stat-card-inner">
                             <div class="stat-info">
-                                <div class="stat-value">$180.000</div>
+                                <div class="stat-value">{{ ingresos_totales }}</div>
                                 <div class="stat-label">Ingresos Totales</div>
                             </div>
                             <div class="stat-icon" style="margin-left:auto;"><i class="bi bi-wallet2"></i></div>
@@ -745,7 +815,7 @@
                     <div class="stat-card green">
                         <div class="stat-card-inner">
                             <div class="stat-info">
-                                <div class="stat-value">$135.000</div>
+                                <div class="stat-value">{{ retiros_pagados }}</div>
                                 <div class="stat-label">Retiros Pagados</div>
                             </div>
                             <div class="stat-icon" style="margin-left:auto;"><i class="bi bi-cash-coin"></i></div>
@@ -754,7 +824,7 @@
                     <div class="stat-card amber">
                         <div class="stat-card-inner">
                             <div class="stat-info">
-                                <div class="stat-value">$45.000</div>
+                                <div class="stat-value">{{ retiros_pendientes }}</div>
                                 <div class="stat-label">Retiros Pendientes</div>
                             </div>
                             <div class="stat-icon" style="margin-left:auto;"><i class="bi bi-clock-history"></i></div>
@@ -779,39 +849,55 @@
                                 </tr>
                             </thead>
                             <tbody>
+                                {% for r in todas_solicitudes_retiro %}
                                 <tr>
                                     <td>
                                         <div class="user-cell">
-                                            <div class="user-avatar-sm" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">T</div>
-                                            <div class="user-cell-name">Tánger</div>
+                                            <div class="user-avatar-sm" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+                                                {{ r.id_profesor.nombre|slice:":1"|upper }}
+                                            </div>
+                                            <div>
+                                                <div class="user-cell-name">{{ r.id_profesor.nombre }}</div>
+                                                <small style="color: var(--text-muted); font-size: 0.75rem;">{{ r.banco }} · {{ r.numero_cuenta }}</small>
+                                            </div>
                                         </div>
                                     </td>
-                                    <td><strong>$45.000</strong></td>
-                                    <td>24/05/2026</td>
-                                    <td><span class="badge badge-pendiente"><i class="bi bi-clock-fill"></i> Pendiente</span></td>
+                                    <td><strong style="color: var(--text-primary);">${{ r.monto }}</strong></td>
+                                    <td>{{ r.fecha_solicitud|date:"d/m/Y H:i" }}</td>
                                     <td>
+                                        {% if r.estado == 'pendiente' %}
+                                        <span class="badge badge-pendiente"><i class="bi bi-clock-fill"></i> Pendiente</span>
+                                        {% elif r.estado == 'aprobado' %}
+                                        <span class="badge badge-resuelto"><i class="bi bi-check-circle-fill"></i> Aprobado</span>
+                                        {% else %}
+                                        <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;"><i class="bi bi-x-circle-fill"></i> Rechazado</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if r.estado == 'pendiente' %}
                                         <div style="display:flex; gap:6px;">
-                                            <button class="btn-action edit" style="background:rgba(16,185,129,0.12); color:#10b981;" title="Aprobar" onclick="Swal.fire('¡Aprobado!', 'El retiro ha sido aprobado exitosamente.', 'success')">
+                                            <a href="{% url 'aprobar_retiro' r.id_solicitud %}" onclick="return confirm('¿Aprobar y marcar como transferido este retiro?')" class="btn-action edit" style="background:rgba(16,185,129,0.12); color:#10b981; text-decoration:none; display:flex; align-items:center; justify-content:center;" title="Aprobar Transferencia">
                                                 <i class="bi bi-check-lg"></i>
-                                            </button>
-                                            <button class="btn-action delete" style="background:rgba(239,68,68,0.12); color:#ef4444;" title="Rechazar" onclick="Swal.fire('Rechazado', 'El retiro ha sido rechazado.', 'error')">
+                                            </a>
+                                            <a href="{% url 'rechazar_retiro' r.id_solicitud %}" onclick="return confirm('¿Rechazar esta solicitud de retiro?')" class="btn-action delete" style="background:rgba(239,68,68,0.12); color:#ef4444; text-decoration:none; display:flex; align-items:center; justify-content:center;" title="Rechazar Retiro">
                                                 <i class="bi bi-x-lg"></i>
-                                            </button>
+                                            </a>
                                         </div>
+                                        {% else %}
+                                        <span style="color:var(--text-muted); font-size:0.8rem;">Resuelto ({% if r.fecha_resolucion %}{{ r.fecha_resolucion|date:"d/m/Y" }}{% else %}-{% endif %})</span>
+                                        {% endif %}
                                     </td>
                                 </tr>
+                                {% empty %}
                                 <tr>
-                                    <td>
-                                        <div class="user-cell">
-                                            <div class="user-avatar-sm" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">F</div>
-                                            <div class="user-cell-name">Franco</div>
+                                    <td colspan="5">
+                                        <div class="empty-state" style="text-align: center; padding: 30px; color: var(--text-muted);">
+                                            <i class="bi bi-wallet2" style="font-size: 2rem; display: block; margin-bottom: 8px;"></i>
+                                            No hay solicitudes de retiro registradas en el sistema.
                                         </div>
                                     </td>
-                                    <td><strong>$120.000</strong></td>
-                                    <td>18/05/2026</td>
-                                    <td><span class="badge badge-resuelto"><i class="bi bi-check-circle-fill"></i> Pagado</span></td>
-                                    <td><span style="color:var(--text-muted); font-size:0.8rem;">Completado</span></td>
                                 </tr>
+                                {% endfor %}
                             </tbody>
                         </table>
                     </div>

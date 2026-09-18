@@ -241,13 +241,98 @@
                 </div>
             </div>
 
-            <!-- esta parte es del botón para solicitar la transferencia de los fondos disponibles -->
+            <!-- esta parte es del formulario para solicitar la transferencia de los fondos disponibles -->
             <div class="prof-card" style="margin-top: 30px;">
-                <h2 class="prof-card-title">Solicitar Transferencia de Fondos</h2>
+                <h2 class="prof-card-title"><i class="bi bi-bank"></i> Solicitar Transferencia de Fondos</h2>
                 <p class="prof-card-subtitle">Solicita el depósito de tu saldo disponible. Las transferencias tardan de 24 a 48 horas hábiles en procesarse.</p>
                 
-                <div class="prof-withdraw-action-box">
-                    <button class="prof-form-btn prof-form-btn-accent" onclick="requestWithdrawal()">Solicitar Retiro de Fondos</button>
+                {% if saldo_disponible_raw > 0 %}
+                <form id="formSolicitarRetiro" onsubmit="submitRetiroForm(event)" style="margin-top: 20px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px;">Monto a Retirar ($)</label>
+                            <input type="number" name="monto" id="retiro_monto" value="{{ saldo_disponible_raw }}" max="{{ saldo_disponible_raw }}" min="1000" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.15);">
+                            <small style="color: var(--primary); font-size: 0.78rem;">Máximo disponible: ${{ saldo_disponible_raw }}</small>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px;">Banco de Destino</label>
+                            <select name="banco" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.15);">
+                                <option value="Banco Estado">Banco Estado (Cuenta Rut)</option>
+                                <option value="Banco de Chile">Banco de Chile / Edwards</option>
+                                <option value="Banco Santander">Banco Santander</option>
+                                <option value="BCI">BCI</option>
+                                <option value="Scotiabank">Scotiabank</option>
+                                <option value="Banco Falabella">Banco Falabella</option>
+                                <option value="Tenpo / Mach / Prepago">Tenpo / Mach / Prepago</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px;">Tipo de Cuenta</label>
+                            <select name="tipo_cuenta" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.15);">
+                                <option value="Cuenta Rut / Vista">Cuenta Rut / Vista</option>
+                                <option value="Cuenta Corriente">Cuenta Corriente</option>
+                                <option value="Cuenta de Ahorro">Cuenta de Ahorro</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px;">Número de Cuenta</label>
+                            <input type="text" name="numero_cuenta" placeholder="Ej. 12345678" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.15);">
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end;">
+                        <button type="submit" class="prof-form-btn prof-form-btn-accent" style="padding: 10px 24px;">
+                            <i class="bi bi-send-check"></i> Enviar Solicitud de Retiro
+                        </button>
+                    </div>
+                </form>
+                {% else %}
+                <div style="padding: 20px; background: rgba(245, 158, 11, 0.08); border-radius: 8px; border-left: 4px solid #f59e0b; margin-top: 15px;">
+                    <p style="margin: 0; color: #92400e; font-size: 0.92rem;"><i class="bi bi-info-circle-fill"></i> No cuentas con saldo disponible suficiente para solicitar un retiro en este momento. Las clases impartidas acreditarán tu saldo automáticamente.</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Tabla de historial de solicitudes de retiro -->
+            <div class="prof-card" style="margin-top: 30px;">
+                <h2 class="prof-card-title"><i class="bi bi-clock-history"></i> Historial de Mis Retiros</h2>
+                <div style="overflow-x: auto; margin-top: 15px;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid rgba(0,0,0,0.08); font-size: 0.85rem; color: #6b7280;">
+                                <th style="padding: 10px;">ID</th>
+                                <th style="padding: 10px;">Fecha Solicitud</th>
+                                <th style="padding: 10px;">Monto</th>
+                                <th style="padding: 10px;">Banco / Cuenta</th>
+                                <th style="padding: 10px;">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ret in mis_retiros %}
+                            <tr style="border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 0.9rem;">
+                                <td style="padding: 12px 10px; color: #9ca3af; font-family: monospace;">#RET-{{ ret.id_solicitud }}</td>
+                                <td style="padding: 12px 10px;">{{ ret.fecha_solicitud|date:"d/m/Y H:i" }}</td>
+                                <td style="padding: 12px 10px; font-weight: 700; color: #10b981;">${{ ret.monto }}</td>
+                                <td style="padding: 12px 10px;">{{ ret.banco }} ({{ ret.numero_cuenta }})</td>
+                                <td style="padding: 12px 10px;">
+                                    {% if ret.estado == 'pendiente' %}
+                                    <span style="background: rgba(245, 158, 11, 0.15); color: #b45309; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.8rem;"><i class="bi bi-clock"></i> Pendiente</span>
+                                    {% elif ret.estado == 'aprobado' %}
+                                    <span style="background: rgba(16, 185, 129, 0.15); color: #047857; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.8rem;"><i class="bi bi-check-circle-fill"></i> Aprobado / Transferido</span>
+                                    {% else %}
+                                    <span style="background: rgba(239, 68, 68, 0.15); color: #b91c1c; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.8rem;"><i class="bi bi-x-circle-fill"></i> Rechazado</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 30px; color: #9ca3af;">
+                                    <i class="bi bi-inbox" style="font-size: 1.8rem; display: block; margin-bottom: 6px;"></i>
+                                    Aún no has solicitado retiros de fondos.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </section>
@@ -420,24 +505,54 @@
         });
     });
 
-    // esta parte es de la función que simula la solicitud de retiro de fondos del profe
-    function requestWithdrawal() {
+    // función para enviar la solicitud de retiro de fondos real al backend
+    function submitRetiroForm(event) {
+        event.preventDefault();
+        const formEl = document.getElementById('formSolicitarRetiro');
+        const formData = new FormData(formEl);
+        const monto = document.getElementById('retiro_monto').value;
+
         Swal.fire({
-            title: '¿Confirmas tu solicitud de retiro?',
-            text: "Se iniciará el proceso de transferencia de tu saldo disponible.",
+            title: '¿Confirmar Solicitud de Retiro?',
+            text: `Se enviará la solicitud de transferencia por $${monto} a tu cuenta bancaria.`,
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: '#f59e0b',
             cancelButtonColor: '#6b7280',
-            confirmButtonText: 'Sí, solicitar retiro',
+            confirmButtonText: 'Sí, enviar solicitud',
             cancelButtonText: 'Cancelar'
         }).then((result) => {
             if (result.isConfirmed) {
-                Swal.fire({
-                    title: 'Solicitud Recibida',
-                    text: 'Tu solicitud de retiro está siendo procesada. Recibirás tu saldo en las próximas 48 horas hábiles.',
-                    icon: 'success',
-                    confirmButtonColor: '#a855f7'
+                fetch("{% url 'solicitar_retiro' %}", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: formData
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            title: '¡Solicitud Registrada!',
+                            text: data.message,
+                            icon: 'success',
+                            confirmButtonColor: '#10b981'
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'Atención',
+                            text: data.message || 'No se pudo procesar la solicitud.',
+                            icon: 'warning',
+                            confirmButtonColor: '#ef4444'
+                        });
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    Swal.fire('Error', 'Hubo un error de conexión al procesar el retiro.', 'error');
                 });
             }
         });
@@ -860,7 +975,7 @@
 
     // esta parte es de exponer todas nuestras funciones interactivas al ámbito global window para que funcionen con los eventos onclick
     window.switchSection = switchSection;
-    window.requestWithdrawal = requestWithdrawal;
+    window.submitRetiroForm = submitRetiroForm;
     window.renderTeacherInbox = renderTeacherInbox;
     window.sendTeacherMessage = sendTeacherMessage;
     window.filterAlumnChats = filterAlumnChats;

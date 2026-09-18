@@ -92,7 +92,21 @@ def alumno_pag1(request):
     if not alumno_id:
         return redirect('login')
     alumno = get_object_or_404(Alumno, id_alumno=alumno_id)
-    context = {'alumno': alumno}
+    from alumnos.models import Reporte, Profesor, Clase, Inscripcion
+    mis_reportes = Reporte.objects.filter(remitente_tipo='alumno', remitente_nombre=alumno.nombre).order_by('-fecha_reporte')
+    profesores_list = Profesor.objects.all()
+    clases_disponibles = Clase.objects.all().select_related('id_profesor')
+    mis_inscripciones = Inscripcion.objects.filter(id_alumno=alumno).select_related('id_clase', 'id_clase__id_profesor').order_by('-fecha_inscripcion')
+    inscritas_ids = list(mis_inscripciones.values_list('id_clase_id', flat=True))
+
+    context = {
+        'alumno': alumno,
+        'mis_reportes': mis_reportes,
+        'profesores_list': profesores_list,
+        'clases_disponibles': clases_disponibles,
+        'mis_inscripciones': mis_inscripciones,
+        'inscritas_ids': inscritas_ids,
+    }
     return render(request, 'alumnos/Alumno_pag1.html', context)
 
 
@@ -161,5 +175,90 @@ def logout_alumno(request):
     if 'alumno_id' in request.session:
         del request.session['alumno_id']
     return redirect('home')
+
+import json
+from .models import Reporte, Clase, Inscripcion
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt
+def enviar_reporte(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            descripcion = data.get('descripcion')
+            
+            alumno_id = request.session.get('alumno_id')
+            profesor_id = request.session.get('profesor_id')
+            
+            if not descripcion:
+                return JsonResponse({"success": False, "message": "La descripción no puede estar vacía."})
+                
+            if alumno_id:
+                alumno = Alumno.objects.get(id_alumno=alumno_id)
+                Reporte.objects.create(
+                    remitente_tipo='alumno',
+                    remitente_nombre=alumno.nombre,
+                    descripcion=descripcion
+                )
+                return JsonResponse({"success": True})
+            elif profesor_id:
+                profesor = Profesor.objects.get(id_profesor=profesor_id)
+                Reporte.objects.create(
+                    remitente_tipo='profesor',
+                    remitente_nombre=profesor.nombre,
+                    descripcion=descripcion
+                )
+                return JsonResponse({"success": True})
+            else:
+                return JsonResponse({"success": False, "message": "No hay sesión activa."})
+                
+        except Exception as e:
+            return JsonResponse({"success": False, "message": str(e)})
+            
+    return JsonResponse({"success": False, "message": "Método no permitido."})
+
+
+@csrf_exempt
+def inscribir_clase(request):
+    alumno_id = request.session.get('alumno_id')
+    if not alumno_id:
+        return JsonResponse({'success': False, 'message': 'Debes iniciar sesión como alumno para inscribirte.'})
+    
+    if request.method == 'POST':
+        try:
+            alumno = get_object_or_404(Alumno, id_alumno=alumno_id)
+            if request.content_type == 'application/json':
+                data = json.loads(request.body)
+                id_clase = data.get('id_clase')
+            else:
+                id_clase = request.POST.get('id_clase')
+            
+            if not id_clase:
+                return JsonResponse({'success': False, 'message': 'ID de clase no proporcionado.'})
+                
+            clase = get_object_or_404(Clase, id_clase=id_clase)
+            
+            # Validar si ya está inscrito
+            if Inscripcion.objects.filter(id_alumno=alumno, id_clase=clase).exists():
+                return JsonResponse({'success': False, 'message': f'Ya estás inscrito en la clase "{clase.nombre_curso}".'})
+                
+            Inscripcion.objects.create(
+                id_alumno=alumno,
+                id_clase=clase
+            )
+            return JsonResponse({'success': True, 'message': f'¡Te has inscrito exitosamente a "{clase.nombre_curso}" con el profesor {clase.id_profesor.nombre}!'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
+            
+    return JsonResponse({'success': False, 'message': 'Método no permitido.'})
+
+
+def cancelar_inscripcion(request, pk):
+    alumno_id = request.session.get('alumno_id')
+    if not alumno_id:
+        return redirect('login')
+    inscripcion = get_object_or_404(Inscripcion, id_inscripcion=pk, id_alumno_id=alumno_id)
+    inscripcion.delete()
+    return redirect('alumno_pag1')
 
 

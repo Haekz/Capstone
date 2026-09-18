@@ -86,5 +86,20 @@ class Reporte(models.Model):
         return f"Reporte de {self.remitente_nombre} ({self.remitente_tipo})"
 
 
+class SolicitudRetiro(models.Model):
+    id_solicitud = models.AutoField(primary_key=True)
+    id_profesor = models.ForeignKey(Profesor, on_delete=models.CASCADE, related_name='retiros')
+    monto = models.IntegerField()
+    fecha_solicitud = models.DateTimeField(auto_now_add=True)
+    estado = models.CharField(max_length=15, choices=[('pendiente', 'Pendiente'), ('aprobado', 'Aprobado'), ('rechazado', 'Rechazado')], default='pendiente')
+    banco = models.CharField(max_length=60, default='Banco Estado')
+    tipo_cuenta = models.CharField(max_length=40, default='Cuenta Rut / Vista')
+    numero_cuenta = models.CharField(max_length=40, blank=True, default='')
+    fecha_resolucion = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Retiro #{self.id_solicitud} - {self.id_profesor.nombre} (${self.monto}) - {self.estado}"
+
+
 
 

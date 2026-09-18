@@ -1,6 +1,10 @@
 #from django.conf.urls import url
 from django.urls import path
-from .views import home, contactos, nosotros, planes, servicios, simulador, opcion_user, regis_alum, alumnos_reg, alumno_pag1, custom_login, logout_alumno
+from .views import (
+    home, contactos, nosotros, planes, servicios, simulador, opcion_user,
+    regis_alum, alumnos_reg, alumno_pag1, custom_login, logout_alumno,
+    enviar_reporte, inscribir_clase, cancelar_inscripcion
+)
 
 urlpatterns = [
     path('', home, name='home'),
@@ -15,5 +19,8 @@ urlpatterns = [
     path('alumno_home', alumno_pag1, name='alumno_pag1'),
     path('login/', custom_login, name='custom_login_alumno'),
     path('logout_alumno/', logout_alumno, name='logout_alumno'),
+    path('enviar_reporte/', enviar_reporte, name='enviar_reporte'),
+    path('inscribir_clase/', inscribir_clase, name='inscribir_clase'),
+    path('cancelar_inscripcion/<int:pk>/', cancelar_inscripcion, name='cancelar_inscripcion'),
 ]
 

@@ -239,30 +239,82 @@
                     
                     <!-- Upcoming Classes -->
                     <div class="classes-subsection" style="margin-bottom: 40px;">
-                        <h3 class="subsection-title"><i class="bi bi-calendar-check-fill"></i> Clases Próximas</h3>
+                        <h3 class="subsection-title"><i class="bi bi-calendar-check-fill"></i> Clases Próximas en las que estás Inscrito</h3>
                         <div class="classes-grid" id="upcoming-classes-container">
-                            <!-- Populated via JS -->
+                            {% if mis_inscripciones %}
+                                {% for insc in mis_inscripciones %}
+                                <div class="class-item-card">
+                                    <div class="class-card-header">
+                                        <span class="class-badge">{{ insc.id_clase.id_profesor.especialidad }}</span>
+                                        <span class="class-status-badge" style="background: rgba(16, 185, 129, 0.1); color: #10b981; font-weight: 600;">Inscrito</span>
+                                    </div>
+                                    <div class="class-card-body">
+                                        <h4>{{ insc.id_clase.nombre_curso }}</h4>
+                                        <p class="class-teacher-type"><i class="bi bi-person-workspace"></i> Prof. {{ insc.id_clase.id_profesor.nombre }}</p>
+                                        <div class="class-info-item">
+                                            <i class="bi bi-calendar-event"></i>
+                                            <span>Fecha de inscripción: {{ insc.fecha_inscripcion|date:"d/m/Y" }}</span>
+                                        </div>
+                                        <div class="class-info-item">
+                                            <i class="bi bi-clock"></i>
+                                            <span>Horario: {{ insc.id_clase.horario|time:"H:i" }} hrs ({{ insc.id_clase.get_modalidad_display }})</span>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; gap: 8px; padding: 0 15px 15px 15px;">
+                                        <button class="btn-join-class" style="flex: 1;" onclick="joinVideoCall('{{ insc.id_clase.id_profesor.nombre }}', 'https://meet.google.com/lbwus-class-{{ insc.id_clase.id_clase }}')">
+                                            <i class="bi bi-camera-video-fill"></i> Unirse a la Clase
+                                        </button>
+                                        <a href="{% url 'cancelar_inscripcion' insc.id_inscripcion %}" onclick="return confirm('¿Seguro que deseas cancelar tu inscripción?')" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; padding: 10px 14px; text-decoration: none; display: flex; align-items: center; justify-content: center;" title="Cancelar Inscripción">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="empty-teachers-state" style="grid-column: 1/-1;">
+                                    <i class="bi bi-calendar-x"></i>
+                                    <p>No estás inscrito en ninguna clase todavía. ¡Revisa el catálogo abajo para inscribirte a tu primera clase!</p>
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
-                    
-                    <!-- Past Classes -->
-                    <div class="classes-subsection">
-                        <h3 class="subsection-title"><i class="bi bi-clock-history"></i> Historial de Clases</h3>
-                        <div class="classes-table-container">
-                            <table class="classes-table">
-                                <thead>
-                                    <tr>
-                                        <th>Profesor/Tutor</th>
-                                        <th>Materia</th>
-                                        <th>Fecha y Hora</th>
-                                        <th>Duración</th>
-                                        <th>Estado</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="past-classes-container">
-                                    <!-- Populated via JS -->
-                                </tbody>
-                            </table>
+
+                    <!-- Available Classes Catalog to Enroll -->
+                    <div class="classes-subsection" id="catalogo-clases-seccion" style="margin-bottom: 40px;">
+                        <h3 class="subsection-title"><i class="bi bi-journal-plus"></i> Catálogo de Clases Disponibles</h3>
+                        <div class="classes-grid">
+                            {% for c in clases_disponibles %}
+                            <div class="class-item-card">
+                                <div class="class-card-header">
+                                    <span class="class-badge">{{ c.id_profesor.especialidad }}</span>
+                                    <span class="class-status-badge" style="background: rgba(99, 102, 241, 0.1); color: var(--primary);">{{ c.get_modalidad_display }}</span>
+                                </div>
+                                <div class="class-card-body">
+                                    <h4>{{ c.nombre_curso }}</h4>
+                                    <p class="class-teacher-type"><i class="bi bi-person"></i> Prof. {{ c.id_profesor.nombre }}</p>
+                                    <div class="class-info-item">
+                                        <i class="bi bi-clock"></i>
+                                        <span>Horario: {{ c.horario|time:"H:i" }} hrs</span>
+                                    </div>
+                                </div>
+                                <div style="padding: 0 15px 15px 15px;">
+                                    {% if c.id_clase in inscritas_ids %}
+                                    <button disabled style="width: 100%; background: rgba(16, 185, 129, 0.15); color: #059669; border: 1px solid rgba(16, 185, 129, 0.3); padding: 12px; border-radius: 8px; font-weight: 600; cursor: default;">
+                                        <i class="bi bi-check-circle-fill"></i> Ya estás inscrito
+                                    </button>
+                                    {% else %}
+                                    <button class="btn-join-class" style="width: 100%; background: var(--primary); color: #fff;" onclick="inscribirAClase({{ c.id_clase }}, '{{ c.nombre_curso }}')">
+                                        <i class="bi bi-plus-circle"></i> Inscribirme a esta Clase
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="empty-teachers-state" style="grid-column: 1/-1;">
+                                <i class="bi bi-inbox"></i>
+                                <p>No hay clases abiertas disponibles en este momento. El administrador las publicará pronto.</p>
+                            </div>
+                            {% endfor %}
                         </div>
                     </div>
                 </div>
@@ -308,7 +360,29 @@
                         <div class="support-list-card">
                             <h3>Mis Reportes Enviados</h3>
                             <div class="tickets-list-container" id="tickets-list-container">
-                                <!-- Populated via JS -->
+                                {% if mis_reportes %}
+                                    {% for r in mis_reportes %}
+                                    <div class="ticket-item" style="border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin-bottom: 15px;">
+                                        <div class="ticket-header" style="margin-bottom: 8px; display: flex; justify-content: space-between;">
+                                            <span class="ticket-id" style="font-family: monospace; color: var(--primary); font-weight: bold;">TKT-{{ r.id_reporte }}</span>
+                                            <span class="ticket-badge {% if r.estado == 'pendiente' %}status-pending{% else %}status-resolved{% endif %}" style="padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; {% if r.estado == 'pendiente' %}background: #fffbeb; color: #d97706;{% else %}background: #ecfdf5; color: #059669;{% endif %}">
+                                                {{ r.estado|title }}
+                                            </span>
+                                        </div>
+                                        <div class="ticket-description" style="margin-bottom: 10px; font-size: 0.9rem; line-height: 1.4;">
+                                            {{ r.descripcion|linebreaksbr }}
+                                        </div>
+                                        <div class="ticket-meta" style="font-size: 0.8rem; color: var(--text-light);">
+                                            Enviado el: {{ r.fecha_reporte|date:"d M Y" }}
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="empty-teachers-state" style="text-align: center; padding: 30px; color: var(--text-light);">
+                                        <i class="bi bi-chat-left-text" style="font-size: 2rem; display: block; margin-bottom: 10px;"></i>
+                                        <p>No has enviado ningún reporte de soporte todavía.</p>
+                                    </div>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -1158,13 +1232,21 @@
         // ── DATA POOLS ──
         // Teachers
         const teachers = [
-            { id: 1, name: "Dr. Carlos Ruiz", specialties: ["Matemáticas", "Física"], distance: 0.8, rating: "4.9 ⭐", price: "$15.000", initial: "CR" },
-            { id: 2, name: "Lic. María José Valenzuela", specialties: ["Lenguaje", "Historia"], distance: 1.2, rating: "4.8 ⭐", price: "$12.000", initial: "MJ" },
-            { id: 3, name: "Ing. David Silva", specialties: ["Programación", "Matemáticas"], distance: 1.5, rating: "5.0 ⭐", price: "$18.000", initial: "DS" },
-            { id: 4, name: "Prof. Ana Contreras", specialties: ["Inglés"], distance: 2.1, rating: "4.7 ⭐", price: "$14.000", initial: "AC" },
-            { id: 5, name: "Dra. Lucía Méndez", specialties: ["Química", "Biología"], distance: 2.8, rating: "4.9 ⭐", price: "$16.000", initial: "LM" },
-            { id: 6, name: "Prof. Pedro Rojas", specialties: ["Física", "Química"], distance: 3.2, rating: "4.6 ⭐", price: "$13.000", initial: "PR" },
-            { id: 7, name: "Msc. Sofía Vergara", specialties: ["Inglés", "Historia"], distance: 4.0, rating: "4.8 ⭐", price: "$15.000", initial: "SV" }
+            {% if profesores_list %}
+                {% for prof in profesores_list %}
+                {
+                    id: {{ prof.id_profesor }},
+                    name: "{{ prof.nombre }}",
+                    specialties: ["{{ prof.especialidad }}"],
+                    distance: 1.2,
+                    rating: "5.0 ⭐",
+                    price: "$15.000",
+                    initial: "{{ prof.nombre|slice:':1'|upper }}"
+                }{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            {% else %}
+                { id: 1, name: "Dr. Carlos Ruiz", specialties: ["Matemáticas", "Física"], distance: 0.8, rating: "4.9 ⭐", price: "$15.000", initial: "CR" }
+            {% endif %}
         ];
 
         // Tutors
@@ -1390,32 +1472,63 @@
 
         const isFavorite = (teacherId) => favoriteIds.includes(teacherId);
 
-        // ── MANDATORY PLAN ACCESS VERIFICATION ──
+        // ── MANDATORY PLAN ACCESS VERIFICATION & CLASS SCHEDULING ──
         const requestClassAccess = (teacherName) => {
-            if (!hasPlan) {
-                Swal.fire({
-                    title: '¡Suscripción Obligatoria!',
-                    text: `Para poder solicitar clases con ${teacherName} es obligatorio contar con un plan de LBWUS activo.`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'Ver Planes Disponibles',
-                    cancelButtonText: 'Cancelar',
-                    confirmButtonColor: 'var(--primary)',
-                    cancelButtonColor: '#6b7280'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        switchView('view-plans');
-                    }
-                });
-            } else {
-                Swal.fire({
-                    title: '¡Acceso Concedido!',
-                    text: `Redirigiendo al calendario del profesor ${teacherName}...`,
-                    icon: 'success',
-                    confirmButtonColor: 'var(--primary)'
-                });
-            }
+            switchView('view-my-classes');
+            setTimeout(() => {
+                const targetEl = document.getElementById('catalogo-clases-seccion');
+                if (targetEl) targetEl.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
         };
+
+        function inscribirAClase(idClase, nombreCurso) {
+            Swal.fire({
+                title: 'Confirmar Inscripción',
+                text: `¿Deseas inscribirte a la clase "${nombreCurso}"?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, Inscribirme',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: 'var(--primary)',
+                cancelButtonColor: '#6b7280'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch("{% url 'inscribir_clase' %}", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRFToken": "{{ csrf_token }}"
+                        },
+                        body: JSON.stringify({ id_clase: idClase })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                title: '¡Inscripción Exitosa!',
+                                text: data.message,
+                                icon: 'success',
+                                confirmButtonColor: 'var(--primary)'
+                            }).then(() => {
+                                window.location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'Atención',
+                                text: data.message,
+                                icon: 'warning',
+                                confirmButtonColor: 'var(--primary)'
+                            });
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        Swal.fire('Error', 'No se pudo procesar la inscripción.', 'error');
+                    });
+                }
+            });
+        }
+        window.inscribirAClase = inscribirAClase;
 
         // ── RESTORE INTERESTS FROM STORAGE ──
         const savedTopics = JSON.parse(localStorage.getItem('selected-topics') || '[]');
@@ -1667,78 +1780,7 @@
 
         // ── CLASSES RENDERING ──
         function renderMyClasses() {
-            const upcomingContainer = document.getElementById('upcoming-classes-container');
-            const pastContainer = document.getElementById('past-classes-container');
-            
-            if (upcomingContainer) upcomingContainer.innerHTML = '';
-            if (pastContainer) pastContainer.innerHTML = '';
-            
-            const upcoming = myClasses.filter(c => c.status === 'upcoming');
-            const past = myClasses.filter(c => c.status === 'completed');
-            
-            // Render upcoming
-            if (upcomingContainer) {
-                if (upcoming.length === 0) {
-                    upcomingContainer.innerHTML = `
-                        <div class="empty-teachers-state" style="grid-column: 1/-1;">
-                            <i class="bi bi-calendar-x"></i>
-                            <p>No tienes clases programadas próximamente.</p>
-                        </div>
-                    `;
-                } else {
-                    upcoming.forEach(c => {
-                        const card = document.createElement('div');
-                        card.className = 'class-item-card';
-                        card.innerHTML = `
-                            <div class="class-card-header">
-                                <span class="class-badge">${c.specialty}</span>
-                                <span class="class-status-badge">Próxima</span>
-                            </div>
-                            <div class="class-card-body">
-                                <h4>${c.teacherName}</h4>
-                                <p class="class-teacher-type">${c.type}</p>
-                                <div class="class-info-item">
-                                    <i class="bi bi-calendar-event"></i>
-                                    <span>${c.datetime}</span>
-                                </div>
-                                <div class="class-info-item">
-                                    <i class="bi bi-clock"></i>
-                                    <span>Duración: ${c.duration}</span>
-                                </div>
-                            </div>
-                            <button class="btn-join-class" onclick="joinVideoCall('${c.teacherName}', '${c.videoUrl}')">
-                                <i class="bi bi-camera-video-fill"></i> Unirse a la Clase
-                            </button>
-                        `;
-                        upcomingContainer.appendChild(card);
-                    });
-                }
-            }
-            
-            // Render past
-            if (pastContainer) {
-                if (past.length === 0) {
-                    pastContainer.innerHTML = `
-                        <tr>
-                            <td colspan="5" style="text-align: center; color: var(--text-light); padding: 30px;">
-                                No hay historial de clases completadas.
-                            </td>
-                        </tr>
-                    `;
-                } else {
-                    past.forEach(c => {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td><strong>${c.teacherName}</strong> <span style="font-size:0.8rem; color:var(--text-light);">(${c.type})</span></td>
-                            <td><span class="video-specialty" style="margin-bottom:0;">${c.specialty}</span></td>
-                            <td>${c.datetime}</td>
-                            <td>${c.duration}</td>
-                            <td><span class="status-badge-completed"><i class="bi bi-check-circle-fill"></i> Completada</span></td>
-                        `;
-                        pastContainer.appendChild(tr);
-                    });
-                }
-            }
+            // Renderizado dinámicamente desde el backend de Django con mis_inscripciones y clases_disponibles
         }
 
         // Mock join video call
@@ -1761,52 +1803,7 @@
 
         // ── SUPPORT RENDERING ──
         function renderMyReports() {
-            const container = document.getElementById('tickets-list-container');
-            if (!container) return;
-            container.innerHTML = '';
-            
-            if (myReports.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-teachers-state">
-                        <i class="bi bi-chat-left-text"></i>
-                        <p>No has enviado ningún reporte de soporte todavía.</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            myReports.forEach(r => {
-                const item = document.createElement('div');
-                item.className = 'ticket-item';
-                
-                let responseHTML = '';
-                if (r.response) {
-                    responseHTML = `
-                        <div class="ticket-response" style="margin-top: 10px;">
-                            <strong>Respuesta del Soporte:</strong>
-                            <p>${r.response}</p>
-                        </div>
-                    `;
-                } else {
-                    responseHTML = `
-                        <div class="ticket-response" style="margin-top: 10px; background-color: rgba(245, 158, 11, 0.05); border-left-color: var(--accent);">
-                            <i class="bi bi-hourglass-split"></i> En espera de revisión por el equipo de soporte.
-                        </div>
-                    `;
-                }
-                
-                item.innerHTML = `
-                    <div class="ticket-header" style="margin-bottom: 8px;">
-                        <span class="ticket-id" style="font-family: monospace;">${r.id}</span>
-                        <span class="ticket-badge ${r.statusClass}">${r.status}</span>
-                    </div>
-                    <div class="ticket-subject" style="margin-bottom: 4px;"><strong>${r.subject}</strong></div>
-                    <div class="ticket-meta" style="margin-bottom: 8px; font-size: 0.8rem; color: var(--text-light);">Categoría: <strong>${r.category}</strong> | Fecha: ${r.date}</div>
-                    <div class="ticket-description" style="margin-bottom: 8px;">${r.description}</div>
-                    ${responseHTML}
-                `;
-                container.appendChild(item);
-            });
+            // Desactivado: Ahora los reportes se renderizan con Django desde el backend
         }
 
         // Submit support ticket form handler
@@ -1816,30 +1813,39 @@
             const subject = document.getElementById('support-subject').value;
             const description = document.getElementById('support-description').value;
             
-            const newTicketId = "TKT-" + Math.floor(1000 + Math.random() * 9000);
-            const newTicket = {
-                id: newTicketId,
-                category: category,
-                subject: subject,
-                description: description,
-                status: "Pendiente",
-                statusClass: "status-pending",
-                date: new Date().toISOString().split('T')[0],
-                response: null
+            const payload = {
+                descripcion: `Categoría: ${category} | Asunto: ${subject}\n\nDetalle: ${description}`
             };
-            
-            myReports.unshift(newTicket); // Add to the top
-            renderMyReports();
-            
-            // Clear form
-            document.getElementById('support-ticket-form').reset();
-            
-            Swal.fire({
-                title: '¡Reporte Enviado!',
-                text: `Tu ticket ${newTicketId} ha sido registrado exitosamente y será atendido a la brevedad.`,
-                icon: 'success',
-                confirmButtonColor: 'var(--primary)'
-            });
+
+            fetch("{% url 'enviar_reporte' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": "{{ csrf_token }}"
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    Swal.fire({
+                        title: '¡Reporte Enviado!',
+                        text: 'Tu ticket ha sido registrado en el sistema. Los administradores lo resolverán a la brevedad.',
+                        icon: 'success',
+                        confirmButtonColor: 'var(--primary)'
+                    });
+                    document.getElementById('support-ticket-form').reset();
+                    // Opcional: recargar vista o inyectar un aviso temporal
+                } else {
+                    Swal.fire({
+                        title: 'Error',
+                        text: data.message || 'Hubo un error al enviar el reporte',
+                        icon: 'error',
+                        confirmButtonColor: 'var(--primary)'
+                    });
+                }
+            })
+            .catch(error => console.error("Error:", error));
         };
 
         // Tab selection switching
