@@ -167,3 +167,12 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Configuración para el envío de correos de prueba en consola
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Backends de autenticación centralizada (RUT, Correo o Usuario)
+AUTHENTICATION_BACKENDS = [
+    'alumnos.backends.RutOrEmailBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]

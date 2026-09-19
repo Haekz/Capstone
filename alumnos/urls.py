@@ -1,11 +1,27 @@
 from django.urls import path
 from .views import (
-    home, contactos, nosotros, planes, servicios, simulador, opcion_user, 
-    regis_alum, alumnos_reg, alumno_pag1, crud, alumnos_Add, alumnos_del, 
-    alumnos_findEdit, alumnos_Update, pago, confirmacion, iniciar_webpay
+    home,
+    contactos,
+    nosotros,
+    planes,
+    servicios,
+    simulador,
+    opcion_user,
+    regis_alum,
+    alumnos_reg,
+    alumno_pag1,
+    custom_login,
+    logout_alumno,
+    enviar_reporte,
+    inscribir_clase,
+    cancelar_inscripcion,
+    pago,
+    confirmacion,
+    iniciar_webpay,
 )
 
 urlpatterns = [
+    # Sitio público
     path('', home, name='home'),
     path('contactos', contactos, name='contactos'),
     path('nosotros', nosotros, name='nosotros'),
@@ -13,16 +29,24 @@ urlpatterns = [
     path('servicios', servicios, name='servicios'),
     path('simulador', simulador, name='simulador'),
     path('select', opcion_user, name='opcion_user'),
+
+    # Alumno
     path('registro_alumno', regis_alum, name='regis_alum'),
     path('alumnos_reg', alumnos_reg, name='alumnos_reg'),
     path('alumno_home', alumno_pag1, name='alumno_pag1'),
+    path('login/', custom_login, name='custom_login_alumno'),
+    path('logout_alumno/', logout_alumno, name='logout_alumno'),
 
-    # esta parte es de las rutas CRUD de alumnos
-    path('crud/', crud, name='crud'),
-    path('alumnos_Add', alumnos_Add, name='alumnos_Add'),
-    path('alumnos_del/<str:pk>/', alumnos_del, name='alumnos_del'),
-    path('alumnos_findEdit/<str:pk>/', alumnos_findEdit, name='alumnos_findEdit'),
-    path('alumnos_Update', alumnos_Update, name='alumnos_Update'),
+    # Funcionalidades del alumno
+    path('enviar_reporte/', enviar_reporte, name='enviar_reporte'),
+    path('inscribir_clase/', inscribir_clase, name='inscribir_clase'),
+    path(
+        'cancelar_inscripcion/<int:pk>/',
+        cancelar_inscripcion,
+        name='cancelar_inscripcion'
+    ),
+
+    # Pago / Transbank
     path('pago', pago, name='pago'),
     path('confirmacion', confirmacion, name='confirmacion'),
     path('iniciar-webpay/', iniciar_webpay, name='iniciar_webpay'),
