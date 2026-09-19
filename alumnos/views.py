@@ -1,7 +1,7 @@
 from alumnos.models import Profesor
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
-from django.contrib.auth import authenticate, login as auth_login
+from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.contrib.auth.hashers import check_password
 from .models import Alumno, Genero, Tutor
 from .forms import AlumnoForm
@@ -41,48 +41,36 @@ def regis_alum(request):
     if request.method == 'POST':
         form = AlumnoForm(request.POST)
         if form.is_valid():
-            form.save()
+            alumno = form.save()
+            auth_login(request, alumno.user, backend='alumnos.backends.RutOrEmailBackend')
+            request.session['alumno_id'] = alumno.id_alumno
             return JsonResponse({"success": True, "message": "Alumno registrado exitosamente."})
         else:
-            error_messages = []
-            for field, errors in form.errors.items():
-                for error in errors:
-                    field_label = form.fields[field].label if field != '__all__' else "Error"
-                    error_messages.append(f"{field_label}: {error}")
-            message = " | ".join(error_messages)
-            return JsonResponse({"success": False, "message": message})
+            errors = []
+            for field, errs in form.errors.items():
+                label = form.fields[field].label if field in form.fields else field
+                errors.append(f"{label}: {errs[0]}")
+            return JsonResponse({"success": False, "message": " | ".join(errors)})
     
     form = AlumnoForm()
-    context = {'form': form}
+    generos = Genero.objects.all()
+    context = {'form': form, 'generos': generos}
     return render(request, 'alumnos/regis_alum.html', context)
 
 def alumnos_reg(request):
     if request.method == 'POST':
-        try:
-            nombre = request.POST['nombre']
-            rut = request.POST['rut']
-            nivel_educacion = request.POST['nivel_educacion']
-            direccion = request.POST['direccion']
-            fecha_nacimiento = request.POST['fecha_nacimiento']
-            correo_electronico = request.POST['correo_electronico']
-            telefono = request.POST['telefono']
-            genero_id = request.POST['genero']
-
-            genero = Genero.objects.get(id_genero=genero_id)
-
-            Alumno.objects.create(
-                nombre=nombre,
-                rut=rut,
-                nivel_educacion=nivel_educacion,
-                direccion=direccion,
-                fecha_nacimiento=fecha_nacimiento,
-                correo_electronico=correo_electronico,
-                telefono=telefono,
-                genero=genero
-            )
+        form = AlumnoForm(request.POST)
+        if form.is_valid():
+            alumno = form.save()
+            auth_login(request, alumno.user, backend='alumnos.backends.RutOrEmailBackend')
+            request.session['alumno_id'] = alumno.id_alumno
             return JsonResponse({"success": True, "message": "Alumno registrado exitosamente."})
-        except Exception as e:
-            return JsonResponse({"success": False, "message": str(e)})
+        else:
+            errors = []
+            for field, errs in form.errors.items():
+                label = form.fields[field].label if field in form.fields else field
+                errors.append(f"{label}: {errs[0]}")
+            return JsonResponse({"success": False, "message": " | ".join(errors)})
 
     generos = Genero.objects.all()
     return render(request, 'alumnos/regis_alum.html', {'generos': generos})
@@ -123,55 +111,44 @@ def custom_login(request):
         username = request.POST.get('username', '').strip()
         password = request.POST.get('password', '').strip()
 
-        # 1. Intentar autenticar contra Django User (Superusuario/Admin)
-        django_user = authenticate(request, username=username, password=password)
-        if django_user is not None:
-            auth_login(request, django_user)
-            tutor = Tutor.objects.filter(correo_electronico=django_user.email).first()
-            if tutor:
-                request.session['admin_id'] = tutor.id_tutor
-            elif django_user.is_superuser:
-                primer_tutor = Tutor.objects.first()
-                if primer_tutor:
-                    request.session['admin_id'] = primer_tutor.id_tutor
-            return redirect('dashboard_admin')
+        if not username or not password:
+            error = "Por favor ingrese todos los campos."
+        else:
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                auth_login(request, user)
 
-        # 1.5 Intentar autenticar contra Tutor/Administrador registrado en la base de datos
-        tutores = Tutor.objects.filter(correo_electronico__iexact=username)
-        if not tutores.exists():
-            tutores = Tutor.objects.filter(rut__iexact=username)
+                # 1. ¿Es Alumno?
+                if hasattr(user, 'perfil_alumno'):
+                    request.session['alumno_id'] = user.perfil_alumno.id_alumno
+                    return redirect('alumno_pag1')
 
-        for tutor in tutores:
-            if tutor.password and check_password(password, tutor.password):
-                request.session['admin_id'] = tutor.id_tutor
-                return redirect('dashboard_admin')
+                # 2. ¿Es Profesor?
+                elif hasattr(user, 'perfil_profesor'):
+                    request.session['profesor_id'] = user.perfil_profesor.id_profesor
+                    return redirect('panel_profesor')
 
-        # 1.8 Intentar autenticar contra Profesor registrado en la base de datos
-        profesores = Profesor.objects.filter(correo_electronico__iexact=username)
-        if not profesores.exists():
-            profesores = Profesor.objects.filter(rut__iexact=username)
+                # 3. ¿Es Administrador / Tutor?
+                elif hasattr(user, 'perfil_tutor'):
+                    request.session['admin_id'] = user.perfil_tutor.id_tutor
+                    return redirect('dashboard_admin')
 
-        for profesor in profesores:
-            if profesor.password and check_password(password, profesor.password):
-                request.session['profesor_id'] = profesor.id_profesor
-                return redirect('panel_profesor')
+                # 4. Superusuario o Staff sin perfil previo
+                elif user.is_staff or user.is_superuser:
+                    tutor = Tutor.objects.filter(user=user).first() or Tutor.objects.filter(correo_electronico__iexact=user.email).first() or Tutor.objects.first()
+                    request.session['admin_id'] = tutor.id_tutor if tutor else user.id
+                    return redirect('dashboard_admin')
 
-        # 2. Intentar autenticar contra Alumno (insensible a mayúsculas/minúsculas y tolerando duplicados)
-        alumnos = Alumno.objects.filter(correo_electronico__iexact=username)
-        if not alumnos.exists():
-            alumnos = Alumno.objects.filter(rut__iexact=username)
-
-        for alumno in alumnos:
-            if alumno.password and check_password(password, alumno.password):
-                request.session['alumno_id'] = alumno.id_alumno
-                return redirect('alumno_pag1')
-
-        error = "Usuario o contraseña incorrectos. Inténtalo de nuevo."
+                else:
+                    error = "Tu cuenta no tiene un perfil asignado en el sistema."
+            else:
+                error = "RUT/Correo o contraseña incorrectos. Inténtalo de nuevo."
 
     return render(request, 'registration/login.html', {'error': error})
 
 
 def logout_alumno(request):
+    auth_logout(request)
     if 'alumno_id' in request.session:
         del request.session['alumno_id']
     return redirect('home')

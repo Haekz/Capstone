@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 # Create your models here.
 
@@ -11,6 +12,7 @@ class Genero(models.Model):
 
 class Tutor(models.Model):
     id_tutor = models.AutoField(primary_key=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil_tutor', null=True, blank=True)
     nombre = models.CharField(max_length=60)
     rut = models.CharField(max_length=12, unique=True)
     direccion = models.CharField(max_length=60)
@@ -18,13 +20,13 @@ class Tutor(models.Model):
     correo_electronico = models.EmailField(max_length=60, unique=True)
     telefono = models.CharField(max_length=20, blank=True)
     genero = models.ForeignKey(Genero, on_delete=models.SET_NULL, null=True)
-    password = models.CharField(max_length=128, blank=True, null=True)
 
     def __str__(self):
         return self.nombre
 
 class Alumno(models.Model):
     id_alumno = models.AutoField(primary_key=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil_alumno', null=True, blank=True)
     nombre = models.CharField(max_length=60)
     rut = models.CharField(max_length=12, unique=True)
     nivel_educacion = models.CharField(max_length=10, choices=[('basica', 'Básica'), ('media', 'Media'), ('superior', 'Superior')])
@@ -34,13 +36,13 @@ class Alumno(models.Model):
     telefono = models.CharField(max_length=20, blank=True)
     genero = models.ForeignKey(Genero, on_delete=models.SET_NULL, null=True)  
     id_tutor = models.ForeignKey(Tutor, on_delete=models.SET_NULL, null=True)
-    password = models.CharField(max_length=128, blank=True, null=True)
 
     def __str__(self):
         return self.nombre
 
 class Profesor(models.Model):
     id_profesor = models.AutoField(primary_key=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil_profesor', null=True, blank=True)
     nombre = models.CharField(max_length=60)
     rut = models.CharField(max_length=12, unique=True)
     especialidad = models.CharField(max_length=60)
@@ -49,7 +51,6 @@ class Profesor(models.Model):
     correo_electronico = models.EmailField(max_length=60, unique=True)
     telefono = models.CharField(max_length=20)
     genero = models.ForeignKey(Genero, on_delete=models.SET_NULL, null=True)
-    password = models.CharField(max_length=128, blank=True, null=True)
 
     def __str__(self):
         return self.nombre

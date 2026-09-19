@@ -51,9 +51,18 @@ def regis_prof(request):
 
             genero = get_object_or_404(Genero, id_genero=genero_id)
 
-            from django.contrib.auth.hashers import make_password
-            # Crear el registro del Profesor
+            from django.contrib.auth.models import User
+            # Crear usuario Django centralizado (username = RUT normalizado o RUT)
+            user = User.objects.create_user(
+                username=rut,
+                email=correo_electronico,
+                password=password,
+                first_name=nombre
+            )
+
+            # Crear el registro del Profesor vinculado al User
             profesor = Profesor.objects.create(
+                user=user,
                 nombre=nombre,
                 rut=rut,
                 especialidad=especialidad,
@@ -61,11 +70,12 @@ def regis_prof(request):
                 fecha_nacimiento=fecha_nacimiento,
                 correo_electronico=correo_electronico,
                 telefono=telefono,
-                genero=genero,
-                password=make_password(password)
+                genero=genero
             )
 
-            # Iniciar sesión automáticamente (guardar ID en la sesión)
+            # Iniciar sesión automáticamente
+            from django.contrib.auth import login as auth_login
+            auth_login(request, user, backend='alumnos.backends.RutOrEmailBackend')
             request.session['profesor_id'] = profesor.id_profesor
 
             return JsonResponse({
@@ -88,23 +98,19 @@ def login_prof(request):
         if not identificador or not password:
             return JsonResponse({"success": False, "message": "Por favor ingrese todos los campos."})
 
-        # Buscar profesor por Correo Electrónico o por RUT
-        profesor = Profesor.objects.filter(correo_electronico__iexact=identificador).first()
-        if not profesor:
-            profesor = Profesor.objects.filter(rut__iexact=identificador).first()
-
-        from django.contrib.auth.hashers import check_password
-        if profesor and profesor.password and check_password(password, profesor.password):
-            # Guardar ID en la sesión
-            request.session['profesor_id'] = profesor.id_profesor
+        from django.contrib.auth import authenticate, login as auth_login
+        user = authenticate(request, username=identificador, password=password)
+        if user and hasattr(user, 'perfil_profesor'):
+            auth_login(request, user)
+            request.session['profesor_id'] = user.perfil_profesor.id_profesor
             return JsonResponse({
                 "success": True, 
-                "message": f"Bienvenido de vuelta, Prof. {profesor.nombre}."
+                "message": f"Bienvenido de vuelta, Prof. {user.perfil_profesor.nombre}."
             })
         else:
             return JsonResponse({
                 "success": False, 
-                "message": "Credenciales inválidas. Por favor verifique sus datos."
+                "message": "Credenciales inválidas o no tienes cuenta de profesor."
             })
 
     return redirect('regis_prof')
@@ -237,7 +243,8 @@ def actualizar_perfil_prof(request):
 
 
 def logout_prof(request):
-    # Eliminar la sesión del profesor
+    from django.contrib.auth import logout as auth_logout
+    auth_logout(request)
     if 'profesor_id' in request.session:
         del request.session['profesor_id']
     return redirect('home')
@@ -335,19 +342,30 @@ def regis_tutor(request):
 
             genero = get_object_or_404(Genero, id_genero=genero_id)
 
-            from django.contrib.auth.hashers import make_password
+            from django.contrib.auth.models import User
+            user = User.objects.create_user(
+                username=rut,
+                email=correo_electronico,
+                password=password,
+                first_name=nombre
+            )
+            user.is_staff = True
+            user.save()
+
             tutor = Tutor.objects.create(
+                user=user,
                 nombre=nombre,
                 rut=rut,
                 direccion=direccion,
                 fecha_nacimiento=fecha_nacimiento,
                 correo_electronico=correo_electronico,
                 telefono=telefono,
-                genero=genero,
-                password=make_password(password)
+                genero=genero
             )
 
-            # esta parte es de guardar la sesión de administrador
+            # Iniciar sesión de administrador
+            from django.contrib.auth import login as auth_login
+            auth_login(request, user, backend='alumnos.backends.RutOrEmailBackend')
             request.session['admin_id'] = tutor.id_tutor
 
             return JsonResponse({
@@ -363,30 +381,30 @@ def regis_tutor(request):
 
 
 def login_admin(request):
-    # esta parte es del acceso rápido sin contraseña para administradores
     if request.method == 'POST':
         identificador = request.POST.get('identificador', '').strip()
+        password = request.POST.get('password', '').strip()
         
-        if not identificador:
-            return JsonResponse({"success": False, "message": "Por favor ingrese su RUT o Correo Electrónico."})
+        if not identificador or not password:
+            return JsonResponse({"success": False, "message": "Por favor ingrese RUT/Correo y contraseña."})
 
-        # esta parte es de buscar al admin por correo o rut
-        tutor = Tutor.objects.filter(correo_electronico=identificador).first()
-        if not tutor:
-            tutor = Tutor.objects.filter(rut=identificador).first()
-
-        if tutor:
-            request.session['admin_id'] = tutor.id_tutor
+        from django.contrib.auth import authenticate, login as auth_login
+        user = authenticate(request, username=identificador, password=password)
+        if user and (hasattr(user, 'perfil_tutor') or user.is_staff or user.is_superuser):
+            auth_login(request, user)
+            admin_id = user.perfil_tutor.id_tutor if hasattr(user, 'perfil_tutor') else user.id
+            request.session['admin_id'] = admin_id
+            nombre_mostrar = user.perfil_tutor.nombre if hasattr(user, 'perfil_tutor') else (user.first_name or user.username)
             return JsonResponse({
                 "success": True, 
-                "message": f"Bienvenido de vuelta, Administrador {tutor.nombre}."
+                "message": f"Bienvenido de vuelta, Administrador {nombre_mostrar}."
             })
         else:
             return JsonResponse({
                 "success": False, 
-                "message": "No se encontró ningún administrador registrado con esos datos. Es obligatorio registrarse primero."
+                "message": "Credenciales inválidas o no tienes permisos de administrador."
             })
 
-    return redirect('regis_tutor')
+    return redirect('login')
 
 

@@ -39,9 +39,15 @@ def validar_rut_chileno(rut):
 def usuario_existe(rut, correo):
     """
     Verifica de forma transversal si el RUT o correo ya existe en 
-    alguno de los 3 modelos principales (Alumno, Profesor, Tutor).
+    el modelo User o en alguno de los 3 modelos de perfil (Alumno, Profesor, Tutor).
     Retorna un string con el mensaje de error si existe, o None si está libre.
     """
+    from django.contrib.auth.models import User
+    if User.objects.filter(email__iexact=correo).exists():
+        return "El correo electrónico ya está registrado en el sistema."
+    if User.objects.filter(username__iexact=rut).exists():
+        return "El RUT ingresado ya está registrado en el sistema."
+
     for modelo in [Alumno, Profesor, Tutor]:
         if modelo.objects.filter(correo_electronico__iexact=correo).exists():
             return "El correo electrónico ya está registrado en el sistema."

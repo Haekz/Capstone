@@ -193,6 +193,8 @@ def alumnos_Update(request):
 
 
 def logout_admin(request):
+    from django.contrib.auth import logout as auth_logout
+    auth_logout(request)
     if 'admin_id' in request.session:
         del request.session['admin_id']
     return redirect('home')

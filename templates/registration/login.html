@@ -22,23 +22,23 @@
     </div>
 
     <h1>Iniciar Sesión</h1>
-    <p class="sub">Bienvenido de vuelta a LBWUS</p>
+    <p class="sub">Portal de Acceso Universal (Alumnos, Profesores y Administradores)</p>
 
-    <!-- esta parte es del formulario principal con correo y contraseña -->
+    <!-- esta parte es del formulario principal con correo o RUT y contraseña -->
     <form method="post" action="{% url 'login' %}">
         {% csrf_token %}
 
         {% if form.errors or error %}
         <div class="error">
-            {{ error|default:"Usuario o contraseña incorrectos. Inténtalo de nuevo." }}
+            {{ error|default:"RUT/Correo o contraseña incorrectos. Inténtalo de nuevo." }}
         </div>
         {% endif %}
 
-        <!-- esta parte es del campo de correo/usuario -->
+        <!-- esta parte es del campo de RUT o correo -->
         <div class="campo">
-            <i class="bi bi-envelope-fill"></i>
+            <i class="bi bi-person-badge-fill"></i>
             <input type="text" name="username" id="id_username"
-                placeholder="Correo o usuario" required autocomplete="username">
+                placeholder="RUT o Correo Electrónico" required autocomplete="username">
         </div>
 
         <!-- esta parte es del campo de contraseña -->
@@ -56,26 +56,6 @@
         <button type="submit" class="btn">Ingresar</button>
     </form>
 
-    <!-- esta parte es del separador para los accesos de prof y admin -->
-    <div class="sep">
-        <div class="sep-line"></div>
-        <span class="sep-text">Acceso especial</span>
-        <div class="sep-line"></div>
-    </div>
-
-    <div class="links-extra">
-        <button class="link-extra" onclick="abrirModal('profesor')">
-            <i class="bi bi-person-workspace"></i>
-            <span>Soy Profesor</span>
-            <i class="bi bi-chevron-right"></i>
-        </button>
-        <button class="link-extra" onclick="abrirModal('admin')">
-            <i class="bi bi-shield-fill"></i>
-            <span>Soy Administrador</span>
-            <i class="bi bi-chevron-right"></i>
-        </button>
-    </div>
-
     <!-- esta parte es del pie con el enlace al registro y el botón de volver al inicio -->
     <div class="footer">
         ¿No tienes cuenta? <a href="{% url 'opcion_user' %}">Regístrate gratis</a>
@@ -87,105 +67,5 @@
     </a>
 
 </div>
-
-<!-- esta parte es del modal de acceso para profesores -->
-<div class="modal-overlay" id="modal-profesor">
-    <div class="modal-box">
-        <button class="modal-close" onclick="cerrarModal('profesor')">
-            <i class="bi bi-x-lg"></i>
-        </button>
-        <div class="modal-avatar azul"><i class="bi bi-person-workspace"></i></div>
-        <p class="modal-title">Acceso Profesor</p>
-        <p class="modal-sub">Ingresa tu RUT o correo registrado</p>
-        <form id="form-profesor">
-            {% csrf_token %}
-            <div class="campo">
-                <i class="bi bi-person-badge-fill"></i>
-                <input type="text" id="prof-id" placeholder="ej. 12.345.678-9" required>
-            </div>
-            <button type="submit" class="btn-modal azul">Ingresar</button>
-        </form>
-    </div>
-</div>
-
-<!-- esta parte es del modal de acceso para administradores -->
-<div class="modal-overlay" id="modal-admin">
-    <div class="modal-box">
-        <button class="modal-close" onclick="cerrarModal('admin')">
-            <i class="bi bi-x-lg"></i>
-        </button>
-        <div class="modal-avatar"><i class="bi bi-shield-fill"></i></div>
-        <p class="modal-title">Acceso Administrador</p>
-        <p class="modal-sub">Ingresa tu RUT o correo registrado</p>
-        <form id="form-admin">
-            {% csrf_token %}
-            <div class="campo">
-                <i class="bi bi-shield-lock-fill"></i>
-                <input type="text" id="admin-id" placeholder="ej. 11.222.333-4" required>
-            </div>
-            <button type="submit" class="btn-modal morado">Ingresar</button>
-        </form>
-    </div>
-</div>
-
-<!-- esta parte es de sweetalert2 para las alertas bonitas -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-    // esta parte es de abrir y cerrar los modales
-    function abrirModal(tipo) {
-        document.getElementById('modal-' + tipo).classList.add('open');
-    }
-    function cerrarModal(tipo) {
-        document.getElementById('modal-' + tipo).classList.remove('open');
-    }
-    // cerrar al hacer click fuera del cuadro
-    document.querySelectorAll('.modal-overlay').forEach(o => {
-        o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
-    });
-
-    // esta parte es del submit del form de profesor por fetch
-    document.getElementById('form-profesor').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const btn = this.querySelector('button');
-        btn.disabled = true;
-        btn.textContent = '...';
-        const fd = new FormData();
-        fd.append('identificador', document.getElementById('prof-id').value);
-        fd.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
-        fetch("{% url 'login_prof' %}", { method: 'POST', body: fd })
-        .then(r => r.json()).then(res => {
-            if (res.success) {
-                Swal.fire({ icon: 'success', title: '¡Bienvenido!', text: res.message, confirmButtonColor: '#3b82f6' })
-                .then(() => window.location.href = "{% url 'panel_profesor' %}");
-            } else {
-                Swal.fire({ icon: 'error', title: 'Error', text: res.message, confirmButtonColor: '#a855f7' });
-                btn.disabled = false;
-                btn.textContent = 'Ingresar';
-            }
-        });
-    });
-
-    // esta parte es del submit del form de admin por fetch
-    document.getElementById('form-admin').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const btn = this.querySelector('button');
-        btn.disabled = true;
-        btn.textContent = '...';
-        const fd = new FormData();
-        fd.append('identificador', document.getElementById('admin-id').value);
-        fd.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
-        fetch("{% url 'login_admin' %}", { method: 'POST', body: fd })
-        .then(r => r.json()).then(res => {
-            if (res.success) {
-                Swal.fire({ icon: 'success', title: '¡Acceso Concedido!', text: res.message, confirmButtonColor: '#a855f7' })
-                .then(() => window.location.href = "{% url 'dashboard_admin' %}");
-            } else {
-                Swal.fire({ icon: 'error', title: 'Error', text: res.message, confirmButtonColor: '#a855f7' });
-                btn.disabled = false;
-                btn.textContent = 'Ingresar';
-            }
-        });
-    });
-</script>
 </body>
 </html>

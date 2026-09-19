@@ -19,7 +19,7 @@ class AlumnoForm(forms.ModelForm):
         fields = [
             'nombre', 'rut', 'nivel_educacion', 'direccion', 
             'fecha_nacimiento', 'correo_electronico', 'telefono', 
-            'genero', 'password'
+            'genero'
         ]
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre Completo'}),
@@ -40,7 +40,6 @@ class AlumnoForm(forms.ModelForm):
             'correo_electronico': 'Correo Electrónico',
             'telefono': 'Teléfono',
             'genero': 'Género',
-            'password': 'Contraseña',
         }
 
     def clean_fecha_nacimiento(self):
@@ -91,11 +90,22 @@ class AlumnoForm(forms.ModelForm):
                 raise forms.ValidationError(error_msg)
                 
         return cleaned_data
+
     def save(self, commit=True):
         alumno = super().save(commit=False)
         password = self.cleaned_data.get('password')
-        if password:
-            alumno.password = make_password(password)
+        rut = self.cleaned_data.get('rut')
+        correo = self.cleaned_data.get('correo_electronico')
+        nombre = self.cleaned_data.get('nombre')
+
+        from django.contrib.auth.models import User
+        user = User.objects.create_user(
+            username=rut,
+            email=correo,
+            password=password,
+            first_name=nombre
+        )
+        alumno.user = user
         if commit:
             alumno.save()
         return alumno
