@@ -202,15 +202,9 @@
                 <a href="{% url 'regis_prof' %}" class="btn-card-select">Registrarme como Profesor</a>
             </div>
 
-            <!-- esta parte es de la tarjeta para registrarse como Administrador -->
-            <div class="selection-card">
-                <div class="icon-box">
-                    <i class="bi bi-shield-fill"></i>
-                </div>
-                <h2>Administrador</h2>
-                <p>Gestiona la plataforma, supervisa a profesores y alumnos, revisa reportes y mantén el control total del sistema LBWUS.</p>
-                <a href="{% url 'regis_tutor' %}" class="btn-card-select">Registrarme como Admin</a>
-            </div>
+            <!-- La tarjeta de registro de Administrador se quito a proposito:
+                 las cuentas de administrador las crea otro administrador desde
+                 su panel, no se ofrecen como autoservicio publico. -->
         </div>
     </div>
 </section>

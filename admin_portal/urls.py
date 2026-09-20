@@ -1,7 +1,9 @@
 from django.urls import path
 from .views import (
     menu, reporte_alumnos, home_adm, planes_adm, nosotros_adm, contactos_adm,
-    dashboard_admin, resolver_reporte
+    crud, alumnos_Add, alumnos_del, alumnos_findEdit, alumnos_Update,
+    dashboard_admin, resolver_reporte, logout_admin, crear_clase, eliminar_clase,
+    aprobar_retiro, rechazar_retiro
 )
 
 urlpatterns = [
@@ -14,6 +16,16 @@ urlpatterns = [
     path('nosotros_adm', nosotros_adm, name='nosotros_adm'),
     path('contactos_adm', contactos_adm, name='contactos_adm'),
     path('resolver_reporte/<int:pk>/', resolver_reporte, name='resolver_reporte'),
+    path('crear_clase/', crear_clase, name='crear_clase'),
+    path('eliminar_clase/<int:pk>/', eliminar_clase, name='eliminar_clase'),
+    path('aprobar_retiro/<int:pk>/', aprobar_retiro, name='aprobar_retiro'),
+    path('rechazar_retiro/<int:pk>/', rechazar_retiro, name='rechazar_retiro'),
 
-
+    # esta parte es de las rutas CRUD de alumnos
+    path('crud/', crud, name='crud'),
+    path('alumnos_Add', alumnos_Add, name='alumnos_Add'),
+    path('alumnos_del/<str:pk>/', alumnos_del, name='alumnos_del'),
+    path('alumnos_findEdit/<str:pk>/', alumnos_findEdit, name='alumnos_findEdit'),
+    path('alumnos_Update', alumnos_Update, name='alumnos_Update'),
+    path('logout_admin/', logout_admin, name='logout_admin'),
 ]

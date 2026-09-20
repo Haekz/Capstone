@@ -87,6 +87,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                # Expone 'usuario_sesion' al menu global (alumnos/base.html)
+                'alumnos.context_processors.estado_sesion',
             ],
         },
     },
@@ -167,3 +169,12 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Configuración para el envío de correos de prueba en consola
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Backends de autenticación centralizada (RUT, Correo o Usuario)
+AUTHENTICATION_BACKENDS = [
+    'alumnos.backends.RutOrEmailBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
