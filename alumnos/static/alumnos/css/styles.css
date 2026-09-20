@@ -971,11 +971,38 @@ body.dark-mode .service-block:hover {
     display: none;
 }
 
+/* esta parte es del bloque de sesion del menu (saludo + panel + salir) */
+.sesion-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.sesion-saludo {
+    color: var(--text);
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+.sesion-rol {
+    color: var(--text-light);
+    font-size: 0.8rem;
+}
+
+body.dark-mode .sesion-saludo {
+    color: var(--white);
+}
+
 .mobile-only {
     display: none;
 }
 
 @media (max-width: 992px) {
+    /* el bloque de sesion se mueve al menu hamburguesa */
+    .sesion-box {
+        display: none;
+    }
+
     .mobile-only {
         display: block;
     }

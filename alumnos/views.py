@@ -5,6 +5,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.urls import reverse
+from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 
 from .models import (
@@ -260,6 +261,7 @@ def alumnos_reg(request):
 # PORTAL DEL ALUMNO
 # ============================================================
 
+@never_cache
 def alumno_pag1(request):
 
     alumno_id = request.session.get(
@@ -456,24 +458,15 @@ def custom_login(request):
                     or user.is_superuser
                 ):
 
+                    # Solo se acepta el Tutor ligado a ESTE usuario.
+                    # Antes, si no lo encontraba, caia en
+                    # Tutor.objects.first() y la sesion terminaba operando
+                    # con el perfil de otra persona.
                     tutor = (
                         Tutor.objects
                         .filter(user=user)
                         .first()
                     )
-
-                    if not tutor:
-
-                        tutor = (
-                            Tutor.objects
-                            .filter(
-                                correo_electronico__iexact=user.email
-                            )
-                            .first()
-                        )
-
-                    if not tutor:
-                        tutor = Tutor.objects.first()
 
                     if tutor:
 
@@ -481,14 +474,14 @@ def custom_login(request):
                             'admin_id'
                         ] = tutor.id_tutor
 
-                    else:
+                        return redirect(
+                            'dashboard_admin'
+                        )
 
-                        request.session[
-                            'admin_id'
-                        ] = user.id
-
-                    return redirect(
-                        'dashboard_admin'
+                    error = (
+                        "Tu cuenta no tiene "
+                        "un perfil de "
+                        "administrador asociado."
                     )
 
                 else:

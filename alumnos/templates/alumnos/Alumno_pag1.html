@@ -21,7 +21,9 @@
 
     <!-- Custom Standalone Navbar for Alumno -->
     <nav class="custom-navbar">
-        <a href="{% url 'home' %}" class="logo">
+        <!-- El logo vuelve al propio portal, no al sitio publico: salir al
+             home de marketing con la sesion activa parecia un cierre de sesion. -->
+        <a href="{% url 'alumno_pag1' %}" class="logo">
             <img src="{% static 'alumnos/img/Logo.png' %}" alt="LBWUS Logo">
             <span class="logo-text">LBWUS</span>
         </a>

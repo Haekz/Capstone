@@ -1,6 +1,7 @@
 from django.urls import path
+from django.views.generic import RedirectView
+
 from .views import (
-    home,
     contactos,
     nosotros,
     planes,
@@ -22,7 +23,9 @@ from .views import (
 
 urlpatterns = [
     # Sitio público
-    path('', home, name='home'),
+    # El home canónico vive en la raíz ('/') y se registra en lbwus/urls.py.
+    # Aquí solo redirigimos para no romper enlaces antiguos a /alumnos/.
+    path('', RedirectView.as_view(pattern_name='home', permanent=False), name='alumnos_index'),
     path('contactos', contactos, name='contactos'),
     path('nosotros', nosotros, name='nosotros'),
     path('planes', planes, name='planes'),

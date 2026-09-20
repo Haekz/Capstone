@@ -33,8 +33,15 @@
                 <li><a href="{% url 'servicios' %}" id="nav-servicios">Servicios</a></li>
                 <li><a href="{% url 'planes' %}" id="nav-planes">Planes</a></li>
                 <li><a href="{% url 'contactos' %}" id="nav-contacto">Contacto</a></li>
-                <li class="mobile-only"><a href="{% url 'login' %}">Iniciar Sesión</a></li>
-                <li class="mobile-only"><a href="{% url 'opcion_user' %}">Registrarse</a></li>
+                {% if usuario_sesion.autenticado %}
+                    {% if usuario_sesion.url_panel %}
+                        <li class="mobile-only"><a href="{{ usuario_sesion.url_panel }}">{{ usuario_sesion.texto_panel }}</a></li>
+                    {% endif %}
+                    <li class="mobile-only"><a href="{{ usuario_sesion.url_logout }}">Cerrar sesión</a></li>
+                {% else %}
+                    <li class="mobile-only"><a href="{% url 'login' %}">Iniciar Sesión</a></li>
+                    <li class="mobile-only"><a href="{% url 'opcion_user' %}">Registrarse</a></li>
+                {% endif %}
             </ul>
 
             <div class="nav-actions">
@@ -69,8 +76,20 @@
                     </div>
                 </div>
 
-                <a href="{% url 'login' %}" class="btn-secundario desktop-only">Iniciar</a>
-                <a href="{% url 'opcion_user' %}" class="btn-principal desktop-only">Registrarse</a>
+                {% if usuario_sesion.autenticado %}
+                    <div class="sesion-box desktop-only">
+                        <span class="sesion-saludo">
+                            Hola, {{ usuario_sesion.nombre }}{% if usuario_sesion.rol %} <span class="sesion-rol">{{ usuario_sesion.rol }}</span>{% endif %}
+                        </span>
+                        {% if usuario_sesion.url_panel %}
+                            <a href="{{ usuario_sesion.url_panel }}" class="btn-secundario">{{ usuario_sesion.texto_panel }}</a>
+                        {% endif %}
+                        <a href="{{ usuario_sesion.url_logout }}" class="btn-principal">Cerrar sesión</a>
+                    </div>
+                {% else %}
+                    <a href="{% url 'login' %}" class="btn-secundario desktop-only">Iniciar</a>
+                    <a href="{% url 'opcion_user' %}" class="btn-principal desktop-only">Registrarse</a>
+                {% endif %}
                 <label for="menu-toggle" class="hamburger">
                     <span></span><span></span><span></span>
                 </label>

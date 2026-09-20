@@ -87,6 +87,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                # Expone 'usuario_sesion' al menu global (alumnos/base.html)
+                'alumnos.context_processors.estado_sesion',
             ],
         },
     },
