@@ -43,51 +43,55 @@
         <nav class="sidebar-nav">
             <span class="nav-label">Principal</span>
 
-            <a class="nav-item {% block nav_resumen %}{% endblock %}" href="{% url 'dashboard_admin' %}">
+            <a id="nav-resumen" class="nav-item {% block nav_resumen %}{% endblock %}" href="{% url 'dashboard_admin' %}">
                 <i class="bi bi-grid-1x2-fill"></i>
                 Resumen General
             </a>
 
-            <a class="nav-item {% block nav_usuarios %}{% endblock %}" href="{% url 'crud' %}">
+            {# El dashboard resuelve "usuarios" como seccion interna y sobrescribe este destino. #}
+            <a id="nav-usuarios" class="nav-item {% block nav_usuarios %}{% endblock %}" href="{% block nav_usuarios_href %}{% url 'crud' %}{% endblock %}">
                 <i class="bi bi-people-fill"></i>
                 Gestión de Alumnos
             </a>
 
-            <a class="nav-item {% block nav_reportes %}{% endblock %}" href="{% url 'dashboard_admin' %}#reportes">
+            <a id="nav-reportes" class="nav-item {% block nav_reportes %}{% endblock %}" href="{% url 'dashboard_admin' %}#reportes">
                 <i class="bi bi-flag-fill"></i>
                 Reportes
+                {% if reportes_pendientes > 0 %}
+                <span class="nav-badge">{{ reportes_pendientes }}</span>
+                {% endif %}
             </a>
 
             <span class="nav-label">Contenido</span>
 
-            <a class="nav-item {% block nav_planes %}{% endblock %}" href="{% url 'planes_adm' %}">
+            <a id="nav-planes" class="nav-item {% block nav_planes %}{% endblock %}" href="{% url 'planes_adm' %}">
                 <i class="bi bi-collection-fill"></i>
                 Planes
             </a>
 
-            <a class="nav-item {% block nav_nosotros %}{% endblock %}" href="{% url 'nosotros_adm' %}">
+            <a id="nav-nosotros" class="nav-item {% block nav_nosotros %}{% endblock %}" href="{% url 'nosotros_adm' %}">
                 <i class="bi bi-info-circle-fill"></i>
                 Nosotros
             </a>
 
-            <a class="nav-item {% block nav_contactos %}{% endblock %}" href="{% url 'contactos_adm' %}">
+            <a id="nav-contactos" class="nav-item {% block nav_contactos %}{% endblock %}" href="{% url 'contactos_adm' %}">
                 <i class="bi bi-telephone-fill"></i>
                 Contactos
             </a>
 
             <span class="nav-label">Herramientas</span>
 
-            <a class="nav-item {% block nav_clases %}{% endblock %}" href="{% url 'dashboard_admin' %}#clases">
+            <a id="nav-clases" class="nav-item {% block nav_clases %}{% endblock %}" href="{% url 'dashboard_admin' %}#clases">
                 <i class="bi bi-calendar3"></i>
                 Clases / Horarios
             </a>
 
-            <a class="nav-item {% block nav_finanzas %}{% endblock %}" href="{% url 'dashboard_admin' %}#finanzas">
+            <a id="nav-finanzas" class="nav-item {% block nav_finanzas %}{% endblock %}" href="{% url 'dashboard_admin' %}#finanzas">
                 <i class="bi bi-wallet2"></i>
                 Finanzas / Retiros
             </a>
 
-            <a class="nav-item {% block nav_ajustes %}{% endblock %}" href="{% url 'dashboard_admin' %}#ajustes">
+            <a id="nav-ajustes" class="nav-item {% block nav_ajustes %}{% endblock %}" href="{% url 'dashboard_admin' %}#ajustes">
                 <i class="bi bi-gear-fill"></i>
                 Ajustes
             </a>

@@ -18,122 +18,13 @@
 </head>
 
 <body class="{% block body_class %}{% endblock %}">
-    <header class="header">
-        <nav class="nav-box">
-            <div class="logo">
-                <img src="{% static 'alumnos/img/Logo.png' %}" alt="LBWUS Logo">
-                <a href="{% url 'home' %}"><span class="logo-text">LBWUS</span></a>
-            </div>
-
-            <input type="checkbox" id="menu-toggle" class="menu-toggle">
-
-            <ul class="menu">
-                <li><a href="{% url 'home' %}" id="nav-home">Inicio</a></li>
-                <li><a href="{% url 'nosotros' %}" id="nav-nosotros">Nosotros</a></li>
-                <li><a href="{% url 'servicios' %}" id="nav-servicios">Servicios</a></li>
-                <li><a href="{% url 'planes' %}" id="nav-planes">Planes</a></li>
-                <li><a href="{% url 'contactos' %}" id="nav-contacto">Contacto</a></li>
-                {% if usuario_sesion.autenticado %}
-                    {% if usuario_sesion.url_panel %}
-                        <li class="mobile-only"><a href="{{ usuario_sesion.url_panel }}">{{ usuario_sesion.texto_panel }}</a></li>
-                    {% endif %}
-                    <li class="mobile-only"><a href="{{ usuario_sesion.url_logout }}">Cerrar sesión</a></li>
-                {% else %}
-                    <li class="mobile-only"><a href="{% url 'login' %}">Iniciar Sesión</a></li>
-                    <li class="mobile-only"><a href="{% url 'opcion_user' %}">Registrarse</a></li>
-                {% endif %}
-            </ul>
-
-            <div class="nav-actions">
-                <button onclick="toggleTheme()" id="theme-toggler" class="theme-btn"
-                    aria-label="Cambiar modo día/noche">
-                    <i class="bi bi-moon-stars-fill theme-icon"></i>
-                </button>
-
-                <!-- Carrito de compras (global, en todas las páginas) -->
-                <div class="submenu-cart">
-                    <button class="cart-btn" id="cart-button" aria-label="Carrito">
-                        <i class="bi bi-cart-fill"></i>
-                        <span class="cart-count" id="contador-carrito" style="display:none">0</span>
-                    </button>
-                    <div id="carrito" class="carrito-dropdown">
-                        <table id="lista-carrito" class="cart-table">
-                            <thead>
-                                <tr>
-                                    <th>Nombre</th>
-                                    <th>Pago</th>
-                                    <th>Precio</th>
-                                    <th>Cant.</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                        <a href="#" id="vaciar-carrito" class="btn-vaciar">Vaciar Carrito</a>
-                        <a href="{% url 'pago' %}" class="btn-pagar" id="btn-ir-pago" style="display:none;">
-                            <i class="bi bi-credit-card-fill"></i> Ir a Pagar
-                        </a>
-                    </div>
-                </div>
-
-                {% if usuario_sesion.autenticado %}
-                    <div class="sesion-box desktop-only">
-                        <span class="sesion-saludo">
-                            Hola, {{ usuario_sesion.nombre }}{% if usuario_sesion.rol %} <span class="sesion-rol">{{ usuario_sesion.rol }}</span>{% endif %}
-                        </span>
-                        {% if usuario_sesion.url_panel %}
-                            <a href="{{ usuario_sesion.url_panel }}" class="btn-secundario">{{ usuario_sesion.texto_panel }}</a>
-                        {% endif %}
-                        <a href="{{ usuario_sesion.url_logout }}" class="btn-principal">Cerrar sesión</a>
-                    </div>
-                {% else %}
-                    <a href="{% url 'login' %}" class="btn-secundario desktop-only">Iniciar</a>
-                    <a href="{% url 'opcion_user' %}" class="btn-principal desktop-only">Registrarse</a>
-                {% endif %}
-                <label for="menu-toggle" class="hamburger">
-                    <span></span><span></span><span></span>
-                </label>
-            </div>
-        </nav>
-    </header>
+    {% include 'alumnos/includes/navbar.html' %}
 
     <main>
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="footer">
-        <div class="contenedor footer-grid">
-            <div class="footer-col">
-                <h3>Contacto</h3>
-                <p>Dirección: Pacifico Norte 123, Vernon Rockville, CT 06066</p>
-                <p>Tel: 123-456-7890</p>
-                <p>Email: teachers@lbwus.cl</p>
-            </div>
-            <div class="footer-col">
-                <h3>Información</h3>
-                <ul>
-                    <li><a href="{% url 'nosotros' %}">Nosotros</a></li>
-                    <li><a href="#">Privacidad</a></li>
-                    <li><a href="#">Términos</a></li>
-                </ul>
-                <div class="social-box">
-                    <a href="#" class="social-fb" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
-                    <a href="#" class="social-ig" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
-                    <a href="#" class="social-x" aria-label="X (Twitter)"><i class="bi bi-twitter-x"></i></a>
-                </div>
-            </div>
-            <div class="footer-col">
-                <h3>Newsletter</h3>
-                <div class="subscribe-box">
-                    <input type="email" placeholder="Tu email...">
-                    <button class="btn-principal">OK</button>
-                </div>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2026 LBWUS - Desarrollando enseñanza para el mundo</p>
-        </div>
-    </footer>
+    {% include 'alumnos/includes/footer.html' %}
 
     <script>
         function toggleTheme() {
