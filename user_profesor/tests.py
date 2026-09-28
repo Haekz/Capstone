@@ -1,14 +1,8 @@
 """Tests del panel del profesor y del acceso de administrador.
 
-Cubren tres bugs verificados explotandolos antes de corregirlos:
-
-1. custom_login() y login_admin() podian dejar la sesion apuntando a un
-   perfil Tutor ajeno (Tutor.objects.first()) o a un user.id que no es un
-   id_tutor.
-2. El panel regalaba $45.000/$36.000 a las cuentas sin inscripciones, y
-   solicitar_retiro() dejaba retirar ese dinero inexistente.
-3. El grafico de rendimiento rellenaba los meses vacios con [14, 22, 18,
-   25, 32] en vez de mostrar 0.
+Cubren tres reglas: la sesion de admin debe apuntar al perfil Tutor propio,
+el saldo debe salir de inscripciones reales, y el grafico de rendimiento no
+puede inventar datos.
 """
 
 from datetime import date, time
@@ -36,7 +30,7 @@ class AccesoAdministradorTests(TestCase):
     def setUpTestData(cls):
         cls.genero = Genero.objects.create(descripcion='Otro')
 
-        # Tutor legitimo, el primero de la tabla.
+        # Tutor legitimo.
         cls.user_ana = User.objects.create_user(
             '20202020-2', password='clave12345', first_name='Ana'
         )
@@ -53,7 +47,7 @@ class AccesoAdministradorTests(TestCase):
         )
 
     def test_staff_sin_perfil_no_hereda_un_tutor_ajeno(self):
-        """Antes caia en Tutor.objects.first() y operaba como Ana."""
+        """Un staff sin perfil Tutor no debe recibir el perfil de otro."""
         self.client.post(
             reverse('login'),
             {'username': '30303030-3', 'password': 'clave12345'},
@@ -258,7 +252,7 @@ class GraficoRendimientoTests(TestCase):
                 self.assertEqual(mes['porcentaje'], 0)
 
     def test_no_reaparecen_los_valores_inventados(self):
-        """Blinda contra volver a rellenar con mock_values."""
+        """El grafico no debe contener valores simulados."""
         cantidades = {mes['cantidad'] for mes in self._grafico()}
 
         self.assertFalse(

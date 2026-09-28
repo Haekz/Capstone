@@ -1,201 +1,71 @@
+{% extends 'alumnos/base.html' %}
 {% load static %}
 
-<!DOCTYPE html>
-<html lang="en">
+{% block title %}Simulador | LBWUS{% endblock %}
+{% block body_class %}simulador-page{% endblock %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="{% static 'alumnos/img/Logo.png' %}">
-    <!-- Bootstrap CSS (librerias)-->
-    <title>LBWUS</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <!-- Bootstrap desde CDN: no hay copia local en static/ -->
+{% block extra_css %}
+    {# Bootstrap solo aca: las clases form-select/form-control/btn de esta
+       pagina dependen de el. #}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="{% static 'alumnos/css/estilo.css' %}">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
-    
-</head>
+    <link rel="stylesheet" href="{% static 'alumnos/css/simulador.css' %}">
+{% endblock %}
 
-<body>
-      <!--Navbar-->
-      <nav class="navbar navbar-expand-lg fixed-top">
-        <div class="container-fluid">
-            <a class="navbar-brand me-auto" href="{% url 'home' %}">
-                {% load static %}
-                <img src="{% static 'alumnos/img/Logo.png' %}" alt="Logo" width="50px" class="d-inline-block align-text-top">                
-                LBWUS</a>
-            <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
-                <div class="offcanvas-header">
-                    <h5 class="offcanvas-title" id="offcanvasNavbarLabel">LBWUS</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-                </div>
-                <div class="offcanvas-body">
-                    <ul class="navbar-nav justify-content-center flex-grow-1 pe-3">
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2 active" aria-current="page" href="{% url 'home' %}">Inicio</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2" href="{% url 'planes' %}">Planes</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2" href="{% url 'servicios' %}">Servicios</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2" href="{% url 'nosotros' %}">Nosotros</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mx-lg-2" href="{% url 'contactos' %}">Contactos</a>
-                        </li>                        
-                    </ul>
-                </div>
-            </div>
-            {% if usuario_sesion.autenticado %}
-                {% if usuario_sesion.url_panel %}
-                    <a href="{{ usuario_sesion.url_panel }}" class="registrarse-button btn btn-primary">{{ usuario_sesion.texto_panel }}</a>
-                {% endif %}
-                <a href="{{ usuario_sesion.url_logout }}" class="login-button btn btn-secondary">Cerrar sesión</a>
-            {% else %}
-                <a href="{% url 'opcion_user' %}" class="registrarse-button btn btn-primary">Registrarse</a>
-                <a href="{% url 'login' %}" class="login-button btn btn-secondary">Iniciar</a>
-            {% endif %}
-            <!-- Botón para cambiar el tema con iconos -->
-            <button onclick="toggleTheme()" id="theme-toggler" class="btn btn-outline-light ms-2">
-                <i class="bi bi-sun"></i>  <!-- Icono predeterminado para el tema claro -->
-            </button>
-            <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar"
-                aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+{% block content %}
+<!-- Busqueda de profesionales por comuna o por nombre -->
+<div class="container mt-5">
+    <div class="header text-center">
+        <h2>Simula tu búsqueda de un profesional</h2>
+    </div>
+    <div class="search-container d-flex justify-content-center gap-3">
+        <div class="search-section">
+            <div class="search-title">Por comuna</div>
+            <label for="comunaInput" class="visually-hidden">Selecciona una comuna</label>
+            <select id="comunaInput" class="form-select">
+                <option selected>Elige una comuna</option>
+            </select>
+            <button class="btn btn-busqueda mt-3" onclick="buscarProfesores()">Buscar</button>
+            <div id="resultados" class="mt-3" role="status" aria-live="polite"></div>
         </div>
-    </nav>    
-<!--End Navbar-->
-    <!-- Inicio de busqueda por Profesional-->
-    <div class="container mt-5">
-        <div class="header text-center">
-            <h2>Simula tu búsqueda de un profesional</h2>
-        </div>
-        <div class="search-container d-flex justify-content-center gap-3">
-            <div class="search-section">
-                <div class="search-title">Por comuna</div>
-                <select id="comunaInput" class="form-select" aria-label="Selecciona una comuna">
-                    <option selected>Elige una comuna</option>
-                </select>
-                <button class="btn btn-busqueda mt-3" onclick="buscarProfesores()">Buscar</button>
-                <div id="resultados" class="mt-3"></div>
-            </div>
-            <div class="form-section">
-                <div class="search-title">Por nombre</div>
-                <input type="text" id="search" placeholder="Buscar por nombre..." class="form-control">
-                <ul id="results" class="list-group mt-3"></ul>
-            </div>
+        <div class="form-section">
+            <div class="search-title">Por nombre</div>
+            <label for="search" class="visually-hidden">Buscar profesor por nombre</label>
+            <input type="text" id="search" placeholder="Buscar por nombre..." class="form-control">
+            <ul id="results" class="list-group mt-3" role="status" aria-live="polite"></ul>
         </div>
     </div>
-    <!-- Fin de busqueda por Profesional-->
+</div>
 
-    <!-- Sección de conversión de moneda -->
-    <div class="container mt-5">
-        <div class="header text-center">
-            <h2>Conversión de Moneda</h2>
-        </div>
-        <div class="search-container d-flex justify-content-center gap-3">
-            <div class="conversion-section">
-                <label for="amount" class="form-label">Monto:</label>
-                <input type="number" id="amount" class="form-control" placeholder="Ingresa el monto">
-                <label for="fromCurrency" class="form-label mt-3">De:</label>
-                <select id="fromCurrency" class="form-select">
-                    <option value="CLP">Peso chileno</option>
-                    <option value="USD">Dólar estadounidense</option>
-                    <option value="UF">Unidad de Fomento (UF)</option>
-                </select>
-                <label for="toCurrency" class="form-label mt-3">A:</label>
-                <select id="toCurrency" class="form-select">
-                    <option value="CLP">Peso chileno</option>
-                    <option value="USD">Dólar estadounidense</option>
-                    <option value="UF">Unidad de Fomento (UF)</option>
-                </select>
-                <button id="convert" class="btn btn-busqueda mt-3" onclick="convertCurrency()">Convertir</button>
-                <div id="conversion-result" class="mt-3"></div>
-            </div>
+<!-- Conversion de moneda con datos de mindicador.cl -->
+<div class="container mt-5 mb-5">
+    <div class="header text-center">
+        <h2>Conversión de Moneda</h2>
+    </div>
+    <div class="search-container d-flex justify-content-center gap-3">
+        <div class="conversion-section">
+            <label for="amount" class="form-label">Monto:</label>
+            <input type="number" id="amount" class="form-control" placeholder="Ingresa el monto">
+            <label for="fromCurrency" class="form-label mt-3">De:</label>
+            <select id="fromCurrency" class="form-select">
+                <option value="CLP">Peso chileno</option>
+                <option value="USD">Dólar estadounidense</option>
+                <option value="UF">Unidad de Fomento (UF)</option>
+            </select>
+            <label for="toCurrency" class="form-label mt-3">A:</label>
+            <select id="toCurrency" class="form-select">
+                <option value="CLP">Peso chileno</option>
+                <option value="USD">Dólar estadounidense</option>
+                <option value="UF">Unidad de Fomento (UF)</option>
+            </select>
+            <button id="convert" class="btn btn-busqueda mt-3" onclick="convertCurrency()">Convertir</button>
+            <div id="conversion-result" class="mt-3" role="status" aria-live="polite"></div>
         </div>
     </div>
-    <!-- Fin de sección de conversión de moneda -->s
-<footer class="footer">
-    <div class="container container-footer">
-        <div class="menu-footer">
-            <div class="contact-info">
-                <p class="title-footer">Información de Contacto</p>
-                <ul>
-                    <li class="infocontact">
-                        Dirección: Pacifico Norte 123 <br> Vernon Rockville, CT 06066
-                    </li>
-                    <li>Teléfono: 123-456-7890</li>
-                    <li>Email: teachers@lbwus.cl</li>
-                </ul>
-                <div class="social-icons">
-                    <span class="facebook">
-                        <i class="fa-brands fa-facebook-f"></i>
-                    </span>
-                    <span class="twitter">
-                        <i class="fa-brands fa-twitter"></i>
-                    </span>
-                    <span class="youtube">
-                        <i class="fa-brands fa-youtube"></i>
-                    </span>
-                    <span class="pinterest">
-                        <i class="fa-brands fa-pinterest-p"></i>
-                    </span>
-                    <a href="https://www.instagram.com/lbwus_?utm_source=qr&stkn=MXZxaTlubnMxZHZubw%3D%3D" target="_blank" rel="noopener noreferrer">
-                        <span class="instagram">
-                            <i class="fa-brands fa-instagram"></i>
-                        </span>
-                    </a>
-                </div>
-            </div>
+</div>
+{% endblock %}
 
-            <div class="information">
-                <p class="title-footer">Información</p>
-                <ul class="infofo">
-                    <li><a href="#">Acerca de Nosotros</a></li>
-                    <li><a href="#">Estado de tus contrataciones</a></li>
-                    <li><a href="#">Políticas de Privacidad</a></li>
-                    <li><a href="#">Términos y condiciones</a></li>
-                    <li><a href="#">Contáctanos</a></li>
-                </ul>
-            </div>
-
-            <div class="my-account">
-                <p class="title-footer">Mi cuenta</p>
-                <ul class="mi-cuenta">
-                    <li><a href="#">Mi cuenta</a></li>
-                    <li><a href="#">Historial de ordenes</a></li>
-                    <li><a href="#">Lista de deseos</a></li>
-                    <li><a href="#">Boletín</a></li>
-                    <li><a href="#">Reembolsos</a></li>
-                </ul>
-            </div>
-
-            <div class="newsletter">
-                <p class="title-footer">Boletín informativo</p>
-                <div class="content">
-                    <p>
-                        Suscríbete a nuestros boletines ahora y mantente al día con nuevas colecciones y ofertas exclusivas.
-                    </p>
-                    <input type="email" placeholder="Ingresa el correo aquí...">
-                    <button>Suscríbete</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="copyright">
-            <p>Desarrollando enseñanza para el mundo &copy; 2024</p>
-        </div>
-    </div>
-</footer>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="../java/main.js"></script>
-<script src="../java/jquery.js"></script>
-<script src="https://kit.fontawesome.com/81581fb069.js" crossorigin="anonymous"></script>
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
 <script>
     const comunas = [
         "Cerrillos", "Cerro Navia", "Conchalí", "El Bosque", "Estación Central",
@@ -207,7 +77,7 @@
         "Santiago", "Vitacura"
     ];
 
-    // Lista de profesores de ejemplo
+    // Datos de ejemplo: el simulador no consulta la base de datos real.
     const profesores = [
         { nombre: "Juan Perez", comuna: "Cerrillos" },
         { nombre: "Maria Gomez", comuna: "La Florida" },
@@ -217,9 +87,9 @@
         { nombre: "Laura Sanchez", comuna: "Maipú" }
     ];
 
-    // Cargar comunas al cargar la página
     function cargarComunas() {
         const comunaInput = document.getElementById('comunaInput');
+        if (!comunaInput) return;
         comunas.forEach(comuna => {
             const option = document.createElement('option');
             option.value = comuna;
@@ -228,75 +98,86 @@
         });
     }
 
-    // Buscar profesores por comuna
     function buscarProfesores() {
         const comuna = document.getElementById('comunaInput').value;
         const resultados = document.getElementById('resultados');
-        resultados.innerHTML = '';
+        resultados.textContent = '';
 
         if (comuna === "Elige una comuna") {
-            alert("Por favor selecciona una comuna.");
+            resultados.textContent = "Por favor selecciona una comuna.";
             return;
         }
 
-        const profesoresFiltrados = profesores.filter(profesor => profesor.comuna === comuna);
-        if (profesoresFiltrados.length > 0) {
-            profesoresFiltrados.forEach(profesor => {
-                const div = document.createElement('div');
-                div.textContent = profesor.nombre;
-                resultados.appendChild(div);
-            });
-        } else {
+        const encontrados = profesores.filter(p => p.comuna === comuna);
+        if (encontrados.length === 0) {
             resultados.textContent = "No se encontraron profesores en esta comuna.";
+            return;
         }
+        encontrados.forEach(profesor => {
+            const div = document.createElement('div');
+            div.textContent = profesor.nombre;
+            resultados.appendChild(div);
+        });
     }
 
-    // Búsqueda en tiempo real
-    $(document).ready(function () {
-        $('#search').on('input', function () {
-            var query = $(this).val().toLowerCase();
-            $('#results').empty();
+    // Busqueda por nombre en vivo, sin jQuery: el resto del sitio no lo carga.
+    function initBusquedaPorNombre() {
+        const input = document.getElementById('search');
+        const lista = document.getElementById('results');
+        if (!input || !lista) return;
 
-            if (query !== "") {
-                var filteredResults = profesores.filter(function (profesor) {
-                    return profesor.nombre.toLowerCase().includes(query);
-                });
+        input.addEventListener('input', () => {
+            const query = input.value.toLowerCase().trim();
+            lista.textContent = '';
+            if (!query) return;
 
-                filteredResults.forEach(function (profesor) {
-                    $('#results').append('<li class="list-group-item">' + profesor.nombre + ' (' + profesor.comuna + ')</li>');
+            profesores
+                .filter(p => p.nombre.toLowerCase().includes(query))
+                .forEach(p => {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item';
+                    li.textContent = `${p.nombre} (${p.comuna})`;
+                    lista.appendChild(li);
                 });
-            }
         });
-
-        cargarComunas();
-    });
+    }
 
     function convertCurrency() {
-        var amount = parseFloat(document.getElementById('amount').value);
-        var fromCurrency = document.getElementById('fromCurrency').value;
-        var toCurrency = document.getElementById('toCurrency').value;
+        const salida = document.getElementById('conversion-result');
+        const amount = parseFloat(document.getElementById('amount').value);
+        const desde = document.getElementById('fromCurrency').value;
+        const hacia = document.getElementById('toCurrency').value;
 
-        if (fromCurrency === toCurrency) {
-            document.getElementById('conversion-result').innerText = `El monto convertido es: ${amount}`;
+        if (isNaN(amount) || amount <= 0) {
+            salida.textContent = 'Ingresa un monto válido.';
             return;
         }
 
-        $.getJSON('https://mindicador.cl/api', function (data) { /*Data se refiere al objeto de datos que se recibe de la respuesta de la API */
-            var conversionRates = {
-                CLP: 1,
-                USD: data.dolar.valor,
-                UF: data.uf.valor
-            };
+        if (desde === hacia) {
+            salida.textContent = `El monto convertido es: ${amount}`;
+            return;
+        }
 
-            var amountInCLP = amount * conversionRates[fromCurrency];
-            var convertedAmount = amountInCLP / conversionRates[toCurrency];
-
-            document.getElementById('conversion-result').innerText = `El monto convertido es: ${convertedAmount.toFixed(4)}`;
-        }).fail(function () {
-            alert('Error al obtener los datos de la API.');
-        });
+        salida.textContent = 'Consultando valores...';
+        fetch('https://mindicador.cl/api')
+            .then(respuesta => {
+                if (!respuesta.ok) throw new Error('respuesta no válida');
+                return respuesta.json();
+            })
+            .then(data => {
+                const tasas = { CLP: 1, USD: data.dolar.valor, UF: data.uf.valor };
+                const enPesos = amount * tasas[desde];
+                salida.textContent =
+                    `El monto convertido es: ${(enPesos / tasas[hacia]).toFixed(2)}`;
+            })
+            .catch(() => {
+                salida.textContent = 'No se pudieron obtener los valores de referencia.';
+            });
     }
-</script>
-</body>
 
-</html>
+    document.addEventListener('DOMContentLoaded', () => {
+        cargarComunas();
+        initBusquedaPorNombre();
+    });
+</script>
+{% endblock %}

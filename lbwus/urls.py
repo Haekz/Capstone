@@ -6,9 +6,7 @@ from alumnos.views import home, custom_login
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # Ruta raíz que muestra la página de inicio.
-    # Este es el UNICO lugar donde se registra name='home'.
-    # No volver a declararlo en las urls de las apps: Django permite nombres
+    # Unico lugar donde se registra name='home': Django acepta nombres
     # duplicados sin avisar y el ultimo registrado gana el reverse().
     path('', home, name='home'),
     path('alumnos/', include('alumnos.urls')),

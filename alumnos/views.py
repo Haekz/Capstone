@@ -458,10 +458,8 @@ def custom_login(request):
                     or user.is_superuser
                 ):
 
-                    # Solo se acepta el Tutor ligado a ESTE usuario.
-                    # Antes, si no lo encontraba, caia en
-                    # Tutor.objects.first() y la sesion terminaba operando
-                    # con el perfil de otra persona.
+                    # Solo se acepta el Tutor ligado a ESTE usuario: tomar
+                    # cualquier otro haria operar la sesion con un perfil ajeno.
                     tutor = (
                         Tutor.objects
                         .filter(user=user)

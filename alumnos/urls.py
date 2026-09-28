@@ -23,8 +23,7 @@ from .views import (
 
 urlpatterns = [
     # Sitio público
-    # El home canónico vive en la raíz ('/') y se registra en lbwus/urls.py.
-    # Aquí solo redirigimos para no romper enlaces antiguos a /alumnos/.
+    # El home canonico vive en la raiz ('/'); aqui solo se redirige.
     path('', RedirectView.as_view(pattern_name='home', permanent=False), name='alumnos_index'),
     path('contactos', contactos, name='contactos'),
     path('nosotros', nosotros, name='nosotros'),

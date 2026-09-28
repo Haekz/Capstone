@@ -1,10 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.cache import never_cache
+from alumnos.decorators import profesor_required, profesor_required_json
 from alumnos.models import Genero, Profesor, Clase, Inscripcion, Tutor
 
-# Tarifas por inscripcion real. Antes estaban escritas a mano dentro de cada
-# vista, junto a un saldo de regalo para las cuentas sin actividad.
+# Tarifas por inscripcion real.
 VALOR_INSCRIPCION = 15000   # lo que paga el alumno
 PAGO_PROFESOR = 12000       # lo que le corresponde al profesor
 
@@ -13,8 +13,6 @@ def calcular_saldos(profesor):
     """Devuelve los saldos de un profesor a partir de sus inscripciones.
 
     Sin inscripciones el resultado es 0: una cuenta nueva no tiene dinero.
-    Antes se devolvian 45000/36000 de relleno y el profesor podia pedir un
-    retiro por plata que nunca existio.
     """
     from django.db.models import Sum
 
@@ -160,13 +158,12 @@ def login_prof(request):
 
 
 @never_cache
+@profesor_required
 def panel_profesor(request):
     import datetime
-    profesor_id = request.session.get('profesor_id')
-    if not profesor_id:
-        return redirect('regis_prof')
-
-    profesor = get_object_or_404(Profesor, id_profesor=profesor_id)
+    profesor = get_object_or_404(
+        Profesor, id_profesor=request.session['profesor_id']
+    )
     clases = Clase.objects.filter(id_profesor=profesor)
     inscripciones = Inscripcion.objects.filter(id_clase__id_profesor=profesor)
 
@@ -198,8 +195,7 @@ def panel_profesor(request):
     current_month = datetime.datetime.now().month
     rendimiento_meses = []
 
-    # Un mes sin inscripciones vale 0. Antes se rellenaba con mock_values y el
-    # grafico mostraba actividad inventada.
+    # Un mes sin inscripciones vale 0: el grafico no rellena con datos falsos.
     tope_grafico = 40
     for i in range(4, -1, -1):
         month_idx = (current_month - i - 1) % 12
@@ -243,13 +239,12 @@ def panel_profesor(request):
     return render(request, 'user_profesor/panel_profesor.html', context)
 
 
+@profesor_required_json
 def actualizar_perfil_prof(request):
     if request.method == 'POST':
-        profesor_id = request.session.get('profesor_id')
-        if not profesor_id:
-            return JsonResponse({"success": False, "message": "Sesión inválida."})
-
-        profesor = get_object_or_404(Profesor, id_profesor=profesor_id)
+        profesor = get_object_or_404(
+            Profesor, id_profesor=request.session['profesor_id']
+        )
 
         try:
             nombre = request.POST.get('nombre', '').strip()
@@ -289,13 +284,12 @@ def logout_prof(request):
     return redirect('home')
 
 
+@profesor_required_json
 def solicitar_retiro(request):
-    profesor_id = request.session.get('profesor_id')
-    if not profesor_id:
-        return JsonResponse({"success": False, "message": "Sesión inválida."})
-
     if request.method == 'POST':
-        profesor = get_object_or_404(Profesor, id_profesor=profesor_id)
+        profesor = get_object_or_404(
+            Profesor, id_profesor=request.session['profesor_id']
+        )
         from alumnos.models import SolicitudRetiro
 
         try:
@@ -348,9 +342,8 @@ def _es_admin(request):
 
 
 def regis_tutor(request):
-    # esta parte es de registrar un nuevo administrador usando el modelo Tutor.
-    # NO es un registro publico: crear administradores desde internet permitia
-    # que cualquiera se diera acceso al portal y al /admin/ de Django.
+    # Registra un administrador (modelo Tutor). No es un registro publico:
+    # solo un admin ya autenticado puede crear otros.
     if not _es_admin(request):
         if request.method == 'POST':
             return JsonResponse(
@@ -414,9 +407,8 @@ def regis_tutor(request):
                 password=password,
                 first_name=nombre
             )
-            # Sin is_staff: el acceso al portal lo da el perfil Tutor, no el
-            # flag de Django. is_staff abre /admin/, que es otra cosa y debe
-            # concederse a mano desde la consola.
+            # Sin is_staff: el acceso al portal lo da el perfil Tutor.
+            # is_staff abre /admin/ y se concede a mano desde la consola.
             user.save()
 
             tutor = Tutor.objects.create(
@@ -458,10 +450,8 @@ def login_admin(request):
         from django.contrib.auth import authenticate, login as auth_login
         user = authenticate(request, username=identificador, password=password)
 
-        # Exigimos el perfil Tutor propio de este usuario. Antes bastaba con
-        # is_staff y se guardaba user.id como admin_id: un id de User y un id
-        # de Tutor no son lo mismo, asi que la sesion quedaba apuntando a un
-        # perfil ajeno o inexistente.
+        # Se exige el perfil Tutor propio de este usuario: admin_id guarda un
+        # id_tutor, que no es lo mismo que un user.id.
         if user and hasattr(user, 'perfil_tutor'):
             auth_login(request, user)
             request.session['admin_id'] = user.perfil_tutor.id_tutor

@@ -10,7 +10,11 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
+import os
 from pathlib import Path
+
+import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -19,11 +23,28 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
+# Railway y otros hostings con Postgres gestionado inyectan DATABASE_URL:
+# su presencia indica que NO estamos en un equipo de desarrollo.
+EN_PRODUCCION = bool(os.environ.get('DATABASE_URL'))
+
+# Clave de respaldo SOLO para desarrollo local.
+# Esta comprometida: vive en el historial de git. Jamas usarla en produccion.
+SECRET_KEY_DESARROLLO = 'django-insecure-(5vif7*6x25s&&b89y)#ly7=3a*bp0&_$9d^+xuap-3-oh3rdi'
+
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-(5vif7*6x25s&&b89y)#ly7=3a*bp0&_$9d^+xuap-3-oh3rdi'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+if not SECRET_KEY:
+    if EN_PRODUCCION:
+        raise ImproperlyConfigured(
+            'Falta la variable de entorno DJANGO_SECRET_KEY. '
+            'Generala con: python -c "from django.core.management.utils '
+            'import get_random_secret_key; print(get_random_secret_key())"'
+        )
+    SECRET_KEY = SECRET_KEY_DESARROLLO
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Por defecto se apaga en produccion; se puede forzar con DJANGO_DEBUG.
+DEBUG = os.environ.get('DJANGO_DEBUG', str(not EN_PRODUCCION)).lower() == 'true'
 
 ALLOWED_HOSTS = ['lbwus.xyz', '*.up.railway.app', 'localhost', '127.0.0.1']
 
@@ -67,7 +88,14 @@ MIDDLEWARE = [
 
 SITE_ID = 1
 
+# Unica definicion de backends de autenticacion. El orden importa:
+# Django prueba uno por uno y se queda con el primero que responda.
+#   1. RutOrEmailBackend -> login con RUT (con o sin puntos), correo o usuario.
+#   2. ModelBackend      -> login clasico por username. Respaldo para /admin/.
+#   3. allauth           -> requerido por el login social con Google.
+# No declarar esta lista dos veces: la segunda pisa a la primera en silencio.
 AUTHENTICATION_BACKENDS = [
+    'alumnos.backends.RutOrEmailBackend',
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
@@ -101,10 +129,7 @@ WSGI_APPLICATION = 'lbwus.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-import os
-import dj_database_url
-
-if os.environ.get('DATABASE_URL'):
+if EN_PRODUCCION:
     DATABASES = {
         'default': dj_database_url.config(
             default=os.environ.get('DATABASE_URL'),
@@ -172,9 +197,3 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Configuración para el envío de correos de prueba en consola
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
-# Backends de autenticación centralizada (RUT, Correo o Usuario)
-AUTHENTICATION_BACKENDS = [
-    'alumnos.backends.RutOrEmailBackend',
-    'django.contrib.auth.backends.ModelBackend',
-]

@@ -1,0 +1,117 @@
+/* Estilos exclusivos de la pagina del simulador.
+ *
+ * Todo se acota bajo .simulador-page: sin selectores globales, para no
+ * afectar al navbar ni al footer compartidos.
+ */
+
+.simulador-page .header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.simulador-page .header h2 {
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.simulador-page .search-container {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 40px;
+}
+
+.simulador-page .search-section,
+.simulador-page .form-section,
+.simulador-page .conversion-section {
+  background-color: #ffffff;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 350px;
+  text-align: center;
+}
+
+.simulador-page .search-title {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.simulador-page .form-select,
+.simulador-page input[type="text"],
+.simulador-page input[type="number"],
+.simulador-page .form-label {
+  width: 100%;
+  height: 45px;
+  font-size: 16px;
+  border-radius: 25px;
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin-bottom: 20px;
+}
+
+.simulador-page .btn-busqueda {
+  height: 45px;
+  background-color: #FFD700;
+  color: black;
+  border-radius: 25px;
+  border: none;
+  font-size: 16px;
+  width: 100%;
+}
+
+.simulador-page .btn-busqueda:hover {
+  background-color: #f0c200;
+}
+
+.simulador-page #resultados,
+.simulador-page #results,
+.simulador-page #conversion-result {
+  margin-top: 20px;
+}
+
+.simulador-page #conversion-result {
+  font-size: 18px;
+}
+
+.simulador-page #resultados div,
+.simulador-page #results li {
+  font-size: 14px;
+  border-bottom: 1px solid #ccc;
+  padding: 8px;
+  list-style-type: none;
+  border-radius: 0.25rem;
+  background-color: #ffffff;
+  margin-bottom: 10px;
+}
+
+/* Las tarjetas son blancas fijas; en modo oscuro el texto heredado del body
+ * quedaria blanco sobre blanco. */
+body.dark-mode .simulador-page .search-section,
+body.dark-mode .simulador-page .form-section,
+body.dark-mode .simulador-page .conversion-section {
+  background-color: #1e1e2e;
+  color: #f1f1f1;
+}
+
+body.dark-mode .simulador-page #resultados div,
+body.dark-mode .simulador-page #results li {
+  background-color: #2a2a3c;
+  color: #f1f1f1;
+  border-bottom-color: #44445a;
+}
+
+@media (max-width: 768px) {
+  .simulador-page .search-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .simulador-page .search-section,
+  .simulador-page .form-section,
+  .simulador-page .conversion-section {
+    width: 100%;
+    max-width: 350px;
+  }
+}

@@ -539,9 +539,7 @@ class ReporteAlumnosTests(TestCase):
 class RegistroAdminTests(TestCase):
     """Crear administradores no puede ser un autoservicio publico.
 
-    regis_tutor() era accesible sin sesion y ademas marcaba is_staff=True,
-    asi que cualquiera con el formulario obtenia el portal admin Y el
-    /admin/ de Django. Se verifico explotandolo antes de corregirlo.
+    regis_tutor() exige sesion de admin y no marca is_staff.
     """
 
     RUT_NUEVO = '15133974-3'  # digito verificador valido (modulo 11)
