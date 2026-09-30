@@ -1,154 +1,17 @@
+{% extends 'admin_portal/base_admin.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="es">
 
-<head>
-    <!-- Datos técnicos y descripción del panel de control de LBWUS -->
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Panel de administración LBWUS - Gestión de usuarios y reportes">
-    <title>Panel Admin - LBWUS</title>
-    <link rel="icon" href="{% static 'alumnos/img/Logo.png' %}">
+{% block title %}Panel Admin - LBWUS{% endblock %}
+{% block page_title %}Resumen General{% endblock %}
+{% block page_subtitle %}Bienvenido de vuelta, {{ admin.nombre }}{% endblock %}
 
-    <!-- Recursos externos: Iconos de Bootstrap y tipografía Inter -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
-        rel="stylesheet">
+{# Al entrar sin hash la seccion visible es el resumen. #}
+{% block nav_resumen %}active{% endblock %}
 
-    <!-- Carga de la hoja de estilos principal del dashboard -->
-    <link rel="stylesheet" href="{% static 'admin_portal/css/admin_panel.css' %}">
-</head>
+{# El dashboard resuelve "usuarios" como seccion interna, no como pagina aparte. #}
+{% block nav_usuarios_href %}{% url 'dashboard_admin' %}#usuarios{% endblock %}
 
-<body class="light-mode">
-
-    <!-- Estructura contenedora de toda la vista del panel -->
-    <div class="admin-wrapper" id="admin-wrapper">
-
-        <!-- =============================================
-         esta parte es del sidebar izquierdo con navegación
-         ============================================= -->
-        <aside class="sidebar" id="sidebar">
-
-            <!-- Logotipo e identificación de la plataforma -->
-            <a class="sidebar-brand" href="#">
-                <img src="{% static 'alumnos/img/Logo.png' %}" alt="Logo LBWUS">
-                <div class="sidebar-brand-text">
-                    <span class="sidebar-brand-name">LBWUS</span>
-                    <span class="sidebar-brand-role">Admin Portal</span>
-                </div>
-            </a>
-
-            <!-- Ficha rápida del usuario administrador logueado -->
-            <div class="sidebar-user">
-                <div class="sidebar-user-avatar" id="user-avatar-initials">
-                    {{ admin.nombre|slice:":1"|upper }}
-                </div>
-                <div class="sidebar-user-info">
-                    <div class="sidebar-user-name">{{ admin.nombre }}</div>
-                    <div class="sidebar-user-role">Administrador</div>
-                </div>
-            </div>
-
-            <!-- Menú de opciones del sidebar izquierdo -->
-            <nav class="sidebar-nav">
-                <span class="nav-label">Principal</span>
-
-                <button class="nav-item active" id="nav-resumen" onclick="showSection('resumen')">
-                    <i class="bi bi-grid-1x2-fill"></i>
-                    Resumen General
-                </button>
-
-                <button class="nav-item" id="nav-usuarios" onclick="showSection('usuarios')">
-                    <i class="bi bi-people-fill"></i>
-                    Gestión de Usuarios
-                </button>
-
-                <button class="nav-item" id="nav-reportes" onclick="showSection('reportes')">
-                    <i class="bi bi-flag-fill"></i>
-                    Reportes
-                    {% if reportes_pendientes > 0 %}
-                    <span class="nav-badge">{{ reportes_pendientes }}</span>
-                    {% endif %}
-                </button>
-
-                <span class="nav-label">Herramientas</span>
-
-                <button class="nav-item" id="nav-clases" onclick="showSection('clases')">
-                    <i class="bi bi-calendar3"></i>
-                    Clases / Horarios
-                </button>
-
-                <button class="nav-item" id="nav-finanzas" onclick="showSection('finanzas')">
-                    <i class="bi bi-wallet2"></i>
-                    Finanzas / Retiros
-                </button>
-
-                <a class="nav-item" href="{% url 'planes_adm' %}">
-                    <i class="bi bi-collection-fill"></i>
-                    Gestionar Planes
-                </a>
-
-                <a class="nav-item" href="{% url 'nosotros_adm' %}">
-                    <i class="bi bi-info-circle-fill"></i>
-                    Nosotros
-                </a>
-
-                <a class="nav-item" href="{% url 'contactos_adm' %}">
-                    <i class="bi bi-telephone-fill"></i>
-                    Contactos
-                </a>
-
-                <span class="nav-label">Configuración</span>
-
-                <button class="nav-item" id="nav-ajustes" onclick="showSection('ajustes')">
-                    <i class="bi bi-gear-fill"></i>
-                    Ajustes
-                </button>
-            </nav>
-
-            <!-- Enlace para desloguearse y volver al inicio público -->
-            <div class="sidebar-footer">
-                <a href="{% url 'logout_admin' %}" class="sidebar-logout">
-                    <i class="bi bi-box-arrow-left"></i>
-                    Cerrar Sesión
-                </a>
-            </div>
-        </aside>
-
-        <!-- =============================================
-         esta parte es del contenido principal a la derecha
-         ============================================= -->
-        <main class="main-content">
-
-            <!-- Encabezado superior con título dinámico de la sección y acciones -->
-            <div class="topbar">
-                <div class="topbar-left">
-                    <h1 id="section-title">Resumen General</h1>
-                    <p id="section-subtitle">Bienvenido de vuelta, {{ admin.nombre }}</p>
-                </div>
-                <div class="topbar-right">
-                <!-- Botón de búsqueda flotante (Ctrl + K) -->
-                <button class="theme-btn" onclick="openSearchModal()" title="Buscar (Ctrl + K)">
-                    <i class="bi bi-search"></i>
-                </button>
-                <!-- Botón de notificaciones con punto indicador de pendientes -->
-                <button class="theme-btn" onclick="toggleNotifications()" title="Notificaciones" style="position:relative;">
-                    <i class="bi bi-bell-fill"></i>
-                    <span class="notification-badge-dot" id="notif-badge-dot"></span>
-                </button>
-                <!-- Botón toggle para alternar entre los modos visuales claro/oscuro -->
-                <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Cambiar tema">
-                    <i class="bi bi-sun-fill" id="theme-icon"></i>
-                </button>
-                </div>
-            </div>
-
-            <!-- =============================================
-             esta parte es del contenido que cambia según la sección activa
-             ============================================= -->
-            <div class="page-content">
+{% block content %}
 
                 <!-- ============ SECCIÓN: RESUMEN GENERAL ============ -->
                 <div class="admin-section active" id="section-resumen">
@@ -297,10 +160,10 @@
                                         <line x1="50" y1="180" x2="550" y2="180" stroke="var(--border)" />
 
                                         <!-- Valores del eje Y -->
-                                        <text x="25" y="34" fill="var(--text-muted)" font-size="10">40</text>
-                                        <text x="25" y="84" fill="var(--text-muted)" font-size="10">25</text>
-                                        <text x="25" y="134" fill="var(--text-muted)" font-size="10">10</text>
-                                        <text x="25" y="184" fill="var(--text-muted)" font-size="10">0</text>
+                                        <text x="25" y="34" fill="var(--text-muted)" font-size="11">40</text>
+                                        <text x="25" y="84" fill="var(--text-muted)" font-size="11">25</text>
+                                        <text x="25" y="134" fill="var(--text-muted)" font-size="11">10</text>
+                                        <text x="25" y="184" fill="var(--text-muted)" font-size="11">0</text>
 
                                         <!-- Área sombreada debajo de la línea -->
                                         <path class="chart-area-path" d="M 90 150 L 190 120 L 290 140 L 390 70 L 490 50 L 490 180 L 90 180 Z" fill="url(#chart-gradient)" opacity="0.15" />
@@ -675,6 +538,7 @@
                     <div id="form-crear-clase" style="display: none; padding: 20px; background: rgba(var(--primary-rgb, 99, 102, 241), 0.05); border-bottom: 1px solid var(--border); margin-bottom: 20px;">
                         <h4 style="margin-top: 0; margin-bottom: 15px; font-size: 1.1rem; color: var(--text-primary);"><i class="bi bi-pencil-square"></i> Crear Nueva Clase</h4>
                         <form id="crearClaseForm" onsubmit="submitCrearClase(event)">
+                            {% csrf_token %}
                             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
                                 <div>
                                     <label style="display: block; font-size: 0.85rem; margin-bottom: 5px; font-weight: 600;">Nombre del Curso / Materia</label>
@@ -763,41 +627,6 @@
                     </div>
                 </div>
             </div>
-
-            <script>
-                function toggleCrearClaseForm() {
-                    const formEl = document.getElementById('form-crear-clase');
-                    if (formEl) {
-                        formEl.style.display = formEl.style.display === 'none' ? 'block' : 'none';
-                    }
-                }
-
-                function submitCrearClase(event) {
-                    event.preventDefault();
-                    const formData = new FormData(document.getElementById('crearClaseForm'));
-
-                    fetch("{% url 'crear_clase' %}", {
-                        method: "POST",
-                        headers: {
-                            "X-CSRFToken": "{{ csrf_token }}"
-                        },
-                        body: formData
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            alert(data.message);
-                            window.location.reload();
-                        } else {
-                            alert(data.message || "Error al crear la clase.");
-                        }
-                    })
-                    .catch(err => {
-                        console.error(err);
-                        alert("Error de conexión al crear clase.");
-                    });
-                }
-            </script>
 
             <!-- ============ SECCIÓN: FINANZAS Y RETIROS ============ -->
             <div class="admin-section" id="section-finanzas">
@@ -951,306 +780,166 @@
                     </div>
                 </div>
             </div>
+{% endblock %}
 
-            </div>
-    <!-- Panel lateral deslizable de Notificaciones (Drawer) -->
-    <div class="notifications-drawer" id="notifications-drawer">
-        <div class="drawer-header">
-            <h2>Notificaciones</h2>
-            <button class="close-drawer-btn" onclick="toggleNotifications()">&times;</button>
-        </div>
-        <div class="drawer-body">
-            <div class="notification-item unread" id="notif-1">
-                <div class="notification-icon purple">
-                    <i class="bi bi-person-plus-fill"></i>
-                </div>
-                <div class="notification-content">
-                    <p class="notification-title">Nuevo Alumno Registrado</p>
-                    <p class="notification-desc">El estudiante Jose se ha registrado en el Plan Básico.</p>
-                    <span class="notification-time">Hace 5 minutos</span>
-                </div>
-            </div>
-            <div class="notification-item unread" id="notif-2">
-                <div class="notification-icon blue">
-                    <i class="bi bi-cash-stack"></i>
-                </div>
-                <div class="notification-content">
-                    <p class="notification-title">Solicitud de Retiro</p>
-                    <p class="notification-desc">El profesor Tánger ha solicitado un retiro de $45.000.</p>
-                    <span class="notification-time">Hace 2 horas</span>
-                </div>
-            </div>
-            <div class="notification-item" id="notif-3">
-                <div class="notification-icon amber">
-                    <i class="bi bi-exclamation-circle-fill"></i>
-                </div>
-                <div class="notification-content">
-                    <p class="notification-title">Reporte Recibido</p>
-                    <p class="notification-desc">Se reportó un problema de conexión en la clase de Matemáticas.</p>
-                    <span class="notification-time">Ayer</span>
-                </div>
-            </div>
-        </div>
-        <div class="drawer-footer">
-            <button class="btn-clear-notifications" onclick="clearNotifications()">Marcar todas como leídas</button>
-        </div>
-    </div>
+{% block extra_js %}
+<script>
+    // Secciones que el dashboard muestra y oculta sin recargar la pagina.
+    const sections = ['resumen', 'usuarios', 'reportes', 'clases', 'finanzas', 'ajustes'];
 
-    <!-- Modal de Búsqueda Global (Ctrl + K) -->
-    <div class="search-modal-backdrop" id="search-modal-backdrop" onclick="closeSearchModal()">
-        <div class="search-modal" onclick="event.stopPropagation()">
-            <div class="search-modal-header">
-                <i class="bi bi-search"></i>
-                <input type="text" class="search-modal-input" id="search-modal-input" placeholder="Buscar alumnos, profesores, reportes..." oninput="handleGlobalSearch()">
-                <span class="search-esc-badge">ESC</span>
-            </div>
-            <div class="search-modal-results" id="search-modal-results">
-                <div class="search-section-label">Sugerencias rápidas</div>
-                <div class="search-result-item" onclick="navigateFromSearch('usuarios')">
-                    <i class="bi bi-people"></i>
-                    <span>Gestión de Usuarios</span>
-                    <span class="search-result-type">Sección</span>
-                </div>
-                <div class="search-result-item" onclick="navigateFromSearch('reportes')">
-                    <i class="bi bi-flag"></i>
-                    <span>Reportes Pendientes</span>
-                    <span class="search-result-type">Sección</span>
-                </div>
-                <div class="search-result-item" onclick="navigateFromSearch('clases')">
-                    <i class="bi bi-calendar"></i>
-                    <span>Agenda de Clases</span>
-                    <span class="search-result-type">Sección</span>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- Fin de la sección del contenido principal -->
-    </main>
-    </div>
+    const titles = {
+        resumen: ['Resumen General', 'Vista general del sistema LBWUS'],
+        usuarios: ['Gestion de Usuarios', 'Administra alumnos, profesores y administradores'],
+        reportes: ['Reportes', 'Revisa y resuelve los reportes del sistema'],
+        clases: ['Agenda de Clases', 'Visualiza el horario semanal de clases de la plataforma'],
+        finanzas: ['Finanzas y Solicitudes', 'Administra los balances y retiros de fondos de profesores'],
+        ajustes: ['Ajustes de Perfil', 'Configura tus opciones personales y apariencia del panel']
+    };
 
-    <!-- Bloque de scripts JavaScript para el control dinámico del dashboard -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-        // Control de navegación AJAX-like entre las secciones principales
-        const sections = ['resumen', 'usuarios', 'reportes', 'clases', 'finanzas', 'ajustes'];
+    function showSection(name) {
+        if (!titles[name]) return;
 
-        function showSection(name) {
-            sections.forEach(s => {
-                const secEl = document.getElementById('section-' + s);
-                if (secEl) secEl.classList.remove('active');
-                const navBtn = document.getElementById('nav-' + s);
-                if (navBtn) navBtn.classList.remove('active');
-            });
-            const targetSec = document.getElementById('section-' + name);
-            if (targetSec) targetSec.classList.add('active');
-            const activeNav = document.getElementById('nav-' + name);
-            if (activeNav) activeNav.classList.add('active');
+        sections.forEach(s => {
+            const secEl = document.getElementById('section-' + s);
+            if (secEl) secEl.classList.remove('active');
+            const navBtn = document.getElementById('nav-' + s);
+            if (navBtn) navBtn.classList.remove('active');
+        });
 
-            const titles = {
-                resumen: ['Resumen General', 'Vista general del sistema LBWUS'],
-                usuarios: ['Gestión de Usuarios', 'Administra alumnos, profesores y administradores'],
-                reportes: ['Reportes', 'Revisa y resuelve los reportes del sistema'],
-                clases: ['Agenda de Clases', 'Visualiza el horario semanal de clases de la plataforma'],
-                finanzas: ['Finanzas y Solicitudes', 'Administra los balances y retiros de fondos de profesores'],
-                ajustes: ['Ajustes de Perfil', 'Configura tus opciones personales y apariencia del panel']
-            };
-            document.getElementById('section-title').textContent = titles[name][0];
-            document.getElementById('section-subtitle').textContent = titles[name][1];
+        const targetSec = document.getElementById('section-' + name);
+        if (targetSec) targetSec.classList.add('active');
+        const activeNav = document.getElementById('nav-' + name);
+        if (activeNav) activeNav.classList.add('active');
 
-            // Cambiar hash en la URL
-            window.location.hash = name;
-        }
+        document.getElementById('section-title').textContent = titles[name][0];
+        document.getElementById('section-subtitle').textContent = titles[name][1];
+    }
 
-        // Manejo de tabs secundarias dentro de la sección de Usuarios
-        function showUserTab(tab) {
-            ['alumnos', 'profesores', 'admins'].forEach(t => {
-                document.getElementById('users-' + t).style.display = 'none';
-                document.getElementById('tab-' + t).classList.remove('active');
-            });
-            document.getElementById('users-' + tab).style.display = 'block';
-            document.getElementById('tab-' + tab).classList.add('active');
-            document.getElementById('user-search').value = '';
-        }
+    // El sidebar de base_admin.html navega con enlaces #hash. Escuchamos el
+    // cambio de hash para que esos enlaces tambien funcionen estando ya aqui,
+    // donde el navegador no recarga la pagina.
+    function aplicarSeccionDesdeHash() {
+        const hash = window.location.hash.replace('#', '');
+        showSection(sections.includes(hash) ? hash : 'resumen');
+    }
 
-        // Filtro interactivo de búsqueda de usuarios por texto
-        function filterUsers() {
-            const query = document.getElementById('user-search').value.toLowerCase();
-            const activeTab = document.querySelector('[id^="users-"]:not([style*="display: none"])');
-            if (!activeTab) return;
-            const rows = activeTab.querySelectorAll('.user-row');
-            rows.forEach(row => {
-                const name = row.dataset.name || '';
-                const rut = row.dataset.rut || '';
-                const correo = row.dataset.correo || '';
-                row.style.display = (name.includes(query) || rut.includes(query) || correo.includes(query)) ? '' : 'none';
-            });
-        }
+    window.addEventListener('DOMContentLoaded', aplicarSeccionDesdeHash);
+    window.addEventListener('hashchange', aplicarSeccionDesdeHash);
 
-        // Filtro de reportes por su estado actual (pendiente, resuelto, etc)
-        let activeReportFilter = 'todos';
+    // Estando en el dashboard el buscador global salta de seccion en vez de
+    // recargar. Sobrescribe a proposito la version generica de base_admin.
+    function navigateFromSearch(section) {
+        closeSearchModal();
+        window.location.hash = section;
+    }
 
-        function filterReports(estado, btn) {
-            activeReportFilter = estado;
-            document.querySelectorAll('.report-row').forEach(row => {
-                if (estado === 'todos' || row.dataset.estado === estado) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
+    // Pestanas internas de la seccion de Usuarios.
+    function showUserTab(tab) {
+        ['alumnos', 'profesores', 'admins'].forEach(t => {
+            document.getElementById('users-' + t).style.display = 'none';
+            document.getElementById('tab-' + t).classList.remove('active');
+        });
+        document.getElementById('users-' + tab).style.display = 'block';
+        document.getElementById('tab-' + tab).classList.add('active');
+        document.getElementById('user-search').value = '';
+    }
+
+    // Filtro de usuarios por nombre, RUT o correo.
+    function filterUsers() {
+        const query = document.getElementById('user-search').value.toLowerCase();
+        const activeTab = document.querySelector('[id^="users-"]:not([style*="display: none"])');
+        if (!activeTab) return;
+        activeTab.querySelectorAll('.user-row').forEach(row => {
+            const name = row.dataset.name || '';
+            const rut = row.dataset.rut || '';
+            const correo = row.dataset.correo || '';
+            row.style.display = (name.includes(query) || rut.includes(query) || correo.includes(query)) ? '' : 'none';
+        });
+    }
+
+    // Filtro de reportes por estado.
+    let activeReportFilter = 'todos';
+
+    function filterReports(estado, btn) {
+        activeReportFilter = estado;
+        btn.closest('.panel-header').querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        filterReportRows();
+    }
+
+    // Buscador de reportes por remitente o descripcion del caso.
+    function filterReportRows() {
+        const query = document.getElementById('report-search').value.toLowerCase();
+        document.querySelectorAll('.report-row').forEach(row => {
+            const name = row.dataset.name || '';
+            const desc = row.dataset.desc || '';
+            const matchFilter = activeReportFilter === 'todos' || row.dataset.estado === activeReportFilter;
+            const matchSearch = name.includes(query) || desc.includes(query);
+            row.style.display = (matchFilter && matchSearch) ? '' : 'none';
+        });
+    }
+
+    // Color de acento del panel (solo para la sesion actual).
+    function changeAccentColor() {
+        const color = document.getElementById('accent-color-select').value;
+        const colors = {
+            purple: ['#7c3aed', '#6d28d9'],
+            blue: ['#3b82f6', '#1d4ed8'],
+            green: ['#10b981', '#059669']
+        };
+        document.documentElement.style.setProperty('--primary', colors[color][0]);
+        document.documentElement.style.setProperty('--primary-dark', colors[color][1]);
+        Swal.fire('Color actualizado', 'El color de acento se aplico temporalmente.', 'success');
+    }
+
+    // --- Seccion Clases: formulario de creacion ---
+
+    // Muestra u oculta el formulario de nueva clase.
+    function toggleCrearClaseForm() {
+        const formEl = document.getElementById('form-crear-clase');
+        if (!formEl) return;
+        const visible = formEl.style.display !== 'none';
+        formEl.style.display = visible ? 'none' : 'block';
+    }
+
+    // Envia el formulario por fetch y avisa el resultado sin salir de la pagina.
+    function submitCrearClase(event) {
+        event.preventDefault();
+        const form = document.getElementById('crearClaseForm');
+        const boton = form.querySelector('button[type="submit"]');
+
+        // El token viaja dentro del FormData gracias al tag csrf_token del
+        // formulario, asi que este archivo ya no necesita interpolarlo a mano.
+        boton.disabled = true;
+
+        fetch("{% url 'crear_clase' %}", {
+            method: 'POST',
+            body: new FormData(form)
+        })
+            .then(res => {
+                // Sesion vencida: la vista redirige al login en vez de responder JSON.
+                if (res.redirected) {
+                    window.location.href = res.url;
+                    return null;
                 }
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.json();
+            })
+            .then(data => {
+                if (!data) return;
+                if (data.success) {
+                    Swal.fire('Clase creada', data.message, 'success')
+                        .then(() => window.location.reload());
+                } else {
+                    Swal.fire('No se pudo crear', data.message || 'Revisa los datos e intenta de nuevo.', 'warning');
+                    boton.disabled = false;
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                Swal.fire('Error de conexion', 'No se pudo crear la clase. Intenta nuevamente.', 'error');
+                boton.disabled = false;
             });
-            // quitar activo de otros botones del filtro
-            btn.closest('.panel-header').querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            // re-aplicar búsqueda
-            filterReportRows();
-        }
-
-        // Buscador de reportes por nombre del remitente o descripción del caso
-        function filterReportRows() {
-            const query = document.getElementById('report-search').value.toLowerCase();
-            document.querySelectorAll('.report-row').forEach(row => {
-                const name = row.dataset.name || '';
-                const desc = row.dataset.desc || '';
-                const matchFilter = activeReportFilter === 'todos' || row.dataset.estado === activeReportFilter;
-                const matchSearch = name.includes(query) || desc.includes(query);
-                row.style.display = (matchFilter && matchSearch) ? '' : 'none';
-            });
-        }
-
-        // Acción del botón para conmutar entre los estilos de día y noche
-        const themeIcon = document.getElementById('theme-icon');
-
-        function toggleTheme() {
-            document.body.classList.toggle('light-mode');
-            const isLight = document.body.classList.contains('light-mode');
-            themeIcon.className = isLight ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
-            localStorage.setItem('admin-theme', isLight ? 'light' : 'dark');
-        }
-
-        // Carga de la preferencia de tema guardada en el navegador al iniciar y soporte de Hash de URL
-        window.addEventListener('DOMContentLoaded', () => {
-            const saved = localStorage.getItem('admin-theme');
-            if (saved === 'dark') {
-                document.body.classList.remove('light-mode');
-                themeIcon.className = 'bi bi-moon-stars-fill';
-            } else {
-                document.body.classList.add('light-mode');
-                themeIcon.className = 'bi bi-sun-fill';
-            }
-
-            // Cargar sección activa basada en el hash de la URL
-            const hash = window.location.hash.replace('#', '');
-            if (sections.includes(hash)) {
-                showSection(hash);
-            }
-        });
-
-        // Control del Panel Lateral de Notificaciones
-        function toggleNotifications() {
-            const drawer = document.getElementById('notifications-drawer');
-            drawer.classList.toggle('active');
-        }
-
-        function clearNotifications() {
-            document.querySelectorAll('.notification-item.unread').forEach(item => {
-                item.classList.remove('unread');
-            });
-            const badge = document.getElementById('notif-badge-dot');
-            if (badge) badge.style.display = 'none';
-        }
-
-        // Control del Modal de Búsqueda Global (Ctrl + K)
-        function openSearchModal() {
-            const backdrop = document.getElementById('search-modal-backdrop');
-            backdrop.classList.add('active');
-            const input = document.getElementById('search-modal-input');
-            input.value = '';
-            setTimeout(() => input.focus(), 100);
-        }
-
-        function closeSearchModal() {
-            const backdrop = document.getElementById('search-modal-backdrop');
-            backdrop.classList.remove('active');
-        }
-
-        // Activar buscador por atajo de teclado
-        window.addEventListener('keydown', (e) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-                e.preventDefault();
-                openSearchModal();
-            }
-            if (e.key === 'Escape') {
-                closeSearchModal();
-            }
-        });
-
-        // Simular redirección desde la búsqueda global
-        function navigateFromSearch(section) {
-            closeSearchModal();
-            showSection(section);
-        }
-
-        // Simular filtrado básico en búsqueda global
-        function handleGlobalSearch() {
-            const query = document.getElementById('search-modal-input').value.toLowerCase();
-            const resultsBox = document.getElementById('search-modal-results');
-
-            if (!query) {
-                resultsBox.innerHTML = `
-                    <div class="search-section-label">Sugerencias rápidas</div>
-                    <div class="search-result-item" onclick="navigateFromSearch('usuarios')">
-                        <i class="bi bi-people"></i>
-                        <span>Gestión de Usuarios</span>
-                        <span class="search-result-type">Sección</span>
-                    </div>
-                    <div class="search-result-item" onclick="navigateFromSearch('reportes')">
-                        <i class="bi bi-flag"></i>
-                        <span>Reportes Pendientes</span>
-                        <span class="search-result-type">Sección</span>
-                    </div>
-                    <div class="search-result-item" onclick="navigateFromSearch('clases')">
-                        <i class="bi bi-calendar"></i>
-                        <span>Agenda de Clases</span>
-                        <span class="search-result-type">Sección</span>
-                    </div>
-                `;
-                return;
-            }
-
-            // Simulación de búsqueda en tiempo real
-            resultsBox.innerHTML = `
-                <div class="search-section-label">Resultados encontrados</div>
-                <div class="search-result-item" onclick="navigateFromSearch('usuarios')">
-                    <i class="bi bi-person-fill"></i>
-                    <span>Francheska (Alumno)</span>
-                    <span class="search-result-type">Registro</span>
-                </div>
-                <div class="search-result-item" onclick="navigateFromSearch('usuarios')">
-                    <i class="bi bi-person-workspace"></i>
-                    <span>Franco (Profesor)</span>
-                    <span class="search-result-type">Registro</span>
-                </div>
-                <div class="search-result-item" onclick="navigateFromSearch('reportes')">
-                    <i class="bi bi-exclamation-triangle-fill"></i>
-                    <span>Problema de Conexión</span>
-                    <span class="search-result-type">Reporte</span>
-                </div>
-            `;
-        }
-
-        // Función para cambiar color de acento del panel
-        function changeAccentColor() {
-            const color = document.getElementById('accent-color-select').value;
-            const colors = {
-                purple: ['#a855f7', '#9333ea'],
-                blue: ['#3b82f6', '#1d4ed8'],
-                green: ['#10b981', '#059669']
-            };
-            document.documentElement.style.setProperty('--primary', colors[color][0]);
-            document.documentElement.style.setProperty('--primary-dark', colors[color][1]);
-            Swal.fire('¡Color Actualizado!', 'El color de acento se aplicó temporalmente.', 'success');
-        }
-    </script>
-</body>
-
-</html>
+    }
+</script>
+{% endblock %}

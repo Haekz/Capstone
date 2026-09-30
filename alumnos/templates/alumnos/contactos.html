@@ -3,425 +3,160 @@
 
 {% block title %}LBWUS | Contactos{% endblock %}
 
-{% block extra_css %}
-<style>
-    /* esta parte es de la sección principal de contacto */
-    .contact-section {
-        padding: calc(var(--header-height) + 60px) 0 60px;
-        min-height: calc(100vh - 120px);
-        background: radial-gradient(circle at top right, rgba(168, 85, 247, 0.04) 0%, transparent 60%),
-                    radial-gradient(circle at bottom left, rgba(245, 158, 11, 0.03) 0%, transparent 60%);
-    }
-
-    .contact-container {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 0 24px;
-    }
-
-    /* esta parte es del encabezado de la sección de contacto */
-    .contact-header {
-        text-align: center;
-        margin-bottom: 60px;
-    }
-
-    .contact-header h1 {
-        font-size: clamp(2rem, 5vw, 2.75rem);
-        font-weight: 700;
-        color: var(--text);
-        margin-bottom: 16px;
-        letter-spacing: -0.5px;
-    }
-
-    .contact-header p {
-        font-size: 1.1rem;
-        color: var(--text-light);
-        max-width: 700px;
-        margin: 0 auto;
-        line-height: 1.6;
-    }
-
-    /* esta parte es del grid de dos columnas (info + formulario) */
-    .contact-grid {
-        display: grid;
-        grid-template-columns: 1fr 1.2fr;
-        gap: 50px;
-        align-items: start;
-    }
-
-    /* esta parte es de las tarjetas del panel de info y formulario */
-    .contact-info-card, .contact-form-card {
-        background: var(--white);
-        border: 1px solid rgba(168, 85, 247, 0.12);
-        border-radius: 24px;
-        padding: 40px;
-        box-shadow: var(--shadow);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .contact-info-card:hover, .contact-form-card:hover {
-        box-shadow: 0 15px 35px rgba(168, 85, 247, 0.08);
-    }
-
-    .contact-info-card h2, .contact-form-card h2 {
-        font-size: 1.75rem;
-        font-weight: 700;
-        color: var(--text);
-        margin-bottom: 20px;
-        position: relative;
-    }
-
-    .contact-info-card h2::after, .contact-form-card h2::after {
-        content: '';
-        position: absolute;
-        bottom: -8px;
-        left: 0;
-        width: 50px;
-        height: 4px;
-        background: linear-gradient(90deg, var(--primary), var(--primary-dark));
-        border-radius: 2px;
-    }
-
-    .contact-info-card > p {
-        color: var(--text-light);
-        margin-top: 20px;
-        margin-bottom: 35px;
-        font-size: 0.95rem;
-        line-height: 1.6;
-    }
-
-    /* esta parte es de la lista de datos de contacto */
-    .info-details-list {
-        display: flex;
-        flex-direction: column;
-        gap: 25px;
-    }
-
-    .info-detail-item {
-        display: flex;
-        align-items: flex-start;
-        gap: 20px;
-        text-decoration: none;
-    }
-
-    .info-icon-wrapper {
-        width: 50px;
-        height: 50px;
-        border-radius: 14px;
-        background: rgba(168, 85, 247, 0.08);
-        color: var(--primary);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.3rem;
-        flex-shrink: 0;
-        transition: all 0.3s ease;
-    }
-
-    .info-detail-item:hover .info-icon-wrapper {
-        background: var(--primary);
-        color: var(--white);
-        transform: translateY(-2px);
-        box-shadow: 0 5px 10px rgba(168, 85, 247, 0.15);
-    }
-
-    .info-text-wrapper {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .info-text-wrapper span.label {
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        font-weight: 700;
-        letter-spacing: 0.5px;
-        color: var(--text-light);
-        margin-bottom: 3px;
-    }
-
-    .info-text-wrapper a, .info-text-wrapper p {
-        font-size: 1rem;
-        font-weight: 600;
-        color: var(--text);
-        text-decoration: none;
-        margin: 0;
-        transition: color 0.3s ease;
-    }
-
-    .info-text-wrapper a:hover { color: var(--primary); }
-
-    /* esta parte es de los iconos de redes sociales */
-    .contact-socials-box {
-        margin-top: 40px;
-        padding-top: 30px;
-        border-top: 1px solid rgba(168, 85, 247, 0.1);
-    }
-
-    .contact-socials-box h4 {
-        font-size: 0.95rem;
-        font-weight: 700;
-        color: var(--text);
-        margin-bottom: 15px;
-    }
-
-    .contact-social-icons {
-        display: flex;
-        gap: 12px;
-    }
-
-    .contact-social-icons a {
-        width: 42px;
-        height: 42px;
-        border-radius: 50%;
-        background: rgba(168, 85, 247, 0.05);
-        color: var(--primary);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.1rem;
-        text-decoration: none;
-        transition: all 0.3s ease;
-        border: 1px solid rgba(168, 85, 247, 0.1);
-    }
-
-    .contact-social-icons a:hover {
-        background: var(--primary);
-        color: var(--white);
-        transform: translateY(-3px);
-        box-shadow: 0 5px 12px rgba(168, 85, 247, 0.2);
-    }
-
-    /* esta parte es del formulario de contacto */
-    .form-card-title { margin-bottom: 30px !important; }
-
-    .contact-form .form-group { margin-bottom: 22px; }
-
-    .contact-form label {
-        font-weight: 600;
-        font-size: 0.9rem;
-        color: var(--text);
-        margin-bottom: 8px;
-        display: block;
-    }
-
-    .contact-form .form-control {
-        width: 100%;
-        padding: 14px 18px;
-        border: 1px solid rgba(168, 85, 247, 0.18);
-        border-radius: 12px;
-        font-family: inherit;
-        background-color: transparent;
-        color: var(--text);
-        transition: all 0.3s ease;
-    }
-
-    .contact-form .form-control:focus {
-        outline: none;
-        border-color: var(--primary);
-        box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.12);
-        background-color: var(--white);
-    }
-
-    .contact-form textarea.form-control { resize: none; }
-
-    .contact-form .invalid-feedback {
-        font-size: 0.8rem;
-        color: #ef4444;
-        margin-top: 5px;
-    }
-
-    /* esta parte es del modo oscuro para las tarjetas de contacto */
-    body.dark-mode .contact-info-card,
-    body.dark-mode .contact-form-card {
-        background: #111827;
-        border-color: rgba(255, 255, 255, 0.08);
-    }
-
-    body.dark-mode .info-icon-wrapper { background: rgba(168, 85, 247, 0.15); }
-
-    body.dark-mode .contact-form .form-control {
-        border-color: rgba(255, 255, 255, 0.15);
-        color: #f3f4f6;
-    }
-
-    body.dark-mode .contact-form .form-control:focus {
-        background-color: #030204;
-        border-color: var(--primary);
-    }
-
-    body.dark-mode .contact-social-icons a {
-        background: rgba(255, 255, 255, 0.05);
-        color: var(--primary-dark);
-        border-color: rgba(255, 255, 255, 0.08);
-    }
-
-    body.dark-mode .contact-social-icons a:hover {
-        background: var(--primary);
-        color: var(--white);
-    }
-
-    /* esta parte es de la sección de ilustraciones decorativas */
-    .illustrations-section {
-        padding: 40px 0 80px;
-    }
-
-    .illustrations-container {
-        max-width: 1000px;
-        margin: 0 auto;
-        padding: 0 24px;
-    }
-
-    .illustrations-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 30px;
-    }
-
-    .illustration-card {
-        background: var(--white);
-        border-radius: 24px;
-        padding: 20px;
-        box-shadow: var(--shadow);
-        border: 1px solid rgba(168, 85, 247, 0.08);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-        transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.4s ease;
-    }
-
-    .illustration-card:hover {
-        transform: translateY(-6px);
-        border-color: var(--primary);
-        box-shadow: 0 15px 30px rgba(168, 85, 247, 0.1);
-    }
-
-    .illustration-card img {
-        max-width: 100%;
-        height: 140px;
-        object-fit: contain;
-        transition: transform 0.4s ease;
-    }
-
-    .illustration-card:hover img { transform: scale(1.05); }
-
-    body.dark-mode .illustration-card {
-        background: #111827;
-        border-color: rgba(255, 255, 255, 0.08);
-    }
-
-    /* esta parte es del responsive para pantallas pequeñas */
-    @media (max-width: 992px) {
-        .contact-grid { grid-template-columns: 1fr; gap: 40px; }
-        .illustrations-grid { grid-template-columns: 1fr; max-width: 400px; margin: 0 auto; gap: 25px; }
-    }
-</style>
-{% endblock %}
-
 {% block content %}
-<section class="contact-section">
-    <div class="contact-container">
-        <div class="contact-header">
-            <h1>Ponte en contacto con nosotros</h1>
-            <p>¿Tienes dudas, comentarios o deseas saber más sobre nuestros planes? Nuestro equipo está listo para ayudarte.</p>
-        </div>
+<!-- esta parte es de la introducción con los accesos rápidos de contacto -->
+<section class="sv-intro ct-intro">
+    <div class="contenedor">
+        <span class="sv-eyebrow">Contacto</span>
+        <h1>Ponte en contacto con nosotros</h1>
+        <p>¿Tienes dudas, comentarios o quieres saber más sobre nuestros planes? Nuestro equipo está listo para
+            ayudarte.</p>
 
-        <div class="contact-grid">
-            <!-- esta parte es del panel izquierdo con información de contacto -->
-            <div class="contact-info-card">
-                <h2>Información</h2>
-                <p>Recuerda que siempre cuentas con nuestro apoyo. Contáctanos y nos informas sobre las dudas que puedas tener.</p>
-
-                <div class="info-details-list">
-                    <a href="tel:123456789" class="info-detail-item">
-                        <div class="info-icon-wrapper"><i class="bi bi-telephone-fill"></i></div>
-                        <div class="info-text-wrapper">
-                            <span class="label">Llámanos</span>
-                            <p>123-456-7890</p>
-                        </div>
-                    </a>
-
-                    <a href="mailto:teachers@lbwus.cl" class="info-detail-item">
-                        <div class="info-icon-wrapper"><i class="bi bi-envelope-fill"></i></div>
-                        <div class="info-text-wrapper">
-                            <span class="label">Envíanos un correo</span>
-                            <p>teachers@lbwus.cl</p>
-                        </div>
-                    </a>
-
-                    <div class="info-detail-item">
-                        <div class="info-icon-wrapper"><i class="bi bi-geo-alt-fill"></i></div>
-                        <div class="info-text-wrapper">
-                            <span class="label">Ubicación</span>
-                            <p>Pacifico Norte 123, Santiago, Chile</p>
-                        </div>
-                    </div>
-
-                    <div class="info-detail-item">
-                        <div class="info-icon-wrapper"><i class="bi bi-clock-fill"></i></div>
-                        <div class="info-text-wrapper">
-                            <span class="label">Horario de atención</span>
-                            <p>Lun - Vie: 9:00 AM - 8:00 PM</p>
-                        </div>
-                    </div>
+        <div class="ct-quick">
+            <a href="tel:1234567890" class="ct-quick-item">
+                <i class="bi bi-telephone"></i>
+                <div>
+                    <span>Llámanos</span>
+                    <strong>123-456-7890</strong>
                 </div>
-
-                <!-- esta parte es de los iconos de redes sociales -->
-                <div class="contact-socials-box">
-                    <h4>Síguenos en redes</h4>
-                    <div class="contact-social-icons">
-                        <a href="#"><i class="fab fa-facebook-f"></i></a>
-                        <a href="https://www.instagram.com/lbwus_?utm_source=qr&stkn=MXZxaTlubnMxZHZubw%3D%3D" target="_blank" rel="noopener noreferrer"><i class="fab fa-instagram"></i></a>
-                        <a href="#"><i class="fab fa-twitter"></i></a>
-                        <a href="#"><i class="fab fa-youtube"></i></a>
-                    </div>
+            </a>
+            <a href="mailto:teachers@lbwus.cl" class="ct-quick-item">
+                <i class="bi bi-envelope"></i>
+                <div>
+                    <span>Escríbenos</span>
+                    <strong>teachers@lbwus.cl</strong>
                 </div>
-            </div>
-
-            <!-- esta parte es del formulario para enviar un mensaje -->
-            <div class="contact-form-card">
-                <h2 class="form-card-title">Escríbenos</h2>
-                <form id="contact-form" autocomplete="off" class="contact-form needs-validation" novalidate>
-                    {% csrf_token %}
-
-                    <div class="form-group">
-                        <label for="nombre">Nombre Completo</label>
-                        <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Ingresa tu nombre completo" required>
-                        <div class="invalid-feedback">Por favor, dinos tu nombre.</div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="email-contact">Correo Electrónico</label>
-                        <input type="email" class="form-control" id="email-contact" name="email" placeholder="ejemplo@correo.com" required>
-                        <div class="invalid-feedback">Por favor, ingresa un correo válido.</div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="mensaje">Tu Mensaje</label>
-                        <textarea class="form-control" id="mensaje" name="mensaje" rows="4" placeholder="¿En qué te podemos ayudar?" required></textarea>
-                        <div class="invalid-feedback">Por favor, escribe tu mensaje.</div>
-                    </div>
-
-                    <button type="submit" class="btn-principal btn-submit">Enviar Mensaje</button>
-                </form>
+            </a>
+            <div class="ct-quick-item">
+                <i class="bi bi-clock"></i>
+                <div>
+                    <span>Horario de atención</span>
+                    <strong>Lun - Vie: 9:00 a 20:00</strong>
+                </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- esta parte es de las ilustraciones decorativas de abajo -->
-<section class="illustrations-section">
-    <div class="illustrations-container">
-        <div class="illustrations-grid">
-            <div class="illustration-card">
-                <img src="{% static 'alumnos/img/ilustracion4.png' %}" alt="Ilustración apoyo educativo">
+<!-- esta parte es del formulario + panel de información -->
+<section class="ct-main">
+    <div class="contenedor ct-grid">
+
+        <!-- formulario para enviar un mensaje -->
+        <div class="ct-form-card">
+            <h2>Envíanos un mensaje</h2>
+            <p class="ct-form-sub">Responderemos a tu consulta a la brevedad.</p>
+
+            <form id="contact-form" autocomplete="off" class="contact-form needs-validation" novalidate>
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label for="nombre">Nombre completo</label>
+                    <input type="text" class="form-control" id="nombre" name="nombre"
+                        placeholder="Ingresa tu nombre completo" required>
+                    <div class="invalid-feedback">Por favor, dinos tu nombre.</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email-contact">Correo electrónico</label>
+                    <input type="email" class="form-control" id="email-contact" name="email"
+                        placeholder="ejemplo@correo.com" required>
+                    <div class="invalid-feedback">Por favor, ingresa un correo válido.</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="mensaje">Tu mensaje</label>
+                    <textarea class="form-control" id="mensaje" name="mensaje" rows="5"
+                        placeholder="¿En qué te podemos ayudar?" required></textarea>
+                    <div class="invalid-feedback">Por favor, escribe tu mensaje.</div>
+                </div>
+
+                <button type="submit" class="btn-principal btn-submit">
+                    Enviar mensaje <i class="bi bi-send"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- panel con información de contacto y redes -->
+        <aside class="ct-info">
+            <h2>Información</h2>
+            <p>Recuerda que siempre cuentas con nuestro apoyo. Contáctanos y cuéntanos las dudas que puedas tener.</p>
+
+            <ul class="ct-info-list">
+                <li>
+                    <i class="bi bi-telephone"></i>
+                    <div>
+                        <span>Teléfono</span>
+                        <a href="tel:1234567890">123-456-7890</a>
+                    </div>
+                </li>
+                <li>
+                    <i class="bi bi-envelope"></i>
+                    <div>
+                        <span>Correo</span>
+                        <a href="mailto:teachers@lbwus.cl">teachers@lbwus.cl</a>
+                    </div>
+                </li>
+                <li>
+                    <i class="bi bi-geo-alt"></i>
+                    <div>
+                        <span>Ubicación</span>
+                        <p>Pacifico Norte 123, Santiago, Chile</p>
+                    </div>
+                </li>
+                <li>
+                    <i class="bi bi-clock"></i>
+                    <div>
+                        <span>Horario</span>
+                        <p>Lun - Vie: 9:00 a 20:00</p>
+                    </div>
+                </li>
+            </ul>
+
+            <div class="ct-socials">
+                <span>Síguenos en redes</span>
+                <div class="ct-socials-icons">
+                    <span class="ct-fb social-placeholder" aria-label="Facebook próximamente"><i class="bi bi-facebook"></i></span>
+                    <a href="https://www.instagram.com/lbwus_?utm_source=qr&stkn=MXZxaTlubnMxZHZubw%3D%3D"
+                        target="_blank" rel="noopener noreferrer" class="ct-ig" aria-label="Instagram"><i
+                            class="bi bi-instagram"></i></a>
+                    <span class="ct-x social-placeholder" aria-label="X (Twitter) próximamente"><i class="bi bi-twitter-x"></i></span>
+                    <span class="ct-yt social-placeholder" aria-label="YouTube próximamente"><i class="bi bi-youtube"></i></span>
+                </div>
             </div>
-            <div class="illustration-card">
-                <img src="{% static 'alumnos/img/ilustracion1.png' %}" alt="Ilustración aprendizaje">
-            </div>
-            <div class="illustration-card">
-                <img src="{% static 'alumnos/img/ilustracion3.jpeg' %}" alt="Ilustración colaboración">
-            </div>
+        </aside>
+    </div>
+</section>
+
+<!-- esta parte es de los tipos de consulta, con las ilustraciones -->
+<section class="ct-topics">
+    <div class="contenedor">
+        <div class="section-header">
+            <h2>¿En qué te podemos ayudar?</h2>
+            <p>Cuéntanos quién eres en tu mensaje y te derivamos con la persona indicada.</p>
+        </div>
+        <div class="ct-topics-grid">
+            <article class="ct-topic">
+                <div class="ct-topic-img">
+                    <img src="{% static 'alumnos/img/ilustracion1.png' %}" alt="Ilustración de dos estudiantes">
+                </div>
+                <h3>Soy estudiante</h3>
+                <p>Dudas sobre niveles, clases online o presenciales y cómo encontrar a tu profesor.</p>
+            </article>
+            <article class="ct-topic">
+                <div class="ct-topic-img">
+                    <img src="{% static 'alumnos/img/ilustracion4.png' %}" alt="Ilustración de un profesor">
+                </div>
+                <h3>Quiero enseñar</h3>
+                <p>Si eres profesional y quieres sumarte a LBWUS como profesor, escríbenos.</p>
+            </article>
+            <article class="ct-topic">
+                <div class="ct-topic-img">
+                    <img src="{% static 'alumnos/img/ilustracion3.jpeg' %}" alt="Ilustración de una estudiante escribiendo">
+                </div>
+                <h3>Planes y pagos</h3>
+                <p>Consultas sobre planes, períodos de pago y el estado de tu contratación.</p>
+            </article>
         </div>
     </div>
 </section>
@@ -448,7 +183,7 @@
                     title: '¡Mensaje Enviado!',
                     text: 'Gracias por contactarnos. Responderemos a tu consulta a la brevedad.',
                     icon: 'success',
-                    confirmButtonColor: '#a855f7'
+                    confirmButtonColor: '#7c3aed'
                 }).then(() => {
                     form.reset();
                     form.classList.remove('was-validated');

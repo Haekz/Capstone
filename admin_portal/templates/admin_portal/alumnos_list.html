@@ -5,16 +5,15 @@
 {% block page_title %}Gestión de Alumnos{% endblock %}
 {% block page_subtitle %}Administra el listado completo de alumnos registrados{% endblock %}
 {% block nav_usuarios %}active{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'admin_portal/css/admin_panel.css' %}">{% endblock %}
 
 {% block content %}
 
 <!-- esta parte es de la barra de herramientas sobre la tabla -->
 <div class="panel">
     <div class="users-toolbar">
-        <div class="search-bar" style="flex:1; max-width:360px;">
+        <div class="search-bar" style="flex:1 1 220px; max-width:360px;">
             <i class="bi bi-search"></i>
-            <input type="text" id="buscador" placeholder="Buscar alumno..." oninput="filtrarTabla()">
+            <input type="text" id="buscador" placeholder="Buscar alumno..." aria-label="Buscar alumno" oninput="filtrarTabla()">
         </div>
         <a href="{% url 'alumnos_Add' %}" class="btn-primary">
             <i class="bi bi-person-plus-fill"></i>
@@ -24,7 +23,7 @@
 
     <!-- esta parte es del mensaje de éxito o error -->
     {% if mensaje %}
-    <div id="mensaje-box" style="padding:12px 22px; background:rgba(16,185,129,0.12); border-left:4px solid #10b981; color:#10b981; font-size:0.85rem; margin:0 22px 0;">
+    <div id="mensaje-box" class="alert-ok">
         <i class="bi bi-check-circle-fill"></i> {{ mensaje }}
     </div>
     {% endif %}

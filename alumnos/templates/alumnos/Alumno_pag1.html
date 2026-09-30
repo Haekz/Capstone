@@ -15,47 +15,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="{% static 'alumnos/css/alumn_1.css' %}?v=1.2">
+    <link rel="stylesheet" href="{% static 'alumnos/css/alumn_1.css' %}?v=2.1">
+    {% include 'alumnos/includes/sin_copia_atras.html' %}
 </head>
-<body>
+<body id="portal-alumno">
+    {% include 'alumnos/includes/tema_inicial.html' %}
 
-    <!-- Custom Standalone Navbar for Alumno -->
-    <nav class="custom-navbar">
-        <!-- El logo vuelve al propio portal, no al sitio publico: salir al
-             home de marketing con la sesion activa parecia un cierre de sesion. -->
-        <a href="{% url 'alumno_pag1' %}" class="logo">
-            <img src="{% static 'alumnos/img/Logo.png' %}" alt="LBWUS Logo">
-            <span class="logo-text">LBWUS</span>
-        </a>
-
-        <!-- Custom Navigation Links -->
-        <!-- esta parte es de los botones de navegacion de arriba -->
-        <ul class="custom-nav-links">
-            <li><button class="nav-view-btn active" data-view="view-dashboard">Dashboard</button></li>
-            <li><button class="nav-view-btn" data-view="view-my-classes">Mis Clases</button></li>
-            <li><button class="nav-view-btn" data-view="view-favorites">Favoritos</button></li>
-            <li><button class="nav-view-btn" data-view="view-courses">Cursos</button></li>
-            <li><button class="nav-view-btn" data-view="view-inbox">Buzón de Dudas</button></li>
-            <li><button class="nav-view-btn" data-view="view-progress">Progreso</button></li>
-            <li><button class="nav-view-btn" data-view="view-plans">Planes</button></li>
-            <li><button class="nav-view-btn" data-view="view-support">Soporte</button></li>
-            <li><button class="nav-view-btn" data-view="view-profile">Mi Perfil</button></li>
-        </ul>
-
-        <div class="custom-nav-actions">
-            <!-- Hamburger (solo móvil) -->
-            <button class="hamburger-btn" id="hamburger-btn" aria-label="Abrir menú">
-                <span class="hamburger-line"></span>
-                <span class="hamburger-line"></span>
-                <span class="hamburger-line"></span>
-            </button>
-            <!-- Theme Toggler -->
-            <button onclick="toggleTheme()" class="btn-theme-toggle" id="theme-toggler">
-                <i class="bi bi-sun-fill" id="theme-icon"></i>
-            </button>
-            <a href="{% url 'logout_alumno' %}" class="btn-logout">Cerrar Sesión</a>
-        </div>
-    </nav>
 
     <!-- Overlay oscuro para el sidebar en móvil -->
     <div class="sidebar-overlay" id="sidebar-overlay"></div>
@@ -63,24 +28,33 @@
     <!-- Main Dashboard Layout -->
     <div class="dashboard-layout">
         <!-- Left Sidebar Menu -->
-        <aside class="sidebar-menu">
+        <aside class="sidebar-menu" id="sidebar-menu">
+            <!-- Marca (mismo estilo que el portal admin) -->
+            <!-- El logo vuelve al propio portal, no al sitio publico: salir al
+                 home de marketing con la sesion activa parecia un cierre de sesion. -->
+            <a href="{% url 'alumno_pag1' %}" class="sb-brand">
+                <img src="{% static 'alumnos/img/Logo.png' %}" alt="LBWUS Logo">
+                <span class="sb-brand-text">
+                    <span class="sb-brand-name">LBWUS</span>
+                    <span class="sb-brand-role">Portal alumno</span>
+                </span>
+            </a>
+
+            <!-- Ficha del alumno conectado (lleva a Mi Perfil) -->
+            <button class="sb-user" onclick="switchView('view-profile')" title="Ver mi perfil">
+                <span class="sb-user-avatar">{{ alumno.nombre|slice:":1"|upper }}</span>
+                <span class="sb-user-info">
+                    <span class="sb-user-name">{{ alumno.nombre }}</span>
+                    <span class="sb-user-role">Alumno</span>
+                </span>
+            </button>
+
             <ul class="sidebar-nav">
+                <li class="sb-label">Principal</li>
                 <li>
-                    <button class="sidebar-nav-item active sidebar-view-btn" data-view="view-dashboard">
+                    <button class="sidebar-nav-item sidebar-view-btn active" data-view="view-dashboard">
                         <i class="bi bi-grid-1x2-fill"></i>
-                        <span>Dashboard (Clases)</span>
-                    </button>
-                </li>
-                <li>
-                    <button class="sidebar-nav-item" id="nav-open-interests">
-                        <i class="bi bi-star-fill"></i>
-                        <span>Temas de Interés</span>
-                    </button>
-                </li>
-                <li>
-                    <button class="sidebar-nav-item sidebar-view-btn" data-view="view-favorites">
-                        <i class="bi bi-heart-fill"></i>
-                        <span>Profesores Favoritos</span>
+                        <span>Dashboard</span>
                     </button>
                 </li>
                 <li>
@@ -90,12 +64,19 @@
                     </button>
                 </li>
                 <li>
-                    <button class="sidebar-nav-item sidebar-view-btn" data-view="view-support">
-                        <i class="bi bi-envelope-paper-fill"></i>
-                        <span>Soporte / Reportes</span>
+                    <button class="sidebar-nav-item sidebar-view-btn" data-view="view-favorites">
+                        <i class="bi bi-heart-fill"></i>
+                        <span>Profesores Favoritos</span>
                     </button>
                 </li>
-                <!-- esta parte es de los botones premium del menu del costado -->
+                <li>
+                    <button class="sidebar-nav-item" id="nav-open-interests">
+                        <i class="bi bi-star-fill"></i>
+                        <span>Temas de Interés</span>
+                    </button>
+                </li>
+
+                <li class="sb-label">Premium</li>
                 <li>
                     <button class="sidebar-nav-item sidebar-view-btn" data-view="view-courses">
                         <i class="bi bi-play-circle-fill"></i>
@@ -114,10 +95,18 @@
                         <span>Informe de Progreso</span>
                     </button>
                 </li>
+
+                <li class="sb-label">Mi cuenta</li>
                 <li>
                     <button class="sidebar-nav-item sidebar-view-btn" data-view="view-plans">
                         <i class="bi bi-credit-card-fill"></i>
                         <span>Planes de Suscripción</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="sidebar-nav-item sidebar-view-btn" data-view="view-support">
+                        <i class="bi bi-envelope-paper-fill"></i>
+                        <span>Soporte / Reportes</span>
                     </button>
                 </li>
                 <li>
@@ -128,9 +117,70 @@
                 </li>
             </ul>
 
+            <!-- Volver al sitio publico (sin cerrar sesion) y cerrar sesion -->
+            <div class="sb-footer">
+                <a href="{% url 'home' %}" class="sb-home">
+                    <i class="bi bi-house-door"></i>
+                    Volver al inicio
+                </a>
+                <a href="{% url 'logout_alumno' %}" class="sb-logout">
+                    <i class="bi bi-box-arrow-left"></i>
+                    Cerrar sesión
+                </a>
+            </div>
         </aside>
 
         <!-- Right Scrollable Views Container -->
+        <div class="portal-main">
+        <!-- Barra superior (mismo estilo que el portal admin) -->
+        <header class="portal-topbar" id="portal-navbar">
+            <div class="topbar-left">
+                <!-- Hamburguesa (solo móvil): abre el menú lateral -->
+                <button class="hamburger-btn" id="hamburger-btn" aria-label="Abrir menú">
+                    <span class="hamburger-line"></span>
+                    <span class="hamburger-line"></span>
+                    <span class="hamburger-line"></span>
+                </button>
+                <div>
+                    <h1 id="portal-title">Dashboard</h1>
+                    <p id="portal-subtitle">Tu panel de aprendizaje</p>
+                </div>
+            </div>
+
+            <div class="topbar-right">
+                <!-- Modo día/noche -->
+                <button onclick="toggleTheme()" class="btn-theme-toggle" id="theme-toggler" aria-label="Cambiar modo día/noche">
+                    <i class="bi bi-moon-stars-fill" id="theme-icon"></i>
+                </button>
+
+            <!-- Carrito (mismo que el sitio público: comparte los planes agregados) -->
+            <div class="submenu-cart">
+                <button class="cart-btn" id="cart-button" aria-label="Carrito">
+                    <i class="bi bi-cart-fill"></i>
+                    <span class="cart-count" id="contador-carrito" style="display:none">0</span>
+                </button>
+                <div id="carrito" class="carrito-dropdown">
+                    <table id="lista-carrito" class="cart-table">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Pago</th>
+                                <th>Precio</th>
+                                <th>Cant.</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    <button type="button" id="vaciar-carrito" class="btn-vaciar">Vaciar Carrito</button>
+                    <a href="{% url 'pago' %}" class="btn-pagar" id="btn-ir-pago" style="display:none;">
+                        <i class="bi bi-credit-card-fill"></i> Ir a Pagar
+                    </a>
+                </div>
+            </div>
+            </div>
+        </header>
+
         <main class="main-content">
             
             <!-- ── VIEW 1: DASHBOARD (CLASES) ── -->
@@ -141,10 +191,11 @@
                         <!-- Welcome Banner -->
                         <div class="welcome-banner">
                             <div class="welcome-text">
+                                <span class="welcome-eyebrow">Portal del alumno</span>
                                 <h1>¡Hola de nuevo, {{ alumno.nombre }}!</h1>
                                 <p>Bienvenido a tu panel de control personalizado. Aquí podrás gestionar tu aprendizaje.</p>
                             </div>
-                            <button class="btn-principal" id="dashboard-setup-btn" style="padding: 12px 24px;">Configurar Intereses</button>
+                            <button class="btn-principal ap-btn-setup" id="dashboard-setup-btn">Configurar Intereses</button>
                         </div>
 
                         <!-- Stats Widgets -->
@@ -177,7 +228,7 @@
                             <h2>Tu Contenido Seleccionado</h2>
 
                             <!-- Barra de Búsqueda -->
-                            <div class="dashboard-search-container" style="margin-bottom: 20px;">
+                            <div class="dashboard-search-container ap-mb-20">
                                 <div class="search-input-wrapper">
                                     <i class="bi bi-search search-icon"></i>
                                     <input type="text" id="dashboard-search-input" placeholder="Buscar profesor, tutor o especialidad (ej. Matemáticas, Carlos)..." onkeyup="renderDashboardContent()">
@@ -220,7 +271,7 @@
 
                     <!-- Right Panel (Pulsating Ad Offer Card) -->
                     <div class="dashboard-right-panel">
-                        <div class="promo-ad-card" onclick="switchView('view-plans')" style="cursor: pointer;">
+                        <div class="promo-ad-card ap-clickable" onclick="switchView('view-plans')">
                             <span class="promo-badge">Oferta Limitada</span>
                             <h3>¡Lleva tu aprendizaje al máximo nivel!</h3>
                             <p>Obtén acceso ilimitado a todos los profesores y tutores con un 30% de descuento en planes superiores.</p>
@@ -232,9 +283,9 @@
 
             <!-- ── VIEW 2: FAVORITE TEACHERS ── -->
             <div class="dashboard-view" id="view-favorites">
-                <div class="results-section" style="max-width: 900px; margin: 0 auto;">
-                    <h2 style="margin-bottom: 10px;"><i class="bi bi-star-fill" style="color: var(--accent);"></i> Mis Profesores Favoritos</h2>
-                    <p style="color: var(--text-light); margin-bottom: 30px;">Aquí se muestran los profesores que has marcado con estrella para contactarlos fácilmente más adelante.</p>
+                <div class="results-section ap-section-narrow">
+                    <h2 class="ap-mb-10"><i class="bi bi-star-fill ap-text-accent"></i> Mis Profesores Favoritos</h2>
+                    <p class="ap-section-intro">Aquí se muestran los profesores que has marcado con estrella para contactarlos fácilmente más adelante.</p>
                     
                     <div class="teachers-list" id="favorites-teachers-container">
                         <!-- Populated via JS -->
@@ -244,12 +295,12 @@
 
             <!-- ── VIEW 4: MY CLASSES ── -->
             <div class="dashboard-view" id="view-my-classes">
-                <div class="results-section" style="max-width: 900px; margin: 0 auto;">
-                    <h2 style="margin-bottom: 10px;"><i class="bi bi-journal-bookmark-fill" style="color: var(--primary);"></i> Mis Clases y Horarios</h2>
-                    <p style="color: var(--text-light); margin-bottom: 30px;">Gestiona tus clases programadas y revisa el historial de tus clases completadas.</p>
+                <div class="results-section ap-section-narrow">
+                    <h2 class="ap-mb-10"><i class="bi bi-journal-bookmark-fill ap-text-primary"></i> Mis Clases y Horarios</h2>
+                    <p class="ap-section-intro">Gestiona tus clases programadas y revisa el historial de tus clases completadas.</p>
                     
                     <!-- Upcoming Classes -->
-                    <div class="classes-subsection" style="margin-bottom: 40px;">
+                    <div class="classes-subsection ap-mb-40">
                         <h3 class="subsection-title"><i class="bi bi-calendar-check-fill"></i> Clases Próximas en las que estás Inscrito</h3>
                         <div class="classes-grid" id="upcoming-classes-container">
                             {% if mis_inscripciones %}
@@ -257,7 +308,7 @@
                                 <div class="class-item-card">
                                     <div class="class-card-header">
                                         <span class="class-badge">{{ insc.id_clase.id_profesor.especialidad }}</span>
-                                        <span class="class-status-badge" style="background: rgba(16, 185, 129, 0.1); color: #10b981; font-weight: 600;">Inscrito</span>
+                                        <span class="class-status-badge class-status-badge--enrolled">Inscrito</span>
                                     </div>
                                     <div class="class-card-body">
                                         <h4>{{ insc.id_clase.nombre_curso }}</h4>
@@ -271,18 +322,18 @@
                                             <span>Horario: {{ insc.id_clase.horario|time:"H:i" }} hrs ({{ insc.id_clase.get_modalidad_display }})</span>
                                         </div>
                                     </div>
-                                    <div style="display: flex; gap: 8px; padding: 0 15px 15px 15px;">
-                                        <button class="btn-join-class" style="flex: 1;" onclick="joinVideoCall('{{ insc.id_clase.id_profesor.nombre }}', 'https://meet.google.com/lbwus-class-{{ insc.id_clase.id_clase }}')">
+                                    <div class="ap-class-actions">
+                                        <button class="btn-join-class ap-flex-1" onclick="joinVideoCall('{{ insc.id_clase.id_profesor.nombre }}', 'https://meet.google.com/lbwus-class-{{ insc.id_clase.id_clase }}')">
                                             <i class="bi bi-camera-video-fill"></i> Unirse a la Clase
                                         </button>
-                                        <a href="{% url 'cancelar_inscripcion' insc.id_inscripcion %}" onclick="return confirm('¿Seguro que deseas cancelar tu inscripción?')" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; padding: 10px 14px; text-decoration: none; display: flex; align-items: center; justify-content: center;" title="Cancelar Inscripción">
+                                        <a class="ap-btn-cancel" href="{% url 'cancelar_inscripcion' insc.id_inscripcion %}" onclick="return confirm('¿Seguro que deseas cancelar tu inscripción?')" title="Cancelar Inscripción">
                                             <i class="bi bi-trash"></i>
                                         </a>
                                     </div>
                                 </div>
                                 {% endfor %}
                             {% else %}
-                                <div class="empty-teachers-state" style="grid-column: 1/-1;">
+                                <div class="empty-teachers-state ap-full-row">
                                     <i class="bi bi-calendar-x"></i>
                                     <p>No estás inscrito en ninguna clase todavía. ¡Revisa el catálogo abajo para inscribirte a tu primera clase!</p>
                                 </div>
@@ -291,14 +342,14 @@
                     </div>
 
                     <!-- Available Classes Catalog to Enroll -->
-                    <div class="classes-subsection" id="catalogo-clases-seccion" style="margin-bottom: 40px;">
+                    <div class="classes-subsection ap-mb-40" id="catalogo-clases-seccion">
                         <h3 class="subsection-title"><i class="bi bi-journal-plus"></i> Catálogo de Clases Disponibles</h3>
                         <div class="classes-grid">
                             {% for c in clases_disponibles %}
                             <div class="class-item-card">
                                 <div class="class-card-header">
                                     <span class="class-badge">{{ c.id_profesor.especialidad }}</span>
-                                    <span class="class-status-badge" style="background: rgba(99, 102, 241, 0.1); color: var(--primary);">{{ c.get_modalidad_display }}</span>
+                                    <span class="class-status-badge class-status-badge--modality">{{ c.get_modalidad_display }}</span>
                                 </div>
                                 <div class="class-card-body">
                                     <h4>{{ c.nombre_curso }}</h4>
@@ -308,20 +359,20 @@
                                         <span>Horario: {{ c.horario|time:"H:i" }} hrs</span>
                                     </div>
                                 </div>
-                                <div style="padding: 0 15px 15px 15px;">
+                                <div class="ap-class-footer">
                                     {% if c.id_clase in inscritas_ids %}
-                                    <button disabled style="width: 100%; background: rgba(16, 185, 129, 0.15); color: #059669; border: 1px solid rgba(16, 185, 129, 0.3); padding: 12px; border-radius: 8px; font-weight: 600; cursor: default;">
+                                    <button class="ap-btn-enrolled" disabled>
                                         <i class="bi bi-check-circle-fill"></i> Ya estás inscrito
                                     </button>
                                     {% else %}
-                                    <button class="btn-join-class" style="width: 100%; background: var(--primary); color: #fff;" onclick="inscribirAClase({{ c.id_clase }}, '{{ c.nombre_curso }}')">
+                                    <button class="btn-join-class btn-join-class--primary" onclick="inscribirAClase({{ c.id_clase }}, '{{ c.nombre_curso }}')">
                                         <i class="bi bi-plus-circle"></i> Inscribirme a esta Clase
                                     </button>
                                     {% endif %}
                                 </div>
                             </div>
                             {% empty %}
-                            <div class="empty-teachers-state" style="grid-column: 1/-1;">
+                            <div class="empty-teachers-state ap-full-row">
                                 <i class="bi bi-inbox"></i>
                                 <p>No hay clases abiertas disponibles en este momento. El administrador las publicará pronto.</p>
                             </div>
@@ -333,9 +384,9 @@
 
             <!-- ── VIEW 5: SUPPORT / REPORTS ── -->
             <div class="dashboard-view" id="view-support">
-                <div class="results-section" style="max-width: 900px; margin: 0 auto;">
-                    <h2 style="margin-bottom: 10px;"><i class="bi bi-envelope-paper-fill" style="color: var(--primary);"></i> Soporte y Reportes</h2>
-                    <p style="color: var(--text-light); margin-bottom: 30px;">¿Tienes algún problema con la plataforma o una tutoría? Envía un reporte a nuestro equipo de soporte.</p>
+                <div class="results-section ap-section-narrow">
+                    <h2 class="ap-mb-10"><i class="bi bi-envelope-paper-fill ap-text-primary"></i> Soporte y Reportes</h2>
+                    <p class="ap-section-intro">¿Tienes algún problema con la plataforma o una tutoría? Envía un reporte a nuestro equipo de soporte.</p>
                     
                     <div class="support-grid">
                         <!-- Submit Ticket Form -->
@@ -361,8 +412,8 @@
                                     <label for="support-description">Descripción del problema</label>
                                     <textarea id="support-description" rows="5" placeholder="Describe detalladamente lo sucedido para poder ayudarte..." required></textarea>
                                 </div>
-                                <button type="submit" class="btn-principal" style="width: 100%; border-radius: 12px; padding: 14px;">
-                                    <i class="bi bi-send-fill" style="margin-right: 8px;"></i>Enviar Reporte
+                                <button type="submit" class="btn-principal ap-btn-block">
+                                    <i class="bi bi-send-fill ap-mr-8"></i>Enviar Reporte
                                 </button>
                             </form>
                         </div>
@@ -373,24 +424,24 @@
                             <div class="tickets-list-container" id="tickets-list-container">
                                 {% if mis_reportes %}
                                     {% for r in mis_reportes %}
-                                    <div class="ticket-item" style="border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin-bottom: 15px;">
-                                        <div class="ticket-header" style="margin-bottom: 8px; display: flex; justify-content: space-between;">
-                                            <span class="ticket-id" style="font-family: monospace; color: var(--primary); font-weight: bold;">TKT-{{ r.id_reporte }}</span>
+                                    <div class="ticket-item ap-ticket">
+                                        <div class="ticket-header ap-ticket-header">
+                                            <span class="ticket-id ap-ticket-id">TKT-{{ r.id_reporte }}</span>
                                             <span class="ticket-badge {% if r.estado == 'pendiente' %}status-pending{% else %}status-resolved{% endif %}" style="padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; {% if r.estado == 'pendiente' %}background: #fffbeb; color: #d97706;{% else %}background: #ecfdf5; color: #059669;{% endif %}">
                                                 {{ r.estado|title }}
                                             </span>
                                         </div>
-                                        <div class="ticket-description" style="margin-bottom: 10px; font-size: 0.9rem; line-height: 1.4;">
+                                        <div class="ticket-description ap-ticket-desc">
                                             {{ r.descripcion|linebreaksbr }}
                                         </div>
-                                        <div class="ticket-meta" style="font-size: 0.8rem; color: var(--text-light);">
+                                        <div class="ticket-meta ap-ticket-meta">
                                             Enviado el: {{ r.fecha_reporte|date:"d M Y" }}
                                         </div>
                                     </div>
                                     {% endfor %}
                                 {% else %}
-                                    <div class="empty-teachers-state" style="text-align: center; padding: 30px; color: var(--text-light);">
-                                        <i class="bi bi-chat-left-text" style="font-size: 2rem; display: block; margin-bottom: 10px;"></i>
+                                    <div class="empty-teachers-state ap-empty-tickets">
+                                        <i class="bi bi-chat-left-text ap-empty-icon"></i>
                                         <p>No has enviado ningún reporte de soporte todavía.</p>
                                     </div>
                                 {% endif %}
@@ -402,31 +453,31 @@
         <!-- ── VIEW 7: CURSOS PREMIUM (PREMIUM) ── -->
         <!-- esta parte es de los cursos premium de los alumnos -->
         <div class="dashboard-view" id="view-courses">
-            <div class="results-section" style="max-width: 1200px; margin: 0 auto; padding: 0 15px;">
+            <div class="results-section ap-section-wide">
                 
                 <!-- Contenido de Cursos (Desbloqueado) -->
                 <!-- esta parte es del catalogo con los carruseles de cursos -->
                 <div class="courses-wrapper-content" id="courses-unlocked-content">
                     
-                    <div class="courses-catalog-header" style="margin-bottom: 30px;">
-                        <h2 style="font-size: 2.2rem; font-weight: 800; color: var(--text); margin-bottom: 8px;">Catálogo de Cursos Premium</h2>
-                        <p style="color: var(--text-light); font-size: 1.05rem;">Aprende a tu propio ritmo con clases interactivas y material exclusivo de tecnología y desarrollo.</p>
+                    <div class="courses-catalog-header ap-mb-30">
+                        <h2 class="ap-catalog-title">Catálogo de Cursos Premium</h2>
+                        <p class="ap-catalog-sub">Aprende a tu propio ritmo con clases interactivas y material exclusivo de tecnología y desarrollo.</p>
                     </div>
 
                     <!-- Fila 1: Popular Python -->
-                    <div class="courses-carousel-section" style="margin-bottom: 45px; position: relative;">
-                        <div class="courses-cat-header" style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
-                            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                                <h3 style="font-size: 1.45rem; font-weight: 800; color: var(--text); margin: 0;">Popular entre Desarrolladores/as Python</h3>
-                                <a href="#" class="btn-edit-profession" style="font-size: 0.88rem; font-weight: 700; color: var(--primary); text-decoration: none;">Editar profesión</a>
+                    <div class="courses-carousel-section ap-carousel-block">
+                        <div class="courses-cat-header ap-cat-header">
+                            <div class="ap-cat-title-row">
+                                <h3 class="ap-cat-title">Popular entre Desarrolladores/as Python</h3>
+                                <span class="btn-edit-profession ap-edit-profession" aria-label="Editar profesión próximamente">Editar profesión</span>
                             </div>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <span class="badge-new-cat" style="background-color: #d1fae5; color: #065f46; font-size: 0.78rem; font-weight: 700; padding: 4px 10px; border-radius: 6px;">Nuevo</span>
-                                <span style="font-size: 0.85rem; color: var(--text-light);">Inspirado en tus selecciones</span>
+                            <div class="ap-cat-meta">
+                                <span class="badge-new-cat ap-badge-new">Nuevo</span>
+                                <span class="ap-cat-hint">Inspirado en tus selecciones</span>
                             </div>
                         </div>
 
-                        <div class="courses-carousel-wrapper" style="position: relative;">
+                        <div class="courses-carousel-wrapper ap-relative">
                             <div class="courses-carousel-track" id="carousel-python-track">
                                 <!-- Se rellena con JS -->
                             </div>
@@ -440,12 +491,12 @@
                     </div>
 
                     <!-- Fila 2: Cursos en tendencia -->
-                    <div class="courses-carousel-section" style="margin-bottom: 45px; position: relative;">
-                        <div class="courses-cat-header" style="margin-bottom: 15px;">
-                            <h3 style="font-size: 1.45rem; font-weight: 800; color: var(--text); margin: 0;">Cursos en tendencia</h3>
+                    <div class="courses-carousel-section ap-carousel-block">
+                        <div class="courses-cat-header ap-mb-15">
+                            <h3 class="ap-cat-title">Cursos en tendencia</h3>
                         </div>
 
-                        <div class="courses-carousel-wrapper" style="position: relative;">
+                        <div class="courses-carousel-wrapper ap-relative">
                             <div class="courses-carousel-track" id="carousel-trend-track">
                                 <!-- Se rellena con JS -->
                             </div>
@@ -465,7 +516,7 @@
         <!-- ── VIEW 8: BUZÓN DE DUDAS (PREMIUM) ── -->
         <!-- esta parte es del chat o buzon de dudas premium -->
         <div class="dashboard-view" id="view-inbox">
-            <div class="results-section" style="max-width: 1000px; margin: 0 auto;">
+            <div class="results-section ap-section-medium">
                 
                 <!-- Pantalla de Bloqueo Premium -->
                 <div class="premium-lock-overlay" id="lock-inbox">
@@ -481,9 +532,9 @@
 
                 <!-- Contenido del Buzón (Desbloqueado) -->
                 <div class="inbox-wrapper-content" id="inbox-unlocked-content" style="display: none;">
-                    <div style="margin-bottom: 25px;">
-                        <h2><i class="bi bi-chat-text-fill" style="color: var(--primary);"></i> Buzón de Dudas</h2>
-                        <p style="color: var(--text-light); font-size: 0.95rem;">Resuelve tus dudas académicas directamente con tus profesores favoritos.</p>
+                    <div class="ap-mb-25">
+                        <h2><i class="bi bi-chat-text-fill ap-text-primary"></i> Buzón de Dudas</h2>
+                        <p class="ap-view-sub">Resuelve tus dudas académicas directamente con tus profesores favoritos.</p>
                     </div>
                     
                     <div class="inbox-layout">
@@ -527,7 +578,7 @@
         <!-- ── VIEW 9: INFORME DE PROGRESO (PREMIUM) ── -->
         <!-- esta parte es del reporte de notas y avance premium -->
         <div class="dashboard-view" id="view-progress">
-            <div class="results-section" style="max-width: 1000px; margin: 0 auto;">
+            <div class="results-section ap-section-medium">
                 
                 <!-- Pantalla de Bloqueo Premium -->
                 <div class="premium-lock-overlay" id="lock-progress">
@@ -543,36 +594,36 @@
 
                 <!-- Contenido de Progreso (Desbloqueado) -->
                 <div class="progress-wrapper-content" id="progress-unlocked-content" style="display: none;">
-                    <div style="margin-bottom: 25px;">
-                        <h2><i class="bi bi-bar-chart-line-fill" style="color: var(--primary);"></i> Mi Informe de Progreso</h2>
-                        <p style="color: var(--text-light); font-size: 0.95rem;">Revisa tus estadísticas de estudio, horas dedicadas y el feedback de tus tutores.</p>
+                    <div class="ap-mb-25">
+                        <h2><i class="bi bi-bar-chart-line-fill ap-text-primary"></i> Mi Informe de Progreso</h2>
+                        <p class="ap-view-sub">Revisa tus estadísticas de estudio, horas dedicadas y el feedback de tus tutores.</p>
                     </div>
                     
                     <!-- Resumen de Estadísticas -->
                     <div class="progress-stats-grid">
                         <div class="progress-stat-card">
-                            <div class="stat-icon" style="background: rgba(168, 85, 247, 0.1); color: var(--primary);"><i class="bi bi-hourglass-split"></i></div>
+                            <div class="stat-icon stat-icon--purple"><i class="bi bi-hourglass-split"></i></div>
                             <div class="stat-info">
                                 <h4 id="progress-stat-hours">36.5 hrs</h4>
                                 <p>Tiempo de Estudio Total</p>
                             </div>
                         </div>
                         <div class="progress-stat-card">
-                            <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;"><i class="bi bi-check-circle-fill"></i></div>
+                            <div class="stat-icon stat-icon--green"><i class="bi bi-check-circle-fill"></i></div>
                             <div class="stat-info">
                                 <h4 id="progress-stat-classes">24</h4>
                                 <p>Clases Completadas</p>
                             </div>
                         </div>
                         <div class="progress-stat-card">
-                            <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--accent);"><i class="bi bi-journal-check"></i></div>
+                            <div class="stat-icon stat-icon--amber"><i class="bi bi-journal-check"></i></div>
                             <div class="stat-info">
                                 <h4 id="progress-stat-subjects">4</h4>
                                 <p>Ramos Cursados</p>
                             </div>
                         </div>
                         <div class="progress-stat-card">
-                            <div class="stat-icon" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;"><i class="bi bi-star-fill"></i></div>
+                            <div class="stat-icon stat-icon--blue"><i class="bi bi-star-fill"></i></div>
                             <div class="stat-info">
                                 <h4 id="progress-stat-rating">4.9</h4>
                                 <p>Promedio Feedback</p>
@@ -592,8 +643,8 @@
                         <!-- Gráfico de tendencia SVG -->
                         <div class="progress-details-card">
                             <h3>Horas de Estudio Semanales</h3>
-                            <div class="chart-container" style="height: 220px; position: relative;">
-                                <svg class="progress-chart-svg" viewBox="0 0 500 200" style="width: 100%; height: 100%;">
+                            <div class="chart-container ap-chart-box">
+                                <svg class="progress-chart-svg ap-fill" viewBox="0 0 500 200">
                                     <defs>
                                         <linearGradient id="chart-grad" x1="0" y1="0" x2="0" y2="1">
                                             <stop offset="0%" stop-color="var(--primary)" stop-opacity="0.3"/>
@@ -618,18 +669,18 @@
                                     <circle cx="460" cy="30" r="5" fill="var(--primary)"/>
                                     
                                     <!-- Textos -->
-                                    <text x="40" y="190" fill="var(--text-light)" font-size="10" text-anchor="middle">Sem 1</text>
-                                    <text x="110" y="190" fill="var(--text-light)" font-size="10" text-anchor="middle">Sem 2</text>
-                                    <text x="180" y="190" fill="var(--text-light)" font-size="10" text-anchor="middle">Sem 3</text>
-                                    <text x="320" y="190" fill="var(--text-light)" font-size="10" text-anchor="middle">Sem 4</text>
-                                    <text x="460" y="190" fill="var(--text-light)" font-size="10" text-anchor="middle">Hoy</text>
+                                    <text x="40" y="190" fill="var(--text-light)" font-size="11" text-anchor="middle">Sem 1</text>
+                                    <text x="110" y="190" fill="var(--text-light)" font-size="11" text-anchor="middle">Sem 2</text>
+                                    <text x="180" y="190" fill="var(--text-light)" font-size="11" text-anchor="middle">Sem 3</text>
+                                    <text x="320" y="190" fill="var(--text-light)" font-size="11" text-anchor="middle">Sem 4</text>
+                                    <text x="460" y="190" fill="var(--text-light)" font-size="11" text-anchor="middle">Hoy</text>
                                 </svg>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Retroalimentación de docentes -->
-                    <div class="progress-feedback-section" style="margin-top: 30px;">
+                    <div class="progress-feedback-section ap-mt-30">
                         <h3>Comentarios y Observaciones del Equipo Docente</h3>
                         <div class="feedback-list-container" id="feedback-list-container">
                             <!-- Se rellena con JS -->
@@ -642,40 +693,40 @@
         <!-- Ventana Modal para Ver Detalles del Curso -->
         <!-- esta parte es de la ventana emergente para ver detalles de cursos -->
         <div class="custom-modal-overlay" id="course-detail-modal">
-            <div class="custom-modal-card" style="max-width: 550px;">
+            <div class="custom-modal-card ap-modal-sm">
                 <div class="custom-modal-header">
-                    <h3 id="detail-course-title" style="margin: 0; font-weight: 800; font-size: 1.35rem; color: var(--text);">Detalles del Curso</h3>
+                    <h3 class="ap-detail-title" id="detail-course-title">Detalles del Curso</h3>
                     <button class="close-modal-btn" onclick="closeCourseDetailModal()">&times;</button>
                 </div>
                 <div class="custom-modal-body">
-                    <div id="detail-course-banner" style="height: 180px; border-radius: 12px; margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; font-size: 2.2rem; font-weight: 800; text-align: center; padding: 20px; text-shadow: 0 4px 8px rgba(0,0,0,0.3);">
+                    <div class="ap-detail-banner" id="detail-course-banner">
                         <!-- Se llena con JS -->
                     </div>
-                    <div style="display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap;" id="detail-course-badges">
+                    <div class="ap-detail-badges" id="detail-course-badges">
                         <!-- Badges premium / bestseller -->
                     </div>
-                    <p style="color: var(--text-light); font-size: 0.95rem; line-height: 1.6; margin-bottom: 20px;" id="detail-course-desc">
+                    <p class="ap-detail-desc" id="detail-course-desc">
                         <!-- Descripcion del curso -->
                     </p>
-                    <div style="border-top: 1px solid rgba(168, 85, 247, 0.1); padding-top: 15px; margin-bottom: 20px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                            <span style="color: var(--text-light); font-size: 0.9rem;">Instructor:</span>
-                            <strong id="detail-course-author" style="color: var(--text);"></strong>
+                    <div class="ap-detail-meta">
+                        <div class="ap-detail-row">
+                            <span class="ap-detail-label">Instructor:</span>
+                            <strong class="ap-text-strong" id="detail-course-author"></strong>
                         </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                            <span style="color: var(--text-light); font-size: 0.9rem;">Valoración:</span>
-                            <span id="detail-course-rating" style="color: var(--text); font-weight: 700;"></span>
+                        <div class="ap-detail-row">
+                            <span class="ap-detail-label">Valoración:</span>
+                            <span class="ap-detail-rating" id="detail-course-rating"></span>
                         </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="color: var(--text-light); font-size: 0.9rem;">Precio del Curso:</span>
+                        <div class="ap-detail-row-last">
+                            <span class="ap-detail-label">Precio del Curso:</span>
                             <div>
-                                <span id="detail-course-price" style="font-size: 1.35rem; font-weight: 800; color: var(--primary); margin-right: 8px;"></span>
-                                <span id="detail-course-oldprice" style="text-decoration: line-through; color: var(--text-light); font-size: 0.95rem;"></span>
+                                <span class="ap-detail-price" id="detail-course-price"></span>
+                                <span class="ap-detail-oldprice" id="detail-course-oldprice"></span>
                             </div>
                         </div>
                     </div>
-                    <button class="btn-principal" onclick="startCourseLearning()" style="width: 100%; border-radius: 12px; padding: 14px;">
-                        <i class="bi bi-play-fill" style="margin-right: 8px;"></i>Iniciar Aprendizaje
+                    <button class="btn-principal ap-btn-block" onclick="startCourseLearning()">
+                        <i class="bi bi-play-fill ap-mr-8"></i>Iniciar Aprendizaje
                     </button>
                 </div>
             </div>
@@ -684,10 +735,10 @@
         <!-- Ventana Modal para Reproducir Clases en Video -->
         <!-- esta parte es de la ventana emergente para ver las clases grabadas en video -->
         <div class="custom-modal-overlay" id="course-video-modal">
-            <div class="custom-modal-card" style="max-width: 1000px; width: 95%; padding: 25px;">
-                <div class="custom-modal-header" style="margin-bottom: 15px;">
-                    <h3 style="margin: 0; font-size: 1.3rem; font-weight: 800; color: var(--text);">
-                        <i class="bi bi-play-btn-fill" style="color: var(--primary); margin-right: 8px;"></i>
+            <div class="custom-modal-card ap-modal-video">
+                <div class="custom-modal-header ap-mb-15">
+                    <h3 class="ap-video-title">
+                        <i class="bi bi-play-btn-fill ap-video-title-icon"></i>
                         <span id="video-modal-title">Reproductor de Curso</span>
                     </h3>
                     <button class="close-modal-btn" onclick="closeCourseVideoModal()">&times;</button>
@@ -701,7 +752,7 @@
                         <!-- Columna Izquierda: Reproductor -->
                         <div class="video-player-column">
                             <div class="video-player-wrapper">
-                                <video id="course-html5-video" controls poster="{% static 'alumnos/img/Logo.png' %}" style="width: 100%; height: 100%; border-radius: 12px; background: #000; outline: none;">
+                                <video class="ap-video-player" id="course-html5-video" controls poster="{% static 'alumnos/img/Logo.png' %}">
                                     <source id="video-player-source" src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" type="video/mp4">
                                     Tu navegador no soporta reproducción de video.
                                 </video>
@@ -709,39 +760,39 @@
                             
                             <!-- Pestañas informativas bajo el video -->
                             <!-- esta parte es de la seccion de descargas de guias pdf bajo el video -->
-                            <div class="video-info-tabs" style="margin-top: 15px;">
-                                <div class="video-tab-nav" style="display: flex; gap: 10px; border-bottom: 1px solid rgba(168, 85, 247, 0.1); padding-bottom: 10px; margin-bottom: 15px;">
+                            <div class="video-info-tabs ap-mt-15">
+                                <div class="video-tab-nav ap-video-tabs-nav">
                                     <button class="video-tab-btn active" onclick="switchVideoTab('tab-video-desc')">Descripción</button>
                                     <button class="video-tab-btn" onclick="switchVideoTab('tab-video-files')">Material Descargable</button>
                                     <button class="video-tab-btn" onclick="switchVideoTab('tab-video-tutor')">Preguntar al Tutor</button>
                                 </div>
                                 <div class="video-tab-content active" id="tab-video-desc">
-                                    <p style="font-size: 0.9rem; color: var(--text-light); line-height: 1.6;" id="video-course-longdesc">
+                                    <p class="ap-video-desc" id="video-course-longdesc">
                                         Bienvenido a esta lección práctica. Aquí cubriremos los fundamentos prácticos de la materia, analizaremos el código de ejemplo y te guiaremos paso a paso para resolver las principales problemáticas de la industria.
                                     </p>
                                 </div>
                                 <div class="video-tab-content" id="tab-video-files" style="display: none;">
-                                    <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px;">
+                                    <ul class="ap-resource-list">
                                         <li>
-                                            <a href="#" onclick="downloadMockResource(event, 'Guia_Teorica_Conceptos.pdf')" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; border-radius: 8px; border: 1px solid rgba(168, 85, 247, 0.1); background: rgba(168, 85, 247, 0.01); color: var(--text); text-decoration: none; font-size: 0.88rem;">
-                                                <span><i class="bi bi-file-earmark-pdf-fill" style="color: #ef4444; margin-right: 8px;"></i> Guía Teórica de Conceptos.pdf</span>
+                                            <button class="ap-resource-btn" type="button" onclick="downloadMockResource(event, 'Guia_Teorica_Conceptos.pdf')">
+                                                <span><i class="bi bi-file-earmark-pdf-fill ap-pdf-icon"></i> Guía Teórica de Conceptos.pdf</span>
                                                 <i class="bi bi-download"></i>
-                                            </a>
+                                            </button>
                                         </li>
                                         <li>
-                                            <a href="#" onclick="downloadMockResource(event, 'Ejercicios_Practicos_Resueltos.pdf')" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; border-radius: 8px; border: 1px solid rgba(168, 85, 247, 0.1); background: rgba(168, 85, 247, 0.01); color: var(--text); text-decoration: none; font-size: 0.88rem;">
-                                                <span><i class="bi bi-file-earmark-pdf-fill" style="color: #ef4444; margin-right: 8px;"></i> Ejercicios Prácticos Resueltos.pdf</span>
+                                            <button class="ap-resource-btn" type="button" onclick="downloadMockResource(event, 'Ejercicios_Practicos_Resueltos.pdf')">
+                                                <span><i class="bi bi-file-earmark-pdf-fill ap-pdf-icon"></i> Ejercicios Prácticos Resueltos.pdf</span>
                                                 <i class="bi bi-download"></i>
-                                            </a>
+                                            </button>
                                         </li>
                                     </ul>
                                 </div>
                                 <div class="video-tab-content" id="tab-video-tutor" style="display: none;">
-                                    <p style="font-size: 0.9rem; color: var(--text-light); line-height: 1.6; margin-bottom: 12px;">
+                                    <p class="ap-video-tutor-text">
                                         ¿Tienes alguna duda sobre esta clase en video? Escríbele directamente a tu tutor favorito en el Buzón de Dudas.
                                     </p>
-                                    <button class="btn-principal" onclick="openChatFromVideo()" style="border-radius: 8px; padding: 8px 16px; font-size: 0.85rem;">
-                                        <i class="bi bi-chat-text-fill" style="margin-right: 6px;"></i>Ir al Buzón de Dudas
+                                    <button class="btn-principal ap-btn-sm" onclick="openChatFromVideo()">
+                                        <i class="bi bi-chat-text-fill ap-mr-6"></i>Ir al Buzón de Dudas
                                     </button>
                                 </div>
                             </div>
@@ -749,7 +800,7 @@
                         
                         <!-- Columna Derecha: Lista de Lecciones -->
                         <div class="video-playlist-column">
-                            <h4 style="margin: 0 0 12px 0; font-size: 0.95rem; font-weight: 800; color: var(--text);">Lecciones del Curso</h4>
+                            <h4 class="ap-side-title">Lecciones del Curso</h4>
                             <div class="video-lessons-list" id="video-lessons-list">
                                 <!-- Se rellena con JS -->
                             </div>
@@ -763,147 +814,132 @@
 
         <!-- ── VIEW 6: AVAILABLE PLANS ── -->
             <div class="dashboard-view" id="view-plans">
-                <div class="results-section" style="max-width: 1000px; margin: 0 auto;">
-                    <div class="planes-header" style="text-align: center; margin-bottom: 40px;">
-                        <h2 style="font-size: 2.2rem; font-weight: 800; color: var(--text); margin-bottom: 10px;">Elige el plan ideal para ti</h2>
-                        <p style="color: var(--text-light); font-size: 1.1rem; max-width: 600px; margin: 0 auto;">Todos nuestros planes están diseñados para brindarte el mejor acompañamiento en tu aprendizaje.</p>
+                <div class="pp-wrap">
+                    <div class="pp-header">
+                        <span class="pp-eyebrow">Planes</span>
+                        <h2>Elige el plan ideal para ti</h2>
+                        <p>Todos nuestros planes están diseñados para brindarte el mejor acompañamiento en tu aprendizaje.</p>
                     </div>
 
-                    <!-- Planes Estándar Grid -->
-                    <div class="plans-showcase-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; margin-bottom: 50px;">
-                        
+                    <!-- Planes estándar -->
+                    <div class="pp-grid">
                         <!-- Tarjeta Plan Básico -->
-                        <div class="plan-card-display">
-                            <div class="plan-card-body">
-                                <h3 class="plan-title" style="font-size: 1.4rem; font-weight: 700; color: var(--text); margin-bottom: 15px;">Plan Básico</h3>
-                                <div class="plan-price-box" style="margin-bottom: 15px;">
-                                    <span class="plan-price" style="font-size: 2.2rem; font-weight: 800; color: var(--primary);">$69.990</span>
-                                    <span class="plan-period" style="color: var(--text-light); font-size: 0.95rem;">/mes</span>
-                                </div>
-                                <p class="plan-billing-info" style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 20px;">Facturación mensual</p>
-                                <button class="btn-principal" onclick="buyPlan('Plan Básico', 69990)" style="width: 100%; border-radius: 12px; padding: 12px; margin-bottom: 25px;">Contratar Plan</button>
-                                
-                                <div style="border-top: 1px solid rgba(168, 85, 247, 0.1); margin-bottom: 20px;"></div>
-                                
-                                <p class="plan-features-title" style="font-weight: 700; font-size: 0.9rem; color: var(--text); margin-bottom: 12px;">Beneficios incluidos:</p>
-                                <ul class="plan-features-list" style="list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem; color: var(--text-light);">
-                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Clases online</li>
-                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> 3 clases a la semana</li>
-                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Temas básicos de asignatura</li>
-                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Material de apoyo</li>
-                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Dudas vía correo</li>
-                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Horarios Pre-definidos</li>
-                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> 1 ramo</li>
-                                </ul>
+                        <div class="pp-card">
+                            <h3 class="pp-title">Plan Básico</h3>
+                            <div class="pp-price-box">
+                                <span class="pp-price">$69.990</span>
+                                <span class="pp-period">/mes</span>
                             </div>
+                            <p class="pp-billing">Facturación mensual</p>
+                            <button class="pp-btn pp-btn--main" onclick="buyPlan('Plan Básico', 69990)">Contratar ahora</button>
+                            <button class="pp-btn pp-btn--ghost" onclick="agregarPlanPortal('1', 'Plan Básico', '$69.990')">
+                                <i class="bi bi-cart-plus"></i> Agregar al carrito
+                            </button>
+                            <div class="pp-divider"></div>
+                            <p class="pp-features-title">Beneficios incluidos</p>
+                            <ul class="pp-features">
+                                <li><i class="bi bi-check-lg"></i> Clases online</li>
+                                <li><i class="bi bi-check-lg"></i> 3 clases a la semana</li>
+                                <li><i class="bi bi-check-lg"></i> Temas básicos de asignatura</li>
+                                <li><i class="bi bi-check-lg"></i> Material de apoyo</li>
+                                <li><i class="bi bi-check-lg"></i> Dudas vía correo</li>
+                                <li><i class="bi bi-check-lg"></i> Horarios pre-definidos</li>
+                                <li><i class="bi bi-check-lg"></i> 1 ramo</li>
+                            </ul>
                         </div>
 
-                        <!-- Tarjeta Plan Medio (Destacado) -->
-                        <div class="plan-card-display featured" style="position: relative; border: 2.5px solid var(--primary); transform: scale(1.03); box-shadow: 0 15px 35px rgba(168, 85, 247, 0.15);">
-                            <span style="position: absolute; top: -15px; left: 50%; transform: translateX(-50%); background-color: var(--accent); color: var(--text); font-size: 0.75rem; font-weight: 800; padding: 4px 14px; border-radius: 50px; text-transform: uppercase; letter-spacing: 0.5px;">Destacado</span>
-                            <div class="plan-card-body">
-                                <h3 class="plan-title" style="font-size: 1.4rem; font-weight: 700; color: var(--text); margin-bottom: 15px; margin-top: 10px;">Plan Medio</h3>
-                                <div class="plan-price-box" style="margin-bottom: 15px;">
-                                    <span class="plan-price" style="font-size: 2.2rem; font-weight: 800; color: var(--primary);">$139.990</span>
-                                    <span class="plan-period" style="color: var(--text-light); font-size: 0.95rem;">/mes</span>
-                                </div>
-                                <p class="plan-billing-info" style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 20px;">Facturación mensual</p>
-                                <button class="btn-principal" onclick="buyPlan('Plan Medio', 139990)" style="width: 100%; border-radius: 12px; padding: 12px; margin-bottom: 25px; background-color: var(--primary);">Contratar Plan</button>
-                                
-                                <div style="border-top: 1px solid rgba(168, 85, 247, 0.1); margin-bottom: 20px;"></div>
-                                
-                                <p class="plan-features-title" style="font-weight: 700; font-size: 0.9rem; color: var(--text); margin-bottom: 12px;">Beneficios incluidos:</p>
-                                <ul class="plan-features-list" style="list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem; color: var(--text-light);">
-                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Clases online</li>
-                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> 4 clases a la semana</li>
-                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Temas intermedios</li>
-                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Material de apoyo</li>
-                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Dudas vía correo</li>
-                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Horarios definidos</li>
-                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> 1 a 2 ramos</li>
-                                </ul>
+                        <!-- Tarjeta Plan Medio -->
+                        <div class="pp-card pp-card--featured">
+                            <span class="pp-tag">Más elegido</span>
+                            <h3 class="pp-title">Plan Medio</h3>
+                            <div class="pp-price-box">
+                                <span class="pp-price">$139.990</span>
+                                <span class="pp-period">/mes</span>
                             </div>
+                            <p class="pp-billing">Facturación mensual</p>
+                            <button class="pp-btn pp-btn--main" onclick="buyPlan('Plan Medio', 139990)">Contratar ahora</button>
+                            <button class="pp-btn pp-btn--ghost" onclick="agregarPlanPortal('2', 'Plan Medio', '$139.990')">
+                                <i class="bi bi-cart-plus"></i> Agregar al carrito
+                            </button>
+                            <div class="pp-divider"></div>
+                            <p class="pp-features-title">Beneficios incluidos</p>
+                            <ul class="pp-features">
+                                <li><i class="bi bi-check-lg"></i> Clases online</li>
+                                <li><i class="bi bi-check-lg"></i> 4 clases a la semana</li>
+                                <li><i class="bi bi-check-lg"></i> Temas intermedios</li>
+                                <li><i class="bi bi-check-lg"></i> Material de apoyo</li>
+                                <li><i class="bi bi-check-lg"></i> Dudas vía correo</li>
+                                <li><i class="bi bi-check-lg"></i> Horarios definidos</li>
+                                <li><i class="bi bi-check-lg"></i> 1 a 2 ramos</li>
+                            </ul>
                         </div>
 
                         <!-- Tarjeta Plan Superior -->
-                        <div class="plan-card-display">
-                            <div class="plan-card-body">
-                                <h3 class="plan-title" style="font-size: 1.4rem; font-weight: 700; color: var(--text); margin-bottom: 15px;">Plan Superior</h3>
-                                <div class="plan-price-box" style="margin-bottom: 15px;">
-                                    <span class="plan-price" style="font-size: 2.2rem; font-weight: 800; color: var(--primary);">$189.990</span>
-                                    <span class="plan-period" style="color: var(--text-light); font-size: 0.95rem;">/mes</span>
-                                </div>
-                                <p class="plan-billing-info" style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 20px;">Facturación mensual</p>
-                                <button class="btn-principal" onclick="buyPlan('Plan Superior', 189990)" style="width: 100%; border-radius: 12px; padding: 12px; margin-bottom: 25px;">Contratar Plan</button>
-                                
-                                <div style="border-top: 1px solid rgba(168, 85, 247, 0.1); margin-bottom: 20px;"></div>
-                                
-                                <p class="plan-features-title" style="font-weight: 700; font-size: 0.9rem; color: var(--text); margin-bottom: 12px;">Beneficios incluidos:</p>
-                                <ul class="plan-features-list" style="list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem; color: var(--text-light);">
-                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Clases presenciales u online</li>
-                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> 5 clases a la semana</li>
-                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Temas avanzados</li>
-                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Material de apoyo</li>
-                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Simulación de pruebas</li>
-                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Horario flexible</li>
-                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> 2 a 3 ramos</li>
-                                </ul>
+                        <div class="pp-card">
+                            <h3 class="pp-title">Plan Superior</h3>
+                            <div class="pp-price-box">
+                                <span class="pp-price">$189.990</span>
+                                <span class="pp-period">/mes</span>
                             </div>
+                            <p class="pp-billing">Facturación mensual</p>
+                            <button class="pp-btn pp-btn--main" onclick="buyPlan('Plan Superior', 189990)">Contratar ahora</button>
+                            <button class="pp-btn pp-btn--ghost" onclick="agregarPlanPortal('3', 'Plan Superior', '$189.990')">
+                                <i class="bi bi-cart-plus"></i> Agregar al carrito
+                            </button>
+                            <div class="pp-divider"></div>
+                            <p class="pp-features-title">Beneficios incluidos</p>
+                            <ul class="pp-features">
+                                <li><i class="bi bi-check-lg"></i> Clases presenciales u online</li>
+                                <li><i class="bi bi-check-lg"></i> 5 clases a la semana</li>
+                                <li><i class="bi bi-check-lg"></i> Temas avanzados</li>
+                                <li><i class="bi bi-check-lg"></i> Material de apoyo</li>
+                                <li><i class="bi bi-check-lg"></i> Simulación de pruebas</li>
+                                <li><i class="bi bi-check-lg"></i> Horario flexible</li>
+                                <li><i class="bi bi-check-lg"></i> 2 a 3 ramos</li>
+                            </ul>
                         </div>
-
                     </div>
 
-                    <div style="border-top: 1.5px solid rgba(168, 85, 247, 0.1); margin: 50px 0 40px 0;"></div>
-
-                    <div class="planes-header" style="text-align: center; margin-bottom: 30px;">
-                        <h3 style="font-size: 1.6rem; font-weight: 800; color: var(--text); margin-bottom: 10px;">Planes Especiales y Flexibles</h3>
-                        <p style="color: var(--text-light); font-size: 1rem;">¿Buscas una solución a tu medida? Revisa nuestras opciones alternativas.</p>
+                    <div class="pp-header pp-header--extra">
+                        <span class="pp-eyebrow">A tu medida</span>
+                        <h3>Planes especiales y flexibles</h3>
+                        <p>¿Buscas una solución a tu medida? Revisa nuestras opciones alternativas.</p>
                     </div>
 
-                    <div class="plans-special-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px;">
-                        
+                    <div class="pp-grid pp-grid--two">
                         <!-- Tarjeta Material Específico -->
-                        <div class="plan-card-display">
-                            <div class="plan-card-body">
-                                <h3 class="plan-title" style="font-size: 1.3rem; font-weight: 700; color: var(--text); margin-bottom: 15px;">Material Específico</h3>
-                                <div class="plan-price-box" style="margin-bottom: 15px;">
-                                    <span class="plan-price" style="font-size: 2rem; font-weight: 800; color: var(--primary);">Clase a Clase</span>
-                                </div>
-                                <p class="plan-billing-info" style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 20px;">Pago directo por clase al profesor</p>
-                                <button class="btn-principal" onclick="switchView('view-dashboard')" style="width: 100%; border-radius: 12px; padding: 12px; margin-bottom: 25px;">Consultar Profesores</button>
-                                
-                                <div style="border-top: 1px solid rgba(168, 85, 247, 0.1); margin-bottom: 20px;"></div>
-                                
-                                <ul class="plan-features-list" style="list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem; color: var(--text-light);">
-                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Pago directo al profesor por clase</li>
-                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Enfocado en 1 o 2 temas específicos</li>
-                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Valores definidos por cada profesor</li>
-                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Material focalizado en tus dudas</li>
-                                </ul>
+                        <div class="pp-card">
+                            <h3 class="pp-title">Material Específico</h3>
+                            <div class="pp-price-box">
+                                <span class="pp-price pp-price--text">Clase a clase</span>
                             </div>
+                            <p class="pp-billing">Pago directo por clase al profesor</p>
+                            <button class="pp-btn pp-btn--outline" onclick="switchView('view-dashboard')">Consultar profesores</button>
+                            <div class="pp-divider"></div>
+                            <ul class="pp-features">
+                                <li><i class="bi bi-check-lg"></i> Pago directo al profesor por clase</li>
+                                <li><i class="bi bi-check-lg"></i> Enfocado en 1 o 2 temas específicos</li>
+                                <li><i class="bi bi-check-lg"></i> Valores definidos por cada profesor</li>
+                                <li><i class="bi bi-check-lg"></i> Material focalizado en tus dudas</li>
+                            </ul>
                         </div>
 
                         <!-- Tarjeta Plan Personalizado -->
-                        <div class="plan-card-display">
-                            <div class="plan-card-body">
-                                <h3 class="plan-title" style="font-size: 1.3rem; font-weight: 700; color: var(--text); margin-bottom: 15px;">Plan Personalizado</h3>
-                                <div class="plan-price-box" style="margin-bottom: 15px;">
-                                    <span class="plan-price" style="font-size: 2rem; font-weight: 800; color: var(--primary);">A Medida</span>
-                                </div>
-                                <p class="plan-billing-info" style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 20px;">Valores según tus selecciones</p>
-                                <button class="btn-principal" onclick="openPlanCustomizer()" style="width: 100%; border-radius: 12px; padding: 12px; margin-bottom: 25px; background-color: var(--accent); color: var(--text);">Diseñar mi Plan</button>
-                                
-                                <div style="border-top: 1px solid rgba(168, 85, 247, 0.1); margin-bottom: 20px;"></div>
-                                
-                                <ul class="plan-features-list" style="list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem; color: var(--text-light);">
-                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Diseña tu propio horario y días</li>
-                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Ajusta la cantidad de ramos</li>
-                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Elige modalidad online o presencial</li>
-                                    <li><i class="bi bi-check-lg" style="color: #10b981; margin-right: 6px;"></i> Añade o quita simulaciones de pruebas</li>
-                                </ul>
+                        <div class="pp-card">
+                            <h3 class="pp-title">Plan Personalizado</h3>
+                            <div class="pp-price-box">
+                                <span class="pp-price pp-price--text">A medida</span>
                             </div>
+                            <p class="pp-billing">Valores según tus selecciones</p>
+                            <button class="pp-btn pp-btn--outline" onclick="openPlanCustomizer()">Diseñar mi plan</button>
+                            <div class="pp-divider"></div>
+                            <ul class="pp-features">
+                                <li><i class="bi bi-check-lg"></i> Diseña tu propio horario y días</li>
+                                <li><i class="bi bi-check-lg"></i> Ajusta la cantidad de ramos</li>
+                                <li><i class="bi bi-check-lg"></i> Elige modalidad online o presencial</li>
+                                <li><i class="bi bi-check-lg"></i> Añade o quita simulaciones de pruebas</li>
+                            </ul>
                         </div>
-
                     </div>
                 </div>
             </div>
@@ -939,9 +975,9 @@
                     </div>
 
                     <!-- Historial de Pagos y Transacciones -->
-                    <div class="profile-transactions-section" style="margin-top: 40px; border-top: 1px solid rgba(168, 85, 247, 0.1); padding-top: 30px;">
-                        <h3 style="margin-bottom: 20px; font-size: 1.25rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 8px;">
-                            <i class="bi bi-credit-card-2-front-fill" style="color: var(--primary);"></i> Historial de Pagos y Transacciones
+                    <div class="profile-transactions-section ap-transactions">
+                        <h3 class="ap-transactions-title">
+                            <i class="bi bi-credit-card-2-front-fill ap-text-primary"></i> Historial de Pagos y Transacciones
                         </h3>
                         <div class="classes-table-container">
                             <table class="classes-table">
@@ -988,12 +1024,13 @@
             </div>
 
         </main>
+        </div>
     </div>
 
     <!-- Modal / Pestaña Emergente: Temas de Interés -->
     <div class="modal-overlay" id="interests-modal">
         <div class="topics-modal">
-            <button class="modal-close-btn" id="close-modal-btn"><i class="bi bi-x-lg"></i></button>
+            <button type="button" class="modal-close-btn" id="close-modal-btn" aria-label="Cerrar"><i class="bi bi-x-lg"></i></button>
             
             <h2>Temas de Interés</h2>
             <p class="subtitle">Selecciona tus áreas académicas favoritas. Filtraremos el panel general al aceptar.</p>
@@ -1022,7 +1059,7 @@
             </div>
 
             <!-- Accept Button (Filtra todo) -->
-            <button class="btn-principal" id="modal-accept-btn" style="width: 100%; padding: 14px; border-radius: 12px; font-weight: 700; margin-top: 10px;">
+            <button class="btn-principal ap-btn-accept" id="modal-accept-btn">
                 Aceptar y Filtrar Contenido
             </button>
         </div>
@@ -1030,10 +1067,10 @@
 
     <!-- Modal Diseñador de Plan Personalizado (Sobrepuesto) -->
     <div class="modal-overlay" id="custom-plan-modal">
-        <div class="topics-modal custom-builder-modal" style="max-width: 800px; max-height: 90vh;">
+        <div class="topics-modal custom-builder-modal ap-modal-builder">
             <button class="close-builder-btn" id="close-builder-btn">&times;</button>
-            <h2 style="font-size: 1.8rem; font-weight: 700; color: var(--text); margin-bottom: 5px;">Diseña tu Plan a Medida</h2>
-            <p style="color: var(--text-light); font-size: 0.95rem; margin-bottom: 10px;">Personaliza cada aspecto de tu reforzamiento y calcula tu valor mensual inmediatamente.</p>
+            <h2 class="ap-builder-title">Diseña tu Plan a Medida</h2>
+            <p class="ap-builder-sub">Personaliza cada aspecto de tu reforzamiento y calcula tu valor mensual inmediatamente.</p>
             
             <div class="builder-layout">
                 <!-- Controles Interactivos -->
@@ -1187,7 +1224,7 @@
                         <li id="sum-situacion">Situación: Reforzamiento Estándar</li>
                         <li id="sum-temas" style="display: none;">Temas: </li>
                     </ul>
-                    <button class="btn-principal" onclick="buyCustomPlan()" style="width: 100%; border-radius: 12px; padding: 14px; margin-top: 20px;">Contratar Plan</button>
+                    <button class="btn-principal ap-btn-block-spaced" onclick="buyCustomPlan()">Contratar Plan</button>
                 </div>
             </div>
         </div>
@@ -1225,19 +1262,17 @@
             
             const themeIcon = document.getElementById('theme-icon');
             if (body.classList.contains('dark-mode')) {
-                themeIcon.className = 'bi bi-moon-fill';
+                themeIcon.className = 'bi bi-sun-fill';
                 localStorage.setItem('theme', 'dark');
             } else {
-                themeIcon.className = 'bi bi-sun-fill';
+                themeIcon.className = 'bi bi-moon-stars-fill';
                 localStorage.setItem('theme', 'light');
             }
         };
 
-        // Initialize Theme Mode
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'dark') {
-            document.body.classList.add('dark-mode');
-            document.getElementById('theme-icon').className = 'bi bi-moon-fill';
+        // El tema ya se aplico al inicio del body (tema_inicial.html); aqui solo el icono.
+        if (document.body.classList.contains('dark-mode')) {
+            document.getElementById('theme-icon').className = 'bi bi-sun-fill';
         }
 
         // ── DATA POOLS ──
@@ -1626,7 +1661,7 @@
                 const card = document.createElement('div');
                 card.className = 'teacher-card';
                 card.innerHTML = `
-                    <button class="teacher-star-btn" onclick="toggleFavorite(${t.id}, event)">
+                    <button type="button" class="teacher-star-btn" aria-label="Marcar profesor como favorito" onclick="toggleFavorite(${t.id}, event)">
                         <i class="${favClass}"></i>
                     </button>
                     <div class="teacher-avatar">${t.initial}</div>
@@ -1675,7 +1710,7 @@
                         const card = document.createElement('div');
                         card.className = 'teacher-card';
                         card.innerHTML = `
-                            <button class="teacher-star-btn" onclick="toggleFavorite(${t.id}, event)">
+                            <button type="button" class="teacher-star-btn" aria-label="Marcar profesor como favorito" onclick="toggleFavorite(${t.id}, event)">
                                 <i class="${favClass}"></i>
                             </button>
                             <div class="teacher-avatar">${t.initial}</div>
@@ -1798,7 +1833,7 @@
                 const card = document.createElement('div');
                 card.className = 'teacher-card';
                 card.innerHTML = `
-                    <button class="teacher-star-btn" onclick="toggleFavorite(${t.id}, event)">
+                    <button type="button" class="teacher-star-btn" aria-label="Marcar profesor como favorito" onclick="toggleFavorite(${t.id}, event)">
                         <i class="bi bi-star-fill"></i>
                     </button>
                     <div class="teacher-avatar">${t.initial}</div>
@@ -2907,6 +2942,160 @@
         renderDashboardContent();
         renderModalPreview();
         updatePlanUI();
+    </script>
+    <!-- Carrito global (misma lógica que base.html del sitio público) -->
+    <script>
+        (function () {
+            const PERIODOS = [
+                { valor: 'mensual', label: 'Mensual', factor: 1 },
+                { valor: '3semanas', label: '3 Semanas', factor: 0.75 },
+                { valor: '2semanas', label: '2 Semanas', factor: 0.50 },
+                { valor: '1semana', label: '1 Semana', factor: 0.25 }
+            ];
+            const clpFmt = n => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(n).replace('CLP', '$').trim();
+            const parsePrecio = s => parseInt((s || '0').replace(/[^0-9]/g, ''), 10) || 0;
+
+            let articulos = [];
+
+            function cargar() {
+                try { articulos = JSON.parse(localStorage.getItem('carrito')) || []; }
+                catch (e) { articulos = []; }
+                articulos.forEach(a => { if (!a.periodo) a.periodo = 'mensual'; });
+            }
+            function guardar() { localStorage.setItem('carrito', JSON.stringify(articulos)); }
+
+            function actualizarContador() {
+                const c = document.getElementById('contador-carrito');
+                if (!c) return;
+                const total = articulos.reduce((s, a) => s + a.cantidad, 0);
+                c.textContent = total;
+                c.style.display = total > 0 ? 'flex' : 'none';
+            }
+
+            function render() {
+                const tbody = document.querySelector('#lista-carrito tbody');
+                if (!tbody) return;
+                tbody.innerHTML = '';
+
+                if (articulos.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="cart-empty">Sin planes en el carrito</td></tr>';
+                } else {
+                    articulos.forEach(item => {
+                        const factor = (PERIODOS.find(p => p.valor === (item.periodo || 'mensual')) || PERIODOS[0]).factor;
+                        const precioAjustado = Math.round(parsePrecio(item.precio) * factor);
+                        const opciones = PERIODOS.map(p =>
+                            `<option value="${p.valor}" ${p.valor === (item.periodo || 'mensual') ? 'selected' : ''}>${p.label}</option>`
+                        ).join('');
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td class="cart-item-name">${item.titulo}</td>
+                            <td><select class="cart-periodo-select" data-id="${item.id}">${opciones}</select></td>
+                            <td class="cart-item-price">${clpFmt(precioAjustado)}</td>
+                            <td>${item.cantidad}</td>
+                            <td><button class="cart-remove-btn" data-id="${item.id}">&times;</button></td>`;
+                        tbody.appendChild(tr);
+                    });
+                }
+
+                actualizarContador();
+                const btnPagar = document.getElementById('btn-ir-pago');
+                if (btnPagar) btnPagar.style.display = articulos.length > 0 ? 'block' : 'none';
+
+                tbody.querySelectorAll('.cart-periodo-select').forEach(sel => {
+                    sel.addEventListener('change', function () {
+                        const item = articulos.find(a => a.id === this.dataset.id);
+                        if (item) { item.periodo = this.value; guardar(); render(); }
+                    });
+                });
+                tbody.querySelectorAll('.cart-remove-btn').forEach(btn => {
+                    btn.addEventListener('click', function () {
+                        articulos = articulos.filter(a => a.id !== this.dataset.id);
+                        guardar(); render();
+                    });
+                });
+            }
+
+            window.agregarAlCarrito = function (id, titulo, precio) {
+                const existe = articulos.find(a => a.id === id);
+                if (existe) existe.cantidad += 1;
+                else articulos.push({ id, titulo, precio, cantidad: 1, periodo: 'mensual' });
+                guardar(); render();
+            };
+
+            // Botón "Agregar al carrito" de la vista Planes del portal
+            window.agregarPlanPortal = function (id, titulo, precio) {
+                window.agregarAlCarrito(id, titulo, precio);
+                if (window.Swal) {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: titulo + ' agregado al carrito',
+                        showConfirmButton: false,
+                        timer: 2200,
+                        timerProgressBar: true
+                    });
+                }
+            };
+
+            document.addEventListener('DOMContentLoaded', () => {
+                cargar();
+                render();
+
+                const cartButton = document.getElementById('cart-button');
+                const carrito = document.getElementById('carrito');
+                if (cartButton && carrito) {
+                    cartButton.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        carrito.style.display = (carrito.style.display === 'block') ? 'none' : 'block';
+                    });
+                    document.addEventListener('click', () => { carrito.style.display = 'none'; });
+                    carrito.addEventListener('click', (e) => e.stopPropagation());
+                }
+
+                const vaciarBtn = document.getElementById('vaciar-carrito');
+                if (vaciarBtn) {
+                    vaciarBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        articulos = [];
+                        guardar(); render();
+                    });
+                }
+            });
+
+
+            // Título de la barra superior según la vista activa (igual que el admin)
+            const TITULOS = {
+                'view-dashboard': ['Dashboard', 'Tu panel de aprendizaje'],
+                'view-my-classes': ['Mis Clases', 'Tus clases agendadas e historial'],
+                'view-favorites': ['Profesores Favoritos', 'Los profesores que guardaste'],
+                'view-courses': ['Cursos Premium', 'Catálogo de cursos en video'],
+                'view-inbox': ['Buzón de Dudas', 'Conversa con tus profesores'],
+                'view-progress': ['Informe de Progreso', 'Tu avance por asignatura'],
+                'view-plans': ['Planes de Suscripción', 'Elige o cambia tu plan'],
+                'view-support': ['Soporte / Reportes', 'Envía un reporte y revisa su estado'],
+                'view-profile': ['Mi Perfil', 'Tus datos y transacciones']
+            };
+            function actualizarTitulo() {
+                const activa = document.querySelector('.dashboard-view.active');
+                const t = activa && TITULOS[activa.id];
+                if (!t) return;
+                const h = document.getElementById('portal-title');
+                const p = document.getElementById('portal-subtitle');
+                if (h) h.textContent = t[0];
+                if (p) p.textContent = t[1];
+            }
+            document.querySelectorAll('.dashboard-view').forEach(v =>
+                new MutationObserver(actualizarTitulo).observe(v, { attributes: true, attributeFilter: ['class'] })
+            );
+            document.addEventListener('DOMContentLoaded', actualizarTitulo);
+
+            // Efecto translúcido del navbar al hacer scroll (igual que el sitio público)
+            window.addEventListener('scroll', () => {
+                const nav = document.getElementById('portal-navbar');
+                if (nav) nav.classList.toggle('scrolled', window.scrollY > 20);
+            });
+        })();
     </script>
 </body>
 </html>

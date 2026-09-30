@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nueva contraseña — LBWUS</title>
+    <title>Cambiar contraseña — LBWUS</title>
     <link rel="icon" href="{% static 'alumnos/img/Logo.png' %}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{% static 'recuperar.css' %}">
@@ -18,7 +18,6 @@
 <body>
     <main class="auth-split">
 
-        <!-- Panel de marca (mismo del login; se oculta en móvil) -->
         <aside class="auth-brand">
             <a href="{% url 'home' %}" class="auth-logo">
                 <img src="{% static 'alumnos/img/Logo.png' %}" alt="LBWUS Logo">
@@ -27,10 +26,10 @@
 
             <div class="auth-brand-body">
                 <h2>Tu cuenta, siempre protegida.</h2>
-                <p>Recupera el acceso en pocos pasos y vuelve a tus clases sin perder tu progreso.</p>
+                <p>Cambia tu contraseña cuando quieras. Tu progreso y tus clases se mantienen.</p>
                 <ul class="auth-points">
-                    <li><i class="bi bi-envelope-check"></i> Enlace seguro enviado a tu correo</li>
-                    <li><i class="bi bi-clock-history"></i> El enlace tiene una validez limitada</li>
+                    <li><i class="bi bi-shield-lock"></i> Usa una contraseña que no uses en otros sitios</li>
+                    <li><i class="bi bi-key"></i> Mínimo 8 caracteres, no solo números</li>
                     <li><i class="bi bi-headset"></i> ¿Dudas? Escríbenos a teachers@lbwus.cl</li>
                 </ul>
             </div>
@@ -38,28 +37,25 @@
             <p class="auth-brand-foot">&copy; 2026 LBWUS - Desarrollando enseñanza para el mundo</p>
         </aside>
 
-        <!-- Panel del contenido -->
         <section class="auth-panel">
             <div class="auth-panel-top">
-                <a href="{% url 'login' %}" class="btn-home">
+                <a href="{{ usuario_sesion.url_panel|default:'/' }}" class="btn-home">
                     <i class="bi bi-arrow-left"></i>
-                    Volver al inicio de sesión
+                    Volver {% if usuario_sesion.texto_panel %}a {{ usuario_sesion.texto_panel|lower }}{% else %}al inicio{% endif %}
                 </a>
             </div>
 
             <div class="auth-form-wrap">
                 <div class="auth-mobile-logo">
                     <a href="{% url 'home' %}" class="auth-logo">
-                <img src="{% static 'alumnos/img/Logo.png' %}" alt="LBWUS Logo">
-                <span>LBWUS</span>
-            </a>
+                        <img src="{% static 'alumnos/img/Logo.png' %}" alt="LBWUS Logo">
+                        <span>LBWUS</span>
+                    </a>
                 </div>
 
-                
-                {% if validlink %}
                 <div class="auth-icon"><i class="bi bi-shield-lock"></i></div>
-                <h1 class="auth-title">Crea tu nueva contraseña</h1>
-                <p class="sub">Escríbela dos veces para confirmarla.</p>
+                <h1 class="auth-title">Cambiar contraseña</h1>
+                <p class="sub">Escribe tu contraseña actual y luego la nueva dos veces.</p>
 
                 <form method="post" id="form-nueva">
                     {% csrf_token %}
@@ -70,10 +66,12 @@
 
                     {% for field in form %}
                     <div class="campo">
-                        <i class="bi bi-lock"></i>
-                        <input type="password" name="{{ field.name }}" id="{{ field.id_for_label }}" data-pass
-                            placeholder="{% if forloop.first %}Nueva contraseña{% else %}Confirmar contraseña{% endif %}"
-                            aria-label="{{ field.label }}" required autocomplete="new-password">
+                        <i class="bi {% if forloop.first %}bi-unlock{% else %}bi-lock{% endif %}"></i>
+                        <input type="password" name="{{ field.name }}" id="{{ field.id_for_label }}"
+                            {% if not forloop.first %}data-pass{% endif %}
+                            placeholder="{% if forloop.first %}Contraseña actual{% elif forloop.last %}Confirmar nueva contraseña{% else %}Nueva contraseña{% endif %}"
+                            aria-label="{{ field.label }}" required
+                            autocomplete="{% if forloop.first %}current-password{% else %}new-password{% endif %}">
                         <button type="button" class="toggle-pass" aria-label="Mostrar contraseña">
                             <i class="bi bi-eye"></i>
                         </button>
@@ -89,20 +87,11 @@
 
                     <button type="submit" class="btn">Guardar contraseña</button>
                 </form>
-                {% else %}
-                <div class="auth-icon auth-icon--warn"><i class="bi bi-link-45deg"></i></div>
-                <h1 class="auth-title">Este enlace ya no es válido</h1>
-                <p class="sub">El enlace para restablecer tu contraseña expiró o ya fue utilizado.</p>
 
-                <div class="note">
-                    <i class="bi bi-info-circle"></i>
-                    <span>Por seguridad, cada enlace <strong>solo funciona una vez</strong> y por tiempo limitado. Solicita uno nuevo y usa siempre el correo más reciente.</span>
+                <div class="footer">
+                    ¿No recuerdas la actual?
+                    <a href="{% url 'password_reset' %}">Recupérala por correo</a>
                 </div>
-
-                <a href="{% url 'password_reset' %}" class="btn">Solicitar nuevo enlace</a>
-                <a href="{% url 'login' %}" class="btn-outline">Volver al inicio de sesión</a>
-                {% endif %}
-                
             </div>
         </section>
     </main>
@@ -121,9 +110,8 @@
             });
         });
 
-        // Requisitos en vivo (solo ayuda visual: la validación real la hace Django)
-        const campos = document.querySelectorAll('#form-nueva input[type="password"], #form-nueva input[data-pass]');
-        const p1 = campos[0], p2 = campos[1];
+        // Requisitos en vivo de la NUEVA contraseña (solo ayuda visual: valida Django)
+        const [p1, p2] = document.querySelectorAll('#form-nueva input[data-pass]');
         const reglas = {
             largo: document.getElementById('rule-largo'),
             numeros: document.getElementById('rule-numeros'),

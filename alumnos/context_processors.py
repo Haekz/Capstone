@@ -58,6 +58,28 @@ def _nombre_visible(user, perfil):
     return nombre_perfil or user.first_name or user.username
 
 
+def _iniciales(nombre):
+    """Hasta dos iniciales para el circulo del menu de cuenta.
+
+    'Alumno Prueba' -> 'AP'; 'Dani' -> 'D'; un RUT como '11111111-1' -> '1'.
+    """
+    palabras = [p for p in nombre.split() if p[:1].isalnum()]
+    return ''.join(p[0] for p in palabras[:2]).upper() or '?'
+
+
+def _datos_cuenta(nombre, **extra):
+    """Arma el diccionario de sesion; un solo lugar para las claves comunes."""
+    return {
+        'usuario_sesion': {
+            'autenticado': True,
+            'nombre': nombre,
+            'iniciales': _iniciales(nombre),
+            'url_cambiar_clave': reverse('password_change'),
+            **extra,
+        }
+    }
+
+
 def _rol_activo(user, sesion):
     """Devuelve (rol, perfil) para el usuario, o (None, None).
 
@@ -94,24 +116,18 @@ def estado_sesion(request):
     if rol is None:
         # Autenticado pero sin perfil en el sistema. Se le ofrece cerrar
         # sesion, no un panel al que no tiene acceso.
-        return {
-            'usuario_sesion': {
-                'autenticado': True,
-                'nombre': _nombre_visible(user, None),
-                'rol': '',
-                'texto_panel': '',
-                'url_panel': '',
-                'url_logout': reverse('logout_alumno'),
-            }
-        }
+        return _datos_cuenta(
+            _nombre_visible(user, None),
+            rol='',
+            texto_panel='',
+            url_panel='',
+            url_logout=reverse('logout_alumno'),
+        )
 
-    return {
-        'usuario_sesion': {
-            'autenticado': True,
-            'nombre': _nombre_visible(user, perfil),
-            'rol': rol['etiqueta'],
-            'texto_panel': rol['texto_panel'],
-            'url_panel': reverse(rol['ruta_panel']),
-            'url_logout': reverse(rol['ruta_logout']),
-        }
-    }
+    return _datos_cuenta(
+        _nombre_visible(user, perfil),
+        rol=rol['etiqueta'],
+        texto_panel=rol['texto_panel'],
+        url_panel=reverse(rol['ruta_panel']),
+        url_logout=reverse(rol['ruta_logout']),
+    )

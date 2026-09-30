@@ -8,11 +8,20 @@
 {% endblock %}
 
 {% block content %}
-<div class="planes-container">
-    <div class="planes-header">
+<!-- esta parte es de la introducción de la página de planes -->
+<section class="sv-intro pl-intro">
+    <div class="contenedor">
+        <span class="sv-eyebrow">Planes</span>
         <h1>Elige el plan ideal para ti</h1>
         <p>Todos nuestros planes están diseñados para brindarte el mejor acompañamiento en tu aprendizaje.</p>
+        <div class="pl-intro-notes">
+            <span><i class="bi bi-calendar-week"></i> Paga mensual o por 1, 2 o 3 semanas</span>
+            <span><i class="bi bi-arrow-repeat"></i> Cambia el período desde el carrito</span>
+        </div>
     </div>
+</section>
+
+<div class="planes-container">
 
     <!-- Primer bloque: Planes estándar -->
     <div class="planes-grid" id="lista-cursos">
@@ -108,8 +117,9 @@
         </div>
     </div>
 
-    <div class="planes-header" style="margin-top: 60px;">
-        <h2>Planes Especiales y Flexibles</h2>
+    <div class="planes-header planes-header--extra">
+        <span class="sv-eyebrow">A tu medida</span>
+        <h2>Planes especiales y flexibles</h2>
         <p>¿Buscas una solución a tu medida? Revisa nuestras opciones alternativas.</p>
     </div>
 
@@ -126,8 +136,7 @@
                 <p class="plan-billing-info">Pago directo por clase al profesor</p>
 
                 <!-- Redirecciona a contacto ya que requiere coordinación y cotización directa -->
-                <a href="{% url 'contactos' %}" class="plan-btn-action" style="text-decoration: none;">Consultar
-                    Profesores</a>
+                <a href="{% url 'contactos' %}" class="plan-btn-action">Consultar profesores</a>
 
                 <div class="plan-divider"></div>
 
@@ -165,6 +174,28 @@
                 </ul>
             </div>
         </div>
+    </div>
+
+    <!-- esta parte es de las preguntas frecuentes sobre los planes -->
+    <div class="pl-faq">
+        <div class="planes-header planes-header--extra">
+            <h2>Preguntas frecuentes</h2>
+        </div>
+        <details class="pl-faq-item">
+            <summary>¿Puedo pagar por semana en vez de por mes?</summary>
+            <p>Sí. Al agregar un plan al carrito puedes elegir pagar mensual o por 1, 2 o 3 semanas, y el valor se
+                ajusta automáticamente.</p>
+        </details>
+        <details class="pl-faq-item">
+            <summary>¿Las clases son online o presenciales?</summary>
+            <p>Los planes Básico y Medio son online. El Plan Superior puede ser presencial u online, y en el Plan
+                Personalizado eliges la modalidad que prefieras.</p>
+        </details>
+        <details class="pl-faq-item">
+            <summary>¿Qué hago si ningún plan se ajusta a lo que necesito?</summary>
+            <p>Puedes diseñar tu propio Plan Personalizado o, si solo necesitas reforzar un tema puntual, consultar
+                por Material Específico y pagar clase a clase.</p>
+        </details>
     </div>
 </div>
 
@@ -341,8 +372,7 @@
                     <li id="sum-situacion">Reforzamiento Estándar</li>
                     <li id="sum-temas" style="display: none;">Temas: N/A</li>
                 </ul>
-                <button class="plan-btn-action" id="btn-agregar-custom" style="margin-bottom: 0;">Contratar
-                    Plan</button>
+                <button class="plan-btn-action" id="btn-agregar-custom">Contratar Plan</button>
             </div>
         </div>
     </div>

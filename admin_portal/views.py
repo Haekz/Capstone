@@ -3,8 +3,10 @@ from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
 from alumnos.models import Alumno, Genero, Profesor, Tutor, Clase, Reporte
+from alumnos.decorators import admin_required
 
-# Vista del menú antiguo (ahora redirige automáticamente al nuevo panel de control)
+# Ruta antigua del menú: ya no tiene template, solo redirige al panel.
+# Se mantiene porque regis_tutor.html envía aquí tras registrarse.
 def menu(request):
     admin_id = request.session.get('admin_id')
     if admin_id:
@@ -98,14 +100,20 @@ def reporte_alumnos(request):
     """
     return redirect('crud')
 
+@never_cache
+@admin_required
 def planes_adm(request):
     context = {}
     return render(request, 'admin_portal/planes_adm.html', context)
 
+@never_cache
+@admin_required
 def nosotros_adm(request):
     context = {}
     return render(request, 'admin_portal/nosotros_adm.html', context)
 
+@never_cache
+@admin_required
 def contactos_adm(request):
     context = {}
     return render(request, 'admin_portal/contactos_adm.html', context)
@@ -119,6 +127,7 @@ def crud(request):
     context = {'alumnos': alumnos}
     return render(request, 'admin_portal/alumnos_list.html', context)
 
+@never_cache
 def alumnos_Add(request):
     if not request.session.get('admin_id'):
         return redirect('login')
@@ -152,6 +161,7 @@ def alumnos_Add(request):
     generos = Genero.objects.all()
     return render(request, 'admin_portal/alumnos_add.html', {'generos': generos})
 
+@never_cache
 def alumnos_findEdit(request, pk):
     if not request.session.get('admin_id'):
         return redirect('login')

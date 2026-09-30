@@ -2,6 +2,7 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
+from django.views.decorators.cache import never_cache
 from alumnos.views import home, custom_login
 
 urlpatterns = [
@@ -19,6 +20,11 @@ urlpatterns = [
     path('accounts/password_reset/done/', auth_views.PasswordResetDoneView.as_view(template_name='registration/recuperar_enviado.html'), name='password_reset_done'),
     path('accounts/reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(template_name='registration/recuperar_confirmar.html'), name='password_reset_confirm'),
     path('accounts/reset/done/', auth_views.PasswordResetCompleteView.as_view(template_name='registration/recuperar_completado.html'), name='password_reset_complete'),
+    # Cambiar contrasena con la sesion iniciada (menu de cuenta del navbar).
+    # Se declaran antes del include de django.contrib.auth.urls para usar
+    # nuestras plantillas y no las del admin de Django.
+    path('accounts/password_change/', never_cache(auth_views.PasswordChangeView.as_view(template_name='registration/cambiar_clave.html')), name='password_change'),
+    path('accounts/password_change/done/', auth_views.PasswordChangeDoneView.as_view(template_name='registration/cambiar_clave_listo.html'), name='password_change_done'),
     path('accounts/', include('django.contrib.auth.urls')),
     path("accounts/", include("allauth.urls")),
 ]

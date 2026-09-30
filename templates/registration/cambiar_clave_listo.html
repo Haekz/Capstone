@@ -1,0 +1,61 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contraseña actualizada — LBWUS</title>
+    <link rel="icon" href="{% static 'alumnos/img/Logo.png' %}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{% static 'recuperar.css' %}">
+    <script>
+        // Respeta el modo oscuro elegido en el sitio (antes de pintar, sin parpadeo)
+        try { if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark-mode'); } catch (e) {}
+    </script>
+</head>
+
+<body>
+    <main class="auth-split">
+
+        <aside class="auth-brand">
+            <a href="{% url 'home' %}" class="auth-logo">
+                <img src="{% static 'alumnos/img/Logo.png' %}" alt="LBWUS Logo">
+                <span>LBWUS</span>
+            </a>
+
+            <div class="auth-brand-body">
+                <h2>Tu cuenta, siempre protegida.</h2>
+                <p>Cambia tu contraseña cuando quieras. Tu progreso y tus clases se mantienen.</p>
+            </div>
+
+            <p class="auth-brand-foot">&copy; 2026 LBWUS - Desarrollando enseñanza para el mundo</p>
+        </aside>
+
+        <section class="auth-panel">
+            <div class="auth-form-wrap">
+                <div class="auth-mobile-logo">
+                    <a href="{% url 'home' %}" class="auth-logo">
+                        <img src="{% static 'alumnos/img/Logo.png' %}" alt="LBWUS Logo">
+                        <span>LBWUS</span>
+                    </a>
+                </div>
+
+                <div class="auth-icon auth-icon--ok"><i class="bi bi-check2-circle"></i></div>
+                <h1 class="auth-title">Contraseña actualizada</h1>
+                <p class="sub">Listo. La próxima vez que inicies sesión usa tu nueva contraseña.</p>
+
+                {% if usuario_sesion.url_panel %}
+                <a href="{{ usuario_sesion.url_panel }}" class="btn">
+                    <i class="bi bi-grid"></i> Ir a {{ usuario_sesion.texto_panel|lower }}
+                </a>
+                {% endif %}
+                <a href="{% url 'home' %}" class="btn-outline">
+                    <i class="bi bi-house-door"></i> Ir al inicio
+                </a>
+            </div>
+        </section>
+    </main>
+</body>
+
+</html>

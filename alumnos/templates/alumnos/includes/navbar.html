@@ -1,0 +1,100 @@
+{% load static %}
+{# Barra de navegacion compartida por todo el sitio publico. #}
+<header class="header">
+    <nav class="nav-box">
+        <div class="logo">
+            <img src="{% static 'alumnos/img/Logo.png' %}" alt="LBWUS Logo">
+            <a href="{% url 'home' %}"><span class="logo-text">LBWUS</span></a>
+        </div>
+
+        <input type="checkbox" id="menu-toggle" class="menu-toggle">
+
+        <ul class="menu">
+            <li><a href="{% url 'home' %}" id="nav-home">Inicio</a></li>
+            <li><a href="{% url 'nosotros' %}" id="nav-nosotros">Nosotros</a></li>
+            <li><a href="{% url 'servicios' %}" id="nav-servicios">Servicios</a></li>
+            <li><a href="{% url 'planes' %}" id="nav-planes">Planes</a></li>
+            <li><a href="{% url 'contactos' %}" id="nav-contacto">Contacto</a></li>
+            {% if usuario_sesion.autenticado %}
+                {% if usuario_sesion.url_panel %}
+                    <li class="mobile-only"><a href="{{ usuario_sesion.url_panel }}">{{ usuario_sesion.texto_panel }}</a></li>
+                {% endif %}
+                <li class="mobile-only"><a href="{{ usuario_sesion.url_cambiar_clave }}">Cambiar contraseña</a></li>
+                <li class="mobile-only"><a href="{{ usuario_sesion.url_logout }}">Cerrar sesión</a></li>
+            {% else %}
+                <li class="mobile-only"><a href="{% url 'login' %}">Iniciar Sesión</a></li>
+                <li class="mobile-only"><a href="{% url 'opcion_user' %}">Registrarse</a></li>
+            {% endif %}
+        </ul>
+
+        <div class="nav-actions">
+            <button onclick="toggleTheme()" id="theme-toggler" class="theme-btn"
+                aria-label="Cambiar modo día/noche">
+                <i class="bi bi-moon-stars-fill theme-icon"></i>
+            </button>
+
+            <!-- Carrito de compras (global, en todas las páginas) -->
+            <div class="submenu-cart">
+                <button class="cart-btn" id="cart-button" aria-label="Carrito">
+                    <i class="bi bi-cart-fill"></i>
+                    <span class="cart-count" id="contador-carrito" style="display:none">0</span>
+                </button>
+                <div id="carrito" class="carrito-dropdown">
+                    <table id="lista-carrito" class="cart-table">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Pago</th>
+                                <th>Precio</th>
+                                <th>Cant.</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    <button type="button" id="vaciar-carrito" class="btn-vaciar">Vaciar Carrito</button>
+                    <a href="{% url 'pago' %}" class="btn-pagar" id="btn-ir-pago" style="display:none;">
+                        <i class="bi bi-credit-card-fill"></i> Ir a Pagar
+                    </a>
+                </div>
+            </div>
+
+            {% if usuario_sesion.autenticado %}
+                <div class="cuenta desktop-only" id="cuenta">
+                    <button type="button" class="cuenta-avatar" id="cuenta-btn"
+                        aria-haspopup="true" aria-expanded="false" aria-controls="cuenta-menu"
+                        aria-label="Menú de cuenta de {{ usuario_sesion.nombre }}">
+                        {{ usuario_sesion.iniciales }}
+                    </button>
+
+                    <div class="cuenta-menu" id="cuenta-menu" hidden>
+                        <div class="cuenta-head">
+                            <span class="cuenta-avatar cuenta-avatar--lg" aria-hidden="true">{{ usuario_sesion.iniciales }}</span>
+                            <div>
+                                <strong>{{ usuario_sesion.nombre }}</strong>
+                                {% if usuario_sesion.rol %}<span class="cuenta-rol">{{ usuario_sesion.rol }}</span>{% endif %}
+                            </div>
+                        </div>
+                        {% if usuario_sesion.url_panel %}
+                            <a href="{{ usuario_sesion.url_panel }}" class="cuenta-item">
+                                <i class="bi bi-grid"></i> {{ usuario_sesion.texto_panel }}
+                            </a>
+                        {% endif %}
+                        <a href="{{ usuario_sesion.url_cambiar_clave }}" class="cuenta-item">
+                            <i class="bi bi-key"></i> Cambiar contraseña
+                        </a>
+                        <a href="{{ usuario_sesion.url_logout }}" class="cuenta-item cuenta-item--salir">
+                            <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+                        </a>
+                    </div>
+                </div>
+            {% else %}
+                <a href="{% url 'login' %}" class="btn-secundario desktop-only">Iniciar</a>
+                <a href="{% url 'opcion_user' %}" class="btn-principal desktop-only">Registrarse</a>
+            {% endif %}
+            <label for="menu-toggle" class="hamburger">
+                <span></span><span></span><span></span>
+            </label>
+        </div>
+    </nav>
+</header>
