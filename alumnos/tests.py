@@ -242,21 +242,23 @@ class LogoNavegacionTests(TestCase):
 
         return respuesta.content.decode()
 
-    def test_logo_del_portal_apunta_al_propio_portal(self):
+    def _href_del_logo(self):
+        """Devuelve el destino del logo del portal.
+
+        Desde el rediseño el logo vive en el menu lateral con la clase
+        'sb-brand' (antes era 'logo' en la barra superior).
+        """
         html = self._entrar_al_portal()
-
-        enlace_logo = re.search(r'<a href="([^"]+)" class="logo">', html)
-
+        enlace_logo = re.search(r'<a href="([^"]+)" class="sb-brand">', html)
         self.assertIsNotNone(enlace_logo, 'No se encontro el enlace del logo.')
-        self.assertEqual(enlace_logo.group(1), reverse('alumno_pag1'))
+        return enlace_logo.group(1)
+
+    def test_logo_del_portal_apunta_al_propio_portal(self):
+        self.assertEqual(self._href_del_logo(), reverse('alumno_pag1'))
 
     def test_logo_del_portal_no_lleva_al_home_publico(self):
         """Blinda contra volver a apuntar el logo al sitio publico."""
-        html = self._entrar_al_portal()
-
-        enlace_logo = re.search(r'<a href="([^"]+)" class="logo">', html)
-
-        self.assertNotEqual(enlace_logo.group(1), reverse('home'))
+        self.assertNotEqual(self._href_del_logo(), reverse('home'))
 
     def test_el_portal_sigue_ofreciendo_cerrar_sesion(self):
         """Quitar la salida por el logo no debe dejar al usuario encerrado."""
@@ -287,10 +289,10 @@ class EnlacesTemplatesTests(TestCase):
     def test_los_iconos_declaran_class(self):
         """Un <i> con el atributo mal tecleado es un icono invisible.
 
-        menu.html tenia <i the="fab fa-twitter">: el autor escribio 'the='
-        en vez de 'class='. El navegador ignora el atributo desconocido y
-        no pinta nada. Como ese template no lo renderiza ninguna vista, se
-        revisa el archivo directamente.
+        Un template antiguo tenia <i the="fab fa-twitter">: el autor escribio
+        'the=' en vez de 'class='. El navegador ignora el atributo
+        desconocido y no pinta nada. Se revisan los archivos directamente
+        para cubrir tambien templates que ninguna vista renderiza.
         """
         plantillas = Path(settings.BASE_DIR).glob('**/templates/**/*.html')
 
