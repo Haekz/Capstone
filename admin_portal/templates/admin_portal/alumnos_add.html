@@ -67,11 +67,11 @@
                 </div>
             </div>
 
-            <div style="margin-top:24px; display:flex; gap:12px;">
+            <div class="form-actions">
                 <button type="submit" class="btn-primary">
                     <i class="bi bi-check-lg"></i> Crear Alumno
                 </button>
-                <a href="{% url 'crud' %}" class="btn-primary" style="background:var(--bg-hover); color:var(--text-secondary); box-shadow:none;">
+                <a href="{% url 'crud' %}" class="btn-secondary">
                     Cancelar
                 </a>
             </div>
@@ -97,7 +97,7 @@
                 icon: data.success ? 'success' : 'error',
                 title: data.success ? '¡Alumno registrado!' : 'Error',
                 text: data.message,
-                confirmButtonColor: '#a855f7',
+                confirmButtonColor: '#7c3aed',
                 background: document.body.classList.contains('light-mode') ? '#fff' : '#12101f',
                 color: document.body.classList.contains('light-mode') ? '#1e1b2e' : '#f1f5f9'
             }).then(() => {

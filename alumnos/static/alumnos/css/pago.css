@@ -1074,3 +1074,388 @@ body.dark-mode .stepper-qty {
         box-shadow: 0 0 0 20px rgba(220, 38, 38, 0);
     }
 }
+/* =====================================================
+   REDISEÑO CHECKOUT (solo página de pago)
+   Todo va bajo .pg-head y .pago-checkout, así que la
+   confirmación y las demás pantallas que usan este CSS
+   quedan igual.
+   ===================================================== */
+
+/* ---- Encabezado con pasos ---- */
+.pg-head {
+    padding: calc(var(--header-height) + 48px) 24px 8px;
+    background:
+        radial-gradient(circle at 85% 10%, rgba(124, 58, 237, 0.08) 0%, transparent 45%);
+}
+
+.pg-head-inner {
+    max-width: 1080px;
+    margin: 0 auto;
+}
+
+.pg-head h1 {
+    font-size: clamp(1.9rem, 3.6vw, 2.6rem);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.1;
+    margin: 24px 0 8px;
+}
+
+.pg-head p {
+    color: var(--text-light);
+    font-size: 1.05rem;
+}
+
+.pg-steps {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+
+.pg-steps li {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pg-steps li + li::before {
+    content: '';
+    width: 28px;
+    height: 1px;
+    background: var(--line);
+    margin-right: 4px;
+}
+
+.pg-steps span {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.pg-steps .is-done span {
+    background: var(--primary-soft);
+    border-color: transparent;
+    color: var(--primary);
+}
+
+.pg-steps .is-current {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.pg-steps .is-current span {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #ffffff;
+}
+
+/* ---- Layout: pago a la izquierda, resumen a la derecha ---- */
+.pago-checkout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    align-items: start;
+    gap: 28px;
+    max-width: 1080px;
+    min-height: 0;
+    padding: 32px 24px var(--section-y);
+}
+
+.pago-checkout .webpay-panel {
+    order: 1;
+    max-width: none;
+}
+
+.pago-checkout .resumen-panel {
+    order: 2;
+    position: sticky;
+    top: calc(var(--header-height) + 20px);
+}
+
+/* ---- Tarjetas base ---- */
+.pago-checkout .resumen-panel,
+.pago-checkout .webpay-panel {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow);
+}
+
+body.dark-mode .pago-checkout .resumen-panel,
+body.dark-mode .pago-checkout .webpay-panel {
+    background: var(--surface);
+    border-color: var(--line);
+}
+
+/* ---- Resumen del pedido ---- */
+.pago-checkout .resumen-header {
+    background: transparent;
+    color: var(--text);
+    padding: 24px 24px 8px;
+    gap: 12px;
+}
+
+.pago-checkout .resumen-header i {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: var(--primary-soft);
+    color: var(--primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+}
+
+.pago-checkout .resumen-header h2 {
+    font-size: 1.15rem;
+    font-weight: 700;
+}
+
+.pago-checkout .resumen-items {
+    padding: 4px 24px;
+}
+
+.pago-checkout .resumen-item {
+    padding: 16px 0;
+    border-bottom: 1px solid var(--line);
+}
+
+.pago-checkout .resumen-item-nombre {
+    font-size: 0.98rem;
+    color: var(--text);
+}
+
+.pago-checkout .resumen-item-periodo {
+    font-size: 0.82rem;
+    color: var(--text-light);
+}
+
+.pago-checkout .resumen-item-precio {
+    font-size: 0.98rem;
+    color: var(--text);
+}
+
+.pago-checkout .resumen-item-remove {
+    color: var(--text-light);
+}
+
+.pago-checkout .resumen-item-remove:hover {
+    color: #ef4444;
+}
+
+.pago-checkout .resumen-stepper {
+    border: 1px solid var(--line);
+    border-radius: 50px;
+    margin-top: 10px;
+}
+
+.pago-checkout .stepper-btn {
+    width: 30px;
+    height: 28px;
+    background: transparent;
+    color: var(--primary);
+}
+
+.pago-checkout .stepper-btn:hover {
+    background: var(--primary-soft);
+}
+
+.pago-checkout .stepper-qty {
+    color: var(--text);
+}
+
+body.dark-mode .pago-checkout .resumen-item {
+    border-bottom-color: var(--line);
+}
+
+body.dark-mode .pago-checkout .resumen-item-nombre,
+body.dark-mode .pago-checkout .resumen-item-precio,
+body.dark-mode .pago-checkout .stepper-qty,
+body.dark-mode .pago-checkout .resumen-total-row {
+    color: var(--text);
+}
+
+body.dark-mode .pago-checkout .resumen-item-periodo {
+    color: var(--text-light);
+}
+
+body.dark-mode .pago-checkout .resumen-stepper {
+    border-color: var(--line);
+}
+
+body.dark-mode .pago-checkout .stepper-btn {
+    background: transparent;
+    color: #c4b5fd;
+}
+
+body.dark-mode .pago-checkout .stepper-btn:hover {
+    background: var(--primary-soft);
+}
+
+.pago-checkout .resumen-divider,
+body.dark-mode .pago-checkout .resumen-divider {
+    background: var(--line);
+    margin: 0 24px;
+}
+
+.pago-checkout .resumen-total-row {
+    padding: 20px 24px;
+    font-size: 1rem;
+    color: var(--text);
+}
+
+.pago-checkout .resumen-total-precio {
+    font-size: 1.6rem;
+    letter-spacing: -0.02em;
+    color: var(--text);
+}
+
+.pago-checkout .resumen-seguridad {
+    margin: 0 24px;
+    padding: 12px 14px;
+    border: none;
+    border-radius: var(--r-sm);
+    font-size: 0.85rem;
+}
+
+body.dark-mode .pago-checkout .resumen-seguridad {
+    border: none;
+}
+
+.pago-checkout .link-volver-planes {
+    padding: 18px 24px 22px;
+    font-size: 0.9rem;
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.pago-checkout .link-volver-planes:hover {
+    color: var(--primary-dark);
+}
+
+body.dark-mode .pago-checkout .link-volver-planes {
+    color: #c4b5fd;
+}
+
+/* ---- Panel Webpay ---- */
+.pago-checkout .webpay-header {
+    padding: 18px 28px;
+}
+
+.pago-checkout .webpay-body {
+    padding: 28px;
+}
+
+.pago-checkout .webpay-merchant {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    margin-bottom: 20px;
+}
+
+.pago-checkout .webpay-intro {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.pago-checkout .webpay-intro p {
+    color: var(--text);
+    font-size: 0.97rem;
+    line-height: 1.55;
+}
+
+body.dark-mode .pago-checkout .webpay-intro {
+    background: var(--bg);
+    border-color: var(--line);
+}
+
+body.dark-mode .pago-checkout .webpay-intro p {
+    color: var(--text);
+}
+
+.pago-checkout .btn-webpay {
+    padding: 17px;
+    border-radius: 50px;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 0;
+}
+
+.pago-checkout .btn-webpay:hover {
+    box-shadow: 0 10px 24px rgba(0, 55, 100, 0.25);
+}
+
+/* Nota de tarjetas de prueba como caja "Modo prueba" */
+.pago-checkout .test-hint {
+    margin-top: 20px;
+    padding: 14px 16px;
+    border: 1px dashed var(--line);
+    border-radius: var(--r-sm);
+    text-align: left;
+    font-size: 0.82rem;
+    color: var(--text-light);
+}
+
+.pago-checkout .test-hint strong,
+body.dark-mode .pago-checkout .test-hint strong {
+    color: var(--text);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+body.dark-mode .pago-checkout .test-hint {
+    color: var(--text-light);
+}
+
+.pago-checkout .webpay-footer {
+    padding: 16px 28px;
+    border-top: 1px solid var(--line);
+    background: transparent;
+}
+
+body.dark-mode .pago-checkout .webpay-footer {
+    background: transparent;
+    border-top-color: var(--line);
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 900px) {
+    .pago-checkout {
+        grid-template-columns: 1fr;
+        max-width: 560px;
+    }
+
+    .pago-checkout .resumen-panel {
+        order: 0;
+        position: static;
+    }
+
+    .pg-head-inner {
+        max-width: 560px;
+    }
+}
+
+@media (max-width: 480px) {
+    .pago-checkout .webpay-body {
+        padding: 22px 18px;
+    }
+
+    .pg-steps li + li::before {
+        width: 14px;
+    }
+}

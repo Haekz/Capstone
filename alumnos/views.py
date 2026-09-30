@@ -330,6 +330,10 @@ def alumno_pag1(request):
 # LOGIN CENTRALIZADO
 # ============================================================
 
+# never_cache: si el navegador guarda el login, al volver "atras" desde el
+# portal muestra esa copia (con los datos escritos) en vez de preguntarle al
+# servidor, que habria redirigido al portal porque la sesion sigue activa.
+@never_cache
 def custom_login(request):
 
     # Si ya existe una sesión activa,

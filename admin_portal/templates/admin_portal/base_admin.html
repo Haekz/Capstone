@@ -9,12 +9,17 @@
     <link rel="icon" href="{% static 'alumnos/img/Logo.png' %}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Estilos específicos de la interfaz del administrador -->
     <link rel="stylesheet" href="{% static 'admin_portal/css/admin_panel.css' %}">
+    {% include 'alumnos/includes/sin_copia_atras.html' %}
     {% block extra_css %}{% endblock %}
 </head>
 <body class="light-mode">
+<script>
+    // Aplica el tema guardado antes de pintar (evita el destello claro en modo oscuro)
+    try { if (localStorage.getItem('admin-theme') === 'dark') document.body.classList.remove('light-mode'); } catch (e) {}
+</script>
 <div class="admin-wrapper">
 
     <!-- Menú lateral izquierdo de navegación común -->
@@ -97,8 +102,12 @@
             </a>
         </nav>
 
-        <!-- Botón para cerrar la sesión y salir al inicio público -->
+        <!-- Volver al sitio publico (sin cerrar sesion) y cerrar sesion -->
         <div class="sidebar-footer">
+            <a href="{% url 'home' %}" class="sidebar-home">
+                <i class="bi bi-house-door"></i>
+                Volver al inicio
+            </a>
             <a href="{% url 'logout_admin' %}" class="sidebar-logout">
                 <i class="bi bi-box-arrow-left"></i>
                 Cerrar Sesión
@@ -112,8 +121,14 @@
         <!-- Barra superior con el nombre de la sección y selector de tema -->
         <div class="topbar">
             <div class="topbar-left">
-                <h1>{% block page_title %}Panel Admin{% endblock %}</h1>
-                <p>{% block page_subtitle %}LBWUS — Panel de Administración{% endblock %}</p>
+                <!-- Botón para abrir el menú lateral (solo móvil) -->
+                <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()" aria-label="Abrir menú">
+                    <i class="bi bi-list"></i>
+                </button>
+                <div>
+                <h1 id="section-title">{% block page_title %}Panel Admin{% endblock %}</h1>
+                <p id="section-subtitle">{% block page_subtitle %}LBWUS — Panel de Administración{% endblock %}</p>
+                </div>
             </div>
             <div class="topbar-right">
                 <!-- Botón de búsqueda flotante (Ctrl + K) -->
@@ -139,11 +154,14 @@
 
     </main>
 
+    <!-- Fondo oscuro detrás del menú lateral en móvil -->
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar(false)"></div>
+
     <!-- Panel lateral deslizable de Notificaciones (Drawer) -->
     <div class="notifications-drawer" id="notifications-drawer">
         <div class="drawer-header">
             <h2>Notificaciones</h2>
-            <button class="close-drawer-btn" onclick="toggleNotifications()">&times;</button>
+            <button type="button" class="close-drawer-btn" aria-label="Cerrar notificaciones" onclick="toggleNotifications()">&times;</button>
         </div>
         <div class="drawer-body">
             <div class="notification-item unread" id="notif-1">
@@ -221,16 +239,24 @@
         document.getElementById('theme-icon').className = isLight ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
         localStorage.setItem('admin-theme', isLight ? 'light' : 'dark');
     }
-    // Al cargar el documento, aplicamos el tema que esté guardado (por defecto claro)
+    // El tema ya se aplico al inicio del body; aqui solo se sincroniza el icono.
     window.addEventListener('DOMContentLoaded', () => {
-        const saved = localStorage.getItem('admin-theme');
-        if (saved === 'dark') {
-            document.body.classList.remove('light-mode');
-            document.getElementById('theme-icon').className = 'bi bi-moon-stars-fill';
-        } else {
-            document.body.classList.add('light-mode');
-            document.getElementById('theme-icon').className = 'bi bi-sun-fill';
-        }
+        const isLight = document.body.classList.contains('light-mode');
+        document.getElementById('theme-icon').className = isLight ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
+    });
+
+    // Menú lateral en móvil (abrir / cerrar)
+    function toggleSidebar(force) {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        const open = typeof force === 'boolean' ? force : !sidebar.classList.contains('open');
+        sidebar.classList.toggle('open', open);
+        overlay.classList.toggle('active', open);
+    }
+
+    // En móvil, al elegir una sección se cierra el menú
+    document.querySelectorAll('.sidebar .nav-item').forEach(link => {
+        link.addEventListener('click', () => toggleSidebar(false));
     });
 
     // Control del Panel Lateral de Notificaciones
@@ -269,6 +295,7 @@
         }
         if (e.key === 'Escape') {
             closeSearchModal();
+            toggleSidebar(false);
         }
     });
 

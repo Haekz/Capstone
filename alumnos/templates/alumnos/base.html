@@ -18,6 +18,7 @@
 </head>
 
 <body class="{% block body_class %}{% endblock %}">
+    {% include 'alumnos/includes/tema_inicial.html' %}
     {% include 'alumnos/includes/navbar.html' %}
 
     <main>
@@ -41,10 +42,9 @@
             icon.className = 'theme-icon bi ' + (isDark ? 'bi-sun-fill' : 'bi-moon-stars-fill');
         }
 
+        // El tema ya se aplico al inicio del body (tema_inicial.html); aqui solo el icono.
         document.addEventListener('DOMContentLoaded', () => {
-            const isDark = localStorage.getItem('theme') === 'dark';
-            if (isDark) document.body.classList.add('dark-mode');
-            updateThemeIcon(isDark);
+            updateThemeIcon(document.body.classList.contains('dark-mode'));
         });
 
         // Efecto translúcido del navbar al hacer scroll
@@ -53,6 +53,24 @@
             if (!header) return;
             header.classList.toggle('scrolled', window.scrollY > 40);
         });
+
+        // Menu de cuenta (circulo con iniciales): abre/cierra, Escape y clic afuera
+        (function () {
+            const btn = document.getElementById('cuenta-btn');
+            const menu = document.getElementById('cuenta-menu');
+            if (!btn || !menu) return;
+
+            function abrir(si) {
+                menu.hidden = !si;
+                btn.setAttribute('aria-expanded', String(si));
+            }
+            btn.addEventListener('click', (e) => { e.stopPropagation(); abrir(menu.hidden); });
+            menu.addEventListener('click', (e) => e.stopPropagation());
+            document.addEventListener('click', () => abrir(false));
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && !menu.hidden) { abrir(false); btn.focus(); }
+            });
+        })();
 
         // ===== CARRITO GLOBAL (heredado en todas las páginas) =====
         (function () {

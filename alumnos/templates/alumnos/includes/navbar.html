@@ -19,6 +19,7 @@
                 {% if usuario_sesion.url_panel %}
                     <li class="mobile-only"><a href="{{ usuario_sesion.url_panel }}">{{ usuario_sesion.texto_panel }}</a></li>
                 {% endif %}
+                <li class="mobile-only"><a href="{{ usuario_sesion.url_cambiar_clave }}">Cambiar contraseña</a></li>
                 <li class="mobile-only"><a href="{{ usuario_sesion.url_logout }}">Cerrar sesión</a></li>
             {% else %}
                 <li class="mobile-only"><a href="{% url 'login' %}">Iniciar Sesión</a></li>
@@ -51,7 +52,7 @@
                         </thead>
                         <tbody></tbody>
                     </table>
-                    <a href="#" id="vaciar-carrito" class="btn-vaciar">Vaciar Carrito</a>
+                    <button type="button" id="vaciar-carrito" class="btn-vaciar">Vaciar Carrito</button>
                     <a href="{% url 'pago' %}" class="btn-pagar" id="btn-ir-pago" style="display:none;">
                         <i class="bi bi-credit-card-fill"></i> Ir a Pagar
                     </a>
@@ -59,14 +60,33 @@
             </div>
 
             {% if usuario_sesion.autenticado %}
-                <div class="sesion-box desktop-only">
-                    <span class="sesion-saludo">
-                        Hola, {{ usuario_sesion.nombre }}{% if usuario_sesion.rol %} <span class="sesion-rol">{{ usuario_sesion.rol }}</span>{% endif %}
-                    </span>
-                    {% if usuario_sesion.url_panel %}
-                        <a href="{{ usuario_sesion.url_panel }}" class="btn-secundario">{{ usuario_sesion.texto_panel }}</a>
-                    {% endif %}
-                    <a href="{{ usuario_sesion.url_logout }}" class="btn-principal">Cerrar sesión</a>
+                <div class="cuenta desktop-only" id="cuenta">
+                    <button type="button" class="cuenta-avatar" id="cuenta-btn"
+                        aria-haspopup="true" aria-expanded="false" aria-controls="cuenta-menu"
+                        aria-label="Menú de cuenta de {{ usuario_sesion.nombre }}">
+                        {{ usuario_sesion.iniciales }}
+                    </button>
+
+                    <div class="cuenta-menu" id="cuenta-menu" hidden>
+                        <div class="cuenta-head">
+                            <span class="cuenta-avatar cuenta-avatar--lg" aria-hidden="true">{{ usuario_sesion.iniciales }}</span>
+                            <div>
+                                <strong>{{ usuario_sesion.nombre }}</strong>
+                                {% if usuario_sesion.rol %}<span class="cuenta-rol">{{ usuario_sesion.rol }}</span>{% endif %}
+                            </div>
+                        </div>
+                        {% if usuario_sesion.url_panel %}
+                            <a href="{{ usuario_sesion.url_panel }}" class="cuenta-item">
+                                <i class="bi bi-grid"></i> {{ usuario_sesion.texto_panel }}
+                            </a>
+                        {% endif %}
+                        <a href="{{ usuario_sesion.url_cambiar_clave }}" class="cuenta-item">
+                            <i class="bi bi-key"></i> Cambiar contraseña
+                        </a>
+                        <a href="{{ usuario_sesion.url_logout }}" class="cuenta-item cuenta-item--salir">
+                            <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+                        </a>
+                    </div>
                 </div>
             {% else %}
                 <a href="{% url 'login' %}" class="btn-secundario desktop-only">Iniciar</a>

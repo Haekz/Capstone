@@ -11,8 +11,23 @@
 {% block content %}
 <div class="registration-container">
     <div class="registration-card">
+        <!-- Panel de marca (mismo estilo que el login; se oculta en móvil) -->
+        <aside class="reg-brand">
+            <div class="reg-brand-body">
+                <span class="reg-eyebrow">Cuenta de alumno</span>
+                <h3>Empieza a aprender mejor hoy.</h3>
+                <p>Crea tu cuenta gratis y encuentra al profesional indicado para ti.</p>
+                <ul class="reg-points">
+                    <li><i class="bi bi-geo-alt"></i> Profesores cerca de tu ubicación</li>
+                    <li><i class="bi bi-calendar-week"></i> Planes por semana o por mes</li>
+                    <li><i class="bi bi-shield-check"></i> Pagos seguros con Webpay</li>
+                </ul>
+            </div>
+            <p class="reg-brand-foot">¿Eres profesor? Elige ese tipo de cuenta en <a href="{% url 'opcion_user' %}">Registrarse</a>.</p>
+        </aside>
+
         <div class="registration-form-box">
-            <h2>Crear Cuenta de Alumno</h2>
+            <h2>Crea tu cuenta</h2>
             <p class="registration-subtitle">Completa tus datos para empezar a aprender con nosotros.</p>
 
             <form id="formAlumnosreg" action="{% url 'regis_alum' %}" method="POST">
@@ -59,7 +74,7 @@
                         title: '¡Éxito!',
                         text: data.message,
                         icon: 'success',
-                        confirmButtonColor: '#a855f7'
+                        confirmButtonColor: '#7c3aed'
                     }).then(() => {
                         window.location.href = "{% url 'alumno_pag1' %}";
                     });
@@ -68,7 +83,7 @@
                         title: 'Error',
                         text: data.message,
                         icon: 'error',
-                        confirmButtonColor: '#a855f7'
+                        confirmButtonColor: '#7c3aed'
                     });
                 }
             }).catch(error => {
@@ -76,7 +91,7 @@
                     title: 'Error',
                     text: 'Hubo un problema con la petición',
                     icon: 'error',
-                    confirmButtonColor: '#a855f7'
+                    confirmButtonColor: '#7c3aed'
                 });
             });
     });

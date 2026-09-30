@@ -1,100 +1,147 @@
-<!-- esta parte es de la sección 'Sobre Nosotros' con la historia del equipo y los testimonios de los alumnos -->
 {% extends 'alumnos/base.html' %}
 {% load static %}
 
-<!-- esta parte es de la página de nosotros, hereda del base y carga los archivos estáticos -->
 {% block title %}LBWUS | Nosotros{% endblock %}
 
 {% block content %}
-<!-- esta parte es de la sección hero con la imagen de fondo y el título principal de la página -->
-<!-- esta parte es del hero secundario con imagen de fondo, etiqueta, título y subtítulo -->
-<section class="hero-sub">
-    <img src="{% static 'alumnos/img/nosotros.jpeg' %}" alt="Nosotros" class="hero-sub-bg">
+<!-- esta parte es del hero secundario: imagen de fondo, etiqueta, título y bajada -->
+<section class="hero-sub ns-hero">
+    <img src="{% static 'alumnos/img/nosotros.jpeg' %}" alt="" class="hero-sub-bg">
     <div class="hero-sub-overlay"></div>
     <div class="hero-sub-content">
         <span class="hero-sub-tag">Quiénes somos</span>
-        <h1>Sobre Nosotros</h1>
+        <h1>Sobre nosotros</h1>
         <p>Conoce al equipo y la pasión que hay detrás de LBWUS.</p>
     </div>
 </section>
-<!-- esta parte es de la sección about con la descripción del equipo e imagen ilustrativa al lado -->
-<section class="about">
-    <div class="contenedor grid-2">
-        <div class="about-img">
-            <img src="{% static 'alumnos/img/ilustracion2.png' %}" alt="Ilustración">
-        </div>
-        <div class="about-text">
-            <span class="badge">Nuestro equipo</span>
-            <h2>Pasión por la enseñanza</h2>
-            <p>Nuestro equipo, formado por dos mujeres emprendedoras, busca apoyar a estudiantes y profesores al ofrecer
-                oportunidades adicionales de ingreso. Esta iniciativa se centra en hacer una diferencia tangible en sus
-                vidas.</p>
 
-            <span class="badge">La mejor atención</span>
-            <p>Más que un negocio, nuestro proyecto se dedica a cubrir necesidades humanas esenciales, lo que nos llena
-                de orgullo. Estamos comprometidos con mejorar la comunidad de manera significativa y duradera.</p>
+<!-- esta parte es de la historia del equipo: texto + ilustración con dato destacado -->
+<section class="ns-story">
+    <div class="contenedor ns-story-grid">
+        <div class="ns-story-text">
+            <span class="ns-eyebrow">Nuestra historia</span>
+            <h2>Pasión por la enseñanza</h2>
+            <p class="ns-lead">Nuestro equipo, formado por dos mujeres emprendedoras, busca apoyar a estudiantes y
+                profesores al ofrecer oportunidades adicionales de ingreso.</p>
+            <p>Esta iniciativa se centra en hacer una diferencia tangible en sus vidas. Más que un negocio, nuestro
+                proyecto se dedica a cubrir necesidades humanas esenciales, lo que nos llena de orgullo.</p>
+            <div class="ns-stats">
+                <div class="ns-stat">
+                    <strong>+10.000</strong>
+                    <span>profesionales</span>
+                </div>
+                <div class="ns-stat">
+                    <strong>Todo Chile</strong>
+                    <span>cobertura nacional</span>
+                </div>
+                <div class="ns-stat">
+                    <strong>2</strong>
+                    <span>modalidades de clase</span>
+                </div>
+            </div>
+        </div>
+        <div class="ns-story-media">
+            <div class="ns-story-panel">
+                <img src="{% static 'alumnos/img/ilustracion2.png' %}" alt="Estudiante con cuaderno y mochila">
+            </div>
+            <div class="ns-float-card">
+                <i class="bi bi-heart-fill"></i>
+                <div>
+                    <strong>La mejor atención</strong>
+                    <span>Comprometidos con nuestra comunidad</span>
+                </div>
+            </div>
         </div>
     </div>
 </section>
 
-<!-- esta parte es de la galería de imágenes que muestra los proyectos y trabajos del equipo -->
-<section class="portfolio">
+<!-- esta parte es de los valores del equipo en tres tarjetas -->
+<section class="ns-values">
     <div class="contenedor">
         <div class="section-header">
-            <h2>Nuestro Trabajo</h2>
+            <h2>Lo que nos mueve</h2>
+            <p>Tres ideas guían cada clase y cada profesor que sumamos a LBWUS.</p>
+        </div>
+        <div class="ns-values-grid">
+            <article class="ns-value">
+                <div class="ns-value-icon"><i class="bi bi-cash-coin"></i></div>
+                <h3>Oportunidades reales</h3>
+                <p>Abrimos nuevas fuentes de ingreso para estudiantes y profesores que quieren enseñar lo que saben.</p>
+            </article>
+            <article class="ns-value">
+                <div class="ns-value-icon"><i class="bi bi-people-fill"></i></div>
+                <h3>Las personas primero</h3>
+                <p>Más que un negocio: buscamos cubrir necesidades esenciales de quienes aprenden y de quienes enseñan.</p>
+            </article>
+            <article class="ns-value">
+                <div class="ns-value-icon"><i class="bi bi-graph-up-arrow"></i></div>
+                <h3>Impacto duradero</h3>
+                <p>Queremos mejorar nuestra comunidad de manera significativa y que ese cambio se mantenga en el tiempo.</p>
+            </article>
+        </div>
+    </div>
+</section>
+
+<!-- esta parte es de la galería con los proyectos y actividades del equipo -->
+<section class="ns-gallery">
+    <div class="contenedor">
+        <div class="section-header">
+            <h2>Nuestro trabajo</h2>
             <p>Conoce los proyectos y actividades que realizamos.</p>
         </div>
-        <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
-            <div class="img-card" style="position: relative; overflow: hidden; border-radius: 12px; height: 200px;">
-                <img src="{% static 'alumnos/img/img1.webp' %}" alt=""
-                    style="width: 100%; height: 100%; object-fit: cover;">
-            </div>
-            <div class="img-card" style="position: relative; overflow: hidden; border-radius: 12px; height: 200px;">
-                <img src="{% static 'alumnos/img/img8.jpg' %}" alt=""
-                    style="width: 100%; height: 100%; object-fit: cover;">
-            </div>
-            <div class="img-card" style="position: relative; overflow: hidden; border-radius: 12px; height: 200px;">
-                <img src="{% static 'alumnos/img/img3.jpeg' %}" alt=""
-                    style="width: 100%; height: 100%; object-fit: cover;">
-            </div>
-            <div class="img-card" style="position: relative; overflow: hidden; border-radius: 12px; height: 200px;">
-                <img src="{% static 'alumnos/img/img5.webp' %}" alt=""
-                    style="width: 100%; height: 100%; object-fit: cover;">
-            </div>
+        <div class="ns-gallery-grid">
+            <figure class="ns-gallery-item ns-gallery-item--big">
+                <img src="{% static 'alumnos/img/img8.jpg' %}" alt="Actividad de LBWUS">
+            </figure>
+            <figure class="ns-gallery-item">
+                <img src="{% static 'alumnos/img/img1.webp' %}" alt="Actividad de LBWUS">
+            </figure>
+            <figure class="ns-gallery-item">
+                <img src="{% static 'alumnos/img/img3.jpeg' %}" alt="Actividad de LBWUS">
+            </figure>
+            <figure class="ns-gallery-item ns-gallery-item--wide">
+                <img src="{% static 'alumnos/img/img5.webp' %}" alt="Actividad de LBWUS">
+            </figure>
         </div>
     </div>
 </section>
 
-<!-- esta parte es de los testimonios de estudiantes que usaron el servicio de LBWUS -->
-<section class="testimonials" style="padding: 100px 0;">
+<!-- esta parte es de los testimonios de estudiantes -->
+<section class="ns-testimonials">
     <div class="contenedor">
         <div class="section-header">
-            <h2>Testimonios</h2>
+            <h2>Lo que dicen nuestros alumnos</h2>
+            <p>Experiencias reales de quienes ya aprenden con LBWUS.</p>
         </div>
-        <div class="grid-2">
-            <div class="service-card" style="display: flex; gap: 20px; text-align: left; align-items: center;">
-                <img src="{% static 'alumnos/img/face1.webp' %}" alt="Maria"
-                    style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;">
-                <div>
-                    <h3>Maria Oliva</h3>
-                    <p>"Excelente servicio, gracias a LBWUS la carrera se me hizo mucho más fácil!"</p>
-                </div>
-            </div>
-            <div class="service-card" style="display: flex; gap: 20px; text-align: left; align-items: center;">
-                <img src="{% static 'alumnos/img/face2.jpg' %}" alt="Vanessa"
-                    style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;">
-                <div>
-                    <h3>Vanessa Stil</h3>
-                    <p>"Estoy muy conforme con el servicio de LBWUS, una empresa comprometida con sus estudiantes."</p>
-                </div>
-            </div>
+        <div class="ns-testimonials-grid">
+            <figure class="ns-quote">
+                <i class="bi bi-quote ns-quote-mark"></i>
+                <blockquote>Excelente servicio, gracias a LBWUS la carrera se me hizo mucho más fácil.</blockquote>
+                <figcaption>
+                    <img src="{% static 'alumnos/img/face1.webp' %}" alt="Maria Oliva">
+                    <div>
+                        <strong>Maria Oliva</strong>
+                        <span>Estudiante</span>
+                    </div>
+                </figcaption>
+            </figure>
+            <figure class="ns-quote">
+                <i class="bi bi-quote ns-quote-mark"></i>
+                <blockquote>Estoy muy conforme con el servicio de LBWUS, una empresa comprometida con sus estudiantes.</blockquote>
+                <figcaption>
+                    <img src="{% static 'alumnos/img/face2.jpg' %}" alt="Vanessa Stil">
+                    <div>
+                        <strong>Vanessa Stil</strong>
+                        <span>Estudiante</span>
+                    </div>
+                </figcaption>
+            </figure>
         </div>
     </div>
 </section>
 {% endblock %}
 
 {% block extra_js %}
-<!-- esta parte es de el script que marca el enlace de nosotros como activo en el nav -->
 <script>
     document.getElementById('nav-nosotros').classList.add('active');
 </script>

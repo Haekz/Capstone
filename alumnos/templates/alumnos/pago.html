@@ -8,7 +8,20 @@
 {% endblock %}
 
 {% block content %}
-<div class="pago-wrapper">
+<!-- esta parte es del encabezado del checkout con los pasos de la compra -->
+<section class="pg-head">
+    <div class="pg-head-inner">
+        <ol class="pg-steps" aria-label="Pasos de la compra">
+            <li class="is-done"><span><i class="bi bi-check-lg"></i></span> Plan elegido</li>
+            <li class="is-current" aria-current="step"><span>2</span> Pago</li>
+            <li><span>3</span> Confirmación</li>
+        </ol>
+        <h1>Finaliza tu compra</h1>
+        <p>Revisa tu pedido y paga de forma segura con Webpay Plus.</p>
+    </div>
+</section>
+
+<div class="pago-wrapper pago-checkout">
 
     <div class="resumen-panel">
         <div class="resumen-header">
