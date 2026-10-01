@@ -1,0 +1,360 @@
+{% load static %}
+{% url 'password_reset_confirm' uidb64=uid token=token as reset_path %}
+<!DOCTYPE html>
+<html lang="es" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="color-scheme" content="light only">
+    <meta name="supported-color-schemes" content="light only">
+    <title>Restablece tu contraseña — LBWUS</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        a {
+            color: #7c3aed;
+        }
+
+        table {
+            border-collapse: separate;
+        }
+
+        img {
+            -ms-interpolation-mode: bicubic;
+        }
+
+        @media only screen and (max-width: 620px) {
+            .container {
+                width: 100% !important;
+            }
+
+            .px {
+                padding-left: 24px !important;
+                padding-right: 24px !important;
+            }
+
+            .hero-title {
+                font-size: 26px !important;
+            }
+
+            .step-text {
+                font-size: 14px !important;
+            }
+
+            .foot-col {
+                display: block !important;
+                width: 100% !important;
+                text-align: center !important;
+                padding-bottom: 12px !important;
+            }
+        }
+    </style>
+</head>
+
+<body style="margin:0; padding:0; background-color:#f1eff7; -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%;">
+
+    <!-- Vista previa del correo -->
+    <div style="display:none; max-height:0; overflow:hidden; mso-hide:all; font-size:1px; line-height:1px; color:#f1eff7; opacity:0;">
+        Crea una nueva contraseña para tu cuenta LBWUS. El enlace es de un solo uso.
+        &#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;
+    </div>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+           bgcolor="#f1eff7" style="background-color:#f1eff7;">
+        <tr>
+            <td align="center" style="padding:40px 16px;">
+
+                <table role="presentation" class="container" width="600"
+                       cellpadding="0" cellspacing="0" border="0"
+                       style="width:100%; max-width:600px; background-color:#ffffff; border-radius:20px; overflow:hidden; box-shadow:0 18px 50px rgba(26,18,51,0.10);">
+
+                    <!-- Cabecera -->
+                    <tr>
+                        <td class="px" align="center" bgcolor="#1a1233"
+                            style="background-color:#1a1233; background-image:radial-gradient(circle at 10% 0%, rgba(168,85,247,0.55) 0%, rgba(26,18,51,0) 55%), radial-gradient(circle at 95% 100%, rgba(124,58,237,0.45) 0%, rgba(26,18,51,0) 55%); padding:32px 48px 36px; font-family:'Outfit', Arial, Helvetica, sans-serif;">
+
+                            <!-- Logo enlazado a la web -->
+                            <table role="presentation" cellpadding="0" cellspacing="0"
+                                   border="0" align="center">
+                                <tr>
+                                    <td align="center" bgcolor="#ffffff"
+                                        style="padding:14px 20px; background-color:#ffffff; border-radius:20px;">
+                                        <a href="https://lbwus.xyz/"
+                                           target="_blank"
+                                           rel="noopener noreferrer"
+                                           aria-label="Visitar LBWUS"
+                                           style="display:inline-block; text-decoration:none;">
+                                            <img src="https://lbwus.xyz/static/alumnos/img/Logo.png"
+                                                 width="100"
+                                                 alt="Logo de LBWUS"
+                                                 style="display:block; width:100px; max-width:100%; height:auto; border:0; outline:none;">
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p style="margin:14px 0 28px; font-size:20px; font-weight:700; letter-spacing:2px;">
+                                <a href="https://lbwus.xyz/"
+                                   target="_blank"
+                                   style="color:#ffffff; text-decoration:none;">
+                                    LBWUS
+                                </a>
+                            </p>
+
+                            <p style="margin:0 0 10px; font-size:12px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#f5a524;">
+                                Seguridad de tu cuenta
+                            </p>
+
+                            <h1 class="hero-title"
+                                style="margin:0 0 12px; font-size:34px; line-height:1.2; font-weight:700; color:#ffffff; letter-spacing:-0.8px;">
+                                Restablece tu contraseña
+                            </h1>
+
+                            <p style="margin:0; font-size:16px; line-height:1.6; color:#cfc8e2;">
+                                Un nuevo acceso para seguir aprendiendo.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Franja de color -->
+                    <tr>
+                        <td height="4" bgcolor="#7c3aed"
+                            style="height:4px; line-height:4px; font-size:0; background-color:#7c3aed; background-image:linear-gradient(90deg, #7c3aed 0%, #a855f7 60%, #f5a524 100%);">
+                            &nbsp;
+                        </td>
+                    </tr>
+
+                    <!-- Contenido -->
+                    <tr>
+                        <td class="px"
+                            style="padding:32px 48px 8px; font-family:'Outfit', Arial, Helvetica, sans-serif;">
+
+                            <p style="margin:0 0 12px; font-size:17px; line-height:1.6; font-weight:600; color:#1a1233;">
+                                Hola{% if user.first_name %} {{ user.first_name }}{% endif %},
+                            </p>
+
+                            <p style="margin:0 0 30px; font-size:16px; line-height:1.65; color:#4a4460;">
+                                Recibimos una solicitud para restablecer la contraseña de tu cuenta.
+                                Presiona el botón para elegir una nueva.
+                            </p>
+
+                            <!-- Botón: dominio corregido y token dinámico -->
+                            <table role="presentation" width="100%" cellpadding="0"
+                                   cellspacing="0" border="0">
+                                <tr>
+                                    <td align="center">
+                                        <table role="presentation" cellpadding="0"
+                                               cellspacing="0" border="0">
+                                            <tr>
+                                                <td align="center" bgcolor="#7c3aed"
+                                                    style="background-color:#7c3aed; border-radius:12px;">
+                                                    <a href="https://lbwus.xyz{{ reset_path }}"
+                                                       target="_blank"
+                                                       style="display:inline-block; padding:18px 32px; font-family:'Outfit', Arial, Helvetica, sans-serif; font-size:16px; font-weight:700; line-height:1.4; color:#ffffff; text-decoration:none; border-radius:12px; letter-spacing:0.2px;">
+                                                        Crear nueva contraseña &nbsp;&rarr;
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- Detalles de la solicitud -->
+                            <table role="presentation" width="100%" cellpadding="0"
+                                   cellspacing="0" border="0"
+                                   style="margin-top:28px; background-color:#f8f6fc; border:1px solid #ece8f4; border-radius:14px;">
+                                <tr>
+                                    <td style="padding:18px 22px 6px; font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:#8a83a0;">
+                                        Detalles de la solicitud
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:6px 22px 16px;">
+                                        <table role="presentation" width="100%"
+                                               cellpadding="0" cellspacing="0" border="0"
+                                               style="font-size:14px; line-height:1.5;">
+                                            <tr>
+                                                <td style="padding:8px 0; color:#6b6580; width:35%;">
+                                                    Cuenta
+                                                </td>
+                                                <td align="right"
+                                                    style="padding:8px 0; color:#1a1233; font-weight:600; word-break:break-all;">
+                                                    {{ email }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding:8px 0; color:#6b6580; border-top:1px solid #ece8f4;">
+                                                    Enlace
+                                                </td>
+                                                <td align="right"
+                                                    style="padding:8px 0; color:#1a1233; font-weight:600; border-top:1px solid #ece8f4;">
+                                                    De un solo uso
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding:8px 0; color:#6b6580; border-top:1px solid #ece8f4;">
+                                                    Vigencia
+                                                </td>
+                                                <td align="right"
+                                                    style="padding:8px 0; color:#1a1233; font-weight:600; border-top:1px solid #ece8f4;">
+                                                    Limitada
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- Instrucciones -->
+                            <p style="margin:28px 0 16px; font-size:16px; font-weight:700; color:#1a1233;">
+                                ¿Qué sigue?
+                            </p>
+
+                            <table role="presentation" width="100%" cellpadding="0"
+                                   cellspacing="0" border="0">
+                                <tr>
+                                    <td valign="top" width="40"
+                                        style="width:40px; padding-bottom:16px;">
+                                        <div style="width:28px; height:28px; border-radius:50%; background-color:#efe9fb; color:#7c3aed; font-size:13px; font-weight:700; line-height:28px; text-align:center;">
+                                            1
+                                        </div>
+                                    </td>
+                                    <td valign="top" class="step-text"
+                                        style="padding:4px 0 16px; font-size:15px; line-height:1.5; color:#4a4460;">
+                                        <strong style="color:#1a1233;">Presiona el botón</strong>
+                                        de este correo.
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td valign="top" width="40"
+                                        style="width:40px; padding-bottom:16px;">
+                                        <div style="width:28px; height:28px; border-radius:50%; background-color:#efe9fb; color:#7c3aed; font-size:13px; font-weight:700; line-height:28px; text-align:center;">
+                                            2
+                                        </div>
+                                    </td>
+                                    <td valign="top" class="step-text"
+                                        style="padding:4px 0 16px; font-size:15px; line-height:1.5; color:#4a4460;">
+                                        <strong style="color:#1a1233;">Escribe tu nueva contraseña</strong>
+                                        y confírmala siguiendo los requisitos de la página.
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td valign="top" width="40" style="width:40px;">
+                                        <div style="width:28px; height:28px; border-radius:50%; background-color:#7c3aed; color:#ffffff; font-size:13px; font-weight:700; line-height:28px; text-align:center;">
+                                            3
+                                        </div>
+                                    </td>
+                                    <td valign="top" class="step-text"
+                                        style="padding:4px 0 0; font-size:15px; line-height:1.5; color:#4a4460;">
+                                        <strong style="color:#1a1233;">Inicia sesión</strong>
+                                        y sigue aprendiendo.
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- Enlace alternativo: dominio corregido -->
+                            <p style="margin:34px 0 6px; font-size:13px; line-height:1.6; color:#6b6580;">
+                                ¿El botón no funciona? Copia y pega este enlace en tu navegador:
+                            </p>
+
+                            <p style="margin:0 0 30px; font-size:13px; line-height:1.5; word-break:break-all;">
+                                <a href="https://lbwus.xyz{{ reset_path }}"
+                                   target="_blank"
+                                   style="color:#7c3aed; text-decoration:underline;">
+                                    https://lbwus.xyz{{ reset_path }}
+                                </a>
+                            </p>
+
+                            <!-- Aviso de seguridad -->
+                            <table role="presentation" width="100%" cellpadding="0"
+                                   cellspacing="0" border="0"
+                                   style="margin-bottom:40px; background-color:#fff8eb; border:1px solid #fde7c2; border-radius:14px;">
+                                <tr>
+                                    <td valign="top" width="44"
+                                        style="width:44px; padding:18px 0 18px 20px;">
+                                        <div style="width:26px; height:26px; border-radius:50%; background-color:#f5a524; color:#1a1233; font-size:15px; font-weight:700; line-height:26px; text-align:center; font-family:Arial, Helvetica, sans-serif;">
+                                            !
+                                        </div>
+                                    </td>
+                                    <td style="padding:18px 22px 18px 10px; font-size:14px; line-height:1.6; color:#5b4a2a;">
+                                        <strong style="color:#1a1233;">¿No pediste este cambio?</strong>
+                                        Ignora este correo: tu contraseña actual seguirá funcionando.
+                                        Si crees que alguien intenta entrar a tu cuenta, escríbenos a
+                                        <a href="mailto:teachers@lbwus.cl"
+                                           style="color:#7c3aed; font-weight:700; text-decoration:none;">
+                                            teachers@lbwus.cl</a>.
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Pie del correo -->
+                    <tr>
+                        <td class="px" bgcolor="#1a1233"
+                            style="background-color:#1a1233; padding:26px 48px; font-family:'Outfit', Arial, Helvetica, sans-serif;">
+                            <table role="presentation" width="100%" cellpadding="0"
+                                   cellspacing="0" border="0">
+                                <tr>
+                                    <td class="foot-col" valign="middle"
+                                        style="font-size:14px; line-height:1.5; color:#ffffff;">
+                                        <a href="https://lbwus.xyz/"
+                                           target="_blank"
+                                           style="color:#ffffff; text-decoration:none;">
+                                            <strong>Equipo LBWUS</strong>
+                                        </a>
+                                        <br>
+                                        <span style="font-size:12px; color:#a9a3bd;">
+                                            Desarrollando enseñanza para el mundo
+                                        </span>
+                                    </td>
+                                    <td class="foot-col" valign="middle" align="right"
+                                        style="font-size:13px; line-height:1.5;">
+                                        <a href="https://lbwus.xyz/"
+                                           target="_blank"
+                                           style="color:#ffffff; text-decoration:none; font-weight:600;">
+                                            Ir a la web &rarr;
+                                        </a>
+                                        <span style="color:#5b5275;">&nbsp;&middot;&nbsp;</span>
+                                        <a href="https://lbwus.xyz/alumnos/planes"
+                                           target="_blank"
+                                           style="color:#ffffff; text-decoration:none; font-weight:600;">
+                                            Planes
+                                        </a>
+                                        <span style="color:#5b5275;">&nbsp;&middot;&nbsp;</span>
+                                        <a href="https://lbwus.xyz/alumnos/contactos"
+                                           target="_blank"
+                                           style="color:#ffffff; text-decoration:none; font-weight:600;">
+                                            Contacto
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+
+                <!-- Información del mensaje -->
+                <table role="presentation" class="container" width="600"
+                       cellpadding="0" cellspacing="0" border="0"
+                       style="width:100%; max-width:600px;">
+                    <tr>
+                        <td align="center"
+                            style="padding:22px 24px 0; font-family:Arial, Helvetica, sans-serif; font-size:11px; line-height:1.7; color:#9a94aa;">
+                            Recibiste este correo porque se solicitó restablecer la contraseña de tu cuenta en LBWUS.
+                            <br>
+                            Mensaje automático: por favor no respondas a esta dirección.
+                            <br>
+                            &copy; {% now "Y" %} LBWUS &middot; Santiago, Chile
+                        </td>
+                    </tr>
+                </table>
+
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
