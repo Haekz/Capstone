@@ -188,6 +188,7 @@ EMAIL_PORT = int(
     )
 )
 
+EMAIL_USE_TLS = True
 EMAIL_TIMEOUT = 15
 
 EMAIL_HOST_USER = os.environ.get(
