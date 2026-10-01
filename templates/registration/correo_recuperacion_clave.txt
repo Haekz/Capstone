@@ -1,0 +1,14 @@
+Hola,
+
+Recibimos una solicitud para restablecer la contraseña de tu cuenta en LBWUS.
+
+Para crear una nueva contraseña, ingresa al siguiente enlace:
+
+{{ protocol }}://{{ domain }}{% url 'password_reset_confirm' uidb64=uid token=token %}
+
+Por seguridad, este enlace tiene una duración limitada.
+
+Si tú no solicitaste este cambio, puedes ignorar este correo. Tu contraseña actual seguirá funcionando normalmente.
+
+Saludos,
+Equipo LBWUS

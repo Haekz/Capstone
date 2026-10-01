@@ -1402,31 +1402,65 @@ body.dark-mode .cuenta-item--salir i {
 
 @media (max-width: 768px) {
     .hero {
-        min-height: 82vh;
-        padding-bottom: 88px;
+        min-height: 0;
+        height: auto;
+        align-items: flex-start;
+        padding-top: calc(var(--header-height) + 38px);
+        padding-bottom: 54px;
+    }
+
+    .hero-content {
+        padding: 0 20px;
     }
 
     .hero-content h1 {
-        font-size: 2.3rem;
+        font-size: clamp(2rem, 8vw, 2.35rem);
+        line-height: 1.06;
+        max-width: 12ch;
+        margin-bottom: 16px;
     }
 
     .hero-content p {
-        font-size: 1rem;
-        margin-bottom: 26px;
+        font-size: 0.96rem;
+        line-height: 1.5;
+        margin-bottom: 22px;
+        max-width: 100%;
     }
 
     .hero-btns {
-        gap: 12px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        width: 100%;
     }
 
     .hero-btns a {
-        width: 100%;
+        width: auto;
+        min-width: 0;
+        padding: 12px;
         text-align: center;
+        font-size: 0.92rem;
     }
 
     .hero-trust {
-        gap: 8px 20px;
-        font-size: 0.88rem;
+        margin-top: 24px;
+        padding-top: 18px;
+        gap: 10px 16px;
+        font-size: 0.82rem;
+        line-height: 1.35;
+    }
+
+    .hero-trust span {
+        gap: 6px;
+    }
+
+    .hero-dots {
+        bottom: 18px;
+        left: 20px;
+    }
+
+    .hero-bg {
+        object-position: center center;
     }
 
     .grid-2 {
