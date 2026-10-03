@@ -115,7 +115,7 @@
         }
         encontrados.forEach(profesor => {
             const div = document.createElement('div');
-            div.textContent = profesor.nombre;
+            div.textContent = profesor.user.first_name;
             resultados.appendChild(div);
         });
     }

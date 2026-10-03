@@ -277,8 +277,7 @@ def alumno_pag1(request):
     )
 
     mis_reportes = Reporte.objects.filter(
-        remitente_tipo='alumno',
-        remitente_nombre=alumno.nombre
+        remitente=alumno.user
     ).order_by(
         '-fecha_reporte'
     )
@@ -286,17 +285,17 @@ def alumno_pag1(request):
     profesores_list = Profesor.objects.all()
 
     clases_disponibles = Clase.objects.all().select_related(
-        'id_profesor'
+        'profesor'
     )
 
     mis_inscripciones = (
         Inscripcion.objects
         .filter(
-            id_alumno=alumno
+            alumno=alumno
         )
         .select_related(
-            'id_clase',
-            'id_clase__id_profesor'
+            'clase',
+            'clase__profesor'
         )
         .order_by(
             '-fecha_inscripcion'
@@ -305,7 +304,7 @@ def alumno_pag1(request):
 
     inscritas_ids = list(
         mis_inscripciones.values_list(
-            'id_clase_id',
+            'clase_id',
             flat=True
         )
     )
@@ -498,8 +497,7 @@ def enviar_reporte(request):
                 )
 
                 Reporte.objects.create(
-                    remitente_tipo='alumno',
-                    remitente_nombre=alumno.nombre,
+                    remitente=alumno.user,
                     descripcion=descripcion
                 )
 
@@ -516,8 +514,7 @@ def enviar_reporte(request):
                 )
 
                 Reporte.objects.create(
-                    remitente_tipo='profesor',
-                    remitente_nombre=profesor.nombre,
+                    remitente=profesor.user,
                     descripcion=descripcion
                 )
 
@@ -605,14 +602,14 @@ def inscribir_clase(request):
 
             clase = get_object_or_404(
                 Clase,
-                id_clase=id_clase
+                clase_id=id_clase
             )
 
             # Evitar inscripciones duplicadas
 
             if Inscripcion.objects.filter(
-                id_alumno=alumno,
-                id_clase=clase
+                alumno=alumno,
+                clase=clase
             ).exists():
 
                 return JsonResponse({
@@ -625,8 +622,8 @@ def inscribir_clase(request):
                 })
 
             Inscripcion.objects.create(
-                id_alumno=alumno,
-                id_clase=clase
+                alumno=alumno,
+                clase=clase
             )
 
             return JsonResponse({
@@ -636,7 +633,7 @@ def inscribir_clase(request):
                     f'exitosamente a '
                     f'"{clase.nombre_curso}" '
                     f'con el profesor '
-                    f'{clase.id_profesor.nombre}!'
+                    f'{clase.profesor.user.first_name}!'
                 )
             })
 
@@ -665,7 +662,7 @@ def cancelar_inscripcion(request, pk):
     inscripcion = get_object_or_404(
         Inscripcion,
         id_inscripcion=pk,
-        id_alumno_id=alumno_id
+        alumno_id=alumno_id
     )
 
     inscripcion.delete()
@@ -899,3 +896,4 @@ def confirmacion(request):
         'alumnos/confirmacion.html',
         ctx
     )
+

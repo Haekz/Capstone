@@ -49,24 +49,24 @@
                 <tr class="fila-alumno">
                     <td>
                         <div class="user-cell">
-                            <div class="user-avatar-sm">{{ alumno.nombre|slice:":1"|upper }}</div>
-                            <div class="user-cell-name">{{ alumno.nombre }}</div>
+                            <div class="user-avatar-sm">{{ alumno.user.first_name|slice:":1"|upper }}</div>
+                            <div class="user-cell-name">{{ alumno.user.first_name }}</div>
                         </div>
                     </td>
-                    <td>{{ alumno.rut }}</td>
+                    <td>{{ alumno.user.rut }}</td>
                     <td><span class="badge badge-alumno">{{ alumno.get_nivel_educacion_display }}</span></td>
-                    <td>{{ alumno.direccion|truncatechars:25 }}</td>
-                    <td style="color:var(--text-muted); font-size:0.8rem;">{{ alumno.fecha_nacimiento }}</td>
-                    <td>{{ alumno.correo_electronico }}</td>
-                    <td>{{ alumno.telefono }}</td>
-                    <td>{{ alumno.genero.descripcion }}</td>
+                    <td>{{ alumno.user.direccion|truncatechars:25 }}</td>
+                    <td style="color:var(--text-muted); font-size:0.8rem;">{{ alumno.user.fecha_nacimiento }}</td>
+                    <td>{{ alumno.user.email }}</td>
+                    <td>{{ alumno.user.telefono }}</td>
+                    <td>{{ alumno.user.genero.descripcion }}</td>
                     <td>
                         <div style="display:flex; gap:6px;">
                             <a href="{% url 'alumnos_findEdit' pk=alumno.id_alumno %}" class="btn-action edit" title="Editar">
                                 <i class="bi bi-pencil-fill"></i>
                             </a>
                             <a href="{% url 'alumnos_del' pk=alumno.id_alumno %}" class="btn-action delete" title="Eliminar"
-                               onclick="return confirm('¿Eliminar a {{ alumno.nombre }}?')">
+                               onclick="return confirm('¿Eliminar a {{ alumno.user.first_name }}?')">
                                 <i class="bi bi-trash3-fill"></i>
                             </a>
                         </div>

@@ -138,3 +138,5 @@ class SolicitudRetiro(models.Model):
 
     def __str__(self):
         return f"Retiro #{self.id_solicitud} - {self.profesor.user.first_name} (${self.monto})"
+
+

@@ -63,7 +63,7 @@
         <!-- esta parte es de la sección de inicio, la pantalla principal cuando entras al panel -->
         <section id="sec-inicio" class="prof-section active">
             <div class="prof-section-header">
-                <h1 class="prof-section-title">¡Bienvenido de vuelta, Prof. {{ profesor.nombre }}!</h1>
+                <h1 class="prof-section-title">¡Bienvenido de vuelta, Prof. {{ profesor.user.first_name }}!</h1>
                 <p class="prof-section-subtitle">Este es el resumen de tus actividades del día de hoy.</p>
             </div>
 
@@ -167,13 +167,13 @@
                     
                     <div class="prof-form-group">
                         <label for="prof-nombre" class="prof-form-label">Nombre Completo</label>
-                        <input type="text" id="prof-nombre" name="nombre" class="prof-form-input" value="{{ profesor.nombre }}" required>
+                        <input type="text" id="prof-nombre" name="nombre" class="prof-form-input" value="{{ profesor.user.first_name }}" required>
                     </div>
 
                     <div class="prof-form-row">
                         <div class="prof-form-group">
                             <label for="prof-rut" class="prof-form-label">RUT</label>
-                            <input type="text" id="prof-rut" name="rut" class="prof-form-input" value="{{ profesor.rut }}" required>
+                            <input type="text" id="prof-rut" name="rut" class="prof-form-input" value="{{ profesor.user.rut }}" required>
                         </div>
                         <div class="prof-form-group">
                             <label for="prof-especialidad" class="prof-form-label">Especialidad</label>
@@ -183,17 +183,17 @@
 
                     <div class="prof-form-group">
                         <label for="prof-direccion" class="prof-form-label">Dirección</label>
-                        <input type="text" id="prof-direccion" name="direccion" class="prof-form-input" value="{{ profesor.direccion }}" required>
+                        <input type="text" id="prof-direccion" name="direccion" class="prof-form-input" value="{{ profesor.user.direccion }}" required>
                     </div>
 
                     <div class="prof-form-row">
                         <div class="prof-form-group">
                             <label for="prof-correo" class="prof-form-label">Correo Electrónico</label>
-                            <input type="email" id="prof-correo" name="correo_electronico" class="prof-form-input" value="{{ profesor.correo_electronico }}" required>
+                            <input type="email" id="prof-correo" name="correo_electronico" class="prof-form-input" value="{{ profesor.user.email }}" required>
                         </div>
                         <div class="prof-form-group">
                             <label for="prof-telefono" class="prof-form-label">Teléfono de Contacto</label>
-                            <input type="tel" id="prof-telefono" name="telefono" class="prof-form-input" value="{{ profesor.telefono }}" required>
+                            <input type="tel" id="prof-telefono" name="telefono" class="prof-form-input" value="{{ profesor.user.telefono }}" required>
                         </div>
                     </div>
 
@@ -201,7 +201,7 @@
                         <label for="prof-genero" class="prof-form-label">Género</label>
                         <select id="prof-genero" name="genero" class="prof-form-select" required>
                             {% for g in generos %}
-                            <option value="{{ g.id_genero }}" {% if g.id_genero == profesor.genero.id_genero %}selected{% endif %}>
+                            <option value="{{ g.id_genero }}" {% if g.id_genero == profesor.user.genero.id_genero %}selected{% endif %}>
                                 {{ g.descripcion }}
                             </option>
                             {% endfor %}

@@ -300,13 +300,13 @@ class FlujoAccionesUsuarioTests(TestCase):
         self.assertIn('exitosamente', respuesta.json()['message'])
         self.assertTrue(
             Inscripcion.objects.filter(
-                id_alumno=self.alumno, id_clase=self.clase,
+                alumno=self.alumno, clase=self.clase,
             ).exists()
         )
 
     def test_reserva_duplicada_rechaza_y_explica(self):
         self._entrar_como_alumno()
-        Inscripcion.objects.create(id_alumno=self.alumno, id_clase=self.clase)
+        Inscripcion.objects.create(alumno=self.alumno, clase=self.clase)
 
         respuesta = self.client.post(reverse('inscribir_clase'), {
             'id_clase': self.clase.id_clase,
@@ -318,7 +318,7 @@ class FlujoAccionesUsuarioTests(TestCase):
     def test_cancelacion_exitosa_redirige_al_portal(self):
         self._entrar_como_alumno()
         inscripcion = Inscripcion.objects.create(
-            id_alumno=self.alumno, id_clase=self.clase,
+            alumno=self.alumno, clase=self.clase,
         )
 
         respuesta = self.client.get(
@@ -337,7 +337,7 @@ class FlujoAccionesUsuarioTests(TestCase):
             fecha_nacimiento=date(2003, 1, 1), correo_electronico='o@lbwus.cl',
             genero=self.genero,
         )
-        ajena = Inscripcion.objects.create(id_alumno=otro_alumno, id_clase=self.clase)
+        ajena = Inscripcion.objects.create(alumno=otro_alumno, clase=self.clase)
         self._entrar_como_alumno()
 
         respuesta = self.client.get(
@@ -414,3 +414,4 @@ class FlujoAccionesUsuarioTests(TestCase):
         self.assertTrue(mail.outbox)
         self.assertIn('password reset', mail.outbox[0].subject.lower())
         self.assertIn(reverse('password_reset_done'), respuesta.request['PATH_INFO'])
+

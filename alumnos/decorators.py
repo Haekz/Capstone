@@ -45,3 +45,7 @@ profesor_required = _sesion_requerida(
 profesor_required_json = _sesion_requerida(
     "profesor_id", _sesion_invalida_json
 )
+
+admin_required_json = _sesion_requerida(
+    "admin_id", _sesion_invalida_json
+)

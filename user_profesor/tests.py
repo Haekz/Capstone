@@ -145,7 +145,7 @@ class SaldoProfesorTests(TestCase):
                 fecha_nacimiento=date(2000, 1, 1),
                 correo_electronico=f'al{numero}@lbwus.cl', genero=self.genero,
             )
-            Inscripcion.objects.create(id_alumno=alumno, id_clase=clase)
+            Inscripcion.objects.create(alumno=alumno, clase=clase)
 
         return clase
 
@@ -278,7 +278,7 @@ class GraficoRendimientoTests(TestCase):
             fecha_nacimiento=date(2001, 1, 1),
             correo_electronico='emi@lbwus.cl', genero=self.genero,
         )
-        Inscripcion.objects.create(id_alumno=alumno, id_clase=clase)
+        Inscripcion.objects.create(alumno=alumno, clase=clase)
 
         # El ultimo elemento del grafico es el mes en curso.
         self.assertEqual(self._grafico()[-1]['cantidad'], 1)

@@ -20,12 +20,12 @@ def calcular_saldos(profesor):
 
     from alumnos.models import SolicitudRetiro
 
-    inscripciones = Inscripcion.objects.filter(id_clase__id_profesor=profesor).count()
+    inscripciones = Inscripcion.objects.filter(clase__profesor=profesor).count()
 
     total_ganado = inscripciones * VALOR_INSCRIPCION
     corresponde_al_profesor = inscripciones * PAGO_PROFESOR
 
-    retiros = SolicitudRetiro.objects.filter(id_profesor=profesor)
+    retiros = SolicitudRetiro.objects.filter(profesor=profesor)
     aprobados = retiros.filter(estado='aprobado').aggregate(Sum('monto'))['monto__sum'] or 0
     pendientes = retiros.filter(estado='pendiente').aggregate(Sum('monto'))['monto__sum'] or 0
 
@@ -154,7 +154,7 @@ def login_prof(request):
             auth_login(request, user)
             prof_id = user.perfil_profesor.id_profesor if hasattr(user, 'perfil_profesor') else user.id
             request.session['profesor_id'] = prof_id
-            nombre_prof = user.perfil_profesor.nombre if hasattr(user, 'perfil_profesor') else (user.first_name or user.username)
+            nombre_prof = user.perfil_profesor.user.first_name if hasattr(user, 'perfil_profesor') else (user.first_name or user.username)
             return JsonResponse({
                 "success": True, 
                 "message": f"Bienvenido de vuelta, Prof. {nombre_prof}."
@@ -176,15 +176,15 @@ def panel_profesor(request):
         return redirect('regis_prof')
 
     profesor = get_object_or_404(Profesor, id_profesor=profesor_id)
-    clases = Clase.objects.filter(id_profesor=profesor)
-    inscripciones = Inscripcion.objects.filter(id_clase__id_profesor=profesor)
+    clases = Clase.objects.filter(profesor=profesor)
+    inscripciones = Inscripcion.objects.filter(clase__profesor=profesor)
 
     # 1. Clases del día (Máximo 6)
     clases_hoy_lista = []
     for clase in clases[:6]:
         # Buscar primer alumno inscrito
-        insc = inscripciones.filter(id_clase=clase).first()
-        alumno_nombre = insc.id_alumno.nombre if insc else "Sin asignar"
+        insc = inscripciones.filter(clase=clase).first()
+        alumno_nombre = insc.alumno.user.first_name if insc else "Sin asignar"
         clases_hoy_lista.append({
             'nombre_curso': clase.nombre_curso,
             'horario': clase.horario,
@@ -195,7 +195,7 @@ def panel_profesor(request):
     # 2. Métricas del Día
     # Dinero generado hoy segun las inscripciones reales de esas clases.
     inscripciones_hoy = inscripciones.filter(
-        id_clase__in=[c.id_clase for c in clases[:6]]
+        clase_id__in=[c.id_clase for c in clases[:6]]
     ).count()
     dinero_hoy_val = inscripciones_hoy * PAGO_PROFESOR
     dinero_hoy = formato_clp(dinero_hoy_val)
@@ -231,7 +231,7 @@ def panel_profesor(request):
     saldo_disponible_fmt = formato_clp(saldo_disponible)
     saldo_pendiente_fmt = formato_clp(saldos['pendiente'])
 
-    mis_retiros = SolicitudRetiro.objects.filter(id_profesor=profesor).order_by('-fecha_solicitud')
+    mis_retiros = SolicitudRetiro.objects.filter(profesor=profesor).order_by('-fecha_solicitud')
     generos = Genero.objects.all()
 
     context = {
@@ -274,13 +274,13 @@ def actualizar_perfil_prof(request):
 
             genero = get_object_or_404(Genero, id_genero=genero_id)
 
-            profesor.nombre = nombre
-            profesor.rut = rut
+            profesor.user.first_name = nombre
+            profesor.user.rut = rut
             profesor.especialidad = especialidad
-            profesor.direccion = direccion
-            profesor.correo_electronico = correo
-            profesor.telefono = telefono
-            profesor.genero = genero
+            profesor.user.direccion = direccion
+            profesor.user.email = correo
+            profesor.user.telefono = telefono
+            profesor.user.genero = genero
             profesor.save()
 
             return JsonResponse({"success": True, "message": "Tu perfil ha sido actualizado con éxito."})
@@ -327,7 +327,7 @@ def solicitar_retiro(request):
                 return JsonResponse({"success": False, "message": f"El monto ingresado excede tu saldo disponible ({formato_clp(saldo_disponible)})."})
 
             SolicitudRetiro.objects.create(
-                id_profesor=profesor,
+                profesor=profesor,
                 monto=monto,
                 banco=banco if banco else 'Banco Estado',
                 tipo_cuenta=tipo_cuenta if tipo_cuenta else 'Cuenta Rut / Vista',
@@ -478,7 +478,7 @@ def login_admin(request):
             tutor = getattr(user, 'perfil_tutor', None) or Tutor.objects.filter(user=user).first()
             admin_id = tutor.id_tutor if tutor else user.id
             request.session['admin_id'] = admin_id
-            nombre_mostrar = tutor.nombre if tutor else (user.first_name or user.username)
+            nombre_mostrar = tutor.user.first_name if tutor else (user.first_name or user.username)
             return JsonResponse({
                 "success": True,
                 "message": f"Bienvenido de vuelta, Administrador {nombre_mostrar}."

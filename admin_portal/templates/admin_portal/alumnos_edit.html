@@ -12,7 +12,7 @@
     <div class="panel-header">
         <span class="panel-title">
             <i class="bi bi-pencil-square"></i>
-            Editando: {{ alumno.nombre }}
+            Editando: {{ alumno.user.first_name }}
         </span>
         <a href="{% url 'crud' %}" class="panel-action">
             <i class="bi bi-arrow-left"></i> Volver al listado
@@ -26,48 +26,17 @@
             <input type="hidden" name="id_alumno" value="{{ alumno.id_alumno }}">
 
             <div class="form-grid">
+                {% for field in form %}
                 <div class="form-field">
-                    <label class="form-label">RUT</label>
-                    <input type="text" class="form-input" name="rut" value="{{ alumno.rut }}" required>
+                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                    <div style="color: #e74c3c; font-size: 0.8rem; margin-top: 4px;">
+                        {{ field.errors.0 }}
+                    </div>
+                    {% endif %}
                 </div>
-                <div class="form-field">
-                    <label class="form-label">Nombre Completo</label>
-                    <input type="text" class="form-input" name="nombre" value="{{ alumno.nombre }}" required>
-                </div>
-                <div class="form-field">
-                    <label class="form-label">Dirección</label>
-                    <input type="text" class="form-input" name="direccion" value="{{ alumno.direccion }}" required>
-                </div>
-                <div class="form-field">
-                    <label class="form-label">Fecha de Nacimiento</label>
-                    <input type="date" class="form-input" name="fecha_nacimiento" value="{{ alumno.fecha_nacimiento|date:'Y-m-d' }}" required>
-                </div>
-                <div class="form-field">
-                    <label class="form-label">Correo Electrónico</label>
-                    <input type="email" class="form-input" name="correo_electronico" value="{{ alumno.correo_electronico }}" required>
-                </div>
-                <div class="form-field">
-                    <label class="form-label">Teléfono</label>
-                    <input type="text" class="form-input" name="telefono" value="{{ alumno.telefono }}" required>
-                </div>
-                <div class="form-field">
-                    <label class="form-label">Nivel de Educación</label>
-                    <select class="form-input" name="nivel_educacion">
-                        <option value="basica" {% if alumno.nivel_educacion == 'basica' %}selected{% endif %}>Básica</option>
-                        <option value="media"  {% if alumno.nivel_educacion == 'media'  %}selected{% endif %}>Media</option>
-                        <option value="superior" {% if alumno.nivel_educacion == 'superior' %}selected{% endif %}>Superior</option>
-                    </select>
-                </div>
-                <div class="form-field">
-                    <label class="form-label">Género</label>
-                    <select class="form-input" name="genero">
-                        {% for genero in generos %}
-                        <option value="{{ genero.id_genero }}" {% if alumno.genero.id_genero == genero.id_genero %}selected{% endif %}>
-                            {{ genero.descripcion }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
+                {% endfor %}
             </div>
 
             <div class="form-actions">
@@ -94,7 +63,13 @@
             body: new FormData(this),
             headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value }
         })
-        .then(r => r.text())
+        .then(async r => {
+            const msg = await r.text();
+            if (!r.ok) {
+                throw new Error(msg);
+            }
+            return msg;
+        })
         .then(msg => {
             Swal.fire({
                 icon: 'success',
@@ -102,7 +77,16 @@
                 text: 'Los datos del alumno fueron guardados correctamente.',
                 confirmButtonColor: '#7c3aed'
             }).then(() => window.location.href = "{% url 'crud' %}");
+        })
+        .catch(err => {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: err.message,
+                confirmButtonColor: '#7c3aed'
+            });
         });
     });
 </script>
 {% endblock %}
+

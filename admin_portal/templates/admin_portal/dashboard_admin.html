@@ -3,7 +3,7 @@
 
 {% block title %}Panel Admin - LBWUS{% endblock %}
 {% block page_title %}Resumen General{% endblock %}
-{% block page_subtitle %}Bienvenido de vuelta, {{ admin.nombre }}{% endblock %}
+{% block page_subtitle %}Bienvenido de vuelta, {{ admin.user.first_name }}{% endblock %}
 
 {# Al entrar sin hash la seccion visible es el resumen. #}
 {% block nav_resumen %}active{% endblock %}
@@ -95,17 +95,17 @@
                                     <tr>
                                         <td>
                                             <div class="user-cell">
-                                                <div class="user-avatar-sm">{{ alumno.nombre|slice:":1"|upper }}
+                                                <div class="user-avatar-sm">{{ alumno.user.first_name|slice:":1"|upper }}
                                                 </div>
                                                 <div>
-                                                    <div class="user-cell-name">{{ alumno.nombre }}</div>
+                                                    <div class="user-cell-name">{{ alumno.user.first_name }}</div>
 
                                                 </div>
                                             </div>
                                         </td>
                                         <td><span class="badge badge-alumno"><i class="bi bi-circle-fill"
                                                     style="font-size:0.4rem;"></i> Alumno</span></td>
-                                        <td>{{ alumno.correo_electronico }}</td>
+                                        <td>{{ alumno.user.email }}</td>
                                     </tr>
                                     {% empty %}
                                     <tr>
@@ -122,16 +122,16 @@
                                             <div class="user-cell">
                                                 <div class="user-avatar-sm"
                                                     style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
-                                                    {{ prof.nombre|slice:":1"|upper }}</div>
+                                                    {{ prof.user.first_name|slice:":1"|upper }}</div>
                                                 <div>
-                                                    <div class="user-cell-name">{{ prof.nombre }}</div>
+                                                    <div class="user-cell-name">{{ prof.user.first_name }}</div>
                                                     <div class="user-cell-sub">{{ prof.especialidad }}</div>
                                                 </div>
                                             </div>
                                         </td>
                                         <td><span class="badge badge-profesor"><i class="bi bi-circle-fill"
                                                     style="font-size:0.4rem;"></i> Profesor</span></td>
-                                        <td>{{ prof.correo_electronico }}</td>
+                                        <td>{{ prof.user.email }}</td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
@@ -209,19 +209,19 @@
                             <div class="panel-body">
                                 {% for reporte in reportes_recientes %}
                                 <div class="report-item">
-                                    <div class="report-icon {{ reporte.remitente_tipo }}">
+                                    <div class="report-icon {{ reporte.remitente.rol }}">
                                         <i
-                                            class="bi bi-{% if reporte.remitente_tipo == 'profesor' %}person-workspace{% else %}mortarboard-fill{% endif %}"></i>
+                                            class="bi bi-{% if reporte.remitente.rol == 'profesor' %}person-workspace{% else %}mortarboard-fill{% endif %}"></i>
                                     </div>
                                     <div class="report-meta">
-                                        <div class="report-name">{{ reporte.remitente_nombre }}</div>
+                                        <div class="report-name">{{ reporte.remitente.first_name }}</div>
                                         <div class="report-desc">{{ reporte.descripcion }}</div>
                                         <div class="report-date">
                                             <i class="bi bi-calendar3"></i>
                                             {{ reporte.fecha_reporte|date:"d M Y" }}
                                             &nbsp;·&nbsp;
-                                            <span class="badge badge-{{ reporte.remitente_tipo }}">{{
-                                                reporte.get_remitente_tipo_display }}</span>
+                                            <span class="badge badge-{{ reporte.remitente.rol }}">{{
+                                                reporte.remitente.get_rol_display }}</span>
                                         </div>
                                     </div>
                                     <div class="report-actions">
@@ -293,24 +293,24 @@
                                 </thead>
                                 <tbody>
                                     {% for alumno in alumnos %}
-                                    <tr class="user-row" data-name="{{ alumno.nombre|lower }}"
-                                        data-rut="{{ alumno.rut }}" data-correo="{{ alumno.correo_electronico|lower }}">
+                                    <tr class="user-row" data-name="{{ alumno.user.first_name|lower }}"
+                                        data-rut="{{ alumno.user.rut }}" data-correo="{{ alumno.user.email|lower }}">
                                         <td>
                                             <div class="user-cell">
-                                                <div class="user-avatar-sm">{{ alumno.nombre|slice:":1"|upper }}</div>
+                                                <div class="user-avatar-sm">{{ alumno.user.first_name|slice:":1"|upper }}</div>
                                                 <div>
-                                                    <div class="user-cell-name">{{ alumno.nombre }}</div>
-                                                    <div class="user-cell-sub">{{ alumno.direccion|truncatechars:30 }}
+                                                    <div class="user-cell-name">{{ alumno.user.first_name }}</div>
+                                                    <div class="user-cell-sub">{{ alumno.user.direccion|truncatechars:30 }}
                                                     </div>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>{{ alumno.rut }}</td>
+                                        <td>{{ alumno.user.rut }}</td>
                                         <td>
                                             <span class="badge badge-alumno">{{ alumno.get_nivel_educacion_display }}</span>
                                         </td>
-                                        <td>{{ alumno.correo_electronico }}</td>
-                                        <td>{{ alumno.telefono }}</td>
+                                        <td>{{ alumno.user.email }}</td>
+                                        <td>{{ alumno.user.telefono }}</td>
                                         <td>
                                             <div style="display:flex; gap:6px;">
                                                 <a href="{% url 'alumnos_findEdit' alumno.id_alumno %}"
@@ -319,7 +319,7 @@
                                                 </a>
                                                 <a href="{% url 'alumnos_del' alumno.id_alumno %}"
                                                     class="btn-action delete" title="Eliminar"
-                                                    onclick="return confirm('¿Seguro que quieres eliminar a {{ alumno.nombre }}?')">
+                                                    onclick="return confirm('¿Seguro que quieres eliminar a {{ alumno.user.first_name }}?')">
                                                     <i class="bi bi-trash3-fill"></i>
                                                 </a>
                                             </div>
@@ -353,24 +353,24 @@
                                 </thead>
                                 <tbody>
                                     {% for prof in profesores %}
-                                    <tr class="user-row" data-name="{{ prof.nombre|lower }}" data-rut="{{ prof.rut }}"
-                                        data-correo="{{ prof.correo_electronico|lower }}">
+                                    <tr class="user-row" data-name="{{ prof.user.first_name|lower }}" data-rut="{{ prof.user.rut }}"
+                                        data-correo="{{ prof.user.email|lower }}">
                                         <td>
                                             <div class="user-cell">
                                                 <div class="user-avatar-sm"
                                                     style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">{{
-                                                    prof.nombre|slice:":1"|upper }}</div>
+                                                    prof.user.first_name|slice:":1"|upper }}</div>
                                                 <div>
-                                                    <div class="user-cell-name">{{ prof.nombre }}</div>
-                                                    <div class="user-cell-sub">{{ prof.direccion|truncatechars:30 }}
+                                                    <div class="user-cell-name">{{ prof.user.first_name }}</div>
+                                                    <div class="user-cell-sub">{{ prof.user.direccion|truncatechars:30 }}
                                                     </div>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>{{ prof.rut }}</td>
+                                        <td>{{ prof.user.rut }}</td>
                                         <td><span class="badge badge-profesor">{{ prof.especialidad }}</span></td>
-                                        <td>{{ prof.correo_electronico }}</td>
-                                        <td>{{ prof.telefono }}</td>
+                                        <td>{{ prof.user.email }}</td>
+                                        <td>{{ prof.user.telefono }}</td>
                                     </tr>
                                     {% empty %}
                                     <tr>
@@ -399,24 +399,24 @@
                                 </thead>
                                 <tbody>
                                     {% for admin_user in admins %}
-                                    <tr class="user-row" data-name="{{ admin_user.nombre|lower }}"
-                                        data-rut="{{ admin_user.rut }}"
-                                        data-correo="{{ admin_user.correo_electronico|lower }}">
+                                    <tr class="user-row" data-name="{{ admin_user.user.first_name|lower }}"
+                                        data-rut="{{ admin_user.user.rut }}"
+                                        data-correo="{{ admin_user.user.email|lower }}">
                                         <td>
                                             <div class="user-cell">
                                                 <div class="user-avatar-sm"
                                                     style="background: linear-gradient(135deg, #f59e0b, #d97706);">{{
-                                                    admin_user.nombre|slice:":1"|upper }}</div>
+                                                    admin_user.user.first_name|slice:":1"|upper }}</div>
                                                 <div>
-                                                    <div class="user-cell-name">{{ admin_user.nombre }}</div>
-                                                    <div class="user-cell-sub">{{ admin_user.direccion|truncatechars:30
+                                                    <div class="user-cell-name">{{ admin_user.user.first_name }}</div>
+                                                    <div class="user-cell-sub">{{ admin_user.user.direccion|truncatechars:30
                                                         }}</div>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>{{ admin_user.rut }}</td>
-                                        <td>{{ admin_user.correo_electronico }}</td>
-                                        <td>{{ admin_user.telefono }}</td>
+                                        <td>{{ admin_user.user.rut }}</td>
+                                        <td>{{ admin_user.user.email }}</td>
+                                        <td>{{ admin_user.user.telefono }}</td>
                                     </tr>
                                     {% empty %}
                                     <tr>
@@ -474,18 +474,18 @@
                             </thead>
                             <tbody>
                                 {% for reporte in todos_reportes %}
-                                <tr class="report-row" data-estado="{{ reporte.estado }}" data-name="{{ reporte.remitente_nombre|lower }}" data-desc="{{ reporte.descripcion|lower }}">
+                                <tr class="report-row" data-estado="{{ reporte.estado }}" data-name="{{ reporte.remitente.first_name|lower }}" data-desc="{{ reporte.descripcion|lower }}">
                                     <td style="color:var(--text-muted); font-size:0.78rem;">#{{ reporte.id_reporte }}</td>
                                     <td>
                                         <div class="user-cell">
-                                            <div class="report-icon {{ reporte.remitente_tipo }}" style="width:32px; height:32px; font-size:0.85rem;">
-                                                <i class="bi bi-{% if reporte.remitente_tipo == 'profesor' %}person-workspace{% else %}mortarboard-fill{% endif %}"></i>
+                                            <div class="report-icon {{ reporte.remitente.rol }}" style="width:32px; height:32px; font-size:0.85rem;">
+                                                <i class="bi bi-{% if reporte.remitente.rol == 'profesor' %}person-workspace{% else %}mortarboard-fill{% endif %}"></i>
                                             </div>
-                                            <div class="user-cell-name">{{ reporte.remitente_nombre }}</div>
+                                            <div class="user-cell-name">{{ reporte.remitente.first_name }}</div>
                                         </div>
                                     </td>
                                     <td>
-                                        <span class="badge badge-{{ reporte.remitente_tipo }}">{{ reporte.get_remitente_tipo_display }}</span>
+                                        <span class="badge badge-{{ reporte.remitente.rol }}">{{ reporte.remitente.get_rol_display }}</span>
                                     </td>
                                     <td style="max-width:280px; color:var(--text-secondary);">
                                         {{ reporte.descripcion|truncatechars:80 }}
@@ -549,7 +549,7 @@
                                     <select name="id_profesor" id="clase_id_profesor" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary);">
                                         <option value="" disabled selected>Selecciona un profesor...</option>
                                         {% for prof in profesores %}
-                                        <option value="{{ prof.id_profesor }}">{{ prof.nombre }} ({{ prof.especialidad }})</option>
+                                        <option value="{{ prof.id_profesor }}">{{ prof.user.first_name }} ({{ prof.especialidad }})</option>
                                         {% endfor %}
                                     </select>
                                 </div>
@@ -594,7 +594,7 @@
                                             <div class="report-icon profesor" style="width:28px; height:28px; font-size:0.8rem;">
                                                 <i class="bi bi-person-workspace"></i>
                                             </div>
-                                            <div>{{ c.id_profesor.nombre }}</div>
+                                            <div>{{ c.profesor.user.first_name }}</div>
                                         </div>
                                     </td>
                                     <td>
@@ -683,10 +683,10 @@
                                     <td>
                                         <div class="user-cell">
                                             <div class="user-avatar-sm" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
-                                                {{ r.id_profesor.nombre|slice:":1"|upper }}
+                                                {{ r.profesor.user.first_name|slice:":1"|upper }}
                                             </div>
                                             <div>
-                                                <div class="user-cell-name">{{ r.id_profesor.nombre }}</div>
+                                                <div class="user-cell-name">{{ r.profesor.user.first_name }}</div>
                                                 <small style="color: var(--text-muted); font-size: 0.75rem;">{{ r.banco }} · {{ r.numero_cuenta }}</small>
                                             </div>
                                         </div>
@@ -744,19 +744,19 @@
                             <div class="form-grid">
                                 <div class="form-field">
                                     <label class="form-label">Nombre del Administrador</label>
-                                    <input type="text" class="form-input" value="{{ admin.nombre }}" required>
+                                    <input type="text" class="form-input" value="{{ admin.user.first_name }}" required>
                                 </div>
                                 <div class="form-field">
                                     <label class="form-label">RUT</label>
-                                    <input type="text" class="form-input" value="{{ admin.rut }}" required>
+                                    <input type="text" class="form-input" value="{{ admin.user.rut }}" required>
                                 </div>
                                 <div class="form-field">
                                     <label class="form-label">Correo Electrónico</label>
-                                    <input type="email" class="form-input" value="{{ admin.correo_electronico }}" required>
+                                    <input type="email" class="form-input" value="{{ admin.user.email }}" required>
                                 </div>
                                 <div class="form-field">
                                     <label class="form-label">Teléfono</label>
-                                    <input type="text" class="form-input" value="{{ admin.telefono }}" required>
+                                    <input type="text" class="form-input" value="{{ admin.user.telefono }}" required>
                                 </div>
                                 <div class="form-field">
                                     <label class="form-label">Color de Acento del Panel</label>
@@ -768,7 +768,7 @@
                                 </div>
                                 <div class="form-field">
                                     <label class="form-label">Dirección</label>
-                                    <input type="text" class="form-input" value="{{ admin.direccion }}" required>
+                                    <input type="text" class="form-input" value="{{ admin.user.direccion }}" required>
                                 </div>
                             </div>
                             <div style="margin-top:24px;">
@@ -943,3 +943,4 @@
     }
 </script>
 {% endblock %}
+

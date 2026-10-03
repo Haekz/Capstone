@@ -17,11 +17,9 @@ def menu(request):
 
 # Controlador principal del Dashboard de administración
 @never_cache
+@admin_required
 def dashboard_admin(request):
-    # redirigir al login si no hay sesión de admin
     admin_id = request.session.get('admin_id')
-    if not admin_id:
-        return redirect('login')
 
     admin = get_object_or_404(Tutor, id_tutor=admin_id)
 
@@ -74,10 +72,8 @@ def dashboard_admin(request):
 
 
 # Controlador para cambiar el estado de un reporte a 'resuelto'
+@admin_required
 def resolver_reporte(request, pk):
-    admin_id = request.session.get('admin_id')
-    if not admin_id:
-        return redirect('login')
 
     reporte = get_object_or_404(Reporte, id_reporte=pk)
     reporte.estado = 'resuelto'
@@ -120,94 +116,84 @@ def contactos_adm(request):
 
 # --- Vistas CRUD movidas desde alumnos ---
 @never_cache
+@admin_required
 def crud(request):
-    if not request.session.get('admin_id'):
-        return redirect('login')
     alumnos = Alumno.objects.all()
     context = {'alumnos': alumnos}
     return render(request, 'admin_portal/alumnos_list.html', context)
 
 @never_cache
+@admin_required
 def alumnos_Add(request):
-    if not request.session.get('admin_id'):
-        return redirect('login')
+    from .forms import AdminAlumnoForm
     if request.method == 'POST':
-        try:
-            nombre = request.POST['nombre']
-            rut = request.POST['rut']
-            nivel_educacion = request.POST['nivel_educacion']
-            direccion = request.POST['direccion']
-            fecha_nacimiento = request.POST['fecha_nacimiento']
-            correo_electronico = request.POST['correo_electronico']
-            telefono = request.POST['telefono']
-            genero_id = request.POST['genero']
+        form = AdminAlumnoForm(request.POST)
+        if form.is_valid():
+            try:
+                form.save()
+                return JsonResponse({"success": True, "message": "Alumno registrado exitosamente."})
+            except Exception as e:
+                return JsonResponse({"success": False, "message": f"Error al guardar: {str(e)}"})
+        else:
+            # Obtener el primer error del formulario
+            errores = dict(form.errors.items())
+            mensaje_error = "\n".join([f"{k}: {v[0]}" for k, v in errores.items()])
+            return JsonResponse({"success": False, "message": mensaje_error})
+    else:
+        form = AdminAlumnoForm()
 
-            genero = Genero.objects.get(id_genero=genero_id)
-
-            Alumno.objects.create(
-                nombre=nombre,
-                rut=rut,
-                nivel_educacion=nivel_educacion,
-                direccion=direccion,
-                fecha_nacimiento=fecha_nacimiento,
-                correo_electronico=correo_electronico,
-                telefono=telefono,
-                genero=genero
-            )
-            return JsonResponse({"success": True, "message": "Alumno registrado exitosamente."})
-        except Exception as e:
-            return JsonResponse({"success": False, "message": str(e)})
-
-    generos = Genero.objects.all()
-    return render(request, 'admin_portal/alumnos_add.html', {'generos': generos})
+    return render(request, 'admin_portal/alumnos_add.html', {'form': form})
 
 @never_cache
+@admin_required
 def alumnos_findEdit(request, pk):
-    if not request.session.get('admin_id'):
-        return redirect('login')
-    try:
-        alumno = Alumno.objects.get(id_alumno=pk)  # Usamos id_alumno en lugar de rut
-        generos = Genero.objects.all()
-        context = {'alumno': alumno, 'generos': generos}
-        return render(request, 'admin_portal/alumnos_edit.html', context)
-    except Alumno.DoesNotExist:
-        context = {'mensaje': "Error, ID no existe..."}
-        return render(request, 'admin_portal/alumnos_list.html', context)
+    alumno = get_object_or_404(Alumno, id_alumno=pk)
+    from .forms import AdminAlumnoForm
+    form = AdminAlumnoForm(instance=alumno)
+    context = {'alumno': alumno, 'form': form}
+    return render(request, 'admin_portal/alumnos_edit.html', context)
 
 
+@admin_required
 def alumnos_del(request, pk):
-    if not request.session.get('admin_id'):
-        return redirect('login')
-    try:
-        alumno = Alumno.objects.get(id_alumno=pk)  # Usamos id_alumno en lugar de rut
+    
+    alumno = get_object_or_404(Alumno, id_alumno=pk)
+    
+    # IMPORTANTE: al borrar el Alumno, quizás también queramos borrar el CustomUser asociado
+    # Si queremos que se mantenga el usuario pero pierda el rol de alumno, no lo borramos.
+    # En este caso, borramos ambos para mantener la base de datos limpia.
+    if alumno.user:
+        alumno.user.delete() 
+    # El perfil de alumno se borrará en cascada por el OneToOneField de CustomUser, 
+    # o si no, lo borramos manualmente (dependiendo de on_delete).
+    if Alumno.objects.filter(id_alumno=pk).exists():
         alumno.delete()
-        mensaje = "Bien, datos eliminados..."
-    except Alumno.DoesNotExist:
-        mensaje = "Error, ID no existe..."
+
     alumnos = Alumno.objects.all()
-    context = {'alumnos': alumnos, 'mensaje': mensaje}
+    context = {'alumnos': alumnos, 'mensaje': "Bien, datos eliminados..."}
     return render(request, 'admin_portal/alumnos_list.html', context)
 
 
+@admin_required
 def alumnos_Update(request):
-    if not request.session.get('admin_id'):
-        return redirect('login')
+        
     if request.method == 'POST':
         id_alumno = request.POST.get('id_alumno')
         alumno = get_object_or_404(Alumno, id_alumno=id_alumno)
-
-        alumno.nombre = request.POST.get('nombre')
-        alumno.rut = request.POST.get('rut')
-        alumno.nivel_educacion = request.POST.get('nivel_educacion')
-        alumno.direccion = request.POST.get('direccion')
-        alumno.fecha_nacimiento = request.POST.get('fecha_nacimiento')
-        alumno.correo_electronico = request.POST.get('correo_electronico')
-        alumno.telefono = request.POST.get('telefono')
-        genero_id = request.POST.get('genero')
-        alumno.genero = Genero.objects.get(id_genero=genero_id)
-
-        alumno.save()
-        return HttpResponse("OK, datos actualizados.")  # Confirmación simple en lugar de redirección
+        
+        from .forms import AdminAlumnoForm
+        form = AdminAlumnoForm(request.POST, instance=alumno)
+        
+        if form.is_valid():
+            try:
+                form.save()
+                return HttpResponse("OK, datos actualizados.")
+            except Exception as e:
+                return HttpResponse(f"Error al actualizar: {str(e)}", status=400)
+        else:
+            errores = dict(form.errors.items())
+            mensaje_error = "\n".join([f"{k}: {v[0]}" for k, v in errores.items()])
+            return HttpResponse(f"Error de validación: {mensaje_error}", status=400)
     else:
         return HttpResponse("Solicitud inválida.", status=400)
 
@@ -220,9 +206,8 @@ def logout_admin(request):
     return redirect('home')
 
 
+@admin_required
 def crear_clase(request):
-    if not request.session.get('admin_id'):
-        return redirect('login')
     if request.method == 'POST':
         nombre_curso = request.POST.get('nombre_curso', '').strip()
         modalidad = request.POST.get('modalidad', 'online')
@@ -237,23 +222,21 @@ def crear_clase(request):
             nombre_curso=nombre_curso,
             modalidad=modalidad,
             horario=horario,
-            id_profesor=profesor
+            profesor=profesor
         )
         return JsonResponse({'success': True, 'message': f'Clase "{clase.nombre_curso}" creada exitosamente.'})
     return JsonResponse({'success': False, 'message': 'Método no permitido.'})
 
 
+@admin_required
 def eliminar_clase(request, pk):
-    if not request.session.get('admin_id'):
-        return redirect('login')
     clase = get_object_or_404(Clase, id_clase=pk)
     clase.delete()
     return redirect('dashboard_admin')
 
 
+@admin_required
 def aprobar_retiro(request, pk):
-    if not request.session.get('admin_id'):
-        return redirect('login')
     from alumnos.models import SolicitudRetiro
     from django.utils import timezone
     retiro = get_object_or_404(SolicitudRetiro, id_solicitud=pk)
@@ -263,9 +246,8 @@ def aprobar_retiro(request, pk):
     return redirect('dashboard_admin')
 
 
+@admin_required
 def rechazar_retiro(request, pk):
-    if not request.session.get('admin_id'):
-        return redirect('login')
     from alumnos.models import SolicitudRetiro
     from django.utils import timezone
     retiro = get_object_or_404(SolicitudRetiro, id_solicitud=pk)
@@ -273,3 +255,6 @@ def rechazar_retiro(request, pk):
     retiro.fecha_resolucion = timezone.now()
     retiro.save()
     return redirect('dashboard_admin')
+
+
+
