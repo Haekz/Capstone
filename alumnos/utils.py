@@ -42,10 +42,12 @@ def usuario_existe(rut, correo):
     el modelo User o en alguno de los 3 modelos de perfil (Alumno, Profesor, Tutor).
     Retorna un string con el mensaje de error si existe, o None si está libre.
     """
-    from django.contrib.auth.models import User
+    from django.contrib.auth import get_user_model
+    from django.db.models import Q
+    User = get_user_model()
     if User.objects.filter(email__iexact=correo).exists():
         return "El correo electrónico ya está registrado en el sistema."
-    if User.objects.filter(username__iexact=rut).exists():
+    if User.objects.filter(Q(username__iexact=rut) | Q(rut__iexact=rut)).exists():
         return "El RUT ingresado ya está registrado en el sistema."
 
     for modelo in [Alumno, Profesor, Tutor]:

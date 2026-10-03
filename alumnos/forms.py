@@ -98,12 +98,19 @@ class AlumnoForm(forms.ModelForm):
         correo = self.cleaned_data.get('correo_electronico')
         nombre = self.cleaned_data.get('nombre')
 
-        from django.contrib.auth.models import User
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
         user = User.objects.create_user(
             username=rut,
+            rut=rut,
             email=correo,
+            rol='alumno',
             password=password,
-            first_name=nombre
+            first_name=nombre,
+            telefono=self.cleaned_data.get('telefono', ''),
+            direccion=self.cleaned_data.get('direccion', ''),
+            fecha_nacimiento=self.cleaned_data.get('fecha_nacimiento'),
+            genero=self.cleaned_data.get('genero')
         )
         alumno.user = user
         if commit:

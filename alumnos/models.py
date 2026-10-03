@@ -1,5 +1,6 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AbstractUser
+from django.conf import settings
 
 # Create your models here.
 
@@ -10,9 +11,37 @@ class Genero(models.Model):
     def __str__(self):
         return self.descripcion
 
+class CustomUser(AbstractUser):
+    ROLES = (
+        ('alumno', 'Alumno'),
+        ('profesor', 'Profesor'),
+        ('admin', 'Administrador'),
+    )
+    rol = models.CharField(max_length=15, choices=ROLES, default='alumno')
+    rut = models.CharField(max_length=12, unique=True, null=True, blank=True)
+    telefono = models.CharField(max_length=20, blank=True)
+    direccion = models.CharField(max_length=100, blank=True)
+    fecha_nacimiento = models.DateField(null=True, blank=True)
+    genero = models.ForeignKey(Genero, on_delete=models.SET_NULL, null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.username} ({self.get_rol_display()})"
+
+    @property
+    def is_alumno(self):
+        return self.rol == 'alumno'
+
+    @property
+    def is_profesor(self):
+        return self.rol == 'profesor'
+
+    @property
+    def is_administrador(self):
+        return self.rol == 'admin' or self.is_staff or self.is_superuser
+
 class Tutor(models.Model):
     id_tutor = models.AutoField(primary_key=True)
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil_tutor', null=True, blank=True)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='perfil_tutor', null=True, blank=True)
     nombre = models.CharField(max_length=60)
     rut = models.CharField(max_length=12, unique=True)
     direccion = models.CharField(max_length=60)
@@ -26,7 +55,7 @@ class Tutor(models.Model):
 
 class Alumno(models.Model):
     id_alumno = models.AutoField(primary_key=True)
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil_alumno', null=True, blank=True)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='perfil_alumno', null=True, blank=True)
     nombre = models.CharField(max_length=60)
     rut = models.CharField(max_length=12, unique=True)
     nivel_educacion = models.CharField(max_length=10, choices=[('basica', 'Básica'), ('media', 'Media'), ('superior', 'Superior')])
@@ -42,7 +71,7 @@ class Alumno(models.Model):
 
 class Profesor(models.Model):
     id_profesor = models.AutoField(primary_key=True)
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil_profesor', null=True, blank=True)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='perfil_profesor', null=True, blank=True)
     nombre = models.CharField(max_length=60)
     rut = models.CharField(max_length=12, unique=True)
     especialidad = models.CharField(max_length=60)

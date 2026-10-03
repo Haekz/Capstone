@@ -156,3 +156,6 @@ AUTHENTICATION_BACKENDS = [
     'alumnos.backends.RutOrEmailBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
+
+# Modelo de usuario personalizado
+AUTH_USER_MODEL = 'alumnos.CustomUser'

@@ -51,13 +51,20 @@ def regis_prof(request):
 
             genero = get_object_or_404(Genero, id_genero=genero_id)
 
-            from django.contrib.auth.models import User
-            # Crear usuario Django centralizado (username = RUT normalizado o RUT)
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            # Crear usuario CustomUser centralizado
             user = User.objects.create_user(
                 username=rut,
+                rut=rut,
                 email=correo_electronico,
+                rol='profesor',
                 password=password,
-                first_name=nombre
+                first_name=nombre,
+                telefono=telefono,
+                direccion=direccion,
+                fecha_nacimiento=fecha_nacimiento,
+                genero=genero
             )
 
             # Crear el registro del Profesor vinculado al User
@@ -100,12 +107,14 @@ def login_prof(request):
 
         from django.contrib.auth import authenticate, login as auth_login
         user = authenticate(request, username=identificador, password=password)
-        if user and hasattr(user, 'perfil_profesor'):
+        if user and (getattr(user, 'rol', None) == 'profesor' or hasattr(user, 'perfil_profesor')):
             auth_login(request, user)
-            request.session['profesor_id'] = user.perfil_profesor.id_profesor
+            prof_id = user.perfil_profesor.id_profesor if hasattr(user, 'perfil_profesor') else user.id
+            request.session['profesor_id'] = prof_id
+            nombre_prof = user.perfil_profesor.nombre if hasattr(user, 'perfil_profesor') else (user.first_name or user.username)
             return JsonResponse({
                 "success": True, 
-                "message": f"Bienvenido de vuelta, Prof. {user.perfil_profesor.nombre}."
+                "message": f"Bienvenido de vuelta, Prof. {nombre_prof}."
             })
         else:
             return JsonResponse({
@@ -342,12 +351,19 @@ def regis_tutor(request):
 
             genero = get_object_or_404(Genero, id_genero=genero_id)
 
-            from django.contrib.auth.models import User
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
             user = User.objects.create_user(
                 username=rut,
+                rut=rut,
                 email=correo_electronico,
+                rol='admin',
                 password=password,
-                first_name=nombre
+                first_name=nombre,
+                telefono=telefono,
+                direccion=direccion,
+                fecha_nacimiento=fecha_nacimiento,
+                genero=genero
             )
             user.is_staff = True
             user.save()
@@ -390,7 +406,7 @@ def login_admin(request):
 
         from django.contrib.auth import authenticate, login as auth_login
         user = authenticate(request, username=identificador, password=password)
-        if user and (hasattr(user, 'perfil_tutor') or user.is_staff or user.is_superuser):
+        if user and (getattr(user, 'rol', None) == 'admin' or hasattr(user, 'perfil_tutor') or user.is_staff or user.is_superuser):
             auth_login(request, user)
             admin_id = user.perfil_tutor.id_tutor if hasattr(user, 'perfil_tutor') else user.id
             request.session['admin_id'] = admin_id

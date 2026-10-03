@@ -119,23 +119,20 @@ def custom_login(request):
                 auth_login(request, user)
 
                 # 1. ¿Es Alumno?
-                if hasattr(user, 'perfil_alumno'):
-                    request.session['alumno_id'] = user.perfil_alumno.id_alumno
+                if getattr(user, 'rol', None) == 'alumno' or hasattr(user, 'perfil_alumno'):
+                    alumno_id = user.perfil_alumno.id_alumno if hasattr(user, 'perfil_alumno') else user.id
+                    request.session['alumno_id'] = alumno_id
                     return redirect('alumno_pag1')
 
                 # 2. ¿Es Profesor?
-                elif hasattr(user, 'perfil_profesor'):
-                    request.session['profesor_id'] = user.perfil_profesor.id_profesor
+                elif getattr(user, 'rol', None) == 'profesor' or hasattr(user, 'perfil_profesor'):
+                    prof_id = user.perfil_profesor.id_profesor if hasattr(user, 'perfil_profesor') else user.id
+                    request.session['profesor_id'] = prof_id
                     return redirect('panel_profesor')
 
                 # 3. ¿Es Administrador / Tutor?
-                elif hasattr(user, 'perfil_tutor'):
-                    request.session['admin_id'] = user.perfil_tutor.id_tutor
-                    return redirect('dashboard_admin')
-
-                # 4. Superusuario o Staff sin perfil previo
-                elif user.is_staff or user.is_superuser:
-                    tutor = Tutor.objects.filter(user=user).first() or Tutor.objects.filter(correo_electronico__iexact=user.email).first() or Tutor.objects.first()
+                elif getattr(user, 'rol', None) == 'admin' or hasattr(user, 'perfil_tutor') or user.is_staff or user.is_superuser:
+                    tutor = getattr(user, 'perfil_tutor', None) or Tutor.objects.filter(user=user).first() or Tutor.objects.filter(correo_electronico__iexact=user.email).first() or Tutor.objects.first()
                     request.session['admin_id'] = tutor.id_tutor if tutor else user.id
                     return redirect('dashboard_admin')
 
