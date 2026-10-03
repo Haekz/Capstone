@@ -18,6 +18,14 @@ from .models import (
     Inscripcion,
 )
 from .forms import AlumnoForm
+from .decorators import alumno_required
+from .roles import (
+    ALUMNO,
+    abrir_sesion_rol,
+    redirigir_a_portal,
+    resolver_rol,
+    rol_en_sesion,
+)
 
 
 # ============================================================
@@ -161,7 +169,7 @@ def regis_alum(request):
                 backend='alumnos.backends.RutOrEmailBackend'
             )
 
-            request.session['alumno_id'] = alumno.id_alumno
+            abrir_sesion_rol(request, ALUMNO, alumno)
 
             return JsonResponse({
                 "success": True,
@@ -219,7 +227,7 @@ def alumnos_reg(request):
                 backend='alumnos.backends.RutOrEmailBackend'
             )
 
-            request.session['alumno_id'] = alumno.id_alumno
+            abrir_sesion_rol(request, ALUMNO, alumno)
 
             return JsonResponse({
                 "success": True,
@@ -262,14 +270,10 @@ def alumnos_reg(request):
 # ============================================================
 
 @never_cache
+@alumno_required
 def alumno_pag1(request):
 
-    alumno_id = request.session.get(
-        'alumno_id'
-    )
-
-    if not alumno_id:
-        return redirect('login')
+    alumno_id = request.session['alumno_id']
 
     alumno = get_object_or_404(
         Alumno,
@@ -336,23 +340,10 @@ def alumno_pag1(request):
 @never_cache
 def custom_login(request):
 
-    # Si ya existe una sesión activa,
-    # redirigir al portal correspondiente.
-
-    if request.session.get('alumno_id'):
-        return redirect(
-            'alumno_pag1'
-        )
-
-    if request.session.get('profesor_id'):
-        return redirect(
-            'panel_profesor'
-        )
-
-    if request.session.get('admin_id'):
-        return redirect(
-            'dashboard_admin'
-        )
+    # Si ya existe una sesión activa, redirigir al portal de ese rol.
+    rol_activo = rol_en_sesion(request)
+    if rol_activo is not None:
+        return redirigir_a_portal(rol_activo)
 
     error = None
 
@@ -385,41 +376,21 @@ def custom_login(request):
 
             if user is not None:
 
-                auth_login(request, user)
+                # El rol lo define el perfil asociado (ver alumnos/roles.py).
+                # Sin perfil no se abre sesion: antes se guardaba user.id
+                # como si fuera id de alumno/tutor y se mezclaban portales.
+                rol, perfil = resolver_rol(user)
 
-                # 1. ¿Es Alumno?
-                if getattr(user, 'rol', None) == 'alumno' or hasattr(user, 'perfil_alumno'):
-                    alumno_id = user.perfil_alumno.id_alumno if hasattr(user, 'perfil_alumno') else user.id
-                    request.session['alumno_id'] = alumno_id
-                    return redirect('alumno_pag1')
-
-                # 2. ¿Es Profesor?
-                elif getattr(user, 'rol', None) == 'profesor' or hasattr(user, 'perfil_profesor'):
-                    prof_id = user.perfil_profesor.id_profesor if hasattr(user, 'perfil_profesor') else user.id
-                    request.session['profesor_id'] = prof_id
-                    return redirect('panel_profesor')
-
-                # 3. ¿Es Administrador / Tutor?
-                elif getattr(user, 'rol', None) == 'admin' or hasattr(user, 'perfil_tutor') or user.is_staff or user.is_superuser:
-                    tutor = getattr(user, 'perfil_tutor', None) or Tutor.objects.filter(user=user).first()
-                    
-                    if tutor:
-                        request.session['admin_id'] = tutor.id_tutor
-                        return redirect('dashboard_admin')
-                    
-                    if getattr(user, 'rol', None) == 'admin' or user.is_staff or user.is_superuser:
-                        request.session['admin_id'] = user.id
-                        return redirect('dashboard_admin')
-
-                    error = "Tu cuenta no tiene un perfil de administrador asociado."
-
-                else:
-
+                if rol is None:
                     error = (
                         "Tu cuenta no tiene "
                         "un perfil asignado "
                         "en el sistema."
                     )
+                else:
+                    auth_login(request, user)
+                    abrir_sesion_rol(request, rol, perfil)
+                    return redirigir_a_portal(rol)
 
             else:
 
@@ -653,14 +624,10 @@ def inscribir_clase(request):
     })
 
 
+@alumno_required
 def cancelar_inscripcion(request, pk):
 
-    alumno_id = request.session.get(
-        'alumno_id'
-    )
-
-    if not alumno_id:
-        return redirect('login')
+    alumno_id = request.session['alumno_id']
 
     inscripcion = get_object_or_404(
         Inscripcion,

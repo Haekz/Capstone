@@ -6,7 +6,9 @@ Estos tests detectan si se quita o si falta en una vista nueva.
 
 from datetime import date
 
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 from django.test import TestCase
 from django.urls import reverse
 

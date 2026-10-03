@@ -3,7 +3,9 @@ existen y trae lo necesario para funcionar en móvil (viewport + menú móvil)."
 import re
 from datetime import date
 
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.staticfiles import finders
 from django.test import TestCase

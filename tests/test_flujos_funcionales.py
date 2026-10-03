@@ -8,7 +8,9 @@ enlaces principales, estados vacios coherentes y salidas claras en acciones.
 from datetime import date, time
 from unittest.mock import patch
 
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
@@ -412,5 +414,5 @@ class FlujoAccionesUsuarioTests(TestCase):
 
         self.assertEqual(respuesta.status_code, 200)
         self.assertTrue(mail.outbox)
-        self.assertIn('password reset', mail.outbox[0].subject.lower())
+        self.assertIn('recuperación de contraseña', mail.outbox[0].subject.lower())
         self.assertIn(reverse('password_reset_done'), respuesta.request['PATH_INFO'])
