@@ -6,3 +6,8 @@ db.sqlite3
 env/
 venv/
 staticfiles/
+
+# Pruebas de usabilidad: base de demo local
+usab.sqlite3
+# Capturas: solo se versionan las que usa el registro (git add -f)
+usabilidad/capturas/
