@@ -111,16 +111,12 @@ def regis_prof(request):
             )
 
             # Crear el registro del Profesor vinculado al User
+            from alumnos.models import Especialidad
+            especialidad_obj, _ = Especialidad.objects.get_or_create(nombre=especialidad)
+            
             profesor = Profesor.objects.create(
                 user=user,
-                nombre=nombre,
-                rut=rut,
-                especialidad=especialidad,
-                direccion=direccion,
-                fecha_nacimiento=fecha_nacimiento,
-                correo_electronico=correo_electronico,
-                telefono=telefono,
-                genero=genero
+                especialidad=especialidad_obj
             )
 
             # Iniciar sesión automáticamente
@@ -276,7 +272,9 @@ def actualizar_perfil_prof(request):
 
             profesor.user.first_name = nombre
             profesor.user.rut = rut
-            profesor.especialidad = especialidad
+            from alumnos.models import Especialidad
+            especialidad_obj, _ = Especialidad.objects.get_or_create(nombre=especialidad)
+            profesor.especialidad = especialidad_obj
             profesor.user.direccion = direccion
             profesor.user.email = correo
             profesor.user.telefono = telefono

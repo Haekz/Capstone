@@ -1,18 +1,8 @@
-"""El layout comun debe salir una sola vez y en todas las paginas publicas.
-
-Navbar y footer viven en alumnos/templates/alumnos/includes/. Estos tests
-detectan tanto una copia pegada a mano como un include roto.
-"""
-
+from alumnos.models import Especialidad
+'El layout comun debe salir una sola vez y en todas las paginas publicas.\n\nNavbar y footer viven en alumnos/templates/alumnos/includes/. Estos tests\ndetectan tanto una copia pegada a mano como un include roto.\n'
 from django.test import TestCase
 from django.urls import reverse
-
-# Paginas publicas que deben compartir el mismo encabezado y pie.
-PAGINAS_PUBLICAS = (
-    'home', 'nosotros', 'servicios', 'planes',
-    'contactos', 'simulador', 'opcion_user', 'pago',
-)
-
+PAGINAS_PUBLICAS = ('home', 'nosotros', 'servicios', 'planes', 'contactos', 'simulador', 'opcion_user', 'pago')
 
 class LayoutCompartidoTests(TestCase):
     """Marcas que solo puede poner base.html a traves de sus includes."""
@@ -21,7 +11,6 @@ class LayoutCompartidoTests(TestCase):
         for nombre in PAGINAS_PUBLICAS:
             with self.subTest(pagina=nombre):
                 html = self.client.get(reverse(nombre)).content.decode()
-
                 self.assertIn('class="nav-box"', html)
                 self.assertIn('class="footer"', html)
 
@@ -30,7 +19,6 @@ class LayoutCompartidoTests(TestCase):
         for nombre in PAGINAS_PUBLICAS:
             with self.subTest(pagina=nombre):
                 html = self.client.get(reverse(nombre)).content.decode()
-
                 self.assertEqual(html.count('<nav class="nav-box"'), 1)
                 self.assertEqual(html.count('<footer class="footer"'), 1)
 
@@ -39,7 +27,6 @@ class LayoutCompartidoTests(TestCase):
         for nombre in PAGINAS_PUBLICAS:
             with self.subTest(pagina=nombre):
                 html = self.client.get(reverse(nombre)).content.decode()
-
                 self.assertIn('2026 LBWUS', html)
                 self.assertNotIn('&copy; 2024', html)
 
@@ -48,10 +35,8 @@ class LayoutCompartidoTests(TestCase):
         for nombre in PAGINAS_PUBLICAS:
             with self.subTest(pagina=nombre):
                 html = self.client.get(reverse(nombre)).content.decode()
-
                 self.assertIn('id="cart-button"', html)
                 self.assertIn('window.agregarAlCarrito', html)
-
 
 class SimuladorHeredaTests(TestCase):
     """El simulador conserva sus funciones propias al heredar del base."""
@@ -71,16 +56,8 @@ class SimuladorHeredaTests(TestCase):
         """estilo.css define reglas globales (`*` y `body`) que romperian
         la tipografia y el modo oscuro del navbar y el footer compartidos.
         """
-        # ManifestStaticFilesStorage puede agregar un hash al nombre:
-        # simulador.01b5585786e9.css. La prueba acepta ambas formas.
-        self.assertNotRegex(
-            self.html,
-            r'css/estilo(?:\.[0-9a-f]+)?\.css'
-        )
-        self.assertRegex(
-            self.html,
-            r'css/simulador(?:\.[0-9a-f]+)?\.css'
-        )
+        self.assertNotRegex(self.html, 'css/estilo(?:\\.[0-9a-f]+)?\\.css')
+        self.assertRegex(self.html, 'css/simulador(?:\\.[0-9a-f]+)?\\.css')
 
     def test_su_css_queda_acotado_a_la_pagina(self):
         self.assertIn('class="simulador-page"', self.html)
