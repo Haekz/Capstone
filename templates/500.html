@@ -1,0 +1,91 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error 500 - Problema Interno</title>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+        }
+        .error-container {
+            position: relative;
+            padding: 50px;
+            max-width: 600px;
+        }
+        /* Logo traslúcido de fondo */
+        .bg-logo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0.15; /* Nivel de traslucidez */
+            z-index: 1;
+            width: 350px; 
+            pointer-events: none;
+        }
+        /* Contenido por encima del logo */
+        .content {
+            position: relative;
+            z-index: 2;
+        }
+        h1 {
+            font-size: 5rem;
+            color: #dc3545;
+            margin: 0 0 10px 0;
+        }
+        h2 {
+            font-size: 2rem;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        p {
+            font-size: 1.2rem;
+            color: #555;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        .btn-home {
+            display: inline-block;
+            padding: 12px 25px;
+            background-color: #212529;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .btn-home:hover {
+            background-color: #424649;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="error-container">
+        <!-- Logo de fondo -->
+        <img src="{% static 'alumnos/img/Logo.png' %}" alt="Logo" class="bg-logo">
+        
+        <div class="content">
+            <h1>500</h1>
+            <h2>¡Lo sentimos mucho!</h2>
+            <p>Ha ocurrido un error inesperado en nuestros servidores y no hemos podido procesar tu solicitud.</p>
+            <p>Nuestro equipo técnico ha sido notificado y estamos trabajando para solucionarlo lo antes posible. Te pedimos perdón por las molestias ocasionadas.</p>
+            <a href="/" class="btn-home">Volver al Inicio</a>
+            
+            <div style="margin-top: 30px;">
+                <img src="{% static 'alumnos/img/fixing_cables.svg' %}" alt="Técnico arreglando cables">
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

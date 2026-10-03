@@ -1,12 +1,16 @@
-
 from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from django.views.decorators.cache import never_cache
+from django.views.generic import TemplateView
 from alumnos.views import home, custom_login
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    # Rutas para probar las pantallas de error
+    path('test404/', TemplateView.as_view(template_name='404.html')),
+    path('test500/', TemplateView.as_view(template_name='500.html')),
+    
     # Ruta raíz que muestra la página de inicio.
     # Este es el UNICO lugar donde se registra name='home'.
     # No volver a declararlo en las urls de las apps: Django permite nombres
