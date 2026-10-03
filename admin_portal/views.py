@@ -17,11 +17,10 @@ def menu(request):
 
 # Controlador principal del Dashboard de administración
 @never_cache
+@admin_required
 def dashboard_admin(request):
     # redirigir al login si no hay sesión de admin
-    admin_id = request.session.get('admin_id')
-    if not admin_id:
-        return redirect('login')
+    admin_id = request.session['admin_id']
 
     admin = get_object_or_404(Tutor, id_tutor=admin_id)
 
@@ -74,10 +73,8 @@ def dashboard_admin(request):
 
 
 # Controlador para cambiar el estado de un reporte a 'resuelto'
+@admin_required
 def resolver_reporte(request, pk):
-    admin_id = request.session.get('admin_id')
-    if not admin_id:
-        return redirect('login')
 
     reporte = get_object_or_404(Reporte, id_reporte=pk)
     reporte.estado = 'resuelto'
@@ -120,17 +117,15 @@ def contactos_adm(request):
 
 # --- Vistas CRUD movidas desde alumnos ---
 @never_cache
+@admin_required
 def crud(request):
-    if not request.session.get('admin_id'):
-        return redirect('login')
     alumnos = Alumno.objects.all()
     context = {'alumnos': alumnos}
     return render(request, 'admin_portal/alumnos_list.html', context)
 
 @never_cache
+@admin_required
 def alumnos_Add(request):
-    if not request.session.get('admin_id'):
-        return redirect('login')
     if request.method == 'POST':
         try:
             nombre = request.POST['nombre']
@@ -162,9 +157,8 @@ def alumnos_Add(request):
     return render(request, 'admin_portal/alumnos_add.html', {'generos': generos})
 
 @never_cache
+@admin_required
 def alumnos_findEdit(request, pk):
-    if not request.session.get('admin_id'):
-        return redirect('login')
     try:
         alumno = Alumno.objects.get(id_alumno=pk)  # Usamos id_alumno en lugar de rut
         generos = Genero.objects.all()
@@ -175,9 +169,8 @@ def alumnos_findEdit(request, pk):
         return render(request, 'admin_portal/alumnos_list.html', context)
 
 
+@admin_required
 def alumnos_del(request, pk):
-    if not request.session.get('admin_id'):
-        return redirect('login')
     try:
         alumno = Alumno.objects.get(id_alumno=pk)  # Usamos id_alumno en lugar de rut
         alumno.delete()
@@ -189,9 +182,8 @@ def alumnos_del(request, pk):
     return render(request, 'admin_portal/alumnos_list.html', context)
 
 
+@admin_required
 def alumnos_Update(request):
-    if not request.session.get('admin_id'):
-        return redirect('login')
     if request.method == 'POST':
         id_alumno = request.POST.get('id_alumno')
         alumno = get_object_or_404(Alumno, id_alumno=id_alumno)
@@ -220,9 +212,8 @@ def logout_admin(request):
     return redirect('home')
 
 
+@admin_required
 def crear_clase(request):
-    if not request.session.get('admin_id'):
-        return redirect('login')
     if request.method == 'POST':
         nombre_curso = request.POST.get('nombre_curso', '').strip()
         modalidad = request.POST.get('modalidad', 'online')
@@ -243,17 +234,15 @@ def crear_clase(request):
     return JsonResponse({'success': False, 'message': 'Método no permitido.'})
 
 
+@admin_required
 def eliminar_clase(request, pk):
-    if not request.session.get('admin_id'):
-        return redirect('login')
     clase = get_object_or_404(Clase, id_clase=pk)
     clase.delete()
     return redirect('dashboard_admin')
 
 
+@admin_required
 def aprobar_retiro(request, pk):
-    if not request.session.get('admin_id'):
-        return redirect('login')
     from alumnos.models import SolicitudRetiro
     from django.utils import timezone
     retiro = get_object_or_404(SolicitudRetiro, id_solicitud=pk)
@@ -263,9 +252,8 @@ def aprobar_retiro(request, pk):
     return redirect('dashboard_admin')
 
 
+@admin_required
 def rechazar_retiro(request, pk):
-    if not request.session.get('admin_id'):
-        return redirect('login')
     from alumnos.models import SolicitudRetiro
     from django.utils import timezone
     retiro = get_object_or_404(SolicitudRetiro, id_solicitud=pk)

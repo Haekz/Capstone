@@ -5,7 +5,9 @@ from datetime import date
 from pathlib import Path
 
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 from django.contrib.staticfiles import finders
 from django.test import TestCase
 from django.urls import get_resolver, reverse
@@ -145,8 +147,11 @@ class MenuEstadoSesionTests(TestCase):
         self.assertEqual(sesion['url_panel'], reverse('dashboard_admin'))
         self.assertEqual(sesion['url_logout'], reverse('logout_admin'))
 
-    def test_staff_sin_perfil_tratado_como_admin(self):
-        """login_admin() acepta staff sin Tutor asociado; el menu tambien."""
+    def test_staff_sin_perfil_no_recibe_panel_admin(self):
+        """El portal admin exige un Tutor (alumnos/roles.py). is_staff solo
+        abre /admin/ de Django; el menu no debe ofrecer un panel que el
+        decorador va a rechazar.
+        """
         staff = User.objects.create_user(
             username='staff', password='clave12345', is_staff=True
         )
@@ -154,7 +159,8 @@ class MenuEstadoSesionTests(TestCase):
 
         _, sesion = self._menu()
 
-        self.assertEqual(sesion['rol'], 'Administrador')
+        self.assertEqual(sesion['rol'], '')
+        self.assertEqual(sesion['url_panel'], '')
 
     def test_usuario_sin_perfil_puede_cerrar_sesion(self):
         """Sin perfil no hay panel, pero si debe poder salir."""

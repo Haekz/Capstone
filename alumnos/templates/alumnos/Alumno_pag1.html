@@ -203,22 +203,22 @@
                             <div class="stat-card">
                                 <div class="stat-icon"><i class="bi bi-clock-history"></i></div>
                                 <div class="stat-info">
-                                    <h3>12 hrs</h3>
-                                    <p>Clases Tomadas</p>
+                                    <h3>{{ mis_inscripciones|length }}</h3>
+                                    <p>Clases inscritas</p>
                                 </div>
                             </div>
                             <div class="stat-card">
                                 <div class="stat-icon"><i class="bi bi-calendar-event"></i></div>
                                 <div class="stat-info">
-                                    <h3>2 Pendientes</h3>
-                                    <p>Próximas Tutorías</p>
+                                    <h3>{{ clases_disponibles|length }}</h3>
+                                    <p>Clases disponibles</p>
                                 </div>
                             </div>
                             <div class="stat-card">
-                                <div class="stat-icon"><i class="bi bi-star-half"></i></div>
+                                <div class="stat-icon"><i class="bi bi-person-video3"></i></div>
                                 <div class="stat-info">
-                                    <h3>4.9</h3>
-                                    <p>Mi Calificación</p>
+                                    <h3>{{ profesores_list|length }}</h3>
+                                    <p>Profesores disponibles</p>
                                 </div>
                             </div>
                         </div>
@@ -231,7 +231,7 @@
                             <div class="dashboard-search-container ap-mb-20">
                                 <div class="search-input-wrapper">
                                     <i class="bi bi-search search-icon"></i>
-                                    <input type="text" id="dashboard-search-input" placeholder="Buscar profesor, tutor o especialidad (ej. Matemáticas, Carlos)..." onkeyup="renderDashboardContent()">
+                                    <input type="search" id="dashboard-search-input" aria-label="Buscar profesor, tutor o especialidad" placeholder="Buscar profesor, tutor o especialidad (ej. Matemáticas, Carlos)..." oninput="renderDashboardContent()">
                                 </div>
                             </div>
                             

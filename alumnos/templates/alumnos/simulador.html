@@ -14,8 +14,12 @@
 {% block content %}
 <!-- Busqueda de profesionales por comuna o por nombre -->
 <div class="container mt-5">
-    <div class="header text-center">
-        <h2>Simula tu búsqueda de un profesional</h2>
+    {% comment %}
+    'sim-header' y no 'header': .header es el navbar fijo de styles.css y
+    convertia estos titulos en barras fijas que tapaban el menu.
+    {% endcomment %}
+    <div class="sim-header text-center">
+        <h1>Simula tu búsqueda de un profesional</h1>
     </div>
     <div class="search-container d-flex justify-content-center gap-3">
         <div class="search-section">
@@ -38,7 +42,7 @@
 
 <!-- Conversion de moneda con datos de mindicador.cl -->
 <div class="container mt-5 mb-5">
-    <div class="header text-center">
+    <div class="sim-header text-center">
         <h2>Conversión de Moneda</h2>
     </div>
     <div class="search-container d-flex justify-content-center gap-3">
