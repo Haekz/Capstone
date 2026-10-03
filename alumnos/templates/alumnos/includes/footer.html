@@ -1,0 +1,35 @@
+{# Pie de pagina compartido por todo el sitio publico. #}
+<footer class="footer">
+    <div class="contenedor footer-grid">
+        <div class="footer-col">
+            <h3>Contacto</h3>
+            <p>Dirección: Pacifico Norte 123, Vernon Rockville, CT 06066</p>
+            <p>Tel: 123-456-7890</p>
+            <p>Email: teachers@lbwus.cl</p>
+        </div>
+        <div class="footer-col">
+            <h3>Información</h3>
+            <ul>
+                <li><a href="{% url 'nosotros' %}">Nosotros</a></li>
+                <li><span class="footer-static-link" aria-label="Política de privacidad próximamente">Privacidad</span></li>
+                <li><span class="footer-static-link" aria-label="Términos y condiciones próximamente">Términos</span></li>
+            </ul>
+            <div class="social-box">
+                <span class="social-fb social-placeholder" aria-label="Facebook próximamente"><i class="bi bi-facebook"></i></span>
+                <a href="https://www.instagram.com/lbwus_?utm_source=qr&stkn=MXZxaTlubnMxZHZubw%3D%3D" class="social-ig" aria-label="Instagram" target="_blank" rel="noopener noreferrer"><i class="bi bi-instagram"></i></a>
+                <span class="social-x social-placeholder" aria-label="X (Twitter) próximamente"><i class="bi bi-twitter-x"></i></span>
+            </div>
+        </div>
+        <div class="footer-col">
+            <h3>Newsletter</h3>
+            <div class="subscribe-box">
+                <label for="newsletter-email" class="visually-hidden">Tu correo electrónico</label>
+                <input type="email" id="newsletter-email" placeholder="Tu email...">
+                <button class="btn-principal">OK</button>
+            </div>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>&copy; 2026 LBWUS - Desarrollando enseñanza para el mundo</p>
+    </div>
+</footer>

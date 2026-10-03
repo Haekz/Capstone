@@ -4,52 +4,126 @@
 {% block title %}LBWUS | Servicios{% endblock %}
 
 {% block content %}
-<div class="contenedor">
-    <div class="section-header" style="margin-top: 100px;">
-        <h2>Nuestros Servicios</h2>
-        <p>Expertos dedicados a cada etapa del aprendizaje.</p>
+<!-- esta parte es de la introducción de la página con accesos directos a cada nivel -->
+<section class="sv-intro">
+    <div class="contenedor">
+        <span class="sv-eyebrow">Lo que ofrecemos</span>
+        <h1>Nuestros servicios</h1>
+        <p>Expertos dedicados a cada etapa del aprendizaje, desde los primeros años hasta la educación superior.</p>
+        <nav class="sv-chips" aria-label="Niveles">
+            <a href="#basica"><i class="bi bi-pencil"></i> Educación Básica</a>
+            <a href="#media"><i class="bi bi-journal-text"></i> Educación Media</a>
+            <a href="#superior"><i class="bi bi-mortarboard"></i> Educación Superior</a>
+        </nav>
     </div>
+</section>
 
-    <!-- esta parte es de la sección de educación básica con la descripción y la imagen descriptiva -->
-    <section class="about" style="background: #f8fafc; border-radius: 24px; padding: 60px; margin-bottom: 40px;">
-        <div class="grid-2">
-            <div class="about-img">
-                <img src="{% static 'alumnos/img/basica.jpeg' %}" alt="Educación Básica" style="width: 100%; border-radius: 16px;">
+<!-- esta parte es de los tres niveles, alternando imagen y texto -->
+<section class="sv-levels">
+    <div class="contenedor">
+
+        <!-- Educación Básica -->
+        <article class="sv-level" id="basica">
+            <div class="sv-level-img">
+                <img src="{% static 'alumnos/img/basica.jpeg' %}" alt="Niños dibujando y escribiendo en clase">
             </div>
-            <div class="about-text">
+            <div class="sv-level-text">
+                <span class="sv-level-num">01 · Nivel inicial</span>
                 <h2>Educación Básica</h2>
-                <p>Introducimos a los estudiantes al mundo del conocimiento de una manera comprensiva. Desde los principios de lectura y escritura hasta habilidades creativas en música y artes.</p>
-                <button class="btn-principal">Ver más detalles</button>
+                <p>Introducimos a los estudiantes al mundo del conocimiento de una manera comprensiva. Desde los
+                    principios de lectura y escritura hasta habilidades creativas en música y artes.</p>
+                <ul class="sv-list">
+                    <li><i class="bi bi-check2"></i> Lectura y escritura</li>
+                    <li><i class="bi bi-check2"></i> Música y artes</li>
+                    <li><i class="bi bi-check2"></i> Aprendizaje comprensivo y a su ritmo</li>
+                </ul>
+                <a href="{% url 'planes' %}" class="btn-text">Ver planes <i class="bi bi-arrow-right"></i></a>
             </div>
-        </div>
-    </section>
+        </article>
 
-    <!-- esta parte es de la sección de educación media con su descripción correspondiente -->
-    <section class="about" style="background: #f1f5f9; border-radius: 24px; padding: 60px; margin-bottom: 40px;">
-        <div class="grid-2">
-            <div class="about-text">
+        <!-- Educación Media -->
+        <article class="sv-level sv-level--reverse" id="media">
+            <div class="sv-level-img">
+                <img src="{% static 'alumnos/img/media.avif' %}" alt="Estudiantes de educación media">
+            </div>
+            <div class="sv-level-text">
+                <span class="sv-level-num">02 · Nivel intermedio</span>
                 <h2>Educación Media</h2>
-                <p>Profundizamos en asignaturas especializadas, preparando a los estudiantes para desafíos superiores y decisiones vocacionales. Enfoque analítico en ciencias y humanidades.</p>
+                <p>Profundizamos en asignaturas especializadas, preparando a los estudiantes para desafíos superiores y
+                    decisiones vocacionales. Enfoque analítico en ciencias y humanidades.</p>
+                <ul class="sv-list">
+                    <li><i class="bi bi-check2"></i> Asignaturas especializadas</li>
+                    <li><i class="bi bi-check2"></i> Ciencias y humanidades</li>
+                    <li><i class="bi bi-check2"></i> Apoyo en decisiones vocacionales</li>
+                </ul>
+                <a href="{% url 'planes' %}" class="btn-text">Ver planes <i class="bi bi-arrow-right"></i></a>
             </div>
-            <div class="about-img">
-                <img src="{% static 'alumnos/img/media.avif' %}" alt="Educación Media" style="width: 100%; border-radius: 16px;">
-            </div>
-        </div>
-    </section>
+        </article>
 
-    <!-- esta parte es de la sección de educación superior para alumnos universitarios y profesionales -->
-    <section class="about" style="background: #f8fafc; border-radius: 24px; padding: 60px; margin-bottom: 100px;">
-        <div class="grid-2">
-            <div class="about-img">
-                <img src="{% static 'alumnos/img/superior.jpeg' %}" alt="Educación Superior" style="width: 100%; border-radius: 16px;">
+        <!-- Educación Superior -->
+        <article class="sv-level" id="superior">
+            <div class="sv-level-img">
+                <img src="{% static 'alumnos/img/superior.jpeg' %}" alt="Estudiante universitaria con cuadernos">
             </div>
-            <div class="about-text">
+            <div class="sv-level-text">
+                <span class="sv-level-num">03 · Nivel avanzado</span>
                 <h2>Educación Superior</h2>
-                <p>Académicos especialistas imparten conocimientos avanzados en ingeniería, medicina y ciencias sociales. Preparación directa para el mercado laboral y la investigación.</p>
+                <p>Académicos especialistas imparten conocimientos avanzados en ingeniería, medicina y ciencias
+                    sociales. Preparación directa para el mercado laboral y la investigación.</p>
+                <ul class="sv-list">
+                    <li><i class="bi bi-check2"></i> Ingeniería, medicina y ciencias sociales</li>
+                    <li><i class="bi bi-check2"></i> Preparación para el mercado laboral</li>
+                    <li><i class="bi bi-check2"></i> Apoyo en investigación</li>
+                </ul>
+                <a href="{% url 'planes' %}" class="btn-text">Ver planes <i class="bi bi-arrow-right"></i></a>
+            </div>
+        </article>
+
+    </div>
+</section>
+
+<!-- esta parte es de los pasos para empezar -->
+<section class="sv-steps">
+    <div class="contenedor">
+        <div class="section-header">
+            <h2>¿Cómo empezar?</h2>
+            <p>Tres pasos para conectar con el profesional indicado.</p>
+        </div>
+        <ol class="sv-steps-grid">
+            <li class="sv-step">
+                <span class="sv-step-num">1</span>
+                <h3>Elige tu nivel</h3>
+                <p>Básica, media o superior, según la etapa en que estés.</p>
+            </li>
+            <li class="sv-step">
+                <span class="sv-step-num">2</span>
+                <h3>Escoge un plan</h3>
+                <p>Básico, medio o superior, por semana o por mes.</p>
+            </li>
+            <li class="sv-step">
+                <span class="sv-step-num">3</span>
+                <h3>Empieza tus clases</h3>
+                <p>Online o presencial, con un profesional cerca de ti.</p>
+            </li>
+        </ol>
+    </div>
+</section>
+
+<!-- esta parte es del llamado a la acción final -->
+<section class="ns-cta">
+    <div class="contenedor">
+        <div class="ns-cta-box">
+            <div>
+                <h2>¿No sabes qué plan elegir?</h2>
+                <p>Compara los planes o escríbenos y te ayudamos a encontrar el indicado.</p>
+            </div>
+            <div class="ns-cta-btns">
+                <a href="{% url 'planes' %}" class="btn-accion">Ver planes</a>
+                <a href="{% url 'contactos' %}" class="btn-outline">Contáctanos</a>
             </div>
         </div>
-    </section>
-</div>
+    </div>
+</section>
 {% endblock %}
 
 {% block extra_js %}

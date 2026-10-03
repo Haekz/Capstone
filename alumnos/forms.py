@@ -17,8 +17,8 @@ class AlumnoForm(forms.ModelForm):
     class Meta:
         model = Alumno
         fields = [
-            'nombre', 'rut', 'nivel_educacion', 'direccion', 
-            'fecha_nacimiento', 'correo_electronico', 'telefono', 
+            'nombre', 'rut', 'nivel_educacion', 'direccion',
+            'fecha_nacimiento', 'correo_electronico', 'telefono',
             'genero'
         ]
         widgets = {
@@ -79,16 +79,16 @@ class AlumnoForm(forms.ModelForm):
 
         if password and confirm_password and password != confirm_password:
             raise forms.ValidationError({"confirm_password": "Las contraseñas no coinciden."})
-            
+
         rut = cleaned_data.get("rut")
         correo = cleaned_data.get("correo_electronico")
-        
+
         if rut and correo:
             from .utils import usuario_existe
             error_msg = usuario_existe(rut, correo)
             if error_msg:
                 raise forms.ValidationError(error_msg)
-                
+
         return cleaned_data
 
     def save(self, commit=True):

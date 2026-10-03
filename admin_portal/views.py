@@ -1,9 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.cache import never_cache
 from alumnos.models import Alumno, Genero, Profesor, Tutor, Clase, Reporte
+from alumnos.decorators import admin_required
 
-# Vista del menú antiguo (ahora redirige automáticamente al nuevo panel de control)
+# Ruta antigua del menú: ya no tiene template, solo redirige al panel.
+# Se mantiene porque regis_tutor.html envía aquí tras registrarse.
 def menu(request):
     admin_id = request.session.get('admin_id')
     if admin_id:
@@ -13,6 +16,7 @@ def menu(request):
 
 
 # Controlador principal del Dashboard de administración
+@never_cache
 def dashboard_admin(request):
     # redirigir al login si no hay sesión de admin
     admin_id = request.session.get('admin_id')
@@ -86,22 +90,36 @@ def home_adm(request):
     return render(request, 'admin_portal/home_adm.html', context)
 
 def reporte_alumnos(request):
-    alumnos = Alumno.objects.all()  
-    return render(request, 'alumnos/reporte_alumnos.html', {'alumnos': alumnos})
+    """Ruta antigua del listado de alumnos.
 
+    Apuntaba a 'alumnos/reporte_alumnos.html', un template que no existe:
+    la vista reventaba con TemplateDoesNotExist (HTTP 500) y ademas no
+    exigia sesion de administrador. El listado vive en crud(), que usa
+    'admin_portal/alumnos_list.html' y si valida el acceso; se redirige
+    ahi para no mantener dos vistas que hacen lo mismo.
+    """
+    return redirect('crud')
+
+@never_cache
+@admin_required
 def planes_adm(request):
     context = {}
     return render(request, 'admin_portal/planes_adm.html', context)
 
+@never_cache
+@admin_required
 def nosotros_adm(request):
     context = {}
     return render(request, 'admin_portal/nosotros_adm.html', context)
 
+@never_cache
+@admin_required
 def contactos_adm(request):
     context = {}
     return render(request, 'admin_portal/contactos_adm.html', context)
 
 # --- Vistas CRUD movidas desde alumnos ---
+@never_cache
 def crud(request):
     if not request.session.get('admin_id'):
         return redirect('login')
@@ -109,6 +127,7 @@ def crud(request):
     context = {'alumnos': alumnos}
     return render(request, 'admin_portal/alumnos_list.html', context)
 
+@never_cache
 def alumnos_Add(request):
     if not request.session.get('admin_id'):
         return redirect('login')
@@ -142,6 +161,7 @@ def alumnos_Add(request):
     generos = Genero.objects.all()
     return render(request, 'admin_portal/alumnos_add.html', {'generos': generos})
 
+@never_cache
 def alumnos_findEdit(request, pk):
     if not request.session.get('admin_id'):
         return redirect('login')

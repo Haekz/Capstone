@@ -1,0 +1,5 @@
+<script>
+    // Aplica el modo oscuro antes de pintar la pagina: si se espera a que cargue,
+    // el navegador alcanza a mostrarla en blanco y se ve un destello.
+    try { if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode'); } catch (e) {}
+</script>

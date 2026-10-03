@@ -1,70 +1,297 @@
-/* esta parte es de los estilos del formulario de registro de alumnos, aquí se define el layout, la tarjeta, la imagen decorativa y los inputs del form */
+/* ===== Formulario de registro de alumnos =====
+   Fondo sobrio (sin degradado fuerte), tarjeta con borde fino
+   y campos iguales a los del login. Usa las variables de
+   styles.css con valores de respaldo por si alguna no existe. */
+
 .registration-container {
-    min-height: calc(100vh - var(--header-height));
+    min-height: 100vh;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
-    padding: 100px 300px;
-    background: linear-gradient(135deg, #ffffff 0%, #c3cfe2 100%);
+    padding: calc(var(--header-height, 76px) + 56px) 20px 80px;
+    background:
+        radial-gradient(circle at 12% 0%, rgba(124, 58, 237, 0.10) 0%, transparent 40%),
+        radial-gradient(circle at 100% 100%, rgba(168, 85, 247, 0.08) 0%, transparent 45%),
+        #f6f5fa;
+}
+
+body.dark-mode .registration-container {
+    background:
+        radial-gradient(circle at 12% 0%, rgba(124, 58, 237, 0.18) 0%, transparent 40%),
+        #0f0b1a;
 }
 
 .registration-card {
-    background: var(--white);
-    border-radius: 24px;
-    box-shadow: var(--shadow);
     display: grid;
-    grid-template-columns: 1fr 1.2fr;
-    max-width: 800px;
-    width: 90%;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    background: #ffffff;
+    border: 1px solid rgba(26, 18, 51, 0.10);
+    border-radius: 24px;
+    box-shadow: 0 1px 2px rgba(26, 18, 51, 0.04), 0 16px 40px rgba(26, 18, 51, 0.08);
+    max-width: 960px;
+    width: 100%;
     overflow: hidden;
-    margin-bottom: 24px;
 }
 
-.registration-img {
-    background: url("../img/prueb1.jpeg") center/cover no-repeat;
+/* ---------- Panel de marca (igual al del login) ---------- */
+.reg-brand {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 32px;
+    padding: 44px 40px;
+    background:
+        radial-gradient(circle at 15% 10%, rgba(168, 85, 247, 0.45) 0%, transparent 45%),
+        radial-gradient(circle at 90% 90%, rgba(124, 58, 237, 0.35) 0%, transparent 50%),
+        #1a1233;
+    color: #ffffff;
+}
+
+.reg-brand::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+    background-size: 22px 22px;
+    mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), transparent 85%);
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), transparent 85%);
+    pointer-events: none;
+}
+
+.reg-brand > * {
+    position: relative;
+}
+
+.reg-eyebrow {
+    display: inline-block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #f5a524;
+    margin-bottom: 14px;
+}
+
+.reg-brand h3 {
+    font-size: clamp(1.7rem, 2.6vw, 2.2rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin-bottom: 14px;
+    color: #ffffff;
+}
+
+.reg-brand-body > p {
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 28px;
+}
+
+.reg-points {
+    list-style: none;
+    display: grid;
+    gap: 14px;
+    padding: 0;
+}
+
+.reg-points li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.reg-points i {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #f5a524;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.reg-brand-foot {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+    line-height: 1.5;
+}
+
+.reg-brand-foot a {
+    color: #ffffff;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+/* Se quita la franja de color superior */
+.registration-card::before {
+    display: none;
+}
+
+body.dark-mode .registration-card {
+    background: #171129;
+    border-color: rgba(255, 255, 255, 0.10);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
 }
 
 .registration-form-box {
-    padding: 50px;
+    padding: 44px 44px 36px;
+    align-self: center;
 }
 
 .registration-form-box h2 {
-    margin-bottom: 30px;
-    text-align: center;
+    text-align: left;
     color: var(--text);
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.15;
+    margin-bottom: 8px;
+}
+
+.registration-subtitle {
+    text-align: left;
+    color: var(--text-light);
+    font-size: 0.98rem;
+    line-height: 1.55;
+    margin-bottom: 28px;
 }
 
 .form-group {
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 }
 
 .form-group label {
     display: block;
-    margin-bottom: 8px;
+    margin-bottom: 7px;
     font-weight: 600;
     font-size: 0.9rem;
+    color: var(--text);
 }
 
-.form-control {
+.registration-form-box .form-control,
+.registration-form-box input:not([type="checkbox"]):not([type="radio"]),
+.registration-form-box select {
     width: 100%;
-    padding: 12px 16px;
-    border: 1px solid #e5e7eb;
+    padding: 13px 16px;
+    border: 1px solid rgba(26, 18, 51, 0.10);
     border-radius: 12px;
     font-family: inherit;
-    transition: var(--transition);
+    font-size: 0.98rem;
+    background: #f7f5fb;
+    color: var(--text);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
-.form-control:focus {
+.registration-form-box .form-control::placeholder,
+.registration-form-box input::placeholder {
+    color: var(--text-light);
+    opacity: 0.8;
+}
+
+body.dark-mode .registration-form-box .form-control,
+body.dark-mode .registration-form-box input:not([type="checkbox"]):not([type="radio"]),
+body.dark-mode .registration-form-box select {
+    background: #0f0b1a;
+    border-color: rgba(255, 255, 255, 0.10);
+    color: var(--text);
+}
+
+.registration-form-box .form-control:focus,
+.registration-form-box input:focus,
+.registration-form-box select:focus {
     outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
+    border-color: #7c3aed;
+    background: #ffffff;
+    box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.12);
 }
 
-@media (max-width: 768px) {
+body.dark-mode .registration-form-box .form-control:focus,
+body.dark-mode .registration-form-box input:focus,
+body.dark-mode .registration-form-box select:focus {
+    background: #171129;
+}
+
+.field-error {
+    color: #dc2626;
+    font-size: 0.82rem;
+    margin-top: 6px;
+}
+
+body.dark-mode .field-error {
+    color: #fca5a5;
+}
+
+.registration-form-box .btn-principal {
+    width: 100%;
+    padding: 14px;
+    margin-top: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 50px;
+    background-color: #7c3aed;
+    color: #ffffff;
+    box-shadow: none;
+}
+
+.registration-form-box .btn-principal:hover {
+    background-color: #6d28d9;
+    transform: none;
+    box-shadow: 0 10px 24px rgba(124, 58, 237, 0.28);
+}
+
+.registration-login-link {
+    margin-top: 22px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(26, 18, 51, 0.10);
+    text-align: center;
+    font-size: 0.93rem;
+    color: var(--text-light);
+}
+
+body.dark-mode .registration-login-link {
+    border-top-color: rgba(255, 255, 255, 0.10);
+}
+
+.registration-login-link a {
+    color: #7c3aed;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.registration-login-link a:hover {
+    text-decoration: underline;
+}
+
+body.dark-mode .registration-login-link a {
+    color: #c4b5fd;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 900px) {
     .registration-card {
         grid-template-columns: 1fr;
+        max-width: 480px;
     }
-    .registration-img {
+
+    .reg-brand {
         display: none;
+    }
+}
+
+@media (max-width: 500px) {
+    .registration-container {
+        padding-top: calc(var(--header-height, 76px) + 28px);
+    }
+
+    .registration-form-box {
+        padding: 32px 22px 28px;
     }
 }

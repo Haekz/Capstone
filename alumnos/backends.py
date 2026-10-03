@@ -32,7 +32,7 @@ class RutOrEmailBackend(ModelBackend):
         # 2. Si no se encuentra en User, buscar en los perfiles por variantes de RUT
         if not users.exists():
             from alumnos.models import Alumno, Profesor, Tutor
-            
+
             alumno = Alumno.objects.filter(rut__in=ruts).select_related('user').first()
             if alumno and alumno.user:
                 users = User.objects.filter(pk=alumno.user.pk)

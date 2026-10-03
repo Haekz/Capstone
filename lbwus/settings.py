@@ -25,7 +25,12 @@ SECRET_KEY = 'django-insecure-(5vif7*6x25s&&b89y)#ly7=3a*bp0&_$9d^+xuap-3-oh3rdi
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['capstone-production-eddd.up.railway.app', '127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['lbwus.xyz', '*.up.railway.app', 'localhost', '127.0.0.1']
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://lbwus.xyz',
+    'https://capstone-production-eddd.up.railway.app'
+]
 
 
 # Application definition
@@ -37,6 +42,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',          
+    'allauth',                       
+    'allauth.account',                
+    'allauth.socialaccount',          
+    'allauth.socialaccount.providers.google',  
     'alumnos',
     'admin_portal',
     'user_profesor',
@@ -45,14 +55,24 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # ✅ Solo esta línea, borrar la otra
+    'whitenoise.middleware.WhiteNoiseMiddleware',  
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
+
+SITE_ID = 1
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+SOCIALACCOUNT_LOGIN_ON_GET = True
 
 ROOT_URLCONF = 'lbwus.urls'
 
@@ -67,6 +87,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                # Expone 'usuario_sesion' al menu global (alumnos/base.html)
+                'alumnos.context_processors.estado_sesion',
             ],
         },
     },
@@ -136,7 +158,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     BASE_DIR / 'lbwus' / 'static',
 ]
@@ -148,8 +170,44 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Configuración para el envío de correos de prueba en consola
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# ============================================================
+# CORREO - RECUPERACIÓN DE CONTRASEÑA
+# ============================================================
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+EMAIL_HOST = os.environ.get(
+    'EMAIL_HOST',
+    'smtp.gmail.com'
+)
+
+EMAIL_PORT = int(
+    os.environ.get(
+        'EMAIL_PORT',
+        '587'
+    )
+)
+
+EMAIL_USE_TLS = True
+EMAIL_TIMEOUT = 15
+
+EMAIL_HOST_USER = os.environ.get(
+    'EMAIL_HOST_USER',
+    ''
+)
+
+EMAIL_HOST_PASSWORD = os.environ.get(
+    'EMAIL_HOST_PASSWORD',
+    ''
+)
+
+DEFAULT_FROM_EMAIL = os.environ.get(
+    'DEFAULT_FROM_EMAIL',
+    EMAIL_HOST_USER
+)
+
+# El enlace de recuperación expira después de 1 hora
+PASSWORD_RESET_TIMEOUT = 3600
 
 # Backends de autenticación centralizada (RUT, Correo o Usuario)
 AUTHENTICATION_BACKENDS = [

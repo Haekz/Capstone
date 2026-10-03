@@ -1,0 +1,6 @@
+<script>
+    // Si el navegador muestra esta pagina desde su memoria al apretar "atras"
+    // (bfcache), se recarga para que el servidor decida: login -> portal si hay
+    // sesion; pagina privada -> login si ya se cerro sesion.
+    window.addEventListener('pageshow', function (e) { if (e.persisted) window.location.reload(); });
+</script>
