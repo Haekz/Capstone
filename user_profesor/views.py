@@ -94,13 +94,20 @@ def regis_prof(request):
 
             genero = get_object_or_404(Genero, id_genero=genero_id)
 
-            from django.contrib.auth.models import User
-            # Crear usuario Django centralizado (username = RUT normalizado o RUT)
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            # Crear usuario CustomUser centralizado
             user = User.objects.create_user(
                 username=rut,
+                rut=rut,
                 email=correo_electronico,
+                rol='profesor',
                 password=password,
-                first_name=nombre
+                first_name=nombre,
+                telefono=telefono,
+                direccion=direccion,
+                fecha_nacimiento=fecha_nacimiento,
+                genero=genero
             )
 
             # Crear el registro del Profesor vinculado al User
@@ -143,12 +150,14 @@ def login_prof(request):
 
         from django.contrib.auth import authenticate, login as auth_login
         user = authenticate(request, username=identificador, password=password)
-        if user and hasattr(user, 'perfil_profesor'):
+        if user and (getattr(user, 'rol', None) == 'profesor' or hasattr(user, 'perfil_profesor')):
             auth_login(request, user)
-            request.session['profesor_id'] = user.perfil_profesor.id_profesor
+            prof_id = user.perfil_profesor.id_profesor if hasattr(user, 'perfil_profesor') else user.id
+            request.session['profesor_id'] = prof_id
+            nombre_prof = user.perfil_profesor.nombre if hasattr(user, 'perfil_profesor') else (user.first_name or user.username)
             return JsonResponse({
-                "success": True,
-                "message": f"Bienvenido de vuelta, Prof. {user.perfil_profesor.nombre}."
+                "success": True, 
+                "message": f"Bienvenido de vuelta, Prof. {nombre_prof}."
             })
         else:
             return JsonResponse({
@@ -407,12 +416,19 @@ def regis_tutor(request):
 
             genero = get_object_or_404(Genero, id_genero=genero_id)
 
-            from django.contrib.auth.models import User
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
             user = User.objects.create_user(
                 username=rut,
+                rut=rut,
                 email=correo_electronico,
+                rol='admin',
                 password=password,
-                first_name=nombre
+                first_name=nombre,
+                telefono=telefono,
+                direccion=direccion,
+                fecha_nacimiento=fecha_nacimiento,
+                genero=genero
             )
             # Sin is_staff: el acceso al portal lo da el perfil Tutor, no el
             # flag de Django. is_staff abre /admin/, que es otra cosa y debe
@@ -457,15 +473,12 @@ def login_admin(request):
 
         from django.contrib.auth import authenticate, login as auth_login
         user = authenticate(request, username=identificador, password=password)
-
-        # Exigimos el perfil Tutor propio de este usuario. Antes bastaba con
-        # is_staff y se guardaba user.id como admin_id: un id de User y un id
-        # de Tutor no son lo mismo, asi que la sesion quedaba apuntando a un
-        # perfil ajeno o inexistente.
-        if user and hasattr(user, 'perfil_tutor'):
+        if user and (getattr(user, 'rol', None) == 'admin' or hasattr(user, 'perfil_tutor') or user.is_staff or user.is_superuser):
             auth_login(request, user)
-            request.session['admin_id'] = user.perfil_tutor.id_tutor
-            nombre_mostrar = user.perfil_tutor.nombre
+            tutor = getattr(user, 'perfil_tutor', None) or Tutor.objects.filter(user=user).first()
+            admin_id = tutor.id_tutor if tutor else user.id
+            request.session['admin_id'] = admin_id
+            nombre_mostrar = tutor.nombre if tutor else (user.first_name or user.username)
             return JsonResponse({
                 "success": True,
                 "message": f"Bienvenido de vuelta, Administrador {nombre_mostrar}."

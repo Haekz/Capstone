@@ -385,108 +385,33 @@ def custom_login(request):
 
             if user is not None:
 
-                auth_login(
-                    request,
-                    user
-                )
+                auth_login(request, user)
 
-                # -------------------------
-                # ALUMNO
-                # -------------------------
+                # 1. ¿Es Alumno?
+                if getattr(user, 'rol', None) == 'alumno' or hasattr(user, 'perfil_alumno'):
+                    alumno_id = user.perfil_alumno.id_alumno if hasattr(user, 'perfil_alumno') else user.id
+                    request.session['alumno_id'] = alumno_id
+                    return redirect('alumno_pag1')
 
-                if hasattr(
-                    user,
-                    'perfil_alumno'
-                ):
+                # 2. ¿Es Profesor?
+                elif getattr(user, 'rol', None) == 'profesor' or hasattr(user, 'perfil_profesor'):
+                    prof_id = user.perfil_profesor.id_profesor if hasattr(user, 'perfil_profesor') else user.id
+                    request.session['profesor_id'] = prof_id
+                    return redirect('panel_profesor')
 
-                    request.session[
-                        'alumno_id'
-                    ] = (
-                        user
-                        .perfil_alumno
-                        .id_alumno
-                    )
-
-                    return redirect(
-                        'alumno_pag1'
-                    )
-
-                # -------------------------
-                # PROFESOR
-                # -------------------------
-
-                elif hasattr(
-                    user,
-                    'perfil_profesor'
-                ):
-
-                    request.session[
-                        'profesor_id'
-                    ] = (
-                        user
-                        .perfil_profesor
-                        .id_profesor
-                    )
-
-                    return redirect(
-                        'panel_profesor'
-                    )
-
-                # -------------------------
-                # ADMINISTRADOR / TUTOR
-                # -------------------------
-
-                elif hasattr(
-                    user,
-                    'perfil_tutor'
-                ):
-
-                    request.session[
-                        'admin_id'
-                    ] = (
-                        user
-                        .perfil_tutor
-                        .id_tutor
-                    )
-
-                    return redirect(
-                        'dashboard_admin'
-                    )
-
-                # -------------------------
-                # SUPERUSUARIO / STAFF
-                # -------------------------
-
-                elif (
-                    user.is_staff
-                    or user.is_superuser
-                ):
-
-                    # Solo se acepta el Tutor ligado a ESTE usuario.
-                    # Antes, si no lo encontraba, caia en
-                    # Tutor.objects.first() y la sesion terminaba operando
-                    # con el perfil de otra persona.
-                    tutor = (
-                        Tutor.objects
-                        .filter(user=user)
-                        .first()
-                    )
-
+                # 3. ¿Es Administrador / Tutor?
+                elif getattr(user, 'rol', None) == 'admin' or hasattr(user, 'perfil_tutor') or user.is_staff or user.is_superuser:
+                    tutor = getattr(user, 'perfil_tutor', None) or Tutor.objects.filter(user=user).first()
+                    
                     if tutor:
+                        request.session['admin_id'] = tutor.id_tutor
+                        return redirect('dashboard_admin')
+                    
+                    if getattr(user, 'rol', None) == 'admin' or user.is_staff or user.is_superuser:
+                        request.session['admin_id'] = user.id
+                        return redirect('dashboard_admin')
 
-                        request.session[
-                            'admin_id'
-                        ] = tutor.id_tutor
-
-                        return redirect(
-                            'dashboard_admin'
-                        )
-
-                    error = (
-                        "Tu cuenta no tiene "
-                        "un perfil de "
-                        "administrador asociado."
-                    )
+                    error = "Tu cuenta no tiene un perfil de administrador asociado."
 
                 else:
 

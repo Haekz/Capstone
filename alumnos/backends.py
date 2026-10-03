@@ -1,6 +1,8 @@
 from django.contrib.auth.backends import ModelBackend
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.db.models import Q
+
+User = get_user_model()
 
 def variaciones_rut(texto):
     clean = texto.replace('.', '').replace(' ', '').upper()
@@ -22,9 +24,9 @@ class RutOrEmailBackend(ModelBackend):
         identificador = username.strip()
         ruts = variaciones_rut(identificador)
 
-        # 1. Buscar en User directamente por username (variantes de RUT), o por email
+        # 1. Buscar en CustomUser directamente por rut, username o email
         users = User.objects.filter(
-            Q(username__in=ruts) | Q(email__iexact=identificador)
+            Q(rut__in=ruts) | Q(username__in=ruts) | Q(email__iexact=identificador)
         )
 
         # 2. Si no se encuentra en User, buscar en los perfiles por variantes de RUT
