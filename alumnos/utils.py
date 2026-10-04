@@ -36,18 +36,36 @@ def validar_rut_chileno(rut):
 
     return dv_ingresado == dv_calculado
 
-def usuario_existe(rut, correo):
+
+def error_fecha_nacimiento(fecha, edad_minima=18):
+    """Mensaje de error para una fecha de nacimiento, o None si sirve."""
+    from datetime import date
+    hoy = date.today()
+    if fecha >= hoy:
+        return "La fecha de nacimiento no puede ser actual ni futura."
+    edad = hoy.year - fecha.year - ((hoy.month, hoy.day) < (fecha.month, fecha.day))
+    if edad < edad_minima:
+        return f"Debes ser mayor o igual a {edad_minima} años."
+    return None
+
+def usuario_existe(rut, correo, excluir_user=None):
     """
     Verifica de forma transversal si el RUT o correo ya existe en
     el modelo User o en alguno de los 3 modelos de perfil (Alumno, Profesor, Tutor).
     Retorna un string con el mensaje de error si existe, o None si está libre.
+
+    ``excluir_user``: usuario que no cuenta como duplicado (la cuenta sin
+    perfil que dejo un login con Google y que ahora se completa).
     """
     from django.contrib.auth import get_user_model
     from django.db.models import Q
     User = get_user_model()
-    if User.objects.filter(email__iexact=correo).exists():
+    usuarios = User.objects.all()
+    if excluir_user is not None:
+        usuarios = usuarios.exclude(pk=excluir_user.pk)
+    if usuarios.filter(email__iexact=correo).exists():
         return "El correo electrónico ya está registrado en el sistema."
-    if User.objects.filter(Q(username__iexact=rut) | Q(rut__iexact=rut)).exists():
+    if usuarios.filter(Q(username__iexact=rut) | Q(rut__iexact=rut)).exists():
         return "El RUT ingresado ya está registrado en el sistema."
 
     for modelo in [Alumno, Profesor, Tutor]:

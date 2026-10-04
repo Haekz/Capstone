@@ -253,6 +253,24 @@ def panel_profesor(request):
 
 
 @profesor_required_json
+def subir_titulo(request):
+    if request.method != 'POST':
+        return JsonResponse({"success": False, "message": "Método no permitido."})
+    from django.core.exceptions import ValidationError
+    from . import titulo
+
+    profesor = get_object_or_404(Profesor, id_profesor=request.session['profesor_id'])
+    try:
+        titulo.subir(profesor, request.FILES.get('titulo'))
+    except ValidationError as e:
+        return JsonResponse({"success": False, "message": e.messages[0]})
+    return JsonResponse({
+        "success": True,
+        "message": "Título recibido. Un administrador lo revisará y te habilitará para hacer clases.",
+    })
+
+
+@profesor_required_json
 def actualizar_perfil_prof(request):
     if request.method == 'POST':
         profesor_id = request.session['profesor_id']

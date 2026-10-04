@@ -287,9 +287,12 @@ def alumno_pag1(request):
         '-fecha_reporte'
     )
 
-    profesores_list = Profesor.objects.all()
+    # Solo profesores con titulo aprobado pueden hacer clases.
+    profesores_list = Profesor.objects.habilitados()
 
-    clases_disponibles = Clase.objects.all().select_related(
+    clases_disponibles = Clase.objects.filter(
+        id_profesor__titulo_estado=Profesor.TITULO_APROBADO
+    ).select_related(
         'id_profesor'
     )
 
@@ -578,6 +581,17 @@ def inscribir_clase(request):
                 Clase,
                 id_clase=id_clase
             )
+
+            if not clase.id_profesor.puede_hacer_clases:
+
+                return JsonResponse({
+                    'success': False,
+                    'message': (
+                        'Esta clase no está disponible: '
+                        'el profesor aún no tiene su '
+                        'título validado.'
+                    )
+                })
 
             # Evitar inscripciones duplicadas
 

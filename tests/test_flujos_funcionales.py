@@ -279,6 +279,7 @@ class FlujoAccionesUsuarioTests(TestCase):
             especialidad='Biologia', direccion='Calle 9',
             fecha_nacimiento=date(1990, 9, 9), correo_electronico='i@lbwus.cl',
             telefono='944444444', genero=cls.genero,
+            titulo_estado=Profesor.TITULO_APROBADO,
         )
         cls.clase = Clase.objects.create(
             nombre_curso='Biologia I', modalidad='online', horario=time(11, 0),

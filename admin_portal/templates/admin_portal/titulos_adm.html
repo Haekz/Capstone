@@ -1,0 +1,77 @@
+{% extends 'admin_portal/base_admin.html' %}
+
+{% block title %}Títulos — Admin LBWUS{% endblock %}
+{% block page_title %}Títulos Profesionales{% endblock %}
+{% block page_subtitle %}Revisa los títulos de los profesores: sin título aprobado no pueden hacer clases{% endblock %}
+{% block nav_titulos %}active{% endblock %}
+
+{% block content %}
+
+{% if messages %}
+<div class="panel" role="status" style="margin-bottom:20px; padding:14px 18px;">
+    {% for m in messages %}<div>{{ m }}</div>{% endfor %}
+</div>
+{% endif %}
+
+<div class="panel">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-hourglass-split"></i> Pendientes de revisión ({{ en_revision|length }})</span>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="user-table">
+            <thead>
+                <tr><th>Profesor</th><th>Especialidad</th><th>Subido</th><th>Archivo</th><th>Decisión</th></tr>
+            </thead>
+            <tbody>
+                {% for p in en_revision %}
+                <tr>
+                    <td><strong>{{ p.nombre }}</strong><br><small>{{ p.rut }}</small></td>
+                    <td>{{ p.especialidad }}</td>
+                    <td>{{ p.titulo_actualizado|date:"d-m-Y H:i" }}</td>
+                    <td><a href="{% url 'ver_titulo' p.id_profesor %}" target="_blank" rel="noopener"><i class="bi bi-file-earmark-text"></i> Ver título</a></td>
+                    <td>
+                        <form method="post" action="{% url 'resolver_titulo' p.id_profesor %}" style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+                            {% csrf_token %}
+                            <input type="text" id="obs-{{ p.id_profesor }}" name="observacion" maxlength="200" placeholder="Motivo si rechazas"
+                                aria-label="Motivo del rechazo para {{ p.nombre }}"
+                                style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--bg-card); color:var(--text-primary);">
+                            <button type="submit" name="decision" value="aprobar" class="btn-primary"><i class="bi bi-check-lg"></i> Aprobar</button>
+                            <button type="submit" name="decision" value="rechazar" class="btn-secondary"><i class="bi bi-x-lg"></i> Rechazar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5">No hay títulos esperando revisión.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="panel" style="margin-top:28px;">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-mortarboard-fill"></i> Resto de profesores</span>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="user-table">
+            <thead>
+                <tr><th>Profesor</th><th>Especialidad</th><th>Estado</th><th>Observación</th><th>Archivo</th></tr>
+            </thead>
+            <tbody>
+                {% for p in otros %}
+                <tr>
+                    <td><strong>{{ p.nombre }}</strong><br><small>{{ p.rut }}</small></td>
+                    <td>{{ p.especialidad }}</td>
+                    <td><span class="badge {% if p.puede_hacer_clases %}badge-activo{% endif %}">{{ p.get_titulo_estado_display }}</span></td>
+                    <td>{{ p.titulo_observacion|default:"—" }}</td>
+                    <td>{% if p.titulo_archivo %}<a href="{% url 'ver_titulo' p.id_profesor %}" target="_blank" rel="noopener">Ver</a>{% else %}—{% endif %}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5">No hay profesores registrados.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
