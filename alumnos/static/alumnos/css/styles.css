@@ -1309,65 +1309,291 @@ body.dark-mode .cuenta-item--salir i {
         display: block;
     }
 
+    /* ---------- Botón hamburguesa: círculo como los demás botones ---------- */
+    .hamburger {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        width: 42px;
+        height: 42px;
+        padding: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.14);
+        cursor: pointer;
+        transition: background 0.2s ease;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .hamburger:hover {
+        background: rgba(255, 255, 255, 0.24);
+    }
+
+    .hamburger span {
+        display: block;
+        width: 20px;
+        height: 2px;
+        border-radius: 2px;
+        background: #ffffff;
+        transition: transform 0.3s ease, opacity 0.2s ease;
+    }
+
+    /* Las 3 rayas se convierten en una X al abrir */
+    .menu-toggle:checked ~ .nav-actions .hamburger {
+        background: #ffffff;
+    }
+
+    .menu-toggle:checked ~ .nav-actions .hamburger span {
+        background: #6d28d9;
+    }
+
+    .menu-toggle:checked ~ .nav-actions .hamburger span:nth-child(1) {
+        transform: translateY(7px) rotate(45deg);
+    }
+
+    .menu-toggle:checked ~ .nav-actions .hamburger span:nth-child(2) {
+        opacity: 0;
+    }
+
+    .menu-toggle:checked ~ .nav-actions .hamburger span:nth-child(3) {
+        transform: translateY(-7px) rotate(-45deg);
+    }
+
+    /* Foco visible al navegar con teclado */
+    .menu-toggle:focus-visible ~ .nav-actions .hamburger {
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.6);
+    }
+
+    /* ---------- Panel del menú ---------- */
     .menu {
         position: fixed;
         top: var(--header-height);
-        left: -100%;
+        left: 0;
+        right: 0;
         width: 100%;
         height: calc(100vh - var(--header-height));
+        height: calc(100dvh - var(--header-height));
+        overflow-y: auto;
         background: var(--bg);
-        flex-direction: column;
-        align-items: center;
-        justify-content: flex-start;
-        padding-top: 40px;
-        gap: 0;
-        transition: left 0.35s ease;
-        z-index: 999;
         border-top: 1px solid var(--line);
+        flex: none;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-start;
+        gap: 4px;
+        padding: 20px 20px calc(28px + env(safe-area-inset-bottom, 0px));
+        z-index: 999;
+        /* Entra deslizándose suave desde arriba */
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-12px);
+        transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
+    }
+
+    .menu-toggle:checked ~ .menu {
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+    }
+
+    /* Bloquea el scroll de la página mientras el menú está abierto */
+    body:has(.menu-toggle:checked) {
+        overflow: hidden;
     }
 
     .menu li {
-        margin-bottom: 18px;
+        margin: 0;
+        width: 100%;
+        max-width: 560px;
+        align-self: center;
     }
 
-    .menu a {
-        font-size: 1.2rem;
+    /* Cada link es una fila con flecha a la derecha */
+    .menu a,
+    body.dark-mode .menu a {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        padding: 15px 18px;
+        border-radius: 14px;
+        font-size: 1.08rem;
+        font-weight: 600;
         color: var(--text);
+        background: transparent;
     }
 
+    /* Sin flechita: en el celular el link se ve limpio */
     .menu a::after {
         display: none;
     }
 
     .menu a:hover,
-    .menu a.active {
+    body.dark-mode .menu a:hover {
+        background: var(--primary-soft);
+        color: var(--text);
+    }
+
+    /* Página actual: fondo suave + barra morada a la izquierda */
+    .menu a.active,
+    body.dark-mode .menu a.active {
         background: var(--primary-soft);
         color: var(--primary);
+        box-shadow: inset 3px 0 0 var(--primary);
     }
 
-    .menu-toggle:checked~.menu {
-        left: 0;
+    body.dark-mode .menu a.active {
+        color: #c4b5fd;
     }
 
-    .hamburger {
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-        cursor: pointer;
-        padding: 6px;
+    /* ---------- Acciones de cuenta abajo, como botones ---------- */
+    .menu li:not(.mobile-only) + li.mobile-only {
+        margin-top: 16px;
+        padding-top: 20px;
+        border-top: 1px solid var(--line);
     }
 
-    .hamburger span {
-        width: 24px;
-        height: 2px;
-        border-radius: 2px;
-        background: #ffffff;
-        transition: 0.3s;
+    .menu li.mobile-only + li.mobile-only {
+        margin-top: 6px;
     }
+
+    .menu li.mobile-only a {
+        justify-content: center;
+        border-radius: 50px;
+        font-size: 1rem;
+    }
+
+    .menu li.mobile-only a::after {
+        display: none;
+    }
+
+    /* "Iniciar Sesión": contorno */
+    .menu li.mobile-only a[href*="login"],
+    body.dark-mode .menu li.mobile-only a[href*="login"] {
+        border: 1.5px solid var(--line);
+        color: var(--text);
+        background: transparent;
+    }
+
+
+    /* "Registrarse": botón principal */
+    .menu li.mobile-only a[href*="select"],
+    body.dark-mode .menu li.mobile-only a[href*="select"] {
+        background: var(--primary);
+        color: #ffffff;
+        box-shadow: 0 10px 24px rgba(124, 58, 237, 0.25);
+    }
+
+
+    /* "Cerrar sesión" (con la cuenta iniciada) en rojo suave */
+    .menu li.mobile-only a[href*="logout"],
+    body.dark-mode .menu li.mobile-only a[href*="logout"] {
+        color: #dc2626;
+        border: 1.5px solid rgba(220, 38, 38, 0.25);
+    }
+
+    body.dark-mode .menu li.mobile-only a[href*="logout"] {
+        color: #f87171;
+    }
+
+    /* ---------- Efecto al pasar el cursor (o tocar) los botones de cuenta ----------
+       Lleva body.dark-mode en el selector para ganarle a las reglas de arriba:
+       sin eso, en modo noche el hover no se veía. */
+    .menu li.mobile-only a {
+        transition: background-color 0.2s ease, border-color 0.2s ease,
+                    color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    body .menu li.mobile-only a:hover,
+    body .menu li.mobile-only a:focus-visible {
+        transform: translateY(-2px);
+    }
+
+    body .menu li.mobile-only a:active {
+        transform: scale(0.98);
+    }
+
+    /* Iniciar Sesión: se rellena de lavanda y el borde y texto pasan a morado */
+    body .menu li.mobile-only a[href*="login"]:hover,
+    body .menu li.mobile-only a[href*="login"]:focus-visible {
+        background: var(--primary-soft);
+        border-color: var(--primary);
+        color: var(--primary);
+        box-shadow: 0 8px 20px rgba(124, 58, 237, 0.18);
+    }
+
+    body.dark-mode .menu li.mobile-only a[href*="login"]:hover,
+    body.dark-mode .menu li.mobile-only a[href*="login"]:focus-visible {
+        background: rgba(124, 58, 237, 0.22);
+        border-color: #a78bfa;
+        color: #ffffff;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+    }
+
+    /* Registrarse: morado más oscuro y sombra más marcada */
+    body .menu li.mobile-only a[href*="select"]:hover,
+    body .menu li.mobile-only a[href*="select"]:focus-visible {
+        background: var(--primary-dark);
+        color: #ffffff;
+        box-shadow: 0 14px 30px rgba(124, 58, 237, 0.40);
+    }
+
+    body.dark-mode .menu li.mobile-only a[href*="select"]:hover,
+    body.dark-mode .menu li.mobile-only a[href*="select"]:focus-visible {
+        background: #8b5cf6;
+        box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.35), 0 14px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Cerrar sesión: fondo rojo suave */
+    body .menu li.mobile-only a[href*="logout"]:hover,
+    body .menu li.mobile-only a[href*="logout"]:focus-visible {
+        background: rgba(220, 38, 38, 0.08);
+        border-color: #dc2626;
+    }
+
+    body.dark-mode .menu li.mobile-only a[href*="logout"]:hover,
+    body.dark-mode .menu li.mobile-only a[href*="logout"]:focus-visible {
+        background: rgba(248, 113, 113, 0.14);
+        border-color: #f87171;
+    }
+
+    /* Aparición escalonada de los links */
+    .menu-toggle:checked ~ .menu li {
+        animation: menuItemIn 0.35s ease both;
+    }
+
+    .menu-toggle:checked ~ .menu li:nth-child(1) { animation-delay: 0.03s; }
+    .menu-toggle:checked ~ .menu li:nth-child(2) { animation-delay: 0.06s; }
+    .menu-toggle:checked ~ .menu li:nth-child(3) { animation-delay: 0.09s; }
+    .menu-toggle:checked ~ .menu li:nth-child(4) { animation-delay: 0.12s; }
+    .menu-toggle:checked ~ .menu li:nth-child(5) { animation-delay: 0.15s; }
+    .menu-toggle:checked ~ .menu li:nth-child(6) { animation-delay: 0.18s; }
+    .menu-toggle:checked ~ .menu li:nth-child(7) { animation-delay: 0.21s; }
+    .menu-toggle:checked ~ .menu li:nth-child(8) { animation-delay: 0.24s; }
 
     .nav-actions .btn-secundario,
     .nav-actions .btn-principal {
         display: none;
+    }
+}
+
+@keyframes menuItemIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .menu,
+    .menu li,
+    .menu li.mobile-only a,
+    .hamburger span {
+        transition: none !important;
+        animation: none !important;
+    }
+
+    body .menu li.mobile-only a:hover,
+    body .menu li.mobile-only a:active {
+        transform: none;
     }
 }
 
@@ -2809,5 +3035,106 @@ body.dark-mode .ct-info {
     .ct-form-card,
     .ct-info {
         padding: 32px 24px;
+    }
+}
+
+/* =========================================================
+   NAVBAR Y FOOTER: más aire (solo espaciado, mismos colores)
+   Aplica a TODO el sitio (navbar y footer compartidos).
+   ========================================================= */
+.nav-box {
+    max-width: 1240px;
+    padding: 0 32px;
+    gap: 32px;
+}
+
+.menu {
+    gap: 4px;
+}
+
+.menu a {
+    padding: 8px 14px;
+}
+
+.nav-actions {
+    gap: 12px;
+}
+
+.nav-actions .btn-secundario,
+.nav-actions .btn-principal {
+    padding: 10px 22px;
+}
+
+.footer {
+    padding: 80px 0 32px;
+}
+
+.footer-grid {
+    max-width: 1200px;
+    margin: 0 auto 56px;
+    padding: 0 32px;
+    gap: 56px;
+    grid-template-columns: 1.3fr 1fr 1.2fr;
+}
+
+.footer-col h3 {
+    margin-bottom: 18px;
+    font-size: 1.05rem;
+}
+
+.footer-col p {
+    margin-bottom: 10px;
+    line-height: 1.6;
+}
+
+.footer-col ul li {
+    margin-bottom: 10px;
+}
+
+.social-box {
+    margin-top: 22px;
+    display: flex;
+    gap: 10px;
+}
+
+/* Redes "próximamente": mismo tamaño que las activas, un poco apagadas */
+.social-box .social-placeholder {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 1.05rem;
+    opacity: 0.55;
+    cursor: default;
+}
+
+.footer-bottom {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 26px 32px 0;
+}
+
+@media (max-width: 860px) {
+    .nav-box {
+        padding: 0 20px;
+        gap: 16px;
+    }
+
+    .footer {
+        padding: 56px 0 28px;
+    }
+
+    .footer-grid {
+        grid-template-columns: 1fr;
+        gap: 36px;
+        padding: 0 24px;
+        margin-bottom: 40px;
+    }
+
+    .footer-bottom {
+        padding: 22px 24px 0;
     }
 }

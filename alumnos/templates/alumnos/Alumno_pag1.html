@@ -16,6 +16,7 @@
 
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{% static 'alumnos/css/alumn_1.css' %}?v=2.1">
+    <link rel="stylesheet" href="{% static 'alumnos/css/avisos.css' %}">
     {% include 'alumnos/includes/sin_copia_atras.html' %}
 </head>
 <body id="portal-alumno">
@@ -365,7 +366,7 @@
                                         <i class="bi bi-check-circle-fill"></i> Ya estás inscrito
                                     </button>
                                     {% else %}
-                                    <button class="btn-join-class btn-join-class--primary" onclick="inscribirAClase({{ c.id_clase }}, '{{ c.nombre_curso }}')">
+                                    <button class="btn-join-class btn-join-class--primary" data-id-clase="{{ c.id_clase }}" data-nombre="{{ c.nombre_curso }}" onclick="inscribirAClase(this.dataset.idClase, this.dataset.nombre)">
                                         <i class="bi bi-plus-circle"></i> Inscribirme a esta Clase
                                     </button>
                                     {% endif %}
@@ -1232,6 +1233,7 @@
 
     <!-- SweetAlert2 CDN -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    {{ profesores_js|json_script:"profesores-data" }}
 
     <!-- App Logic -->
     <script>
@@ -1276,24 +1278,8 @@
         }
 
         // ── DATA POOLS ──
-        // Teachers
-        const teachers = [
-            {% if profesores_list %}
-                {% for prof in profesores_list %}
-                {
-                    id: {{ prof.id_profesor }},
-                    name: "{{ prof.nombre }}",
-                    specialties: ["{{ prof.especialidad }}"],
-                    distance: 1.2,
-                    rating: "5.0 ⭐",
-                    price: "$15.000",
-                    initial: "{{ prof.nombre|slice:':1'|upper }}"
-                }{% if not forloop.last %},{% endif %}
-                {% endfor %}
-            {% else %}
-                { id: 1, name: "Dr. Carlos Ruiz", specialties: ["Matemáticas", "Física"], distance: 0.8, rating: "4.9 ⭐", price: "$15.000", initial: "CR" }
-            {% endif %}
-        ];
+        // Teachers: vienen de la vista como JSON (ver profesores_js en views.py).
+        const teachers = JSON.parse(document.getElementById('profesores-data').textContent);
 
         // Tutors
         const tutors = [

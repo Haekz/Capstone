@@ -317,6 +317,22 @@ class FlujoAccionesUsuarioTests(TestCase):
         self.assertFalse(respuesta.json()['success'])
         self.assertIn('Ya estás inscrito', respuesta.json()['message'])
 
+    def test_portal_escapa_comillas_en_datos_para_js(self):
+        """Un apostrofo en un nombre rompia el JS del portal (onclick y array)."""
+        self.profesor.nombre = "Ivan O'Higgins"
+        self.profesor.save()
+        self.clase.nombre_curso = "Historia de O'Higgins"
+        self.clase.save()
+        self._entrar_como_alumno()
+
+        respuesta = self.client.get(reverse('alumno_pag1'))
+
+        self.assertEqual(respuesta.context['profesores_js'][0]['name'], "Ivan O'Higgins")
+        html = respuesta.content.decode()
+        self.assertIn('id="profesores-data"', html)
+        self.assertIn('data-nombre="Historia de O&#x27;Higgins"', html)
+        self.assertNotIn("inscribirAClase(", html.split('data-nombre')[0][-300:])
+
     def test_cancelacion_exitosa_redirige_al_portal(self):
         self._entrar_como_alumno()
         inscripcion = Inscripcion.objects.create(
