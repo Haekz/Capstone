@@ -280,3 +280,19 @@ class TituloProfesorTests(TestCase):
         self.assertNotEqual(self.client.get(url).status_code, 200)  # el propio profesor
         self.client.logout()
         self.assertNotEqual(self.client.get(url).status_code, 200)  # anonimo
+
+
+class CallbackHttpsTests(TestCase):
+    """Detras del proxy de Railway el callback que va a Google debe ser https."""
+
+    def test_callback_sale_https_tras_el_proxy(self):
+        app = SocialApp.objects.create(provider='google', name='Google', client_id='x', secret='y')
+        app.sites.add(Site.objects.get_current())
+        respuesta = self.client.post(
+            reverse('google_login'),
+            HTTP_HOST='lbwus.xyz',
+            HTTP_X_FORWARDED_PROTO='https',
+        )
+        destino = respuesta['Location']
+        self.assertIn('accounts.google.com', destino)
+        self.assertIn('redirect_uri=https%3A%2F%2Flbwus.xyz%2Faccounts%2Fgoogle%2Flogin%2Fcallback%2F', destino)

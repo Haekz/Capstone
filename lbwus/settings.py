@@ -35,6 +35,12 @@ CSRF_TRUSTED_ORIGINS = [
     'https://capstone-production-eddd.up.railway.app'
 ]
 
+# Railway recibe HTTPS y le pasa la peticion a Django por HTTP interno,
+# avisando con la cabecera X-Forwarded-Proto. Sin esto Django cree que la
+# pagina es http:// y arma enlaces http:// (callback de Google -> error 400
+# redirect_uri_mismatch, y enlaces de recuperar clave con http://).
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 
 # Application definition
 
@@ -82,6 +88,8 @@ SOCIALACCOUNT_ADAPTER = 'alumnos.google_adapter.LbwusSocialAdapter'
 SOCIALACCOUNT_PROVIDERS = {
     'google': {'SCOPE': ['profile', 'email']},
 }
+# Enlaces que arma allauth. Railway define RAILWAY_ENVIRONMENT solo; en local queda http.
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https' if os.environ.get('RAILWAY_ENVIRONMENT') else 'http'
 
 ROOT_URLCONF = 'lbwus.urls'
 
