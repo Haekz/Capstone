@@ -318,6 +318,22 @@ def alumno_pag1(request):
         'alumno': alumno,
         'mis_reportes': mis_reportes,
         'profesores_list': profesores_list,
+        # Para el JS del portal via json_script: Django escapa comillas y
+        # etiquetas. Antes se armaba un array JS con {% for %} dentro del
+        # <script>, que el editor marcaba en rojo y que se rompia si un
+        # nombre traia comillas (O'Higgins, "Pepe").
+        'profesores_js': [
+            {
+                'id': p.id_profesor,
+                'name': p.nombre,
+                'specialties': [p.especialidad],
+                'distance': 1.2,
+                'rating': '5.0 ⭐',
+                'price': '$15.000',
+                'initial': p.nombre[:1].upper(),
+            }
+            for p in profesores_list
+        ],
         'clases_disponibles': clases_disponibles,
         'mis_inscripciones': mis_inscripciones,
         'inscritas_ids': inscritas_ids,
