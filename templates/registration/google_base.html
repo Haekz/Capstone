@@ -1,0 +1,60 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Registro con Google{% endblock %} - LBWUS</title>
+    <link rel="icon" href="{% static 'alumnos/img/Logo.png' %}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{% static 'login.css' %}">
+    <link rel="stylesheet" href="{% static 'registro_google.css' %}">
+    <script>
+        try { if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark-mode'); } catch (e) {}
+    </script>
+</head>
+
+<body>
+    <main class="auth-split">
+        <aside class="auth-brand">
+            <a href="{% url 'home' %}" class="auth-logo">
+                <img src="{% static 'alumnos/img/Logo.png' %}" alt="LBWUS Logo">
+                <span>LBWUS</span>
+            </a>
+            <div class="auth-brand-body">
+                <h2>Ya casi estás dentro.</h2>
+                <p>Confirmamos tu correo y te pedimos solo los datos que Google no nos entrega.</p>
+                <ol class="auth-points gr-pasos">
+                    <li class="{% block paso1 %}{% endblock %}"><i class="bi bi-google"></i> Entraste con Google</li>
+                    <li class="{% block paso2 %}{% endblock %}"><i class="bi bi-envelope-check"></i> Código de seguridad</li>
+                    <li class="{% block paso3 %}{% endblock %}"><i class="bi bi-person-vcard"></i> Tus datos</li>
+                </ol>
+            </div>
+            <p class="auth-brand-foot">&copy; 2026 LBWUS - Desarrollando enseñanza para el mundo</p>
+        </aside>
+
+        <section class="auth-panel">
+            <div class="auth-panel-top">
+                <a href="{% url 'login' %}" class="btn-home">
+                    <i class="bi bi-arrow-left"></i>
+                    Volver al login
+                </a>
+            </div>
+
+            <div class="auth-form-wrap">
+                {% if messages %}
+                <div class="gr-mensajes" role="status">
+                    {% for m in messages %}
+                    <div class="gr-msg gr-msg--{{ m.tags }}">{{ m }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% block form %}{% endblock %}
+            </div>
+        </section>
+    </main>
+</body>
+
+</html>

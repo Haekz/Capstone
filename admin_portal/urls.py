@@ -5,6 +5,7 @@ from .views import (
     dashboard_admin, resolver_reporte, logout_admin, crear_clase, eliminar_clase,
     aprobar_retiro, rechazar_retiro
 )
+from .titulos import titulos_adm, ver_titulo, resolver_titulo
 
 urlpatterns = [
     # esta parte es de las rutas del portal del administrador
@@ -21,6 +22,11 @@ urlpatterns = [
     path('aprobar_retiro/<int:pk>/', aprobar_retiro, name='aprobar_retiro'),
     path('rechazar_retiro/<int:pk>/', rechazar_retiro, name='rechazar_retiro'),
 
+    # Titulos profesionales de profesores
+    path('titulos/', titulos_adm, name='titulos_adm'),
+    path('titulos/<int:pk>/archivo/', ver_titulo, name='ver_titulo'),
+    path('titulos/<int:pk>/resolver/', resolver_titulo, name='resolver_titulo'),
+
     # esta parte es de las rutas CRUD de alumnos
     path('crud/', crud, name='crud'),
     path('alumnos_Add', alumnos_Add, name='alumnos_Add'),
@@ -28,4 +34,4 @@ urlpatterns = [
     path('alumnos_findEdit/<str:pk>/', alumnos_findEdit, name='alumnos_findEdit'),
     path('alumnos_Update', alumnos_Update, name='alumnos_Update'),
     path('logout_admin/', logout_admin, name='logout_admin'),
-]
+]

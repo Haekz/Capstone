@@ -1,0 +1,55 @@
+{% extends 'registration/google_base.html' %}
+
+{% block title %}Código de seguridad{% endblock %}
+{% block paso1 %}hecho{% endblock %}
+{% block paso2 %}actual{% endblock %}
+
+{% block form %}
+<h1 class="auth-title">Revisa tu correo</h1>
+<p class="sub">Enviamos un código de 6 dígitos a <strong>{{ correo }}</strong>. Escríbelo aquí para confirmar que el correo es tuyo.</p>
+
+<form method="post">
+    {% csrf_token %}
+    {% if error %}
+    <div class="error" role="alert">
+        <i class="bi bi-exclamation-circle-fill"></i>
+        <span>{{ error }}</span>
+    </div>
+    {% endif %}
+
+    <label for="codigo" class="gr-label">Código de seguridad</label>
+    <div class="campo">
+        <i class="bi bi-shield-lock"></i>
+        <input type="text" name="codigo" id="codigo" inputmode="numeric" pattern="[0-9]{6}" maxlength="6"
+            autocomplete="one-time-code" required autofocus placeholder="000000" class="gr-codigo">
+    </div>
+
+    <button type="submit" class="btn">Confirmar código</button>
+</form>
+
+<form method="post" action="{% url 'google_reenviar' %}" class="gr-reenviar">
+    {% csrf_token %}
+    <span>¿No te llegó? Revisa también la carpeta de spam.</span>
+    <button type="submit" id="btn-reenviar" {% if espera %}disabled{% endif %} data-espera="{{ espera }}">
+        {% if espera %}Reenviar en {{ espera }} s{% else %}Reenviar código{% endif %}
+    </button>
+</form>
+
+<script>
+    (function () {
+        const btn = document.getElementById('btn-reenviar');
+        let falta = parseInt(btn.dataset.espera || '0', 10);
+        if (!falta) return;
+        const tic = setInterval(() => {
+            falta -= 1;
+            if (falta <= 0) {
+                clearInterval(tic);
+                btn.disabled = false;
+                btn.textContent = 'Reenviar código';
+            } else {
+                btn.textContent = 'Reenviar en ' + falta + ' s';
+            }
+        }, 1000);
+    })();
+</script>
+{% endblock %}

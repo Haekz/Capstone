@@ -6,6 +6,8 @@ db.sqlite3
 env/
 venv/
 staticfiles/
+# Archivos subidos (titulos de profesores): documentos personales, nunca a Git
+media/
 
 # Pruebas de usabilidad: base de demo local
 usab.sqlite3

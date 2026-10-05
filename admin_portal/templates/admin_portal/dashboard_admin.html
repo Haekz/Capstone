@@ -549,7 +549,7 @@
                                     <select name="id_profesor" id="clase_id_profesor" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary);">
                                         <option value="" disabled selected>Selecciona un profesor...</option>
                                         {% for prof in profesores %}
-                                        <option value="{{ prof.id_profesor }}">{{ prof.nombre }} ({{ prof.especialidad }})</option>
+                                        <option value="{{ prof.id_profesor }}" {% if not prof.puede_hacer_clases %}disabled{% endif %}>{{ prof.nombre }} ({{ prof.especialidad }}){% if not prof.puede_hacer_clases %} — título {{ prof.get_titulo_estado_display|lower }}{% endif %}</option>
                                         {% endfor %}
                                     </select>
                                 </div>

@@ -2,7 +2,8 @@
 
 Se ejecuta contra una base SQLite aparte (usab.sqlite3) via
 DJANGO_SETTINGS_MODULE=usabilidad.settings_usab, asi la base real no se toca.
-Uso: python manage.py shell < usabilidad/seed.py
+Uso: python manage.py shell -c "exec(open('usabilidad/seed.py', encoding='utf-8').read())"
+(no usar 'shell < seed.py' en Windows: la consola cp1252 rompe las tildes)
 """
 from datetime import date, time
 
@@ -42,7 +43,8 @@ for rut, nombre, esp in profes:
     up = usuario(rut, nombre, f'{nombre.split()[0].lower()}@demo.cl', 'profesor')
     p, _ = Profesor.objects.get_or_create(user=up, defaults=dict(
         nombre=nombre, rut=rut, especialidad=esp, direccion='Santiago',
-        fecha_nacimiento=date(1988, 1, 1), correo_electronico=up.email, telefono='922222222', genero=g))
+        fecha_nacimiento=date(1988, 1, 1), correo_electronico=up.email, telefono='922222222', genero=g,
+        titulo_estado=Profesor.TITULO_APROBADO))
     Clase.objects.get_or_create(nombre_curso=f'{esp} básico', id_profesor=p,
                                 defaults=dict(modalidad='online', horario=time(17, 0)))
 

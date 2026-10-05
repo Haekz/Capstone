@@ -68,6 +68,11 @@
                 {% endif %}
             </a>
 
+            <a id="nav-titulos" class="nav-item {% block nav_titulos %}{% endblock %}" href="{% url 'titulos_adm' %}">
+                <i class="bi bi-mortarboard-fill"></i>
+                Títulos de Profesores
+            </a>
+
             <span class="nav-label">Contenido</span>
 
             <a id="nav-planes" class="nav-item {% block nav_planes %}{% endblock %}" href="{% url 'planes_adm' %}">

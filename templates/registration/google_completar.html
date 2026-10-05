@@ -1,0 +1,63 @@
+{% extends 'registration/google_base.html' %}
+
+{% block title %}Completa tu registro{% endblock %}
+{% block paso1 %}hecho{% endblock %}
+{% block paso2 %}hecho{% endblock %}
+{% block paso3 %}actual{% endblock %}
+
+{% block form %}
+<h1 class="auth-title">Completa tu registro</h1>
+<p class="sub">Correo confirmado: <strong>{{ correo }}</strong>. Sin estos datos la cuenta no queda creada.</p>
+
+<form method="post" novalidate id="form-completar">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+    <div class="error" role="alert">
+        <i class="bi bi-exclamation-circle-fill"></i>
+        <span>{{ form.non_field_errors.0 }}</span>
+    </div>
+    {% endif %}
+
+    <fieldset class="gr-tipo">
+        <legend class="gr-label">{{ form.tipo.label }}</legend>
+        {% for opcion in form.tipo %}
+        <label class="gr-tipo-op">
+            {{ opcion.tag }}
+            <span><i class="bi {% if opcion.data.value == 'alumno' %}bi-mortarboard{% else %}bi-person-workspace{% endif %}"></i> {{ opcion.choice_label }}</span>
+        </label>
+        {% endfor %}
+        {% if form.tipo.errors %}<p class="field-error">{{ form.tipo.errors.0 }}</p>{% endif %}
+    </fieldset>
+
+    {% for campo in form %}
+    {% if campo.name != 'tipo' %}
+    <div class="gr-campo" data-solo="{% if campo.name == 'nivel_educacion' %}alumno{% elif campo.name == 'especialidad' %}profesor{% endif %}">
+        <label for="{{ campo.id_for_label }}" class="gr-label">{{ campo.label }}</label>
+        {{ campo }}
+        {% if campo.errors %}<p class="field-error">{{ campo.errors.0 }}</p>{% endif %}
+    </div>
+    {% endif %}
+    {% endfor %}
+
+    <p class="gr-nota" data-solo="profesor"><i class="bi bi-info-circle"></i> Como profesor, antes de hacer clases deberás subir tu título profesional desde tu panel.</p>
+
+    <button type="submit" class="btn">Crear mi cuenta</button>
+</form>
+
+<script>
+    // Muestra solo los campos del tipo elegido (nivel = alumno, especialidad = profesor).
+    (function () {
+        const form = document.getElementById('form-completar');
+        function aplicar() {
+            const elegido = (form.querySelector('input[name="tipo"]:checked') || {}).value;
+            form.querySelectorAll('[data-solo]').forEach(el => {
+                const solo = el.dataset.solo;
+                el.hidden = Boolean(solo) && solo !== elegido;
+            });
+        }
+        form.addEventListener('change', aplicar);
+        aplicar();
+    })();
+</script>
+{% endblock %}
