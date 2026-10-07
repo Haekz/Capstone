@@ -24,7 +24,7 @@
                         {% for ins in inscripciones %}
                         <tr>
                             <td class="prof-table-bold">{{ ins.alumno.user.first_name }}</td>
-                            <td>{{ ins.clase.nombre_curso }}</td>
+                            <td>{{ ins.clase.asignatura.nombre }}</td>
                             <td>{{ ins.fecha_inscripcion|date:"d/m/Y" }}</td>
                             <td>
                                 <span class="prof-badge prof-badge-online">Activo</span>

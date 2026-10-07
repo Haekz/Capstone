@@ -99,6 +99,9 @@ class Clase(models.Model):
     modalidad = models.CharField(max_length=10, choices=[('online', 'Online'), ('presencial', 'Presencial')])
     horario = models.TimeField()
     profesor = models.ForeignKey(Profesor, on_delete=models.CASCADE)
+    en_vivo = models.BooleanField(default=False)
+    descripcion_vivo = models.TextField(blank=True, null=True)
+    temas_vivo = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
         return f"{self.asignatura.nombre} - {self.profesor.user.first_name}"

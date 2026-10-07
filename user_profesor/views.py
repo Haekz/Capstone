@@ -182,7 +182,7 @@ def panel_profesor(request):
         insc = inscripciones.filter(clase=clase).first()
         alumno_nombre = insc.alumno.user.first_name if insc else "Sin asignar"
         clases_hoy_lista.append({
-            'nombre_curso': clase.nombre_curso,
+            'nombre_curso': clase.asignatura.nombre,
             'horario': clase.horario,
             'modalidad': clase.get_modalidad_display() if hasattr(clase, 'get_modalidad_display') else clase.modalidad,
             'alumno': alumno_nombre
@@ -324,10 +324,14 @@ def solicitar_retiro(request):
             if monto > saldo_disponible:
                 return JsonResponse({"success": False, "message": f"El monto ingresado excede tu saldo disponible ({formato_clp(saldo_disponible)})."})
 
+            from alumnos.models import Banco
+            banco_obj, _ = Banco.objects.get_or_create(nombre=banco if banco else 'Banco Estado')
+            from alumnos.models import Banco
+            banco_obj, _ = Banco.objects.get_or_create(nombre=banco if banco else 'Banco Estado')
             SolicitudRetiro.objects.create(
                 profesor=profesor,
                 monto=monto,
-                banco=banco if banco else 'Banco Estado',
+                banco=banco_obj,
                 tipo_cuenta=tipo_cuenta if tipo_cuenta else 'Cuenta Rut / Vista',
                 numero_cuenta=numero_cuenta
             )
@@ -434,14 +438,7 @@ def regis_tutor(request):
             user.save()
 
             tutor = Tutor.objects.create(
-                user=user,
-                nombre=nombre,
-                rut=rut,
-                direccion=direccion,
-                fecha_nacimiento=fecha_nacimiento,
-                correo_electronico=correo_electronico,
-                telefono=telefono,
-                genero=genero
+                user=user
             )
 
             # Iniciar sesión de administrador

@@ -311,7 +311,7 @@
                                         <span class="class-status-badge class-status-badge--enrolled">Inscrito</span>
                                     </div>
                                     <div class="class-card-body">
-                                        <h4>{{ insc.clase.nombre_curso }}</h4>
+                                        <h4>{{ insc.clase.asignatura.nombre }}</h4>
                                         <p class="class-teacher-type"><i class="bi bi-person-workspace"></i> Prof. {{ insc.clase.profesor.user.first_name }}</p>
                                         <div class="class-info-item">
                                             <i class="bi bi-calendar-event"></i>
@@ -323,9 +323,9 @@
                                         </div>
                                     </div>
                                     <div class="ap-class-actions">
-                                        <button class="btn-join-class ap-flex-1" onclick="joinVideoCall('{{ insc.clase.profesor.user.first_name }}', 'https://meet.google.com/lbwus-class-{{ insc.clase.id_clase }}')">
+                                        <a class="btn-join-class ap-flex-1" href="{% url 'sala_virtual' insc.clase.id_clase %}" style="display:flex; justify-content:center; align-items:center; text-decoration:none;">
                                             <i class="bi bi-camera-video-fill"></i> Unirse a la Clase
-                                        </button>
+                                        </a>
                                         <a class="ap-btn-cancel" href="{% url 'cancelar_inscripcion' insc.id_inscripcion %}" onclick="return confirm('¿Seguro que deseas cancelar tu inscripción?')" title="Cancelar Inscripción">
                                             <i class="bi bi-trash"></i>
                                         </a>
@@ -352,7 +352,7 @@
                                     <span class="class-status-badge class-status-badge--modality">{{ c.get_modalidad_display }}</span>
                                 </div>
                                 <div class="class-card-body">
-                                    <h4>{{ c.nombre_curso }}</h4>
+                                    <h4>{{ c.asignatura.nombre }}</h4>
                                     <p class="class-teacher-type"><i class="bi bi-person"></i> Prof. {{ c.profesor.user.first_name }}</p>
                                     <div class="class-info-item">
                                         <i class="bi bi-clock"></i>
@@ -365,7 +365,7 @@
                                         <i class="bi bi-check-circle-fill"></i> Ya estás inscrito
                                     </button>
                                     {% else %}
-                                    <button class="btn-join-class btn-join-class--primary" onclick="inscribirAClase({{ c.id_clase }}, '{{ c.nombre_curso }}')">
+                                    <button class="btn-join-class btn-join-class--primary" onclick="inscribirAClase({{ c.id_clase }}, '{{ c.asignatura.nombre }}')">
                                         <i class="bi bi-plus-circle"></i> Inscribirme a esta Clase
                                     </button>
                                     {% endif %}

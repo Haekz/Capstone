@@ -2,6 +2,8 @@ from django.urls import path
 from django.views.generic import RedirectView
 
 from .views import (
+    sala_virtual,
+    iniciar_directo,
     contactos,
     nosotros,
     planes,
@@ -22,6 +24,8 @@ from .views import (
 )
 
 urlpatterns = [
+    path('sala-virtual/<int:clase_id>/', sala_virtual, name='sala_virtual'),
+    path('sala-virtual/<int:clase_id>/iniciar/', iniciar_directo, name='iniciar_directo'),
     # Sitio público
     # El home canónico vive en la raíz ('/') y se registra en lbwus/urls.py.
     # Aquí solo redirigimos para no romper enlaces antiguos a /alumnos/.

@@ -617,7 +617,7 @@ def inscribir_clase(request):
                     'message': (
                         f'Ya estás inscrito en '
                         f'la clase '
-                        f'"{clase.nombre_curso}".'
+                        f'"{clase.asignatura.nombre}".'
                     )
                 })
 
@@ -631,7 +631,7 @@ def inscribir_clase(request):
                 'message': (
                     f'¡Te has inscrito '
                     f'exitosamente a '
-                    f'"{clase.nombre_curso}" '
+                    f'"{clase.asignatura.nombre}" '
                     f'con el profesor '
                     f'{clase.profesor.user.first_name}!'
                 )
@@ -897,3 +897,41 @@ def confirmacion(request):
         ctx
     )
 
+
+
+def sala_virtual(request, clase_id):
+    # Validar que el usuario esta autenticado
+    # Esta vista es mixta: puede entrar un profesor o un alumno
+    
+    # Obtener la clase
+    clase = get_object_or_404(Clase, id_clase=clase_id)
+    
+    # En un sistema real, aca validamos que si es alumno, este inscrito en esta clase
+    # Y si es profesor, que sea el profesor de esta clase
+    
+    context = {
+        'clase': clase
+    }
+    return render(request, 'alumnos/sala_virtual.html', context)
+
+
+from django.views.decorators.http import require_POST
+
+@require_POST
+def iniciar_directo(request, clase_id):
+    clase = get_object_or_404(Clase, id_clase=clase_id)
+    
+    # Solo el profesor de la clase puede iniciar
+    profesor_id = request.session.get('profesor_id')
+    if not profesor_id or str(clase.profesor.id_profesor) != str(profesor_id):
+        return JsonResponse({'success': False, 'message': 'No tienes permiso.'})
+        
+    descripcion = request.POST.get('descripcion_vivo', '')
+    temas = request.POST.get('temas_vivo', '')
+    
+    clase.descripcion_vivo = descripcion
+    clase.temas_vivo = temas
+    clase.en_vivo = True
+    clase.save()
+    
+    return JsonResponse({'success': True})

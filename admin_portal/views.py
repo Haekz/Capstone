@@ -219,12 +219,12 @@ def crear_clase(request):
 
         profesor = get_object_or_404(Profesor, id_profesor=id_profesor)
         clase = Clase.objects.create(
-            nombre_curso=nombre_curso,
+            asignatura=Asignatura.objects.get_or_create(nombre=nombre_curso)[0],
             modalidad=modalidad,
             horario=horario,
             profesor=profesor
         )
-        return JsonResponse({'success': True, 'message': f'Clase "{clase.nombre_curso}" creada exitosamente.'})
+        return JsonResponse({'success': True, 'message': f'Clase "{clase.asignatura.nombre}" creada exitosamente.'})
     return JsonResponse({'success': False, 'message': 'Método no permitido.'})
 
 

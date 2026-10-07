@@ -30,7 +30,7 @@ import dns.resolver
 # esta parte es de forzar el uso de servidores DNS rápidos de Google y Cloudflare para resolver la dirección de Atlas al instante
 try:
     dns.resolver.default_resolver = dns.resolver.Resolver(configure=False)
-    dns.resolver.default_resolver.nameservers = ['8.8.8.8', '1.1.1.1']
+    dns.resolver.default_resolver.nameservers = ['8.8.8.8', '1.1.1.1']  
 except Exception:
     pass
 
