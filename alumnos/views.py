@@ -442,12 +442,7 @@ def custom_login(request):
 # ============================================================
 
 def logout_alumno(request):
-
     auth_logout(request)
-
-    if 'alumno_id' in request.session:
-        del request.session['alumno_id']
-
     return redirect('home')
 
 

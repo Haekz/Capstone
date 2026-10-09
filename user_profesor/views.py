@@ -136,42 +136,13 @@ def regis_prof(request):
     return render(request, 'user_profesor/regis_prof.html', context)
 
 
-def login_prof(request):
-    if request.method == 'POST':
-        identificador = request.POST.get('identificador', '').strip()
-        password = request.POST.get('password', '').strip()
-
-        if not identificador or not password:
-            return JsonResponse({"success": False, "message": "Por favor ingrese todos los campos."})
-
-        from django.contrib.auth import authenticate, login as auth_login
-        user = authenticate(request, username=identificador, password=password)
-        if user and (getattr(user, 'rol', None) == 'profesor' or hasattr(user, 'perfil_profesor')):
-            auth_login(request, user)
-            prof_id = user.perfil_profesor.id_profesor if hasattr(user, 'perfil_profesor') else user.id
-            request.session['profesor_id'] = prof_id
-            nombre_prof = user.perfil_profesor.user.first_name if hasattr(user, 'perfil_profesor') else (user.first_name or user.username)
-            return JsonResponse({
-                "success": True, 
-                "message": f"Bienvenido de vuelta, Prof. {nombre_prof}."
-            })
-        else:
-            return JsonResponse({
-                "success": False,
-                "message": "Credenciales inválidas o no tienes cuenta de profesor."
-            })
-
-    return redirect('regis_prof')
-
-
 @never_cache
 def panel_profesor(request):
     import datetime
-    profesor_id = request.session.get('profesor_id')
-    if not profesor_id:
-        return redirect('regis_prof')
+    if not request.user.is_authenticated or (getattr(request.user, 'rol', None) != 'profesor' and not hasattr(request.user, 'perfil_profesor')):
+        return redirect('custom_login_alumno')
 
-    profesor = get_object_or_404(Profesor, id_profesor=profesor_id)
+    profesor = getattr(request.user, 'perfil_profesor', None) or get_object_or_404(Profesor, user=request.user)
     clases = Clase.objects.filter(profesor=profesor)
     inscripciones = Inscripcion.objects.filter(clase__profesor=profesor)
 
@@ -286,14 +257,6 @@ def actualizar_perfil_prof(request):
             return JsonResponse({"success": False, "message": f"Error al guardar los cambios: {str(e)}"})
 
     return JsonResponse({"success": False, "message": "Método no permitido."})
-
-
-def logout_prof(request):
-    from django.contrib.auth import logout as auth_logout
-    auth_logout(request)
-    if 'profesor_id' in request.session:
-        del request.session['profesor_id']
-    return redirect('home')
 
 
 def solicitar_retiro(request):
@@ -456,34 +419,5 @@ def regis_tutor(request):
     generos = Genero.objects.all()
     context = {'generos': generos}
     return render(request, 'user_profesor/regis_tutor.html', context)
-
-
-def login_admin(request):
-    if request.method == 'POST':
-        identificador = request.POST.get('identificador', '').strip()
-        password = request.POST.get('password', '').strip()
-
-        if not identificador or not password:
-            return JsonResponse({"success": False, "message": "Por favor ingrese RUT/Correo y contraseña."})
-
-        from django.contrib.auth import authenticate, login as auth_login
-        user = authenticate(request, username=identificador, password=password)
-        if user and (getattr(user, 'rol', None) == 'admin' or hasattr(user, 'perfil_tutor') or user.is_staff or user.is_superuser):
-            auth_login(request, user)
-            tutor = getattr(user, 'perfil_tutor', None) or Tutor.objects.filter(user=user).first()
-            admin_id = tutor.id_tutor if tutor else user.id
-            request.session['admin_id'] = admin_id
-            nombre_mostrar = tutor.user.first_name if tutor else (user.first_name or user.username)
-            return JsonResponse({
-                "success": True,
-                "message": f"Bienvenido de vuelta, Administrador {nombre_mostrar}."
-            })
-        else:
-            return JsonResponse({
-                "success": False,
-                "message": "Credenciales inválidas o no tienes permisos de administrador."
-            })
-
-    return redirect('login')
 
 
