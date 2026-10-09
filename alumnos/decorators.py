@@ -49,5 +49,11 @@ alumno_required = _rol_requerido(ALUMNO, _al_login)
 # El profesor anonimo va a su registro, que tambien trae el login de profesor.
 profesor_required = _rol_requerido(PROFESOR, lambda _r: redirect('regis_prof'))
 
-# Endpoints JSON: un redirect romperia al cliente que espera 'success'.
-profesor_required_json = _rol_requerido(PROFESOR, _sesion_invalida_json, json=True)
+# Para endpoints JSON: un redirect romperia al cliente que espera 'success'.
+profesor_required_json = _sesion_requerida(
+    "profesor_id", _sesion_invalida_json
+)
+
+admin_required_json = _sesion_requerida(
+    "admin_id", _sesion_invalida_json
+)

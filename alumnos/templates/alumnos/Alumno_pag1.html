@@ -43,9 +43,9 @@
 
             <!-- Ficha del alumno conectado (lleva a Mi Perfil) -->
             <button class="sb-user" onclick="switchView('view-profile')" title="Ver mi perfil">
-                <span class="sb-user-avatar">{{ alumno.nombre|slice:":1"|upper }}</span>
+                <span class="sb-user-avatar">{{ alumno.user.first_name|slice:":1"|upper }}</span>
                 <span class="sb-user-info">
-                    <span class="sb-user-name">{{ alumno.nombre }}</span>
+                    <span class="sb-user-name">{{ alumno.user.first_name }}</span>
                     <span class="sb-user-role">Alumno</span>
                 </span>
             </button>
@@ -193,7 +193,7 @@
                         <div class="welcome-banner">
                             <div class="welcome-text">
                                 <span class="welcome-eyebrow">Portal del alumno</span>
-                                <h1>¡Hola de nuevo, {{ alumno.nombre }}!</h1>
+                                <h1>¡Hola de nuevo, {{ alumno.user.first_name }}!</h1>
                                 <p>Bienvenido a tu panel de control personalizado. Aquí podrás gestionar tu aprendizaje.</p>
                             </div>
                             <button class="btn-principal ap-btn-setup" id="dashboard-setup-btn">Configurar Intereses</button>
@@ -308,25 +308,25 @@
                                 {% for insc in mis_inscripciones %}
                                 <div class="class-item-card">
                                     <div class="class-card-header">
-                                        <span class="class-badge">{{ insc.id_clase.id_profesor.especialidad }}</span>
+                                        <span class="class-badge">{{ insc.clase.profesor.especialidad }}</span>
                                         <span class="class-status-badge class-status-badge--enrolled">Inscrito</span>
                                     </div>
                                     <div class="class-card-body">
-                                        <h4>{{ insc.id_clase.nombre_curso }}</h4>
-                                        <p class="class-teacher-type"><i class="bi bi-person-workspace"></i> Prof. {{ insc.id_clase.id_profesor.nombre }}</p>
+                                        <h4>{{ insc.clase.asignatura.nombre }}</h4>
+                                        <p class="class-teacher-type"><i class="bi bi-person-workspace"></i> Prof. {{ insc.clase.profesor.user.first_name }}</p>
                                         <div class="class-info-item">
                                             <i class="bi bi-calendar-event"></i>
                                             <span>Fecha de inscripción: {{ insc.fecha_inscripcion|date:"d/m/Y" }}</span>
                                         </div>
                                         <div class="class-info-item">
                                             <i class="bi bi-clock"></i>
-                                            <span>Horario: {{ insc.id_clase.horario|time:"H:i" }} hrs ({{ insc.id_clase.get_modalidad_display }})</span>
+                                            <span>Horario: {{ insc.clase.horario|time:"H:i" }} hrs ({{ insc.clase.get_modalidad_display }})</span>
                                         </div>
                                     </div>
                                     <div class="ap-class-actions">
-                                        <button class="btn-join-class ap-flex-1" onclick="joinVideoCall('{{ insc.id_clase.id_profesor.nombre }}', 'https://meet.google.com/lbwus-class-{{ insc.id_clase.id_clase }}')">
+                                        <a class="btn-join-class ap-flex-1" href="{% url 'sala_virtual' insc.clase.id_clase %}" style="display:flex; justify-content:center; align-items:center; text-decoration:none;">
                                             <i class="bi bi-camera-video-fill"></i> Unirse a la Clase
-                                        </button>
+                                        </a>
                                         <a class="ap-btn-cancel" href="{% url 'cancelar_inscripcion' insc.id_inscripcion %}" onclick="return confirm('¿Seguro que deseas cancelar tu inscripción?')" title="Cancelar Inscripción">
                                             <i class="bi bi-trash"></i>
                                         </a>
@@ -349,12 +349,12 @@
                             {% for c in clases_disponibles %}
                             <div class="class-item-card">
                                 <div class="class-card-header">
-                                    <span class="class-badge">{{ c.id_profesor.especialidad }}</span>
+                                    <span class="class-badge">{{ c.profesor.especialidad }}</span>
                                     <span class="class-status-badge class-status-badge--modality">{{ c.get_modalidad_display }}</span>
                                 </div>
                                 <div class="class-card-body">
-                                    <h4>{{ c.nombre_curso }}</h4>
-                                    <p class="class-teacher-type"><i class="bi bi-person"></i> Prof. {{ c.id_profesor.nombre }}</p>
+                                    <h4>{{ c.asignatura.nombre }}</h4>
+                                    <p class="class-teacher-type"><i class="bi bi-person"></i> Prof. {{ c.profesor.user.first_name }}</p>
                                     <div class="class-info-item">
                                         <i class="bi bi-clock"></i>
                                         <span>Horario: {{ c.horario|time:"H:i" }} hrs</span>
@@ -366,7 +366,7 @@
                                         <i class="bi bi-check-circle-fill"></i> Ya estás inscrito
                                     </button>
                                     {% else %}
-                                    <button class="btn-join-class btn-join-class--primary" data-id-clase="{{ c.id_clase }}" data-nombre="{{ c.nombre_curso }}" onclick="inscribirAClase(this.dataset.idClase, this.dataset.nombre)">
+                                    <button class="btn-join-class btn-join-class--primary" onclick="inscribirAClase({{ c.id_clase }}, '{{ c.asignatura.nombre }}')">
                                         <i class="bi bi-plus-circle"></i> Inscribirme a esta Clase
                                     </button>
                                     {% endif %}
@@ -949,7 +949,7 @@
             <div class="dashboard-view" id="view-profile">
                 <div class="profile-card">
                     <div class="profile-header">
-                        <div class="profile-avatar-large">{{ alumno.nombre|slice:":1"|upper }}</div>
+                        <div class="profile-avatar-large">{{ alumno.user.first_name|slice:":1"|upper }}</div>
                         <div class="profile-title-box">
                             <h2>Perfil del Alumno</h2>
                             <span class="plan-badge"><i class="bi bi-x-circle-fill"></i> Sin Plan Activo</span>
@@ -959,11 +959,11 @@
                     <div class="profile-details-grid">
                         <div class="profile-field">
                             <label>Nombre Completo</label>
-                            <p>{{ alumno.nombre }}</p>
+                            <p>{{ alumno.user.first_name }}</p>
                         </div>
                         <div class="profile-field">
                             <label>Correo Electrónico</label>
-                            <p>{{ alumno.correo_electronico }}</p>
+                            <p>{{ alumno.user.email }}</p>
                         </div>
                         <div class="profile-field">
                             <label>Nivel de Educación</label>
@@ -971,7 +971,7 @@
                         </div>
                         <div class="profile-field">
                             <label>Teléfono de Contacto</label>
-                            <p>{{ alumno.telefono|default:"No registrado" }}</p>
+                            <p>{{ alumno.user.telefono|default:"No registrado" }}</p>
                         </div>
                     </div>
 
@@ -1278,8 +1278,24 @@
         }
 
         // ── DATA POOLS ──
-        // Teachers: vienen de la vista como JSON (ver profesores_js en views.py).
-        const teachers = JSON.parse(document.getElementById('profesores-data').textContent);
+        // Teachers
+        const teachers = [
+            {% if profesores_list %}
+                {% for prof in profesores_list %}
+                {
+                    id: {{ prof.id_profesor }},
+                    name: "{{ prof.user.first_name }}",
+                    specialties: ["{{ prof.especialidad }}"],
+                    distance: 1.2,
+                    rating: "5.0 ⭐",
+                    price: "$15.000",
+                    initial: "{{ prof.user.first_name|slice:':1'|upper }}"
+                }{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            {% else %}
+                { id: 1, name: "Dr. Carlos Ruiz", specialties: ["Matemáticas", "Física"], distance: 0.8, rating: "4.9 ⭐", price: "$15.000", initial: "CR" }
+            {% endif %}
+        ];
 
         // Tutors
         const tutors = [

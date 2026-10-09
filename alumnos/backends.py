@@ -7,13 +7,20 @@ User = get_user_model()
 def variaciones_rut(texto):
     clean = texto.replace('.', '').replace(' ', '').upper()
     vars_set = {texto.strip(), clean}
+    
+    # Si el usuario ingresó el RUT sin guión (ej. 111111111), le inyectamos el guión
+    if '-' not in clean and len(clean) in [8, 9]:
+        clean = clean[:-1] + '-' + clean[-1]
+        vars_set.add(clean)
+
     if '-' in clean:
         partes = clean.split('-')
-        cuerpo, dv = partes[0], partes[1]
-        if len(cuerpo) == 8:
-            vars_set.add(f"{cuerpo[:2]}.{cuerpo[2:5]}.{cuerpo[5:]}-{dv}")
-        elif len(cuerpo) == 7:
-            vars_set.add(f"{cuerpo[:1]}.{cuerpo[1:4]}.{cuerpo[4:]}-{dv}")
+        if len(partes) == 2:
+            cuerpo, dv = partes[0], partes[1]
+            if len(cuerpo) == 8:
+                vars_set.add(f"{cuerpo[:2]}.{cuerpo[2:5]}.{cuerpo[5:]}-{dv}")
+            elif len(cuerpo) == 7:
+                vars_set.add(f"{cuerpo[:1]}.{cuerpo[1:4]}.{cuerpo[4:]}-{dv}")
     return list(vars_set)
 
 class RutOrEmailBackend(ModelBackend):
@@ -28,22 +35,6 @@ class RutOrEmailBackend(ModelBackend):
         users = User.objects.filter(
             Q(rut__in=ruts) | Q(username__in=ruts) | Q(email__iexact=identificador)
         )
-
-        # 2. Si no se encuentra en User, buscar en los perfiles por variantes de RUT
-        if not users.exists():
-            from alumnos.models import Alumno, Profesor, Tutor
-
-            alumno = Alumno.objects.filter(rut__in=ruts).select_related('user').first()
-            if alumno and alumno.user:
-                users = User.objects.filter(pk=alumno.user.pk)
-            else:
-                profesor = Profesor.objects.filter(rut__in=ruts).select_related('user').first()
-                if profesor and profesor.user:
-                    users = User.objects.filter(pk=profesor.user.pk)
-                else:
-                    tutor = Tutor.objects.filter(rut__in=ruts).select_related('user').first()
-                    if tutor and tutor.user:
-                        users = User.objects.filter(pk=tutor.user.pk)
 
         for user in users:
             if user.check_password(password) and self.user_can_authenticate(user):

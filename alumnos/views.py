@@ -281,8 +281,7 @@ def alumno_pag1(request):
     )
 
     mis_reportes = Reporte.objects.filter(
-        remitente_tipo='alumno',
-        remitente_nombre=alumno.nombre
+        remitente=alumno.user
     ).order_by(
         '-fecha_reporte'
     )
@@ -290,20 +289,18 @@ def alumno_pag1(request):
     # Solo profesores con titulo aprobado pueden hacer clases.
     profesores_list = Profesor.objects.habilitados()
 
-    clases_disponibles = Clase.objects.filter(
-        id_profesor__titulo_estado=Profesor.TITULO_APROBADO
-    ).select_related(
-        'id_profesor'
+    clases_disponibles = Clase.objects.all().select_related(
+        'profesor'
     )
 
     mis_inscripciones = (
         Inscripcion.objects
         .filter(
-            id_alumno=alumno
+            alumno=alumno
         )
         .select_related(
-            'id_clase',
-            'id_clase__id_profesor'
+            'clase',
+            'clase__profesor'
         )
         .order_by(
             '-fecha_inscripcion'
@@ -312,7 +309,7 @@ def alumno_pag1(request):
 
     inscritas_ids = list(
         mis_inscripciones.values_list(
-            'id_clase_id',
+            'clase_id',
             flat=True
         )
     )
@@ -433,12 +430,7 @@ def custom_login(request):
 # ============================================================
 
 def logout_alumno(request):
-
     auth_logout(request)
-
-    if 'alumno_id' in request.session:
-        del request.session['alumno_id']
-
     return redirect('home')
 
 
@@ -488,8 +480,7 @@ def enviar_reporte(request):
                 )
 
                 Reporte.objects.create(
-                    remitente_tipo='alumno',
-                    remitente_nombre=alumno.nombre,
+                    remitente=alumno.user,
                     descripcion=descripcion
                 )
 
@@ -506,8 +497,7 @@ def enviar_reporte(request):
                 )
 
                 Reporte.objects.create(
-                    remitente_tipo='profesor',
-                    remitente_nombre=profesor.nombre,
+                    remitente=profesor.user,
                     descripcion=descripcion
                 )
 
@@ -595,7 +585,7 @@ def inscribir_clase(request):
 
             clase = get_object_or_404(
                 Clase,
-                id_clase=id_clase
+                clase_id=id_clase
             )
 
             if not clase.id_profesor.puede_hacer_clases:
@@ -612,8 +602,8 @@ def inscribir_clase(request):
             # Evitar inscripciones duplicadas
 
             if Inscripcion.objects.filter(
-                id_alumno=alumno,
-                id_clase=clase
+                alumno=alumno,
+                clase=clase
             ).exists():
 
                 return JsonResponse({
@@ -621,13 +611,13 @@ def inscribir_clase(request):
                     'message': (
                         f'Ya estás inscrito en '
                         f'la clase '
-                        f'"{clase.nombre_curso}".'
+                        f'"{clase.asignatura.nombre}".'
                     )
                 })
 
             Inscripcion.objects.create(
-                id_alumno=alumno,
-                id_clase=clase
+                alumno=alumno,
+                clase=clase
             )
 
             return JsonResponse({
@@ -635,9 +625,9 @@ def inscribir_clase(request):
                 'message': (
                     f'¡Te has inscrito '
                     f'exitosamente a '
-                    f'"{clase.nombre_curso}" '
+                    f'"{clase.asignatura.nombre}" '
                     f'con el profesor '
-                    f'{clase.id_profesor.nombre}!'
+                    f'{clase.profesor.user.first_name}!'
                 )
             })
 
@@ -662,7 +652,7 @@ def cancelar_inscripcion(request, pk):
     inscripcion = get_object_or_404(
         Inscripcion,
         id_inscripcion=pk,
-        id_alumno_id=alumno_id
+        alumno_id=alumno_id
     )
 
     inscripcion.delete()
@@ -896,3 +886,42 @@ def confirmacion(request):
         'alumnos/confirmacion.html',
         ctx
     )
+
+
+
+def sala_virtual(request, clase_id):
+    # Validar que el usuario esta autenticado
+    # Esta vista es mixta: puede entrar un profesor o un alumno
+    
+    # Obtener la clase
+    clase = get_object_or_404(Clase, id_clase=clase_id)
+    
+    # En un sistema real, aca validamos que si es alumno, este inscrito en esta clase
+    # Y si es profesor, que sea el profesor de esta clase
+    
+    context = {
+        'clase': clase
+    }
+    return render(request, 'alumnos/sala_virtual.html', context)
+
+
+from django.views.decorators.http import require_POST
+
+@require_POST
+def iniciar_directo(request, clase_id):
+    clase = get_object_or_404(Clase, id_clase=clase_id)
+    
+    # Solo el profesor de la clase puede iniciar
+    profesor_id = request.session.get('profesor_id')
+    if not profesor_id or str(clase.profesor.id_profesor) != str(profesor_id):
+        return JsonResponse({'success': False, 'message': 'No tienes permiso.'})
+        
+    descripcion = request.POST.get('descripcion_vivo', '')
+    temas = request.POST.get('temas_vivo', '')
+    
+    clase.descripcion_vivo = descripcion
+    clase.temas_vivo = temas
+    clase.en_vivo = True
+    clase.save()
+    
+    return JsonResponse({'success': True})

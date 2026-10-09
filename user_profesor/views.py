@@ -22,12 +22,12 @@ def calcular_saldos(profesor):
 
     from alumnos.models import SolicitudRetiro
 
-    inscripciones = Inscripcion.objects.filter(id_clase__id_profesor=profesor).count()
+    inscripciones = Inscripcion.objects.filter(clase__profesor=profesor).count()
 
     total_ganado = inscripciones * VALOR_INSCRIPCION
     corresponde_al_profesor = inscripciones * PAGO_PROFESOR
 
-    retiros = SolicitudRetiro.objects.filter(id_profesor=profesor)
+    retiros = SolicitudRetiro.objects.filter(profesor=profesor)
     aprobados = retiros.filter(estado='aprobado').aggregate(Sum('monto'))['monto__sum'] or 0
     pendientes = retiros.filter(estado='pendiente').aggregate(Sum('monto'))['monto__sum'] or 0
 
@@ -113,16 +113,12 @@ def regis_prof(request):
             )
 
             # Crear el registro del Profesor vinculado al User
+            from alumnos.models import Especialidad
+            especialidad_obj, _ = Especialidad.objects.get_or_create(nombre=especialidad)
+            
             profesor = Profesor.objects.create(
                 user=user,
-                nombre=nombre,
-                rut=rut,
-                especialidad=especialidad,
-                direccion=direccion,
-                fecha_nacimiento=fecha_nacimiento,
-                correo_electronico=correo_electronico,
-                telefono=telefono,
-                genero=genero
+                especialidad=especialidad_obj
             )
 
             # Iniciar sesión automáticamente
@@ -142,51 +138,25 @@ def regis_prof(request):
     return render(request, 'user_profesor/regis_prof.html', context)
 
 
-def login_prof(request):
-    if request.method == 'POST':
-        identificador = request.POST.get('identificador', '').strip()
-        password = request.POST.get('password', '').strip()
-
-        if not identificador or not password:
-            return JsonResponse({"success": False, "message": "Por favor ingrese todos los campos."})
-
-        from django.contrib.auth import authenticate, login as auth_login
-        user = authenticate(request, username=identificador, password=password)
-        rol, perfil = resolver_rol(user)
-        if rol is PROFESOR:
-            auth_login(request, user)
-            abrir_sesion_rol(request, PROFESOR, perfil)
-            return JsonResponse({
-                "success": True, 
-                "message": f"Bienvenido de vuelta, Prof. {perfil.nombre}."
-            })
-        else:
-            return JsonResponse({
-                "success": False,
-                "message": "Credenciales inválidas o no tienes cuenta de profesor."
-            })
-
-    return redirect('regis_prof')
-
-
 @never_cache
 @profesor_required
 def panel_profesor(request):
     import datetime
-    profesor_id = request.session['profesor_id']
+    if not request.user.is_authenticated or (getattr(request.user, 'rol', None) != 'profesor' and not hasattr(request.user, 'perfil_profesor')):
+        return redirect('custom_login_alumno')
 
-    profesor = get_object_or_404(Profesor, id_profesor=profesor_id)
-    clases = Clase.objects.filter(id_profesor=profesor)
-    inscripciones = Inscripcion.objects.filter(id_clase__id_profesor=profesor)
+    profesor = getattr(request.user, 'perfil_profesor', None) or get_object_or_404(Profesor, user=request.user)
+    clases = Clase.objects.filter(profesor=profesor)
+    inscripciones = Inscripcion.objects.filter(clase__profesor=profesor)
 
     # 1. Clases del día (Máximo 6)
     clases_hoy_lista = []
     for clase in clases[:6]:
         # Buscar primer alumno inscrito
-        insc = inscripciones.filter(id_clase=clase).first()
-        alumno_nombre = insc.id_alumno.nombre if insc else "Sin asignar"
+        insc = inscripciones.filter(clase=clase).first()
+        alumno_nombre = insc.alumno.user.first_name if insc else "Sin asignar"
         clases_hoy_lista.append({
-            'nombre_curso': clase.nombre_curso,
+            'nombre_curso': clase.asignatura.nombre,
             'horario': clase.horario,
             'modalidad': clase.get_modalidad_display() if hasattr(clase, 'get_modalidad_display') else clase.modalidad,
             'alumno': alumno_nombre
@@ -195,7 +165,7 @@ def panel_profesor(request):
     # 2. Métricas del Día
     # Dinero generado hoy segun las inscripciones reales de esas clases.
     inscripciones_hoy = inscripciones.filter(
-        id_clase__in=[c.id_clase for c in clases[:6]]
+        clase_id__in=[c.id_clase for c in clases[:6]]
     ).count()
     dinero_hoy_val = inscripciones_hoy * PAGO_PROFESOR
     dinero_hoy = formato_clp(dinero_hoy_val)
@@ -231,7 +201,7 @@ def panel_profesor(request):
     saldo_disponible_fmt = formato_clp(saldo_disponible)
     saldo_pendiente_fmt = formato_clp(saldos['pendiente'])
 
-    mis_retiros = SolicitudRetiro.objects.filter(id_profesor=profesor).order_by('-fecha_solicitud')
+    mis_retiros = SolicitudRetiro.objects.filter(profesor=profesor).order_by('-fecha_solicitud')
     generos = Genero.objects.all()
 
     context = {
@@ -291,13 +261,15 @@ def actualizar_perfil_prof(request):
 
             genero = get_object_or_404(Genero, id_genero=genero_id)
 
-            profesor.nombre = nombre
-            profesor.rut = rut
-            profesor.especialidad = especialidad
-            profesor.direccion = direccion
-            profesor.correo_electronico = correo
-            profesor.telefono = telefono
-            profesor.genero = genero
+            profesor.user.first_name = nombre
+            profesor.user.rut = rut
+            from alumnos.models import Especialidad
+            especialidad_obj, _ = Especialidad.objects.get_or_create(nombre=especialidad)
+            profesor.especialidad = especialidad_obj
+            profesor.user.direccion = direccion
+            profesor.user.email = correo
+            profesor.user.telefono = telefono
+            profesor.user.genero = genero
             profesor.save()
 
             return JsonResponse({"success": True, "message": "Tu perfil ha sido actualizado con éxito."})
@@ -307,15 +279,6 @@ def actualizar_perfil_prof(request):
     return JsonResponse({"success": False, "message": "Método no permitido."})
 
 
-def logout_prof(request):
-    from django.contrib.auth import logout as auth_logout
-    auth_logout(request)
-    if 'profesor_id' in request.session:
-        del request.session['profesor_id']
-    return redirect('home')
-
-
-@profesor_required_json
 def solicitar_retiro(request):
     profesor_id = request.session['profesor_id']
 
@@ -342,10 +305,14 @@ def solicitar_retiro(request):
             if monto > saldo_disponible:
                 return JsonResponse({"success": False, "message": f"El monto ingresado excede tu saldo disponible ({formato_clp(saldo_disponible)})."})
 
+            from alumnos.models import Banco
+            banco_obj, _ = Banco.objects.get_or_create(nombre=banco if banco else 'Banco Estado')
+            from alumnos.models import Banco
+            banco_obj, _ = Banco.objects.get_or_create(nombre=banco if banco else 'Banco Estado')
             SolicitudRetiro.objects.create(
-                id_profesor=profesor,
+                profesor=profesor,
                 monto=monto,
-                banco=banco if banco else 'Banco Estado',
+                banco=banco_obj,
                 tipo_cuenta=tipo_cuenta if tipo_cuenta else 'Cuenta Rut / Vista',
                 numero_cuenta=numero_cuenta
             )
@@ -447,14 +414,7 @@ def regis_tutor(request):
             user.save()
 
             tutor = Tutor.objects.create(
-                user=user,
-                nombre=nombre,
-                rut=rut,
-                direccion=direccion,
-                fecha_nacimiento=fecha_nacimiento,
-                correo_electronico=correo_electronico,
-                telefono=telefono,
-                genero=genero
+                user=user
             )
 
             # Iniciar sesión de administrador
@@ -472,32 +432,5 @@ def regis_tutor(request):
     generos = Genero.objects.all()
     context = {'generos': generos}
     return render(request, 'user_profesor/regis_tutor.html', context)
-
-
-def login_admin(request):
-    if request.method == 'POST':
-        identificador = request.POST.get('identificador', '').strip()
-        password = request.POST.get('password', '').strip()
-
-        if not identificador or not password:
-            return JsonResponse({"success": False, "message": "Por favor ingrese RUT/Correo y contraseña."})
-
-        from django.contrib.auth import authenticate, login as auth_login
-        user = authenticate(request, username=identificador, password=password)
-        rol, tutor = resolver_rol(user)
-        if rol is ADMIN:
-            auth_login(request, user)
-            abrir_sesion_rol(request, ADMIN, tutor)
-            return JsonResponse({
-                "success": True,
-                "message": f"Bienvenido de vuelta, Administrador {tutor.nombre}."
-            })
-        else:
-            return JsonResponse({
-                "success": False,
-                "message": "Credenciales inválidas o no tienes permisos de administrador."
-            })
-
-    return redirect('login')
 
 

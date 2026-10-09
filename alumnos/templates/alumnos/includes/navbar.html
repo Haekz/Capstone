@@ -63,7 +63,7 @@
                 <div class="cuenta desktop-only" id="cuenta">
                     <button type="button" class="cuenta-avatar" id="cuenta-btn"
                         aria-haspopup="true" aria-expanded="false" aria-controls="cuenta-menu"
-                        aria-label="Menú de cuenta de {{ usuario_sesion.nombre }}">
+                        aria-label="Menú de cuenta de {{ usuario_sesion.user.first_name }}">
                         {{ usuario_sesion.iniciales }}
                     </button>
 
@@ -71,7 +71,7 @@
                         <div class="cuenta-head">
                             <span class="cuenta-avatar cuenta-avatar--lg" aria-hidden="true">{{ usuario_sesion.iniciales }}</span>
                             <div>
-                                <strong>{{ usuario_sesion.nombre }}</strong>
+                                <strong>{{ usuario_sesion.user.first_name }}</strong>
                                 {% if usuario_sesion.rol %}<span class="cuenta-rol">{{ usuario_sesion.rol }}</span>{% endif %}
                             </div>
                         </div>
@@ -98,3 +98,4 @@
         </div>
     </nav>
 </header>
+

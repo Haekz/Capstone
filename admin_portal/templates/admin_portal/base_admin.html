@@ -37,10 +37,10 @@
         <!-- Mini ficha del perfil del administrador que tiene la sesión activa -->
         <div class="sidebar-user">
             <div class="sidebar-user-avatar">
-                {{ admin.nombre|slice:":1"|upper|default:"A" }}
+                {{ admin.user.first_name|slice:":1"|upper|default:"A" }}
             </div>
             <div class="sidebar-user-info">
-                <div class="sidebar-user-name">{{ admin.nombre|default:"Administrador" }}</div>
+                <div class="sidebar-user-name">{{ admin.user.first_name|default:"Administrador" }}</div>
                 <div class="sidebar-user-role">Administrador</div>
             </div>
         </div>
