@@ -325,7 +325,7 @@
     </div>
 </div>
 
-<script src="https://meet.jit.si/external_api.js"></script>
+<script src="https://meet.ffmuc.net/external_api.js"></script>
 <script>
     const isEnVivo = {{ clase.en_vivo|yesno:"true,false" }};
     const isProfesor = {% if request.session.profesor_id == clase.profesor.id_profesor %}true{% else %}false{% endif %};
@@ -344,7 +344,7 @@
 
     function iniciarDirecto() {
         const formData = new FormData(document.getElementById('form-pre-stream'));
-        fetch(/alumnos/sala-virtual//iniciar/, {
+        fetch('/alumnos/sala-virtual/' + claseId + '/iniciar/', {
             method: 'POST',
             body: formData,
             headers: {
@@ -366,7 +366,7 @@
         const container = document.getElementById('meet-container');
         container.innerHTML = ''; // limpiar placeholders
 
-        const domain = 'meet.jit.si';
+        const domain = 'meet.ffmuc.net';
         const options = {
             roomName: 'lbwus-clase-privada-{{ clase.id_clase }}',
             width: '100%',
@@ -401,15 +401,14 @@
         const now = new Date();
         const timeStr = now.getHours() + ':' + now.getMinutes().toString().padStart(2, '0');
         
-        const msgHtml = 
-            <div class="message">
-                <div class="message-header">
-                    <span class="sender">T</span>
-                    <span class="time"></span>
-                </div>
-                <div class="text"></div>
-            </div>
-        ;
+        const msgHtml = '<div class="message">' +
+                '<div class="message-header">' +
+                    '<span class="sender">Tú</span>' +
+                    '<span class="time">' + timeStr + '</span>' +
+                '</div>' +
+                '<div class="text">' + text + '</div>' +
+            '</div>';
+        
         msgContainer.innerHTML += msgHtml;
         msgContainer.scrollTop = msgContainer.scrollHeight;
         input.value = '';
