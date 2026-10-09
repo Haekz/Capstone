@@ -4,6 +4,7 @@ from django.contrib.auth import views as auth_views
 from django.views.decorators.cache import never_cache
 from django.views.generic import TemplateView
 from alumnos.views import home, custom_login
+from alumnos import google_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -39,5 +40,9 @@ path(
     path('accounts/password_change/', never_cache(auth_views.PasswordChangeView.as_view(template_name='registration/cambiar_clave.html')), name='password_change'),
     path('accounts/password_change/done/', auth_views.PasswordChangeDoneView.as_view(template_name='registration/cambiar_clave_listo.html'), name='password_change_done'),
     path('accounts/', include('django.contrib.auth.urls')),
+    # Registro con Google: codigo por correo y datos faltantes (antes de allauth).
+    path('accounts/google/verificar/', google_views.google_verificar, name='google_verificar'),
+    path('accounts/google/reenviar/', google_views.google_reenviar, name='google_reenviar'),
+    path('accounts/google/completar/', google_views.google_completar, name='google_completar'),
     path("accounts/", include("allauth.urls")),
 ]

@@ -7,5 +7,6 @@ urlpatterns = [
     path('panel', panel_profesor, name='panel_profesor'),
     path('actualizar_perfil', actualizar_perfil_prof, name='actualizar_perfil_prof'),
     path('solicitar_retiro', solicitar_retiro, name='solicitar_retiro'),
+    path('subir_titulo', subir_titulo, name='subir_titulo'),
 ]
 

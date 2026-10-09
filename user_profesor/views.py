@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.cache import never_cache
 from alumnos.models import Genero, Profesor, Clase, Inscripcion, Tutor
+from alumnos.decorators import profesor_required, profesor_required_json
+from alumnos.roles import ADMIN, PROFESOR, abrir_sesion_rol, resolver_rol
 
 # Tarifas por inscripcion real. Antes estaban escritas a mano dentro de cada
 # vista, junto a un saldo de regalo para las cuentas sin actividad.
@@ -122,7 +124,7 @@ def regis_prof(request):
             # Iniciar sesión automáticamente
             from django.contrib.auth import login as auth_login
             auth_login(request, user, backend='alumnos.backends.RutOrEmailBackend')
-            request.session['profesor_id'] = profesor.id_profesor
+            abrir_sesion_rol(request, PROFESOR, profesor)
 
             return JsonResponse({
                 "success": True,
@@ -137,6 +139,7 @@ def regis_prof(request):
 
 
 @never_cache
+@profesor_required
 def panel_profesor(request):
     import datetime
     if not request.user.is_authenticated or (getattr(request.user, 'rol', None) != 'profesor' and not hasattr(request.user, 'perfil_profesor')):
@@ -219,11 +222,28 @@ def panel_profesor(request):
     return render(request, 'user_profesor/panel_profesor.html', context)
 
 
+@profesor_required_json
+def subir_titulo(request):
+    if request.method != 'POST':
+        return JsonResponse({"success": False, "message": "Método no permitido."})
+    from django.core.exceptions import ValidationError
+    from . import titulo
+
+    profesor = get_object_or_404(Profesor, id_profesor=request.session['profesor_id'])
+    try:
+        titulo.subir(profesor, request.FILES.get('titulo'))
+    except ValidationError as e:
+        return JsonResponse({"success": False, "message": e.messages[0]})
+    return JsonResponse({
+        "success": True,
+        "message": "Título recibido. Un administrador lo revisará y te habilitará para hacer clases.",
+    })
+
+
+@profesor_required_json
 def actualizar_perfil_prof(request):
     if request.method == 'POST':
-        profesor_id = request.session.get('profesor_id')
-        if not profesor_id:
-            return JsonResponse({"success": False, "message": "Sesión inválida."})
+        profesor_id = request.session['profesor_id']
 
         profesor = get_object_or_404(Profesor, id_profesor=profesor_id)
 
@@ -260,9 +280,7 @@ def actualizar_perfil_prof(request):
 
 
 def solicitar_retiro(request):
-    profesor_id = request.session.get('profesor_id')
-    if not profesor_id:
-        return JsonResponse({"success": False, "message": "Sesión inválida."})
+    profesor_id = request.session['profesor_id']
 
     if request.method == 'POST':
         profesor = get_object_or_404(Profesor, id_profesor=profesor_id)
@@ -310,15 +328,10 @@ def solicitar_retiro(request):
 def _es_admin(request):
     """Solo un administrador con sesion activa puede crear otro.
 
-    Se acepta la clave de sesion 'admin_id' (que es como login_admin() marca
-    la sesion) o el flag is_staff/is_superuser de un usuario de Django.
+    Antes bastaba is_staff, pero un staff sin perfil Tutor no tiene portal
+    admin (ver alumnos/roles.py): la regla ahora es la misma en todo el sitio.
     """
-    if request.session.get('admin_id'):
-        return True
-
-    user = getattr(request, 'user', None)
-
-    return bool(user and user.is_authenticated and (user.is_staff or user.is_superuser))
+    return bool(request.session.get(ADMIN.clave_sesion))
 
 
 def regis_tutor(request):
@@ -407,7 +420,7 @@ def regis_tutor(request):
             # Iniciar sesión de administrador
             from django.contrib.auth import login as auth_login
             auth_login(request, user, backend='alumnos.backends.RutOrEmailBackend')
-            request.session['admin_id'] = tutor.id_tutor
+            abrir_sesion_rol(request, ADMIN, tutor)
 
             return JsonResponse({
                 "success": True,

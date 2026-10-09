@@ -12,6 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Estilos específicos de la interfaz del administrador -->
     <link rel="stylesheet" href="{% static 'admin_portal/css/admin_panel.css' %}">
+    <link rel="stylesheet" href="{% static 'alumnos/css/avisos.css' %}">
     {% include 'alumnos/includes/sin_copia_atras.html' %}
     {% block extra_css %}{% endblock %}
 </head>
@@ -65,6 +66,11 @@
                 {% if reportes_pendientes > 0 %}
                 <span class="nav-badge">{{ reportes_pendientes }}</span>
                 {% endif %}
+            </a>
+
+            <a id="nav-titulos" class="nav-item {% block nav_titulos %}{% endblock %}" href="{% url 'titulos_adm' %}">
+                <i class="bi bi-mortarboard-fill"></i>
+                Títulos de Profesores
             </a>
 
             <span class="nav-label">Contenido</span>

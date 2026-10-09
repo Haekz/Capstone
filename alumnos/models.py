@@ -78,6 +78,18 @@ class Banco(models.Model):
 
 
 class Profesor(models.Model):
+    # Estados del titulo profesional. Sin titulo aprobado no se hacen clases.
+    TITULO_PENDIENTE = 'pendiente'      # aun no lo sube
+    TITULO_EN_REVISION = 'en_revision'  # subido, falta que un admin lo revise
+    TITULO_APROBADO = 'aprobado'
+    TITULO_RECHAZADO = 'rechazado'
+    ESTADOS_TITULO = [
+        (TITULO_PENDIENTE, 'Pendiente'),
+        (TITULO_EN_REVISION, 'En revisión'),
+        (TITULO_APROBADO, 'Aprobado'),
+        (TITULO_RECHAZADO, 'Rechazado'),
+    ]
+
     id_profesor = models.AutoField(primary_key=True)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='perfil_profesor')
     especialidad = models.ForeignKey(Especialidad, on_delete=models.SET_NULL, null=True)
@@ -88,6 +100,15 @@ class Profesor(models.Model):
 
 class Asignatura(models.Model):
     nombre = models.CharField(max_length=60, unique=True)
+
+    # Documento privado: se sirve solo a admins (ver admin_portal.ver_titulo),
+    # nunca por MEDIA_URL publico.
+    titulo_archivo = models.FileField(upload_to='titulos/', blank=True)
+    titulo_estado = models.CharField(max_length=12, choices=ESTADOS_TITULO, default=TITULO_PENDIENTE)
+    titulo_observacion = models.CharField(max_length=200, blank=True)
+    titulo_actualizado = models.DateTimeField(null=True, blank=True)
+
+    objects = ProfesorQuerySet.as_manager()
 
     def __str__(self):
         return self.nombre

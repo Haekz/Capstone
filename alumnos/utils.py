@@ -22,8 +22,11 @@ def usuario_existe(rut, correo):
     from django.contrib.auth import get_user_model
     from django.db.models import Q
     User = get_user_model()
-    if User.objects.filter(email__iexact=correo).exists():
+    usuarios = User.objects.all()
+    if excluir_user is not None:
+        usuarios = usuarios.exclude(pk=excluir_user.pk)
+    if usuarios.filter(email__iexact=correo).exists():
         return "El correo electrónico ya está registrado en el sistema."
-    if User.objects.filter(Q(username__iexact=rut) | Q(rut__iexact=rut)).exists():
+    if usuarios.filter(Q(username__iexact=rut) | Q(rut__iexact=rut)).exists():
         return "El RUT ingresado ya está registrado en el sistema."
     return None

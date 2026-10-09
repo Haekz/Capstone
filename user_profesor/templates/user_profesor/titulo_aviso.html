@@ -1,0 +1,64 @@
+{# Aviso del titulo profesional. Sin titulo aprobado el profesor no hace clases. #}
+{% if not profesor.puede_hacer_clases %}
+<div class="titulo-aviso titulo-aviso--{{ profesor.titulo_estado }}" role="region" aria-labelledby="titulo-aviso-h">
+    <div class="titulo-aviso-icono" aria-hidden="true">
+        <i class="bi {% if profesor.titulo_estado == 'en_revision' %}bi-hourglass-split{% elif profesor.titulo_estado == 'rechazado' %}bi-x-octagon{% else %}bi-mortarboard{% endif %}"></i>
+    </div>
+    <div class="titulo-aviso-cuerpo">
+        {% if profesor.titulo_estado == 'en_revision' %}
+        <h2 id="titulo-aviso-h">Tu título está en revisión</h2>
+        <p>Un administrador lo está revisando. Cuando lo apruebe podrás hacer clases y aparecerás para los alumnos.</p>
+        {% else %}
+        <h2 id="titulo-aviso-h">{% if profesor.titulo_estado == 'rechazado' %}Tu título fue rechazado{% else %}Sube tu título profesional{% endif %}</h2>
+        <p>
+            {% if profesor.titulo_estado == 'rechazado' %}
+            Motivo: <strong>{{ profesor.titulo_observacion|default:"sin observación" }}</strong>. Sube una nueva versión.
+            {% else %}
+            Antes de hacer clases necesitamos validar tu título. Hasta entonces no aparecerás para los alumnos.
+            {% endif %}
+        </p>
+        <form id="form-titulo" action="{% url 'subir_titulo' %}" method="POST" enctype="multipart/form-data" class="titulo-form">
+            {% csrf_token %}
+            <label for="titulo-archivo" class="titulo-label">Archivo del título (PDF, JPG o PNG, máx. 5 MB)</label>
+            <input type="file" id="titulo-archivo" name="titulo" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" required>
+            <button type="submit" class="prof-form-btn">Enviar título</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    (function () {
+        const form = document.getElementById('form-titulo');
+        if (!form) return;
+
+        // Si el CDN de SweetAlert no carga, el profesor igual debe enterarse.
+        function avisar(titulo, texto, icono) {
+            if (window.Swal) {
+                return Swal.fire({ title: titulo, text: texto, icon: icono, confirmButtonColor: '#7c3aed' });
+            }
+            alert(titulo + '\n\n' + texto);
+            return Promise.resolve();
+        }
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const boton = form.querySelector('button');
+            boton.disabled = true;
+            fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form),
+                headers: { 'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value }
+            })
+            .then(r => r.json())
+            .then(data => avisar(
+                data.success ? '¡Recibido!' : 'Revisa el archivo',
+                data.message,
+                data.success ? 'success' : 'warning'
+            ).then(() => { if (data.success) window.location.reload(); }))
+            .catch(() => avisar('Error', 'No pudimos subir el archivo.', 'error'))
+            .finally(() => { boton.disabled = false; });
+        });
+    })();
+</script>
+{% endif %}

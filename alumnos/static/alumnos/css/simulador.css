@@ -4,12 +4,13 @@
  * afectar al navbar ni al footer compartidos.
  */
 
-.simulador-page .header {
+.simulador-page .sim-header {
   text-align: center;
   margin-bottom: 40px;
 }
 
-.simulador-page .header h2 {
+.simulador-page .sim-header h1,
+.simulador-page .sim-header h2 {
   font-size: 28px;
   font-weight: bold;
 }
@@ -40,8 +41,7 @@
 
 .simulador-page .form-select,
 .simulador-page input[type="text"],
-.simulador-page input[type="number"],
-.simulador-page .form-label {
+.simulador-page input[type="number"] {
   width: 100%;
   height: 45px;
   font-size: 16px;
@@ -49,6 +49,14 @@
   border: 1px solid #ccc;
   padding: 10px;
   margin-bottom: 20px;
+}
+
+/* Las etiquetas eran cajas con borde y parecian campos para escribir. */
+.simulador-page .form-label {
+  display: block;
+  text-align: left;
+  font-weight: 600;
+  margin-bottom: 6px;
 }
 
 .simulador-page .btn-busqueda {

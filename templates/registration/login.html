@@ -60,6 +60,15 @@
                 <p class="sub">Ingresa con tu cuenta de alumno, profesor o administrador.</p>
 
                 <!-- LOGIN CON GOOGLE -->
+                {% if messages %}
+                {% for m in messages %}
+                <div class="error" role="alert">
+                    <i class="bi bi-info-circle-fill"></i>
+                    <span>{{ m }}</span>
+                </div>
+                {% endfor %}
+                {% endif %}
+
                 {% get_providers as socialaccount_providers %}
 
                 {% if socialaccount_providers %}

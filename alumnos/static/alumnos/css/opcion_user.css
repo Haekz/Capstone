@@ -1,0 +1,293 @@
+/* Pagina para elegir perfil (alumnos/select). Antes estaba en un <style> dentro de opcion_user.html. */
+
+/* ---------- Sección: todo centrado, con aire ---------- */
+.selection-section {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: calc(var(--header-height, 76px) + 72px) 24px 104px;
+    background:
+        radial-gradient(ellipse at 50% 0%, rgba(124, 58, 237, 0.12) 0%, transparent 60%),
+        #f6f5fa;
+}
+
+body.dark-mode .selection-section {
+    background:
+        radial-gradient(ellipse at 50% 0%, rgba(124, 58, 237, 0.22) 0%, transparent 60%),
+        #0f0b1a;
+}
+
+.selection-container {
+    width: 100%;
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 0;
+    text-align: center;
+}
+
+/* ---------- Encabezado ---------- */
+.selection-header {
+    max-width: 620px;
+    margin: 0 auto 56px;
+}
+
+/* Etiqueta "Registro" (sale del CSS, no hay que tocar el HTML) */
+.selection-header::before {
+    content: 'Registro';
+    display: inline-block;
+    margin-bottom: 18px;
+    padding: 6px 16px;
+    border-radius: 50px;
+    background: #efe9fb;
+    color: #6d28d9;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+body.dark-mode .selection-header::before {
+    background: rgba(124, 58, 237, 0.2);
+    color: #c4b5fd;
+}
+
+.selection-header h1 {
+    margin: 0 0 16px;
+    font-size: clamp(2.2rem, 4.8vw, 3.1rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.08;
+    color: var(--text);
+}
+
+.selection-header p {
+    margin: 0 auto;
+    max-width: 520px;
+    font-size: 1.1rem;
+    line-height: 1.65;
+    color: var(--text-light);
+}
+
+/* ---------- Grilla: 2 tarjetas centradas ---------- */
+.selection-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 28px;
+    max-width: 860px;
+    margin: 0 auto;
+    align-items: stretch;
+}
+
+/* ---------- Tarjeta ---------- */
+.selection-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 48px 40px 40px;
+    background: #ffffff;
+    border: 1px solid rgba(26, 18, 51, 0.09);
+    border-radius: 24px;
+    box-shadow: 0 1px 2px rgba(26, 18, 51, 0.04), 0 16px 40px rgba(26, 18, 51, 0.07);
+    overflow: hidden;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+/* Franja de color arriba: morado para Alumno, ámbar para Profesor */
+.selection-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, #7c3aed, #a855f7);
+    opacity: 1;
+}
+
+.selection-card:nth-child(2)::before {
+    background: linear-gradient(90deg, #f5a524, #fbbf24);
+}
+
+.selection-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(124, 58, 237, 0.35);
+    box-shadow: 0 24px 50px rgba(124, 58, 237, 0.14);
+}
+
+.selection-card:nth-child(2):hover {
+    border-color: rgba(245, 165, 36, 0.5);
+    box-shadow: 0 24px 50px rgba(245, 165, 36, 0.14);
+}
+
+body.dark-mode .selection-card {
+    background: #171129;
+    border-color: rgba(255, 255, 255, 0.10);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+/* Ícono centrado */
+.icon-box {
+    width: 76px;
+    height: 76px;
+    margin: 0 auto 24px;
+    border-radius: 22px;
+    background: #efe9fb;
+    color: #7c3aed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.1rem;
+    transform: none;
+    box-shadow: none;
+    transition: transform 0.25s ease;
+}
+
+.selection-card:nth-child(2) .icon-box {
+    background: rgba(245, 165, 36, 0.15);
+    color: #d98a0c;
+}
+
+.selection-card:hover .icon-box {
+    transform: scale(1.06);
+    background: #efe9fb;
+    color: #7c3aed;
+    box-shadow: none;
+}
+
+.selection-card:nth-child(2):hover .icon-box {
+    background: rgba(245, 165, 36, 0.15);
+    color: #d98a0c;
+}
+
+body.dark-mode .icon-box,
+body.dark-mode .selection-card:hover .icon-box {
+    background: rgba(124, 58, 237, 0.2);
+    color: #c4b5fd;
+}
+
+body.dark-mode .selection-card:nth-child(2) .icon-box,
+body.dark-mode .selection-card:nth-child(2):hover .icon-box {
+    background: rgba(245, 165, 36, 0.16);
+    color: #fbbf24;
+}
+
+/* Textos */
+.selection-card h2 {
+    margin: 0 0 12px;
+    font-size: 1.65rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+}
+
+.selection-card p {
+    flex-grow: 1;
+    margin: 0 0 32px;
+    max-width: 34ch;
+    font-size: 1rem;
+    line-height: 1.65;
+    color: var(--text-light);
+}
+
+/* Botón al fondo de la tarjeta, misma altura en ambas */
+.btn-card-select {
+    margin-top: auto;
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 15px 24px;
+    border-radius: 50px;
+    border: none;
+    background: #7c3aed;
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: none;
+    transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Toda la tarjeta es clickeable */
+.btn-card-select::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+}
+
+.selection-card:hover .btn-card-select {
+    background: #6d28d9;
+    color: #ffffff;
+    box-shadow: 0 10px 24px rgba(124, 58, 237, 0.30);
+}
+
+/* Profesor: botón oscuro para diferenciarlo sin competir */
+.selection-card:nth-child(2) .btn-card-select {
+    background: #1a1233;
+}
+
+.selection-card:nth-child(2):hover .btn-card-select {
+    background: #2c2150;
+    box-shadow: 0 10px 24px rgba(26, 18, 51, 0.25);
+}
+
+body.dark-mode .selection-card:nth-child(2) .btn-card-select {
+    background: #ffffff;
+    color: #1a1233;
+}
+
+body.dark-mode .selection-card:nth-child(2):hover .btn-card-select {
+    background: #efe9fb;
+    color: #1a1233;
+}
+
+.btn-card-select:focus-visible {
+    outline: 3px solid rgba(124, 58, 237, 0.4);
+    outline-offset: 3px;
+}
+
+/* Si algún día se agrega el link a "Iniciar sesión" debajo de las tarjetas */
+.selection-login {
+    margin-top: 36px;
+    color: var(--text-light);
+}
+
+.selection-login a {
+    color: #7c3aed;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 860px) {
+    .selection-section {
+        min-height: 0;
+        padding: calc(var(--header-height, 76px) + 44px) 20px 72px;
+    }
+
+    .selection-header {
+        margin-bottom: 40px;
+    }
+
+    .selection-grid {
+        grid-template-columns: 1fr;
+        max-width: 460px;
+        gap: 20px;
+    }
+
+    .selection-card {
+        padding: 40px 28px 30px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .selection-card,
+    .selection-card:hover,
+    .icon-box {
+        transform: none !important;
+        transition: none !important;
+    }
+}

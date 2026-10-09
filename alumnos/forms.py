@@ -34,6 +34,13 @@ class AlumnoForm(forms.ModelForm):
             'nivel_educacion': 'Nivel de Educación',
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Los selects mostraban '---------': el usuario no sabia que elegir.
+        nivel = self.fields['nivel_educacion']
+        nivel.choices = [('', 'Selecciona tu nivel')] + [c for c in nivel.choices if c[0]]
+        self.fields['genero'].empty_label = 'Selecciona tu género'
+
     def clean_fecha_nacimiento(self):
         fecha = self.cleaned_data.get('fecha_nacimiento')
         if not fecha:
