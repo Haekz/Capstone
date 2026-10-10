@@ -434,3 +434,9 @@ def regis_tutor(request):
     return render(request, 'user_profesor/regis_tutor.html', context)
 
 
+
+from django.contrib.auth import logout as auth_logout
+
+def logout_prof(request):
+    auth_logout(request)
+    return redirect('home')

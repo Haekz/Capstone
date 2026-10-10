@@ -24,6 +24,7 @@ class CustomUser(AbstractUser):
     direccion = models.CharField(max_length=100, blank=True)
     fecha_nacimiento = models.DateField(null=True, blank=True)
     genero = models.ForeignKey(Genero, on_delete=models.SET_NULL, null=True, blank=True)
+    foto_perfil = models.ImageField(upload_to='perfiles/', null=True, blank=True)
 
     def __str__(self):
         return f"{self.username} ({self.get_rol_display()})"
@@ -93,6 +94,7 @@ class Profesor(models.Model):
     id_profesor = models.AutoField(primary_key=True)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='perfil_profesor')
     especialidad = models.ForeignKey(Especialidad, on_delete=models.SET_NULL, null=True)
+    telefono_publico = models.BooleanField(default=False, help_text='¿Mostrar teléfono a los alumnos?')
 
     def __str__(self):
         return f"Profesor: {self.user.first_name} {self.user.last_name}"

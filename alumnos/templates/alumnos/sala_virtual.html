@@ -325,7 +325,7 @@
     </div>
 </div>
 
-<script src="https://meet.ffmuc.net/external_api.js"></script>
+<script src="https://meet.jit.si/external_api.js"></script>
 <script>
     const isEnVivo = {{ clase.en_vivo|yesno:"true,false" }};
     const isProfesor = {% if request.session.profesor_id == clase.profesor.id_profesor %}true{% else %}false{% endif %};
@@ -366,7 +366,7 @@
         const container = document.getElementById('meet-container');
         container.innerHTML = ''; // limpiar placeholders
 
-        const domain = 'meet.ffmuc.net';
+        const domain = 'meet.jit.si';
         const options = {
             roomName: 'lbwus-clase-privada-{{ clase.id_clase }}',
             width: '100%',
