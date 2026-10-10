@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,17 +21,25 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-(5vif7*6x25s&&b89y)#ly7=3a*bp0&_$9d^+xuap-3-oh3rdi'
+SECRET_KEY = os.environ["SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['lbwus.xyz', '*.up.railway.app', 'localhost', '127.0.0.1']
+# '.up.railway.app' (con punto) acepta cualquier subdominio. Django no
+# entiende comodines tipo '*.dominio': esa forma no coincidia con nada.
+ALLOWED_HOSTS = ['lbwus.xyz', '.up.railway.app', 'localhost', '127.0.0.1']
 
 CSRF_TRUSTED_ORIGINS = [
     'https://lbwus.xyz',
     'https://capstone-production-eddd.up.railway.app'
 ]
+
+# Railway recibe HTTPS y le pasa la peticion a Django por HTTP interno,
+# avisando con la cabecera X-Forwarded-Proto. Sin esto Django cree que la
+# pagina es http:// y arma enlaces http:// (callback de Google -> error 400
+# redirect_uri_mismatch, y enlaces de recuperar clave con http://).
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
 # Application definition
@@ -67,12 +76,20 @@ MIDDLEWARE = [
 
 SITE_ID = 1
 
-AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend',
-]
-
 SOCIALACCOUNT_LOGIN_ON_GET = True
+
+# Google entra con su correo verificado, pero las cuentas de LBWUS no se
+# crean solas: el adaptador busca la cuenta por correo y, si no existe, manda
+# al flujo propio (codigo por correo + datos del perfil). Ver
+# alumnos/google_adapter.py. No se usa SOCIALACCOUNT_EMAIL_AUTHENTICATION:
+# allauth borra la clave de las cuentas cuyo correo no esta en su tabla
+# EmailAddress, y las nuestras no estan ahi.
+SOCIALACCOUNT_ADAPTER = 'alumnos.google_adapter.LbwusSocialAdapter'
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {'SCOPE': ['profile', 'email']},
+}
+# Enlaces que arma allauth. Railway define RAILWAY_ENVIRONMENT solo; en local queda http.
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https' if os.environ.get('RAILWAY_ENVIRONMENT') else 'http'
 
 ROOT_URLCONF = 'lbwus.urls'
 
@@ -101,7 +118,6 @@ WSGI_APPLICATION = 'lbwus.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-import os
 import dj_database_url
 
 if os.environ.get('DATABASE_URL'):
@@ -165,6 +181,13 @@ STATICFILES_DIRS = [
 STATIC_ROOT = BASE_DIR/'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
+# Archivos subidos (titulos de profesores). NO se publica MEDIA_URL en urls:
+# son documentos privados y solo los ve un admin por una vista protegida.
+# En Railway el disco es efimero: montar un Volume en MEDIA_ROOT.
+MEDIA_ROOT = Path(os.environ.get('MEDIA_ROOT', BASE_DIR / 'media'))
+MEDIA_URL = '/media/'
+TITULO_MAX_MB = 5
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
@@ -209,11 +232,17 @@ DEFAULT_FROM_EMAIL = os.environ.get(
 # El enlace de recuperación expira después de 1 hora
 PASSWORD_RESET_TIMEOUT = 3600
 
-# Backends de autenticación centralizada (RUT, Correo o Usuario)
+# Backends de autenticación centralizada (RUT, Correo o Usuario) + allauth.
+# Antes habia DOS definiciones y la de abajo pisaba a la de allauth.
 AUTHENTICATION_BACKENDS = [
     'alumnos.backends.RutOrEmailBackend',
     'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
 ]
+
+# Codigo de seguridad para registrarse con Google
+CODIGO_GOOGLE_MINUTOS = 10
+CODIGO_GOOGLE_INTENTOS = 5
 
 # Modelo de usuario personalizado
 AUTH_USER_MODEL = 'alumnos.CustomUser'

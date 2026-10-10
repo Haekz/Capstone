@@ -218,6 +218,8 @@ def crear_clase(request):
             return JsonResponse({'success': False, 'message': 'Todos los campos son requeridos.'})
 
         profesor = get_object_or_404(Profesor, id_profesor=id_profesor)
+        if not profesor.puede_hacer_clases:
+            return JsonResponse({'success': False, 'message': f'{profesor.nombre} aún no tiene su título profesional aprobado.'})
         clase = Clase.objects.create(
             asignatura=Asignatura.objects.get_or_create(nombre=nombre_curso)[0],
             modalidad=modalidad,

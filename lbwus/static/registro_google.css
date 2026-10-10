@@ -1,0 +1,140 @@
+/* Registro con Google (codigo + completar datos). Usa los tokens de login.css. */
+
+.gr-pasos { list-style: none; }
+.gr-pasos li { opacity: 0.55; }
+.gr-pasos li.hecho,
+.gr-pasos li.actual { opacity: 1; }
+.gr-pasos li.actual { font-weight: 700; }
+
+.gr-label {
+    display: block;
+    font-size: 0.88rem;
+    font-weight: 600;
+    margin: 0 0 6px;
+    color: var(--text);
+}
+
+.gr-codigo {
+    letter-spacing: 0.4em;
+    font-size: 1.2rem !important;
+    font-variant-numeric: tabular-nums;
+}
+
+.gr-reenviar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 20px;
+    font-size: 0.88rem;
+    color: var(--text-light);
+}
+
+.gr-reenviar button {
+    min-height: 32px;
+    background: none;
+    border: none;
+    font: inherit;
+    font-weight: 600;
+    color: var(--primary);
+    cursor: pointer;
+}
+
+.gr-reenviar button:disabled {
+    color: var(--text-light);
+    cursor: not-allowed;
+}
+
+.gr-campo { margin-bottom: 14px; }
+.gr-campo[hidden], .gr-nota[hidden] { display: none; }
+
+.gr-campo input,
+.gr-campo select {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--field);
+    color: var(--text);
+    font: inherit;
+}
+
+.gr-campo input:focus,
+.gr-campo select:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: 1px;
+}
+
+.gr-campo .field-error { margin: 6px 0 0; }
+
+.gr-tipo {
+    border: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.gr-tipo legend { grid-column: 1 / -1; }
+
+.gr-tipo-op { position: relative; cursor: pointer; }
+
+.gr-tipo-op input {
+    position: absolute;
+    opacity: 0;
+    inset: 0;
+}
+
+.gr-tipo-op span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 48px;
+    border: 1.5px solid var(--line);
+    border-radius: 14px;
+    font-weight: 600;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.gr-tipo-op input:checked + span {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+    color: var(--primary);
+}
+
+html.dark-mode .gr-tipo-op input:checked + span { color: #c4b5fd; }
+
+.gr-tipo-op input:focus-visible + span {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.gr-nota {
+    display: flex;
+    gap: 8px;
+    font-size: 0.86rem;
+    color: var(--text-light);
+    background: var(--primary-soft);
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin: 4px 0 10px;
+}
+
+.gr-mensajes { margin-bottom: 16px; display: grid; gap: 8px; }
+
+.gr-msg {
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 0.88rem;
+    border: 1px solid var(--line);
+    background: var(--primary-soft);
+}
+
+.gr-msg--error { background: rgba(239, 68, 68, 0.08); border-color: rgba(239, 68, 68, 0.25); color: #b91c1c; }
+.gr-msg--success { background: rgba(16, 185, 129, 0.10); border-color: rgba(16, 185, 129, 0.3); color: #047857; }
+.gr-msg--warning { background: rgba(245, 165, 36, 0.12); border-color: rgba(245, 165, 36, 0.35); color: #92400e; }
+html.dark-mode .gr-msg--error { color: #fca5a5; }
+html.dark-mode .gr-msg--success { color: #6ee7b7; }
+html.dark-mode .gr-msg--warning { color: #fcd34d; }

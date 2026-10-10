@@ -6,3 +6,10 @@ db.sqlite3
 env/
 venv/
 staticfiles/
+# Archivos subidos (titulos de profesores): documentos personales, nunca a Git
+media/
+
+# Pruebas de usabilidad: base de demo local
+usab.sqlite3
+# Capturas: solo se versionan las que usa el registro (git add -f)
+usabilidad/capturas/
