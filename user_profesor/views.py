@@ -261,7 +261,9 @@ def actualizar_perfil_prof(request):
 
             genero = get_object_or_404(Genero, id_genero=genero_id)
 
-            profesor.user.first_name = nombre
+            partes = nombre.split(' ', 1)
+            profesor.user.first_name = partes[0]
+            profesor.user.last_name = partes[1] if len(partes) > 1 else ''
             profesor.user.rut = rut
             from alumnos.models import Especialidad
             especialidad_obj, _ = Especialidad.objects.get_or_create(nombre=especialidad)
@@ -270,6 +272,13 @@ def actualizar_perfil_prof(request):
             profesor.user.email = correo
             profesor.user.telefono = telefono
             profesor.user.genero = genero
+            
+            # Nuevos campos
+            profesor.telefono_publico = request.POST.get('telefono_publico') == 'on'
+            if 'foto_perfil' in request.FILES:
+                profesor.user.foto_perfil = request.FILES['foto_perfil']
+                
+            profesor.user.save()
             profesor.save()
 
             return JsonResponse({"success": True, "message": "Tu perfil ha sido actualizado con éxito."})
