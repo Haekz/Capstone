@@ -1,14 +1,6 @@
 import re
 from datetime import date
 
-def error_fecha_nacimiento(fecha):
-    if not fecha: return None
-    today = date.today()
-    if fecha == today: return "No puedes elegir la fecha actual."
-    if fecha > today: return "La fecha de nacimiento no puede ser una fecha futura."
-    age = today.year - fecha.year - ((today.month, today.day) < (fecha.month, fecha.day))
-    if age < 18: return "Debes ser mayor o igual a 18 años."
-    return None
 def validar_rut_chileno(rut):
     rut_clean = rut.replace(".", "").replace("-", "").strip().upper()
     if not re.match(r'^\d{7,8}[0-9K]$', rut_clean): return False
@@ -27,7 +19,16 @@ def validar_rut_chileno(rut):
     else: dv_calculado = str(dv_esperado)
     return dv_ingresado == dv_calculado
 
-def usuario_existe(rut, correo):
+def error_fecha_nacimiento(fecha, edad_minima=18):
+    """Mensaje de error para una fecha de nacimiento, o None si sirve."""
+    from datetime import date
+    hoy = date.today()
+    if fecha >= hoy: return "La fecha de nacimiento no puede ser actual ni futura."
+    edad = hoy.year - fecha.year - ((hoy.month, hoy.day) < (fecha.month, fecha.day))
+    if edad < edad_minima: return f"Debes ser mayor o igual a {edad_minima} años."
+    return None
+
+def usuario_existe(rut, correo, excluir_user=None):
     from django.contrib.auth import get_user_model
     from django.db.models import Q
     User = get_user_model()

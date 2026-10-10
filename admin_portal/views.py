@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
-from alumnos.models import Alumno, Genero, Profesor, Tutor, Clase, Reporte
+from alumnos.models import Alumno, Asignatura, Genero, Profesor, Tutor, Clase, Reporte
 from alumnos.decorators import admin_required
 
 # Ruta antigua del menú: ya no tiene template, solo redirige al panel.

@@ -82,6 +82,10 @@ class ProfesorQuerySet(models.QuerySet):
     def aprobados(self):
         return self.filter(titulo_estado='aprobado')
 
+    def habilitados(self):
+        """Profesores que ya pueden hacer clases (titulo aprobado)."""
+        return self.aprobados()
+
 
 class Profesor(models.Model):
     # Estados del titulo profesional. Sin titulo aprobado no se hacen clases.
@@ -112,6 +116,18 @@ class Profesor(models.Model):
 
     def __str__(self):
         return f"Profesor: {self.user.first_name} {self.user.last_name}"
+
+    @property
+    def nombre(self):
+        return f"{self.user.first_name} {self.user.last_name}".strip()
+
+    @property
+    def puede_hacer_clases(self):
+        return self.titulo_estado == self.TITULO_APROBADO
+
+    @property
+    def puede_subir_titulo(self):
+        return self.titulo_estado in (self.TITULO_PENDIENTE, self.TITULO_RECHAZADO)
 
 
 class Asignatura(models.Model):

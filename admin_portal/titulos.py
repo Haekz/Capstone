@@ -15,7 +15,7 @@ from user_profesor import titulo
 @never_cache
 @admin_required
 def titulos_adm(request):
-    profesores = Profesor.objects.order_by('titulo_estado', 'nombre')
+    profesores = Profesor.objects.order_by('titulo_estado', 'user__first_name')
     return render(request, 'admin_portal/titulos_adm.html', {
         'admin': get_object_or_404(Tutor, id_tutor=request.session['admin_id']),
         'en_revision': profesores.filter(titulo_estado=Profesor.TITULO_EN_REVISION),

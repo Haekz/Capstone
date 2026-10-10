@@ -25,3 +25,4 @@ transbank-sdk==6.1.0
 urllib3==2.7.0
 oauthlib==3.2.2
 requests-oauthlib==2.0.0
+Pillow>=10.0
