@@ -78,6 +78,11 @@ class Banco(models.Model):
         return self.nombre
 
 
+class ProfesorQuerySet(models.QuerySet):
+    def aprobados(self):
+        return self.filter(titulo_estado='aprobado')
+
+
 class Profesor(models.Model):
     # Estados del titulo profesional. Sin titulo aprobado no se hacen clases.
     TITULO_PENDIENTE = 'pendiente'      # aun no lo sube
@@ -96,13 +101,6 @@ class Profesor(models.Model):
     especialidad = models.ForeignKey(Especialidad, on_delete=models.SET_NULL, null=True)
     telefono_publico = models.BooleanField(default=False, help_text='¿Mostrar teléfono a los alumnos?')
 
-    def __str__(self):
-        return f"Profesor: {self.user.first_name} {self.user.last_name}"
-
-
-class Asignatura(models.Model):
-    nombre = models.CharField(max_length=60, unique=True)
-
     # Documento privado: se sirve solo a admins (ver admin_portal.ver_titulo),
     # nunca por MEDIA_URL publico.
     titulo_archivo = models.FileField(upload_to='titulos/', blank=True)
@@ -111,6 +109,13 @@ class Asignatura(models.Model):
     titulo_actualizado = models.DateTimeField(null=True, blank=True)
 
     objects = ProfesorQuerySet.as_manager()
+
+    def __str__(self):
+        return f"Profesor: {self.user.first_name} {self.user.last_name}"
+
+
+class Asignatura(models.Model):
+    nombre = models.CharField(max_length=60, unique=True)
 
     def __str__(self):
         return self.nombre
