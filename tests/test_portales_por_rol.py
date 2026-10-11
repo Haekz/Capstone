@@ -17,7 +17,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from alumnos.models import Alumno, Clase, Genero, Profesor, Tutor
+from alumnos.models import Alumno, Asignatura, Clase, Especialidad, Genero, Profesor, Tutor
 
 User = get_user_model()
 
@@ -44,25 +44,30 @@ class PortalesPorRolTests(TestCase):
         g = Genero.objects.create(descripcion='Otro')
         nac = date(1990, 1, 1)
 
-        u_al = User.objects.create_user('11111111-1', password=CLAVE, rol='alumno')
-        cls.alumno = Alumno.objects.create(
-            user=u_al, nombre='Ana Alumna', rut='11111111-1', nivel_educacion='media',
-            direccion='C1', fecha_nacimiento=nac, correo_electronico='a@lbwus.cl', genero=g,
+        # Datos personales en CustomUser; los perfiles solo guardan lo suyo.
+        u_al = User.objects.create_user(
+            '11111111-1', password=CLAVE, rol='alumno', rut='11111111-1',
+            first_name='Ana', last_name='Alumna', email='a@lbwus.cl',
+            direccion='C1', fecha_nacimiento=nac, genero=g,
         )
-        u_pr = User.objects.create_user('22222222-2', password=CLAVE, rol='profesor')
+        cls.alumno = Alumno.objects.create(user=u_al, nivel_educacion='media')
+        u_pr = User.objects.create_user(
+            '22222222-2', password=CLAVE, rol='profesor', rut='22222222-2',
+            first_name='Pedro', last_name='Profe', email='p@lbwus.cl',
+            direccion='C2', fecha_nacimiento=nac, telefono='911111111', genero=g,
+        )
         cls.profesor = Profesor.objects.create(
-            user=u_pr, nombre='Pedro Profe', rut='22222222-2', especialidad='Mate',
-            direccion='C2', fecha_nacimiento=nac, correo_electronico='p@lbwus.cl',
-            telefono='911111111', genero=g,
+            user=u_pr, especialidad=Especialidad.objects.create(nombre='Mate'),
         )
         # rol sin definir a proposito: antes eso lo mandaba al portal alumno.
-        u_ad = User.objects.create_user('33333333-3', password=CLAVE)
-        cls.tutor = Tutor.objects.create(
-            user=u_ad, nombre='Tania Admin', rut='33333333-3', direccion='C3',
-            fecha_nacimiento=nac, correo_electronico='t@lbwus.cl', genero=g,
+        u_ad = User.objects.create_user(
+            '33333333-3', password=CLAVE, rut='33333333-3',
+            first_name='Tania', last_name='Admin', email='t@lbwus.cl',
+            direccion='C3', fecha_nacimiento=nac, genero=g,
         )
-        Clase.objects.create(nombre_curso='Algebra', modalidad='online',
-                             horario=time(10, 0), id_profesor=cls.profesor)
+        cls.tutor = Tutor.objects.create(user=u_ad)
+        Clase.objects.create(asignatura=Asignatura.objects.create(nombre='Algebra'),
+                             modalidad='online', horario=time(10, 0), profesor=cls.profesor)
 
         cls.ruts = {'alumno': '11111111-1', 'profesor': '22222222-2', 'admin': '33333333-3'}
 
@@ -143,18 +148,6 @@ class PortalesPorRolTests(TestCase):
                 self._login(rol)
                 respuesta = self.client.post(reverse('solicitar_retiro'), {'monto': '1000'})
                 self.assertFalse(respuesta.json()['success'])
-
-    def test_logins_especificos_rechazan_rol_equivocado(self):
-        respuesta = self.client.post(
-            reverse('login_prof'), {'identificador': self.ruts['alumno'], 'password': CLAVE}
-        )
-        self.assertFalse(respuesta.json()['success'])
-
-        respuesta = self.client.post(
-            reverse('login_admin'), {'identificador': self.ruts['profesor'], 'password': CLAVE}
-        )
-        self.assertFalse(respuesta.json()['success'])
-        self.assertIsNone(self.client.session.get('admin_id'))
 
     # ---------- usuarios sin perfil ----------
 

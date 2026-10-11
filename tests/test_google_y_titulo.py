@@ -24,7 +24,7 @@ from django.urls import reverse
 
 from alumnos import codigo_google
 from alumnos.google_adapter import buscar_usuario_por_correo
-from alumnos.models import Alumno, Clase, Genero, Profesor, Tutor
+from alumnos.models import Alumno, Asignatura, Clase, Especialidad, Genero, Profesor, Tutor
 
 User = get_user_model()
 PDF = b'%PDF-1.4 titulo de prueba'
@@ -60,6 +60,7 @@ class BaseGoogle(TestCase):
         app = SocialApp.objects.create(provider='google', name='Google', client_id='x', secret='y')
         app.sites.add(Site.objects.get_current())
         cls.genero = Genero.objects.create(descripcion='Otro')
+        cls.especialidad = Especialidad.objects.create(nombre='Química')
 
     def volver_de_google(self, sociallogin):
         """Ejecuta el callback de allauth con la sesion del cliente de prueba."""
@@ -85,10 +86,10 @@ class LoginGoogleTests(BaseGoogle):
         self.client.session.save()
 
     def test_cuenta_registrada_entra_directo_a_su_portal(self):
-        u = User.objects.create_user('11111111-1', email='ana@demo.cl', password='x')
-        alumno = Alumno.objects.create(user=u, nombre='Ana', rut='11111111-1', nivel_educacion='media',
-                                       direccion='C', fecha_nacimiento=date(2000, 1, 1),
-                                       correo_electronico='ana@demo.cl', genero=self.genero)
+        u = User.objects.create_user('11111111-1', email='ana@demo.cl', password='x',
+                                     first_name='Ana', rut='11111111-1', direccion='C',
+                                     fecha_nacimiento=date(2000, 1, 1), genero=self.genero)
+        alumno = Alumno.objects.create(user=u, nivel_educacion='media')
 
         respuesta = self.volver_de_google(google_login('ANA@demo.cl'))
 
@@ -145,13 +146,14 @@ class LoginGoogleTests(BaseGoogle):
 
         self.assertRedirects(r, reverse('alumno_pag1'), fetch_redirect_response=False)
         user = User.objects.get(email='nuevo@demo.cl')
-        self.assertEqual(user.perfil_alumno.rut, '12345678-5')
+        self.assertTrue(hasattr(user, 'perfil_alumno'))
+        self.assertEqual(user.rut, '12345678-5')
         self.assertFalse(user.has_usable_password())
         self.assertTrue(SocialAccount.objects.filter(user=user, uid='g-1').exists())
         self.assertNotIn(codigo_google.CLAVE, self.client.session)
 
     def test_registro_como_profesor_queda_pendiente_de_titulo(self):
-        r = self._registrarse(tipo='profesor', especialidad='Química')
+        r = self._registrarse(tipo='profesor', especialidad=self.especialidad.pk)
 
         self.assertRedirects(r, reverse('panel_profesor'), fetch_redirect_response=False)
         profesor = User.objects.get(email='nuevo@demo.cl').perfil_profesor
@@ -190,17 +192,19 @@ class TituloProfesorTests(TestCase):
     @classmethod
     def setUpTestData(cls):
         g = Genero.objects.create(descripcion='Otro')
-        u = User.objects.create_user('22222222-2', password='clave12345')
+        u = User.objects.create_user('22222222-2', password='clave12345', first_name='Pedro',
+                                     rut='22222222-2', direccion='C', fecha_nacimiento=date(1990, 1, 1),
+                                     email='p@demo.cl', telefono='9', genero=g)
         cls.profesor = Profesor.objects.create(
-            user=u, nombre='Pedro', rut='22222222-2', especialidad='Mate', direccion='C',
-            fecha_nacimiento=date(1990, 1, 1), correo_electronico='p@demo.cl', telefono='9', genero=g)
-        ua = User.objects.create_user('33333333-3', password='clave12345')
-        cls.tutor = Tutor.objects.create(user=ua, nombre='Tania', rut='33333333-3', direccion='C',
-                                         fecha_nacimiento=date(1985, 1, 1), correo_electronico='t@demo.cl', genero=g)
-        ual = User.objects.create_user('11111111-1', password='clave12345')
-        cls.alumno = Alumno.objects.create(user=ual, nombre='Ana', rut='11111111-1', nivel_educacion='media',
-                                           direccion='C', fecha_nacimiento=date(2000, 1, 1),
-                                           correo_electronico='a@demo.cl', genero=g)
+            user=u, especialidad=Especialidad.objects.create(nombre='Mate'))
+        ua = User.objects.create_user('33333333-3', password='clave12345', first_name='Tania',
+                                      rut='33333333-3', direccion='C', fecha_nacimiento=date(1985, 1, 1),
+                                      email='t@demo.cl', genero=g)
+        cls.tutor = Tutor.objects.create(user=ua)
+        ual = User.objects.create_user('11111111-1', password='clave12345', first_name='Ana',
+                                       rut='11111111-1', direccion='C', fecha_nacimiento=date(2000, 1, 1),
+                                       email='a@demo.cl', genero=g)
+        cls.alumno = Alumno.objects.create(user=ual, nivel_educacion='media')
 
     def setUp(self):
         import tempfile
@@ -248,8 +252,8 @@ class TituloProfesorTests(TestCase):
             'id_profesor': self.profesor.id_profesor}).json()
         self.assertFalse(r['success'])
 
-        clase = Clase.objects.create(nombre_curso='X', modalidad='online', horario=hora(9),
-                                     id_profesor=self.profesor)
+        clase = Clase.objects.create(asignatura=Asignatura.objects.create(nombre='X'),
+                                     modalidad='online', horario=hora(9), profesor=self.profesor)
         self.client.logout()
         self.entrar('11111111-1')
         r = self.client.post(reverse('inscribir_clase'), {'id_clase': clase.id_clase}).json()
