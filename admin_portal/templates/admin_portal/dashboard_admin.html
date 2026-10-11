@@ -317,11 +317,14 @@
                                                     class="btn-action edit" title="Editar">
                                                     <i class="bi bi-pencil-fill"></i>
                                                 </a>
-                                                <a href="{% url 'alumnos_del' alumno.id_alumno %}"
-                                                    class="btn-action delete" title="Eliminar"
-                                                    onclick="return confirm('¿Seguro que quieres eliminar a {{ alumno.user.first_name }}?')">
-                                                    <i class="bi bi-trash3-fill"></i>
-                                                </a>
+                                                <form method="post" action="{% url 'alumnos_del' alumno.id_alumno %}"
+                                                    class="form-accion"
+                                                    onsubmit="return confirm('¿Seguro que quieres eliminar a {{ alumno.user.first_name }}?')">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn-action delete" title="Eliminar">
+                                                        <i class="bi bi-trash3-fill"></i>
+                                                    </button>
+                                                </form>
                                             </div>
                                         </td>
                                     </tr>

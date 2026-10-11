@@ -24,7 +24,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ["SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# En Railway se define DEBUG=False. Sin la variable queda en True, como antes.
+DEBUG = os.environ.get('DEBUG', 'True').lower() in ('1', 'true', 'si')
 
 # '.up.railway.app' (con punto) acepta cualquier subdominio. Django no
 # entiende comodines tipo '*.dominio': esa forma no coincidia con nada.
