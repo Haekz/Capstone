@@ -279,8 +279,11 @@ def actualizar_perfil_prof(request):
     return JsonResponse({"success": False, "message": "Método no permitido."})
 
 
+# _json: el panel llama esta vista con fetch y espera {'success': ...};
+# un redirect le romperia el res.json().
+@profesor_required_json
 def solicitar_retiro(request):
-    profesor_id = request.session['profesor_id']
+    profesor_id = request.session.get('profesor_id')
 
     if request.method == 'POST':
         profesor = get_object_or_404(Profesor, id_profesor=profesor_id)

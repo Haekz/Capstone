@@ -8,7 +8,7 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 from django.test import TestCase
 from django.urls import reverse
-from alumnos.models import Genero, Tutor
+from alumnos.models import Genero, SolicitudRetiro, Tutor
 
 class AccesoPortalAdminTests(TestCase):
     """Las pantallas internas exigen sesion de admin; la de salida no."""
@@ -54,3 +54,14 @@ class AccesoPortalAdminTests(TestCase):
         respuesta = self.client.get(reverse('alumnos_del', args=[victima.id_tutor]))
         self.assertEqual(respuesta.status_code, 302)
         self.assertTrue(Tutor.objects.filter(pk=victima.pk).exists())
+
+
+class SolicitarRetiroTests(TestCase):
+    """Antes leia request.session['profesor_id'] sin decorador: un anonimo
+    provocaba KeyError (error 500)."""
+
+    def test_anonimo_recibe_sesion_invalida_y_no_crea_retiro(self):
+        respuesta = self.client.post(reverse('solicitar_retiro'), {'monto': '1000'})
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertFalse(respuesta.json()['success'])
+        self.assertFalse(SolicitudRetiro.objects.exists())
