@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'alumnos',
     'admin_portal',
     'user_profesor',
+    'comunidad',
     'django_extensions',
 ]
 
@@ -134,6 +135,12 @@ else:
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+
+# MongoDB Atlas (app comunidad). Sin MONGODB_URI, MongoDB queda desactivado
+# y el sitio funciona igual. Nunca escribir la URI en el codigo.
+MONGODB_URI = os.environ.get('MONGODB_URI')          # None = MongoDB desactivado
+MONGODB_DB = os.environ.get('MONGODB_DB', 'lbwus_dev')
+MONGODB_TIMEOUT_MS = int(os.environ.get('MONGODB_TIMEOUT_MS', '5000'))
 
 
 

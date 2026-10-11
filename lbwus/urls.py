@@ -20,6 +20,7 @@ urlpatterns = [
     path('alumnos/', include('alumnos.urls')),
     path('admin_portal/', include('admin_portal.urls')),
     path('profesor/', include('user_profesor.urls')),
+    path('comunidad/', include('comunidad.urls')),
     path('accounts/login/', custom_login, name='login'),
 path(
     'accounts/password_reset/',
