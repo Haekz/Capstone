@@ -6,7 +6,7 @@ Estos tests detectan si se quita o si falta en una vista nueva.
 from datetime import date
 from django.contrib.auth import get_user_model
 User = get_user_model()
-from django.test import TestCase
+from django.test import Client, TestCase
 from django.urls import reverse
 from alumnos.models import Alumno, Genero, SolicitudRetiro, Tutor
 
@@ -74,6 +74,30 @@ class AccesoPortalAdminTests(TestCase):
         self.assertEqual(respuesta.status_code, 200)
         self.assertFalse(Alumno.objects.filter(pk=alumno.pk).exists())
         self.assertFalse(User.objects.filter(username='30303030-3').exists())
+
+
+class CsrfEndpointsAlumnoTests(TestCase):
+    """enviar_reporte e inscribir_clase ya no usan @csrf_exempt: el portal
+    del alumno manda el token en el encabezado X-CSRFToken."""
+    VISTAS = ('enviar_reporte', 'inscribir_clase')
+
+    def setUp(self):
+        self.client = Client(enforce_csrf_checks=True)
+
+    def test_post_sin_token_es_rechazado(self):
+        for nombre in self.VISTAS:
+            with self.subTest(vista=nombre):
+                respuesta = self.client.post(reverse(nombre), '{}', content_type='application/json')
+                self.assertEqual(respuesta.status_code, 403)
+
+    def test_post_con_token_del_encabezado_pasa(self):
+        self.client.get(reverse('login'))  # el formulario deja la cookie csrftoken
+        token = self.client.cookies['csrftoken'].value
+        for nombre in self.VISTAS:
+            with self.subTest(vista=nombre):
+                respuesta = self.client.post(reverse(nombre), '{}', content_type='application/json',
+                                             HTTP_X_CSRFTOKEN=token)
+                self.assertNotEqual(respuesta.status_code, 403)
 
 
 class SolicitarRetiroTests(TestCase):

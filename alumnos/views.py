@@ -438,7 +438,6 @@ def logout_alumno(request):
 # REPORTES
 # ============================================================
 
-@csrf_exempt
 def enviar_reporte(request):
 
     if request.method == 'POST':
@@ -531,7 +530,6 @@ def enviar_reporte(request):
 # INSCRIPCIÓN DE CLASES
 # ============================================================
 
-@csrf_exempt
 def inscribir_clase(request):
 
     alumno_id = request.session.get(
