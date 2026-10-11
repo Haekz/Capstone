@@ -8,7 +8,7 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 from django.test import TestCase
 from django.urls import reverse
-from alumnos.models import Genero, SolicitudRetiro, Tutor
+from alumnos.models import Alumno, Genero, SolicitudRetiro, Tutor
 
 class AccesoPortalAdminTests(TestCase):
     """Las pantallas internas exigen sesion de admin; la de salida no."""
@@ -54,6 +54,26 @@ class AccesoPortalAdminTests(TestCase):
         respuesta = self.client.get(reverse('alumnos_del', args=[victima.id_tutor]))
         self.assertEqual(respuesta.status_code, 302)
         self.assertTrue(Tutor.objects.filter(pk=victima.pk).exists())
+
+    def _crear_alumno(self):
+        user = User.objects.create_user('30303030-3', password='x')
+        return Alumno.objects.create(user=user, nivel_educacion='media')
+
+    def test_eliminar_alumno_por_get_no_borra(self):
+        """Un enlace (o una imagen en otra pagina) no debe poder borrar."""
+        alumno = self._crear_alumno()
+        self._entrar_como_admin()
+        respuesta = self.client.get(reverse('alumnos_del', args=[alumno.id_alumno]))
+        self.assertEqual(respuesta.status_code, 405)
+        self.assertTrue(Alumno.objects.filter(pk=alumno.pk).exists())
+
+    def test_admin_elimina_alumno_por_post(self):
+        alumno = self._crear_alumno()
+        self._entrar_como_admin()
+        respuesta = self.client.post(reverse('alumnos_del', args=[alumno.id_alumno]))
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertFalse(Alumno.objects.filter(pk=alumno.pk).exists())
+        self.assertFalse(User.objects.filter(username='30303030-3').exists())
 
 
 class SolicitarRetiroTests(TestCase):

@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
+from django.views.decorators.http import require_POST
 from alumnos.models import Alumno, Asignatura, Genero, Profesor, Tutor, Clase, Reporte
 from alumnos.decorators import admin_required
 
@@ -155,6 +156,7 @@ def alumnos_findEdit(request, pk):
 
 
 @admin_required
+@require_POST
 def alumnos_del(request, pk):
     
     alumno = get_object_or_404(Alumno, id_alumno=pk)
