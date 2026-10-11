@@ -23,6 +23,7 @@ from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
 from alumnos import codigo_google
+from alumnos.google_adapter import buscar_usuario_por_correo
 from alumnos.models import Alumno, Clase, Genero, Profesor, Tutor
 
 User = get_user_model()
@@ -38,6 +39,18 @@ def google_login(correo, uid='g-1', verificado=True, nombre='Gabi Google'):
                      email_addresses=[EmailAddress(email=correo, verified=verificado, primary=True)])
     sl.state = {'process': 'login'}
     return sl
+
+
+class BuscarUsuarioPorCorreoTests(TestCase):
+    """El correo vive solo en CustomUser.email (antes tambien se buscaba en
+    los perfiles por un campo que ya no existe y daba FieldError)."""
+
+    def test_encuentra_al_usuario_sin_importar_mayusculas(self):
+        u = User.objects.create_user('11111111-1', email='ana@demo.cl', password='x')
+        self.assertEqual(buscar_usuario_por_correo('ANA@demo.cl'), u)
+
+    def test_correo_desconocido_devuelve_none(self):
+        self.assertIsNone(buscar_usuario_por_correo('nadie@demo.cl'))
 
 
 class BaseGoogle(TestCase):

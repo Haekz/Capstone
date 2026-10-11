@@ -20,7 +20,6 @@ from django.contrib.auth import get_user_model, login as auth_login
 from django.shortcuts import redirect
 
 from . import codigo_google
-from .models import Alumno, Profesor, Tutor
 from .roles import abrir_sesion_rol, redirigir_a_portal, resolver_rol
 
 BACKEND_SESION = 'django.contrib.auth.backends.ModelBackend'
@@ -35,16 +34,11 @@ def correo_verificado(sociallogin):
 
 
 def buscar_usuario_por_correo(correo):
-    """Usuario dueno de ``correo`` (en CustomUser o en algun perfil), o None."""
-    User = get_user_model()
-    user = User.objects.filter(email__iexact=correo).first()
-    if user is not None:
-        return user
-    for modelo in (Alumno, Profesor, Tutor):
-        perfil = modelo.objects.filter(correo_electronico__iexact=correo).select_related('user').first()
-        if perfil is not None and perfil.user is not None:
-            return perfil.user
-    return None
+    """Usuario dueno de ``correo``, o None.
+
+    El correo vive solo en CustomUser.email: los perfiles ya no lo guardan.
+    """
+    return get_user_model().objects.filter(email__iexact=correo).first()
 
 
 def entrar_al_portal(request, user):
