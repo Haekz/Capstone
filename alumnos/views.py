@@ -583,10 +583,10 @@ def inscribir_clase(request):
 
             clase = get_object_or_404(
                 Clase,
-                clase_id=id_clase
+                id_clase=id_clase
             )
 
-            if not clase.id_profesor.puede_hacer_clases:
+            if not clase.profesor.puede_hacer_clases:
 
                 return JsonResponse({
                     'success': False,

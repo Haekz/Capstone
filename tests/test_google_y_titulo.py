@@ -24,7 +24,8 @@ from django.urls import reverse
 
 from alumnos import codigo_google
 from alumnos.google_adapter import buscar_usuario_por_correo
-from alumnos.models import Alumno, Asignatura, Clase, Especialidad, Genero, Profesor, Tutor
+from alumnos.models import (Alumno, Asignatura, Clase, Especialidad, Genero, Inscripcion,
+                            Profesor, Tutor)
 
 User = get_user_model()
 PDF = b'%PDF-1.4 titulo de prueba'
@@ -258,6 +259,17 @@ class TituloProfesorTests(TestCase):
         self.entrar('11111111-1')
         r = self.client.post(reverse('inscribir_clase'), {'id_clase': clase.id_clase}).json()
         self.assertFalse(r['success'])
+        # Por el titulo, no por otro error (antes la vista fallaba siempre).
+        self.assertIn('título', r['message'])
+
+    def test_alumno_se_inscribe_si_el_titulo_esta_aprobado(self):
+        Profesor.objects.filter(pk=self.profesor.pk).update(titulo_estado=Profesor.TITULO_APROBADO)
+        clase = Clase.objects.create(asignatura=Asignatura.objects.create(nombre='X'),
+                                     modalidad='online', horario=hora(9), profesor=self.profesor)
+        self.entrar('11111111-1')
+        r = self.client.post(reverse('inscribir_clase'), {'id_clase': clase.id_clase}).json()
+        self.assertTrue(r['success'], r['message'])
+        self.assertTrue(Inscripcion.objects.filter(alumno=self.alumno, clase=clase).exists())
 
     def test_admin_aprueba_y_el_profesor_queda_habilitado(self):
         self.entrar('22222222-2')
