@@ -13,7 +13,6 @@ django-allauth==65.18.0
 django-extensions==4.1
 dnspython==2.8.0
 idna==3.18
-marshmallow==3.26.1
 mongomock==4.3.0
 packaging==26.2
 pycparser==3.0
