@@ -5,6 +5,7 @@ from django.views.decorators.cache import never_cache
 from django.views.generic import TemplateView
 from alumnos.views import home, custom_login
 from alumnos import google_views
+from lbwus.puerta import puerta
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -17,6 +18,7 @@ urlpatterns = [
     # No volver a declararlo en las urls de las apps: Django permite nombres
     # duplicados sin avisar y el ultimo registrado gana el reverse().
     path('', home, name='home'),
+    path('puerta/', puerta, name='puerta'),
     path('alumnos/', include('alumnos.urls')),
     path('admin_portal/', include('admin_portal.urls')),
     path('profesor/', include('user_profesor.urls')),

@@ -68,6 +68,8 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  
     'django.contrib.sessions.middleware.SessionMiddleware',
+    # Puerta con clave para todo el sitio; necesita la sesion (lbwus/puerta.py).
+    'lbwus.puerta.PuertaSitioMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -142,6 +144,13 @@ else:
 MONGODB_URI = os.environ.get('MONGODB_URI')          # None = MongoDB desactivado
 MONGODB_DB = os.environ.get('MONGODB_DB', 'lbwus_dev')
 MONGODB_TIMEOUT_MS = int(os.environ.get('MONGODB_TIMEOUT_MS', '5000'))
+
+# Puerta con clave para todo el sitio (lbwus/puerta.py). Vacia = sin puerta.
+# La clave se define solo como variable de entorno, nunca en el codigo.
+SITIO_CLAVE = os.environ.get('SITIO_CLAVE', '')
+
+# La pagina de error de Django oculta tambien MONGODB_URI y SITIO_CLAVE.
+DEFAULT_EXCEPTION_REPORTER_FILTER = 'lbwus.reporte_errores.FiltroReporteErrores'
 
 
 

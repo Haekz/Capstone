@@ -1,0 +1,48 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>Acceso al sitio — LBWUS</title>
+    <link rel="icon" href="{% static 'alumnos/img/Logo.png' %}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{% static 'puerta.css' %}">
+</head>
+
+<body>
+    {% include 'alumnos/includes/tema_inicial.html' %}
+
+    <main class="puerta-card">
+        <div class="puerta-logo">
+            <img src="{% static 'alumnos/img/Logo.png' %}" alt="LBWUS Logo">
+            <span>LBWUS</span>
+        </div>
+
+        <h1 class="puerta-title">Sitio en pruebas</h1>
+        <p class="puerta-sub">Ingresa la clave de acceso para continuar.</p>
+
+        <form method="post" action="{% url 'puerta' %}" class="puerta-form">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next }}">
+
+            {% if form.clave.errors %}
+            <div class="puerta-error" role="alert">
+                <i class="bi bi-exclamation-circle"></i> {{ form.clave.errors.0 }}
+            </div>
+            {% endif %}
+
+            <label for="{{ form.clave.id_for_label }}" class="puerta-label">{{ form.clave.label }}</label>
+            <div class="puerta-campo">
+                <i class="bi bi-lock"></i>
+                {{ form.clave }}
+            </div>
+
+            <button type="submit" class="puerta-btn">Entrar <i class="bi bi-arrow-right"></i></button>
+        </form>
+    </main>
+</body>
+
+</html>
