@@ -58,6 +58,12 @@ class ConClaveTests(TestCase):
         self.assertContains(r, 'name="csrfmiddlewaretoken"')
         self.assertContains(r, 'type="password"')
         self.assertContains(r, 'alumnos/img/Logo')
+        # Pantalla de mantenimiento: es lo que ve cualquier visitante.
+        self.assertContains(r, '<title>En mantenimiento — LBWUS</title>', html=True)
+        self.assertContains(r, '<h1 class="puerta-title">Sitio en mantenimiento</h1>', html=True)
+        self.assertContains(r, 'Estamos realizando mejoras. Si eres parte del equipo, '
+                               'ingresa la clave de acceso para continuar.')
+        self.assertContains(r, '<i class="bi bi-tools" aria-hidden="true"></i>', html=True)
 
     def test_clave_incorrecta_no_deja_pasar(self):
         for clave in ['otra', CLAVE_PRUEBA + ' ', CLAVE_PRUEBA.upper(), '']:
