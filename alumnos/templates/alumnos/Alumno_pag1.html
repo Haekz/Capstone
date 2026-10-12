@@ -1278,24 +1278,13 @@
         }
 
         // ── DATA POOLS ──
-        // Teachers
-        const teachers = [
-            {% if profesores_list %}
-                {% for prof in profesores_list %}
-                {
-                    id: {{ prof.id_profesor }},
-                    name: "{{ prof.user.first_name }}",
-                    specialties: ["{{ prof.especialidad }}"],
-                    distance: 1.2,
-                    rating: "5.0 ⭐",
-                    price: "$15.000",
-                    initial: "{{ prof.user.first_name|slice:':1'|upper }}"
-                }{% if not forloop.last %},{% endif %}
-                {% endfor %}
-            {% else %}
-                { id: 1, name: "Dr. Carlos Ruiz", specialties: ["Matemáticas", "Física"], distance: 0.8, rating: "4.9 ⭐", price: "$15.000", initial: "CR" }
-            {% endif %}
-        ];
+        // Teachers: vienen de la vista como JSON (ver profesores_js en views.py).
+        // json_script entrega el texto tal cual lo escribio el profesor, asi que
+        // todo dato suyo que va a innerHTML pasa por escaparHtml.
+        const teachers = JSON.parse(document.getElementById('profesores-data').textContent);
+        const escaparHtml = (texto) => String(texto).replace(/[&<>"']/g, (c) => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        })[c]);
 
         // Tutors
         const tutors = [
@@ -1548,7 +1537,7 @@
         const isFavorite = (teacherId) => favoriteIds.includes(teacherId);
 
         // ── MANDATORY PLAN ACCESS VERIFICATION & CLASS SCHEDULING ──
-        const requestClassAccess = (teacherName) => {
+        const requestClassAccess = (teacherId) => {
             switchView('view-my-classes');
             setTimeout(() => {
                 const targetEl = document.getElementById('catalogo-clases-seccion');
@@ -1666,10 +1655,10 @@
                     <button type="button" class="teacher-star-btn" aria-label="Marcar profesor como favorito" onclick="toggleFavorite(${t.id}, event)">
                         <i class="${favClass}"></i>
                     </button>
-                    <div class="teacher-avatar">${t.initial}</div>
+                    <div class="teacher-avatar">${escaparHtml(t.initial)}</div>
                     <div class="teacher-info">
-                        <h4>${t.name}</h4>
-                        <p class="teacher-specialty">${t.specialties.join(', ')}</p>
+                        <h4>${escaparHtml(t.name)}</h4>
+                        <p class="teacher-specialty">${escaparHtml(t.specialties.join(', '))}</p>
                         <span class="teacher-rating">${t.rating}</span>
                     </div>
                     <div class="teacher-distance-box">
@@ -1715,15 +1704,15 @@
                             <button type="button" class="teacher-star-btn" aria-label="Marcar profesor como favorito" onclick="toggleFavorite(${t.id}, event)">
                                 <i class="${favClass}"></i>
                             </button>
-                            <div class="teacher-avatar">${t.initial}</div>
+                            <div class="teacher-avatar">${escaparHtml(t.initial)}</div>
                             <div class="teacher-info">
-                                <h4>${t.name}</h4>
-                                <p class="teacher-specialty">${t.specialties.join(', ')}</p>
+                                <h4>${escaparHtml(t.name)}</h4>
+                                <p class="teacher-specialty">${escaparHtml(t.specialties.join(', '))}</p>
                                 <span class="teacher-rating">${t.rating}</span>
                             </div>
                             <div class="teacher-distance-box">
                                 <span class="teacher-distance"><i class="bi bi-geo-alt-fill"></i>${t.distance} km</span>
-                                <button class="btn-contact-teacher" onclick="requestClassAccess('${t.name}')">Ver Horarios</button>
+                                <button class="btn-contact-teacher" onclick="requestClassAccess(${t.id})">Ver Horarios</button>
                             </div>
                         `;
                         teachersContainer.appendChild(card);
@@ -1756,15 +1745,15 @@
                         const card = document.createElement('div');
                         card.className = 'teacher-card';
                         card.innerHTML = `
-                            <div class="teacher-avatar">${t.initial}</div>
+                            <div class="teacher-avatar">${escaparHtml(t.initial)}</div>
                             <div class="teacher-info">
-                                <h4>${t.name}</h4>
-                                <p class="teacher-specialty">${t.specialties.join(', ')}</p>
+                                <h4>${escaparHtml(t.name)}</h4>
+                                <p class="teacher-specialty">${escaparHtml(t.specialties.join(', '))}</p>
                                 <span class="teacher-rating">${t.rating}</span>
                             </div>
                             <div class="teacher-distance-box">
                                 <span class="teacher-distance"><i class="bi bi-geo-alt-fill"></i>${t.distance} km</span>
-                                <button class="btn-contact-teacher" onclick="requestClassAccess('${t.name}')">Contactar</button>
+                                <button class="btn-contact-teacher" onclick="requestClassAccess(${t.id})">Contactar</button>
                             </div>
                         `;
                         tutorsContainer.appendChild(card);
@@ -1838,15 +1827,15 @@
                     <button type="button" class="teacher-star-btn" aria-label="Marcar profesor como favorito" onclick="toggleFavorite(${t.id}, event)">
                         <i class="bi bi-star-fill"></i>
                     </button>
-                    <div class="teacher-avatar">${t.initial}</div>
+                    <div class="teacher-avatar">${escaparHtml(t.initial)}</div>
                     <div class="teacher-info">
-                        <h4>${t.name}</h4>
-                        <p class="teacher-specialty">${t.specialties.join(', ')}</p>
+                        <h4>${escaparHtml(t.name)}</h4>
+                        <p class="teacher-specialty">${escaparHtml(t.specialties.join(', '))}</p>
                         <span class="teacher-rating">${t.rating}</span>
                     </div>
                     <div class="teacher-distance-box">
                         <span class="teacher-distance"><i class="bi bi-geo-alt-fill"></i>${t.distance} km</span>
-                        <button class="btn-contact-teacher" onclick="requestClassAccess('${t.name}')">Ver Horarios</button>
+                        <button class="btn-contact-teacher" onclick="requestClassAccess(${t.id})">Ver Horarios</button>
                     </div>
                 `;
                 container.appendChild(card);

@@ -40,7 +40,12 @@
                         </div>
                         <div class="prof-group">
                             <label for="especialidad" class="prof-label">Especialidad</label>
-                            <input type="text" id="especialidad" name="especialidad" class="prof-input" placeholder="ej. Matemáticas, Inglés" required maxlength="60">
+                            <select id="especialidad" name="especialidad" class="prof-select" required>
+                                <option value="" disabled selected>Seleccione...</option>
+                                {% for e in especialidades %}
+                                <option value="{{ e.pk }}">{{ e.nombre }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
                     </div>
 

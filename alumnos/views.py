@@ -287,7 +287,10 @@ def alumno_pag1(request):
     )
 
     # Solo profesores con titulo aprobado pueden hacer clases.
-    profesores_list = Profesor.objects.habilitados()
+    profesores_list = Profesor.objects.habilitados().select_related(
+        'user',
+        'especialidad'
+    )
 
     clases_disponibles = Clase.objects.all().select_related(
         'profesor'
@@ -326,7 +329,9 @@ def alumno_pag1(request):
             {
                 'id': p.id_profesor,
                 'name': p.nombre,
-                'specialties': [p.especialidad],
+                # Solo el nombre: json_script no serializa el objeto
+                # Especialidad. Sin especialidad, la lista va vacia.
+                'specialties': [p.especialidad.nombre] if p.especialidad else [],
                 'distance': 1.2,
                 'rating': '5.0 ⭐',
                 'price': '$15.000',

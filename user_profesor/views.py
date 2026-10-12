@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.cache import never_cache
-from alumnos.models import Genero, Profesor, Clase, Inscripcion, Tutor
+from alumnos.models import Especialidad, Genero, Profesor, Clase, Inscripcion, Tutor
 from alumnos.decorators import profesor_required, profesor_required_json
 from alumnos.roles import ADMIN, PROFESOR, abrir_sesion_rol, resolver_rol
 
@@ -42,6 +42,17 @@ def calcular_saldos(profesor):
     }
 
 
+def buscar_especialidad(especialidad_id):
+    """Especialidad del catalogo segun el id que manda el <select>, o None.
+
+    Antes se recibia texto libre y se hacia get_or_create, asi que cada
+    profesor podia agregar especialidades nuevas (o duplicadas) al catalogo.
+    """
+    if not especialidad_id.isdecimal():
+        return None
+    return Especialidad.objects.filter(pk=especialidad_id).first()
+
+
 def formato_clp(monto):
     """12345 -> '$12.345'."""
     return f"${monto:,}".replace(",", ".")
@@ -54,7 +65,7 @@ def regis_prof(request):
         try:
             nombre = request.POST.get('nombre', '').strip()
             rut = request.POST.get('rut', '').strip()
-            especialidad = request.POST.get('especialidad', '').strip()
+            especialidad_id = request.POST.get('especialidad', '').strip()
             direccion = request.POST.get('direccion', '').strip()
             fecha_nacimiento = request.POST.get('fecha_nacimiento', '').strip()
             correo_electronico = request.POST.get('correo_electronico', '').strip()
@@ -64,8 +75,12 @@ def regis_prof(request):
             confirm_password = request.POST.get('confirm_password', '').strip()
 
             # Validar que todos los campos obligatorios estén presentes
-            if not all([nombre, rut, especialidad, direccion, fecha_nacimiento, correo_electronico, telefono, genero_id, password, confirm_password]):
+            if not all([nombre, rut, especialidad_id, direccion, fecha_nacimiento, correo_electronico, telefono, genero_id, password, confirm_password]):
                 return JsonResponse({"success": False, "message": "Todos los campos del registro son obligatorios."})
+
+            especialidad = buscar_especialidad(especialidad_id)
+            if especialidad is None:
+                return JsonResponse({"success": False, "message": "Selecciona una especialidad válida."})
 
             if password != confirm_password:
                 return JsonResponse({"success": False, "message": "Las contraseñas no coinciden."})
@@ -113,12 +128,9 @@ def regis_prof(request):
             )
 
             # Crear el registro del Profesor vinculado al User
-            from alumnos.models import Especialidad
-            especialidad_obj, _ = Especialidad.objects.get_or_create(nombre=especialidad)
-            
             profesor = Profesor.objects.create(
                 user=user,
-                especialidad=especialidad_obj
+                especialidad=especialidad
             )
 
             # Iniciar sesión automáticamente
@@ -134,7 +146,10 @@ def regis_prof(request):
             return JsonResponse({"success": False, "message": f"Error al registrar: {str(e)}"})
 
     generos = Genero.objects.all()
-    context = {'generos': generos}
+    context = {
+        'generos': generos,
+        'especialidades': Especialidad.objects.order_by('nombre'),
+    }
     return render(request, 'user_profesor/regis_prof.html', context)
 
 
@@ -218,6 +233,7 @@ def panel_profesor(request):
         'saldo_pendiente': saldo_pendiente_fmt,
         'mis_retiros': mis_retiros,
         'generos': generos,
+        'especialidades': Especialidad.objects.order_by('nombre'),
     }
     return render(request, 'user_profesor/panel_profesor.html', context)
 
@@ -250,22 +266,24 @@ def actualizar_perfil_prof(request):
         try:
             nombre = request.POST.get('nombre', '').strip()
             rut = request.POST.get('rut', '').strip()
-            especialidad = request.POST.get('especialidad', '').strip()
+            especialidad_id = request.POST.get('especialidad', '').strip()
             direccion = request.POST.get('direccion', '').strip()
             correo = request.POST.get('correo_electronico', '').strip()
             telefono = request.POST.get('telefono', '').strip()
             genero_id = request.POST.get('genero', '').strip()
 
-            if not all([nombre, rut, especialidad, direccion, correo, telefono, genero_id]):
+            if not all([nombre, rut, especialidad_id, direccion, correo, telefono, genero_id]):
                 return JsonResponse({"success": False, "message": "Todos los campos son obligatorios."})
+
+            especialidad = buscar_especialidad(especialidad_id)
+            if especialidad is None:
+                return JsonResponse({"success": False, "message": "Selecciona una especialidad válida."})
 
             genero = get_object_or_404(Genero, id_genero=genero_id)
 
             profesor.user.first_name = nombre
             profesor.user.rut = rut
-            from alumnos.models import Especialidad
-            especialidad_obj, _ = Especialidad.objects.get_or_create(nombre=especialidad)
-            profesor.especialidad = especialidad_obj
+            profesor.especialidad = especialidad
             profesor.user.direccion = direccion
             profesor.user.email = correo
             profesor.user.telefono = telefono

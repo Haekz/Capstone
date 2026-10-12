@@ -235,7 +235,12 @@ input:checked + .slider:before {
                         </div>
                         <div class="prof-form-group">
                             <label for="prof-especialidad" class="prof-form-label">Especialidad</label>
-                            <input type="text" id="prof-especialidad" name="especialidad" class="prof-form-input" value="{{ profesor.especialidad }}" required>
+                            <select id="prof-especialidad" name="especialidad" class="prof-form-select" required>
+                                <option value="" disabled {% if not profesor.especialidad_id %}selected{% endif %}>Seleccione...</option>
+                                {% for e in especialidades %}
+                                <option value="{{ e.pk }}" {% if e.pk == profesor.especialidad_id %}selected{% endif %}>{{ e.nombre }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
                     </div>
 
