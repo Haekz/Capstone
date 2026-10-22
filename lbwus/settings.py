@@ -21,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ["SECRET_KEY"]
+SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-lbwus-secret-key-for-local-development")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # En Railway se define DEBUG=False. Sin la variable queda en True, como antes.
@@ -41,6 +41,14 @@ CSRF_TRUSTED_ORIGINS = [
 # pagina es http:// y arma enlaces http:// (callback de Google -> error 400
 # redirect_uri_mismatch, y enlaces de recuperar clave con http://).
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+if not DEBUG:
+    SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'True').lower() in ('1', 'true', 'si')
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
 
 
 # Application definition

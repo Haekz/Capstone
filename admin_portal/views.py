@@ -74,6 +74,7 @@ def dashboard_admin(request):
 
 # Controlador para cambiar el estado de un reporte a 'resuelto'
 @admin_required
+@require_POST
 def resolver_reporte(request, pk):
 
     reporte = get_object_or_404(Reporte, id_reporte=pk)
@@ -233,6 +234,7 @@ def crear_clase(request):
 
 
 @admin_required
+@require_POST
 def eliminar_clase(request, pk):
     clase = get_object_or_404(Clase, id_clase=pk)
     clase.delete()
@@ -240,6 +242,7 @@ def eliminar_clase(request, pk):
 
 
 @admin_required
+@require_POST
 def aprobar_retiro(request, pk):
     from alumnos.models import SolicitudRetiro
     from django.utils import timezone
@@ -251,6 +254,7 @@ def aprobar_retiro(request, pk):
 
 
 @admin_required
+@require_POST
 def rechazar_retiro(request, pk):
     from alumnos.models import SolicitudRetiro
     from django.utils import timezone

@@ -22,7 +22,10 @@ def calcular_saldos(profesor):
 
     from alumnos.models import SolicitudRetiro
 
-    inscripciones = Inscripcion.objects.filter(clase__profesor=profesor).count()
+    inscripciones = Inscripcion.objects.filter(
+        clase__profesor=profesor,
+        estado__in=['confirmada', 'pendiente']
+    ).count()
 
     total_ganado = inscripciones * VALOR_INSCRIPCION
     corresponde_al_profesor = inscripciones * PAGO_PROFESOR
@@ -87,6 +90,13 @@ def regis_prof(request):
 
             if len(password) < 6:
                 return JsonResponse({"success": False, "message": "La contraseña debe tener al menos 6 caracteres."})
+
+            from django.contrib.auth.password_validation import validate_password
+            from django.core.exceptions import ValidationError as DjangoValidationError
+            try:
+                validate_password(password)
+            except DjangoValidationError as e:
+                return JsonResponse({"success": False, "message": " | ".join(e.messages)})
 
             from alumnos.utils import validar_rut_chileno, usuario_existe
             from datetime import datetime, date
@@ -162,7 +172,10 @@ def panel_profesor(request):
 
     profesor = getattr(request.user, 'perfil_profesor', None) or get_object_or_404(Profesor, user=request.user)
     clases = Clase.objects.filter(profesor=profesor)
-    inscripciones = Inscripcion.objects.filter(clase__profesor=profesor)
+    inscripciones = Inscripcion.objects.filter(
+        clase__profesor=profesor,
+        estado__in=['confirmada', 'pendiente']
+    )
 
     # 1. Clases del día (Máximo 6)
     clases_hoy_lista = []
@@ -281,13 +294,27 @@ def actualizar_perfil_prof(request):
 
             genero = get_object_or_404(Genero, id_genero=genero_id)
 
+            from alumnos.utils import validar_rut_chileno, usuario_existe
+
+            if not validar_rut_chileno(rut):
+                return JsonResponse({"success": False, "message": "El RUT ingresado no es válido."})
+
+            if rut != profesor.user.rut:
+                return JsonResponse({"success": False, "message": "Por motivos de seguridad, el RUT no puede ser modificado."})
+
+            error_msg = usuario_existe(rut=rut, correo=correo, excluir_user=profesor.user)
+            if error_msg:
+                return JsonResponse({"success": False, "message": error_msg})
+
             profesor.user.first_name = nombre
             profesor.user.rut = rut
+            profesor.user.username = rut
             profesor.especialidad = especialidad
             profesor.user.direccion = direccion
             profesor.user.email = correo
             profesor.user.telefono = telefono
             profesor.user.genero = genero
+            profesor.user.save()
             profesor.save()
 
             return JsonResponse({"success": True, "message": "Tu perfil ha sido actualizado con éxito."})
@@ -304,44 +331,45 @@ def solicitar_retiro(request):
     profesor_id = request.session.get('profesor_id')
 
     if request.method == 'POST':
-        profesor = get_object_or_404(Profesor, id_profesor=profesor_id)
-        from alumnos.models import SolicitudRetiro
+        from django.db import transaction
+        from alumnos.models import SolicitudRetiro, Banco
 
         try:
             monto_str = request.POST.get('monto', '').replace('.', '').replace('$', '').strip()
             monto = int(monto_str)
-            banco = request.POST.get('banco', 'Banco Estado').strip()
-            tipo_cuenta = request.POST.get('tipo_cuenta', 'Cuenta Rut / Vista').strip()
-            numero_cuenta = request.POST.get('numero_cuenta', '').strip()
+            banco = request.POST.get('banco', 'Banco Estado').strip()[:50]
+            tipo_cuenta = request.POST.get('tipo_cuenta', 'Cuenta Rut / Vista').strip()[:50]
+            numero_cuenta = request.POST.get('numero_cuenta', '').strip()[:30]
 
             if monto <= 0:
                 return JsonResponse({"success": False, "message": "El monto a retirar debe ser mayor a cero."})
 
-            # Validar saldo disponible con la misma regla que muestra el panel.
-            saldo_disponible = calcular_saldos(profesor)['disponible']
+            with transaction.atomic():
+                profesor = Profesor.objects.select_for_update().get(id_profesor=profesor_id)
+                list(SolicitudRetiro.objects.select_for_update().filter(profesor=profesor))
 
-            if saldo_disponible <= 0:
-                return JsonResponse({"success": False, "message": "Aún no tienes saldo disponible para retirar."})
+                # Validar saldo disponible con la misma regla que muestra el panel.
+                saldo_disponible = calcular_saldos(profesor)['disponible']
 
-            if monto > saldo_disponible:
-                return JsonResponse({"success": False, "message": f"El monto ingresado excede tu saldo disponible ({formato_clp(saldo_disponible)})."})
+                if saldo_disponible <= 0:
+                    return JsonResponse({"success": False, "message": "Aún no tienes saldo disponible para retirar."})
 
-            from alumnos.models import Banco
-            banco_obj, _ = Banco.objects.get_or_create(nombre=banco if banco else 'Banco Estado')
-            from alumnos.models import Banco
-            banco_obj, _ = Banco.objects.get_or_create(nombre=banco if banco else 'Banco Estado')
-            SolicitudRetiro.objects.create(
-                profesor=profesor,
-                monto=monto,
-                banco=banco_obj,
-                tipo_cuenta=tipo_cuenta if tipo_cuenta else 'Cuenta Rut / Vista',
-                numero_cuenta=numero_cuenta
-            )
+                if monto > saldo_disponible:
+                    return JsonResponse({"success": False, "message": f"El monto ingresado excede tu saldo disponible ({formato_clp(saldo_disponible)})."})
+
+                banco_obj, _ = Banco.objects.get_or_create(nombre=banco if banco else 'Banco Estado')
+                SolicitudRetiro.objects.create(
+                    profesor=profesor,
+                    monto=monto,
+                    banco=banco_obj,
+                    tipo_cuenta=tipo_cuenta if tipo_cuenta else 'Cuenta Rut / Vista',
+                    numero_cuenta=numero_cuenta
+                )
             return JsonResponse({"success": True, "message": f"Solicitud de retiro por ${monto:,} registrada con éxito. Se procesará en 24 a 48 horas hábiles.".replace(",", ".")})
         except ValueError:
             return JsonResponse({"success": False, "message": "Por favor ingresa un monto numérico válido."})
-        except Exception as e:
-            return JsonResponse({"success": False, "message": str(e)})
+        except Exception:
+            return JsonResponse({"success": False, "message": "Ocurrió un error al procesar la solicitud de retiro. Intenta nuevamente."})
 
     return JsonResponse({"success": False, "message": "Método no permitido."})
 
@@ -391,6 +419,13 @@ def regis_tutor(request):
 
             if len(password) < 6:
                 return JsonResponse({"success": False, "message": "La contraseña debe tener al menos 6 caracteres."})
+
+            from django.contrib.auth.password_validation import validate_password
+            from django.core.exceptions import ValidationError as DjangoValidationError
+            try:
+                validate_password(password)
+            except DjangoValidationError as e:
+                return JsonResponse({"success": False, "message": " | ".join(e.messages)})
 
             from alumnos.utils import validar_rut_chileno, usuario_existe
             from datetime import datetime, date

@@ -327,9 +327,12 @@
                                         <a class="btn-join-class ap-flex-1" href="{% url 'sala_virtual' insc.clase.id_clase %}" style="display:flex; justify-content:center; align-items:center; text-decoration:none;">
                                             <i class="bi bi-camera-video-fill"></i> Unirse a la Clase
                                         </a>
-                                        <a class="ap-btn-cancel" href="{% url 'cancelar_inscripcion' insc.id_inscripcion %}" onclick="return confirm('¿Seguro que deseas cancelar tu inscripción?')" title="Cancelar Inscripción">
-                                            <i class="bi bi-trash"></i>
-                                        </a>
+                                        <form method="POST" action="{% url 'cancelar_inscripcion' insc.id_inscripcion %}" onsubmit="return confirm('¿Seguro que deseas cancelar tu inscripción?')" style="display:inline;">
+                                            {% csrf_token %}
+                                            <button type="submit" class="ap-btn-cancel" title="Cancelar Inscripción" style="border:none; cursor:pointer; background:transparent;">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
                                     </div>
                                 </div>
                                 {% endfor %}
@@ -361,15 +364,9 @@
                                     </div>
                                 </div>
                                 <div class="ap-class-footer">
-                                    {% if c.id_clase in inscritas_ids %}
-                                    <button class="ap-btn-enrolled" disabled>
-                                        <i class="bi bi-check-circle-fill"></i> Ya estás inscrito
+                                    <button class="btn-join-class btn-join-class--primary" onclick="abrirModalHorarios({{ c.id_clase }}, '{{ c.asignatura.nombre|escapejs }}', '{{ c.profesor.user.first_name|escapejs }}')">
+                                        <i class="bi bi-calendar-event"></i> Ver horarios disponibles
                                     </button>
-                                    {% else %}
-                                    <button class="btn-join-class btn-join-class--primary" onclick="inscribirAClase({{ c.id_clase }}, '{{ c.asignatura.nombre }}')">
-                                        <i class="bi bi-plus-circle"></i> Inscribirme a esta Clase
-                                    </button>
-                                    {% endif %}
                                 </div>
                             </div>
                             {% empty %}
@@ -729,6 +726,43 @@
                     <button class="btn-principal ap-btn-block" onclick="startCourseLearning()">
                         <i class="bi bi-play-fill ap-mr-8"></i>Iniciar Aprendizaje
                     </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ventana Modal para Elegir y Reservar Horarios Disponibles de SesionClase -->
+        <div class="custom-modal-overlay" id="modal-horarios-sesiones">
+            <div class="custom-modal-card ap-modal-md" style="max-width: 650px; width: 95%;">
+                <div class="custom-modal-header" style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid var(--border-color); padding-bottom:14px; margin-bottom:16px;">
+                    <div>
+                        <h3 style="margin:0; font-size:1.25rem; font-weight:700; color:var(--text-dark); display:flex; align-items:center; gap:8px;">
+                            <i class="bi bi-calendar-check" style="color:var(--primary);"></i>
+                            <span id="modal-horarios-titulo">Horarios Disponibles</span>
+                        </h3>
+                        <p id="modal-horarios-profesor" style="margin:4px 0 0; font-size:0.9rem; color:var(--text-light);"></p>
+                    </div>
+                    <button class="close-modal-btn" onclick="cerrarModalHorarios()">&times;</button>
+                </div>
+                <div class="custom-modal-body" style="padding:0;">
+                    <!-- Spinner de carga -->
+                    <div id="modal-horarios-loading" style="text-align:center; padding:35px 20px;">
+                        <div class="spinner-border text-primary" role="status" style="width:2.5rem; height:2.5rem; color:var(--primary);"></div>
+                        <p style="margin-top:12px; color:var(--text-light); font-size:0.95rem;">Cargando sesiones programadas...</p>
+                    </div>
+
+                    <!-- Estado sin sesiones programadas -->
+                    <div id="modal-horarios-empty" style="display:none; text-align:center; padding:35px 20px;">
+                        <div style="width:60px; height:60px; border-radius:50%; background:rgba(99, 102, 241, 0.1); color:var(--primary); display:flex; align-items:center; justify-content:center; margin:0 auto 14px; font-size:1.8rem;">
+                            <i class="bi bi-calendar-x"></i>
+                        </div>
+                        <h4 style="margin:0 0 6px; font-weight:600; color:var(--text-dark);">No hay horarios programados</h4>
+                        <p style="margin:0; font-size:0.9rem; color:var(--text-light);">El profesor aún no ha publicado nuevas sesiones con cupos libres para esta clase. Por favor vuelve a consultar pronto.</p>
+                    </div>
+
+                    <!-- Lista de sesiones disponibles -->
+                    <div id="modal-horarios-lista" style="display:none; max-height:420px; overflow-y:auto; padding-right:4px; display:flex; flex-direction:column; gap:12px;">
+                        <!-- Se llena dinámicamente con JS -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -2910,6 +2944,135 @@
             }
         }
 
+        // ── GESTIÓN DE MODAL DE HORARIOS Y RESERVAS DE SESIONES ──
+        function abrirModalHorarios(idClase, nombreAsignatura, nombreProfesor) {
+            const modal = document.getElementById('modal-horarios-sesiones');
+            if (!modal) return;
+
+            document.getElementById('modal-horarios-titulo').innerText = `${nombreAsignatura}`;
+            document.getElementById('modal-horarios-profesor').innerText = `Profesor(a): ${nombreProfesor}`;
+
+            const loadingEl = document.getElementById('modal-horarios-loading');
+            const emptyEl = document.getElementById('modal-horarios-empty');
+            const listaEl = document.getElementById('modal-horarios-lista');
+
+            loadingEl.style.display = 'block';
+            emptyEl.style.display = 'none';
+            listaEl.style.display = 'none';
+            listaEl.innerHTML = '';
+
+            modal.classList.add('open');
+
+            fetch(`{% url 'sesiones_disponibles' %}?clase_id=${idClase}`)
+                .then(res => res.json())
+                .then(data => {
+                    loadingEl.style.display = 'none';
+                    if (data.success && data.sesiones && data.sesiones.length > 0) {
+                        listaEl.style.display = 'flex';
+                        listaEl.innerHTML = data.sesiones.map(s => {
+                            const cuposColor = s.cupos_disponibles <= 2 ? '#ef4444' : '#10b981';
+                            const btnHtml = s.ya_inscrito 
+                                ? `<button class="ap-btn-enrolled" disabled style="padding: 8px 16px; font-size: 0.85rem;"><i class="bi bi-check-circle-fill"></i> Ya reservado</button>`
+                                : `<button class="btn-principal" onclick="confirmarReservaSesion(${s.id_sesion}, '${s.asignatura.replace(/'/g, "\\'")}', '${s.fecha_formateada} ${s.hora_formateada}')" style="padding: 8px 16px; font-size: 0.85rem;"><i class="bi bi-bookmark-plus-fill ap-mr-4"></i>Reservar este horario</button>`;
+
+                            return `
+                                <div class="sesion-item-card" style="border: 1px solid var(--border-color); background: var(--bg-card); border-radius: 12px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+                                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <span style="font-weight: 700; font-size: 1.05rem; color: var(--text);">
+                                                <i class="bi bi-calendar3" style="color: var(--primary); margin-right: 6px;"></i>${s.fecha_formateada}
+                                            </span>
+                                            <span class="class-status-badge class-status-badge--modality">${s.modalidad.toUpperCase()}</span>
+                                        </div>
+                                        <div style="font-size: 0.88rem; color: var(--text-light); display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+                                            <span><i class="bi bi-clock ap-mr-4"></i>${s.hora_formateada} (${s.duracion_minutos} min)</span>
+                                            <span style="color: ${cuposColor}; font-weight: 600;">
+                                                <i class="bi bi-people-fill ap-mr-4"></i>${s.cupos_disponibles} cupo${s.cupos_disponibles === 1 ? '' : 's'} disponible${s.cupos_disponibles === 1 ? '' : 's'}
+                                            </span>
+                                        </div>
+                                        <div style="font-size: 0.9rem; font-weight: 700; color: var(--primary); margin-top: 2px;">
+                                            Valor: ${s.precio_formateado}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        ${btnHtml}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+                    } else {
+                        emptyEl.style.display = 'block';
+                    }
+                })
+                .catch(err => {
+                    console.error('Error al cargar horarios:', err);
+                    loadingEl.style.display = 'none';
+                    emptyEl.style.display = 'block';
+                    emptyEl.querySelector('p').innerText = 'Ocurrió un error al cargar los horarios disponibles.';
+                });
+        }
+
+        function cerrarModalHorarios() {
+            const modal = document.getElementById('modal-horarios-sesiones');
+            if (modal) modal.classList.remove('open');
+        }
+
+        const modalHorariosOverlay = document.getElementById('modal-horarios-sesiones');
+        if (modalHorariosOverlay) {
+            modalHorariosOverlay.addEventListener('click', (e) => {
+                if (e.target === modalHorariosOverlay) cerrarModalHorarios();
+            });
+        }
+
+        function confirmarReservaSesion(idSesion, nombreAsignatura, fechaHora) {
+            Swal.fire({
+                title: 'Confirmar Reserva de Horario',
+                html: `¿Deseas reservar tu cupo para la sesión de <b>"${nombreAsignatura}"</b>?<br><br><span style="color:var(--primary); font-weight:600;"><i class="bi bi-clock"></i> ${fechaHora}</span>`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, Reservar Cupo',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: 'var(--primary)',
+                cancelButtonColor: '#6b7280'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch("{% url 'reservar_sesion' %}", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRFToken": "{{ csrf_token }}"
+                        },
+                        body: JSON.stringify({ id_sesion: idSesion })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                title: '¡Reserva Confirmada!',
+                                text: data.message,
+                                icon: 'success',
+                                confirmButtonColor: 'var(--primary)'
+                            }).then(() => {
+                                cerrarModalHorarios();
+                                window.location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'No se pudo reservar',
+                                text: data.message,
+                                icon: 'warning',
+                                confirmButtonColor: 'var(--primary)'
+                            });
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        Swal.fire('Error', 'No se pudo procesar la solicitud de reserva.', 'error');
+                    });
+                }
+            });
+        }
+
         // Exponer funciones globalmente para manejadores onclick inline en HTML
         window.switchView = switchView;
         window.toggleTheme = toggleTheme;
@@ -2928,6 +3091,9 @@
         window.switchVideoTab = switchVideoTab;
         window.openChatFromVideo = openChatFromVideo;
         window.downloadMockResource = downloadMockResource;
+        window.abrirModalHorarios = abrirModalHorarios;
+        window.cerrarModalHorarios = cerrarModalHorarios;
+        window.confirmarReservaSesion = confirmarReservaSesion;
 
         // Initialize Rendering
         renderDashboardContent();

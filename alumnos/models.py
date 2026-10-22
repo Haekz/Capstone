@@ -1,6 +1,10 @@
-from django.db import models
+from decimal import Decimal
+from django.db import models, transaction
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
+from django.utils import timezone
 
 # Create your models here.
 
@@ -151,13 +155,251 @@ class Clase(models.Model):
         return f"{self.asignatura.nombre} - {self.profesor.user.first_name}"
 
 
+class SesionClaseQuerySet(models.QuerySet):
+    """QuerySet optimizado para consultas de disponibilidad y agenda de sesiones."""
+
+    def activas(self):
+        return self.exclude(estado='cancelada')
+
+    def futuras(self):
+        return self.filter(fecha_hora_inicio__gt=timezone.now())
+
+    def programadas(self):
+        return self.filter(estado='programada')
+
+    def disponibles(self):
+        """Sesiones programadas a futuro que aún cuentan con cupos libres."""
+        return (
+            self.filter(
+                estado='programada',
+                fecha_hora_inicio__gt=timezone.now()
+            )
+            .annotate(
+                cupos_ocupados_count=models.Count(
+                    'inscripciones',
+                    filter=models.Q(inscripciones__estado__in=['confirmada', 'pendiente'])
+                )
+            )
+            .filter(cupos_ocupados_count__lt=models.F('cupo_maximo'))
+        )
+
+    def por_profesor(self, profesor):
+        return self.filter(clase__profesor=profesor)
+
+    def por_asignatura(self, asignatura):
+        return self.filter(clase__asignatura=asignatura)
+
+
+class SesionClaseManager(models.Manager.from_queryset(SesionClaseQuerySet)):
+    pass
+
+
+class SesionClase(models.Model):
+    """
+    Representa una sesión individual o evento puntual derivado de la plantilla Clase.
+    Gestiona fecha/hora, control estricto de cupos, precio individual y disponibilidad.
+    """
+
+    ESTADO_PROGRAMADA = 'programada'
+    ESTADO_EN_CURSO = 'en_curso'
+    ESTADO_FINALIZADA = 'finalizada'
+    ESTADO_CANCELADA = 'cancelada'
+
+    ESTADOS_CHOICES = [
+        (ESTADO_PROGRAMADA, 'Programada'),
+        (ESTADO_EN_CURSO, 'En curso'),
+        (ESTADO_FINALIZADA, 'Finalizada'),
+        (ESTADO_CANCELADA, 'Cancelada'),
+    ]
+
+    id_sesion = models.AutoField(primary_key=True)
+    clase = models.ForeignKey(
+        Clase,
+        on_delete=models.CASCADE,
+        related_name='sesiones',
+        verbose_name='Clase base'
+    )
+    fecha_hora_inicio = models.DateTimeField(verbose_name='Fecha y hora de inicio')
+    fecha_hora_fin = models.DateTimeField(verbose_name='Fecha y hora de fin')
+    cupo_maximo = models.PositiveIntegerField(
+        default=1,
+        validators=[MinValueValidator(1)],
+        verbose_name='Cupo máximo'
+    )
+    precio = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        validators=[MinValueValidator(Decimal('0.00'))],
+        verbose_name='Precio de la sesión'
+    )
+    estado = models.CharField(
+        max_length=20,
+        choices=ESTADOS_CHOICES,
+        default=ESTADO_PROGRAMADA,
+        db_index=True,
+        verbose_name='Estado de la sesión'
+    )
+
+    objects = SesionClaseManager()
+
+    class Meta:
+        verbose_name = 'Sesión de Clase'
+        verbose_name_plural = 'Sesiones de Clases'
+        ordering = ['fecha_hora_inicio']
+        indexes = [
+            models.Index(fields=['clase', 'fecha_hora_inicio']),
+            models.Index(fields=['estado', 'fecha_hora_inicio']),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(fecha_hora_fin__gt=models.F('fecha_hora_inicio')),
+                name='sesion_fin_posterior_a_inicio'
+            ),
+            models.CheckConstraint(
+                check=models.Q(cupo_maximo__gt=0),
+                name='sesion_cupo_maximo_positivo'
+            ),
+            models.CheckConstraint(
+                check=models.Q(precio__gte=0),
+                name='sesion_precio_no_negativo'
+            ),
+        ]
+
+    def __str__(self):
+        inicio_str = self.fecha_hora_inicio.strftime('%d/%m/%Y %H:%M') if self.fecha_hora_inicio else 'Sin fecha'
+        return f"{self.clase.asignatura.nombre} ({inicio_str}) - {self.get_estado_display()}"
+
+    def clean(self):
+        super().clean()
+
+        # 1. Validar que las fechas sean estrictamente a futuro en el momento de creación
+        if not self.pk and self.fecha_hora_inicio:
+            if self.fecha_hora_inicio <= timezone.now():
+                raise ValidationError({
+                    'fecha_hora_inicio': 'La fecha y hora de inicio debe ser estrictamente en el futuro.'
+                })
+
+        # 2. Validar coherencia fin > inicio
+        if self.fecha_hora_inicio and self.fecha_hora_fin:
+            if self.fecha_hora_fin <= self.fecha_hora_inicio:
+                raise ValidationError({
+                    'fecha_hora_fin': 'La fecha y hora de fin debe ser posterior a la fecha y hora de inicio.'
+                })
+
+        # 3. Validar cupo mayor a cero
+        if self.cupo_maximo is not None and self.cupo_maximo < 1:
+            raise ValidationError({
+                'cupo_maximo': 'El cupo máximo debe ser de al menos 1 persona.'
+            })
+
+        # 4. Validar precio no negativo
+        if self.precio is not None and self.precio < Decimal('0.00'):
+            raise ValidationError({
+                'precio': 'El precio no puede ser negativo.'
+            })
+
+    def save(self, *args, **kwargs):
+        skip_clean = kwargs.pop('skip_clean', False)
+        if not skip_clean:
+            self.full_clean()
+        super().save(*args, **kwargs)
+
+    @property
+    def duracion_minutos(self):
+        if self.fecha_hora_inicio and self.fecha_hora_fin:
+            return int((self.fecha_hora_fin - self.fecha_hora_inicio).total_seconds() // 60)
+        return 0
+
+    @property
+    def cupos_ocupados(self):
+        return self.inscripciones.filter(
+            estado__in=['confirmada', 'pendiente']
+        ).count()
+
+    @property
+    def cupos_disponibles(self):
+        return max(0, self.cupo_maximo - self.cupos_ocupados)
+
+    @property
+    def esta_disponible(self):
+        return (
+            self.estado == self.ESTADO_PROGRAMADA
+            and bool(self.fecha_hora_inicio and self.fecha_hora_inicio > timezone.now())
+            and self.cupos_disponibles > 0
+        )
+
+    def reservar(self, alumno):
+        """
+        Reserva atómica delegando al servicio transaccional con bloqueo a nivel de fila (select_for_update)
+        para garantizar consistencia en entornos concurrentes (PostgreSQL).
+        """
+        from .services import InscripcionService
+        return InscripcionService.inscribir_alumno_en_sesion(alumno, self.pk)
+
+
 class Inscripcion(models.Model):
+    ESTADO_CONFIRMADA = 'confirmada'
+    ESTADO_PENDIENTE = 'pendiente'
+    ESTADO_CANCELADA = 'cancelada'
+
+    ESTADOS_CHOICES = [
+        (ESTADO_CONFIRMADA, 'Confirmada'),
+        (ESTADO_PENDIENTE, 'Pendiente'),
+        (ESTADO_CANCELADA, 'Cancelada'),
+    ]
+
     id_inscripcion = models.AutoField(primary_key=True)
     fecha_inscripcion = models.DateField(auto_now_add=True)
     alumno = models.ForeignKey(Alumno, on_delete=models.CASCADE)
     clase = models.ForeignKey(Clase, on_delete=models.CASCADE)
+    sesion = models.ForeignKey(
+        SesionClase,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='inscripciones',
+        verbose_name='Sesión puntual'
+    )
+    estado = models.CharField(
+        max_length=20,
+        choices=ESTADOS_CHOICES,
+        default=ESTADO_CONFIRMADA,
+        db_index=True,
+        verbose_name='Estado de inscripción'
+    )
+
+    class Meta:
+        verbose_name = 'Inscripción'
+        verbose_name_plural = 'Inscripciones'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['alumno', 'sesion'],
+                condition=models.Q(sesion__isnull=False, estado__in=['confirmada', 'pendiente']),
+                name='unique_inscripcion_alumno_sesion_activa'
+            ),
+            models.UniqueConstraint(
+                fields=['alumno', 'clase'],
+                condition=models.Q(sesion__isnull=True, estado__in=['confirmada', 'pendiente']),
+                name='unique_inscripcion_alumno_clase_activa'
+            ),
+        ]
+
+    def clean(self):
+        super().clean()
+        if self.sesion and not getattr(self, 'clase_id', None):
+            self.clase = self.sesion.clase
+        elif self.sesion and getattr(self, 'clase_id', None) and self.clase_id != self.sesion.clase_id:
+            raise ValidationError({'sesion': 'La sesión seleccionada no pertenece a la clase especificada.'})
+
+    def save(self, *args, **kwargs):
+        if self.sesion and not getattr(self, 'clase_id', None):
+            self.clase = self.sesion.clase
+        super().save(*args, **kwargs)
 
     def __str__(self):
+        if self.sesion:
+            return f'{self.alumno} inscrito en {self.clase} (Sesión #{self.sesion.pk})'
         return f'{self.alumno} inscrito en {self.clase}'
 
 

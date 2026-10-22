@@ -226,10 +226,12 @@
                                     </div>
                                     <div class="report-actions">
                                         {% if reporte.estado == 'pendiente' %}
-                                        <a href="{% url 'resolver_reporte' reporte.id_reporte %}"
-                                            class="btn-action resolve" title="Marcar como resuelto">
-                                            <i class="bi bi-check-lg"></i>
-                                        </a>
+                                        <form method="POST" action="{% url 'resolver_reporte' reporte.id_reporte %}" style="display:inline;">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn-action resolve" title="Marcar como resuelto" style="border:none; cursor:pointer;">
+                                                <i class="bi bi-check-lg"></i>
+                                            </button>
+                                        </form>
                                         {% else %}
                                         <span class="badge badge-resuelto"><i class="bi bi-check-circle-fill"></i>
                                             Resuelto</span>
@@ -505,9 +507,12 @@
                                     </td>
                                     <td>
                                         {% if reporte.estado == 'pendiente' %}
-                                        <a href="{% url 'resolver_reporte' reporte.id_reporte %}" class="btn-action resolve" title="Marcar como resuelto">
-                                            <i class="bi bi-check-lg"></i>
-                                        </a>
+                                        <form method="POST" action="{% url 'resolver_reporte' reporte.id_reporte %}" style="display:inline;">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn-action resolve" title="Marcar como resuelto" style="border:none; cursor:pointer;">
+                                                <i class="bi bi-check-lg"></i>
+                                            </button>
+                                        </form>
                                         {% else %}
                                         <span style="color:var(--text-muted); font-size:0.78rem;">-</span>
                                         {% endif %}
@@ -607,9 +612,12 @@
                                     </td>
                                     <td><i class="bi bi-clock"></i> {{ c.horario|time:"H:i" }}</td>
                                     <td>
-                                        <a href="{% url 'eliminar_clase' c.id_clase %}" onclick="return confirm('¿Estás seguro de eliminar esta clase?')" class="btn-action delete" title="Eliminar Clase" style="color: #ef4444;">
-                                            <i class="bi bi-trash"></i>
-                                        </a>
+                                        <form method="POST" action="{% url 'eliminar_clase' c.id_clase %}" onsubmit="return confirm('¿Estás seguro de eliminar esta clase?')" style="display:inline;">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn-action delete" title="Eliminar Clase" style="border:none; background:transparent; color:#ef4444; cursor:pointer;">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
                                     </td>
                                 </tr>
                                 {% empty %}
@@ -708,12 +716,18 @@
                                     <td>
                                         {% if r.estado == 'pendiente' %}
                                         <div style="display:flex; gap:6px;">
-                                            <a href="{% url 'aprobar_retiro' r.id_solicitud %}" onclick="return confirm('¿Aprobar y marcar como transferido este retiro?')" class="btn-action edit" style="background:rgba(16,185,129,0.12); color:#10b981; text-decoration:none; display:flex; align-items:center; justify-content:center;" title="Aprobar Transferencia">
-                                                <i class="bi bi-check-lg"></i>
-                                            </a>
-                                            <a href="{% url 'rechazar_retiro' r.id_solicitud %}" onclick="return confirm('¿Rechazar esta solicitud de retiro?')" class="btn-action delete" style="background:rgba(239,68,68,0.12); color:#ef4444; text-decoration:none; display:flex; align-items:center; justify-content:center;" title="Rechazar Retiro">
-                                                <i class="bi bi-x-lg"></i>
-                                            </a>
+                                            <form method="POST" action="{% url 'aprobar_retiro' r.id_solicitud %}" onsubmit="return confirm('¿Aprobar y marcar como transferido este retiro?')" style="display:inline;">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn-action edit" style="border:none; background:rgba(16,185,129,0.12); color:#10b981; display:flex; align-items:center; justify-content:center; cursor:pointer; width:32px; height:32px; border-radius:6px;" title="Aprobar Transferencia">
+                                                    <i class="bi bi-check-lg"></i>
+                                                </button>
+                                            </form>
+                                            <form method="POST" action="{% url 'rechazar_retiro' r.id_solicitud %}" onsubmit="return confirm('¿Rechazar esta solicitud de retiro?')" style="display:inline;">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn-action delete" style="border:none; background:rgba(239,68,68,0.12); color:#ef4444; display:flex; align-items:center; justify-content:center; cursor:pointer; width:32px; height:32px; border-radius:6px;" title="Rechazar Retiro">
+                                                    <i class="bi bi-x-lg"></i>
+                                                </button>
+                                            </form>
                                         </div>
                                         {% else %}
                                         <span style="color:var(--text-muted); font-size:0.8rem;">Resuelto ({% if r.fecha_resolucion %}{{ r.fecha_resolucion|date:"d/m/Y" }}{% else %}-{% endif %})</span>

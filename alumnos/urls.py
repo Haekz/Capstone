@@ -18,6 +18,8 @@ from .views import (
     enviar_reporte,
     inscribir_clase,
     cancelar_inscripcion,
+    listar_sesiones_disponibles,
+    reservar_sesion,
     pago,
     confirmacion,
     iniciar_webpay,
@@ -47,6 +49,8 @@ urlpatterns = [
     # Funcionalidades del alumno
     path('enviar_reporte/', enviar_reporte, name='enviar_reporte'),
     path('inscribir_clase/', inscribir_clase, name='inscribir_clase'),
+    path('sesiones-disponibles/', listar_sesiones_disponibles, name='sesiones_disponibles'),
+    path('reservar-sesion/', reservar_sesion, name='reservar_sesion'),
     path(
         'cancelar_inscripcion/<int:pk>/',
         cancelar_inscripcion,

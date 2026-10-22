@@ -22,6 +22,11 @@ def _rol_requerido(rol, anonimo, json=False):
         @wraps(vista)
         def envoltura(request, *args, **kwargs):
             if request.session.get(rol.clave_sesion):
+                user = getattr(request, 'user', None)
+                if user is not None and (not user.is_authenticated or not user.is_active):
+                    from django.contrib.auth import logout
+                    logout(request)
+                    return anonimo(request)
                 return vista(request, *args, **kwargs)
 
             otro = rol_en_sesion(request)
