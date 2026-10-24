@@ -21,10 +21,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ["SECRET_KEY"]
+SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-lbwus-secret-key-for-local-development")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# En Railway se define DEBUG=False. Sin la variable queda en True, como antes.
+DEBUG = os.environ.get('DEBUG', 'True').lower() in ('1', 'true', 'si')
 
 # '.up.railway.app' (con punto) acepta cualquier subdominio. Django no
 # entiende comodines tipo '*.dominio': esa forma no coincidia con nada.
@@ -40,6 +41,14 @@ CSRF_TRUSTED_ORIGINS = [
 # pagina es http:// y arma enlaces http:// (callback de Google -> error 400
 # redirect_uri_mismatch, y enlaces de recuperar clave con http://).
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+if not DEBUG:
+    SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'True').lower() in ('1', 'true', 'si')
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
 
 
 # Application definition
@@ -59,6 +68,7 @@ INSTALLED_APPS = [
     'alumnos',
     'admin_portal',
     'user_profesor',
+    'comunidad',
     'django_extensions',
 ]
 
@@ -66,6 +76,8 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  
     'django.contrib.sessions.middleware.SessionMiddleware',
+    # Puerta con clave para todo el sitio; necesita la sesion (lbwus/puerta.py).
+    'lbwus.puerta.PuertaSitioMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -134,6 +146,19 @@ else:
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+
+# MongoDB Atlas (app comunidad). Sin MONGODB_URI, MongoDB queda desactivado
+# y el sitio funciona igual. Nunca escribir la URI en el codigo.
+MONGODB_URI = os.environ.get('MONGODB_URI')          # None = MongoDB desactivado
+MONGODB_DB = os.environ.get('MONGODB_DB', 'lbwus_dev')
+MONGODB_TIMEOUT_MS = int(os.environ.get('MONGODB_TIMEOUT_MS', '5000'))
+
+# Puerta con clave para todo el sitio (lbwus/puerta.py). Vacia = sin puerta.
+# La clave se define solo como variable de entorno, nunca en el codigo.
+SITIO_CLAVE = os.environ.get('SITIO_CLAVE', '')
+
+# La pagina de error de Django oculta tambien MONGODB_URI y SITIO_CLAVE.
+DEFAULT_EXCEPTION_REPORTER_FILTER = 'lbwus.reporte_errores.FiltroReporteErrores'
 
 
 

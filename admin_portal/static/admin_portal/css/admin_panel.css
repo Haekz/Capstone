@@ -774,6 +774,12 @@ body.light-mode .sidebar-logout {
     color: white;
 }
 
+/* Form POST que envuelve un .btn-action: el boton queda como si el form
+   no existiera (sigue en la misma fila flex que los demas). */
+.form-accion {
+    display: contents;
+}
+
 .btn-action.resolve {
     background: rgba(16,185,129,0.15);
     color: var(--success);

@@ -13,8 +13,7 @@ django-allauth==65.18.0
 django-extensions==4.1
 dnspython==2.8.0
 idna==3.18
-marshmallow==3.26.1
-mongoengine==0.29.3
+mongomock==4.3.0
 packaging==26.2
 pycparser==3.0
 pymongo==4.17.0
@@ -25,3 +24,4 @@ transbank-sdk==6.1.0
 urllib3==2.7.0
 oauthlib==3.2.2
 requests-oauthlib==2.0.0
+Pillow>=10.0

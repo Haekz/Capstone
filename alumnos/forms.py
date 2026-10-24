@@ -71,6 +71,13 @@ class AlumnoForm(forms.ModelForm):
                 raise forms.ValidationError("El RUT ingresado no es válido.")
         return rut
 
+    def clean_password(self):
+        password = self.cleaned_data.get('password')
+        if password:
+            from django.contrib.auth.password_validation import validate_password
+            validate_password(password)
+        return password
+
     def clean(self):
         cleaned_data = super().clean()
         password = cleaned_data.get("password")

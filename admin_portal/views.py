@@ -2,7 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
-from alumnos.models import Alumno, Genero, Profesor, Tutor, Clase, Reporte
+from django.views.decorators.http import require_POST
+from alumnos.models import Alumno, Asignatura, Genero, Profesor, Tutor, Clase, Reporte
 from alumnos.decorators import admin_required
 
 # Ruta antigua del menú: ya no tiene template, solo redirige al panel.
@@ -73,6 +74,7 @@ def dashboard_admin(request):
 
 # Controlador para cambiar el estado de un reporte a 'resuelto'
 @admin_required
+@require_POST
 def resolver_reporte(request, pk):
 
     reporte = get_object_or_404(Reporte, id_reporte=pk)
@@ -155,6 +157,7 @@ def alumnos_findEdit(request, pk):
 
 
 @admin_required
+@require_POST
 def alumnos_del(request, pk):
     
     alumno = get_object_or_404(Alumno, id_alumno=pk)
@@ -231,6 +234,7 @@ def crear_clase(request):
 
 
 @admin_required
+@require_POST
 def eliminar_clase(request, pk):
     clase = get_object_or_404(Clase, id_clase=pk)
     clase.delete()
@@ -238,6 +242,7 @@ def eliminar_clase(request, pk):
 
 
 @admin_required
+@require_POST
 def aprobar_retiro(request, pk):
     from alumnos.models import SolicitudRetiro
     from django.utils import timezone
@@ -249,6 +254,7 @@ def aprobar_retiro(request, pk):
 
 
 @admin_required
+@require_POST
 def rechazar_retiro(request, pk):
     from alumnos.models import SolicitudRetiro
     from django.utils import timezone

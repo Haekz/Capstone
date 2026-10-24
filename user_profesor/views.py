@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.cache import never_cache
-from alumnos.models import Genero, Profesor, Clase, Inscripcion, Tutor
+from alumnos.models import Especialidad, Genero, Profesor, Clase, Inscripcion, Tutor
 from alumnos.decorators import profesor_required, profesor_required_json
 from alumnos.roles import ADMIN, PROFESOR, abrir_sesion_rol, resolver_rol
 
@@ -22,7 +22,10 @@ def calcular_saldos(profesor):
 
     from alumnos.models import SolicitudRetiro
 
-    inscripciones = Inscripcion.objects.filter(clase__profesor=profesor).count()
+    inscripciones = Inscripcion.objects.filter(
+        clase__profesor=profesor,
+        estado__in=['confirmada', 'pendiente']
+    ).count()
 
     total_ganado = inscripciones * VALOR_INSCRIPCION
     corresponde_al_profesor = inscripciones * PAGO_PROFESOR
@@ -42,6 +45,17 @@ def calcular_saldos(profesor):
     }
 
 
+def buscar_especialidad(especialidad_id):
+    """Especialidad del catalogo segun el id que manda el <select>, o None.
+
+    Antes se recibia texto libre y se hacia get_or_create, asi que cada
+    profesor podia agregar especialidades nuevas (o duplicadas) al catalogo.
+    """
+    if not especialidad_id.isdecimal():
+        return None
+    return Especialidad.objects.filter(pk=especialidad_id).first()
+
+
 def formato_clp(monto):
     """12345 -> '$12.345'."""
     return f"${monto:,}".replace(",", ".")
@@ -54,7 +68,7 @@ def regis_prof(request):
         try:
             nombre = request.POST.get('nombre', '').strip()
             rut = request.POST.get('rut', '').strip()
-            especialidad = request.POST.get('especialidad', '').strip()
+            especialidad_id = request.POST.get('especialidad', '').strip()
             direccion = request.POST.get('direccion', '').strip()
             fecha_nacimiento = request.POST.get('fecha_nacimiento', '').strip()
             correo_electronico = request.POST.get('correo_electronico', '').strip()
@@ -64,14 +78,25 @@ def regis_prof(request):
             confirm_password = request.POST.get('confirm_password', '').strip()
 
             # Validar que todos los campos obligatorios estén presentes
-            if not all([nombre, rut, especialidad, direccion, fecha_nacimiento, correo_electronico, telefono, genero_id, password, confirm_password]):
+            if not all([nombre, rut, especialidad_id, direccion, fecha_nacimiento, correo_electronico, telefono, genero_id, password, confirm_password]):
                 return JsonResponse({"success": False, "message": "Todos los campos del registro son obligatorios."})
+
+            especialidad = buscar_especialidad(especialidad_id)
+            if especialidad is None:
+                return JsonResponse({"success": False, "message": "Selecciona una especialidad válida."})
 
             if password != confirm_password:
                 return JsonResponse({"success": False, "message": "Las contraseñas no coinciden."})
 
             if len(password) < 6:
                 return JsonResponse({"success": False, "message": "La contraseña debe tener al menos 6 caracteres."})
+
+            from django.contrib.auth.password_validation import validate_password
+            from django.core.exceptions import ValidationError as DjangoValidationError
+            try:
+                validate_password(password)
+            except DjangoValidationError as e:
+                return JsonResponse({"success": False, "message": " | ".join(e.messages)})
 
             from alumnos.utils import validar_rut_chileno, usuario_existe
             from datetime import datetime, date
@@ -113,12 +138,9 @@ def regis_prof(request):
             )
 
             # Crear el registro del Profesor vinculado al User
-            from alumnos.models import Especialidad
-            especialidad_obj, _ = Especialidad.objects.get_or_create(nombre=especialidad)
-            
             profesor = Profesor.objects.create(
                 user=user,
-                especialidad=especialidad_obj
+                especialidad=especialidad
             )
 
             # Iniciar sesión automáticamente
@@ -134,7 +156,10 @@ def regis_prof(request):
             return JsonResponse({"success": False, "message": f"Error al registrar: {str(e)}"})
 
     generos = Genero.objects.all()
-    context = {'generos': generos}
+    context = {
+        'generos': generos,
+        'especialidades': Especialidad.objects.order_by('nombre'),
+    }
     return render(request, 'user_profesor/regis_prof.html', context)
 
 
@@ -147,7 +172,10 @@ def panel_profesor(request):
 
     profesor = getattr(request.user, 'perfil_profesor', None) or get_object_or_404(Profesor, user=request.user)
     clases = Clase.objects.filter(profesor=profesor)
-    inscripciones = Inscripcion.objects.filter(clase__profesor=profesor)
+    inscripciones = Inscripcion.objects.filter(
+        clase__profesor=profesor,
+        estado__in=['confirmada', 'pendiente']
+    )
 
     # 1. Clases del día (Máximo 6)
     clases_hoy_lista = []
@@ -218,6 +246,7 @@ def panel_profesor(request):
         'saldo_pendiente': saldo_pendiente_fmt,
         'mis_retiros': mis_retiros,
         'generos': generos,
+        'especialidades': Especialidad.objects.order_by('nombre'),
     }
     return render(request, 'user_profesor/panel_profesor.html', context)
 
@@ -250,26 +279,42 @@ def actualizar_perfil_prof(request):
         try:
             nombre = request.POST.get('nombre', '').strip()
             rut = request.POST.get('rut', '').strip()
-            especialidad = request.POST.get('especialidad', '').strip()
+            especialidad_id = request.POST.get('especialidad', '').strip()
             direccion = request.POST.get('direccion', '').strip()
             correo = request.POST.get('correo_electronico', '').strip()
             telefono = request.POST.get('telefono', '').strip()
             genero_id = request.POST.get('genero', '').strip()
 
-            if not all([nombre, rut, especialidad, direccion, correo, telefono, genero_id]):
+            if not all([nombre, rut, especialidad_id, direccion, correo, telefono, genero_id]):
                 return JsonResponse({"success": False, "message": "Todos los campos son obligatorios."})
+
+            especialidad = buscar_especialidad(especialidad_id)
+            if especialidad is None:
+                return JsonResponse({"success": False, "message": "Selecciona una especialidad válida."})
 
             genero = get_object_or_404(Genero, id_genero=genero_id)
 
+            from alumnos.utils import validar_rut_chileno, usuario_existe
+
+            if not validar_rut_chileno(rut):
+                return JsonResponse({"success": False, "message": "El RUT ingresado no es válido."})
+
+            if rut != profesor.user.rut:
+                return JsonResponse({"success": False, "message": "Por motivos de seguridad, el RUT no puede ser modificado."})
+
+            error_msg = usuario_existe(rut=rut, correo=correo, excluir_user=profesor.user)
+            if error_msg:
+                return JsonResponse({"success": False, "message": error_msg})
+
             profesor.user.first_name = nombre
             profesor.user.rut = rut
-            from alumnos.models import Especialidad
-            especialidad_obj, _ = Especialidad.objects.get_or_create(nombre=especialidad)
-            profesor.especialidad = especialidad_obj
+            profesor.user.username = rut
+            profesor.especialidad = especialidad
             profesor.user.direccion = direccion
             profesor.user.email = correo
             profesor.user.telefono = telefono
             profesor.user.genero = genero
+            profesor.user.save()
             profesor.save()
 
             return JsonResponse({"success": True, "message": "Tu perfil ha sido actualizado con éxito."})
@@ -279,48 +324,52 @@ def actualizar_perfil_prof(request):
     return JsonResponse({"success": False, "message": "Método no permitido."})
 
 
+# _json: el panel llama esta vista con fetch y espera {'success': ...};
+# un redirect le romperia el res.json().
+@profesor_required_json
 def solicitar_retiro(request):
-    profesor_id = request.session['profesor_id']
+    profesor_id = request.session.get('profesor_id')
 
     if request.method == 'POST':
-        profesor = get_object_or_404(Profesor, id_profesor=profesor_id)
-        from alumnos.models import SolicitudRetiro
+        from django.db import transaction
+        from alumnos.models import SolicitudRetiro, Banco
 
         try:
             monto_str = request.POST.get('monto', '').replace('.', '').replace('$', '').strip()
             monto = int(monto_str)
-            banco = request.POST.get('banco', 'Banco Estado').strip()
-            tipo_cuenta = request.POST.get('tipo_cuenta', 'Cuenta Rut / Vista').strip()
-            numero_cuenta = request.POST.get('numero_cuenta', '').strip()
+            banco = request.POST.get('banco', 'Banco Estado').strip()[:50]
+            tipo_cuenta = request.POST.get('tipo_cuenta', 'Cuenta Rut / Vista').strip()[:50]
+            numero_cuenta = request.POST.get('numero_cuenta', '').strip()[:30]
 
             if monto <= 0:
                 return JsonResponse({"success": False, "message": "El monto a retirar debe ser mayor a cero."})
 
-            # Validar saldo disponible con la misma regla que muestra el panel.
-            saldo_disponible = calcular_saldos(profesor)['disponible']
+            with transaction.atomic():
+                profesor = Profesor.objects.select_for_update().get(id_profesor=profesor_id)
+                list(SolicitudRetiro.objects.select_for_update().filter(profesor=profesor))
 
-            if saldo_disponible <= 0:
-                return JsonResponse({"success": False, "message": "Aún no tienes saldo disponible para retirar."})
+                # Validar saldo disponible con la misma regla que muestra el panel.
+                saldo_disponible = calcular_saldos(profesor)['disponible']
 
-            if monto > saldo_disponible:
-                return JsonResponse({"success": False, "message": f"El monto ingresado excede tu saldo disponible ({formato_clp(saldo_disponible)})."})
+                if saldo_disponible <= 0:
+                    return JsonResponse({"success": False, "message": "Aún no tienes saldo disponible para retirar."})
 
-            from alumnos.models import Banco
-            banco_obj, _ = Banco.objects.get_or_create(nombre=banco if banco else 'Banco Estado')
-            from alumnos.models import Banco
-            banco_obj, _ = Banco.objects.get_or_create(nombre=banco if banco else 'Banco Estado')
-            SolicitudRetiro.objects.create(
-                profesor=profesor,
-                monto=monto,
-                banco=banco_obj,
-                tipo_cuenta=tipo_cuenta if tipo_cuenta else 'Cuenta Rut / Vista',
-                numero_cuenta=numero_cuenta
-            )
+                if monto > saldo_disponible:
+                    return JsonResponse({"success": False, "message": f"El monto ingresado excede tu saldo disponible ({formato_clp(saldo_disponible)})."})
+
+                banco_obj, _ = Banco.objects.get_or_create(nombre=banco if banco else 'Banco Estado')
+                SolicitudRetiro.objects.create(
+                    profesor=profesor,
+                    monto=monto,
+                    banco=banco_obj,
+                    tipo_cuenta=tipo_cuenta if tipo_cuenta else 'Cuenta Rut / Vista',
+                    numero_cuenta=numero_cuenta
+                )
             return JsonResponse({"success": True, "message": f"Solicitud de retiro por ${monto:,} registrada con éxito. Se procesará en 24 a 48 horas hábiles.".replace(",", ".")})
         except ValueError:
             return JsonResponse({"success": False, "message": "Por favor ingresa un monto numérico válido."})
-        except Exception as e:
-            return JsonResponse({"success": False, "message": str(e)})
+        except Exception:
+            return JsonResponse({"success": False, "message": "Ocurrió un error al procesar la solicitud de retiro. Intenta nuevamente."})
 
     return JsonResponse({"success": False, "message": "Método no permitido."})
 
@@ -370,6 +419,13 @@ def regis_tutor(request):
 
             if len(password) < 6:
                 return JsonResponse({"success": False, "message": "La contraseña debe tener al menos 6 caracteres."})
+
+            from django.contrib.auth.password_validation import validate_password
+            from django.core.exceptions import ValidationError as DjangoValidationError
+            try:
+                validate_password(password)
+            except DjangoValidationError as e:
+                return JsonResponse({"success": False, "message": " | ".join(e.messages)})
 
             from alumnos.utils import validar_rut_chileno, usuario_existe
             from datetime import datetime, date

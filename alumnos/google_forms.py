@@ -9,7 +9,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.db import transaction
 
-from .models import Alumno, Genero, Profesor
+from .models import Alumno, Especialidad, Genero, Profesor
 from .utils import error_fecha_nacimiento, usuario_existe, validar_rut_chileno
 
 ALUMNO, PROFESOR = 'alumno', 'profesor'
@@ -36,8 +36,9 @@ class CompletarRegistroGoogleForm(forms.Form):
         label='Nivel de educación', required=False,
         choices=[('', 'Selecciona tu nivel')] + Alumno._meta.get_field('nivel_educacion').choices,
     )
-    especialidad = forms.CharField(label='Especialidad', max_length=60, required=False,
-                                   widget=forms.TextInput(attrs={'placeholder': 'Ej. Matemáticas'}))
+    especialidad = forms.ModelChoiceField(label='Especialidad', required=False,
+                                          queryset=Especialidad.objects.all(),
+                                          empty_label='Selecciona tu especialidad')
 
     def __init__(self, *args, correo, user_existente=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -62,7 +63,7 @@ class CompletarRegistroGoogleForm(forms.Form):
         tipo = datos.get('tipo')
         if tipo == ALUMNO and not datos.get('nivel_educacion'):
             self.add_error('nivel_educacion', 'Selecciona tu nivel de educación.')
-        if tipo == PROFESOR and not (datos.get('especialidad') or '').strip():
+        if tipo == PROFESOR and not datos.get('especialidad'):
             self.add_error('especialidad', 'Indica tu especialidad.')
         if datos.get('rut'):
             error = usuario_existe(datos['rut'], self.correo, excluir_user=self.user_existente)
@@ -73,11 +74,8 @@ class CompletarRegistroGoogleForm(forms.Form):
     @transaction.atomic
     def save(self):
         """Crea (o completa) el usuario y su perfil. Devuelve el usuario."""
+        # Los datos personales van en CustomUser; el perfil solo guarda lo suyo.
         d = self.cleaned_data
-        comunes = dict(nombre=d['nombre'], rut=d['rut'], direccion=d['direccion'],
-                       fecha_nacimiento=d['fecha_nacimiento'], correo_electronico=self.correo,
-                       telefono=d['telefono'], genero=d['genero'])
-
         user = self.user_existente or get_user_model()(username=d['rut'])
         user.username = d['rut']
         user.rut = d['rut']
@@ -93,7 +91,7 @@ class CompletarRegistroGoogleForm(forms.Form):
         user.save()
 
         if d['tipo'] == ALUMNO:
-            Alumno.objects.create(user=user, nivel_educacion=d['nivel_educacion'], **comunes)
+            Alumno.objects.create(user=user, nivel_educacion=d['nivel_educacion'])
         else:
-            Profesor.objects.create(user=user, especialidad=d['especialidad'].strip(), **comunes)
+            Profesor.objects.create(user=user, especialidad=d['especialidad'])
         return user

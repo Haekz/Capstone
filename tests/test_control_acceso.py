@@ -6,9 +6,9 @@ Estos tests detectan si se quita o si falta en una vista nueva.
 from datetime import date
 from django.contrib.auth import get_user_model
 User = get_user_model()
-from django.test import TestCase
+from django.test import Client, TestCase
 from django.urls import reverse
-from alumnos.models import Genero, Tutor
+from alumnos.models import Alumno, Genero, SolicitudRetiro, Tutor
 
 class AccesoPortalAdminTests(TestCase):
     """Las pantallas internas exigen sesion de admin; la de salida no."""
@@ -54,3 +54,58 @@ class AccesoPortalAdminTests(TestCase):
         respuesta = self.client.get(reverse('alumnos_del', args=[victima.id_tutor]))
         self.assertEqual(respuesta.status_code, 302)
         self.assertTrue(Tutor.objects.filter(pk=victima.pk).exists())
+
+    def _crear_alumno(self):
+        user = User.objects.create_user('30303030-3', password='x')
+        return Alumno.objects.create(user=user, nivel_educacion='media')
+
+    def test_eliminar_alumno_por_get_no_borra(self):
+        """Un enlace (o una imagen en otra pagina) no debe poder borrar."""
+        alumno = self._crear_alumno()
+        self._entrar_como_admin()
+        respuesta = self.client.get(reverse('alumnos_del', args=[alumno.id_alumno]))
+        self.assertEqual(respuesta.status_code, 405)
+        self.assertTrue(Alumno.objects.filter(pk=alumno.pk).exists())
+
+    def test_admin_elimina_alumno_por_post(self):
+        alumno = self._crear_alumno()
+        self._entrar_como_admin()
+        respuesta = self.client.post(reverse('alumnos_del', args=[alumno.id_alumno]))
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertFalse(Alumno.objects.filter(pk=alumno.pk).exists())
+        self.assertFalse(User.objects.filter(username='30303030-3').exists())
+
+
+class CsrfEndpointsAlumnoTests(TestCase):
+    """enviar_reporte e inscribir_clase ya no usan @csrf_exempt: el portal
+    del alumno manda el token en el encabezado X-CSRFToken."""
+    VISTAS = ('enviar_reporte', 'inscribir_clase')
+
+    def setUp(self):
+        self.client = Client(enforce_csrf_checks=True)
+
+    def test_post_sin_token_es_rechazado(self):
+        for nombre in self.VISTAS:
+            with self.subTest(vista=nombre):
+                respuesta = self.client.post(reverse(nombre), '{}', content_type='application/json')
+                self.assertEqual(respuesta.status_code, 403)
+
+    def test_post_con_token_del_encabezado_pasa(self):
+        self.client.get(reverse('login'))  # el formulario deja la cookie csrftoken
+        token = self.client.cookies['csrftoken'].value
+        for nombre in self.VISTAS:
+            with self.subTest(vista=nombre):
+                respuesta = self.client.post(reverse(nombre), '{}', content_type='application/json',
+                                             HTTP_X_CSRFTOKEN=token)
+                self.assertNotEqual(respuesta.status_code, 403)
+
+
+class SolicitarRetiroTests(TestCase):
+    """Antes leia request.session['profesor_id'] sin decorador: un anonimo
+    provocaba KeyError (error 500)."""
+
+    def test_anonimo_recibe_sesion_invalida_y_no_crea_retiro(self):
+        respuesta = self.client.post(reverse('solicitar_retiro'), {'monto': '1000'})
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertFalse(respuesta.json()['success'])
+        self.assertFalse(SolicitudRetiro.objects.exists())
