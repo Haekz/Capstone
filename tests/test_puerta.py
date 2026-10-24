@@ -164,3 +164,53 @@ class FiltroReporteErroresTests(SimpleTestCase):
         self.assertIn('MONGODB_URI', html)
         self.assertNotIn(CLAVE_PRUEBA, html)
         self.assertNotIn(URI_PRUEBA, html)
+
+
+@override_settings(SITIO_CLAVE='', SITIO_DOMINIOS_CORREO=['duocuc.cl'],
+                   EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+class PuertaPorCorreoTests(TestCase):
+
+    def _pedir(self, correo):
+        return self.client.post(reverse('puerta'), {'accion': 'correo', 'correo': correo, 'next': '/'})
+
+    def _codigo(self):
+        from django.core import mail
+        return mail.outbox[-1].body.split('es: ')[1][:6]
+
+    def test_sin_sesion_redirige_a_la_puerta(self):
+        self.assertTrue(es_redireccion_a_puerta(self.client.get('/')))
+
+    def test_correo_de_otro_dominio_no_recibe_codigo(self):
+        from django.core import mail
+        r = self._pedir('alguien@gmail.com')
+        self.assertContains(r, 'Solo pueden entrar')
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_dominio_parecido_no_pasa(self):
+        from django.core import mail
+        self._pedir('x@duocuc.cl.evil.com')
+        self._pedir('x@evil.com@duocuc.cl')
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_flujo_completo(self):
+        r = self._pedir('Ana@DuocUC.cl')
+        self.assertContains(r, 'ana@duocuc.cl')
+        r = self.client.post(reverse('puerta'), {'accion': 'codigo', 'codigo': self._codigo(), 'next': '/'})
+        self.assertRedirects(r, '/', fetch_redirect_response=False)
+        self.assertTrue(self.client.session[SESION_PUERTA])
+        self.assertEqual(self.client.get('/').status_code, 200)
+
+    def test_codigo_incorrecto(self):
+        self._pedir('ana@duocuc.cl')
+        r = self.client.post(reverse('puerta'), {'accion': 'codigo', 'codigo': '000000', 'next': '/'})
+        self.assertContains(r, 'no es correcto')
+        self.assertNotIn(SESION_PUERTA, self.client.session)
+
+    def test_bloqueo_tras_cinco_intentos(self):
+        self._pedir('ana@duocuc.cl')
+        codigo = self._codigo()
+        for _ in range(5):
+            self.client.post(reverse('puerta'), {'accion': 'codigo', 'codigo': '000000'})
+        r = self.client.post(reverse('puerta'), {'accion': 'codigo', 'codigo': codigo})
+        self.assertContains(r, 'Demasiados intentos')
+        self.assertNotIn(SESION_PUERTA, self.client.session)

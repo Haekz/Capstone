@@ -23,8 +23,45 @@
 
         <div class="puerta-icon"><i class="bi bi-tools" aria-hidden="true"></i></div>
         <h1 class="puerta-title">Sitio en mantenimiento</h1>
-        <p class="puerta-sub">Estamos realizando mejoras. Si eres parte del equipo, ingresa la clave de acceso para continuar.</p>
+        {% if modo_correo %}
+        <p class="puerta-sub">Acceso solo para el equipo. Ingresa tu correo institucional y te enviaremos un código.</p>
+        {% if error %}
+        <div class="puerta-error" role="alert"><i class="bi bi-exclamation-circle"></i> {{ error }}</div>
+        {% endif %}
 
+        {% if pendiente_correo %}
+        <form method="post" action="{% url 'puerta' %}" class="puerta-form">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next }}">
+            <input type="hidden" name="accion" value="codigo">
+            <label for="puerta-codigo" class="puerta-label">Código enviado a {{ pendiente_correo }}</label>
+            <div class="puerta-campo">
+                <i class="bi bi-key"></i>
+                <input id="puerta-codigo" name="codigo" class="puerta-input" inputmode="numeric" autocomplete="one-time-code" maxlength="6" autofocus placeholder="123456">
+            </div>
+            <button type="submit" class="puerta-btn">Entrar <i class="bi bi-arrow-right"></i></button>
+        </form>
+        <form method="post" action="{% url 'puerta' %}" class="puerta-form">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next }}">
+            <button type="submit" name="accion" value="reenviar" class="puerta-btn">Reenviar código</button>
+            <button type="submit" name="accion" value="cambiar" class="puerta-btn">Usar otro correo</button>
+        </form>
+        {% else %}
+        <form method="post" action="{% url 'puerta' %}" class="puerta-form">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next }}">
+            <input type="hidden" name="accion" value="correo">
+            <label for="puerta-correo" class="puerta-label">Correo institucional</label>
+            <div class="puerta-campo">
+                <i class="bi bi-envelope"></i>
+                <input id="puerta-correo" type="email" name="correo" class="puerta-input" value="{{ correo_valor|default:'' }}" autocomplete="email" autofocus placeholder="nombre@duocuc.cl" required>
+            </div>
+            <button type="submit" class="puerta-btn">Enviar código <i class="bi bi-arrow-right"></i></button>
+        </form>
+        {% endif %}
+        {% else %}
+        <p class="puerta-sub">Estamos realizando mejoras. Si eres parte del equipo, ingresa la clave de acceso para continuar.</p>
         <form method="post" action="{% url 'puerta' %}" class="puerta-form">
             {% csrf_token %}
             <input type="hidden" name="next" value="{{ next }}">
@@ -43,6 +80,7 @@
 
             <button type="submit" class="puerta-btn">Entrar <i class="bi bi-arrow-right"></i></button>
         </form>
+        {% endif %}
     </main>
 </body>
 

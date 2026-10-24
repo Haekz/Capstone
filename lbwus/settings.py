@@ -156,6 +156,12 @@ MONGODB_TIMEOUT_MS = int(os.environ.get('MONGODB_TIMEOUT_MS', '5000'))
 # Puerta con clave para todo el sitio (lbwus/puerta.py). Vacia = sin puerta.
 # La clave se define solo como variable de entorno, nunca en el codigo.
 SITIO_CLAVE = os.environ.get('SITIO_CLAVE', '')
+# Alternativa: solo entran correos de estos dominios (separados por coma),
+# verificados con un codigo enviado al correo. Tiene prioridad sobre SITIO_CLAVE.
+SITIO_DOMINIOS_CORREO = [
+    d.strip().lower().lstrip('@')
+    for d in os.environ.get('SITIO_DOMINIOS_CORREO', '').split(',') if d.strip()
+]
 
 # La pagina de error de Django oculta tambien MONGODB_URI y SITIO_CLAVE.
 DEFAULT_EXCEPTION_REPORTER_FILTER = 'lbwus.reporte_errores.FiltroReporteErrores'
