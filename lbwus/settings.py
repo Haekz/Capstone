@@ -195,7 +195,9 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+# Las horas se guardan en UTC (USE_TZ) y se muestran/ingresan en hora de Chile.
+# Con 'UTC' una sesion de las 18:00 se mostraba y comparaba 3-4 horas corrida.
+TIME_ZONE = 'America/Santiago'
 
 USE_I18N = True
 

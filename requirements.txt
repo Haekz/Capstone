@@ -25,3 +25,5 @@ urllib3==2.7.0
 oauthlib==3.2.2
 requests-oauthlib==2.0.0
 Pillow>=10.0
+# Zonas horarias (TIME_ZONE = 'America/Santiago') aunque el servidor no traiga la base del sistema.
+tzdata==2026.4
