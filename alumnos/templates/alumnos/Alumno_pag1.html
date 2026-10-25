@@ -350,6 +350,14 @@
                     <!-- Available Classes Catalog to Enroll -->
                     <div class="classes-subsection ap-mb-40" id="catalogo-clases-seccion">
                         <h3 class="subsection-title"><i class="bi bi-journal-plus"></i> Catálogo de Clases Disponibles</h3>
+                        <!-- Filtros combinados: opciones y disponibilidad las resuelve el backend -->
+                        <form method="get" class="catalog-filters" id="catalogo-filtros" aria-label="Filtrar catálogo de clases">
+                            <div class="catalog-filter">{{ filtros.especialidad.label_tag }}{{ filtros.especialidad }}</div>
+                            <div class="catalog-filter">{{ filtros.modalidad.label_tag }}{{ filtros.modalidad }}</div>
+                            <div class="catalog-filter catalog-filter--check">{{ filtros.disponible }}{{ filtros.disponible.label_tag }}</div>
+                            <button type="submit" class="btn-join-class btn-join-class--primary"><i class="bi bi-funnel"></i> Filtrar</button>
+                            {% if hay_filtros %}<a href="{% url 'alumno_pag1' %}" class="catalog-filter-clear">Limpiar filtros</a>{% endif %}
+                        </form>
                         <div class="classes-grid">
                             {% for c in clases_disponibles %}
                             <div class="class-item-card">
@@ -374,7 +382,11 @@
                             {% empty %}
                             <div class="empty-teachers-state ap-full-row">
                                 <i class="bi bi-inbox"></i>
+                                {% if hay_filtros %}
+                                <p>No hay clases que coincidan con los filtros seleccionados. Prueba con otra combinación o limpia los filtros.</p>
+                                {% else %}
                                 <p>No hay clases abiertas disponibles en este momento. El administrador las publicará pronto.</p>
+                                {% endif %}
                             </div>
                             {% endfor %}
                         </div>
@@ -1074,14 +1086,9 @@
             
             <!-- Grid of Tags -->
             <div class="topic-tag-grid" id="topic-tags-container">
-                <button class="topic-tag" data-topic="Matemáticas">Matemáticas</button>
-                <button class="topic-tag" data-topic="Física">Física</button>
-                <button class="topic-tag" data-topic="Química">Química</button>
-                <button class="topic-tag" data-topic="Biología">Biología</button>
-                <button class="topic-tag" data-topic="Lenguaje">Lenguaje</button>
-                <button class="topic-tag" data-topic="Inglés">Inglés</button>
-                <button class="topic-tag" data-topic="Historia">Historia</button>
-                <button class="topic-tag" data-topic="Programación">Programación</button>
+                {% for e in especialidades %}
+                <button class="topic-tag" data-topic="{{ e.nombre }}">{{ e.nombre }}</button>
+                {% endfor %}
             </div>
 
             <!-- Preview Section -->
@@ -3090,6 +3097,7 @@
         renderDashboardContent();
         renderModalPreview();
         updatePlanUI();
+        {% if hay_filtros %}requestClassAccess();  // vuelve al catalogo tras filtrar{% endif %}
     </script>
     <!-- Carrito global (misma lógica que base.html del sitio público) -->
     <script>

@@ -141,15 +141,43 @@ class Asignatura(models.Model):
         return self.nombre
 
 
+class ClaseQuerySet(models.QuerySet):
+    """Filtros del catalogo de clases que ve el alumno."""
+
+    def habilitadas(self):
+        """Clases de profesores con titulo aprobado (los unicos que pueden hacer clases)."""
+        return self.filter(profesor__titulo_estado=Profesor.TITULO_APROBADO)
+
+    def con_disponibilidad(self):
+        """Clases con al menos una sesion programada, futura y con cupo (ver SesionClaseQuerySet.disponibles)."""
+        sesiones = SesionClase.objects.disponibles().filter(clase=models.OuterRef('pk'))
+        return self.filter(models.Exists(sesiones))
+
+    def filtrar(self, especialidad=None, modalidad=None, solo_disponibles=False):
+        """Combina los filtros; los que vienen vacios no se aplican."""
+        clases = self
+        if especialidad:
+            clases = clases.filter(profesor__especialidad=especialidad)
+        if modalidad:
+            clases = clases.filter(modalidad=modalidad)
+        if solo_disponibles:
+            clases = clases.con_disponibilidad()
+        return clases
+
+
 class Clase(models.Model):
+    MODALIDADES = [('online', 'Online'), ('presencial', 'Presencial')]
+
     id_clase = models.AutoField(primary_key=True)
     asignatura = models.ForeignKey(Asignatura, on_delete=models.CASCADE)
-    modalidad = models.CharField(max_length=10, choices=[('online', 'Online'), ('presencial', 'Presencial')])
+    modalidad = models.CharField(max_length=10, choices=MODALIDADES)
     horario = models.TimeField()
     profesor = models.ForeignKey(Profesor, on_delete=models.CASCADE)
     en_vivo = models.BooleanField(default=False)
     descripcion_vivo = models.TextField(blank=True, null=True)
     temas_vivo = models.CharField(max_length=255, blank=True, null=True)
+
+    objects = ClaseQuerySet.as_manager()
 
     def __str__(self):
         return f"{self.asignatura.nombre} - {self.profesor.user.first_name}"
