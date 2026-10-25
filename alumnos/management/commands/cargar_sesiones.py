@@ -52,7 +52,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING('No hay clases registradas. Ejecuta primero cargar_catalogos.'))
             return
 
-        hoy = timezone.now().date()
+        hoy = timezone.localdate()
         tz = timezone.get_current_timezone()
         total_creadas = 0
 

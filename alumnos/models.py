@@ -312,8 +312,17 @@ class SesionClase(models.Model):
         ]
 
     def __str__(self):
-        inicio_str = self.fecha_hora_inicio.strftime('%d/%m/%Y %H:%M') if self.fecha_hora_inicio else 'Sin fecha'
+        inicio_str = self.inicio_local.strftime('%d/%m/%Y %H:%M') if self.fecha_hora_inicio else 'Sin fecha'
         return f"{self.clase.asignatura.nombre} ({inicio_str}) - {self.get_estado_display()}"
+
+    # strftime no convierte zona: para mostrar horas fuera de templates usar estas.
+    @property
+    def inicio_local(self):
+        return timezone.localtime(self.fecha_hora_inicio)
+
+    @property
+    def fin_local(self):
+        return timezone.localtime(self.fecha_hora_fin)
 
     def clean(self):
         super().clean()

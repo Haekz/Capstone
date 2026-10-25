@@ -748,9 +748,9 @@ def listar_sesiones_disponibles(request):
             'modalidad': s.clase.modalidad,
             'fecha_hora_inicio': s.fecha_hora_inicio.isoformat(),
             'fecha_hora_fin': s.fecha_hora_fin.isoformat(),
-            'fecha_formateada': s.fecha_hora_inicio.strftime('%d/%m/%Y'),
-            'hora_formateada': f"{s.fecha_hora_inicio.strftime('%H:%M')} - {s.fecha_hora_fin.strftime('%H:%M')} hrs",
-            'inicio_formateado': s.fecha_hora_inicio.strftime('%d/%m/%Y %H:%M'),
+            'fecha_formateada': s.inicio_local.strftime('%d/%m/%Y'),
+            'hora_formateada': f"{s.inicio_local.strftime('%H:%M')} - {s.fin_local.strftime('%H:%M')} hrs",
+            'inicio_formateado': s.inicio_local.strftime('%d/%m/%Y %H:%M'),
             'duracion_minutos': s.duracion_minutos,
             'cupo_maximo': s.cupo_maximo,
             'cupos_disponibles': s.cupos_disponibles,
@@ -794,7 +794,7 @@ def reservar_sesion(request):
             'success': True,
             'message': (
                 f'¡Reserva confirmada con éxito para la sesión de "{sesion.clase.asignatura.nombre}" '
-                f'el {sesion.fecha_hora_inicio.strftime("%d/%m/%Y a las %H:%M")}!'
+                f'el {sesion.inicio_local.strftime("%d/%m/%Y a las %H:%M")}!'
             ),
             'id_inscripcion': inscripcion.pk
         })
