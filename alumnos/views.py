@@ -370,6 +370,7 @@ def alumno_pag1(request):
         'sesiones_disponibles': sesiones_disponibles,
         'mis_inscripciones': mis_inscripciones,
         'inscritas_ids': inscritas_ids,
+        'progreso': alumno.resumen_progreso(),
     }
 
     return render(
