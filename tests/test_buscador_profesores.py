@@ -119,3 +119,12 @@ class BuscadorProfesoresTests(TestCase):
         r = self._portal()
         self.assertContains(r, 'Contenido de ejemplo: aún no hay tutores registrados')
         self.assertContains(r, 'Contenido de ejemplo: aún no hay clases en video')
+
+    def test_busqueda_no_distingue_tildes(self):
+        # "matematicas" debe encontrar "Matemáticas": la consulta y los datos
+        # pasan por normalizar() (sin tildes, en minúsculas) antes de comparar.
+        r = self._portal()
+        self.assertContains(r, "normalize('NFD')")
+        self.assertContains(r, 'normalizar(searchInput.value.trim())')
+        self.assertContains(r, 'normalizar(t.name).includes(searchQuery)', count=2)
+        self.assertNotContains(r, 'toLowerCase().includes(searchQuery)')
