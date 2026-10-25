@@ -308,7 +308,7 @@ def alumno_pag1(request):
     profesores_list = Profesor.objects.habilitados().select_related(
         'user',
         'especialidad'
-    )
+    ).order_by('user__first_name', 'user__last_name')
 
     clases_disponibles = Clase.objects.all().select_related(
         'profesor'
@@ -346,14 +346,13 @@ def alumno_pag1(request):
         'alumno': alumno,
         'mis_reportes': mis_reportes,
         'profesores_list': profesores_list,
+        # Solo datos reales. Distancia, calificacion y precio no se
+        # registran todavia en la plataforma, asi que no se inventan.
         'profesores_js': [
             {
                 'id': p.id_profesor,
                 'name': p.nombre,
                 'specialties': [p.especialidad.nombre] if p.especialidad else [],
-                'distance': 1.2,
-                'rating': '5.0 ⭐',
-                'price': '$15.000',
                 'initial': p.nombre[:1].upper(),
             }
             for p in profesores_list

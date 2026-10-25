@@ -257,12 +257,14 @@
                             </div>
 
                             <div class="tab-content" id="tab-tutores">
+                                <p class="demo-notice"><i class="bi bi-info-circle"></i> Contenido de ejemplo: aún no hay tutores registrados en la plataforma.</p>
                                 <div class="teachers-list" id="dashboard-tutors-container">
                                     <!-- Populated via JS -->
                                 </div>
                             </div>
 
                             <div class="tab-content" id="tab-videos">
+                                <p class="demo-notice"><i class="bi bi-info-circle"></i> Contenido de ejemplo: aún no hay clases en video publicadas.</p>
                                 <div class="filtered-grid" id="dashboard-videos-container">
                                     <!-- Populated via JS -->
                                 </div>
@@ -1320,12 +1322,12 @@
             '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
         })[c]);
 
-        // Tutors
+        // Tutors: datos de EJEMPLO (aun no hay tutores reales). La pestana lo avisa.
         const tutors = [
-            { id: 101, name: "Tutor Juan Pablo", specialties: ["Matemáticas", "Programación"], distance: 1.1, rating: "4.9 ⭐", initial: "JP" },
-            { id: 102, name: "Tutora Camila Gómez", specialties: ["Inglés", "Lenguaje"], distance: 1.8, rating: "4.8 ⭐", initial: "CG" },
-            { id: 103, name: "Tutor Roberto Muñoz", specialties: ["Física", "Química"], distance: 2.4, rating: "4.7 ⭐", initial: "RM" },
-            { id: 104, name: "Tutora Patricia Soto", specialties: ["Biología"], distance: 3.1, rating: "4.6 ⭐", initial: "PS" }
+            { id: 101, name: "Tutor Juan Pablo", specialties: ["Matemáticas", "Programación"], initial: "JP" },
+            { id: 102, name: "Tutora Camila Gómez", specialties: ["Inglés", "Lenguaje"], initial: "CG" },
+            { id: 103, name: "Tutor Roberto Muñoz", specialties: ["Física", "Química"], initial: "RM" },
+            { id: 104, name: "Tutora Patricia Soto", specialties: ["Biología"], initial: "PS" }
         ];
 
         // Videos
@@ -1668,7 +1670,6 @@
                 );
             }
 
-            filtered.sort((a, b) => a.distance - b.distance);
             if (countBadge) countBadge.innerText = `${filtered.length} encontrados`;
 
             if (filtered.length === 0) {
@@ -1693,10 +1694,6 @@
                     <div class="teacher-info">
                         <h4>${escaparHtml(t.name)}</h4>
                         <p class="teacher-specialty">${escaparHtml(t.specialties.join(', '))}</p>
-                        <span class="teacher-rating">${t.rating}</span>
-                    </div>
-                    <div class="teacher-distance-box">
-                        <span class="teacher-distance"><i class="bi bi-geo-alt-fill"></i>${t.distance} km</span>
                     </div>
                 `;
                 container.appendChild(card);
@@ -1725,7 +1722,6 @@
                         t.specialties.some(spec => spec.toLowerCase().includes(searchQuery))
                     );
                 }
-                filteredTeachers.sort((a, b) => a.distance - b.distance);
                 
                 if (filteredTeachers.length === 0) {
                     teachersContainer.innerHTML = `<div class="empty-teachers-state"><i class="bi bi-person-fill-exclamation"></i><p>No hay profesores que coincidan con tu búsqueda.</p></div>`;
@@ -1742,10 +1738,8 @@
                             <div class="teacher-info">
                                 <h4>${escaparHtml(t.name)}</h4>
                                 <p class="teacher-specialty">${escaparHtml(t.specialties.join(', '))}</p>
-                                <span class="teacher-rating">${t.rating}</span>
                             </div>
                             <div class="teacher-distance-box">
-                                <span class="teacher-distance"><i class="bi bi-geo-alt-fill"></i>${t.distance} km</span>
                                 <button class="btn-contact-teacher" onclick="requestClassAccess(${t.id})">Ver Horarios</button>
                             </div>
                         `;
@@ -1770,7 +1764,6 @@
                         t.specialties.some(spec => spec.toLowerCase().includes(searchQuery))
                     );
                 }
-                filteredTutors.sort((a, b) => a.distance - b.distance);
                 
                 if (filteredTutors.length === 0) {
                     tutorsContainer.innerHTML = `<div class="empty-teachers-state"><i class="bi bi-person-fill-exclamation"></i><p>No hay tutores que coincidan con tu búsqueda.</p></div>`;
@@ -1783,10 +1776,8 @@
                             <div class="teacher-info">
                                 <h4>${escaparHtml(t.name)}</h4>
                                 <p class="teacher-specialty">${escaparHtml(t.specialties.join(', '))}</p>
-                                <span class="teacher-rating">${t.rating}</span>
                             </div>
                             <div class="teacher-distance-box">
-                                <span class="teacher-distance"><i class="bi bi-geo-alt-fill"></i>${t.distance} km</span>
                                 <button class="btn-contact-teacher" onclick="requestClassAccess(${t.id})">Contactar</button>
                             </div>
                         `;
@@ -1865,10 +1856,8 @@
                     <div class="teacher-info">
                         <h4>${escaparHtml(t.name)}</h4>
                         <p class="teacher-specialty">${escaparHtml(t.specialties.join(', '))}</p>
-                        <span class="teacher-rating">${t.rating}</span>
                     </div>
                     <div class="teacher-distance-box">
-                        <span class="teacher-distance"><i class="bi bi-geo-alt-fill"></i>${t.distance} km</span>
                         <button class="btn-contact-teacher" onclick="requestClassAccess(${t.id})">Ver Horarios</button>
                     </div>
                 `;

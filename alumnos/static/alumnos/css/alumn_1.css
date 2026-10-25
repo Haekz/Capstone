@@ -722,12 +722,6 @@ body.dark-mode .teacher-card {
     margin-bottom: 2px;
 }
 
-.teacher-rating {
-    font-size: 0.85rem;
-    color: var(--accent);
-    font-weight: 600;
-}
-
 .teacher-distance-box {
     text-align: right;
     display: flex;
@@ -736,17 +730,18 @@ body.dark-mode .teacher-card {
     gap: 5px;
 }
 
-.teacher-distance {
-    background-color: rgba(245, 158, 11, 0.08);
-    color: var(--accent);
-    padding: 4px 10px;
+/* Aviso de las pestañas con datos de ejemplo (tutores y videos) */
+.demo-notice {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    border: 1px dashed #d1d5db;
     border-radius: 8px;
-    font-size: 0.8rem;
-    font-weight: 700;
+    padding: 8px 12px;
+    margin-bottom: 12px;
 }
 
-.teacher-distance i {
-    margin-right: 4px;
+body.dark-mode .demo-notice {
+    border-color: #4b5563;
 }
 
 .btn-contact-teacher {
