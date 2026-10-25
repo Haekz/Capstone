@@ -67,6 +67,18 @@ class Alumno(models.Model):
     def __str__(self):
         return f"Alumno: {self.user.first_name} {self.user.last_name}"
 
+    def resumen_progreso(self):
+        """Horas, clases y ramos de las clases que el alumno ya completo (vista Mi Progreso)."""
+        completadas = list(
+            Inscripcion.objects.filter(alumno=self).completadas().select_related('sesion', 'clase')
+        )
+        minutos = sum(i.sesion.duracion_minutos for i in completadas)
+        return {
+            'horas': round(minutos / 60, 1),
+            'clases': len(completadas),
+            'ramos': len({i.clase.asignatura_id for i in completadas}),
+        }
+
 
 class Especialidad(models.Model):
     nombre = models.CharField(max_length=60, unique=True)
@@ -366,6 +378,15 @@ class SesionClase(models.Model):
         return InscripcionService.inscribir_alumno_en_sesion(alumno, self.pk)
 
 
+class InscripcionQuerySet(models.QuerySet):
+    def completadas(self):
+        """Confirmadas en sesiones que ya terminaron y no se cancelaron."""
+        return self.filter(
+            estado=Inscripcion.ESTADO_CONFIRMADA,
+            sesion__fecha_hora_fin__lte=timezone.now(),
+        ).exclude(sesion__estado=SesionClase.ESTADO_CANCELADA)
+
+
 class Inscripcion(models.Model):
     ESTADO_CONFIRMADA = 'confirmada'
     ESTADO_PENDIENTE = 'pendiente'
@@ -396,6 +417,8 @@ class Inscripcion(models.Model):
         db_index=True,
         verbose_name='Estado de inscripción'
     )
+
+    objects = InscripcionQuerySet.as_manager()
 
     class Meta:
         verbose_name = 'Inscripción'

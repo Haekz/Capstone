@@ -616,28 +616,28 @@
                         <div class="progress-stat-card">
                             <div class="stat-icon stat-icon--purple"><i class="bi bi-hourglass-split"></i></div>
                             <div class="stat-info">
-                                <h4 id="progress-stat-hours">36.5 hrs</h4>
+                                <h4 id="progress-stat-hours">{{ progreso.horas|floatformat:"-1" }} hrs</h4>
                                 <p>Tiempo de Estudio Total</p>
                             </div>
                         </div>
                         <div class="progress-stat-card">
                             <div class="stat-icon stat-icon--green"><i class="bi bi-check-circle-fill"></i></div>
                             <div class="stat-info">
-                                <h4 id="progress-stat-classes">24</h4>
+                                <h4 id="progress-stat-classes">{{ progreso.clases }}</h4>
                                 <p>Clases Completadas</p>
                             </div>
                         </div>
                         <div class="progress-stat-card">
                             <div class="stat-icon stat-icon--amber"><i class="bi bi-journal-check"></i></div>
                             <div class="stat-info">
-                                <h4 id="progress-stat-subjects">4</h4>
+                                <h4 id="progress-stat-subjects">{{ progreso.ramos }}</h4>
                                 <p>Ramos Cursados</p>
                             </div>
                         </div>
                         <div class="progress-stat-card">
                             <div class="stat-icon stat-icon--blue"><i class="bi bi-star-fill"></i></div>
                             <div class="stat-info">
-                                <h4 id="progress-stat-rating">4.9</h4>
+                                <h4 id="progress-stat-rating">Sin datos</h4>
                                 <p>Promedio Feedback</p>
                             </div>
                         </div>
@@ -647,6 +647,7 @@
                         <!-- Avance por ramo -->
                         <div class="progress-details-card">
                             <h3>Avance por Ramo</h3>
+                            <p class="demo-notice"><i class="bi bi-info-circle"></i> Contenido de ejemplo: el avance por ramo aún no se registra en la plataforma.</p>
                             <div class="progress-subject-list" id="progress-subject-list">
                                 <!-- Se rellena con JS -->
                             </div>
@@ -655,6 +656,7 @@
                         <!-- Gráfico de tendencia SVG -->
                         <div class="progress-details-card">
                             <h3>Horas de Estudio Semanales</h3>
+                            <p class="demo-notice"><i class="bi bi-info-circle"></i> Contenido de ejemplo: el gráfico semanal aún no usa tus datos.</p>
                             <div class="chart-container ap-chart-box">
                                 <svg class="progress-chart-svg ap-fill" viewBox="0 0 500 200">
                                     <defs>
@@ -694,6 +696,7 @@
                     <!-- Retroalimentación de docentes -->
                     <div class="progress-feedback-section ap-mt-30">
                         <h3>Comentarios y Observaciones del Equipo Docente</h3>
+                        <p class="demo-notice"><i class="bi bi-info-circle"></i> Contenido de ejemplo: los comentarios de docentes aún no se registran en la plataforma.</p>
                         <div class="feedback-list-container" id="feedback-list-container">
                             <!-- Se rellena con JS -->
                         </div>
