@@ -311,24 +311,25 @@
                                 <div class="class-item-card">
                                     <div class="class-card-header">
                                         <span class="class-badge">{{ insc.clase.profesor.especialidad }}</span>
+                                        {% if insc.sesion.estado == 'cancelada' %}
+                                        <span class="class-status-badge class-status-badge--modality">Sesión cancelada</span>
+                                        {% elif insc.estado == 'pendiente' %}
+                                        <span class="class-status-badge class-status-badge--modality">Pendiente</span>
+                                        {% else %}
                                         <span class="class-status-badge class-status-badge--enrolled">Inscrito</span>
+                                        {% endif %}
                                     </div>
                                     <div class="class-card-body">
                                         <h4>{{ insc.clase.asignatura.nombre }}</h4>
                                         <p class="class-teacher-type"><i class="bi bi-person-workspace"></i> Prof. {{ insc.clase.profesor.user.first_name }}</p>
-                                        <div class="class-info-item">
-                                            <i class="bi bi-calendar-event"></i>
-                                            <span>Fecha de inscripción: {{ insc.fecha_inscripcion|date:"d/m/Y" }}</span>
-                                        </div>
-                                        <div class="class-info-item">
-                                            <i class="bi bi-clock"></i>
-                                            <span>Horario: {{ insc.clase.horario|time:"H:i" }} hrs ({{ insc.clase.get_modalidad_display }})</span>
-                                        </div>
+                                        {% include "alumnos/includes/fecha_sesion.html" %}
                                     </div>
                                     <div class="ap-class-actions">
+                                        {% if insc.sesion.estado != 'cancelada' %}
                                         <a class="btn-join-class ap-flex-1" href="{% url 'sala_virtual' insc.clase.id_clase %}" style="display:flex; justify-content:center; align-items:center; text-decoration:none;">
                                             <i class="bi bi-camera-video-fill"></i> Unirse a la Clase
                                         </a>
+                                        {% endif %}
                                         <form method="POST" action="{% url 'cancelar_inscripcion' insc.id_inscripcion %}" onsubmit="return confirm('¿Seguro que deseas cancelar tu inscripción?')" style="display:inline;">
                                             {% csrf_token %}
                                             <button type="submit" class="ap-btn-cancel" title="Cancelar Inscripción" style="border:none; cursor:pointer; background:transparent;">
@@ -344,6 +345,31 @@
                                     <p>No estás inscrito en ninguna clase todavía. ¡Revisa el catálogo abajo para inscribirte a tu primera clase!</p>
                                 </div>
                             {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Historial: sesiones confirmadas que ya terminaron -->
+                    <div class="classes-subsection ap-mb-40" id="historial-clases-seccion">
+                        <h3 class="subsection-title"><i class="bi bi-check2-circle"></i> Historial de Clases Completadas</h3>
+                        <div class="classes-grid">
+                            {% for insc in historial_clases %}
+                            <div class="class-item-card">
+                                <div class="class-card-header">
+                                    <span class="class-badge">{{ insc.clase.profesor.especialidad }}</span>
+                                    <span class="class-status-badge class-status-badge--enrolled">Completada</span>
+                                </div>
+                                <div class="class-card-body">
+                                    <h4>{{ insc.clase.asignatura.nombre }}</h4>
+                                    <p class="class-teacher-type"><i class="bi bi-person-workspace"></i> Prof. {{ insc.clase.profesor.user.first_name }}</p>
+                                    {% include "alumnos/includes/fecha_sesion.html" %}
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="empty-teachers-state ap-full-row">
+                                <i class="bi bi-hourglass-split"></i>
+                                <p>Todavía no tienes clases completadas. Aquí aparecerán tus sesiones ya realizadas.</p>
+                            </div>
+                            {% endfor %}
                         </div>
                     </div>
 
@@ -1876,24 +1902,6 @@
         // ── CLASSES RENDERING ──
         function renderMyClasses() {
             // Renderizado dinámicamente desde el backend de Django con mis_inscripciones y clases_disponibles
-        }
-
-        // Mock join video call
-        function joinVideoCall(teacherName, url) {
-            Swal.fire({
-                title: 'Conectando a la Clase',
-                text: `Te estás uniendo a la clase en video de ${teacherName}...`,
-                icon: 'info',
-                showCancelButton: true,
-                confirmButtonText: 'Abrir Videollamada',
-                cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#10b981',
-                cancelButtonColor: '#6b7280'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.open(url, '_blank');
-                }
-            });
         }
 
         // ── SUPPORT RENDERING ──
