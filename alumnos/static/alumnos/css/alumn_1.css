@@ -744,6 +744,61 @@ body.dark-mode .demo-notice {
     border-color: #4b5563;
 }
 
+/* Filtros del catálogo de clases (los colores salen de los tokens: modo oscuro incluido) */
+.catalog-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px 16px;
+    margin-bottom: 18px;
+}
+
+.catalog-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-light);
+}
+
+.catalog-filter--check {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+}
+
+.catalog-filter-input {
+    min-width: 180px;
+    min-height: 40px;
+    padding: 8px 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background-color: var(--white);
+    color: var(--text);
+    font-size: 0.9rem;
+}
+
+.catalog-filter-input:focus-visible,
+.catalog-filter--check input:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+#portal-alumno .catalog-filters .btn-join-class--primary {
+    width: auto;
+    min-height: 40px;
+    padding: 8px 18px;
+}
+
+.catalog-filter-clear {
+    align-self: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--primary-ink);
+}
+
 .btn-contact-teacher {
     background-color: var(--primary);
     color: var(--white);

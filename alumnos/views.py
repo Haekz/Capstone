@@ -22,7 +22,7 @@ from .models import (
     Inscripcion,
 )
 from django.core.exceptions import ValidationError
-from .forms import AlumnoForm
+from .forms import AlumnoForm, FiltroClasesForm
 from .decorators import alumno_required
 from .exceptions import InscripcionError
 from .services import InscripcionService
@@ -310,9 +310,15 @@ def alumno_pag1(request):
         'especialidad'
     ).order_by('user__first_name', 'user__last_name')
 
-    clases_disponibles = Clase.objects.all().select_related(
-        'profesor'
-    )
+    # Catalogo: solo clases de profesores habilitados, con los filtros del GET.
+    filtros = FiltroClasesForm(request.GET)
+    filtros.is_valid()  # un campo invalido queda fuera de cleaned_data y no filtra
+    criterios = filtros.cleaned_data
+    clases_disponibles = Clase.objects.habilitadas().filtrar(
+        especialidad=criterios.get('especialidad'),
+        modalidad=criterios.get('modalidad'),
+        solo_disponibles=criterios.get('disponible', False),
+    ).select_related('asignatura', 'profesor__user', 'profesor__especialidad')
 
     mis_inscripciones = (
         Inscripcion.objects
@@ -358,6 +364,9 @@ def alumno_pag1(request):
             for p in profesores_list
         ],
         'clases_disponibles': clases_disponibles,
+        'filtros': filtros,
+        'hay_filtros': any(criterios.values()),
+        'especialidades': filtros.fields['especialidad'].queryset,
         'sesiones_disponibles': sesiones_disponibles,
         'mis_inscripciones': mis_inscripciones,
         'inscritas_ids': inscritas_ids,
