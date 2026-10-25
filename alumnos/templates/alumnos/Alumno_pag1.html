@@ -1321,6 +1321,8 @@
         const escaparHtml = (texto) => String(texto).replace(/[&<>"']/g, (c) => ({
             '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
         })[c]);
+        // Minusculas y sin tildes, para que "matematicas" encuentre "Matemáticas".
+        const normalizar = (texto) => String(texto).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
         // Tutors: datos de EJEMPLO (aun no hay tutores reales). La pestana lo avisa.
         const tutors = [
@@ -1704,7 +1706,7 @@
         function renderDashboardContent() {
             const selectedTopics = getSelectedTopics();
             const searchInput = document.getElementById('dashboard-search-input');
-            const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
+            const searchQuery = searchInput ? normalizar(searchInput.value.trim()) : '';
             
             // 1. Teachers
             const teachersContainer = document.getElementById('dashboard-teachers-container');
@@ -1718,8 +1720,8 @@
                 }
                 if (searchQuery) {
                     filteredTeachers = filteredTeachers.filter(t => 
-                        t.name.toLowerCase().includes(searchQuery) ||
-                        t.specialties.some(spec => spec.toLowerCase().includes(searchQuery))
+                        normalizar(t.name).includes(searchQuery) ||
+                        t.specialties.some(spec => normalizar(spec).includes(searchQuery))
                     );
                 }
                 
@@ -1760,8 +1762,8 @@
                 }
                 if (searchQuery) {
                     filteredTutors = filteredTutors.filter(t => 
-                        t.name.toLowerCase().includes(searchQuery) ||
-                        t.specialties.some(spec => spec.toLowerCase().includes(searchQuery))
+                        normalizar(t.name).includes(searchQuery) ||
+                        t.specialties.some(spec => normalizar(spec).includes(searchQuery))
                     );
                 }
                 
@@ -1796,9 +1798,9 @@
                 }
                 if (searchQuery) {
                     filteredVideos = filteredVideos.filter(v => 
-                        v.title.toLowerCase().includes(searchQuery) ||
-                        v.specialty.toLowerCase().includes(searchQuery) ||
-                        v.teacher.toLowerCase().includes(searchQuery)
+                        normalizar(v.title).includes(searchQuery) ||
+                        normalizar(v.specialty).includes(searchQuery) ||
+                        normalizar(v.teacher).includes(searchQuery)
                     );
                 }
 
