@@ -173,6 +173,8 @@ class SeguridadBlindajeTests(TestCase):
             'token': 'mock_token_seguro_test'
         }
         mock_tx.return_value = instancia_mock
+        # Pagar exige alumna logueada (el plan necesita un dueño).
+        self.client.post(reverse('login'), {'username': '33333333-3', 'password': 'AlumPassword123!'})
 
         # Carrito manipulado: Plan 1 ($89.990) pero precio enviado $350
         carrito_manipulado = json.dumps([{

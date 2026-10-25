@@ -36,6 +36,12 @@ class SeguridadPagoWebpayTests(TestCase):
         self.url_confirmacion = reverse('confirmacion')
         self.url_planes = reverse('planes')
 
+        # Pagar exige alumna logueada (el plan necesita un dueño).
+        user = User.objects.create_user('44444444-4', rut='44444444-4',
+                                        password='Clave12345!', rol='alumno')
+        Alumno.objects.create(user=user, nivel_educacion='media')
+        self.client.post(reverse('login'), {'username': '44444444-4', 'password': 'Clave12345!'})
+
         # Carrito válido de prueba
         self.carrito_valido = [
             {

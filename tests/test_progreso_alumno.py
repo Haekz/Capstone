@@ -15,6 +15,7 @@ from django.urls import reverse
 from alumnos.models import Alumno, Asignatura, Clase, Genero, Inscripcion, SesionClase
 from tests.test_especialidad import CLAVE, NAC, crear_profesor
 from tests.test_filtros_clases import crear_sesion
+from tests.test_suscripciones import dar_plan
 
 User = get_user_model()
 
@@ -35,6 +36,7 @@ class ProgresoAlumnoTests(TestCase):
     def setUpTestData(cls):
         genero = Genero.objects.create(descripcion='Otro')
         cls.ana = crear_alumno(RUT_ANA, 'Ana', genero)
+        dar_plan(cls.ana)  # Mi Progreso es premium: sin plan no se renderiza
         cls.bea = crear_alumno('22222222-2', 'Bea', genero)
         profesor = crear_profesor('20000000-1', 'profe@lbwus.cl', None)
 
