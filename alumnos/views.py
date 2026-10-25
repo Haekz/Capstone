@@ -364,19 +364,6 @@ def alumno_pag1(request):
         .order_by('-sesion__fecha_hora_inicio')
     )
 
-    inscritas_ids = list(
-        mis_inscripciones.values_list(
-            'clase_id',
-            flat=True
-        )
-    )
-
-    sesiones_disponibles = (
-        SesionClase.objects.disponibles()
-        .select_related('clase', 'clase__asignatura', 'clase__profesor', 'clase__profesor__user')
-        .order_by('fecha_hora_inicio')
-    )
-
     pagos = list(alumno.suscripciones.exclude(estado=Suscripcion.ESTADO_PENDIENTE))
     for pago in pagos:
         pago.monto_clp = _clp(pago.monto)  # mismo formato que la confirmacion de Webpay
@@ -400,10 +387,8 @@ def alumno_pag1(request):
         'filtros': filtros,
         'hay_filtros': any(criterios.values()),
         'especialidades': filtros.fields['especialidad'].queryset,
-        'sesiones_disponibles': sesiones_disponibles,
         'mis_inscripciones': mis_inscripciones,
         'historial_clases': historial_clases,
-        'inscritas_ids': inscritas_ids,
         'progreso': alumno.resumen_progreso(),
         'plan_activo': _plan_para_js(alumno.plan_vigente()),
         'pagos': pagos,
