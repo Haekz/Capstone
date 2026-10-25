@@ -218,3 +218,21 @@ class PortalPlanTests(TestCase):
             self.assertNotContains(r, simulado)
         # Comprar lleva al flujo real: planes -> carrito -> Webpay.
         self.assertContains(r, f'window.location.href = "{reverse("planes")}"')
+
+
+class SoportePagosTests(TestCase):
+
+    def test_pago_avisa_que_hay_que_iniciar_sesion_solo_al_anonimo(self):
+        aviso = 'iniciar sesión como alumno</a>'
+        self.assertContains(self.client.get(reverse('pago')), aviso)
+        user = User.objects.create_user(RUT, rut=RUT, password=CLAVE, rol='alumno')
+        Alumno.objects.create(user=user, nivel_educacion='media')
+        self.client.post(reverse('login'), {'username': RUT, 'password': CLAVE})
+        self.assertNotContains(self.client.get(reverse('pago')), aviso)
+
+    def test_admin_encuentra_suscripciones_por_buy_order(self):
+        user = User.objects.create_user(RUT, rut=RUT, password=CLAVE, rol='alumno')
+        dar_plan(Alumno.objects.create(user=user, nivel_educacion='media'), buy_order='LB-SOPORTE')
+        self.client.force_login(User.objects.create_superuser('admin', 'a@lbwus.cl', CLAVE))
+        r = self.client.get(reverse('admin:alumnos_suscripcion_changelist'), {'q': 'LB-SOPORTE'})
+        self.assertContains(r, 'LB-SOPORTE')

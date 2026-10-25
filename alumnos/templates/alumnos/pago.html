@@ -64,6 +64,13 @@
                 <p>Serás redirigido a la plataforma segura de <strong>Webpay Plus</strong> para completar tu pago con tarjeta de crédito, débito o prepago.</p>
             </div>
 
+            {% if not request.session.alumno_id %}
+            <p class="webpay-intro" role="alert">
+                <i class="bi bi-person-lock"></i>
+                Para pagar debes <a href="{% url 'login' %}">iniciar sesión como alumno</a>: el plan queda asociado a tu cuenta. Tu carrito se conserva.
+            </p>
+            {% endif %}
+
             <form id="form-iniciar" action="{% url 'iniciar_webpay' %}" method="POST">
                 {% csrf_token %}
                 <input type="hidden" name="amount" id="input-amount">

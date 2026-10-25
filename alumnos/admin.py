@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, Genero, Tutor, Alumno, Profesor, Clase, SesionClase, Inscripcion
+from .models import CustomUser, Genero, Tutor, Alumno, Profesor, Clase, SesionClase, Inscripcion, Suscripcion
 
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
@@ -25,3 +25,12 @@ class InscripcionAdmin(admin.ModelAdmin):
     search_fields = ['alumno__user__first_name', 'alumno__user__last_name', 'clase__asignatura__nombre']
 
 admin.site.register(Inscripcion, InscripcionAdmin)
+
+
+# Soporte de pagos: buscar por buy_order de Webpay ("pagué y no tengo plan").
+class SuscripcionAdmin(admin.ModelAdmin):
+    list_display = ['buy_order', 'alumno', 'plan', 'monto', 'estado', 'creada', 'fecha_fin']
+    list_filter = ['estado', 'plan']
+    search_fields = ['buy_order', 'alumno__user__first_name', 'alumno__user__last_name']
+
+admin.site.register(Suscripcion, SuscripcionAdmin)
