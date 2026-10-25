@@ -147,6 +147,31 @@ class FlujoWebpayTests(TestCase):
         self.assertEqual(Suscripcion.objects.get().estado, Suscripcion.ESTADO_RECHAZADA)
 
 
+class PrecioPersonalizadoTests(TestCase):
+    """El Plan Personalizado da premium: su precio (que viene del navegador) tiene piso."""
+
+    @classmethod
+    def setUpTestData(cls):
+        user = User.objects.create_user(RUT, rut=RUT, password=CLAVE, rol='alumno')
+        cls.alumno = Alumno.objects.create(user=user, nivel_educacion='media')
+
+    def _cobrado(self, mock_tx, precio):
+        instancia = mock_transbank(mock_tx)
+        self.client.post(reverse('login'), {'username': RUT, 'password': CLAVE})
+        carrito = [{'id': '5', 'titulo': 'Plan Personalizado', 'precio': precio,
+                    'periodo': 'mensual', 'cantidad': 1}]
+        self.client.post(reverse('iniciar_webpay'), {'carrito': json.dumps(carrito), 'amount': '1'})
+        return instancia.create.call_args[0][2], Suscripcion.objects.get().monto
+
+    @patch('alumnos.views._tx')
+    def test_precio_manipulado_se_sube_al_minimo(self, mock_tx):
+        self.assertEqual(self._cobrado(mock_tx, '$350'), (15000, 15000))
+
+    @patch('alumnos.views._tx')
+    def test_precio_legitimo_sobre_el_minimo_se_respeta(self, mock_tx):
+        self.assertEqual(self._cobrado(mock_tx, '$85.000'), (85000, 85000))
+
+
 class PortalPlanTests(TestCase):
 
     @classmethod
@@ -193,3 +218,21 @@ class PortalPlanTests(TestCase):
             self.assertNotContains(r, simulado)
         # Comprar lleva al flujo real: planes -> carrito -> Webpay.
         self.assertContains(r, f'window.location.href = "{reverse("planes")}"')
+
+
+class SoportePagosTests(TestCase):
+
+    def test_pago_avisa_que_hay_que_iniciar_sesion_solo_al_anonimo(self):
+        aviso = 'iniciar sesión como alumno</a>'
+        self.assertContains(self.client.get(reverse('pago')), aviso)
+        user = User.objects.create_user(RUT, rut=RUT, password=CLAVE, rol='alumno')
+        Alumno.objects.create(user=user, nivel_educacion='media')
+        self.client.post(reverse('login'), {'username': RUT, 'password': CLAVE})
+        self.assertNotContains(self.client.get(reverse('pago')), aviso)
+
+    def test_admin_encuentra_suscripciones_por_buy_order(self):
+        user = User.objects.create_user(RUT, rut=RUT, password=CLAVE, rol='alumno')
+        dar_plan(Alumno.objects.create(user=user, nivel_educacion='media'), buy_order='LB-SOPORTE')
+        self.client.force_login(User.objects.create_superuser('admin', 'a@lbwus.cl', CLAVE))
+        r = self.client.get(reverse('admin:alumnos_suscripcion_changelist'), {'q': 'LB-SOPORTE'})
+        self.assertContains(r, 'LB-SOPORTE')

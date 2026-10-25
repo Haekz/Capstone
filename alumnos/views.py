@@ -91,6 +91,12 @@ PRECIOS_PLANES_OFICIALES = {
     '3': 189990,
 }
 
+# El Plan Personalizado se cotiza en el navegador, asi que su precio llega del
+# cliente. Como da premium, nunca se cobra menos que su configuracion mas
+# barata en planes.html (grabado $10.000 + 1 hora semanal $5.000).
+PLAN_PERSONALIZADO = '5'
+PRECIO_MINIMO_PERSONALIZADO = 15000
+
 def _precio_item(item):
     item_id = str(item.get('id', ''))
     if item_id in PRECIOS_PLANES_OFICIALES:
@@ -102,6 +108,8 @@ def _precio_item(item):
                 if c.isdigit()
             ) or 0
         )
+        if item_id == PLAN_PERSONALIZADO:
+            base = max(base, PRECIO_MINIMO_PERSONALIZADO)
 
     factor = PERIODOS.get(
         item.get('periodo', 'mensual'),
