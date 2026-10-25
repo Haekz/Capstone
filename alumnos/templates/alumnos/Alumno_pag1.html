@@ -1353,6 +1353,10 @@
         const escaparHtml = (texto) => String(texto).replace(/[&<>"']/g, (c) => ({
             '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
         })[c]);
+        // SCRUM-32: enlace al perfil profesional (solo profesores reales; los tutores son de ejemplo).
+        const URL_PERFIL_PROFESOR = "{% url 'perfil_profesor' 0 %}";
+        const enlacePerfil = (t) =>
+            `<a class="teacher-profile-link" href="${URL_PERFIL_PROFESOR.replace(/0\/$/, `${Number(t.id)}/`)}">Ver perfil</a>`;
         // Minusculas y sin tildes, para que "matematicas" encuentre "Matemáticas".
         const normalizar = (texto) => String(texto).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
@@ -1728,6 +1732,7 @@
                     <div class="teacher-info">
                         <h4>${escaparHtml(t.name)}</h4>
                         <p class="teacher-specialty">${escaparHtml(t.specialties.join(', '))}</p>
+                        ${enlacePerfil(t)}
                     </div>
                 `;
                 container.appendChild(card);
@@ -1772,6 +1777,7 @@
                             <div class="teacher-info">
                                 <h4>${escaparHtml(t.name)}</h4>
                                 <p class="teacher-specialty">${escaparHtml(t.specialties.join(', '))}</p>
+                                ${enlacePerfil(t)}
                             </div>
                             <div class="teacher-distance-box">
                                 <button class="btn-contact-teacher" onclick="requestClassAccess(${t.id})">Ver Horarios</button>
@@ -1890,6 +1896,7 @@
                     <div class="teacher-info">
                         <h4>${escaparHtml(t.name)}</h4>
                         <p class="teacher-specialty">${escaparHtml(t.specialties.join(', '))}</p>
+                        ${enlacePerfil(t)}
                     </div>
                     <div class="teacher-distance-box">
                         <button class="btn-contact-teacher" onclick="requestClassAccess(${t.id})">Ver Horarios</button>
