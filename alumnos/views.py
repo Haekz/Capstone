@@ -20,6 +20,7 @@ from .models import (
     Clase,
     SesionClase,
     Inscripcion,
+    Suscripcion,
 )
 from django.core.exceptions import ValidationError
 from .forms import AlumnoForm, FiltroClasesForm
@@ -54,6 +55,14 @@ PERIODOS = {
     '1semana': 0.25,
 }
 
+# Duracion de un plan segun el periodo elegido en el carrito.
+DIAS_POR_PERIODO = {
+    'mensual': 30,
+    '3semanas': 21,
+    '2semanas': 14,
+    '1semana': 7,
+}
+
 
 def _tx():
     return Transaction(
@@ -67,6 +76,13 @@ def _tx():
 
 def _clp(n):
     return '$' + f'{int(n):,}'.replace(',', '.')
+
+
+def _plan_para_js(suscripcion):
+    """Plan vigente en el formato que usa el JS del portal, o None si no tiene."""
+    if suscripcion is None:
+        return None
+    return {'nombre': suscripcion.get_plan_display(), 'premium': suscripcion.es_premium}
 
 
 PRECIOS_PLANES_OFICIALES = {
@@ -92,12 +108,18 @@ def _precio_item(item):
         1
     )
 
-    try:
-        cantidad = max(1, min(int(item.get('cantidad', 1)), 20))
-    except (ValueError, TypeError):
-        cantidad = 1
+    return round(base * factor) * _cantidad(item)
 
-    return round(base * factor) * cantidad
+
+def _cantidad(item):
+    try:
+        return max(1, min(int(item.get('cantidad', 1)), 20))
+    except (ValueError, TypeError):
+        return 1
+
+
+def _dias_item(item):
+    return DIAS_POR_PERIODO.get(item.get('periodo', 'mensual'), 30) * _cantidad(item)
 
 
 # ============================================================
@@ -348,6 +370,10 @@ def alumno_pag1(request):
         .order_by('fecha_hora_inicio')
     )
 
+    pagos = list(alumno.suscripciones.exclude(estado=Suscripcion.ESTADO_PENDIENTE))
+    for pago in pagos:
+        pago.monto_clp = _clp(pago.monto)  # mismo formato que la confirmacion de Webpay
+
     context = {
         'alumno': alumno,
         'mis_reportes': mis_reportes,
@@ -371,6 +397,8 @@ def alumno_pag1(request):
         'mis_inscripciones': mis_inscripciones,
         'inscritas_ids': inscritas_ids,
         'progreso': alumno.resumen_progreso(),
+        'plan_activo': _plan_para_js(alumno.plan_vigente()),
+        'pagos': pagos,
     }
 
     return render(
@@ -804,6 +832,7 @@ def pago(request):
     )
 
 
+@alumno_required  # el plan necesita un dueño: sin alumna logueada no se cobra
 def iniciar_webpay(request):
 
     if request.method != 'POST':
@@ -872,6 +901,15 @@ def iniciar_webpay(request):
         'buy_order': buy_order,
         'carrito': carrito_json,
     }
+
+    planes_validos = dict(Suscripcion.PLANES)
+    for item in carrito:
+        plan = str(item.get('id', ''))
+        if plan in planes_validos:
+            Suscripcion.objects.create(
+                alumno_id=request.session['alumno_id'], plan=plan,
+                dias=_dias_item(item), monto=_precio_item(item), buy_order=buy_order,
+            )
 
     return render(
         request,
@@ -959,6 +997,9 @@ def confirmacion(request):
             )
             or {}
         )
+
+        # El buy_order viene de Transbank (commit), no del navegador.
+        Suscripcion.confirmar_pago(resp.get('buy_order', ''), aprobado)
 
         ctx.update({
             'aprobado': aprobado,

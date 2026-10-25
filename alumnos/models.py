@@ -1,3 +1,4 @@
+from datetime import timedelta
 from decimal import Decimal
 from django.db import models, transaction
 from django.contrib.auth.models import AbstractUser
@@ -78,6 +79,10 @@ class Alumno(models.Model):
             'clases': len(completadas),
             'ramos': len({i.clase.asignatura_id for i in completadas}),
         }
+
+    def plan_vigente(self):
+        """Suscripcion activa que vence mas tarde, o None si no tiene plan."""
+        return self.suscripciones.vigentes().order_by('-fecha_fin').first()
 
 
 class Especialidad(models.Model):
@@ -452,6 +457,75 @@ class Inscripcion(models.Model):
         if self.sesion:
             return f'{self.alumno} inscrito en {self.clase} (Sesión #{self.sesion.pk})'
         return f'{self.alumno} inscrito en {self.clase}'
+
+
+class SuscripcionQuerySet(models.QuerySet):
+    def vigentes(self):
+        return self.filter(estado=Suscripcion.ESTADO_ACTIVA, fecha_fin__gt=timezone.now())
+
+
+class Suscripcion(models.Model):
+    """Plan contratado por un alumno.
+
+    Nace pendiente al iniciar Webpay y solo se activa cuando Transbank aprueba
+    el pago (se busca por buy_order: la vuelta desde Webpay puede llegar sin la
+    cookie de sesion). Es la unica fuente de verdad del plan: nada de localStorage.
+    """
+    # Los valores son los ids de los planes en el carrito (planes.html).
+    PLAN_BASICO = '1'
+    PLANES = [
+        (PLAN_BASICO, 'Plan Básico'),
+        ('2', 'Plan Medio'),
+        ('3', 'Plan Superior'),
+        ('5', 'Plan Personalizado'),
+    ]
+    ESTADO_PENDIENTE = 'pendiente'
+    ESTADO_ACTIVA = 'activa'
+    ESTADO_RECHAZADA = 'rechazada'
+    ESTADOS = [
+        (ESTADO_PENDIENTE, 'Pendiente'),
+        (ESTADO_ACTIVA, 'Aprobado'),
+        (ESTADO_RECHAZADA, 'Rechazado'),
+    ]
+
+    alumno = models.ForeignKey(Alumno, on_delete=models.CASCADE, related_name='suscripciones')
+    plan = models.CharField(max_length=2, choices=PLANES)
+    dias = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    monto = models.PositiveIntegerField()
+    buy_order = models.CharField(max_length=26, db_index=True)
+    estado = models.CharField(max_length=10, choices=ESTADOS, default=ESTADO_PENDIENTE)
+    creada = models.DateTimeField(auto_now_add=True)
+    fecha_fin = models.DateTimeField(null=True, blank=True)
+
+    objects = SuscripcionQuerySet.as_manager()
+
+    class Meta:
+        verbose_name = 'Suscripción'
+        verbose_name_plural = 'Suscripciones'
+        ordering = ['-creada']
+
+    def __str__(self):
+        return f'{self.get_plan_display()} - {self.alumno} ({self.get_estado_display()})'
+
+    @property
+    def es_premium(self):
+        return self.plan != self.PLAN_BASICO
+
+    @classmethod
+    def confirmar_pago(cls, buy_order, aprobado):
+        """Activa o rechaza las suscripciones pendientes de la orden.
+
+        Idempotente: si Webpay vuelve dos veces, la segunda no encuentra pendientes.
+        """
+        pendientes = cls.objects.filter(buy_order=buy_order, estado=cls.ESTADO_PENDIENTE)
+        if not aprobado:
+            pendientes.update(estado=cls.ESTADO_RECHAZADA)
+            return
+        ahora = timezone.now()
+        for suscripcion in pendientes:
+            suscripcion.estado = cls.ESTADO_ACTIVA
+            suscripcion.fecha_fin = ahora + timedelta(days=suscripcion.dias)
+            suscripcion.save(update_fields=['estado', 'fecha_fin'])
 
 
 class Reporte(models.Model):

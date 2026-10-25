@@ -544,6 +544,7 @@
 
                 <!-- Contenido del Buzón (Desbloqueado) -->
                 <div class="inbox-wrapper-content" id="inbox-unlocked-content" style="display: none;">
+                    {% if plan_activo.premium %}{# sin plan premium este contenido ni siquiera llega al HTML #}
                     <div class="ap-mb-25">
                         <h2><i class="bi bi-chat-text-fill ap-text-primary"></i> Buzón de Dudas</h2>
                         <p class="ap-view-sub">Resuelve tus dudas académicas directamente con tus profesores favoritos.</p>
@@ -583,6 +584,7 @@
                             </form>
                         </div>
                     </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -606,6 +608,7 @@
 
                 <!-- Contenido de Progreso (Desbloqueado) -->
                 <div class="progress-wrapper-content" id="progress-unlocked-content" style="display: none;">
+                    {% if plan_activo.premium %}{# sin plan premium este contenido ni siquiera llega al HTML #}
                     <div class="ap-mb-25">
                         <h2><i class="bi bi-bar-chart-line-fill ap-text-primary"></i> Mi Informe de Progreso</h2>
                         <p class="ap-view-sub">Revisa tus estadísticas de estudio, horas dedicadas y el feedback de tus tutores.</p>
@@ -701,6 +704,7 @@
                             <!-- Se rellena con JS -->
                         </div>
                     </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -883,7 +887,7 @@
                                 <span class="pp-period">/mes</span>
                             </div>
                             <p class="pp-billing">Facturación mensual</p>
-                            <button class="pp-btn pp-btn--main" onclick="buyPlan('Plan Básico', 69990)">Contratar ahora</button>
+                            <button class="pp-btn pp-btn--main" onclick="buyPlan()">Contratar ahora</button>
                             <button class="pp-btn pp-btn--ghost" onclick="agregarPlanPortal('1', 'Plan Básico', '$69.990')">
                                 <i class="bi bi-cart-plus"></i> Agregar al carrito
                             </button>
@@ -909,7 +913,7 @@
                                 <span class="pp-period">/mes</span>
                             </div>
                             <p class="pp-billing">Facturación mensual</p>
-                            <button class="pp-btn pp-btn--main" onclick="buyPlan('Plan Medio', 139990)">Contratar ahora</button>
+                            <button class="pp-btn pp-btn--main" onclick="buyPlan()">Contratar ahora</button>
                             <button class="pp-btn pp-btn--ghost" onclick="agregarPlanPortal('2', 'Plan Medio', '$139.990')">
                                 <i class="bi bi-cart-plus"></i> Agregar al carrito
                             </button>
@@ -934,7 +938,7 @@
                                 <span class="pp-period">/mes</span>
                             </div>
                             <p class="pp-billing">Facturación mensual</p>
-                            <button class="pp-btn pp-btn--main" onclick="buyPlan('Plan Superior', 189990)">Contratar ahora</button>
+                            <button class="pp-btn pp-btn--main" onclick="buyPlan()">Contratar ahora</button>
                             <button class="pp-btn pp-btn--ghost" onclick="agregarPlanPortal('3', 'Plan Superior', '$189.990')">
                                 <i class="bi bi-cart-plus"></i> Agregar al carrito
                             </button>
@@ -1044,30 +1048,20 @@
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    {% for pago in pagos %}
                                     <tr>
-                                        <td><code>TX-99812</code></td>
-                                        <td>Plan LBWUS Inicial - Mensual</td>
-                                        <td>15 Mayo, 2026</td>
-                                        <td>$19.990</td>
-                                        <td>Webpay (Crédito)</td>
-                                        <td><span class="tx-badge success">Aprobado</span></td>
+                                        <td><code>{{ pago.buy_order }}</code></td>
+                                        <td>{{ pago.get_plan_display }}</td>
+                                        <td>{{ pago.creada|date:"d-m-Y" }}</td>
+                                        <td>{{ pago.monto_clp }}</td>
+                                        <td>Webpay</td>
+                                        <td><span class="tx-badge {% if pago.estado == 'activa' %}success{% else %}failed{% endif %}">{{ pago.get_estado_display }}</span></td>
                                     </tr>
+                                    {% empty %}
                                     <tr>
-                                        <td><code>TX-99540</code></td>
-                                        <td>Clase Particular - David Silva</td>
-                                        <td>12 Mayo, 2026</td>
-                                        <td>$18.000</td>
-                                        <td>Webpay (Débito)</td>
-                                        <td><span class="tx-badge success">Aprobado</span></td>
+                                        <td colspan="6">Aún no tienes pagos registrados.</td>
                                     </tr>
-                                    <tr>
-                                        <td><code>TX-99031</code></td>
-                                        <td>Plan LBWUS Inicial - Mensual (Intento)</td>
-                                        <td>15 Abril, 2026</td>
-                                        <td>$19.990</td>
-                                        <td>Webpay (Crédito)</td>
-                                        <td><span class="tx-badge failed">Rechazado</span></td>
-                                    </tr>
+                                    {% endfor %}
                                 </tbody>
                             </table>
                         </div>
@@ -1282,10 +1276,12 @@
     {{ profesores_js|json_script:"profesores-data" }}
 
     <!-- App Logic -->
+    {{ plan_activo|json_script:"plan-activo" }}
     <script>
-        // ── HAS PLAN LOCK VARIABLE ──
-        let hasPlan = localStorage.getItem('hasPlan') === 'true'; 
-        let activePlanName = localStorage.getItem('activePlanName') || '';
+        // ── PLAN ACTIVO: lo decide el servidor (Suscripcion), no localStorage ──
+        const planActivo = JSON.parse(document.getElementById('plan-activo').textContent);
+        const hasPlan = planActivo !== null;
+        const activePlanName = planActivo ? planActivo.nombre : '';
 
         const updatePlanUI = () => {
             const planBadge = document.querySelector('.profile-title-box .plan-badge');
@@ -1453,7 +1449,7 @@
             });
 
             // Control de vistas Premium
-            const isPremium = hasPlan && activePlanName !== 'Plan Básico';
+            const isPremium = hasPlan && planActivo.premium;
             
             const checkPremiumView = (viewId, lockId, contentId, renderFn) => {
                 if (targetViewId === viewId) {
@@ -1963,55 +1959,10 @@
             });
         });
 
-        // ── PLANS SYSTEM (Simulate buy and customizer) ──
-        function buyPlan(planName, price) {
-            Swal.fire({
-                title: 'Procesando Pago',
-                text: `Conectándote con Transbank Webpay para contratar ${planName}...`,
-                icon: 'info',
-                allowOutsideClick: false,
-                showConfirmButton: false,
-                willOpen: () => {
-                    Swal.showLoading();
-                }
-            });
-
-            setTimeout(() => {
-                hasPlan = true;
-                activePlanName = planName;
-                localStorage.setItem('hasPlan', 'true');
-                localStorage.setItem('activePlanName', planName);
-                
-                // Add transaction history record dynamically
-                const tbody = document.querySelector('.profile-transactions-section table tbody');
-                if (tbody) {
-                    const tr = document.createElement('tr');
-                    const txId = "TX-" + Math.floor(99000 + Math.random() * 1000);
-                    const dateStr = new Date().toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' });
-                    const priceStr = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(price).replace('CLP','$').trim();
-                    
-                    tr.innerHTML = `
-                        <td><code>${txId}</code></td>
-                        <td>${planName}</td>
-                        <td>${dateStr}</td>
-                        <td>${priceStr}</td>
-                        <td>Webpay (Débito)</td>
-                        <td><span class="tx-badge success">Aprobado</span></td>
-                    `;
-                    tbody.insertBefore(tr, tbody.firstChild);
-                }
-
-                updatePlanUI();
-
-                Swal.fire({
-                    title: '¡Suscripción Exitosa!',
-                    text: `Felicidades, has contratado el ${planName}. Ahora puedes reservar clases con cualquier profesor o tutor.`,
-                    icon: 'success',
-                    confirmButtonColor: 'var(--primary)'
-                }).then(() => {
-                    switchView('view-dashboard');
-                });
-            }, 2000);
+        // ── PLANES: la compra real pasa por planes -> carrito -> Webpay ──
+        // (antes se simulaba el pago y se activaba el plan sin cobrar nada)
+        function buyPlan() {
+            window.location.href = "{% url 'planes' %}";
         }
 
         // ── CUSTOM PLAN CUSTOMIZER ──
@@ -2261,11 +2212,8 @@
         });
 
         function buyCustomPlan() {
-            const priceStr = document.getElementById('calc-total-price')?.innerText || '$40.000';
-            const price = parseInt(priceStr.replace(/[^0-9]/g, ''), 10) || 40000;
-            
             closePlanCustomizer();
-            buyPlan('Plan Personalizado', price);
+            buyPlan();  // el plan personalizado tambien se arma y paga en /planes
         }
 
         // ── LÓGICA DE LAS VISTAS PREMIUM ──
