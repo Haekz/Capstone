@@ -147,6 +147,31 @@ class FlujoWebpayTests(TestCase):
         self.assertEqual(Suscripcion.objects.get().estado, Suscripcion.ESTADO_RECHAZADA)
 
 
+class PrecioPersonalizadoTests(TestCase):
+    """El Plan Personalizado da premium: su precio (que viene del navegador) tiene piso."""
+
+    @classmethod
+    def setUpTestData(cls):
+        user = User.objects.create_user(RUT, rut=RUT, password=CLAVE, rol='alumno')
+        cls.alumno = Alumno.objects.create(user=user, nivel_educacion='media')
+
+    def _cobrado(self, mock_tx, precio):
+        instancia = mock_transbank(mock_tx)
+        self.client.post(reverse('login'), {'username': RUT, 'password': CLAVE})
+        carrito = [{'id': '5', 'titulo': 'Plan Personalizado', 'precio': precio,
+                    'periodo': 'mensual', 'cantidad': 1}]
+        self.client.post(reverse('iniciar_webpay'), {'carrito': json.dumps(carrito), 'amount': '1'})
+        return instancia.create.call_args[0][2], Suscripcion.objects.get().monto
+
+    @patch('alumnos.views._tx')
+    def test_precio_manipulado_se_sube_al_minimo(self, mock_tx):
+        self.assertEqual(self._cobrado(mock_tx, '$350'), (15000, 15000))
+
+    @patch('alumnos.views._tx')
+    def test_precio_legitimo_sobre_el_minimo_se_respeta(self, mock_tx):
+        self.assertEqual(self._cobrado(mock_tx, '$85.000'), (85000, 85000))
+
+
 class PortalPlanTests(TestCase):
 
     @classmethod
