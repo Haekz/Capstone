@@ -384,6 +384,13 @@ class SesionClase(models.Model):
 
 
 class InscripcionQuerySet(models.QuerySet):
+    def proximas(self):
+        """Activas cuya sesion aun no termina (o inscritas a la clase sin sesion puntual)."""
+        return self.filter(
+            models.Q(sesion__isnull=True) | models.Q(sesion__fecha_hora_fin__gt=timezone.now()),
+            estado__in=[Inscripcion.ESTADO_CONFIRMADA, Inscripcion.ESTADO_PENDIENTE],
+        )
+
     def completadas(self):
         """Confirmadas en sesiones que ya terminaron y no se cancelaron."""
         return self.filter(

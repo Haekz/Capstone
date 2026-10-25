@@ -10,6 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.decorators.debug import sensitive_post_parameters
 from django.core.cache import cache
+from django.db.models import F
 
 from .models import (
     Alumno,
@@ -350,32 +351,17 @@ def alumno_pag1(request):
         solo_disponibles=criterios.get('disponible', False),
     ).select_related('asignatura', 'profesor__user', 'profesor__especialidad')
 
+    # Mis clases: proximas primero por fecha de sesion; las ya realizadas van al historial.
+    relacionadas = ('clase__asignatura', 'clase__profesor__user', 'clase__profesor__especialidad', 'sesion')
     mis_inscripciones = (
-        Inscripcion.objects
-        .filter(
-            alumno=alumno,
-            estado__in=['confirmada', 'pendiente']
-        )
-        .select_related(
-            'clase',
-            'clase__profesor'
-        )
-        .order_by(
-            '-fecha_inscripcion'
-        )
+        Inscripcion.objects.filter(alumno=alumno).proximas()
+        .select_related(*relacionadas)
+        .order_by(F('sesion__fecha_hora_inicio').asc(nulls_last=True), '-fecha_inscripcion')
     )
-
-    inscritas_ids = list(
-        mis_inscripciones.values_list(
-            'clase_id',
-            flat=True
-        )
-    )
-
-    sesiones_disponibles = (
-        SesionClase.objects.disponibles()
-        .select_related('clase', 'clase__asignatura', 'clase__profesor', 'clase__profesor__user')
-        .order_by('fecha_hora_inicio')
+    historial_clases = (
+        Inscripcion.objects.filter(alumno=alumno).completadas()
+        .select_related(*relacionadas)
+        .order_by('-sesion__fecha_hora_inicio')
     )
 
     pagos = list(alumno.suscripciones.exclude(estado=Suscripcion.ESTADO_PENDIENTE))
@@ -401,9 +387,8 @@ def alumno_pag1(request):
         'filtros': filtros,
         'hay_filtros': any(criterios.values()),
         'especialidades': filtros.fields['especialidad'].queryset,
-        'sesiones_disponibles': sesiones_disponibles,
         'mis_inscripciones': mis_inscripciones,
-        'inscritas_ids': inscritas_ids,
+        'historial_clases': historial_clases,
         'progreso': alumno.resumen_progreso(),
         'plan_activo': _plan_para_js(alumno.plan_vigente()),
         'pagos': pagos,
