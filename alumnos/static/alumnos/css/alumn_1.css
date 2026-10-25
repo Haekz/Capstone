@@ -713,6 +713,21 @@ body.dark-mode .teacher-card {
     margin-bottom: 4px;
 }
 
+/* SCRUM-32: enlace al perfil profesional */
+.teacher-profile-link {
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text);
+    text-decoration: underline;
+}
+
+.teacher-profile-link:hover,
+.teacher-profile-link:focus-visible {
+    color: var(--primary);
+}
+
 .teacher-specialty {
     font-size: 0.85rem;
     color: var(--primary);

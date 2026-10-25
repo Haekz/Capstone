@@ -24,8 +24,10 @@ from .views import (
     confirmacion,
     iniciar_webpay,
 )
+from .perfil_profesor import perfil_profesor
 
 urlpatterns = [
+    path('profesores/<int:id_profesor>/', perfil_profesor, name='perfil_profesor'),
     path('sala-virtual/<int:clase_id>/', sala_virtual, name='sala_virtual'),
     path('sala-virtual/<int:clase_id>/iniciar/', iniciar_directo, name='iniciar_directo'),
     # Sitio público
