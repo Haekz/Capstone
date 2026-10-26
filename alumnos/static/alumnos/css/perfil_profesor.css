@@ -38,6 +38,7 @@
     color: #ffffff;
     font-size: 2rem;
     font-weight: 700;
+    object-fit: cover; /* cuando es la foto */
 }
 
 .perfil-prof h1 {
