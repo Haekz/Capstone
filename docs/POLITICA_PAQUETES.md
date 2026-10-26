@@ -101,9 +101,11 @@ Las cifras salen de `alumnos/paquetes.py`, que es la única fuente de precios (p
 
 El ingreso de LBWUS por clase **baja entre 25% y 27,5%**. Pesa más que el descuento por paquete.
 
-### Escenario del primer año (proyección aprobada de 300 clases)
+### Escenario de referencia del primer año (proyección de 300 clases)
 
-Escenario inicial del equipo: **132 compras Flexible, 26 Progreso y 8 Intensivo**. Es una distribución de partida, **no son ventas reales**. No incluye devoluciones, prórrogas ni clases vencidas.
+Las **300 clases son una proyección de partida, no un tope**: el volumen real puede ser mayor. Los valores **por clase y por compra** (tablas anteriores y siguientes) no dependen del volumen. Los totales sí, y se pueden escalar con la tabla "Por cada 100 clases" que sigue a este escenario.
+
+Mezcla inicial del equipo: **132 compras Flexible, 26 Progreso y 8 Intensivo**. Es una distribución de partida, **no son ventas reales**. No incluye devoluciones, prórrogas ni clases vencidas.
 
 | Plan | Compras | Clases | Cobrado | Comisión LBWUS (15%) |
 |---|---|---|---|---|
@@ -117,6 +119,19 @@ Escenario inicial del equipo: **132 compras Flexible, 26 Progreso y 8 Intensivo*
 - **Profesores (85%):** $3.775.700.
 - **IVA contenido en la comisión de LBWUS:** $106.350 (`iva_incluido`).
 
+**Por cada 100 clases con esa misma mezcla** (para proyectar otro volumen, multiplicar):
+
+| Concepto | Por 100 clases |
+|---|---|
+| Cobrado | $1.480.667 |
+| Comisión de LBWUS (15%) | $222.100 |
+| Profesores (85%) | $1.258.567 |
+| Transbank en crédito | $40.350 |
+| Transbank en débito o prepago | $26.254 |
+| Neto de LBWUS (crédito / débito) | $181.750 / $195.846 |
+
+Esta escala solo vale si la mezcla se mantiene. Si con más volumen se venden más Progreso e Intensivo, el precio medio por clase baja. Con tarifa base queda siempre **entre $14.500 y $15.000**, sin importar cuántas clases se vendan.
+
 ### Costo de Transbank (supuesto referencial)
 
 Tasas del equipo: **2,29% + IVA** para crédito y **1,49% + IVA** para débito o prepago. Son referenciales: están sujetas a mínimos y a las condiciones reales del contrato. El cálculo no aplica mínimos. La comisión se cobra sobre el total pagado, incluida la parte del profesor.
@@ -127,7 +142,7 @@ Tasas del equipo: **2,29% + IVA** para crédito y **1,49% + IVA** para débito o
 | Progreso ($59.000) | $1.608 | $1.046 | $8.850 | $7.242 / $7.804 |
 | Intensivo ($116.000) | $3.161 | $2.057 | $17.400 | $14.239 / $15.343 |
 
-| Primer año | Costo Transbank | Neto de LBWUS | % de lo cobrado |
+| Escenario de 300 clases | Costo Transbank | Neto de LBWUS | % de lo cobrado |
 |---|---|---|---|
 | Todo en crédito | $121.049 | $545.251 | 12,3% |
 | Todo en débito o prepago | $78.761 | $587.539 | 13,2% |
