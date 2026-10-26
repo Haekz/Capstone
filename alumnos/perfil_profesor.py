@@ -6,11 +6,14 @@ Privacidad:
   clases y proximas sesiones.
 - El telefono solo si el profesor lo autorizo (Profesor.telefono_publico).
 - Nunca RUT, correo, direccion, fecha de nacimiento ni el archivo del titulo.
+- SCRUM-36: solo reseñas verificadas y visibles (resenas/consultas.py).
 """
 
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
+
+from resenas.consultas import contexto_resenas
 
 from .decorators import alumno_required
 from .models import Clase, Profesor, SesionClase
@@ -41,4 +44,6 @@ def perfil_profesor(request, id_profesor):
             sesiones.filter(fecha_hora_fin__lte=timezone.now())
             .exclude(estado=SesionClase.ESTADO_CANCELADA).count()
         ),
+        **contexto_resenas(profesor, alumno_id=request.session['alumno_id'],
+                           ruta_reporte='resena_reportar_alumno'),
     })

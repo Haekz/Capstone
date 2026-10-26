@@ -1,0 +1,62 @@
+{% extends 'alumnos/base.html' %}
+{% load static %}
+
+{% block title %}Calificar a {{ profesor.nombre }} | LBWUS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'alumnos/css/perfil_profesor.css' %}">
+<link rel="stylesheet" href="{% static 'resenas/resenas.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="perfil-prof">
+    <a class="perfil-prof__volver" href="{% url 'alumno_pag1' %}">
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a mi portal
+    </a>
+
+    <header class="perfil-prof__cabecera">
+        <div>
+            <h1>Calificar a {{ profesor.nombre }}</h1>
+            <p class="perfil-prof__verificado">
+                <i class="bi bi-patch-check-fill" aria-hidden="true"></i>
+                Clase verificada · {{ inscripcion.clase.asignatura.nombre }} · {{ inscripcion.sesion.fecha_hora_inicio|date:"d/m/Y" }}
+            </p>
+        </div>
+    </header>
+
+    <section class="perfil-prof__bloque" aria-labelledby="resena-titulo">
+        <h2 id="resena-titulo">{% if resena %}Tu reseña{% else %}Nueva reseña{% endif %}</h2>
+        {% include 'resenas/_mensajes.html' %}
+        {% if inscripcion.paquete_id %}
+        <p class="perfil-prof__vacio">Esta reseña cubre todo tu paquete. Podrás actualizarla cada vez que completes una nueva clase del paquete.</p>
+        {% endif %}
+
+        {% if editable %}
+        <form method="post" class="resena-form">
+            {% csrf_token %}
+            <fieldset class="resena-form__puntaje">
+                <legend>{{ form.puntaje.label }}</legend>
+                {% for opcion in form.puntaje %}
+                <label class="resena-form__opcion">{{ opcion.tag }} {{ opcion.choice_label }}</label>
+                {% endfor %}
+                {% for error in form.puntaje.errors %}<p class="resena-form__error" role="alert">{{ error }}</p>{% endfor %}
+            </fieldset>
+            <label for="{{ form.comentario.id_for_label }}">{{ form.comentario.label }}</label>
+            {{ form.comentario }}
+            <small class="perfil-prof__vacio">{{ form.comentario.help_text }}</small>
+            {% for error in form.comentario.errors %}<p class="resena-form__error" role="alert">{{ error }}</p>{% endfor %}
+            <button type="submit" class="perfil-prof__reservar">
+                <i class="bi bi-star-fill" aria-hidden="true"></i> {% if resena %}Actualizar reseña{% else %}Publicar reseña{% endif %}
+            </button>
+        </form>
+        {% else %}
+        <div class="resena-lista">
+            {% include 'resenas/_estrellas.html' with puntaje=resena.puntaje %}
+            {% if resena.comentario %}<p class="resena__comentario">{{ resena.comentario }}</p>{% endif %}
+            {% if resena.estado == 'oculta' %}<p class="perfil-prof__vacio">Un administrador ocultó esta reseña porque incumple las normas de la plataforma.</p>{% endif %}
+            <p class="perfil-prof__vacio">Podrás actualizarla cuando completes una nueva clase de este paquete.</p>
+        </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

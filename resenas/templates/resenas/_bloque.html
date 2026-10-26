@@ -1,0 +1,44 @@
+{# Bloque de reseñas: perfil público del profesor y "Mis reseñas". Ver resenas/consultas.py. #}
+<section class="perfil-prof__bloque" id="perfil-resenas" aria-labelledby="perfil-resenas-titulo">
+    <h2 id="perfil-resenas-titulo">Reseñas verificadas</h2>
+    {% include 'resenas/_mensajes.html' %}
+    {% if total_resenas %}
+    <p class="resena-resumen">
+        <strong>{{ promedio }}</strong> de 5 <i class="bi bi-star-fill" aria-hidden="true"></i>
+        · {{ total_resenas }} reseña{{ total_resenas|pluralize }} verificada{{ total_resenas|pluralize }}
+    </p>
+    <ul class="perfil-prof__lista resena-lista">
+        {% for resena in resenas %}
+        <li class="resena">
+            <div class="resena__cabecera">
+                <strong>{{ resena.autor_publico }}</strong>
+                {% include 'resenas/_estrellas.html' with puntaje=resena.puntaje %}
+            </div>
+            <p class="resena__verificada">
+                <i class="bi bi-patch-check-fill" aria-hidden="true"></i>
+                Clase verificada · {{ resena.inscripcion.clase.asignatura.nombre }} · {{ resena.actualizada|date:"d/m/Y" }}
+            </p>
+            {% if resena.comentario %}<p class="resena__comentario">{{ resena.comentario }}</p>{% endif %}
+            {% if ruta_reporte and not resena.es_propia %}
+            <details class="resena__reporte">
+                <summary>Reportar reseña</summary>
+                <form method="post" action="{% url ruta_reporte resena.pk %}">
+                    {% csrf_token %}
+                    <label for="motivo-{{ resena.pk }}">Motivo</label>
+                    <select id="motivo-{{ resena.pk }}" name="motivo" required>
+                        <option value="">Elige un motivo</option>
+                        {% for valor, texto in motivos %}<option value="{{ valor }}">{{ texto }}</option>{% endfor %}
+                    </select>
+                    <label for="detalle-{{ resena.pk }}">Detalle (opcional)</label>
+                    <textarea id="detalle-{{ resena.pk }}" name="detalle" rows="3" maxlength="500"></textarea>
+                    <button type="submit" class="perfil-prof__reservar">Enviar reporte</button>
+                </form>
+            </details>
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="perfil-prof__vacio">Este profesor aún no tiene reseñas verificadas.</p>
+    {% endif %}
+</section>

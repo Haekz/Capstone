@@ -5,6 +5,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'alumnos/css/perfil_profesor.css' %}">
+<link rel="stylesheet" href="{% static 'resenas/resenas.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -75,5 +76,7 @@
         <p class="perfil-prof__vacio">No hay horarios disponibles por ahora.</p>
         {% endif %}
     </section>
+
+    {% include 'resenas/_bloque.html' %}
 </div>
 {% endblock %}
