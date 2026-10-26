@@ -27,6 +27,7 @@ from alumnos.models import (
     Inscripcion, Profesor, SesionClase
 )
 from alumnos.services import InscripcionService
+from tests.test_paquetes import dar_paquete
 from alumnos.exceptions import (
     InscripcionError,
     CupoAgotadoError,
@@ -83,6 +84,7 @@ class TestBlindajeTransaccionalInscripcion(TestCase):
             )
             alumno = Alumno.objects.create(user=u_al)
             self.alumnos.append(alumno)
+            dar_paquete(alumno, self.profesor, 'intensivo')  # reservar consume una clase pagada
 
         # Sesión con cupo limitado de 2 plazas
         self.ahora = timezone.now()
@@ -238,6 +240,7 @@ class TestConcurrenciaMultihiloInscripcion(TransactionTestCase):
             )
             alumno = Alumno.objects.create(user=u_al)
             self.alumnos.append(alumno)
+            dar_paquete(alumno, self.profesor, 'intensivo')  # reservar consume una clase pagada
 
         # Sesión estricta con cupo = 2 para 6 solicitantes simultáneos
         self.ahora = timezone.now()

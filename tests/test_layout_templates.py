@@ -2,7 +2,7 @@ from alumnos.models import Especialidad
 'El layout comun debe salir una sola vez y en todas las paginas publicas.\n\nNavbar y footer viven en alumnos/templates/alumnos/includes/. Estos tests\ndetectan tanto una copia pegada a mano como un include roto.\n'
 from django.test import TestCase
 from django.urls import reverse
-PAGINAS_PUBLICAS = ('home', 'nosotros', 'servicios', 'planes', 'contactos', 'simulador', 'opcion_user', 'pago')
+PAGINAS_PUBLICAS = ('home', 'nosotros', 'servicios', 'planes', 'contactos', 'simulador', 'opcion_user')
 
 class LayoutCompartidoTests(TestCase):
     """Marcas que solo puede poner base.html a traves de sus includes."""
@@ -30,13 +30,13 @@ class LayoutCompartidoTests(TestCase):
                 self.assertIn('2026 LBWUS', html)
                 self.assertNotIn('&copy; 2024', html)
 
-    def test_el_carrito_global_viaja_con_el_navbar(self):
-        """El JS de planes llama a window.agregarAlCarrito desde el base."""
+    def test_no_queda_carrito_de_compras(self):
+        """Los paquetes se compran directo en Planes: el carrito (localStorage) ya no existe."""
         for nombre in PAGINAS_PUBLICAS:
             with self.subTest(pagina=nombre):
                 html = self.client.get(reverse(nombre)).content.decode()
-                self.assertIn('id="cart-button"', html)
-                self.assertIn('window.agregarAlCarrito', html)
+                self.assertNotIn('id="cart-button"', html)
+                self.assertNotIn('agregarAlCarrito', html)
 
 class SimuladorHeredaTests(TestCase):
     """El simulador conserva sus funciones propias al heredar del base."""

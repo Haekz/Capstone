@@ -5,15 +5,35 @@ Encapsula la lógica transaccional de reservas y matriculación con control estr
 import logging
 from django.db import transaction, IntegrityError
 from django.utils import timezone
-from .models import Alumno, Clase, SesionClase, Inscripcion
+from .models import Alumno, Clase, SesionClase, Inscripcion, PaqueteClases
 from .exceptions import (
     InscripcionError,
     CupoAgotadoError,
     InscripcionDuplicadaError,
     SesionNoDisponibleError,
+    SinClasesDisponiblesError,
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _paquete_con_clases(alumno, profesor, hasta):
+    """Paquete vigente del alumno con ese profesor, con clases libres y que vence antes.
+
+    `hasta`: la clase debe tomarse dentro de la vigencia del paquete.
+    Bloquea las filas para que dos reservas simultaneas no gasten la misma
+    ultima clase. PostgreSQL no admite FOR UPDATE con GROUP BY, por eso las
+    usadas se cuentan aparte y no con annotate.
+    """
+    candidatos = PaqueteClases.objects.select_for_update().filter(
+        alumno=alumno, profesor=profesor, estado=PaqueteClases.ESTADO_ACTIVA, fecha_fin__gte=hasta,
+    ).order_by('fecha_fin', 'pk')
+    for paquete in candidatos:
+        if paquete.clases_disponibles:
+            return paquete
+    raise SinClasesDisponiblesError(
+        f'No tienes clases disponibles con {profesor.nombre} para esa fecha. Compra un paquete en Planes.'
+    )
 
 
 class InscripcionService:
@@ -77,13 +97,17 @@ class InscripcionService:
             if total_ocupados >= sesion.cupo_maximo:
                 raise CupoAgotadoError("No quedan cupos disponibles para esta sesión.")
 
-            # 5. Persistencia protegida contra race-conditions en BD mediante UniqueConstraint
+            # 5. Cada reserva consume una clase de un paquete pagado (F-11)
+            paquete = _paquete_con_clases(alumno, sesion.clase.profesor, sesion.fecha_hora_inicio)
+
+            # 6. Persistencia protegida contra race-conditions en BD mediante UniqueConstraint
             try:
                 inscripcion = Inscripcion.objects.create(
                     alumno=alumno,
                     clase=sesion.clase,
                     sesion=sesion,
-                    estado=Inscripcion.ESTADO_CONFIRMADA
+                    estado=Inscripcion.ESTADO_CONFIRMADA,
+                    paquete=paquete,
                 )
             except IntegrityError as exc:
                 logger.warning(
@@ -126,12 +150,15 @@ class InscripcionService:
                     f'Ya estás inscrito en la clase "{clase.asignatura.nombre}".'
                 )
 
+            paquete = _paquete_con_clases(alumno, clase.profesor, timezone.now())
+
             try:
                 inscripcion = Inscripcion.objects.create(
                     alumno=alumno,
                     clase=clase,
                     sesion=None,
-                    estado=Inscripcion.ESTADO_CONFIRMADA
+                    estado=Inscripcion.ESTADO_CONFIRMADA,
+                    paquete=paquete,
                 )
             except IntegrityError as exc:
                 logger.warning(
@@ -149,6 +176,7 @@ class InscripcionService:
         """
         Cancela una inscripción de forma controlada dentro de una transacción,
         marcando su estado como 'cancelada' para liberar el cupo en consultas concurrentes.
+        Si salió de un paquete, la clase vuelve sola: las usadas se cuentan.
         """
         with transaction.atomic():
             try:
@@ -159,6 +187,63 @@ class InscripcionService:
             except Inscripcion.DoesNotExist as exc:
                 raise InscripcionError("Inscripción no encontrada o no pertenece al alumno.") from exc
 
+            if not inscripcion.puede_cancelar:
+                raise InscripcionError("Esta clase ya comenzó o no está activa: no se puede cancelar.")
+
             inscripcion.estado = Inscripcion.ESTADO_CANCELADA
             inscripcion.save(update_fields=['estado'])
+            return inscripcion
+
+    @classmethod
+    def reprogramar_inscripcion(cls, alumno: Alumno, inscripcion_id: int, nueva_sesion_id: int) -> Inscripcion:
+        """
+        Mueve una reserva a otra sesion del MISMO profesor sin gastar otra clase del paquete.
+
+        Reglas: la reserva debe estar activa y no haber empezado; la nueva sesion
+        debe estar programada, ser futura, tener cupo, no estar ya reservada por el
+        alumno y caer dentro de la vigencia del paquete (si la reserva sale de uno).
+        """
+        with transaction.atomic():
+            try:
+                # of=('self',): PostgreSQL no bloquea el lado nulo de un outer join (paquete, sesion)
+                inscripcion = Inscripcion.objects.select_for_update(of=('self',)).select_related('paquete', 'sesion').get(
+                    id_inscripcion=inscripcion_id, alumno=alumno
+                )
+            except Inscripcion.DoesNotExist as exc:
+                raise InscripcionError("Inscripción no encontrada o no pertenece al alumno.") from exc
+
+            if inscripcion.sesion_id is None or not inscripcion.puede_cancelar:
+                raise InscripcionError("Esta reserva ya comenzó, no está activa o no tiene una sesión que mover.")
+
+            try:
+                nueva = SesionClase.objects.select_for_update().select_related('clase__profesor').get(pk=nueva_sesion_id)
+            except SesionClase.DoesNotExist as exc:
+                raise SesionNoDisponibleError(f"La sesión #{nueva_sesion_id} no existe.") from exc
+
+            if nueva.pk == inscripcion.sesion_id:
+                raise InscripcionError("Elige una sesión distinta a la actual.")
+            if nueva.clase.profesor_id != inscripcion.clase.profesor_id:
+                raise InscripcionError("Solo puedes reprogramar con el mismo profesor.")
+            if nueva.estado != SesionClase.ESTADO_PROGRAMADA or nueva.fecha_hora_inicio <= timezone.now():
+                raise SesionNoDisponibleError("La sesión elegida no está disponible para reservas.")
+            if not nueva.clase.profesor.puede_hacer_clases:
+                raise SesionNoDisponibleError("Esta clase no está disponible: el profesor aún no tiene su título validado.")
+            paquete = inscripcion.paquete
+            if paquete and nueva.fecha_hora_inicio > paquete.fecha_fin:
+                raise SinClasesDisponiblesError("La sesión elegida queda fuera de la vigencia de tu paquete.")
+
+            if nueva.inscripciones.select_for_update().filter(
+                alumno=alumno, estado__in=Inscripcion.ESTADOS_ACTIVOS
+            ).exists():
+                raise InscripcionDuplicadaError("Ya tienes una reserva en esa sesión.")
+            ocupados = nueva.inscripciones.select_for_update().filter(estado__in=Inscripcion.ESTADOS_ACTIVOS).count()
+            if ocupados >= nueva.cupo_maximo:
+                raise CupoAgotadoError("No quedan cupos disponibles para esta sesión.")
+
+            inscripcion.sesion = nueva
+            inscripcion.clase = nueva.clase
+            try:
+                inscripcion.save(update_fields=['sesion', 'clase'])
+            except IntegrityError as exc:
+                raise InscripcionDuplicadaError("Ya tienes una reserva en esa sesión.") from exc
             return inscripcion

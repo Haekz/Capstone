@@ -101,7 +101,7 @@
                 <li>
                     <button class="sidebar-nav-item sidebar-view-btn" data-view="view-plans">
                         <i class="bi bi-credit-card-fill"></i>
-                        <span>Planes de Suscripción</span>
+                        <span>Mis Paquetes</span>
                     </button>
                 </li>
                 <li>
@@ -153,32 +153,6 @@
                 <button onclick="toggleTheme()" class="btn-theme-toggle" id="theme-toggler" aria-label="Cambiar modo día/noche">
                     <i class="bi bi-moon-stars-fill" id="theme-icon"></i>
                 </button>
-
-            <!-- Carrito (mismo que el sitio público: comparte los planes agregados) -->
-            <div class="submenu-cart">
-                <button class="cart-btn" id="cart-button" aria-label="Carrito">
-                    <i class="bi bi-cart-fill"></i>
-                    <span class="cart-count" id="contador-carrito" style="display:none">0</span>
-                </button>
-                <div id="carrito" class="carrito-dropdown">
-                    <table id="lista-carrito" class="cart-table">
-                        <thead>
-                            <tr>
-                                <th>Nombre</th>
-                                <th>Pago</th>
-                                <th>Precio</th>
-                                <th>Cant.</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                    <button type="button" id="vaciar-carrito" class="btn-vaciar">Vaciar Carrito</button>
-                    <a href="{% url 'pago' %}" class="btn-pagar" id="btn-ir-pago" style="display:none;">
-                        <i class="bi bi-credit-card-fill"></i> Ir a Pagar
-                    </a>
-                </div>
-            </div>
             </div>
         </header>
 
@@ -275,10 +249,10 @@
                     <!-- Right Panel (Pulsating Ad Offer Card) -->
                     <div class="dashboard-right-panel">
                         <div class="promo-ad-card ap-clickable" onclick="switchView('view-plans')">
-                            <span class="promo-badge">Oferta Limitada</span>
-                            <h3>¡Lleva tu aprendizaje al máximo nivel!</h3>
-                            <p>Obtén acceso ilimitado a todos los profesores y tutores con un 30% de descuento en planes superiores.</p>
-                            <div class="btn-promo-cta">Ver Planes Disponibles</div>
+                            <span class="promo-badge">Paquetes de clases</span>
+                            <h3>Más clases, menos precio por clase</h3>
+                            <p>Compra Flexible, Progreso o Intensivo con el profesor que elijas y reserva tus clases.</p>
+                            <a class="btn-promo-cta" href="{% url 'planes' %}" onclick="event.stopPropagation()">Ver planes y precios</a>
                         </div>
                     </div>
                 </div>
@@ -330,12 +304,20 @@
                                             <i class="bi bi-camera-video-fill"></i> Unirse a la Clase
                                         </a>
                                         {% endif %}
-                                        <form method="POST" action="{% url 'cancelar_inscripcion' insc.id_inscripcion %}" onsubmit="return confirm('¿Seguro que deseas cancelar tu inscripción?')" style="display:inline;">
+                                        {% if insc.puede_cancelar and insc.sesion_id %}
+                                        <button type="button" class="ap-btn-cancel" title="Reprogramar clase" aria-label="Reprogramar clase" style="border:none; cursor:pointer; background:transparent;"
+                                                onclick="abrirModalHorarios({{ insc.clase.id_clase }}, '{{ insc.clase.asignatura.nombre|escapejs }}', '{{ insc.clase.profesor.user.first_name|escapejs }}', {{ insc.id_inscripcion }})">
+                                            <i class="bi bi-calendar2-week"></i>
+                                        </button>
+                                        {% endif %}
+                                        {% if insc.puede_cancelar %}
+                                        <form method="POST" action="{% url 'cancelar_inscripcion' insc.id_inscripcion %}" onsubmit="return confirm('¿Seguro que deseas cancelar tu inscripción? La clase vuelve a tu paquete.')" style="display:inline;">
                                             {% csrf_token %}
                                             <button type="submit" class="ap-btn-cancel" title="Cancelar Inscripción" style="border:none; cursor:pointer; background:transparent;">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </form>
+                                        {% endif %}
                                     </div>
                                 </div>
                                 {% endfor %}
@@ -563,8 +545,8 @@
                             <i class="bi bi-lock-fill"></i>
                         </div>
                         <h2>Función Premium Exclusiva</h2>
-                        <p>Resuelve tus dudas directamente con tus profesores preferidos. Esta función requiere una suscripción premium activa (Plan Medio, Superior o Personalizado).</p>
-                        <button class="btn-principal" onclick="switchView('view-plans')">Ver Planes Disponibles</button>
+                        <p>Resuelve tus dudas directamente con tus profesores preferidos. Esta función requiere un paquete de clases vigente.</p>
+                        <button class="btn-principal" onclick="switchView('view-plans')">Ver Mis Paquetes</button>
                     </div>
                 </div>
 
@@ -627,8 +609,8 @@
                             <i class="bi bi-lock-fill"></i>
                         </div>
                         <h2>Función Premium Exclusiva</h2>
-                        <p>Obtén análisis detallados de tu avance, horas de estudio y la retroalimentación de tus tutores. Esta función requiere una suscripción premium activa (Plan Medio, Superior o Personalizado).</p>
-                        <button class="btn-principal" onclick="switchView('view-plans')">Ver Planes Disponibles</button>
+                        <p>Obtén análisis detallados de tu avance, horas de estudio y la retroalimentación de tus tutores. Esta función requiere un paquete de clases vigente.</p>
+                        <button class="btn-principal" onclick="switchView('view-plans')">Ver Mis Paquetes</button>
                     </div>
                 </div>
 
@@ -894,134 +876,37 @@
             </div>
         </div>
 
-        <!-- ── VIEW 6: AVAILABLE PLANS ── -->
+        <!-- ── VIEW 6: MIS PAQUETES ── -->
             <div class="dashboard-view" id="view-plans">
                 <div class="pp-wrap">
                     <div class="pp-header">
                         <span class="pp-eyebrow">Planes</span>
-                        <h2>Elige el plan ideal para ti</h2>
-                        <p>Todos nuestros planes están diseñados para brindarte el mejor acompañamiento en tu aprendizaje.</p>
+                        <h2>Mis paquetes de clases</h2>
+                        <p>Cada reserva usa 1 clase de un paquete con ese profesor. Si cancelas antes de que empiece la clase, o si el profesor cancela la sesión, la clase vuelve a tu paquete.</p>
                     </div>
 
-                    <!-- Planes estándar -->
+                    {% if mis_paquetes %}
                     <div class="pp-grid">
-                        <!-- Tarjeta Plan Básico -->
+                        {% for paquete in mis_paquetes %}
                         <div class="pp-card">
-                            <h3 class="pp-title">Plan Básico</h3>
+                            <h3 class="pp-title">{{ paquete.get_plan_display }}</h3>
                             <div class="pp-price-box">
-                                <span class="pp-price">$89.990</span>
-                                <span class="pp-period">/mes</span>
+                                <span class="pp-price">{{ paquete.clases_disponibles }}</span>
+                                <span class="pp-period">de {{ paquete.clases }} clase{{ paquete.clases|pluralize }} disponible{{ paquete.clases_disponibles|pluralize }}</span>
                             </div>
-                            <p class="pp-billing">Facturación mensual</p>
-                            <button class="pp-btn pp-btn--main" onclick="buyPlan()">Contratar ahora</button>
-                            <button class="pp-btn pp-btn--ghost" onclick="agregarPlanPortal('1', 'Plan Básico', '$89.990')">
-                                <i class="bi bi-cart-plus"></i> Agregar al carrito
-                            </button>
-                            <div class="pp-divider"></div>
-                            <p class="pp-features-title">Beneficios incluidos</p>
-                            <ul class="pp-features">
-                                <li><i class="bi bi-check-lg"></i> Clases online</li>
-                                <li><i class="bi bi-check-lg"></i> 3 clases a la semana</li>
-                                <li><i class="bi bi-check-lg"></i> Temas básicos de asignatura</li>
-                                <li><i class="bi bi-check-lg"></i> Material de apoyo</li>
-                                <li><i class="bi bi-check-lg"></i> Dudas vía correo</li>
-                                <li><i class="bi bi-check-lg"></i> Horarios pre-definidos</li>
-                                <li><i class="bi bi-check-lg"></i> 1 ramo</li>
-                            </ul>
+                            <p class="pp-billing">Con {{ paquete.profesor.nombre|default:"un profesor que ya no está disponible" }} · vence el {{ paquete.fecha_fin|date:"d-m-Y" }}</p>
+                            {% if paquete.profesor %}
+                            <a class="pp-btn pp-btn--ghost" href="{% url 'planes' %}?profesor={{ paquete.profesor.id_profesor }}">Comprar más clases con este profesor</a>
+                            {% endif %}
                         </div>
-
-                        <!-- Tarjeta Plan Medio -->
-                        <div class="pp-card pp-card--featured">
-                            <span class="pp-tag">Más elegido</span>
-                            <h3 class="pp-title">Plan Medio</h3>
-                            <div class="pp-price-box">
-                                <span class="pp-price">$139.990</span>
-                                <span class="pp-period">/mes</span>
-                            </div>
-                            <p class="pp-billing">Facturación mensual</p>
-                            <button class="pp-btn pp-btn--main" onclick="buyPlan()">Contratar ahora</button>
-                            <button class="pp-btn pp-btn--ghost" onclick="agregarPlanPortal('2', 'Plan Medio', '$139.990')">
-                                <i class="bi bi-cart-plus"></i> Agregar al carrito
-                            </button>
-                            <div class="pp-divider"></div>
-                            <p class="pp-features-title">Beneficios incluidos</p>
-                            <ul class="pp-features">
-                                <li><i class="bi bi-check-lg"></i> Clases online</li>
-                                <li><i class="bi bi-check-lg"></i> 4 clases a la semana</li>
-                                <li><i class="bi bi-check-lg"></i> Temas intermedios</li>
-                                <li><i class="bi bi-check-lg"></i> Material de apoyo</li>
-                                <li><i class="bi bi-check-lg"></i> Dudas vía correo</li>
-                                <li><i class="bi bi-check-lg"></i> Horarios definidos</li>
-                                <li><i class="bi bi-check-lg"></i> 1 a 2 ramos</li>
-                            </ul>
-                        </div>
-
-                        <!-- Tarjeta Plan Superior -->
-                        <div class="pp-card">
-                            <h3 class="pp-title">Plan Superior</h3>
-                            <div class="pp-price-box">
-                                <span class="pp-price">$189.990</span>
-                                <span class="pp-period">/mes</span>
-                            </div>
-                            <p class="pp-billing">Facturación mensual</p>
-                            <button class="pp-btn pp-btn--main" onclick="buyPlan()">Contratar ahora</button>
-                            <button class="pp-btn pp-btn--ghost" onclick="agregarPlanPortal('3', 'Plan Superior', '$189.990')">
-                                <i class="bi bi-cart-plus"></i> Agregar al carrito
-                            </button>
-                            <div class="pp-divider"></div>
-                            <p class="pp-features-title">Beneficios incluidos</p>
-                            <ul class="pp-features">
-                                <li><i class="bi bi-check-lg"></i> Clases presenciales u online</li>
-                                <li><i class="bi bi-check-lg"></i> 5 clases a la semana</li>
-                                <li><i class="bi bi-check-lg"></i> Temas avanzados</li>
-                                <li><i class="bi bi-check-lg"></i> Material de apoyo</li>
-                                <li><i class="bi bi-check-lg"></i> Simulación de pruebas</li>
-                                <li><i class="bi bi-check-lg"></i> Horario flexible</li>
-                                <li><i class="bi bi-check-lg"></i> 2 a 3 ramos</li>
-                            </ul>
-                        </div>
+                        {% endfor %}
                     </div>
+                    {% else %}
+                    <p class="pp-vacio">Aún no tienes paquetes vigentes. Compra uno para reservar tus clases.</p>
+                    {% endif %}
 
-                    <div class="pp-header pp-header--extra">
-                        <span class="pp-eyebrow">A tu medida</span>
-                        <h3>Planes especiales y flexibles</h3>
-                        <p>¿Buscas una solución a tu medida? Revisa nuestras opciones alternativas.</p>
-                    </div>
-
-                    <div class="pp-grid pp-grid--two">
-                        <!-- Tarjeta Material Específico -->
-                        <div class="pp-card">
-                            <h3 class="pp-title">Material Específico</h3>
-                            <div class="pp-price-box">
-                                <span class="pp-price pp-price--text">Clase a clase</span>
-                            </div>
-                            <p class="pp-billing">Pago directo por clase al profesor</p>
-                            <button class="pp-btn pp-btn--outline" onclick="switchView('view-dashboard')">Consultar profesores</button>
-                            <div class="pp-divider"></div>
-                            <ul class="pp-features">
-                                <li><i class="bi bi-check-lg"></i> Pago directo al profesor por clase</li>
-                                <li><i class="bi bi-check-lg"></i> Enfocado en 1 o 2 temas específicos</li>
-                                <li><i class="bi bi-check-lg"></i> Valores definidos por cada profesor</li>
-                                <li><i class="bi bi-check-lg"></i> Material focalizado en tus dudas</li>
-                            </ul>
-                        </div>
-
-                        <!-- Tarjeta Plan Personalizado -->
-                        <div class="pp-card">
-                            <h3 class="pp-title">Plan Personalizado</h3>
-                            <div class="pp-price-box">
-                                <span class="pp-price pp-price--text">A medida</span>
-                            </div>
-                            <p class="pp-billing">Valores según tus selecciones</p>
-                            <button class="pp-btn pp-btn--outline" onclick="openPlanCustomizer()">Diseñar mi plan</button>
-                            <div class="pp-divider"></div>
-                            <ul class="pp-features">
-                                <li><i class="bi bi-check-lg"></i> Diseña tu propio horario y días</li>
-                                <li><i class="bi bi-check-lg"></i> Ajusta la cantidad de ramos</li>
-                                <li><i class="bi bi-check-lg"></i> Elige modalidad online o presencial</li>
-                                <li><i class="bi bi-check-lg"></i> Añade o quita simulaciones de pruebas</li>
-                            </ul>
-                        </div>
+                    <div class="pp-acciones">
+                        <a class="pp-btn pp-btn--main" href="{% url 'planes' %}">Ver planes y precios</a>
                     </div>
                 </div>
             </div>
@@ -1132,171 +1017,6 @@
         </div>
     </div>
 
-    <!-- Modal Diseñador de Plan Personalizado (Sobrepuesto) -->
-    <div class="modal-overlay" id="custom-plan-modal">
-        <div class="topics-modal custom-builder-modal ap-modal-builder">
-            <button class="close-builder-btn" id="close-builder-btn">&times;</button>
-            <h2 class="ap-builder-title">Diseña tu Plan a Medida</h2>
-            <p class="ap-builder-sub">Personaliza cada aspecto de tu reforzamiento y calcula tu valor mensual inmediatamente.</p>
-            
-            <div class="builder-layout">
-                <!-- Controles Interactivos -->
-                <div class="builder-controls">
-                    <!-- Modalidad -->
-                    <div class="control-group">
-                        <label class="control-label">Modalidad de Clases</label>
-                        <div class="radio-toggle radio-toggle-triple">
-                            <input type="radio" id="mode-online" name="modalidad" value="online" checked>
-                            <label for="mode-online">Online</label>
-                            
-                            <input type="radio" id="mode-presencial" name="modalidad" value="presencial">
-                            <label for="mode-presencial">Presencial</label>
-
-                            <input type="radio" id="mode-grabado" name="modalidad" value="grabado">
-                            <label for="mode-grabado">Grabado</label>
-                        </div>
-                    </div>
-                    
-                    <!-- Horas semanales -->
-                    <div class="control-group">
-                        <label class="control-label" id="label-horas">Horas semanales: 2 horas</label>
-                        <input type="range" id="input-horas" min="1" max="20" value="2" class="slider-horas">
-                    </div>
-
-                    <!-- Días de la semana -->
-                    <div class="control-group">
-                        <label class="control-label">Días de la semana preferidos</label>
-                        <div class="chips-group" id="dias-chips">
-                            <div class="chip-item">
-                                <input type="checkbox" id="day-lunes" name="dias" value="Lunes" checked>
-                                <label for="day-lunes">Lu</label>
-                            </div>
-                            <div class="chip-item">
-                                <input type="checkbox" id="day-martes" name="dias" value="Martes">
-                                <label for="day-martes">Ma</label>
-                            </div>
-                            <div class="chip-item">
-                                <input type="checkbox" id="day-miercoles" name="dias" value="Miércoles">
-                                <label for="day-miercoles">Mi</label>
-                            </div>
-                            <div class="chip-item">
-                                <input type="checkbox" id="day-jueves" name="dias" value="Jueves">
-                                <label for="day-jueves">Ju</label>
-                            </div>
-                            <div class="chip-item">
-                                <input type="checkbox" id="day-viernes" name="dias" value="Viernes" checked>
-                                <label for="day-viernes">Vi</label>
-                            </div>
-                            <div class="chip-item">
-                                <input type="checkbox" id="day-sabado" name="dias" value="Sábado">
-                                <label for="day-sabado">Sá</label>
-                            </div>
-                            <div class="chip-item">
-                                <input type="checkbox" id="day-domingo" name="dias" value="Domingo">
-                                <label for="day-domingo">Do</label>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Asignaturas -->
-                    <div class="control-group">
-                        <label class="control-label">Asignaturas (Ramos)</label>
-                        <div class="chips-group" id="asignaturas-chips">
-                            <div class="chip-item">
-                                <input type="checkbox" id="subject-mate" name="asignaturas" value="Matemáticas" checked>
-                                <label for="subject-mate">Matemáticas</label>
-                            </div>
-                            <div class="chip-item">
-                                <input type="checkbox" id="subject-fisica" name="asignaturas" value="Física">
-                                <label for="subject-fisica">Física</label>
-                            </div>
-                            <div class="chip-item">
-                                <input type="checkbox" id="subject-quimica" name="asignaturas" value="Química">
-                                <label for="subject-quimica">Química</label>
-                            </div>
-                            <div class="chip-item">
-                                <input type="checkbox" id="subject-lengua" name="asignaturas" value="Lenguaje">
-                                <label for="subject-lengua">Lenguaje</label>
-                            </div>
-                            <div class="chip-item">
-                                <input type="checkbox" id="subject-ingles" name="asignaturas" value="Inglés">
-                                <label for="subject-ingles">Inglés</label>
-                            </div>
-                            <div class="chip-item">
-                                <input type="checkbox" id="subject-prog" name="asignaturas" value="Programación">
-                                <label for="subject-prog">Programación</label>
-                            </div>
-                            <div class="chip-item">
-                                <input type="checkbox" id="subject-otro" name="asignaturas" value="Otro">
-                                <label for="subject-otro">Otro</label>
-                            </div>
-                        </div>
-                        <div id="custom-subject-container" style="display: none; margin-top: 10px;">
-                            <input type="text" id="input-custom-subject" placeholder="Escribe la asignatura (ej. Historia)" class="builder-text-input">
-                        </div>
-                    </div>
-
-                    <!-- Temas a tratar -->
-                    <div class="control-group">
-                        <label class="control-label" for="input-temas">Temas específicos a tratar</label>
-                        <input type="text" id="input-temas" placeholder="Ej: Álgebra lineal, Mecánica clásica, etc." class="builder-text-input">
-                    </div>
-
-                    <!-- Nivel del Profesor -->
-                    <div class="control-group">
-                        <label class="control-label" for="input-profesor">Nivel del Profesor</label>
-                        <select id="input-profesor" class="builder-select">
-                            <option value="junior">Estudiante Tutor (Junior)</option>
-                            <option value="senior" selected>Profesor Profesional (Senior)</option>
-                            <option value="master">Experto Académico (Master/PhD)</option>
-                        </select>
-                    </div>
-
-                    <!-- Lugar de Clases (Condicional para Presencial) -->
-                    <div class="control-group" id="lugar-container" style="display: none;">
-                        <label class="control-label" for="input-lugar">Lugar de Clases Presenciales</label>
-                        <select id="input-lugar" class="builder-select">
-                            <option value="sede" selected>En Sede LBWUS (Sin costo extra)</option>
-                            <option value="domicilio">A Domicilio (+ $20.000)</option>
-                            <option value="publico">Lugar Público (Biblioteca, Café) (+ $10.000)</option>
-                        </select>
-                    </div>
-
-                    <!-- Situación del Alumno -->
-                    <div class="control-group">
-                        <label class="control-label" for="input-situacion">Situación del Alumno</label>
-                        <select id="input-situacion" class="builder-select">
-                            <option value="estandar" selected>Reforzamiento Estándar</option>
-                            <option value="examen">Preparación Examen Final (+ $15.000)</option>
-                            <option value="nivelacion">Nivelación Intensiva (+ $30.000)</option>
-                            <option value="nee">Necesidades Educativas Especiales (NEE) (+ $25.000)</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <!-- Resumen de Costos y Compra -->
-                <div class="builder-summary">
-                    <div class="summary-badge" id="summary-price-badge">¡Muy Económico!</div>
-                    <div class="summary-price-box">
-                        <span class="summary-price" id="calc-total-price">$40.000</span>
-                        <span class="summary-period">/mes</span>
-                    </div>
-                    <ul class="summary-details">
-                        <li id="sum-modalidad">Modalidad: Online</li>
-                        <li id="sum-horas">2 horas semanales</li>
-                        <li id="sum-dias">Días: Lunes, Viernes</li>
-                        <li id="sum-asignaturas">Asignaturas: Matemáticas</li>
-                        <li id="sum-profesor">Profesor: Senior</li>
-                        <li id="sum-lugar" style="display: none;">Lugar: En Sede</li>
-                        <li id="sum-situacion">Situación: Reforzamiento Estándar</li>
-                        <li id="sum-temas" style="display: none;">Temas: </li>
-                    </ul>
-                    <button class="btn-principal ap-btn-block-spaced" onclick="buyCustomPlan()">Contratar Plan</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- SweetAlert2 CDN -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     {{ profesores_js|json_script:"profesores-data" }}
@@ -1304,7 +1024,7 @@
     <!-- App Logic -->
     {{ plan_activo|json_script:"plan-activo" }}
     <script>
-        // ── PLAN ACTIVO: lo decide el servidor (Suscripcion), no localStorage ──
+        // ── PLAN ACTIVO: lo decide el servidor (paquete vigente o suscripción antigua), no localStorage ──
         const planActivo = JSON.parse(document.getElementById('plan-activo').textContent);
         const hasPlan = planActivo !== null;
         const activePlanName = planActivo ? planActivo.nombre : '';
@@ -1974,263 +1694,6 @@
             });
         });
 
-        // ── PLANES: la compra real pasa por planes -> carrito -> Webpay ──
-        // (antes se simulaba el pago y se activaba el plan sin cobrar nada)
-        function buyPlan() {
-            window.location.href = "{% url 'planes' %}";
-        }
-
-        // ── CUSTOM PLAN CUSTOMIZER ──
-        const openPlanCustomizer = () => {
-            const modal = document.getElementById('custom-plan-modal');
-            if (modal) {
-                modal.classList.add('open');
-                calcularPlan(); // Calcular valor por defecto al abrir
-            }
-        };
-
-        const closePlanCustomizer = () => {
-            const modal = document.getElementById('custom-plan-modal');
-            if (modal) modal.classList.remove('open');
-        };
-
-        const closeBuilderBtn = document.getElementById('close-builder-btn');
-        if (closeBuilderBtn) {
-            closeBuilderBtn.addEventListener('click', closePlanCustomizer);
-        }
-
-        // Elementos interactivos del formulario
-        const radioOnline = document.getElementById('mode-online');
-        const radioPresencial = document.getElementById('mode-presencial');
-        const radioGrabado = document.getElementById('mode-grabado');
-        const inputHoras = document.getElementById('input-horas');
-        const labelHoras = document.getElementById('label-horas');
-        const inputCustomSubject = document.getElementById('input-custom-subject');
-        const customSubjectContainer = document.getElementById('custom-subject-container');
-        const inputTemas = document.getElementById('input-temas');
-        const inputProfesor = document.getElementById('input-profesor');
-        const inputLugar = document.getElementById('input-lugar');
-        const lugarContainer = document.getElementById('lugar-container');
-        const inputSituacion = document.getElementById('input-situacion');
-
-        // Elementos de resumen y precio
-        const calcTotalPrice = document.getElementById('calc-total-price');
-        const summaryBadge = document.getElementById('summary-price-badge');
-        const sumModalidad = document.getElementById('sum-modalidad');
-        const sumHoras = document.getElementById('sum-horas');
-        const sumDias = document.getElementById('sum-dias');
-        const sumAsignaturas = document.getElementById('sum-asignaturas');
-        const sumProfesor = document.getElementById('sum-profesor');
-        const sumLugar = document.getElementById('sum-lugar');
-        const sumSituacion = document.getElementById('sum-situacion');
-        const sumTemas = document.getElementById('sum-temas');
-
-        function calcularPlan() {
-            let total = 0;
-            
-            // 1. Modalidad
-            let modalidad = 'online';
-            if (radioPresencial && radioPresencial.checked) {
-                modalidad = 'presencial';
-            } else if (radioGrabado && radioGrabado.checked) {
-                modalidad = 'grabado';
-            }
-
-            let baseCost = 20000;
-            let hourRate = 8000;
-            if (modalidad === 'presencial') {
-                baseCost = 45000;
-                hourRate = 12000;
-                if (lugarContainer) lugarContainer.style.display = 'block';
-                if (sumLugar) sumLugar.style.display = 'list-item';
-            } else {
-                if (lugarContainer) lugarContainer.style.display = 'none';
-                if (sumLugar) sumLugar.style.display = 'none';
-            }
-            if (modalidad === 'grabado') {
-                baseCost = 10000;
-                hourRate = 5000;
-            }
-
-            total += baseCost;
-            if (sumModalidad) {
-                sumModalidad.textContent = `Modalidad: ${modalidad.charAt(0).toUpperCase() + modalidad.slice(1)}`;
-            }
-
-            // 2. Horas semanales
-            const horas = parseInt(inputHoras.value) || 1;
-            if (labelHoras) {
-                labelHoras.textContent = `Horas semanales: ${horas} ${horas === 1 ? 'hora' : 'horas'}`;
-            }
-            if (sumHoras) {
-                sumHoras.textContent = `${horas} ${horas === 1 ? 'hora' : 'horas'} semanales`;
-            }
-            total += horas * hourRate;
-
-            // 3. Días de la semana
-            const selectedDays = [];
-            const checkboxesDays = document.querySelectorAll('#dias-chips input[type="checkbox"]');
-            checkboxesDays.forEach(cb => {
-                if (cb.checked) {
-                    selectedDays.push(cb.value);
-                }
-            });
-            const numDays = selectedDays.length;
-            if (numDays > 1) {
-                total += (numDays - 1) * 5000;
-            }
-            if (sumDias) {
-                sumDias.textContent = `Días: ${selectedDays.length > 0 ? selectedDays.join(', ') : 'Ninguno'}`;
-            }
-
-            // 4. Asignaturas (Ramos)
-            const selectedSubjects = [];
-            const checkboxesSubjects = document.querySelectorAll('#asignaturas-chips input[type="checkbox"]');
-            let hasOtro = false;
-            checkboxesSubjects.forEach(cb => {
-                if (cb.checked) {
-                    if (cb.value === 'Otro') {
-                        hasOtro = true;
-                    } else {
-                        selectedSubjects.push(cb.value);
-                    }
-                }
-            });
-
-            if (customSubjectContainer) {
-                if (hasOtro) {
-                    customSubjectContainer.style.display = 'block';
-                    const customValue = inputCustomSubject.value.trim();
-                    if (customValue) {
-                        selectedSubjects.push(customValue);
-                    } else {
-                        selectedSubjects.push('Otro');
-                    }
-                } else {
-                    customSubjectContainer.style.display = 'none';
-                }
-            }
-
-            const numSubjects = selectedSubjects.length;
-            if (numSubjects > 1) {
-                total += (numSubjects - 1) * 10000;
-            }
-            if (sumAsignaturas) {
-                sumAsignaturas.textContent = `Asignaturas: ${selectedSubjects.length > 0 ? selectedSubjects.join(', ') : 'Ninguna'}`;
-            }
-
-            // 5. Profesor
-            const profesorVal = inputProfesor.value;
-            let labelProfesor = 'Junior';
-            if (profesorVal === 'senior') {
-                total += 25000;
-                labelProfesor = 'Senior';
-            } else if (profesorVal === 'master') {
-                total += 60000;
-                labelProfesor = 'Experto (Master/PhD)';
-            }
-            if (sumProfesor) {
-                sumProfesor.textContent = `Profesor: ${labelProfesor}`;
-            }
-
-            // 6. Lugar (si es presencial)
-            if (modalidad === 'presencial' && inputLugar) {
-                const lugarVal = inputLugar.value;
-                let labelLugar = 'En Sede';
-                if (lugarVal === 'domicilio') {
-                    total += 20000;
-                    labelLugar = 'A Domicilio';
-                } else if (lugarVal === 'publico') {
-                    total += 10000;
-                    labelLugar = 'Lugar Público';
-                }
-                if (sumLugar) {
-                    sumLugar.textContent = `Lugar: ${labelLugar}`;
-                }
-            }
-
-            // 7. Situación Especial
-            const situacionVal = inputSituacion.value;
-            let labelSituacion = 'Reforzamiento Estándar';
-            if (situacionVal === 'examen') {
-                total += 15000;
-                labelSituacion = 'Examen Final';
-            } else if (situacionVal === 'nivelacion') {
-                total += 30000;
-                labelSituacion = 'Nivelación Intensiva';
-            } else if (situacionVal === 'nee') {
-                total += 25000;
-                labelSituacion = 'NEE';
-            }
-            if (sumSituacion) {
-                sumSituacion.textContent = `Situación: ${labelSituacion}`;
-            }
-
-            // 8. Temas a tratar
-            const temasVal = inputTemas.value.trim();
-            if (sumTemas) {
-                if (temasVal) {
-                    sumTemas.style.display = 'list-item';
-                    sumTemas.textContent = `Temas: ${temasVal}`;
-                } else {
-                    sumTemas.style.display = 'none';
-                }
-            }
-
-            // Formatear precio total
-            const formattedTotal = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(total);
-            if (calcTotalPrice) {
-                calcTotalPrice.textContent = formattedTotal.replace('CLP', '$').trim();
-            }
-
-            // Actualizar etiqueta del presupuesto
-            if (summaryBadge) {
-                if (total < 60000) {
-                    summaryBadge.textContent = "¡Muy Económico!";
-                    summaryBadge.style.backgroundColor = "rgba(74, 222, 128, 0.15)";
-                    summaryBadge.style.color = "#16a34a";
-                } else if (total >= 60000 && total <= 120000) {
-                    summaryBadge.textContent = "Balanceado";
-                    summaryBadge.style.backgroundColor = "rgba(59, 130, 246, 0.15)";
-                    summaryBadge.style.color = "#2563eb";
-                } else if (total > 120000 && total <= 180000) {
-                    summaryBadge.textContent = "Plan Avanzado";
-                    summaryBadge.style.backgroundColor = "rgba(245, 158, 11, 0.15)";
-                    summaryBadge.style.color = "#d97706";
-                } else {
-                    summaryBadge.textContent = "¡Excesivamente Caro (Premium)!";
-                    summaryBadge.style.backgroundColor = "rgba(239, 68, 68, 0.15)";
-                    summaryBadge.style.color = "#dc2626";
-                }
-            }
-        }
-
-        // Asignar listeners para actualizar dinámicamente
-        const inputsToBind = [
-            radioOnline, radioPresencial, radioGrabado, inputHoras,
-            inputCustomSubject, inputTemas, inputProfesor, inputLugar, inputSituacion
-        ];
-        
-        inputsToBind.forEach(el => {
-            if (el) {
-                el.addEventListener('input', calcularPlan);
-                el.addEventListener('change', calcularPlan);
-            }
-        });
-
-        // Listeners para checkboxes de chips
-        document.querySelectorAll('#dias-chips input[type="checkbox"]').forEach(cb => {
-            cb.addEventListener('change', calcularPlan);
-        });
-        document.querySelectorAll('#asignaturas-chips input[type="checkbox"]').forEach(cb => {
-            cb.addEventListener('change', calcularPlan);
-        });
-
-        function buyCustomPlan() {
-            closePlanCustomizer();
-            buyPlan();  // el plan personalizado tambien se arma y paga en /planes
-        }
-
         // ── LÓGICA DE LAS VISTAS PREMIUM ──
 
         // esta parte es de los datos iniciales de los cursos
@@ -2506,7 +1969,7 @@
                     text: `Para ver las clases en video de "${selectedCourse.title}" necesitas tener un plan activo.`,
                     icon: 'warning',
                     showCancelButton: true,
-                    confirmButtonText: 'Ver Planes Disponibles',
+                    confirmButtonText: 'Ver Mis Paquetes',
                     cancelButtonText: 'Más tarde',
                     confirmButtonColor: 'var(--primary)',
                     cancelButtonColor: '#6b7280'
@@ -2909,11 +2372,12 @@
         }
 
         // ── GESTIÓN DE MODAL DE HORARIOS Y RESERVAS DE SESIONES ──
-        function abrirModalHorarios(idClase, nombreAsignatura, nombreProfesor) {
+        // idInscripcion: modo "mover reserva" (reprogramar) en vez de reservar una nueva.
+        function abrirModalHorarios(idClase, nombreAsignatura, nombreProfesor, idInscripcion = null) {
             const modal = document.getElementById('modal-horarios-sesiones');
             if (!modal) return;
 
-            document.getElementById('modal-horarios-titulo').innerText = `${nombreAsignatura}`;
+            document.getElementById('modal-horarios-titulo').innerText = idInscripcion ? `Reprogramar: ${nombreAsignatura}` : `${nombreAsignatura}`;
             document.getElementById('modal-horarios-profesor').innerText = `Profesor(a): ${nombreProfesor}`;
 
             const loadingEl = document.getElementById('modal-horarios-loading');
@@ -2935,9 +2399,13 @@
                         listaEl.style.display = 'flex';
                         listaEl.innerHTML = data.sesiones.map(s => {
                             const cuposColor = s.cupos_disponibles <= 2 ? '#ef4444' : '#10b981';
+                            const asignaturaJs = s.asignatura.replace(/'/g, "\\'");
+                            const fechaTexto = `${s.fecha_formateada} ${s.hora_formateada}`;
                             const btnHtml = s.ya_inscrito 
                                 ? `<button class="ap-btn-enrolled" disabled style="padding: 8px 16px; font-size: 0.85rem;"><i class="bi bi-check-circle-fill"></i> Ya reservado</button>`
-                                : `<button class="btn-principal" onclick="confirmarReservaSesion(${s.id_sesion}, '${s.asignatura.replace(/'/g, "\\'")}', '${s.fecha_formateada} ${s.hora_formateada}')" style="padding: 8px 16px; font-size: 0.85rem;"><i class="bi bi-bookmark-plus-fill ap-mr-4"></i>Reservar este horario</button>`;
+                                : idInscripcion
+                                ? `<button class="btn-principal" onclick="confirmarReprogramacion(${idInscripcion}, ${s.id_sesion}, '${asignaturaJs}', '${fechaTexto}')" style="padding: 8px 16px; font-size: 0.85rem;"><i class="bi bi-calendar2-check ap-mr-4"></i>Mover a este horario</button>`
+                                : `<button class="btn-principal" onclick="confirmarReservaSesion(${s.id_sesion}, '${asignaturaJs}', '${fechaTexto}')" style="padding: 8px 16px; font-size: 0.85rem;"><i class="bi bi-bookmark-plus-fill ap-mr-4"></i>Reservar este horario</button>`;
 
                             return `
                                 <div class="sesion-item-card" style="border: 1px solid var(--border-color); background: var(--bg-card); border-radius: 12px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
@@ -2955,7 +2423,7 @@
                                             </span>
                                         </div>
                                         <div style="font-size: 0.9rem; font-weight: 700; color: var(--primary); margin-top: 2px;">
-                                            Valor: ${s.precio_formateado}
+                                            ${idInscripcion ? 'No usa otra clase de tu paquete' : 'Usa 1 clase de tu paquete'}
                                         </div>
                                     </div>
                                     <div>
@@ -3037,12 +2505,48 @@
             });
         }
 
+        // Mueve una reserva a otro horario del mismo profesor: no gasta otra clase del paquete.
+        function confirmarReprogramacion(idInscripcion, idSesion, nombreAsignatura, fechaHora) {
+            Swal.fire({
+                title: 'Reprogramar clase',
+                html: `¿Mover tu reserva de <b>"${nombreAsignatura}"</b> a este horario?<br><br><span style="color:var(--primary); font-weight:600;"><i class="bi bi-clock"></i> ${fechaHora}</span><br><br>No usa otra clase de tu paquete.`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, mover reserva',
+                cancelButtonText: 'Volver',
+                confirmButtonColor: 'var(--primary)',
+                cancelButtonColor: '#6b7280'
+            }).then((result) => {
+                if (!result.isConfirmed) return;
+                fetch("{% url 'reprogramar_inscripcion' 0 %}".replace('/0/', `/${idInscripcion}/`), {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                    body: new URLSearchParams({ id_sesion: idSesion })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    Swal.fire({
+                        title: data.success ? '¡Clase reprogramada!' : 'No se pudo reprogramar',
+                        text: data.message,
+                        icon: data.success ? 'success' : 'warning',
+                        confirmButtonColor: 'var(--primary)'
+                    }).then(() => {
+                        if (data.success) { cerrarModalHorarios(); window.location.reload(); }
+                    });
+                })
+                .catch(err => {
+                    console.error(err);
+                    Swal.fire('Error', 'No se pudo procesar la reprogramación.', 'error');
+                });
+            });
+        }
+
         // Exponer funciones globalmente para manejadores onclick inline en HTML
+        window.confirmarReprogramacion = confirmarReprogramacion;
         window.switchView = switchView;
         window.toggleTheme = toggleTheme;
         window.toggleFavorite = toggleFavorite;
         window.requestClassAccess = requestClassAccess;
-        window.openPlanCustomizer = openPlanCustomizer;
         window.scrollCoursesCarousel = scrollCoursesCarousel;
         window.openCourseDetailModal = openCourseDetailModal;
         window.closeCourseDetailModal = closeCourseDetailModal;
@@ -3065,127 +2569,9 @@
         updatePlanUI();
         {% if hay_filtros %}requestClassAccess();  // vuelve al catalogo tras filtrar{% endif %}
     </script>
-    <!-- Carrito global (misma lógica que base.html del sitio público) -->
+    <!-- Título de la barra superior según la vista activa -->
     <script>
         (function () {
-            const PERIODOS = [
-                { valor: 'mensual', label: 'Mensual', factor: 1 },
-                { valor: '3semanas', label: '3 Semanas', factor: 0.75 },
-                { valor: '2semanas', label: '2 Semanas', factor: 0.50 },
-                { valor: '1semana', label: '1 Semana', factor: 0.25 }
-            ];
-            const clpFmt = n => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(n).replace('CLP', '$').trim();
-            const parsePrecio = s => parseInt((s || '0').replace(/[^0-9]/g, ''), 10) || 0;
-
-            let articulos = [];
-
-            function cargar() {
-                try { articulos = JSON.parse(localStorage.getItem('carrito')) || []; }
-                catch (e) { articulos = []; }
-                articulos.forEach(a => { if (!a.periodo) a.periodo = 'mensual'; });
-            }
-            function guardar() { localStorage.setItem('carrito', JSON.stringify(articulos)); }
-
-            function actualizarContador() {
-                const c = document.getElementById('contador-carrito');
-                if (!c) return;
-                const total = articulos.reduce((s, a) => s + a.cantidad, 0);
-                c.textContent = total;
-                c.style.display = total > 0 ? 'flex' : 'none';
-            }
-
-            function render() {
-                const tbody = document.querySelector('#lista-carrito tbody');
-                if (!tbody) return;
-                tbody.innerHTML = '';
-
-                if (articulos.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="cart-empty">Sin planes en el carrito</td></tr>';
-                } else {
-                    articulos.forEach(item => {
-                        const factor = (PERIODOS.find(p => p.valor === (item.periodo || 'mensual')) || PERIODOS[0]).factor;
-                        const precioAjustado = Math.round(parsePrecio(item.precio) * factor);
-                        const opciones = PERIODOS.map(p =>
-                            `<option value="${p.valor}" ${p.valor === (item.periodo || 'mensual') ? 'selected' : ''}>${p.label}</option>`
-                        ).join('');
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td class="cart-item-name">${item.titulo}</td>
-                            <td><select class="cart-periodo-select" data-id="${item.id}">${opciones}</select></td>
-                            <td class="cart-item-price">${clpFmt(precioAjustado)}</td>
-                            <td>${item.cantidad}</td>
-                            <td><button class="cart-remove-btn" data-id="${item.id}">&times;</button></td>`;
-                        tbody.appendChild(tr);
-                    });
-                }
-
-                actualizarContador();
-                const btnPagar = document.getElementById('btn-ir-pago');
-                if (btnPagar) btnPagar.style.display = articulos.length > 0 ? 'block' : 'none';
-
-                tbody.querySelectorAll('.cart-periodo-select').forEach(sel => {
-                    sel.addEventListener('change', function () {
-                        const item = articulos.find(a => a.id === this.dataset.id);
-                        if (item) { item.periodo = this.value; guardar(); render(); }
-                    });
-                });
-                tbody.querySelectorAll('.cart-remove-btn').forEach(btn => {
-                    btn.addEventListener('click', function () {
-                        articulos = articulos.filter(a => a.id !== this.dataset.id);
-                        guardar(); render();
-                    });
-                });
-            }
-
-            window.agregarAlCarrito = function (id, titulo, precio) {
-                const existe = articulos.find(a => a.id === id);
-                if (existe) existe.cantidad += 1;
-                else articulos.push({ id, titulo, precio, cantidad: 1, periodo: 'mensual' });
-                guardar(); render();
-            };
-
-            // Botón "Agregar al carrito" de la vista Planes del portal
-            window.agregarPlanPortal = function (id, titulo, precio) {
-                window.agregarAlCarrito(id, titulo, precio);
-                if (window.Swal) {
-                    Swal.fire({
-                        toast: true,
-                        position: 'top-end',
-                        icon: 'success',
-                        title: titulo + ' agregado al carrito',
-                        showConfirmButton: false,
-                        timer: 2200,
-                        timerProgressBar: true
-                    });
-                }
-            };
-
-            document.addEventListener('DOMContentLoaded', () => {
-                cargar();
-                render();
-
-                const cartButton = document.getElementById('cart-button');
-                const carrito = document.getElementById('carrito');
-                if (cartButton && carrito) {
-                    cartButton.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        carrito.style.display = (carrito.style.display === 'block') ? 'none' : 'block';
-                    });
-                    document.addEventListener('click', () => { carrito.style.display = 'none'; });
-                    carrito.addEventListener('click', (e) => e.stopPropagation());
-                }
-
-                const vaciarBtn = document.getElementById('vaciar-carrito');
-                if (vaciarBtn) {
-                    vaciarBtn.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        articulos = [];
-                        guardar(); render();
-                    });
-                }
-            });
-
-
             // Título de la barra superior según la vista activa (igual que el admin)
             const TITULOS = {
                 'view-dashboard': ['Dashboard', 'Tu panel de aprendizaje'],
@@ -3194,7 +2580,7 @@
                 'view-courses': ['Cursos Premium', 'Catálogo de cursos en video'],
                 'view-inbox': ['Buzón de Dudas', 'Conversa con tus profesores'],
                 'view-progress': ['Informe de Progreso', 'Tu avance por asignatura'],
-                'view-plans': ['Planes de Suscripción', 'Elige o cambia tu plan'],
+                'view-plans': ['Mis Paquetes', 'Tus clases disponibles y vigencia'],
                 'view-support': ['Soporte / Reportes', 'Envía un reporte y revisa su estado'],
                 'view-profile': ['Mi Perfil', 'Tus datos y transacciones']
             };
