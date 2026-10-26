@@ -325,7 +325,7 @@
                                         {% include "alumnos/includes/fecha_sesion.html" %}
                                     </div>
                                     <div class="ap-class-actions">
-                                        {% if insc.sesion.estado != 'cancelada' %}
+                                        {% if insc.puede_unirse %}
                                         <a class="btn-join-class ap-flex-1" href="{% url 'sala_virtual' insc.clase.id_clase %}" style="display:flex; justify-content:center; align-items:center; text-decoration:none;">
                                             <i class="bi bi-camera-video-fill"></i> Unirse a la Clase
                                         </a>

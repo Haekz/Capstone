@@ -469,6 +469,15 @@ class Inscripcion(models.Model):
             self.clase = self.sesion.clase
         super().save(*args, **kwargs)
 
+    @property
+    def puede_unirse(self):
+        """Solo una inscripcion confirmada, de una sesion no cancelada, entra a la sala virtual.
+
+        'pendiente' solo la asigna un admin a mano: aun no esta confirmada.
+        """
+        sesion_cancelada = self.sesion_id is not None and self.sesion.estado == SesionClase.ESTADO_CANCELADA
+        return self.estado == self.ESTADO_CONFIRMADA and not sesion_cancelada
+
     def __str__(self):
         if self.sesion:
             return f'{self.alumno} inscrito en {self.clase} (Sesión #{self.sesion.pk})'

@@ -75,8 +75,9 @@ class MisClasesTests(TestCase):
         r = self._portal()
         self.assertContains(r, '>Pendiente</span>')
         self.assertContains(r, '>Sesión cancelada</span>')
-        # Se puede unir a las 4 activas (cercana, pendiente, lejana, sin sesion), no a la cancelada.
-        self.assertContains(r, 'Unirse a la Clase', count=4)
+        # Solo las confirmadas de sesion no cancelada (cercana, lejana, sin sesion) muestran
+        # "Unirse": la pendiente aun no esta confirmada (ver test_sala_virtual_acceso).
+        self.assertContains(r, 'Unirse a la Clase', count=3)
 
     def test_historial_muestra_las_sesiones_realizadas(self):
         r = self._portal()
