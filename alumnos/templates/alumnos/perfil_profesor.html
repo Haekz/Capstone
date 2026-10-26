@@ -14,7 +14,11 @@
     </a>
 
     <header class="perfil-prof__cabecera">
+        {% if profesor.user.foto_perfil %}
+        <img class="perfil-prof__avatar" src="{% url 'foto_profesor' profesor.id_profesor %}" alt="Foto de {{ profesor.nombre }}">
+        {% else %}
         <div class="perfil-prof__avatar" aria-hidden="true">{{ profesor.nombre|slice:":1"|upper }}</div>
+        {% endif %}
         <div>
             <h1>{{ profesor.nombre }}</h1>
             <p class="perfil-prof__especialidad">{{ profesor.especialidad.nombre|default:"Especialidad no informada" }}</p>
