@@ -103,7 +103,7 @@ El ingreso de LBWUS por clase **baja entre 25% y 27,5%**. Pesa más que el descu
 
 ### Escenario de referencia del primer año (proyección de 300 clases)
 
-Las **300 clases son una proyección de partida, no un tope**: el volumen real puede ser mayor. Los valores **por clase y por compra** (tablas anteriores y siguientes) no dependen del volumen. Los totales sí, y se pueden escalar con la tabla "Por cada 100 clases" que sigue a este escenario.
+Las **300 clases son una proyección de partida, no un tope**: el volumen real puede ser mayor. Los valores **por clase y por compra** (tablas anteriores y siguientes) no dependen del volumen.
 
 Mezcla inicial del equipo: **132 compras Flexible, 26 Progreso y 8 Intensivo**. Es una distribución de partida, **no son ventas reales**. No incluye devoluciones, prórrogas ni clases vencidas.
 
@@ -118,19 +118,6 @@ Mezcla inicial del equipo: **132 compras Flexible, 26 Progreso y 8 Intensivo**. 
 - **Precio medio por clase:** $14.807, es decir 1,3% menos que los $15.000 anteriores.
 - **Profesores (85%):** $3.775.700.
 - **IVA contenido en la comisión de LBWUS:** $106.350 (`iva_incluido`).
-
-**Por cada 100 clases con esa misma mezcla** (para proyectar otro volumen, multiplicar):
-
-| Concepto | Por 100 clases |
-|---|---|
-| Cobrado | $1.480.667 |
-| Comisión de LBWUS (15%) | $222.100 |
-| Profesores (85%) | $1.258.567 |
-| Transbank en crédito | $40.350 |
-| Transbank en débito o prepago | $26.254 |
-| Neto de LBWUS (crédito / débito) | $181.750 / $195.846 |
-
-Esta escala solo vale si la mezcla se mantiene. Si con más volumen se venden más Progreso e Intensivo, el precio medio por clase baja. Con tarifa base queda siempre **entre $14.500 y $15.000**, sin importar cuántas clases se vendan.
 
 ### Costo de Transbank (supuesto referencial)
 
