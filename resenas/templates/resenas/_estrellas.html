@@ -1,0 +1,1 @@
+<span class="resena-estrellas" role="img" aria-label="{{ puntaje }} de 5 estrellas">{% for _ in "12345" %}<i class="bi {% if forloop.counter <= puntaje %}bi-star-fill{% else %}bi-star{% endif %}" aria-hidden="true"></i>{% endfor %}</span>

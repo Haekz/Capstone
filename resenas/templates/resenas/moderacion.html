@@ -1,0 +1,118 @@
+{% extends 'admin_portal/base_admin.html' %}
+
+{% block title %}Reseñas — Admin LBWUS{% endblock %}
+{% block page_title %}Moderación de Reseñas{% endblock %}
+{% block page_subtitle %}Las reseñas reportadas siguen visibles hasta que decidas. Cada decisión queda registrada.{% endblock %}
+{% block nav_resenas %}active{% endblock %}
+
+{% block content %}
+
+{% if messages %}
+<div class="panel" role="status" style="margin-bottom:20px; padding:14px 18px;">
+    {% for m in messages %}<div>{{ m }}</div>{% endfor %}
+</div>
+{% endif %}
+
+<div class="panel">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-flag-fill"></i> Reportadas pendientes ({{ reportadas|length }})</span>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="user-table">
+            <thead>
+                <tr><th>Reseña</th><th>Profesor</th><th>Reportes</th><th>Decisión</th></tr>
+            </thead>
+            <tbody>
+                {% for r in reportadas %}
+                <tr>
+                    <td><strong>{{ r.puntaje }}/5 · {{ r.autor_publico }}</strong><br><small>{{ r.comentario|default:"Sin comentario" }}</small></td>
+                    <td>{{ r.inscripcion.clase.profesor.nombre }}</td>
+                    <td>
+                        {% for rep in r.pendientes %}
+                        <div><strong>{{ rep.get_motivo_display }}</strong> — {{ rep.remitente.first_name }} ({{ rep.creado|date:"d-m-Y" }}){% if rep.detalle %}<br><small>{{ rep.detalle }}</small>{% endif %}</div>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        <form method="post" action="{% url 'resena_moderar' r.pk %}" style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+                            {% csrf_token %}
+                            <select name="criterio" aria-label="Criterio que incumple la reseña #{{ r.pk }}"
+                                style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--bg-card); color:var(--text-primary);">
+                                <option value="">Criterio (obligatorio para ocultar)</option>
+                                {% for valor, texto in motivos %}<option value="{{ valor }}">{{ texto }}</option>{% endfor %}
+                            </select>
+                            <input type="text" name="observacion" maxlength="300" placeholder="Observación"
+                                aria-label="Observación sobre la reseña #{{ r.pk }}"
+                                style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--bg-card); color:var(--text-primary);">
+                            <button type="submit" name="accion" value="mantener" class="btn-primary"><i class="bi bi-check-lg"></i> Mantener visible</button>
+                            <button type="submit" name="accion" value="ocultar" class="btn-secondary"><i class="bi bi-eye-slash"></i> Ocultar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4">No hay reseñas reportadas pendientes.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="panel" style="margin-top:28px;">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-eye-slash-fill"></i> Ocultas ({{ ocultas|length }})</span>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="user-table">
+            <thead>
+                <tr><th>Reseña</th><th>Profesor</th><th>Decisión</th></tr>
+            </thead>
+            <tbody>
+                {% for r in ocultas %}
+                <tr>
+                    <td><strong>{{ r.puntaje }}/5 · {{ r.autor_publico }}</strong><br><small>{{ r.comentario|default:"Sin comentario" }}</small></td>
+                    <td>{{ r.inscripcion.clase.profesor.nombre }}</td>
+                    <td>
+                        <form method="post" action="{% url 'resena_moderar' r.pk %}" style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+                            {% csrf_token %}
+                            <input type="text" name="observacion" maxlength="300" placeholder="Motivo de la restauración"
+                                aria-label="Motivo para restaurar la reseña #{{ r.pk }}"
+                                style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--bg-card); color:var(--text-primary);">
+                            <button type="submit" name="accion" value="restaurar" class="btn-primary"><i class="bi bi-arrow-counterclockwise"></i> Restaurar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3">No hay reseñas ocultas.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="panel" style="margin-top:28px;">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-clock-history"></i> Registro de decisiones (últimas 50)</span>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="user-table">
+            <thead>
+                <tr><th>Fecha</th><th>Reseña</th><th>Decisión</th><th>Criterio</th><th>Observación</th><th>Administrador</th></tr>
+            </thead>
+            <tbody>
+                {% for m in historial %}
+                <tr>
+                    <td>{{ m.fecha|date:"d-m-Y H:i" }}</td>
+                    <td>#{{ m.resena_id }}</td>
+                    <td><span class="badge">{{ m.get_accion_display }}</span></td>
+                    <td>{{ m.get_criterio_display|default:"—" }}</td>
+                    <td>{{ m.observacion|default:"—" }}</td>
+                    <td>{{ m.administrador.first_name|default:"Cuenta eliminada" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6">Todavía no hay decisiones registradas.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

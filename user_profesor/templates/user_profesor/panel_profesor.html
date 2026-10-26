@@ -91,6 +91,12 @@ input:checked + .slider:before {
             <li class="prof-menu-item" id="menu-saldo" onclick="switchSection('saldo')">
                 <i class="bi bi-cash-stack"></i> Saldo Generado
             </li>
+            {# Página aparte: un enlace real, usable con teclado. #}
+            <li class="prof-menu-item">
+                <a href="{% url 'resenas_profesor' %}" style="color:inherit; text-decoration:none; display:flex; align-items:center; gap:inherit;">
+                    <i class="bi bi-star-half"></i> Mis Reseñas
+                </a>
+            </li>
         </ul>
         
         <!-- esta parte es del botón de cerrar sesión abajo del menú lateral -->

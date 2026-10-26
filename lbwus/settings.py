@@ -69,6 +69,7 @@ INSTALLED_APPS = [
     'admin_portal',
     'user_profesor',
     'comunidad',
+    'resenas',
     'django_extensions',
 ]
 
