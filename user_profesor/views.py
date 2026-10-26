@@ -1,9 +1,11 @@
+from django.core.exceptions import ValidationError
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse
+from django.http import FileResponse, Http404, JsonResponse
 from django.views.decorators.cache import never_cache
 from alumnos.models import Especialidad, Genero, Profesor, Clase, Inscripcion, Tutor
 from alumnos.decorators import profesor_required, profesor_required_json
 from alumnos.roles import ADMIN, PROFESOR, abrir_sesion_rol, resolver_rol
+from . import foto
 
 # Tarifas por inscripcion real. Antes estaban escritas a mano dentro de cada
 # vista, junto a un saldo de regalo para las cuentas sin actividad.
@@ -255,7 +257,6 @@ def panel_profesor(request):
 def subir_titulo(request):
     if request.method != 'POST':
         return JsonResponse({"success": False, "message": "Método no permitido."})
-    from django.core.exceptions import ValidationError
     from . import titulo
 
     profesor = get_object_or_404(Profesor, id_profesor=request.session['profesor_id'])
@@ -267,6 +268,25 @@ def subir_titulo(request):
         "success": True,
         "message": "Título recibido. Un administrador lo revisará y te habilitará para hacer clases.",
     })
+
+
+@never_cache
+def foto_profesor(request, id_profesor):
+    """Foto de perfil: la ve el propio profesor y, si esta habilitado, cualquier usuario con sesion.
+
+    Misma regla que el perfil publico (SCRUM-32); sin MEDIA_URL publico.
+    """
+    if not request.user.is_authenticated:
+        raise Http404
+    profesor = get_object_or_404(Profesor.objects.select_related('user'), id_profesor=id_profesor)
+    es_dueno = profesor.user_id == request.user.id
+    visible = es_dueno or Profesor.objects.habilitados().filter(pk=profesor.pk).exists()
+    if not (visible and profesor.user.foto_perfil):
+        raise Http404
+    try:
+        return FileResponse(profesor.user.foto_perfil.open('rb'))
+    except FileNotFoundError:
+        raise Http404
 
 
 @profesor_required_json
@@ -306,6 +326,13 @@ def actualizar_perfil_prof(request):
             if error_msg:
                 return JsonResponse({"success": False, "message": error_msg})
 
+            # La foto se valida antes de guardar nada: si no sirve, el perfil queda igual.
+            archivo_foto = request.FILES.get('foto_perfil')
+            try:
+                foto_jpeg = foto.procesar(archivo_foto) if archivo_foto else None
+            except ValidationError as e:
+                return JsonResponse({"success": False, "message": e.messages[0]})
+
             profesor.user.first_name = nombre
             profesor.user.rut = rut
             profesor.user.username = rut
@@ -314,6 +341,8 @@ def actualizar_perfil_prof(request):
             profesor.user.email = correo
             profesor.user.telefono = telefono
             profesor.user.genero = genero
+            if foto_jpeg:
+                foto.guardar(profesor.user, foto_jpeg)
             profesor.user.save()
             profesor.save()
 
