@@ -139,6 +139,10 @@ if os.environ.get('DATABASE_URL'):
             conn_max_age=600
         )
     }
+elif os.environ.get('EXIGIR_POSTGRES') == '1':
+    # Pruebas contra la base productiva: sin DATABASE_URL se detiene en vez de caer en SQLite.
+    from django.core.exceptions import ImproperlyConfigured
+    raise ImproperlyConfigured('EXIGIR_POSTGRES=1 requiere DATABASE_URL apuntando a PostgreSQL.')
 else:
     DATABASES = {
         'default': {

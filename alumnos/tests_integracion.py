@@ -41,7 +41,7 @@ class IntegracionFlujosTestCase(TestCase):
         )
         self.alumno = Alumno.objects.create(
             user=self.user_alumno,
-            nivel_educacion='Universitaria'
+            nivel_educacion='superior'  # valor de choices: 'Universitaria' no cabe en varchar(10) de PostgreSQL
         )
 
     def test_flujo_transmision_en_vivo(self):

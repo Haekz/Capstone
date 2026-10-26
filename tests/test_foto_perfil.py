@@ -72,7 +72,11 @@ class FotoPerfilTests(TestCase):
 
     def pedir_foto(self, profesor):
         r = self.client.get(reverse('foto_profesor', args=[profesor.id_profesor]))
-        r.close()  # suelta el archivo: en Windows impide borrar la carpeta temporal
+        # Suelta solo el archivo (en Windows impide borrar la carpeta temporal). r.close()
+        # dispara request_finished y Django cierra la conexion: en PostgreSQL rompe el test.
+        archivo = getattr(r, 'file_to_stream', None)
+        if archivo:
+            archivo.close()
         return r
 
     # ------------------------------------------------------------ subida
