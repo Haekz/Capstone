@@ -10,7 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.decorators.debug import sensitive_post_parameters
 from django.core.cache import cache
-from django.db.models import F
+from django.db.models import F, Q
 
 from .models import (
     Alumno,
@@ -1066,13 +1066,13 @@ def sala_virtual(request, clase_id):
         and (clase.profesor.user_id == request.user.id
              or request.session.get('profesor_id') == getattr(clase.profesor, 'id_profesor', None))
     )
-    # 2. Alumno inscrito en la clase
-    es_alumno = Inscripcion.objects.filter(
-        clase=clase,
-        alumno__user=request.user
-    ).exists() or bool(
-        request.session.get('alumno_id')
-        and Inscripcion.objects.filter(clase=clase, alumno_id=request.session['alumno_id']).exists()
+    # 2. Alumno con una inscripcion que permita entrar (Inscripcion.puede_unirse)
+    propias = Q(alumno__user=request.user)
+    if request.session.get('alumno_id'):
+        propias |= Q(alumno_id=request.session['alumno_id'])
+    es_alumno = any(
+        insc.puede_unirse
+        for insc in Inscripcion.objects.filter(propias, clase=clase).select_related('sesion')
     )
     # 3. Administrador o Tutor
     es_admin = bool(
