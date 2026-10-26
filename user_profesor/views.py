@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
+from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from alumnos.models import Especialidad, Genero, Profesor, Clase, Inscripcion, Tutor
 from alumnos.decorators import profesor_required, profesor_required_json
@@ -166,7 +167,6 @@ def regis_prof(request):
 @never_cache
 @profesor_required
 def panel_profesor(request):
-    import datetime
     if not request.user.is_authenticated or (getattr(request.user, 'rol', None) != 'profesor' and not hasattr(request.user, 'perfil_profesor')):
         return redirect('custom_login_alumno')
 
@@ -202,7 +202,7 @@ def panel_profesor(request):
 
     # 3. Gráfico de solicitudes mensuales (Últimos 5 meses)
     meses_nombres = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
-    current_month = datetime.datetime.now().month
+    current_month = timezone.localdate().month  # mes en Chile, no el del servidor
     rendimiento_meses = []
 
     # Un mes sin inscripciones vale 0. Antes se rellenaba con mock_values y el
