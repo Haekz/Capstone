@@ -22,9 +22,13 @@ def calcular_saldos(profesor):
 
     from alumnos.models import SolicitudRetiro
 
+    from alumnos.models import Pago
+
+    # La remuneración se basa únicamente en transacciones confirmadas
     inscripciones = Inscripcion.objects.filter(
         clase__profesor=profesor,
-        estado__in=['confirmada', 'pendiente']
+        estado=Inscripcion.ESTADO_CONFIRMADA,
+        pago__estado=Pago.ESTADO_PAGADA
     ).count()
 
     total_ganado = inscripciones * VALOR_INSCRIPCION

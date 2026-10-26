@@ -338,6 +338,48 @@ class SesionClase(models.Model):
         return InscripcionService.inscribir_alumno_en_sesion(alumno, self.pk)
 
 
+class Pago(models.Model):
+    """Registro de transacciones de pago con Webpay Plus o Simulación."""
+    ESTADO_INICIADA = 'iniciada'
+    ESTADO_PAGADA = 'pagada'
+    ESTADO_RECHAZADA = 'rechazada'
+    ESTADO_ANULADA = 'anulada'
+
+    ESTADOS_CHOICES = (
+        (ESTADO_INICIADA, 'Iniciada'),
+        (ESTADO_PAGADA, 'Pagada'),
+        (ESTADO_RECHAZADA, 'Rechazada'),
+        (ESTADO_ANULADA, 'Anulada'),
+    )
+
+    id_pago = models.AutoField(primary_key=True)
+    buy_order = models.CharField(max_length=40, unique=True, db_index=True)
+    session_id = models.CharField(max_length=50, blank=True)
+    token_ws = models.CharField(max_length=100, unique=True, null=True, blank=True, db_index=True)
+    monto = models.PositiveIntegerField()
+    estado = models.CharField(max_length=20, choices=ESTADOS_CHOICES, default=ESTADO_INICIADA, db_index=True)
+    es_simulacion = models.BooleanField(default=False)
+
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='pagos')
+    alumno = models.ForeignKey(Alumno, on_delete=models.SET_NULL, null=True, blank=True, related_name='pagos')
+    detalle_carrito = models.JSONField(default=list, blank=True)
+
+    authorization_code = models.CharField(max_length=40, blank=True)
+    ultimos_digitos_tarjeta = models.CharField(max_length=10, blank=True)
+    fecha_transaccion = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Pago'
+        verbose_name_plural = 'Pagos'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        tipo = " (Simulación)" if self.es_simulacion else ""
+        return f"Pago {self.buy_order} - ${self.monto} ({self.get_estado_display()}){tipo}"
+
+
 class Inscripcion(models.Model):
     ESTADO_CONFIRMADA = 'confirmada'
     ESTADO_PENDIENTE = 'pendiente'
@@ -353,6 +395,14 @@ class Inscripcion(models.Model):
     fecha_inscripcion = models.DateField(auto_now_add=True)
     alumno = models.ForeignKey(Alumno, on_delete=models.CASCADE)
     clase = models.ForeignKey(Clase, on_delete=models.CASCADE)
+    pago = models.ForeignKey(
+        Pago,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='inscripciones',
+        verbose_name='Pago asociado'
+    )
     sesion = models.ForeignKey(
         SesionClase,
         on_delete=models.CASCADE,

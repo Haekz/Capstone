@@ -271,3 +271,9 @@ CODIGO_GOOGLE_INTENTOS = 5
 
 # Modelo de usuario personalizado
 AUTH_USER_MODEL = 'alumnos.CustomUser'
+
+# ============================================================
+# WEBPAY PLUS & MODO SIMULACION DE PRUEBAS
+# ============================================================
+WEBPAY_SIMULACION_ACTIVADA = os.environ.get('WEBPAY_SIMULACION', 'True').lower() in ('true', '1', 'yes')
+USUARIOS_SIMULACION_WEBPAY = ['*']

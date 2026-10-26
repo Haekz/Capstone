@@ -1,3 +1,6 @@
+import uuid
+from django.utils import timezone
+from django.conf import settings
 import json
 import random
 
@@ -20,6 +23,7 @@ from .models import (
     Clase,
     SesionClase,
     Inscripcion,
+    Pago,
 )
 from django.core.exceptions import ValidationError
 from .forms import AlumnoForm
@@ -795,6 +799,23 @@ def pago(request):
     )
 
 
+
+def _simulacion_permitida(user):
+    """Verifica si la simulación de Webpay está habilitada para el entorno o usuario."""
+    if not getattr(settings, 'WEBPAY_SIMULACION_ACTIVADA', True):
+        return False
+    usuarios_permitidos = getattr(settings, 'USUARIOS_SIMULACION_WEBPAY', ['*'])
+    if '*' in usuarios_permitidos:
+        return True
+    if user and user.is_authenticated:
+        return (
+            user.is_staff
+            or user.is_superuser
+            or user.username in usuarios_permitidos
+            or user.email in usuarios_permitidos
+        )
+    return False
+
 def iniciar_webpay(request):
 
     if request.method != 'POST':
@@ -812,12 +833,7 @@ def iniciar_webpay(request):
     except (ValueError, TypeError):
         return redirect('planes')
 
-    # Validar y calcular el monto esperado desde el carrito en el servidor
-    try:
-        amount_post = int(request.POST.get('amount', '0'))
-    except ValueError:
-        amount_post = 0
-
+    # Validar y calcular el monto esperado desde el carrito en el servidor (Zero Trust)
     monto_calculado = sum(_precio_item(item) for item in carrito)
     if monto_calculado >= 350:
         amount = monto_calculado
@@ -844,24 +860,82 @@ def iniciar_webpay(request):
         )
     )
 
+    alumno_obj = None
+    if request.user.is_authenticated:
+        alumno_obj = Alumno.objects.filter(user=request.user).first()
+    if not alumno_obj and request.session.get('alumno_id'):
+        alumno_obj = Alumno.objects.filter(pk=request.session.get('alumno_id')).first()
+
+    # Modo simulación de pago para pruebas/testers (sin cobro real)
+    es_simulacion = request.POST.get('simular') == '1' or request.GET.get('simular') == '1'
+    if es_simulacion and _simulacion_permitida(request.user):
+        token_sim = f'sim_{uuid.uuid4().hex[:20]}'
+        buy_order_sim = f'LB-SIM-{random.randrange(100000, 999999)}'
+        pago = Pago.objects.create(
+            buy_order=buy_order_sim,
+            session_id=session_id,
+            token_ws=token_sim,
+            monto=amount,
+            estado=Pago.ESTADO_PAGADA,
+            es_simulacion=True,
+            usuario=request.user if request.user.is_authenticated else None,
+            alumno=alumno_obj,
+            detalle_carrito=carrito,
+            authorization_code=str(random.randint(100000, 999999)),
+            ultimos_digitos_tarjeta='6623',
+            fecha_transaccion=timezone.now(),
+        )
+
+        request.session['orden_pendiente'] = {
+            'buy_order': buy_order_sim,
+            'carrito': carrito_json,
+            'pago_id': pago.id_pago,
+            'token': token_sim,
+            'amount': amount,
+        }
+
+        return redirect(f"{reverse('confirmacion')}?token_ws={token_sim}")
+
+    # Registro en base de datos antes de interactuar con la pasarela Webpay
+    pago = Pago.objects.create(
+        buy_order=buy_order,
+        session_id=session_id,
+        monto=amount,
+        estado=Pago.ESTADO_INICIADA,
+        es_simulacion=False,
+        usuario=request.user if request.user.is_authenticated else None,
+        alumno=alumno_obj,
+        detalle_carrito=carrito,
+    )
+
     return_url = (
         request.build_absolute_uri(
             reverse('confirmacion')
         )
     )
 
-    response = _tx().create(
-        buy_order,
-        session_id,
-        amount,
-        return_url
-    )
+    try:
+        response = _tx().create(
+            buy_order,
+            session_id,
+            amount,
+            return_url
+        )
+        pago.token_ws = response['token']
+        pago.save(update_fields=['token_ws'])
+    except Exception:
+        pago.estado = Pago.ESTADO_RECHAZADA
+        pago.save(update_fields=['estado'])
+        return redirect('planes')
 
     request.session[
         'orden_pendiente'
     ] = {
         'buy_order': buy_order,
         'carrito': carrito_json,
+        'pago_id': pago.id_pago,
+        'token': response['token'],
+        'amount': amount,
     }
 
     return render(
@@ -893,17 +967,29 @@ def confirmacion(request):
     )
 
     try:
-
         carrito = json.loads(
             orden.get(
                 'carrito',
                 '[]'
             )
         )
-
     except (ValueError, TypeError):
-
         carrito = []
+
+    # Recuperar pago desde BD si existe
+    pago = None
+    if token:
+        pago = Pago.objects.filter(token_ws=token).first()
+    elif tbk_token:
+        pago = Pago.objects.filter(token_ws=tbk_token).first()
+
+    if not pago and orden.get('pago_id'):
+        pago = Pago.objects.filter(pk=orden.get('pago_id')).first()
+    if not pago and orden.get('buy_order'):
+        pago = Pago.objects.filter(buy_order=orden.get('buy_order')).first()
+
+    if not carrito and pago and pago.detalle_carrito:
+        carrito = pago.detalle_carrito
 
     items = [
         {
@@ -926,81 +1012,138 @@ def confirmacion(request):
         'items': items
     }
 
-    # Pago recibido desde Webpay
-
-    if token:
-
-        resp = _tx().commit(
-            token
-        )
-
-        aprobado = (
-            resp.get(
-                'response_code'
-            ) == 0
-            and
-            resp.get(
-                'status'
-            ) == 'AUTHORIZED'
-        )
-
-        card = (
-            resp.get(
-                'card_detail'
-            )
-            or {}
-        )
-
-        ctx.update({
-            'aprobado': aprobado,
-
-            'orden': resp.get(
-                'buy_order',
-                orden.get(
-                    'buy_order',
-                    ''
-                )
-            ),
-
-            'monto': _clp(
-                resp.get(
-                    'amount',
-                    0
-                )
-            ),
-
-            'codigo_autorizacion': (
-                resp.get(
-                    'authorization_code',
-                    ''
-                )
-            ),
-
-            'tarjeta': card.get(
-                'card_number',
-                ''
-            ),
-
-            'fecha': resp.get(
-                'transaction_date',
-                ''
-            ),
-        })
-
-    # Pago cancelado/anulado
-
-    elif tbk_token:
+    # 1. Pago cancelado/anulado por el usuario en pasarela
+    if tbk_token:
+        if pago:
+            pago.estado = Pago.ESTADO_ANULADA
+            pago.save(update_fields=['estado', 'updated_at'])
 
         ctx.update({
             'aprobado': False,
-            'anulado': True
+            'anulado': True,
+            'orden': pago.buy_order if pago else orden.get('buy_order', ''),
         })
-
-    else:
-
-        return redirect(
-            'planes'
+        return render(
+            request,
+            'alumnos/confirmacion.html',
+            ctx
         )
+
+    # 2. Sin tokens ni orden: redirigir a planes
+    if not token:
+        return redirect('planes')
+
+    # 3. Control de Idempotencia / Prevención de doble aplicación
+    if pago and pago.estado == Pago.ESTADO_PAGADA:
+        ctx.update({
+            'aprobado': True,
+            'orden': pago.buy_order,
+            'monto': _clp(pago.monto),
+            'codigo_autorizacion': pago.authorization_code,
+            'tarjeta': pago.ultimos_digitos_tarjeta or '6623',
+            'fecha': str(pago.fecha_transaccion or pago.created_at),
+        })
+        return render(
+            request,
+            'alumnos/confirmacion.html',
+            ctx
+        )
+
+    if pago and pago.estado in (Pago.ESTADO_RECHAZADA, Pago.ESTADO_ANULADA):
+        ctx.update({
+            'aprobado': False,
+            'anulado': (pago.estado == Pago.ESTADO_ANULADA),
+            'orden': pago.buy_order,
+            'monto': _clp(pago.monto),
+        })
+        return render(
+            request,
+            'alumnos/confirmacion.html',
+            ctx
+        )
+
+    # 4. Procesar confirmación con Transbank Webpay
+    expected_order = pago.buy_order if pago else orden.get('buy_order', '')
+    expected_amount = pago.monto if pago else orden.get('amount')
+    if expected_amount is None and carrito:
+        expected_amount = sum(_precio_item(it) for it in carrito)
+
+    try:
+        resp = _tx().commit(token)
+    except Exception:
+        if pago:
+            pago.estado = Pago.ESTADO_RECHAZADA
+            pago.save(update_fields=['estado', 'updated_at'])
+        ctx.update({
+            'aprobado': False,
+            'orden': expected_order,
+            'monto': _clp(expected_amount or 0),
+        })
+        return render(
+            request,
+            'alumnos/confirmacion.html',
+            ctx
+        )
+
+    card = resp.get('card_detail') or {}
+    resp_order = resp.get('buy_order', '')
+    resp_amount = int(resp.get('amount', 0))
+    resp_code = resp.get('response_code')
+    resp_status = resp.get('status')
+
+    # Validación cruzada: estado pasarela, orden y monto coincidente
+    aprobado_tbk = (resp_code == 0 and resp_status == 'AUTHORIZED')
+    orden_valida = (not expected_order or resp_order == expected_order)
+    monto_valido = (not expected_amount or resp_amount == int(expected_amount))
+
+    aprobado = bool(aprobado_tbk and orden_valida and monto_valido)
+
+    if pago:
+        if aprobado:
+            pago.estado = Pago.ESTADO_PAGADA
+            pago.authorization_code = resp.get('authorization_code', '')
+            pago.ultimos_digitos_tarjeta = card.get('card_number', '')
+            pago.fecha_transaccion = timezone.now()
+            pago.save()
+        else:
+            pago.estado = Pago.ESTADO_RECHAZADA
+            pago.save(update_fields=['estado', 'updated_at'])
+
+    ctx.update({
+        'aprobado': aprobado,
+
+        'orden': resp.get(
+            'buy_order',
+            orden.get(
+                'buy_order',
+                ''
+            )
+        ),
+
+        'monto': _clp(
+            resp.get(
+                'amount',
+                0
+            )
+        ),
+
+        'codigo_autorizacion': (
+            resp.get(
+                'authorization_code',
+                ''
+            )
+        ),
+
+        'tarjeta': card.get(
+            'card_number',
+            ''
+        ),
+
+        'fecha': resp.get(
+            'transaction_date',
+            ''
+        ),
+    })
 
     return render(
         request,
