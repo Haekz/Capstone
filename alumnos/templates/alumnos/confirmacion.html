@@ -43,7 +43,7 @@
 
         <div class="conf-acciones">
             <a href="{% url 'home' %}" class="btn-conf-home"><i class="bi bi-house-fill"></i> Ir al Inicio</a>
-            <a href="{% url 'planes' %}" class="btn-conf-planes"><i class="bi bi-grid-fill"></i> Ver más Planes</a>
+            <a href="{% url 'alumno_pag1' %}" class="btn-conf-planes"><i class="bi bi-calendar-check"></i> Reservar mis clases</a>
         </div>
 
         {% else %}
@@ -54,15 +54,10 @@
             {% else %}La transacción no pudo completarse. Revisa los datos de tu tarjeta o intenta con otro medio de pago.{% endif %}
         </p>
         <div class="conf-acciones">
-            <a href="{% url 'pago' %}" class="btn-conf-home"><i class="bi bi-arrow-counterclockwise"></i> Intentar de nuevo</a>
-            <a href="{% url 'planes' %}" class="btn-conf-planes"><i class="bi bi-grid-fill"></i> Volver a los planes</a>
+            <a href="{% url 'planes' %}" class="btn-conf-home"><i class="bi bi-arrow-counterclockwise"></i> Intentar de nuevo</a>
         </div>
         {% endif %}
 
     </div>
 </div>
-
-{% if aprobado %}
-<script>localStorage.removeItem('carrito');</script>
-{% endif %}
 {% endblock %}

@@ -8,11 +8,19 @@ from alumnos.roles import ADMIN, PROFESOR, abrir_sesion_rol, resolver_rol
 from django.core.exceptions import ValidationError
 from django.http import FileResponse, Http404
 from . import foto
+from alumnos import paquetes
 
 # Tarifas por inscripcion real. Antes estaban escritas a mano dentro de cada
 # vista, junto a un saldo de regalo para las cuentas sin actividad.
-VALOR_INSCRIPCION = 15000   # lo que paga el alumno
-PAGO_PROFESOR = 12000       # lo que le corresponde al profesor
+# Inscripciones de antes de los paquetes (sin paquete): valor fijo por inscripcion.
+# Las nuevas valen lo que pago el alumno por esa clase y el profesor recibe 85%.
+VALOR_INSCRIPCION = 15000
+PAGO_PROFESOR = paquetes.pago_profesor(VALOR_INSCRIPCION)
+
+
+def _valor_clase(inscripcion):
+    """Lo que pago el alumno por esa clase."""
+    return inscripcion.paquete.precio_por_clase if inscripcion.paquete_id else VALOR_INSCRIPCION
 
 
 def calcular_saldos(profesor):
@@ -26,13 +34,11 @@ def calcular_saldos(profesor):
 
     from alumnos.models import SolicitudRetiro
 
-    inscripciones = Inscripcion.objects.filter(
-        clase__profesor=profesor,
-        estado__in=['confirmada', 'pendiente']
-    ).count()
+    inscripciones = Inscripcion.objects.filter(clase__profesor=profesor).consumidas().select_related('paquete')
+    valores = [_valor_clase(i) for i in inscripciones]
 
-    total_ganado = inscripciones * VALOR_INSCRIPCION
-    corresponde_al_profesor = inscripciones * PAGO_PROFESOR
+    total_ganado = sum(valores)
+    corresponde_al_profesor = sum(paquetes.pago_profesor(v) for v in valores)
 
     retiros = SolicitudRetiro.objects.filter(profesor=profesor)
     aprobados = retiros.filter(estado='aprobado').aggregate(Sum('monto'))['monto__sum'] or 0
@@ -197,8 +203,8 @@ def panel_profesor(request):
     # Dinero generado hoy segun las inscripciones reales de esas clases.
     inscripciones_hoy = inscripciones.filter(
         clase_id__in=[c.id_clase for c in clases[:6]]
-    ).count()
-    dinero_hoy_val = inscripciones_hoy * PAGO_PROFESOR
+    ).select_related('paquete')
+    dinero_hoy_val = sum(paquetes.pago_profesor(_valor_clase(i)) for i in inscripciones_hoy)
     dinero_hoy = formato_clp(dinero_hoy_val)
     # Contador de clases disponibles diarias (base 8 máximo diario)
     clases_disponibles = max(0, 8 - len(clases_hoy_lista))
@@ -334,10 +340,18 @@ def actualizar_perfil_prof(request):
             except ValidationError as e:
                 return JsonResponse({"success": False, "message": e.messages[0]})
 
+            # Tarifa por clase: opcional; solo afecta a los paquetes que se vendan despues.
+            tarifa_txt = request.POST.get('tarifa', '').strip()
+            try:
+                tarifa = paquetes.validar_tarifa(tarifa_txt) if tarifa_txt else profesor.tarifa
+            except ValidationError as e:
+                return JsonResponse({"success": False, "message": e.messages[0]})
+
             profesor.user.first_name = nombre
             profesor.user.rut = rut
             profesor.user.username = rut
             profesor.especialidad = especialidad
+            profesor.tarifa = tarifa
             profesor.user.direccion = direccion
             profesor.user.email = correo
             profesor.user.telefono = telefono

@@ -264,6 +264,9 @@ class TituloProfesorTests(TestCase):
 
     def test_alumno_se_inscribe_si_el_titulo_esta_aprobado(self):
         Profesor.objects.filter(pk=self.profesor.pk).update(titulo_estado=Profesor.TITULO_APROBADO)
+        self.profesor.refresh_from_db()
+        from tests.test_paquetes import dar_paquete
+        dar_paquete(self.alumno, self.profesor)  # inscribirse consume una clase pagada
         clase = Clase.objects.create(asignatura=Asignatura.objects.create(nombre='X'),
                                      modalidad='online', horario=hora(9), profesor=self.profesor)
         self.entrar('11111111-1')

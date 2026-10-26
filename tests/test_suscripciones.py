@@ -7,7 +7,6 @@
   y el contenido premium no llega al HTML sin plan premium.
 """
 
-import json
 from datetime import timedelta
 from unittest.mock import MagicMock, patch
 
@@ -97,35 +96,8 @@ class FlujoWebpayTests(TestCase):
         user = User.objects.create_user(RUT, rut=RUT, password=CLAVE, rol='alumno')
         cls.alumno = Alumno.objects.create(user=user, nivel_educacion='media')
 
-    def _pagar(self, carrito):
-        return self.client.post(reverse('iniciar_webpay'),
-                                {'carrito': json.dumps(carrito), 'amount': '1'})
-
-    @patch('alumnos.views._tx')
-    def test_pagar_sin_login_no_cobra_ni_crea_suscripciones(self, mock_tx):
-        instancia = mock_transbank(mock_tx)
-        r = self._pagar([{'id': '2', 'periodo': 'mensual', 'cantidad': 1}])
-        self.assertRedirects(r, reverse('login'), fetch_redirect_response=False)
-        instancia.create.assert_not_called()
-        self.assertFalse(Suscripcion.objects.exists())
-
-    @patch('alumnos.views._tx')
-    def test_iniciar_pago_crea_pendientes_por_cada_plan(self, mock_tx):
-        mock_transbank(mock_tx)
-        self.client.post(reverse('login'), {'username': RUT, 'password': CLAVE})
-        r = self._pagar([
-            {'id': '2', 'periodo': 'mensual', 'cantidad': 2},
-            {'id': '1', 'periodo': '1semana', 'cantidad': 1},
-            {'id': '99', 'precio': '$5.000'},  # no es un plan: se cobra pero no crea suscripcion
-        ])
-        self.assertEqual(r.status_code, 200)
-        buy_order = self.client.session['orden_pendiente']['buy_order']
-        pendientes = {(s.plan, s.dias, s.monto, s.estado)
-                      for s in Suscripcion.objects.filter(alumno=self.alumno, buy_order=buy_order)}
-        self.assertEqual(pendientes, {
-            ('2', 60, 2 * 139990, Suscripcion.ESTADO_PENDIENTE),
-            ('1', 7, round(89990 * 0.25), Suscripcion.ESTADO_PENDIENTE),
-        })
+    # La compra con carrito (iniciar_webpay) ya no existe: ver tests/test_paquetes.py.
+    # Estas suscripciones son las de antes de los paquetes; siguen valiendo hasta vencer.
 
     @patch('alumnos.views._tx')
     def test_confirmacion_activa_aunque_vuelva_sin_cookie_de_sesion(self, mock_tx):
@@ -145,31 +117,6 @@ class FlujoWebpayTests(TestCase):
         Client().post(reverse('confirmacion'), {'token_ws': 'tok'})
         self.assertIsNone(self.alumno.plan_vigente())
         self.assertEqual(Suscripcion.objects.get().estado, Suscripcion.ESTADO_RECHAZADA)
-
-
-class PrecioPersonalizadoTests(TestCase):
-    """El Plan Personalizado da premium: su precio (que viene del navegador) tiene piso."""
-
-    @classmethod
-    def setUpTestData(cls):
-        user = User.objects.create_user(RUT, rut=RUT, password=CLAVE, rol='alumno')
-        cls.alumno = Alumno.objects.create(user=user, nivel_educacion='media')
-
-    def _cobrado(self, mock_tx, precio):
-        instancia = mock_transbank(mock_tx)
-        self.client.post(reverse('login'), {'username': RUT, 'password': CLAVE})
-        carrito = [{'id': '5', 'titulo': 'Plan Personalizado', 'precio': precio,
-                    'periodo': 'mensual', 'cantidad': 1}]
-        self.client.post(reverse('iniciar_webpay'), {'carrito': json.dumps(carrito), 'amount': '1'})
-        return instancia.create.call_args[0][2], Suscripcion.objects.get().monto
-
-    @patch('alumnos.views._tx')
-    def test_precio_manipulado_se_sube_al_minimo(self, mock_tx):
-        self.assertEqual(self._cobrado(mock_tx, '$350'), (15000, 15000))
-
-    @patch('alumnos.views._tx')
-    def test_precio_legitimo_sobre_el_minimo_se_respeta(self, mock_tx):
-        self.assertEqual(self._cobrado(mock_tx, '$85.000'), (85000, 85000))
 
 
 class PortalPlanTests(TestCase):
@@ -216,19 +163,9 @@ class PortalPlanTests(TestCase):
         for simulado in ("localStorage.getItem('hasPlan')", "localStorage.setItem('hasPlan'",
                          'TX-99812', 'Conectándote con Transbank Webpay'):
             self.assertNotContains(r, simulado)
-        # Comprar lleva al flujo real: planes -> carrito -> Webpay.
-        self.assertContains(r, f'window.location.href = "{reverse("planes")}"')
 
 
 class SoportePagosTests(TestCase):
-
-    def test_pago_avisa_que_hay_que_iniciar_sesion_solo_al_anonimo(self):
-        aviso = 'iniciar sesión como alumno</a>'
-        self.assertContains(self.client.get(reverse('pago')), aviso)
-        user = User.objects.create_user(RUT, rut=RUT, password=CLAVE, rol='alumno')
-        Alumno.objects.create(user=user, nivel_educacion='media')
-        self.client.post(reverse('login'), {'username': RUT, 'password': CLAVE})
-        self.assertNotContains(self.client.get(reverse('pago')), aviso)
 
     def test_admin_encuentra_suscripciones_por_buy_order(self):
         user = User.objects.create_user(RUT, rut=RUT, password=CLAVE, rol='alumno')

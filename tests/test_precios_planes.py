@@ -1,35 +1,38 @@
-"""El precio que se muestra de cada plan es el que el servidor cobra.
+"""El precio que se muestra de cada paquete es el que el servidor cobra.
 
-PRECIOS_PLANES_OFICIALES manda (es lo que se envia a Transbank); la pantalla
-solo lo refleja. Si alguien cambia uno sin el otro, estos tests fallan.
+alumnos/paquetes.py manda: la pagina lo muestra y comprar_paquete se lo envia a
+Transbank. Si alguien cambia uno sin el otro, estos tests fallan.
 """
 
-from django.contrib.auth import get_user_model
-from django.test import TestCase
+from unittest.mock import patch
+
 from django.urls import reverse
 
-from alumnos.models import Alumno
-from alumnos.views import PRECIOS_PLANES_OFICIALES, _clp
+from alumnos import paquetes
+from alumnos.templatetags.dinero import clp
+from tests.test_paquetes import RUT_ANA, Escenario
 
-User = get_user_model()
 
+@patch('alumnos.views._tx')
+class PreciosPlanesTests(Escenario):
 
-class PreciosPlanesTests(TestCase):
+    def test_lo_que_muestra_la_pagina_es_lo_que_se_cobra(self, mock_tx):
+        mock_tx.return_value.create.return_value = {'url': 'https://webpay.test/', 'token': 'tok'}
+        for tarifa in (15000, 20000, 33000, 10000, 50000):
+            self.profe.tarifa = tarifa
+            self.profe.save()
+            self.entrar(RUT_ANA)
+            pagina = self.client.get(reverse('planes'), {'profesor': self.profe.id_profesor})
+            for plan in paquetes.PLANES:
+                with self.subTest(tarifa=tarifa, plan=plan.codigo):
+                    self.assertContains(pagina, f'<span class="plan-price">{clp(paquetes.precio(plan, tarifa))}</span>')
+                    self.client.post(reverse('comprar_paquete'),
+                                     {'plan': plan.codigo, 'profesor': self.profe.id_profesor})
+                    self.assertEqual(mock_tx.return_value.create.call_args[0][2],
+                                     paquetes.precio(plan, tarifa))
 
-    def assertMuestraPreciosOficiales(self, respuesta, clase_precio):
-        for precio in PRECIOS_PLANES_OFICIALES.values():
-            self.assertContains(respuesta, f'<span class="{clase_precio}">{_clp(precio)}</span>')
-
-    def test_pagina_publica_de_planes(self):
-        self.assertMuestraPreciosOficiales(self.client.get(reverse('planes')), 'plan-price')
-
-    def test_portal_del_alumno(self):
-        user = User.objects.create_user('11111111-1', rut='11111111-1',
-                                        password='Clave12345!', rol='alumno')
-        Alumno.objects.create(user=user, nivel_educacion='media')
-        self.client.post(reverse('login'), {'username': '11111111-1', 'password': 'Clave12345!'})
+    def test_el_portal_ya_no_ofrece_precios_viejos(self, mock_tx):
+        self.entrar(RUT_ANA)
         r = self.client.get(reverse('alumno_pag1'))
-        self.assertMuestraPreciosOficiales(r, 'pp-price')
-        for plan_id, precio in PRECIOS_PLANES_OFICIALES.items():  # el boton del carrito tambien
-            self.assertContains(r, f"agregarPlanPortal('{plan_id}', ")
-            self.assertContains(r, f"'{_clp(precio)}')")
+        for texto in ('$89.990', '$139.990', '$189.990', 'agregarPlanPortal'):
+            self.assertNotContains(r, texto)

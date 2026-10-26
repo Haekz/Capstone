@@ -4025,6 +4025,27 @@ body.dark-mode .carrito-dropdown {
     margin: 0 auto;
 }
 
+.pp-vacio {
+    text-align: center;
+    color: var(--text-light);
+    margin-bottom: 24px;
+}
+
+.pp-acciones {
+    display: flex;
+    justify-content: center;
+    margin-top: 28px;
+}
+
+.pp-acciones .pp-btn {
+    width: auto;
+    text-decoration: none;
+}
+
+.pp-card .pp-btn {
+    text-decoration: none;
+}
+
 .pp-header {
     text-align: center;
     max-width: 620px;

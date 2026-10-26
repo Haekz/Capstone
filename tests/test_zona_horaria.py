@@ -17,6 +17,7 @@ from django.utils import timezone
 
 from alumnos.models import Asignatura, Clase, Genero, SesionClase
 from tests.test_especialidad import CLAVE, crear_profesor
+from tests.test_paquetes import dar_paquete
 from tests.test_progreso_alumno import crear_alumno
 
 migracion = importlib.import_module('alumnos.migrations.0008_sesiones_hora_chile')
@@ -47,9 +48,10 @@ class HorasEnPantallaTests(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.ana = crear_alumno(RUT_ANA, 'Ana', Genero.objects.create(descripcion='Otro'))
+        profesor = crear_profesor('20000000-1', 'profe@lbwus.cl', None)
+        dar_paquete(cls.ana, profesor)  # reservar consume una clase pagada
         clase = Clase.objects.create(asignatura=Asignatura.objects.create(nombre='Álgebra'),
-                                     modalidad='online', horario=time(10, 0),
-                                     profesor=crear_profesor('20000000-1', 'profe@lbwus.cl', None))
+                                     modalidad='online', horario=time(10, 0), profesor=profesor)
         # "10:00" ingresado en Chile, como desde el admin o cargar_sesiones.
         inicio = timezone.make_aware(datetime.combine(timezone.localdate() + timedelta(days=3), time(10, 0)))
         cls.sesion = SesionClase.objects.create(clase=clase, fecha_hora_inicio=inicio,

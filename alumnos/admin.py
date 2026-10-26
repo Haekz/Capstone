@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, Genero, Tutor, Alumno, Profesor, Clase, SesionClase, Inscripcion, Suscripcion
+from .models import CustomUser, Genero, Tutor, Alumno, Profesor, Clase, SesionClase, Inscripcion, PaqueteClases, Suscripcion
 
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
@@ -34,3 +34,12 @@ class SuscripcionAdmin(admin.ModelAdmin):
     search_fields = ['buy_order', 'alumno__user__first_name', 'alumno__user__last_name']
 
 admin.site.register(Suscripcion, SuscripcionAdmin)
+
+
+# Mismo soporte para los paquetes de clases ("pagué y no puedo reservar").
+class PaqueteClasesAdmin(admin.ModelAdmin):
+    list_display = ['buy_order', 'alumno', 'profesor', 'plan', 'clases', 'monto', 'estado', 'creada', 'fecha_fin']
+    list_filter = ['estado', 'plan']
+    search_fields = ['buy_order', 'alumno__user__first_name', 'alumno__user__last_name']
+
+admin.site.register(PaqueteClases, PaqueteClasesAdmin)

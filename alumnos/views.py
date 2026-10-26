@@ -1,5 +1,5 @@
 import json
-import random
+import secrets
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, Http404
@@ -21,13 +21,16 @@ from .models import (
     Clase,
     SesionClase,
     Inscripcion,
+    PaqueteClases,
     Suscripcion,
 )
 from django.core.exceptions import ValidationError
+from . import paquetes
 from .forms import AlumnoForm, FiltroClasesForm
 from .decorators import alumno_required
 from .exceptions import InscripcionError
 from .services import InscripcionService
+from .templatetags.dinero import clp as _clp  # mismo formato en vistas y plantillas
 from .roles import (
     ALUMNO,
     abrir_sesion_rol,
@@ -49,22 +52,6 @@ from transbank.common.integration_api_keys import IntegrationApiKeys
 from transbank.common.integration_type import IntegrationType
 
 
-PERIODOS = {
-    'mensual': 1,
-    '3semanas': 0.75,
-    '2semanas': 0.50,
-    '1semana': 0.25,
-}
-
-# Duracion de un plan segun el periodo elegido en el carrito.
-DIAS_POR_PERIODO = {
-    'mensual': 30,
-    '3semanas': 21,
-    '2semanas': 14,
-    '1semana': 7,
-}
-
-
 def _tx():
     return Transaction(
         WebpayOptions(
@@ -75,60 +62,27 @@ def _tx():
     )
 
 
-def _clp(n):
-    return '$' + f'{int(n):,}'.replace(',', '.')
+def _plan_para_js(alumno):
+    """Plan vigente en el formato que usa el JS del portal, o None si no tiene.
 
-
-def _plan_para_js(suscripcion):
-    """Plan vigente en el formato que usa el JS del portal, o None si no tiene."""
+    Un paquete vigente es el plan activo. Las suscripciones de antes de los
+    paquetes siguen valiendo hasta que venzan.
+    """
+    paquete = alumno.paquetes.vigentes().order_by('-fecha_fin').first()
+    if paquete:
+        return {'nombre': paquete.get_plan_display(), 'premium': True}
+    suscripcion = alumno.plan_vigente()
     if suscripcion is None:
         return None
     return {'nombre': suscripcion.get_plan_display(), 'premium': suscripcion.es_premium}
 
 
-PRECIOS_PLANES_OFICIALES = {
-    '1': 89990,
-    '2': 139990,
-    '3': 189990,
-}
-
-# El Plan Personalizado se cotiza en el navegador, asi que su precio llega del
-# cliente. Como da premium, nunca se cobra menos que su configuracion mas
-# barata en planes.html (grabado $10.000 + 1 hora semanal $5.000).
-PLAN_PERSONALIZADO = '5'
-PRECIO_MINIMO_PERSONALIZADO = 15000
-
-def _precio_item(item):
-    item_id = str(item.get('id', ''))
-    if item_id in PRECIOS_PLANES_OFICIALES:
-        base = PRECIOS_PLANES_OFICIALES[item_id]
-    else:
-        base = int(
-            ''.join(
-                c for c in str(item.get('precio', '0'))
-                if c.isdigit()
-            ) or 0
-        )
-        if item_id == PLAN_PERSONALIZADO:
-            base = max(base, PRECIO_MINIMO_PERSONALIZADO)
-
-    factor = PERIODOS.get(
-        item.get('periodo', 'mensual'),
-        1
-    )
-
-    return round(base * factor) * _cantidad(item)
-
-
-def _cantidad(item):
-    try:
-        return max(1, min(int(item.get('cantidad', 1)), 20))
-    except (ValueError, TypeError):
-        return 1
-
-
-def _dias_item(item):
-    return DIAS_POR_PERIODO.get(item.get('periodo', 'mensual'), 30) * _cantidad(item)
+def _profesor_habilitado(profesor_id):
+    """Profesor que puede vender clases segun el id recibido, o None."""
+    profesor_id = str(profesor_id or '')
+    if not profesor_id.isdecimal():
+        return None
+    return Profesor.objects.habilitados().select_related('user').filter(pk=profesor_id).first()
 
 
 # ============================================================
@@ -145,12 +99,23 @@ def home(request):
 
 
 def planes(request):
-    context = {}
-    return render(
-        request,
-        'alumnos/planes.html',
-        context
-    )
+    """Paquetes con los precios del profesor elegido (?profesor=id) o de la tarifa base.
+
+    Todo precio sale de alumnos/paquetes.py: la pantalla no calcula nada.
+    """
+    profesor = _profesor_habilitado(request.GET.get('profesor'))
+    tarifa = profesor.tarifa if profesor else paquetes.TARIFA_BASE
+    return render(request, 'alumnos/planes.html', {
+        'profesores': Profesor.objects.habilitados().select_related('user', 'especialidad')
+                                                    .order_by('user__first_name', 'user__last_name'),
+        'profesor': profesor,
+        'tarifa': tarifa,
+        'tarifa_base': paquetes.TARIFA_BASE,
+        'cotizaciones': paquetes.cotizar(tarifa),
+        'duracion_clase': paquetes.DURACION_CLASE_MIN,
+        'comision_pct': int(paquetes.COMISION * 100),
+        'es_alumno': bool(request.session.get('alumno_id')),
+    })
 
 
 def servicios(request):
@@ -364,7 +329,15 @@ def alumno_pag1(request):
         .order_by('-sesion__fecha_hora_inicio')
     )
 
-    pagos = list(alumno.suscripciones.exclude(estado=Suscripcion.ESTADO_PENDIENTE))
+    mis_paquetes = list(
+        alumno.paquetes.vigentes().select_related('profesor__user').order_by('fecha_fin')
+    )
+    # Historial: paquetes y suscripciones antiguas, del mas nuevo al mas viejo.
+    pagos = sorted(
+        [*alumno.suscripciones.exclude(estado=Suscripcion.ESTADO_PENDIENTE),
+         *alumno.paquetes.exclude(estado=PaqueteClases.ESTADO_PENDIENTE)],
+        key=lambda pago: pago.creada, reverse=True,
+    )
     for pago in pagos:
         pago.monto_clp = _clp(pago.monto)  # mismo formato que la confirmacion de Webpay
 
@@ -390,7 +363,8 @@ def alumno_pag1(request):
         'mis_inscripciones': mis_inscripciones,
         'historial_clases': historial_clases,
         'progreso': alumno.resumen_progreso(),
-        'plan_activo': _plan_para_js(alumno.plan_vigente()),
+        'plan_activo': _plan_para_js(alumno),
+        'mis_paquetes': mis_paquetes,
         'pagos': pagos,
     }
 
@@ -806,112 +780,61 @@ def cancelar_inscripcion(request, pk):
     from .services import InscripcionService
     try:
         InscripcionService.cancelar_inscripcion(alumno, inscripcion.pk)
-    except Exception:
-        inscripcion.delete()
+    except InscripcionError:
+        # Ya empezo o no esta activa. Antes se borraba la inscripcion: con
+        # paquetes eso devolveria una clase ya tomada.
+        pass
 
     return redirect('alumno_pag1')
+
+
+@alumno_required
+@require_POST
+def reprogramar_inscripcion(request, pk):
+    """Mueve una reserva propia a otra sesion del mismo profesor (POST id_sesion)."""
+    alumno = get_object_or_404(Alumno, id_alumno=request.session['alumno_id'])
+    id_sesion = request.POST.get('id_sesion', '')
+    if not id_sesion.isdecimal():
+        return JsonResponse({'success': False, 'message': 'ID de sesión no proporcionado.'}, status=400)
+    try:
+        inscripcion = InscripcionService.reprogramar_inscripcion(alumno, pk, int(id_sesion))
+    except (InscripcionError, ValidationError) as e:
+        return JsonResponse({'success': False, 'message': e.messages[0] if e.messages else str(e)})
+    return JsonResponse({
+        'success': True,
+        'message': f'Reserva movida al {inscripcion.sesion.inicio_local.strftime("%d/%m/%Y a las %H:%M")}.',
+    })
 
 
 # ============================================================
 # PAGO CON WEBPAY PLUS - TRANSBANK
 # ============================================================
 
-def pago(request):
-
-    return render(
-        request,
-        'alumnos/pago.html',
-        {}
-    )
-
-
-@alumno_required  # el plan necesita un dueño: sin alumna logueada no se cobra
-def iniciar_webpay(request):
-
-    if request.method != 'POST':
+@alumno_required  # el paquete necesita un dueño: sin alumna logueada no se cobra
+@require_POST
+def comprar_paquete(request):
+    """Inicia Webpay por un paquete. El monto lo calcula el servidor con la tarifa del profesor."""
+    plan = paquetes.POR_CODIGO.get(request.POST.get('plan', ''))
+    profesor = _profesor_habilitado(request.POST.get('profesor'))
+    if not (plan and profesor):
         return redirect('planes')
 
-    carrito_json = request.POST.get(
-        'carrito',
-        '[]'
-    )
-
+    monto = paquetes.precio(plan, profesor.tarifa)
+    # Unico (26 caracteres, el maximo de Transbank): con un numero corto al azar, un
+    # pedido abandonado podia compartir orden con una compra nueva y activarse gratis.
+    buy_order = f'PQ{secrets.token_hex(12)}'
+    session_id = f'S{secrets.token_hex(8)}'
     try:
-        carrito = json.loads(carrito_json)
-        if not isinstance(carrito, list) or not carrito:
-            return redirect('planes')
-    except (ValueError, TypeError):
-        return redirect('planes')
+        response = _tx().create(buy_order, session_id, monto, request.build_absolute_uri(reverse('confirmacion')))
+    except Exception:  # Transbank caido o rechazo la orden: no se cobra ni se crea el paquete
+        return render(request, 'alumnos/confirmacion.html', {'aprobado': False, 'items': []})
 
-    # Validar y calcular el monto esperado desde el carrito en el servidor
-    try:
-        amount_post = int(request.POST.get('amount', '0'))
-    except ValueError:
-        amount_post = 0
-
-    monto_calculado = sum(_precio_item(item) for item in carrito)
-    if monto_calculado >= 350:
-        amount = monto_calculado
-    else:
-        return redirect('planes')
-
-    buy_order = (
-        'LB'
-        + str(
-            random.randrange(
-                1000000,
-                9999999
-            )
-        )
+    PaqueteClases.objects.create(
+        alumno_id=request.session['alumno_id'], profesor=profesor, plan=plan.codigo,
+        clases=plan.clases, tarifa=profesor.tarifa, monto=monto, dias=plan.vigencia_dias,
+        buy_order=buy_order,
     )
-
-    session_id = (
-        'S'
-        + str(
-            random.randrange(
-                1000000,
-                9999999
-            )
-        )
-    )
-
-    return_url = (
-        request.build_absolute_uri(
-            reverse('confirmacion')
-        )
-    )
-
-    response = _tx().create(
-        buy_order,
-        session_id,
-        amount,
-        return_url
-    )
-
-    request.session[
-        'orden_pendiente'
-    ] = {
-        'buy_order': buy_order,
-        'carrito': carrito_json,
-    }
-
-    planes_validos = dict(Suscripcion.PLANES)
-    for item in carrito:
-        plan = str(item.get('id', ''))
-        if plan in planes_validos:
-            Suscripcion.objects.create(
-                alumno_id=request.session['alumno_id'], plan=plan,
-                dias=_dias_item(item), monto=_precio_item(item), buy_order=buy_order,
-            )
-
-    return render(
-        request,
-        'alumnos/redirect_webpay.html',
-        {
-            'url': response['url'],
-            'token': response['token'],
-        }
-    )
+    return render(request, 'alumnos/redirect_webpay.html', {'url': response['url'], 'token': response['token']})
 
 
 @csrf_exempt
@@ -927,52 +850,20 @@ def confirmacion(request):
         or request.POST.get('TBK_TOKEN')
     )
 
-    orden = request.session.pop(
-        'orden_pendiente',
-        {}
-    )
-
-    try:
-
-        carrito = json.loads(
-            orden.get(
-                'carrito',
-                '[]'
-            )
-        )
-
-    except (ValueError, TypeError):
-
-        carrito = []
-
-    items = [
-        {
-            'titulo': item.get(
-                'titulo',
-                ''
-            ),
-            'cantidad': item.get(
-                'cantidad',
-                1
-            ),
-            'precio': _clp(
-                _precio_item(item)
-            ),
-        }
-        for item in carrito
-    ]
-
     ctx = {
-        'items': items
+        'items': []
     }
 
     # Pago recibido desde Webpay
 
     if token:
 
-        resp = _tx().commit(
-            token
-        )
+        try:
+            resp = _tx().commit(
+                token
+            )
+        except Exception:  # token invalido/expirado o Transbank caido: no se activa nada
+            resp = {}
 
         aprobado = (
             resp.get(
@@ -992,18 +883,24 @@ def confirmacion(request):
         )
 
         # El buy_order viene de Transbank (commit), no del navegador.
-        Suscripcion.confirmar_pago(resp.get('buy_order', ''), aprobado)
+        # confirmar_pago es idempotente: repetir el token no activa dos veces.
+        buy_order = resp.get('buy_order', '')
+        # El monto autorizado por Transbank debe ser el del paquete pedido (idea de la rama Franco).
+        paquete = PaqueteClases.objects.filter(buy_order=buy_order).first() if buy_order else None
+        if paquete and int(resp.get('amount') or 0) != paquete.monto:
+            aprobado = False
+        Suscripcion.confirmar_pago(buy_order, aprobado)
+        PaqueteClases.confirmar_pago(buy_order, aprobado)
+        ctx['items'] = [
+            {'titulo': f'{p.get_plan_display()}: {p.clases} clase(s) con {p.profesor.nombre if p.profesor else "—"}',
+             'cantidad': 1, 'precio': _clp(p.monto)}
+            for p in PaqueteClases.objects.filter(buy_order=buy_order).select_related('profesor__user')
+        ] if buy_order else []
 
         ctx.update({
             'aprobado': aprobado,
 
-            'orden': resp.get(
-                'buy_order',
-                orden.get(
-                    'buy_order',
-                    ''
-                )
-            ),
+            'orden': buy_order,
 
             'monto': _clp(
                 resp.get(
