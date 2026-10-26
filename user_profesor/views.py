@@ -1,10 +1,11 @@
-from django.core.exceptions import ValidationError
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import FileResponse, Http404, JsonResponse
+from django.http import JsonResponse
 from django.views.decorators.cache import never_cache
 from alumnos.models import Especialidad, Genero, Profesor, Clase, Inscripcion, Tutor
 from alumnos.decorators import profesor_required, profesor_required_json
 from alumnos.roles import ADMIN, PROFESOR, abrir_sesion_rol, resolver_rol
+from django.core.exceptions import ValidationError
+from django.http import FileResponse, Http404
 from . import foto
 
 # Tarifas por inscripcion real. Antes estaban escritas a mano dentro de cada
