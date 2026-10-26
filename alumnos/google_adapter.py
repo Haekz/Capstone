@@ -1,4 +1,4 @@
-"""Que pasa cuando alguien vuelve de Google.
+﻿"""Que pasa cuando alguien vuelve de Google.
 
 Antes allauth creaba un CustomUser vacio (sin RUT ni perfil) y lo dejaba
 logueado, pero los portales piden un perfil Alumno/Profesor/Tutor
@@ -11,8 +11,11 @@ Ahora, con el correo VERIFICADO que entrega Google:
 2. Si no hay cuenta (o es una cuenta huerfana sin perfil) -> NO se crea nada:
    se envia un codigo al correo y se piden los datos que faltan
    (ver alumnos/google_views.py). Sin esos datos no hay cuenta funcional.
+3. Si la cuenta existe pero esta desactivada (is_active = False) -> se rechaza
+   el acceso de inmediato por seguridad (S4-02 / S-16).
 """
 
+from allauth.account.adapter import DefaultAccountAdapter
 from allauth.core.exceptions import ImmediateHttpResponse
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django.contrib import messages
@@ -43,10 +46,29 @@ def buscar_usuario_por_correo(correo):
 
 def entrar_al_portal(request, user):
     """Abre la sesion del rol del usuario y devuelve el redirect a su portal."""
+    if not getattr(user, 'is_active', True):
+        messages.error(
+            request,
+            'Tu cuenta se encuentra desactivada por la administración. '
+            'Comunícate con soporte si consideras que es un error.'
+        )
+        return redirect('login')
+
     rol, perfil = resolver_rol(user)
     auth_login(request, user, backend=BACKEND_SESION)
     abrir_sesion_rol(request, rol, perfil)
     return redirigir_a_portal(rol)
+
+
+class LbwusAccountAdapter(DefaultAccountAdapter):
+    """
+    Adaptador de cuentas locales para allauth (S4-02 / S-15).
+    Deshabilita el endpoint público de registro directo (/accounts/signup/)
+    para que nadie pueda registrar cuentas huérfanas sin perfil ni validación de RUT.
+    """
+
+    def is_open_for_signup(self, request):
+        return False
 
 
 class LbwusSocialAdapter(DefaultSocialAccountAdapter):
@@ -59,6 +81,16 @@ class LbwusSocialAdapter(DefaultSocialAccountAdapter):
 
         # sociallogin.user ya viene cargado si esta cuenta Google estaba vinculada.
         user = sociallogin.user if sociallogin.is_existing else buscar_usuario_por_correo(correo)
+
+        # Control de acceso estricto para cuentas desactivadas (S4-02 / S-16)
+        if user is not None and not user.is_active:
+            messages.error(
+                request,
+                'Tu cuenta ha sido desactivada por la administración. '
+                'Comunícate con soporte si crees que esto es un error.'
+            )
+            raise ImmediateHttpResponse(redirect('login'))
+
         rol, _ = resolver_rol(user) if user is not None else (None, None)
 
         if rol is not None:

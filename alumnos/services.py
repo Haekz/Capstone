@@ -162,3 +162,12 @@ class InscripcionService:
             inscripcion.estado = Inscripcion.ESTADO_CANCELADA
             inscripcion.save(update_fields=['estado'])
             return inscripcion
+
+
+
+
+class PlanesService:
+    TARIFA_BASE_DEFECTO = 15000
+    @classmethod
+    def calcular_planes(cls, profesor=None):
+        return []

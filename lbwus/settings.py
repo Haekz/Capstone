@@ -97,6 +97,7 @@ SOCIALACCOUNT_LOGIN_ON_GET = True
 # allauth borra la clave de las cuentas cuyo correo no esta en su tabla
 # EmailAddress, y las nuestras no estan ahi.
 SOCIALACCOUNT_ADAPTER = 'alumnos.google_adapter.LbwusSocialAdapter'
+ACCOUNT_ADAPTER = 'alumnos.google_adapter.LbwusAccountAdapter'
 SOCIALACCOUNT_PROVIDERS = {
     'google': {'SCOPE': ['profile', 'email']},
 }
@@ -277,3 +278,22 @@ AUTH_USER_MODEL = 'alumnos.CustomUser'
 # ============================================================
 WEBPAY_SIMULACION_ACTIVADA = os.environ.get('WEBPAY_SIMULACION', 'True').lower() in ('true', '1', 'yes')
 USUARIOS_SIMULACION_WEBPAY = ['*']
+
+
+# ============================================================
+# CACHÉ PERSISTENTE Y COMPARTIDO (S4-02 / S-07)
+# ============================================================
+# En desarrollo y producción se utiliza DatabaseCache, garantizando que el rate
+# limiting de login y el conteo de intentos persistan entre procesos worker
+# y tras reinicios de contenedores.
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'lbwus_cache_table',
+        'TIMEOUT': 300,
+        'OPTIONS': {
+            'MAX_ENTRIES': 10000,
+            'CULL_FREQUENCY': 3,
+        }
+    }
+}

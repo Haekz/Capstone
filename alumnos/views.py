@@ -1,3 +1,4 @@
+import os
 import uuid
 from django.utils import timezone
 from django.conf import settings
@@ -29,7 +30,8 @@ from django.core.exceptions import ValidationError
 from .forms import AlumnoForm
 from .decorators import alumno_required
 from .exceptions import InscripcionError
-from .services import InscripcionService
+from .services import InscripcionService, PlanesService
+from .backends import obtener_identificador_rate_limit
 from .roles import (
     ALUMNO,
     abrir_sesion_rol,
@@ -74,6 +76,14 @@ def _clp(n):
 
 
 PRECIOS_PLANES_OFICIALES = {
+    # Planes vigentes (S4-04): Tarifa base .000
+    'plan_flexible': 15000,
+    'plan_progreso': 59000,
+    'plan_intensivo': 116000,
+    'flexible': 15000,
+    'progreso': 59000,
+    'intensivo': 116000,
+    # Retrocompatibilidad con planes heredados
     '1': 89990,
     '2': 139990,
     '3': 189990,
@@ -118,7 +128,31 @@ def home(request):
 
 
 def planes(request):
-    context = {}
+    profesor_id = request.GET.get('profesor_id')
+    profesor = None
+    if profesor_id:
+        try:
+            profesor = Profesor.objects.select_related('user', 'especialidad').get(pk=profesor_id)
+        except (Profesor.DoesNotExist, ValueError):
+            profesor = None
+
+    planes_data = PlanesService.calcular_planes(profesor=profesor)
+
+    if request.GET.get('format') == 'json' or request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({
+            'planes': planes_data,
+            'profesor': {
+                'id': profesor.id_profesor,
+                'nombre': profesor.nombre,
+            } if profesor else None,
+            'status': 'ok'
+        })
+
+    context = {
+        'planes': planes_data,
+        'profesor_seleccionado': profesor,
+        'tarifa_base_referencia': PlanesService.TARIFA_BASE_DEFECTO,
+    }
     return render(
         request,
         'alumnos/planes.html',
@@ -380,10 +414,23 @@ def alumno_pag1(request):
 # ============================================================
 
 def _obtener_ip(request):
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
-        return x_forwarded_for.split(',')[0].strip()
-    return request.META.get('REMOTE_ADDR', '127.0.0.1')
+    """
+    Obtiene una dirección IP confiable del cliente (S4-02 / S-07).
+    Prioriza REMOTE_ADDR salvo en entornos con proxy inverso de confianza (ej. Railway).
+    Previene evasión de límites de intentos mediante cabeceras X-Forwarded-For manipuladas.
+    """
+    remote_addr = request.META.get('REMOTE_ADDR', '').strip() or '127.0.0.1'
+    confiar_proxy = (
+        getattr(settings, 'CONFIAR_X_FORWARDED_FOR', False)
+        or bool(os.environ.get('RAILWAY_ENVIRONMENT'))
+    )
+    if confiar_proxy:
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ips = [ip.strip() for ip in x_forwarded_for.split(',') if ip.strip()]
+            if ips:
+                return ips[0]
+    return remote_addr
 
 
 # never_cache: si el navegador guarda el login, al volver "atras" desde el
@@ -413,8 +460,9 @@ def custom_login(request):
         )
 
         ip = _obtener_ip(request)
+        canon_user = obtener_identificador_rate_limit(username)
         clave_cache_ip = f'intentos_login_ip_{ip}'
-        clave_cache_user = f'intentos_login_user_{username.lower()}'
+        clave_cache_user = f'intentos_login_user_{canon_user}' if canon_user else 'intentos_login_user_anon'
 
         intentos_ip = cache.get(clave_cache_ip, 0)
         intentos_user = cache.get(clave_cache_user, 0)
@@ -470,7 +518,7 @@ def custom_login(request):
 
             else:
                 cache.set(clave_cache_ip, intentos_ip + 1, 300)
-                if username:
+                if canon_user:
                     cache.set(clave_cache_user, intentos_user + 1, 300)
 
                 error = (
