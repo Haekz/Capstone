@@ -4,7 +4,7 @@ Paquetes **Flexible, Progreso e Intensivo**. Cada regla indica su fuente en el c
 Las cifras salen de `alumnos/paquetes.py`, que es la única fuente de precios (planes, Webpay y saldo del profesor).
 
 > **Cómo leerlo.** Las secciones 1 a 5 describen el sistema **tal como está hoy**. La sección 6 recoge las **decisiones del equipo (26-oct-2026)** y lo que falta construir para cumplirlas. La sección 7 es el flujo de caja con esas decisiones.
-> Las decisiones numeradas de la sección 6 son del equipo. Las **definiciones propuestas** (A a D) esperan aprobación interna. Nada de este documento certifica cumplimiento legal ni autoriza a recibir pagos reales: antes hay que completar las validaciones de la sección 8.
+> La sección 6 sigue la **versión consolidada del 26-oct-2026**, propuesta integral que espera la aprobación del equipo. Nada de este documento certifica cumplimiento legal ni autoriza a recibir pagos reales: antes hay que completar las validaciones de la sección 8.
 
 ## 1. Precio según tutor
 
@@ -60,39 +60,23 @@ Las cifras salen de `alumnos/paquetes.py`, que es la única fuente de precios (p
 | Planes Básico, Medio y Superior (§4) | Flexible, Progreso e Intensivo (los anteriores quedan solo como historial en el modelo `Suscripcion`) |
 | Sin aviso de 24 h la sesión "no será reembolsable ni reprogramable" (§5) | Se puede cancelar y reprogramar hasta que empiece |
 
-## 6. Decisiones del equipo (26-oct-2026) y lo que falta construir
+## 6. Política consolidada (26-oct-2026) y lo que falta construir
 
-| # | Decisión del equipo | Sistema hoy | Falta |
+Sigue los puntos 1 a 11 de la versión consolidada del equipo. Los puntos 12 a 15 están en las secciones 8 y 9.
+
+| # | Política consolidada | Sistema hoy | Falta construir |
 |---|---|---|---|
-| 1 | Devolución de dinero por clases no usadas, **proporcional al precio efectivamente pagado** | No existe | Solicitud, cálculo, anulación o reversa en Webpay y registro |
-| 2 | **Retracto de 10 días** desde la contratación y antes del inicio del servicio, sin exclusiones comerciales | No existe | Regla de plazo y devolución total |
-| 3 | Cancelación gratis con **24 h** de anticipación. Después: condiciones transparentes y proporcionadas, con excepciones justificadas | Se cancela hasta el inicio, sin plazo | Aplicar las 24 h y la excepción de la definición A (propuesta) |
-| 4 | Clases de 60 min. Vigencias de 30, 60 y 90 días | **Implementado** (`DURACION_CLASE_MIN`, `vigencia_dias`) | Nada |
-| 5 | **Prórroga gratuita de 15 días** en Progreso e Intensivo, pedida antes del vencimiento | No existe | Solicitud y extensión de `fecha_fin` |
-| 6 | Las clases no usadas **no son ganancia automática** de LBWUS y el vencimiento no limita el derecho a devolución | Se pierden al vencer | Tratarlas como obligación y no cerrar el derecho al vencer |
-| 7 | El profesor fija su tarifa desde su panel | **Implementado** | Nada |
-| 8 | Descuentos porcentuales sobre la tarifa, redondeo a $1.000, **con aceptación expresa del profesor** | Descuento fijo por plan para todos | Consentimiento del profesor y activar o desactivar cada paquete (definición B, propuesta) |
-| 9 | Precios de referencia: $15.000, $59.000 y $116.000 | **Implementado** | Nada |
-| 10 | Comisión de **15% IVA incluido** sobre el precio final. El profesor recibe el 85% | **Implementado** (`COMISION`) | Nada |
-| 11 | Reprogramación gratis, mismo profesor, **máximo 2 por reserva**, con 24 h de aviso y dentro de la vigencia. Las cancelaciones o incumplimientos del profesor no consumen crédito ni cuentan en el límite | Sin límite ni plazo. La cancelación del profesor sí devuelve la clase | Contador de 2, regla de 24 h y registro de incumplimiento del profesor |
-| 12 | Planes antiguos dejan de venderse. Se conserva el historial. Solo se ven los tres | `planes.html` ya no los muestra por nombre. El modelo `Suscripcion` los conserva | Revisar que ninguna ruta los siga vendiendo |
-| 13 | Términos y Condiciones actualizados: información, derechos de estudiantes y apoderados, menores, privacidad, responsabilidades del profesor. **Revisión jurídica antes de transacciones reales** | Desactualizados (sección 5) | Redacción y revisión jurídica |
-| 14 | Liquidación **semanal** al profesor, solo por clases realizadas y conciliadas | El profesor solicita retiro y el admin lo aprueba (`solicitar_retiro`, `aprobar_retiro`) | Liquidación periódica y conciliación |
-| 15 | Anulaciones, devoluciones totales y parciales, conciliación de pagos y registro de comisiones | No existe | Depende de lo que permita Transbank |
-| 16 | Registrar por separado el efectivo disponible, las obligaciones pendientes y el ingreso devengado | No existe | Reporte financiero (ver ejemplo en la sección 7) |
-
-### Definiciones propuestas (pendientes de aprobación interna)
-
-Cierran los cuatro puntos que estaban abiertos. Son **propuestas**, no certificación de cumplimiento legal.
-
-| | Definición propuesta | Falta construir |
-|---|---|---|
-| A. Cancelación con menos de 24 h | Plazo mínimo de 24 h para cancelar o reprogramar sin restricciones. Dentro de las 24 h: **una excepción gratuita por paquete**, con el crédito recuperado para reservar de nuevo con el mismo profesor. Superada la excepción, la cancelación **queda en revisión de LBWUS**, sin pérdida automática del crédito ni retención de dinero. Si la causa es del profesor o de la plataforma: reprogramar sin penalización o pedir la devolución | Regla de 24 h, contador de la excepción por paquete y cola de revisión |
-| B. Profesor que no acepta los descuentos | Los paquetes son **voluntarios** para cada profesor. Puede activar o desactivar Progreso e Intensivo mientras no haya compromisos afectados. Si no participa, sus alumnos solo ven **Flexible**. Las compras anteriores conservan precio, clases y condiciones | Opción por profesor y filtro de los planes visibles |
-| C. Costo de Transbank en una devolución | **LBWUS lo absorbe** frente al estudiante: si le corresponden $59.000, recibe los $59.000 completos. Si la causa es del profesor, LBWUS puede evaluar la distribución interna según el contrato con el profesor | Registrar por separado el reembolso, el costo del proveedor y su efecto en la contribución de LBWUS |
-| D. Crédito y débito | Supuesto inicial de **50% crédito y 50% débito o prepago**, revisable con datos reales. Se analizarán escenarios con más crédito | Reemplazar el supuesto por los porcentajes reales cuando existan |
-
-**A confirmar:** la definición A habla de cancelar o reprogramar "sin restricciones" con 24 h, y la decisión 11 limita las reprogramaciones a 2 por reserva. Hay que aclarar si ese límite sigue vigente.
+| 1 | **Devoluciones y retracto.** Devolución total si no usó ninguna clase; proporcional al precio pagado (con su descuento) si usó parte. No se descuentan multas ni costos de Transbank. Retracto de 10 días cuando sea aplicable, antes de la prestación. Si Webpay no permite devolver directamente, un procedimiento alternativo autorizado y documentado | No existe | Solicitudes de devolución total y parcial, su estado y la trazabilidad de los montos devueltos |
+| 2 | **Cancelaciones.** Gratis con 24 h de anticipación, recuperando el crédito. Con menos de 24 h: **una excepción gratuita por paquete**. Cancelaciones tardías injustificadas reiteradas: registro de incidencias y posible revisión administrativa de reservas futuras, con criterios objetivos. **Sin multas, retenciones ni pérdida automática de créditos.** Las clases canceladas no cuentan como realizadas ni generan pago al profesor ni comisión | Se cancela hasta el inicio, sin plazo. La clase cancelada no se consume (`consumidas()`) | Regla de 24 h, contador de la excepción por paquete y registro de incidencias |
+| 3 | **Vigencia.** Clases de 60 min. Vigencia de 30, 60 y 90 días desde la confirmación de la compra. **Prórroga gratuita única de 15 días** en Progreso e Intensivo, pedida antes del vencimiento. Vencido el paquete no se reserva, pero lo no realizado **no pasa a ser ingreso** de LBWUS y se puede pedir su devolución proporcional. Si el vencimiento se debe al profesor o a la plataforma, LBWUS ofrece una solución | Duración y vigencias **implementadas** (`DURACION_CLASE_MIN`, `vigencia_dias`). Las clases vencidas se pierden | Prórroga única y tratamiento de lo vencido como obligación |
+| 4 | **Términos y Condiciones** reescritos: precios, descuentos, vigencias, cancelaciones, reprogramaciones, devoluciones, retracto, responsabilidades de profesores, reclamos, datos personales, menores y apoderados. Revisión jurídica antes de pagos reales y **aceptación expresa al contratar** | Desactualizados (sección 5). La compra **no muestra ni pide aceptar** los Términos; el pie de página los marca como "próximamente" | Redacción, revisión jurídica, publicación y aceptación en el flujo de compra |
+| 5 | **Tarifas y descuentos voluntarios.** Tarifa del profesor desde su panel. Cada profesor decide **por paquete** si ofrece Progreso e Intensivo; si no, ese paquete no se puede contratar y queda Flexible. Descuentos de ≈1,67% y ≈3,33% sobre la tarifa, redondeo a $1.000. Precios de referencia: $15.000, $59.000 y $116.000. Los cambios solo afectan compras futuras | Tarifa, descuentos, redondeo, precios y condiciones fijas al comprar: **implementado**. Todos los profesores ofrecen los tres paquetes | Opción del profesor por paquete y ocultar el paquete no ofrecido |
+| 6 | **Comisión** de 15% IVA incluido sobre el precio final; 85% bruto para el profesor. LBWUS asume sus costos de procesamiento sin cambiar la comisión del profesor. El 15% **no es ingreso neto** | **Implementado** (`COMISION`) | Nada en el cálculo |
+| 7 | **Reprogramación:** **máximo 2 por clase contratada**, dentro de la vigencia y normalmente con el mismo profesor. **Cancelar y volver a reservar con el mismo crédito cuenta como reprogramación.** Lo causado por el profesor, por LBWUS o por circunstancias justificadas no cuenta. El límite no puede impedir devoluciones | Sin límite ni plazo. Ya impide reservar dos veces la misma sesión | Contador por clase, historial de cada cambio y registro de su causa. **Ojo:** los créditos no tienen identidad propia (se cuentan, no se registran uno a uno), así que seguir "el mismo crédito" entre una cancelación y una nueva reserva requiere diseñarlo |
+| 8 | **Planes antiguos** (Básico, Medio, Superior y suscripciones) se dejan de vender. Solo Flexible, Progreso e Intensivo, sin suscripciones obligatorias ni renovación automática. Se conserva el historial | `planes.html` ya no los muestra por nombre. El modelo `Suscripcion` conserva el historial. No hay renovación automática (sección 5) | Verificar que ninguna ruta permita contratarlos |
+| 9 | **Transbank:** 2,29% y 1,49% + IVA como referencia, con mínimos y sujeto a contrato. LBWUS absorbe los costos de procesamiento y anulación sin descontarlos de las devoluciones. Registrar operaciones aprobadas, rechazadas, anuladas y reembolsadas, y conciliarlas | Solo registra pagos aprobados y rechazados (`_activar_pendientes`) | Estados de anulación y reembolso, conciliación y registro del costo del proveedor |
+| 10 | **Pagos a profesores:** liquidación semanal propuesta de las clases realizadas y conciliadas. Lo pendiente, cancelado, no realizado o en reclamo no se liquida. Separar lo cobrado, las obligaciones pendientes y lo devengado. Confirmar que el proveedor permite administrar y transferir fondos a los profesores | El profesor solicita retiro y el admin lo aprueba (`solicitar_retiro`, `aprobar_retiro`) | Liquidación semanal, conciliación y reporte de lo cobrado, pendiente y devengado (ejemplo en la sección 7) |
+| 11 | **Proyección:** 300 clases el primer año (132 / 26 / 8) y 50% crédito / 50% débito o prepago. **Son supuestos**, no datos observados; se reemplazan con ventas reales | No aplica | Nada: los escenarios de medios de pago (todo crédito, 50/50, todo débito) ya están en la sección 7 |
 
 ## 7. Cambio del precio promedio y flujo de caja
 
@@ -156,11 +140,11 @@ El alumno paga todo el paquete al comprar, pero las clases se dictan durante 60 
 | Obligación pendiente por 6 clases no dictadas | $87.000 |
 | **Suma** | **$116.000** |
 
-Mientras no se dicten las clases, ese dinero es una **obligación**, no un ingreso. Con las decisiones 1 y 6, tampoco pasa a ser ganancia al vencer el paquete.
+Mientras no se dicten las clases, ese dinero es una **obligación**, no un ingreso. Con los puntos 1 y 3 de la sección 6, tampoco pasa a ser ganancia al vencer el paquete.
 
 ### Devolución proporcional al precio pagado
 
-Se devuelve lo no usado al **precio por clase efectivamente pagado**, no a la tarifa del profesor. Según la definición C, el estudiante recibe el monto completo y LBWUS absorbe el costo de Transbank:
+Se devuelve lo no usado al **precio por clase efectivamente pagado**, no a la tarifa del profesor. Según los puntos 1 y 9 de la sección 6, el estudiante recibe el monto completo y LBWUS absorbe el costo de Transbank:
 
 | Plan | Clases usadas | Devolución |
 |---|---|---|
@@ -174,15 +158,18 @@ Se devuelve lo no usado al **precio por clase efectivamente pagado**, no a la ta
 ## 8. Validaciones previas al lanzamiento comercial
 
 Fuera del alcance de esta tarea, pero condición para cobrar dinero real:
-- **Revisión jurídica** de los Términos y Condiciones, el derecho a retracto, las políticas de cancelación, los reembolsos, la protección de datos y las responsabilidades contractuales.
-- **Revisión contable y tributaria** de la comisión de intermediación, los documentos tributarios, los pagos a profesores y el reconocimiento de ingresos.
-- **Confirmación con Transbank**, por contrato, de las tarifas, los plazos de liquidación, los costos de anulación y los mecanismos de devolución total y parcial.
+- **Revisión jurídica (punto 12)** según la Ley N.º 19.496 de Protección de los Derechos de los Consumidores: retracto, proporcionalidad de las restricciones, cancelaciones e inasistencias, devoluciones, responsabilidades de intermediación, y protección de menores y de sus datos. Ninguna regla interna puede restringir derechos irrenunciables.
+- **Revisión contable y tributaria (punto 13)** de las comisiones, los documentos tributarios, las obligaciones de los profesores, los pagos anticipados, las devoluciones y el reconocimiento de ingresos, incluidos los costos de Transbank y sus impuestos.
+- **Validación operativa de pagos (punto 14):** contrato verificado con el proveedor, conciliación y devolución funcionando, y un procedimiento autorizado para liquidar a profesores. Se prueba con operaciones de prueba: compras, rechazos, anulaciones, devoluciones parciales, clases completadas y escenarios de error.
 
 ## 9. Aprobación y trazabilidad
 
 El equipo debe confirmar expresamente que este documento refleja las decisiones comerciales acordadas. Una vez aprobado, es la referencia para actualizar los Términos y Condiciones, el flujo de caja, las reglas del sistema y los criterios de aceptación de las tareas de Jira.
 
+**Aprobadores (punto 15):** Francheska, Franco y Benjamín.
 **Estado de aprobación:** pendiente.
+
+La aprobación del equipo **no reemplaza** las revisiones jurídica, contable, tributaria ni contractual necesarias para operar con dinero real.
 
 **Los puntos de este documento son propuestas para aprobación interna. No constituyen certificación de cumplimiento legal ni autorización para recibir pagos reales.**
 
