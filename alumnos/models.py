@@ -23,6 +23,7 @@ class CustomUser(AbstractUser):
         ('alumno', 'Alumno'),
         ('profesor', 'Profesor'),
         ('admin', 'Administrador'),
+        ('apoderado', 'Apoderado'),
     )
     rol = models.CharField(max_length=15, choices=ROLES, default='alumno')
     rut = models.CharField(max_length=12, unique=True, null=True, blank=True)

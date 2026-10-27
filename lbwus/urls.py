@@ -24,6 +24,7 @@ urlpatterns = [
     path('profesor/', include('user_profesor.urls')),
     path('comunidad/', include('comunidad.urls')),
     path('resenas/', include('resenas.urls')),
+    path('apoderados/', include('apoderados.urls')),
     path('accounts/login/', custom_login, name='login'),
 path(
     'accounts/password_reset/',

@@ -1,0 +1,92 @@
+{% extends 'admin_portal/base_admin.html' %}
+
+{% block title %}Apoderados — Admin LBWUS{% endblock %}
+{% block page_title %}Verificación de Apoderados{% endblock %}
+{% block page_subtitle %}Revisa el documento de identidad de forma presencial o por videollamada. No guardes copias: solo se registra tu decisión.{% endblock %}
+{% block nav_apoderados %}active{% endblock %}
+
+{% block content %}
+
+{% if messages %}
+<div class="panel" role="status" style="margin-bottom:20px; padding:14px 18px;">
+    {% for m in messages %}<div>{{ m }}</div>{% endfor %}
+</div>
+{% endif %}
+
+<div class="panel">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-person-vcard-fill"></i> Identidad por revisar ({{ pendientes|length }})</span>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="user-table">
+            <thead>
+                <tr><th>Apoderado</th><th>Datos a comparar con el documento</th><th>Evidencia</th><th>Decisión</th></tr>
+            </thead>
+            <tbody>
+                {% for a in pendientes %}
+                <tr>
+                    <td><strong>{{ a.nombre }}</strong><br><small>{{ a.user.email }}{% if a.user.telefono %} · {{ a.user.telefono }}{% endif %}</small></td>
+                    <td>RUT {{ a.user.rut }}<br><small>Nacimiento: {{ a.user.fecha_nacimiento|date:"d-m-Y" }}</small></td>
+                    <td><small>Correo confirmado el {{ a.correo_verificado|date:"d-m-Y H:i" }}<br>
+                        Declaración v{{ a.version_declaracion }} aceptada el {{ a.declaracion_aceptada|date:"d-m-Y H:i" }}</small></td>
+                    <td>
+                        <form method="post" action="{% url 'apoderado_revisar' a.pk %}" style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+                            {% csrf_token %}
+                            <select name="documento" aria-label="Documento revisado de {{ a.nombre }}"
+                                style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--bg-card); color:var(--text-primary);">
+                                <option value="">Documento revisado</option>
+                                {% for valor, texto in documentos %}<option value="{{ valor }}">{{ texto }}</option>{% endfor %}
+                            </select>
+                            <select name="canal" aria-label="Canal de la revisión de {{ a.nombre }}"
+                                style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--bg-card); color:var(--text-primary);">
+                                <option value="">Canal</option>
+                                {% for valor, texto in canales %}<option value="{{ valor }}">{{ texto }}</option>{% endfor %}
+                            </select>
+                            <label style="display:inline-flex; gap:6px; align-items:center;">
+                                <input type="checkbox" name="rut_coincide" value="on"> El RUT del documento coincide
+                            </label>
+                            <input type="text" name="observacion" maxlength="300" placeholder="Observación (obligatoria para rechazar)"
+                                aria-label="Observación sobre {{ a.nombre }}"
+                                style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--bg-card); color:var(--text-primary);">
+                            <button type="submit" name="decision" value="aprobar" class="btn-primary"><i class="bi bi-check-lg"></i> Aprobar</button>
+                            <button type="submit" name="decision" value="rechazar" class="btn-secondary"><i class="bi bi-x-lg"></i> Rechazar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4">No hay apoderados por revisar.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="panel" style="margin-top:28px;">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-clock-history"></i> Registro de decisiones (últimas 50)</span>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="user-table">
+            <thead>
+                <tr><th>Fecha</th><th>Apoderado</th><th>Decisión</th><th>Documento</th><th>Canal</th><th>Observación</th><th>Administrador</th></tr>
+            </thead>
+            <tbody>
+                {% for r in historial %}
+                <tr>
+                    <td>{{ r.fecha|date:"d-m-Y H:i" }}</td>
+                    <td>{{ r.apoderado.nombre }}</td>
+                    <td><span class="badge">{{ r.get_decision_display }}</span></td>
+                    <td>{{ r.get_documento_display|default:"—" }}</td>
+                    <td>{{ r.get_canal_display|default:"—" }}</td>
+                    <td>{{ r.observacion|default:"—" }}</td>
+                    <td>{{ r.administrador.first_name|default:"Cuenta eliminada" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7">Todavía no hay decisiones registradas.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

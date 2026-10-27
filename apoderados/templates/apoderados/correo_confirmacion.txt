@@ -1,0 +1,13 @@
+Hola {{ nombre }},
+
+Gracias por crear tu cuenta de apoderado en LBWUS. Para confirmar que este correo es tuyo, abre el siguiente enlace:
+
+{{ enlace }}
+
+El enlace sirve una sola vez y vence en {{ horas }} hora{{ horas|pluralize }}. Si vence, inicia sesión y pide uno nuevo desde tu cuenta.
+
+Después, un administrador revisará tu identidad. No te pediremos enviar copias de documentos por correo.
+
+Si no creaste esta cuenta, ignora este mensaje.
+
+Equipo LBWUS

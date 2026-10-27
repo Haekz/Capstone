@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     'user_profesor',
     'comunidad',
     'resenas',
+    'apoderados',
     'django_extensions',
 ]
 

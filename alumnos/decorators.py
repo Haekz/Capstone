@@ -14,7 +14,7 @@ from functools import wraps
 from django.http import JsonResponse
 from django.shortcuts import redirect
 
-from .roles import ADMIN, ALUMNO, PROFESOR, redirigir_a_portal, rol_en_sesion
+from .roles import ADMIN, ALUMNO, APODERADO, PROFESOR, redirigir_a_portal, rol_en_sesion
 
 
 def _rol_requerido(rol, anonimo, json=False):
@@ -50,6 +50,7 @@ def _sesion_invalida_json(_request):
 
 admin_required = _rol_requerido(ADMIN, _al_login)
 alumno_required = _rol_requerido(ALUMNO, _al_login)
+apoderado_required = _rol_requerido(APODERADO, _al_login)
 
 # El profesor anonimo va a su registro, que tambien trae el login de profesor.
 profesor_required = _rol_requerido(PROFESOR, lambda _r: redirect('regis_prof'))

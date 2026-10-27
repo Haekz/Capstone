@@ -1,0 +1,56 @@
+{% extends 'alumnos/base.html' %}
+{% load static %}
+
+{% block title %}Cuenta de apoderado | LBWUS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'alumnos/css/perfil_profesor.css' %}">
+<link rel="stylesheet" href="{% static 'apoderados/apoderados.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="perfil-prof">
+    <a class="perfil-prof__volver" href="{% url 'opcion_user' %}">
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver
+    </a>
+
+    <header class="perfil-prof__cabecera">
+        <div>
+            <h1>Crea tu cuenta de apoderado</h1>
+            <p class="perfil-prof__vacio">Para madres, padres y adultos responsables de estudiantes menores de edad.
+                Antes de habilitar tu cuenta confirmaremos tu correo y un administrador revisará tu identidad.
+                No te pediremos subir documentos.</p>
+        </div>
+    </header>
+
+    <section class="perfil-prof__bloque" aria-labelledby="registro-titulo">
+        <h2 id="registro-titulo">Tus datos</h2>
+        {% for error in form.non_field_errors %}<p class="apod-form__error" role="alert">{{ error }}</p>{% endfor %}
+
+        <form method="post" class="apod-form" novalidate>
+            {% csrf_token %}
+            {% for campo in form %}
+            {% if campo.name == 'acepta_declaracion' %}
+            <div class="apod-form__declaracion">
+                {{ campo }}
+                <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+            </div>
+            {% else %}
+            <div class="apod-form__campo">
+                <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+                {{ campo }}
+            </div>
+            {% endif %}
+            {% if campo.errors %}
+            <div id="{{ campo.auto_id }}-error" role="alert">
+                {% for error in campo.errors %}<p class="apod-form__error">{{ error }}</p>{% endfor %}
+            </div>
+            {% endif %}
+            {% endfor %}
+            <button type="submit" class="perfil-prof__reservar">
+                <i class="bi bi-person-check-fill" aria-hidden="true"></i> Crear cuenta
+            </button>
+        </form>
+    </section>
+</div>
+{% endblock %}
