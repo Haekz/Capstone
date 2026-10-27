@@ -7,7 +7,7 @@ muestra su cuenta y sus vinculos: no abre nada de alumnos, profesores ni admin.
 import time
 
 from django.contrib import messages
-from django.contrib.auth import login as auth_login, logout as auth_logout
+from django.contrib.auth import login as auth_login, logout as auth_logout, update_session_auth_hash
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -15,20 +15,21 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_POST
 
-from alumnos.decorators import admin_required, alumno_required, apoderado_required
+from alumnos.decorators import admin_required, alumno_required, alumno_sesion_required, apoderado_required
 from alumnos.exceptions import InscripcionError
 from alumnos.models import Inscripcion, PaqueteClases, SesionClase, Tutor
 from alumnos.roles import ALUMNO, APODERADO, abrir_sesion_rol, redirigir_a_portal, rol_en_sesion
 from alumnos.services import InscripcionService
+from alumnos.utils import es_menor
 from alumnos.views import iniciar_compra_paquete  # unico inicio de Webpay para paquetes
 
 from .correo import avisar_apoderados, enviar_confirmacion, enviar_confirmacion_adolescente, enviar_invitacion
 from .forms import (VERSION_DECLARACION_VINCULO, AceptarInvitacionForm, ClaveEstudianteForm,
-                    InvitacionForm, RegistroAdolescenteForm, RegistroApoderadoForm,
-                    RegistroEstudianteForm, RevisionIdentidadForm, RevisionVinculoForm)
+                    InvitacionForm, NuevaClaveForm, RegistroAdolescenteForm, RegistroApoderadoForm,
+                    RegistroEstudianteForm, RevisionIdentidadForm, RevisionVinculoForm, RevocarVinculoForm)
 from .models import (Apoderado, CompraApoderado, Revision, RevisionIdentidad, RevisionVinculo,
-                     SolicitudAdolescente, Vinculo)
-from .permisos import vinculo_contratable
+                     Revocacion, SolicitudAdolescente, Vinculo)
+from .permisos import debe_renovar_clave, vinculo_contratable
 from .tokens import invitacion_vigente, token_correo, token_correo_adolescente, user_id_de_uid
 
 ESPERA_REENVIO = 60  # segundos entre correos de confirmacion
@@ -168,6 +169,8 @@ def clave_estudiante(request, id_vinculo):
         alumno__solicitud_apoderado__isnull=True,
     )
     estudiante = vinculo.alumno.user
+    if not es_menor(estudiante):  # a los 18 la contrasena es solo suya (fase 1d)
+        raise Http404
     form = ClaveEstudianteForm(estudiante, request.POST or None)
     if request.method == 'POST' and form.is_valid():
         form.save()
@@ -257,6 +260,60 @@ def cancelar_clase(request, id_vinculo, id_inscripcion):
 def reprogramar_clase(request, id_vinculo, id_inscripcion):
     return _operar(request, id_vinculo, 'reprogramó', lambda v: InscripcionService.reprogramar_inscripcion(
         v.alumno, id_inscripcion, _sesion_del_post(request), vinculo=v))
+
+
+# --- Fase 1d: revocar el vinculo y contrasena propia al cumplir 18 ---
+
+def _revocar(request, vinculo, volver, motivo_obligatorio):
+    form = RevocarVinculoForm(request.POST or None, motivo_obligatorio=motivo_obligatorio)
+    estudiante = vinculo.alumno.user.first_name
+    if request.method == 'POST' and form.is_valid():
+        canceladas = vinculo.revocar(request.user, form.cleaned_data['motivo'])
+        messages.success(request, f'Revocamos el vínculo de {vinculo.apoderado.nombre} con {estudiante}. '
+                                  f'Clases futuras canceladas: {canceladas}.')
+        return redirect(volver)
+    return _formulario(
+        request, form, titulo=f'Revocar el vínculo con {estudiante}', subtitulo='Confirma la revocación',
+        boton='Revocar vínculo', volver_url=reverse(volver),
+        intro=(f'{vinculo.apoderado.nombre} dejará de poder reservar, contratar o cambiar la contraseña de '
+               f'{estudiante}. Las clases futuras pagadas con este vínculo se cancelan y vuelven al paquete.'),
+    )
+
+
+@never_cache
+@apoderado_required
+def revocar_vinculo(request, id_vinculo):
+    vinculo = get_object_or_404(Vinculo.objects.select_related('apoderado', 'alumno__user'), pk=id_vinculo,
+                                apoderado_id=request.session[APODERADO.clave_sesion],
+                                estado__in=Vinculo.REVOCABLES)
+    return _revocar(request, vinculo, APODERADO.ruta_portal, motivo_obligatorio=False)
+
+
+@never_cache
+@admin_required
+def revocar_vinculo_admin(request, id_vinculo):
+    vinculo = get_object_or_404(Vinculo.objects.select_related('apoderado', 'alumno__user'), pk=id_vinculo,
+                                estado__in=Vinculo.REVOCABLES)
+    return _revocar(request, vinculo, 'apoderados_revision', motivo_obligatorio=True)
+
+
+@sensitive_post_parameters('new_password1', 'new_password2')
+@never_cache
+@alumno_sesion_required
+def nueva_clave_estudiante(request):
+    if not debe_renovar_clave(request.user):
+        return redirect(ALUMNO.ruta_portal)
+    form = NuevaClaveForm(request.user, request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        update_session_auth_hash(request, form.save())  # sigue con la sesion abierta
+        messages.success(request, 'Listo: tu cuenta ahora tiene una contraseña que solo tú conoces.')
+        return redirect(ALUMNO.ruta_portal)
+    return _formulario(
+        request, form, titulo='Define tu nueva contraseña', subtitulo='Ya cumpliste 18 años',
+        boton='Guardar contraseña', volver_url=reverse('logout_apoderado'),
+        intro=('Tu apoderado definió tu contraseña actual. Desde ahora tu cuenta es solo tuya: '
+               'elige una nueva que solo tú conozcas para seguir.'),
+    )
 
 
 # --- Fase 1b-ii: el adolescente de 14 a 17 invita a su madre o padre ---
@@ -395,6 +452,10 @@ def revision(request):
                                 .select_related('apoderado__user', 'alumno__user').prefetch_related('invitaciones')),
         'historial_vinculos': (RevisionVinculo.objects
                                .select_related('vinculo__apoderado__user', 'vinculo__alumno__user', 'administrador')[:50]),
+        'vinculos_vigentes': (Vinculo.objects.filter(estado=Vinculo.VERIFICADO)
+                              .select_related('apoderado__user', 'alumno__user')),
+        'revocaciones': Revocacion.objects.select_related('vinculo__apoderado__user', 'vinculo__alumno__user',
+                                                          'autor').order_by('-fecha')[:50],
         'documentos': RevisionIdentidad.DOCUMENTOS,
         'canales': Revision.CANALES,
     })

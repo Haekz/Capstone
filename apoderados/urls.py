@@ -9,6 +9,8 @@ urlpatterns = [
     path('mi-cuenta/reenviar/', views.reenviar, name='apoderado_reenviar_correo'),
     path('mi-cuenta/estudiantes/nuevo/', views.registrar_estudiante, name='apoderado_registrar_estudiante'),
     path('mi-cuenta/estudiantes/<int:id_vinculo>/clave/', views.clave_estudiante, name='apoderado_clave_estudiante'),
+    path('mi-cuenta/estudiantes/<int:id_vinculo>/revocar/', views.revocar_vinculo, name='apoderado_revocar_vinculo'),
+    path('estudiante/nueva-clave/', views.nueva_clave_estudiante, name='nueva_clave_estudiante'),
     path('mi-cuenta/estudiantes/<int:id_vinculo>/comprar/', views.comprar_paquete, name='apoderado_comprar_paquete'),
     path('mi-cuenta/estudiantes/<int:id_vinculo>/clases/', views.clases_estudiante, name='apoderado_clases_estudiante'),
     path('mi-cuenta/estudiantes/<int:id_vinculo>/clases/reservar/', views.reservar_clase,
@@ -27,6 +29,7 @@ urlpatterns = [
     path('estudiantes/mi-solicitud/invitar/', views.invitar, name='adolescente_invitar'),
     path('salir/', views.logout_apoderado, name='logout_apoderado'),
     path('revision/', views.revision, name='apoderados_revision'),
+    path('revision/vinculos/<int:id_vinculo>/revocar/', views.revocar_vinculo_admin, name='apoderados_revocar_vinculo'),
     path('<int:id_apoderado>/revisar/', views.revisar, name='apoderado_revisar'),
     path('vinculos/<int:id_vinculo>/revisar/', views.revisar_vinculo, name='apoderado_revisar_vinculo'),
 ]

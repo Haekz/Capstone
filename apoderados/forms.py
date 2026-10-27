@@ -11,7 +11,7 @@ from alumnos.models import Alumno
 from alumnos.utils import (EDAD_ADULTA, EDAD_MINIMA_ESTUDIANTE, edad, error_fecha_nacimiento,
                            usuario_existe, validar_rut_chileno)
 
-from .models import (Apoderado, Invitacion, Revision, RevisionIdentidad, RevisionVinculo,
+from .models import (Apoderado, ClaveDelApoderado, Invitacion, Revision, RevisionIdentidad, RevisionVinculo,
                      SolicitudAdolescente, Vinculo)
 
 # Al cambiar un texto, subir su version: cada registro guarda la que se acepto.
@@ -152,8 +152,10 @@ class RegistroEstudianteForm(_CuentaForm):
     def save(self):
         datos = self.cleaned_data
         with transaction.atomic():
+            alumno = _crear_estudiante(datos)
+            ClaveDelApoderado.objects.create(user=alumno.user)  # al cumplir 18 define la suya (1d)
             return Vinculo.objects.create(
-                apoderado=self.apoderado, alumno=_crear_estudiante(datos), parentesco=datos['parentesco'],
+                apoderado=self.apoderado, alumno=alumno, parentesco=datos['parentesco'],
                 version_declaracion=VERSION_DECLARACION_VINCULO, declaracion_aceptada=timezone.now(),
             )
 
@@ -221,6 +223,34 @@ class AceptarInvitacionForm(AccesibleMixin, forms.Form):
 
 class ClaveEstudianteForm(AccesibleMixin, SetPasswordForm):
     """El apoderado define una contrasena nueva para el estudiante a su cargo."""
+
+    def save(self, commit=True):
+        user = super().save(commit)
+        ClaveDelApoderado.objects.update_or_create(user=user)
+        return user
+
+
+class NuevaClaveForm(AccesibleMixin, SetPasswordForm):
+    """Al cumplir 18, el estudiante reemplaza la contrasena que definio su apoderado."""
+
+    def save(self, commit=True):
+        user = super().save(commit)
+        ClaveDelApoderado.objects.filter(user=user).delete()
+        return user
+
+
+class RevocarVinculoForm(AccesibleMixin, forms.Form):
+    motivo = forms.CharField(label='Motivo', max_length=300, required=False, widget=forms.Textarea(attrs={'rows': 3}))
+    confirmar = forms.BooleanField(
+        label='Entiendo que se cancelarán las clases futuras que pagué con este vínculo '
+              'y que no podré volver a actuar por el estudiante.')
+
+    def __init__(self, *args, motivo_obligatorio=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        if motivo_obligatorio:  # el administrador siempre deja el motivo (p. ej. resolucion judicial)
+            self.fields['motivo'].required = True
+            self.fields['confirmar'].label = ('Entiendo que se cancelarán las clases futuras pagadas con '
+                                              'este vínculo y que el apoderado no podrá volver a actuar.')
 
 
 class _RevisionForm(forms.ModelForm):

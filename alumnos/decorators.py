@@ -14,6 +14,8 @@ from functools import wraps
 from django.http import JsonResponse
 from django.shortcuts import redirect
 
+from apoderados.permisos import debe_renovar_clave
+
 from .roles import ADMIN, ALUMNO, APODERADO, PROFESOR, redirigir_a_portal, rol_en_sesion
 
 
@@ -49,8 +51,22 @@ def _sesion_invalida_json(_request):
 
 
 admin_required = _rol_requerido(ADMIN, _al_login)
-alumno_required = _rol_requerido(ALUMNO, _al_login)
 apoderado_required = _rol_requerido(APODERADO, _al_login)
+
+# Solo el rol, sin la regla de abajo: para la pantalla donde se cumple esa regla.
+alumno_sesion_required = _rol_requerido(ALUMNO, _al_login)
+
+
+def alumno_required(vista):
+    """Rol alumno y, al cumplir 18, contrasena propia (fase 1d de menores):
+    si sigue con la que definio su apoderado, primero define una nueva."""
+    @wraps(vista)
+    def con_clave_propia(request, *args, **kwargs):
+        if debe_renovar_clave(request.user):
+            return redirect('nueva_clave_estudiante')
+        return vista(request, *args, **kwargs)
+
+    return alumno_sesion_required(con_clave_propia)
 
 # El profesor anonimo va a su registro, que tambien trae el login de profesor.
 profesor_required = _rol_requerido(PROFESOR, lambda _r: redirect('regis_prof'))

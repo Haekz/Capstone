@@ -5,8 +5,9 @@ Fase 1b: vinculo con cada estudiante menor, verificado uno por uno con el
 certificado de nacimiento (solo madre o padre en el MVP). El vinculo lo inicia
 el apoderado (1b-i) o un adolescente de 14 a 17 que lo invita por correo (1b-ii).
 
-Una cuenta o un vinculo verificados NO habilitan reservas, compras ni clases:
-eso llega con la contratacion por el apoderado (fase 1c). Minimizacion de
+Fase 1c: el apoderado contrata y reserva por su estudiante (Vinculo.autoriza).
+Fase 1d: el vinculo se revoca (apoderado o administrador) o termina solo
+cuando el estudiante cumple 18. Minimizacion de
 datos: no se guardan copias de documentos ni la IP; solo la evidencia de que un
 administrador reviso, y que version de cada declaracion se acepto.
 """
@@ -16,6 +17,9 @@ from datetime import timedelta
 from django.conf import settings
 from django.db import models, transaction
 from django.utils import timezone
+
+from alumnos.models import Inscripcion
+from alumnos.utils import es_menor
 
 
 class Revision(models.Model):
@@ -112,7 +116,10 @@ class Vinculo(models.Model):
     PENDIENTE = 'pendiente'
     VERIFICADO = 'verificado'
     RECHAZADO = 'rechazado'
-    ESTADOS = [(PENDIENTE, 'Por verificar'), (VERIFICADO, 'Verificado'), (RECHAZADO, 'Rechazado')]
+    REVOCADO = 'revocado'
+    ESTADOS = [(PENDIENTE, 'Por verificar'), (VERIFICADO, 'Verificado'), (RECHAZADO, 'Rechazado'),
+               (REVOCADO, 'Revocado')]
+    REVOCABLES = (PENDIENTE, VERIFICADO)
     # MVP: solo se acepta el certificado de nacimiento, que acredita madre o padre.
     PARENTESCOS = [('madre', 'Madre'), ('padre', 'Padre')]
 
@@ -142,9 +149,26 @@ class Vinculo(models.Model):
         return not SolicitudAdolescente.objects.filter(alumno_id=self.alumno_id).exists()
 
     def autoriza(self, alumno):
-        """Puede actuar por ``alumno``: vinculo verificado de ese estudiante y apoderado verificado."""
+        """Puede actuar por ``alumno``: vinculo verificado de ese estudiante, apoderado
+        verificado y estudiante aun menor (a los 18 el vinculo termina solo, fase 1d)."""
         return (self.estado == self.VERIFICADO and self.alumno_id == alumno.pk
-                and self.apoderado.estado == Apoderado.VERIFICADO)
+                and self.apoderado.estado == Apoderado.VERIFICADO and es_menor(alumno.user))
+
+    @property
+    def termino_por_edad(self):
+        return self.estado == self.VERIFICADO and not es_menor(self.alumno.user)
+
+    def revocar(self, autor, motivo=''):
+        """Revoca y cancela las clases futuras de paquetes pagados con este vinculo
+        (la clase vuelve al paquete). Devuelve cuantas reservas se cancelaron."""
+        with transaction.atomic():
+            Vinculo.objects.select_for_update().filter(pk=self.pk).update(estado=self.REVOCADO)
+            self.estado = self.REVOCADO
+            Revocacion.objects.create(vinculo=self, autor=autor, motivo=motivo)
+            return Inscripcion.objects.filter(
+                paquete__compra_apoderado__vinculo=self, estado__in=Inscripcion.ESTADOS_ACTIVOS,
+                sesion__fecha_hora_inicio__gt=timezone.now(),
+            ).update(estado=Inscripcion.ESTADO_CANCELADA)
 
     def aplicar_revision(self, revision, administrador):
         revision.vinculo = self
@@ -257,3 +281,27 @@ class CompraApoderado(models.Model):
         verbose_name = 'compra de apoderado'
         verbose_name_plural = 'compras de apoderados'
         ordering = ['-creada']
+
+
+class Revocacion(models.Model):
+    """Evidencia de una revocacion (fase 1d): quien, cuando y por que."""
+    vinculo = models.OneToOneField(Vinculo, on_delete=models.CASCADE, related_name='revocacion')
+    # SET_NULL: si se borra la cuenta del autor, la evidencia sigue registrada.
+    autor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='+')
+    motivo = models.CharField(max_length=300, blank=True)
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'revocación de vínculo'
+        verbose_name_plural = 'revocaciones de vínculos'
+
+
+class ClaveDelApoderado(models.Model):
+    """Cuenta cuya contrasena definio el apoderado: al cumplir 18 se exige una nueva (fase 1d)."""
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+                                related_name='clave_del_apoderado')
+    definida = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'contraseña definida por el apoderado'
+        verbose_name_plural = 'contraseñas definidas por apoderados'
