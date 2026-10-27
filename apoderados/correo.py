@@ -1,4 +1,4 @@
-"""Correos del modulo: confirmaciones de correo e invitacion al apoderado.
+"""Correos del modulo: confirmaciones, invitacion al apoderado y avisos de clases.
 
 Cada funcion devuelve False si el correo no salio (se puede reenviar).
 """
@@ -12,6 +12,7 @@ from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
+from .models import Apoderado, Vinculo
 from .tokens import firmar_invitacion, token_correo, token_correo_adolescente
 
 logger = logging.getLogger(__name__)
@@ -56,3 +57,19 @@ def enviar_invitacion(request, invitacion):
         'enlace': request.build_absolute_uri(reverse('apoderado_invitacion', args=[firmar_invitacion(invitacion)])),
         'dias': invitacion.VIGENCIA.days,
     }, invitacion.correo)
+
+
+def avisar_apoderados(inscripcion, accion, autor):
+    """Avisa a cada apoderado con vinculo verificado del estudiante (fase 1c).
+
+    Un correo por persona: ningun apoderado ve la direccion del otro. Un fallo
+    de SMTP no deshace la reserva, que ya quedo guardada.
+    """
+    destinatarios = (Vinculo.objects.filter(alumno=inscripcion.alumno, estado=Vinculo.VERIFICADO,
+                                            apoderado__estado=Apoderado.VERIFICADO)
+                     .values_list('apoderado__user__email', flat=True))
+    estudiante = inscripcion.alumno.user.first_name
+    contexto = {'accion': accion, 'autor': autor, 'estudiante': estudiante,
+                'clase': inscripcion.clase, 'sesion': inscripcion.sesion}
+    return all([_enviar(f'Clases de {estudiante}', 'apoderados/correo_aviso_clase.txt', contexto, correo)
+                for correo in destinatarios])

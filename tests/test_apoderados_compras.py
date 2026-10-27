@@ -2,7 +2,7 @@
 
 Datos ficticios; Webpay va con mock. El paquete queda a nombre del estudiante
 y sigue el mismo flujo de pago; CompraApoderado registra quien lo pago. El
-menor todavia no puede usarlo: las reservas por el apoderado son la 1c-ii.
+menor no lo usa por su cuenta: reserva su apoderado (1c-ii).
 """
 
 from datetime import time as hora
@@ -102,7 +102,7 @@ class CompraDelApoderadoTests(TestCase):
                 self.comprar(tx)
         self.assertFalse(PaqueteClases.objects.exists())
 
-    def test_el_menor_aun_no_reserva_con_el_paquete_contratado(self, tx):
+    def test_el_menor_no_reserva_por_su_cuenta_con_el_paquete_contratado(self, tx):
         self.comprar(tx)
         self.confirmar(tx, PaqueteClases.objects.get())
         clase = Clase.objects.create(asignatura=Asignatura.objects.create(nombre='Álgebra'),

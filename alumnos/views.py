@@ -27,7 +27,7 @@ from .models import (
 from django.core.exceptions import ValidationError
 from . import paquetes
 from django.db import transaction
-from apoderados.permisos import vinculo_contratable
+from apoderados.permisos import clase_pagada_por_apoderado, vinculo_contratable
 from .forms import AlumnoForm, FiltroClasesForm
 from .decorators import alumno_required
 from .exceptions import InscripcionError
@@ -985,18 +985,19 @@ def sala_virtual(request, clase_id):
         and (clase.profesor.user_id == request.user.id
              or request.session.get('profesor_id') == getattr(clase.profesor, 'id_profesor', None))
     )
-    # 2. Alumno con una inscripcion que permita entrar (Inscripcion.puede_unirse)
+    # 2. Alumno con una inscripcion que permita entrar (Inscripcion.puede_unirse).
+    #    Menores: solo clases pagadas por su apoderado con vinculo vigente (fase 1c).
     propias = Q(alumno__user=request.user)
     if request.session.get('alumno_id'):
         propias |= Q(alumno_id=request.session['alumno_id'])
+    menor = es_menor(request.user)
     es_alumno = any(
-        insc.puede_unirse
-        for insc in Inscripcion.objects.filter(propias, clase=clase).select_related('sesion')
+        insc.puede_unirse and (not menor or clase_pagada_por_apoderado(insc))
+        for insc in Inscripcion.objects.filter(propias, clase=clase).select_related('sesion', 'alumno')
     )
     # Nadie mas entra: ni administradores, ni staff, ni el campo ``rol``. Antes
     # bastaba rol 'admin'/'tutor' para abrir cualquier clase (decision 10, menores).
-    # Menores: sin clases virtuales hasta la fase 1c, aunque tengan inscripcion.
-    if not (es_profesor or (es_alumno and not es_menor(request.user))):
+    if not (es_profesor or es_alumno):
         from django.http import HttpResponseForbidden
         return HttpResponseForbidden("Acceso denegado: debes estar inscrito en la clase o ser el profesor asignado.")
 

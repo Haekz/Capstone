@@ -17,17 +17,18 @@ from .exceptions import (
 
 logger = logging.getLogger(__name__)
 
-MENSAJE_MENOR = ('Las reservas y compras de estudiantes menores de edad las hará su apoderado. '
-                 'Esta función todavía no está disponible.')
+MENSAJE_MENOR = ('Las reservas y compras de estudiantes menores de edad las hace su apoderado '
+                 'desde su cuenta.')
 
 
-def exigir_mayor_de_edad(alumno):
-    """Menores: nada transaccional hasta la contratacion por el apoderado (fase 1c).
+def exigir_mayor_de_edad(alumno, vinculo=None):
+    """Menores: solo su apoderado reserva, cancela o reprograma por ellos (fase 1c).
 
-    Aqui pasan todas las reservas (inscribir, reservar, reprogramar), asi que el
-    bloqueo cubre tambien cualquier vista nueva que use este servicio.
+    Aqui pasan todas las reservas, asi que el bloqueo cubre tambien cualquier
+    vista nueva. ``vinculo`` lo pasan solo las vistas del apoderado; debe
+    autorizar a actuar por ese alumno (verificado, propio, apoderado verificado).
     """
-    if es_menor(alumno.user):
+    if es_menor(alumno.user) and not (vinculo is not None and vinculo.autoriza(alumno)):
         raise InscripcionError(MENSAJE_MENOR)
 
 
@@ -61,7 +62,7 @@ class InscripcionService:
     """
 
     @classmethod
-    def inscribir_alumno_en_sesion(cls, alumno: Alumno, sesion_id: int) -> Inscripcion:
+    def inscribir_alumno_en_sesion(cls, alumno: Alumno, sesion_id: int, vinculo=None) -> Inscripcion:
         """
         Inscribe atómicamente a un alumno en una SesionClase puntual.
 
@@ -77,7 +78,7 @@ class InscripcionService:
             InscripcionDuplicadaError: Si el alumno ya está inscrito activamente en la sesión (o colisión de BD).
             CupoAgotadoError: Si el número de inscripciones activas alcanza o supera el cupo máximo.
         """
-        exigir_mayor_de_edad(alumno)
+        exigir_mayor_de_edad(alumno, vinculo)
         with transaction.atomic():
             # 1. Bloqueo pesimista a nivel de fila (select_for_update)
             try:
@@ -188,12 +189,13 @@ class InscripcionService:
             return inscripcion
 
     @classmethod
-    def cancelar_inscripcion(cls, alumno: Alumno, inscripcion_id: int) -> Inscripcion:
+    def cancelar_inscripcion(cls, alumno: Alumno, inscripcion_id: int, vinculo=None) -> Inscripcion:
         """
         Cancela una inscripción de forma controlada dentro de una transacción,
         marcando su estado como 'cancelada' para liberar el cupo en consultas concurrentes.
         Si salió de un paquete, la clase vuelve sola: las usadas se cuentan.
         """
+        exigir_mayor_de_edad(alumno, vinculo)
         with transaction.atomic():
             try:
                 inscripcion = Inscripcion.objects.select_for_update().get(
@@ -211,7 +213,8 @@ class InscripcionService:
             return inscripcion
 
     @classmethod
-    def reprogramar_inscripcion(cls, alumno: Alumno, inscripcion_id: int, nueva_sesion_id: int) -> Inscripcion:
+    def reprogramar_inscripcion(cls, alumno: Alumno, inscripcion_id: int, nueva_sesion_id: int,
+                                vinculo=None) -> Inscripcion:
         """
         Mueve una reserva a otra sesion del MISMO profesor sin gastar otra clase del paquete.
 
@@ -219,7 +222,7 @@ class InscripcionService:
         debe estar programada, ser futura, tener cupo, no estar ya reservada por el
         alumno y caer dentro de la vigencia del paquete (si la reserva sale de uno).
         """
-        exigir_mayor_de_edad(alumno)
+        exigir_mayor_de_edad(alumno, vinculo)
         with transaction.atomic():
             try:
                 # of=('self',): PostgreSQL no bloquea el lado nulo de un outer join (paquete, sesion)

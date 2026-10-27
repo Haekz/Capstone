@@ -1,0 +1,12 @@
+Hola,
+
+{{ autor }} {{ accion }} una clase para {{ estudiante }} en LBWUS:
+
+- Clase: {{ clase.asignatura.nombre }} con {{ clase.profesor.nombre }}
+{% if sesion %}- Fecha: {{ sesion.fecha_hora_inicio|date:"d-m-Y H:i" }} (hora de Chile)
+{% endif %}
+Puedes revisar y cambiar las clases de {{ estudiante }} desde tu cuenta de apoderado.
+
+Si no reconoces este cambio, escríbenos desde la página de contacto.
+
+Equipo LBWUS

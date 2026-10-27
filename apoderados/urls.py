@@ -10,6 +10,13 @@ urlpatterns = [
     path('mi-cuenta/estudiantes/nuevo/', views.registrar_estudiante, name='apoderado_registrar_estudiante'),
     path('mi-cuenta/estudiantes/<int:id_vinculo>/clave/', views.clave_estudiante, name='apoderado_clave_estudiante'),
     path('mi-cuenta/estudiantes/<int:id_vinculo>/comprar/', views.comprar_paquete, name='apoderado_comprar_paquete'),
+    path('mi-cuenta/estudiantes/<int:id_vinculo>/clases/', views.clases_estudiante, name='apoderado_clases_estudiante'),
+    path('mi-cuenta/estudiantes/<int:id_vinculo>/clases/reservar/', views.reservar_clase,
+         name='apoderado_reservar_clase'),
+    path('mi-cuenta/estudiantes/<int:id_vinculo>/clases/<int:id_inscripcion>/cancelar/', views.cancelar_clase,
+         name='apoderado_cancelar_clase'),
+    path('mi-cuenta/estudiantes/<int:id_vinculo>/clases/<int:id_inscripcion>/reprogramar/', views.reprogramar_clase,
+         name='apoderado_reprogramar_clase'),
     path('invitacion/<str:token>/', views.invitacion, name='apoderado_invitacion'),
     # Adolescentes de 14 a 17 (fase 1b-ii): su cuenta es de alumno, restringida.
     path('estudiantes/registro/', views.registro_adolescente, name='adolescente_registro'),

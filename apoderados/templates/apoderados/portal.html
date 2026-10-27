@@ -71,7 +71,8 @@
                 {% if v.estado == 'rechazado' and v.ultima_revision.observacion %}<br><small><strong>Motivo:</strong> {{ v.ultima_revision.observacion }}</small>{% endif %}
                 {% if v.estado != 'rechazado' and v.apoderado_define_clave %}<br><a href="{% url 'apoderado_clave_estudiante' v.pk %}">Cambiar su contraseña</a>{% endif %}
                 {% if v.estado == 'verificado' and apoderado.estado == 'verificado' %}
-                <br><a href="{% url 'planes' %}?estudiante={{ v.pk }}">Contratar clases para {{ v.alumno.user.first_name }}</a>
+                <br><a href="{% url 'apoderado_clases_estudiante' v.pk %}">Ver y reservar sus clases</a>
+                · <a href="{% url 'planes' %}?estudiante={{ v.pk }}">Contratar clases para {{ v.alumno.user.first_name }}</a>
                 {% for c in v.compras.all %}{% with p=c.paquete %}
                 <br><small>{{ p.get_plan_display }} con {{ p.profesor.nombre|default:"—" }} · {{ p.get_estado_display }}{% if p.fecha_fin %} · vence el {{ p.fecha_fin|date:"d-m-Y" }}{% endif %}</small>
                 {% endwith %}{% endfor %}
@@ -82,7 +83,7 @@
         {% else %}
         <p class="perfil-prof__vacio">Todavía no registras estudiantes.</p>
         {% endif %}
-        <p class="perfil-prof__vacio">Puedes contratar clases para cada estudiante con vínculo verificado. Las reservas desde tu cuenta llegarán en la próxima etapa; mientras tanto, los estudiantes menores solo pueden ver el catálogo.</p>
+        <p class="perfil-prof__vacio">Para cada estudiante con vínculo verificado puedes contratar clases y reservarlas. El estudiante ve el catálogo y entra a las clases que reserves; no puede reservar, cancelar ni comprar por su cuenta.</p>
         {% if apoderado.estado == 'verificado' %}
         <a class="perfil-prof__reservar" href="{% url 'apoderado_registrar_estudiante' %}">
             <i class="bi bi-person-plus-fill" aria-hidden="true"></i> Registrar estudiante
