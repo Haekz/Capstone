@@ -5,7 +5,8 @@ Cada prueba es una fila de docs/MATRIZ_IDENTIDAD.md. Lo que ya cubren otros arch
 no se repite aqui: la matriz los referencia.
 
 Las pruebas con @hallazgo_abierto describen el comportamiento SEGURO y hoy fallan:
-son los hallazgos S-03, S-05, S-06 y S-07 del informe de seguridad, que siguen abiertos.
+son los hallazgos S-03, S-06 (cuenta huerfana) y S-07 (admin con sesion) del informe
+de seguridad, que siguen abiertos. S-05 y el resto de S-06/S-07 los cerro S4-02.
 Cuando se corrija uno, unittest avisara "unexpected success": ahi se quita el decorador.
 
 Para ver el fallo real de cada hallazgo (evidencia):
@@ -18,11 +19,18 @@ from datetime import date
 
 from allauth.account.adapter import get_adapter as adaptador_de_cuentas
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AnonymousUser
+from django.contrib.messages.storage.fallback import FallbackStorage
+from django.contrib.sessions.backends.db import SessionStore
+from django.core import mail
 from django.core.cache import cache
+from django.core.management.sql import emit_post_migrate_signal
+from django.db import connection
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
 from admin_portal.forms import AdminAlumnoForm
+from alumnos.google_adapter import entrar_al_portal
 from alumnos.models import Alumno, Genero, Tutor
 from tests.test_google_y_titulo import BaseGoogle, google_login
 
@@ -95,7 +103,6 @@ class S05LimiteDeIntentosTests(BaseIdentidad):
         respuesta = self.entrar('otro@demo.cl', 'mala', HTTP_X_FORWARDED_FOR='203.0.113.1')
         self.assertContains(respuesta, BLOQUEO)
 
-    @hallazgo_abierto
     def test_escribir_el_rut_de_otra_forma_no_reinicia_el_contador(self):
         for _ in range(5):
             self.entrar('12.345.678-5', 'mala')
@@ -105,7 +112,6 @@ class S05LimiteDeIntentosTests(BaseIdentidad):
         self.assertNotIn('alumno_id', self.client.session,
                          'S-05: tras 5 fallos con 12.345.678-5, entra escribiendo 12345678-5')
 
-    @hallazgo_abierto
     def test_cambiar_x_forwarded_for_no_reinicia_el_contador_por_ip(self):
         for i in range(15):
             self.entrar(f'nadie{i}@demo.cl', 'mala', HTTP_X_FORWARDED_FOR='203.0.113.1')
@@ -115,10 +121,29 @@ class S05LimiteDeIntentosTests(BaseIdentidad):
         self.assertContains(respuesta, BLOQUEO,
                             msg_prefix='S-05: cambiando X-Forwarded-For el cliente evita el bloqueo por IP')
 
+    @override_settings(CONFIAR_X_FORWARDED_FOR=True)
+    def test_detras_del_proxy_solo_cuenta_la_ip_que_agrega_el_proxy(self):
+        # El proxy (Railway) agrega la IP real al final; lo anterior lo escribe el cliente.
+        for i in range(15):
+            self.entrar(f'nadie{i}@demo.cl', 'mala', HTTP_X_FORWARDED_FOR=f'10.0.0.{i}, 198.51.100.7')
+
+        respuesta = self.entrar('otro@demo.cl', 'mala', HTTP_X_FORWARDED_FOR='10.9.9.9, 198.51.100.7')
+
+        self.assertContains(respuesta, BLOQUEO,
+                            msg_prefix='S-05: detras del proxy, falsear el inicio de X-Forwarded-For evita el bloqueo')
+
+    def test_migrate_crea_la_tabla_de_la_cache_compartida(self):
+        # Sin la tabla, el contador compartido entre procesos falla al primer login.
+        with connection.cursor() as cursor:
+            cursor.execute('DROP TABLE lbwus_cache_table')
+
+        emit_post_migrate_signal(verbosity=0, interactive=False, db='default')
+
+        self.assertIn('lbwus_cache_table', connection.introspection.table_names())
+
 
 class S06RegistroAbiertoTests(TestCase):
 
-    @hallazgo_abierto
     def test_el_registro_propio_de_allauth_esta_cerrado(self):
         request = RequestFactory().get(reverse('account_signup'))
         self.assertFalse(adaptador_de_cuentas(request).is_open_for_signup(request),
@@ -167,7 +192,6 @@ class S07CuentasDesactivadasTests(BaseIdentidad):
 
 class S07GoogleTests(GoogleConSesion):
 
-    @hallazgo_abierto
     def test_cuenta_desactivada_no_entra_con_google(self):
         user = crear_usuario('12345678-5', self.genero, rol='alumno', email='ana@demo.cl', is_active=False)
         Alumno.objects.create(user=user, nivel_educacion='media')
@@ -176,3 +200,25 @@ class S07GoogleTests(GoogleConSesion):
 
         self.assertNotIn('alumno_id', self.client.session,
                          'S-07: una cuenta desactivada entra a su portal con Google')
+
+    def test_cuenta_huerfana_desactivada_no_recibe_codigo(self):
+        # Sin perfil, sin el rechazo temprano iria al flujo de completar registro.
+        User.objects.create_user('huerfana', email='ana@demo.cl', password=CLAVE, is_active=False)
+
+        self.volver_de_google(google_login('ana@demo.cl'))
+
+        self.assertEqual(len(mail.outbox), 0, 'S-07: se envio un codigo a una cuenta desactivada')
+
+    def test_desactivada_a_ultima_hora_no_abre_sesion(self):
+        # entrar_al_portal es la ultima puerta: tambien la usa google_views al completar el registro.
+        user = crear_usuario('12345678-5', self.genero, rol='alumno', email='ana@demo.cl', is_active=False)
+        Alumno.objects.create(user=user, nivel_educacion='media')
+        request = RequestFactory().get('/')
+        request.session = SessionStore()
+        request.user = AnonymousUser()
+        request._messages = FallbackStorage(request)
+
+        respuesta = entrar_al_portal(request, user)
+
+        self.assertEqual(respuesta.url, reverse('login'))
+        self.assertNotIn('_auth_user_id', request.session)

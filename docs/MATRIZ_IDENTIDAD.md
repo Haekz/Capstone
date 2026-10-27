@@ -8,6 +8,7 @@ Inicio de sesión, usuarios desactivados, errores de autenticación y permisos p
 
 - **OK:** el sistema se comporta como se espera.
 - **ABIERTO:** el hallazgo sigue presente. La prueba describe el comportamiento **seguro**, falla hoy y está marcada con `expectedFailure`, así la suite queda en verde y el hallazgo sigue visible. Cuando se corrija, unittest avisa "unexpected success" y se quita la marca.
+- **CERRADO (S4-02):** lo corrigió la rama de seguridad S4-02; la prueba ya pasa sin marca.
 - Las filas **nuevas** están en `tests/test_matriz_identidad.py`. Las **existentes** se referencian, no se repiten.
 
 ```
@@ -25,8 +26,9 @@ VER_HALLAZGOS=1 python manage.py test tests.test_matriz_identidad -v 2 # muestra
 | ID-02 | Los tres | Cada rol inicia sesión | Llega a su propio portal | Llega a su portal | OK | — | `test_portales_por_rol.test_login_lleva_a_cada_rol_a_su_portal` |
 | ID-03 | Alumno | 5 claves incorrectas con el mismo RUT | Bloqueo de 5 min, incluso con la clave correcta | Bloquea | OK | — | `test_seguridad_blindaje.test_01_rate_limiting_login_bloquea_tras_5_intentos_fallidos` |
 | ID-04 | Anónimo | 15 fallos desde la misma IP | Bloqueo por IP | Bloquea | OK | — | `S05LimiteDeIntentosTests.test_el_contador_por_ip_bloquea_tras_15_fallos` |
-| ID-05 | Alumno | 5 fallos con `12.345.678-5` y luego entra con `12345678-5` | Sigue bloqueado: es el mismo RUT | **Entra** | **ABIERTO** | S-05 | `S05LimiteDeIntentosTests.test_escribir_el_rut_de_otra_forma_no_reinicia_el_contador` |
-| ID-06 | Anónimo | 15 fallos y luego cambia `X-Forwarded-For` | Sigue bloqueado | **No bloquea** | **ABIERTO** | S-05 | `S05LimiteDeIntentosTests.test_cambiar_x_forwarded_for_no_reinicia_el_contador_por_ip` |
+| ID-05 | Alumno | 5 fallos con `12.345.678-5` y luego entra con `12345678-5` | Sigue bloqueado: es el mismo RUT | Sigue bloqueado | **CERRADO (S4-02)** | S-05 | `S05LimiteDeIntentosTests.test_escribir_el_rut_de_otra_forma_no_reinicia_el_contador` |
+| ID-06 | Anónimo | 15 fallos y luego cambia `X-Forwarded-For` | Sigue bloqueado | Sigue bloqueado | **CERRADO (S4-02)** | S-05 | `S05LimiteDeIntentosTests.test_cambiar_x_forwarded_for_no_reinicia_el_contador_por_ip` |
+| ID-06b | Anónimo | Detrás del proxy (Railway): 15 fallos y luego cambia el inicio de `X-Forwarded-For` | Sigue bloqueado: cuenta solo la IP que agrega el proxy | Sigue bloqueado | OK | S-05 | `S05LimiteDeIntentosTests.test_detras_del_proxy_solo_cuenta_la_ip_que_agrega_el_proxy` |
 | ID-07 | Alumno | Alumno creado por el admin entra usando su RUT como clave | No entra | **Entra** | **ABIERTO** | S-03 | `S03ClaveInicialTests.test_alumno_creado_por_admin_no_entra_con_su_rut` |
 
 ### Usuarios desactivados
@@ -36,13 +38,13 @@ VER_HALLAZGOS=1 python manage.py test tests.test_matriz_identidad -v 2 # muestra
 | ID-08 | Alumno | Usuario desactivado intenta entrar con su clave | Rechazado, sin sesión | Rechazado | OK | — | `LoginTests.test_usuario_desactivado_no_inicia_sesion` |
 | ID-09 | Cualquiera | Usuario desactivado con sesión abierta, en una vista con decorador de rol | Expulsado | Expulsado | OK | — | `test_seguridad_blindaje.test_08_usuario_con_is_active_false_es_expulsado_por_decorador` |
 | ID-10 | Admin | Admin desactivado con sesión abierta abre "crear administrador" (`/profesor/registro_tutor`) | Redirige al login | **Responde 200: entra** | **ABIERTO** | S-07 | `S07CuentasDesactivadasTests.test_admin_desactivado_con_sesion_no_entra_a_crear_administradores` |
-| ID-11 | Alumno | Cuenta desactivada entra con Google | Rechazada | **Entra a su portal** | **ABIERTO** | S-07 | `S07GoogleTests.test_cuenta_desactivada_no_entra_con_google` |
+| ID-11 | Alumno | Cuenta desactivada entra con Google | Rechazada | Rechazada | **CERRADO (S4-02)** | S-07 | `S07GoogleTests.test_cuenta_desactivada_no_entra_con_google` |
 
 ### Registro y cuentas
 
 | ID | Rol | Escenario | Esperado | Observado | Resultado | Hallazgo | Evidencia |
 |---|---|---|---|---|---|---|---|
-| ID-12 | Anónimo | Registro propio de allauth (`/accounts/signup/`) | Cerrado | **Abierto** | **ABIERTO** | S-06 | `S06RegistroAbiertoTests.test_el_registro_propio_de_allauth_esta_cerrado` |
+| ID-12 | Anónimo | Registro propio de allauth (`/accounts/signup/`) | Cerrado | Cerrado | **CERRADO (S4-02)** | S-06 | `S06RegistroAbiertoTests.test_el_registro_propio_de_allauth_esta_cerrado` |
 | ID-13 | Anónimo | Cuenta sin perfil creada con el correo de otra persona, que luego la completa con Google | La clave previa deja de servir | **La clave previa sigue sirviendo** | **ABIERTO** | S-06 | `S06CuentaHuerfanaTests.test_completar_con_google_anula_la_clave_previa` |
 | ID-14 | Anónimo | Google entrega un correo no verificado | Rechazado | Rechazado | OK | — | `test_google_y_titulo.test_correo_no_verificado_por_google_se_rechaza` |
 
@@ -63,9 +65,9 @@ VER_HALLAZGOS=1 python manage.py test tests.test_matriz_identidad -v 2 # muestra
 | Hallazgo | Gravedad (informe) | Estado | Filas | Dónde está hoy |
 |---|---|---|---|---|
 | **S-03** Alumnos creados por el admin entran con su RUT como clave | Crítica | **Abierto, confirmado por prueba** | ID-07 | `admin_portal/forms.py:82` (`password=rut`) |
-| **S-05** El límite de intentos se puede saltar | Alta | **Abierto, confirmado por prueba** en sus dos variantes | ID-05, ID-06 | `alumnos/views.py:382-386` (IP desde el primer valor de `X-Forwarded-For`), `alumnos/views.py:417` (contador con el texto escrito, sin normalizar), `alumnos/backends.py:7` (el login sí acepta variantes del RUT). No hay `CACHES` en `lbwus/settings.py` |
-| **S-06** Registro de allauth abierto y reutilización de cuentas huérfanas | Alta | **Abierto, confirmado por prueba**. ID-13 reproduce la cadena completa que el informe marcaba como "falta reproducirlo" | ID-12, ID-13 | `lbwus/urls.py:50` (`allauth.urls`), sin `ACCOUNT_ADAPTER` en `lbwus/settings.py`; `alumnos/google_views.py:56` (reutiliza la cuenta); `alumnos/google_forms.py:89-90` (solo anula la clave en cuentas nuevas) |
-| **S-07** Cuentas desactivadas siguen operando por la sesión o por Google | Alta | **Abierto, confirmado por prueba** | ID-10, ID-11 | `user_profesor/views.py:421-428` (`_es_admin` solo mira la sesión); `alumnos/google_adapter.py:67` (entra al portal sin revisar `is_active`) |
+| **S-05** El límite de intentos se puede saltar | Alta | **Cerrado (S4-02)**: contador por RUT normalizado, IP confiable y caché compartida en base de datos | ID-05, ID-06, ID-06b | `alumnos/backends.py` (`obtener_identificador_rate_limit`), `alumnos/views.py` (`_obtener_ip`), `CACHES` en `lbwus/settings.py` |
+| **S-06** Registro de allauth abierto y reutilización de cuentas huérfanas | Alta | **Parcial**: el registro de allauth está cerrado (S4-02); la cuenta huérfana sigue abierta | ID-12, ID-13 | `alumnos/google_views.py:56` (reutiliza la cuenta); `alumnos/google_forms.py:89-90` (solo anula la clave en cuentas nuevas) |
+| **S-07** Cuentas desactivadas siguen operando por la sesión o por Google | Alta | **Parcial**: Google ya las rechaza (S4-02); el admin con sesión sigue abierto | ID-10, ID-11 | `user_profesor/views.py:421-428` (`_es_admin` solo mira la sesión) |
 
 **S-07, vistas sin decorador de rol (solo revisión de código, sin prueba propia).** Estas vistas de `alumnos/views.py` usan la sesión sin `@alumno_required`, y por lo tanto no revisan `is_active`: `enviar_reporte` (504), `inscribir_clase` (594), `listar_sesiones_disponibles` (677), `reservar_sesion` (725), `sala_virtual` (953) e `iniciar_directo` (996). Son las mismas que cita el informe, con números de línea actualizados.
 
@@ -91,6 +93,5 @@ Ningún fallo se debe a un error de preparación: los siete son `AssertionError`
 
 ## Lo que esta matriz no cubre
 
-- **S-05, contador en memoria:** sin `CACHES`, cada proceso de gunicorn tiene su propio contador y se pierde en cada deploy. No se puede reproducir en una prueba unitaria.
-- **S-05, `X-Forwarded-For` en Railway:** el informe deja "por confirmar" si Railway reemplaza esa cabecera. ID-06 prueba el comportamiento de la aplicación, no el del proxy de Railway.
+- **S-05, `X-Forwarded-For` en Railway:** la app confía solo en la última IP de la cabecera, la que agrega el proxy (ID-06b). Falta confirmar en un deploy real que Railway la agrega así; si usara varios saltos internos, habría que ajustar cuántos se descartan.
 - **Pruebas contra producción:** no se hicieron. Todo corre en el entorno de pruebas de Django.

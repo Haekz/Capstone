@@ -1,6 +1,8 @@
 import json
+import os
 import secrets
 
+from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, Http404
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
@@ -38,6 +40,7 @@ from .roles import (
     resolver_rol,
     rol_en_sesion,
 )
+from .backends import obtener_identificador_rate_limit
 
 
 # ============================================================
@@ -380,10 +383,17 @@ def alumno_pag1(request):
 # ============================================================
 
 def _obtener_ip(request):
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
-        return x_forwarded_for.split(',')[0].strip()
-    return request.META.get('REMOTE_ADDR', '127.0.0.1')
+    """IP del cliente para el limite de intentos (S4-02 / S-07).
+
+    X-Forwarded-For lo escribe el propio cliente, salvo la ultima IP, que la agrega
+    el proxy de confianza (Railway). Por eso solo se usa esa: con la primera bastaba
+    cambiar la cabecera para reiniciar el contador.
+    """
+    if getattr(settings, 'CONFIAR_X_FORWARDED_FOR', False) or os.environ.get('RAILWAY_ENVIRONMENT'):
+        ips = [ip.strip() for ip in request.META.get('HTTP_X_FORWARDED_FOR', '').split(',') if ip.strip()]
+        if ips:
+            return ips[-1]
+    return request.META.get('REMOTE_ADDR', '').strip() or '127.0.0.1'
 
 
 # never_cache: si el navegador guarda el login, al volver "atras" desde el
@@ -413,8 +423,10 @@ def custom_login(request):
         )
 
         ip = _obtener_ip(request)
+        # Mismo contador para todas las formas de escribir el RUT (S4-02 / S-05).
+        canon_user = obtener_identificador_rate_limit(username)
         clave_cache_ip = f'intentos_login_ip_{ip}'
-        clave_cache_user = f'intentos_login_user_{username.lower()}'
+        clave_cache_user = f'intentos_login_user_{canon_user}'
 
         intentos_ip = cache.get(clave_cache_ip, 0)
         intentos_user = cache.get(clave_cache_user, 0)
@@ -470,7 +482,7 @@ def custom_login(request):
 
             else:
                 cache.set(clave_cache_ip, intentos_ip + 1, 300)
-                if username:
+                if canon_user:
                     cache.set(clave_cache_user, intentos_user + 1, 300)
 
                 error = (
