@@ -57,6 +57,7 @@ VER_HALLAZGOS=1 python manage.py test tests.test_matriz_identidad -v 2 # muestra
 | ID-19 | Superusuario sin perfil | Iniciar sesión | No cae en el portal de alumno | No cae | OK | — | `test_portales_por_rol.test_superusuario_sin_perfil_no_cae_en_portal_de_alumno` |
 | ID-20 | Alumno | Entrar a la sala virtual de una clase sin estar inscrito | Rechazado | Rechazado | OK | — | `test_sala_virtual_acceso.test_sin_inscripcion_no_entra` |
 | ID-21 | No admin | Ver el archivo del título de un profesor | Solo admins | Solo admins | OK | — | `test_google_y_titulo.test_archivo_del_titulo_solo_lo_ven_admins` |
+| ID-22 | Admin, staff o campo `rol` | Entrar a la sala virtual de una clase ajena | Rechazado: solo el profesor de la clase y alumnos inscritos | Rechazado (antes entraba) | OK (corregido en `fran-menores-prerrequisitos`) | Decisión 10 de menores | `test_menores_prerrequisitos.SalaVirtualSoloParticipantesTests` |
 
 ## Estado de los hallazgos
 

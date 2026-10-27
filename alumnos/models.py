@@ -23,7 +23,6 @@ class CustomUser(AbstractUser):
         ('alumno', 'Alumno'),
         ('profesor', 'Profesor'),
         ('admin', 'Administrador'),
-        ('tutor', 'Tutor'),
     )
     rol = models.CharField(max_length=15, choices=ROLES, default='alumno')
     rut = models.CharField(max_length=12, unique=True, null=True, blank=True)
@@ -43,10 +42,6 @@ class CustomUser(AbstractUser):
     @property
     def is_profesor(self):
         return self.rol == 'profesor'
-        
-    @property
-    def is_tutor(self):
-        return self.rol == 'tutor'
 
     @property
     def is_administrador(self):
@@ -54,6 +49,8 @@ class CustomUser(AbstractUser):
 
 
 class Tutor(models.Model):
+    # Perfil del ADMINISTRADOR (ver roles.ADMIN), no un tutor legal: no reutilizar
+    # para apoderados de menores, porque tener este perfil abre el portal admin.
     id_tutor = models.AutoField(primary_key=True)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='perfil_tutor')
 
@@ -65,7 +62,6 @@ class Alumno(models.Model):
     id_alumno = models.AutoField(primary_key=True)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='perfil_alumno')
     nivel_educacion = models.CharField(max_length=10, choices=[('basica', 'Básica'), ('media', 'Media'), ('superior', 'Superior')])
-    tutor = models.ForeignKey(Tutor, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
         return f"Alumno: {self.user.first_name} {self.user.last_name}"

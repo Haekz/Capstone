@@ -37,6 +37,15 @@ class AdminAlumnoForm(forms.ModelForm):
             self.fields['telefono'].initial = user.telefono
             self.fields['genero'].initial = user.genero
 
+    def clean_fecha_nacimiento(self):
+        fecha = self.cleaned_data.get('fecha_nacimiento')
+        if fecha:
+            from alumnos.utils import error_fecha_nacimiento
+            error = error_fecha_nacimiento(fecha)
+            if error:
+                raise forms.ValidationError(error)
+        return fecha
+
     def clean_rut(self):
         rut = self.cleaned_data.get('rut')
         if rut:
