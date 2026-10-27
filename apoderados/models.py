@@ -233,3 +233,22 @@ class Invitacion(models.Model):
             self.usada = timezone.now()
             self.save(update_fields=['vinculo', 'usada'])
         return self.vinculo
+
+
+class CompraApoderado(models.Model):
+    """Paquete de clases que un apoderado pago para su estudiante (fase 1c).
+
+    El paquete (alumnos.PaqueteClases) queda a nombre del estudiante y sigue el
+    mismo flujo de Webpay; aqui solo se registra quien lo pago y con que vinculo.
+    SET_NULL: si se borra la cuenta o el vinculo, la evidencia del pago queda.
+    """
+    paquete = models.OneToOneField('alumnos.PaqueteClases', on_delete=models.CASCADE,
+                                   related_name='compra_apoderado')
+    apoderado = models.ForeignKey(Apoderado, on_delete=models.SET_NULL, null=True, related_name='compras')
+    vinculo = models.ForeignKey(Vinculo, on_delete=models.SET_NULL, null=True, related_name='compras')
+    creada = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'compra de apoderado'
+        verbose_name_plural = 'compras de apoderados'
+        ordering = ['-creada']

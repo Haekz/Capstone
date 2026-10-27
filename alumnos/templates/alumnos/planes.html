@@ -25,6 +25,7 @@
 <div class="planes-container">
 
     <form class="pl-selector" method="get" action="{% url 'planes' %}">
+        {% if estudiante %}<input type="hidden" name="estudiante" value="{{ estudiante.pk }}">{% endif %}
         <label for="pl-profesor">Profesor</label>
         <div class="pl-selector-fila">
             <select id="pl-profesor" name="profesor">
@@ -41,6 +42,7 @@
     </form>
 
     <div class="planes-header">
+        {% if estudiante %}<p role="status"><strong>Contratando para {{ estudiante.alumno.user.first_name }}.</strong> El paquete quedará a su nombre y lo pagas tú con Webpay.</p>{% endif %}
         {% if profesor %}
         <h2>Precios con {{ profesor.nombre }}</h2>
         <p>Tarifa de {{ tarifa|clp }} por clase.{% if es_alumno %} <a href="{% url 'perfil_profesor' profesor.id_profesor %}">Ver perfil del profesor</a>{% endif %}</p>
@@ -61,7 +63,14 @@
                 </div>
                 <p class="plan-billing-info">{{ c.plan.clases }} clase{{ c.plan.clases|pluralize }} de {{ duracion_clase }} min · {{ c.precio_por_clase|clp }} por clase</p>
 
-                {% if profesor and es_alumno %}
+                {% if profesor and estudiante %}
+                <form method="post" action="{% url 'apoderado_comprar_paquete' estudiante.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="profesor" value="{{ profesor.id_profesor }}">
+                    <input type="hidden" name="plan" value="{{ c.plan.codigo }}">
+                    <button type="submit" class="plan-btn-action">Contratar {{ c.plan.nombre }} para {{ estudiante.alumno.user.first_name }}</button>
+                </form>
+                {% elif profesor and es_alumno %}
                 <form method="post" action="{% url 'comprar_paquete' %}">
                     {% csrf_token %}
                     <input type="hidden" name="profesor" value="{{ profesor.id_profesor }}">

@@ -26,6 +26,8 @@ from .models import (
 )
 from django.core.exceptions import ValidationError
 from . import paquetes
+from django.db import transaction
+from apoderados.permisos import vinculo_contratable
 from .forms import AlumnoForm, FiltroClasesForm
 from .decorators import alumno_required
 from .exceptions import InscripcionError
@@ -116,6 +118,8 @@ def planes(request):
         'duracion_clase': paquetes.DURACION_CLASE_MIN,
         'comision_pct': int(paquetes.COMISION * 100),
         'es_alumno': bool(request.session.get('alumno_id')),
+        # Apoderado contratando para su estudiante (?estudiante=id del vinculo verificado).
+        'estudiante': vinculo_contratable(request, request.GET.get('estudiante')),
     })
 
 
@@ -820,6 +824,15 @@ def comprar_paquete(request):
     # Menores: la contratacion sera del apoderado (fase 1c). Unico inicio de Webpay.
     if es_menor(get_object_or_404(Alumno, id_alumno=request.session['alumno_id']).user):
         return redirect('alumno_pag1')
+    return iniciar_compra_paquete(request, request.session['alumno_id'])
+
+
+def iniciar_compra_paquete(request, alumno_id, al_crear=None):
+    """Unico inicio de Webpay para paquetes: lo usan el alumno y el apoderado (fase 1c).
+
+    Plan y profesor vienen del POST; el monto lo calcula el servidor. ``al_crear``
+    recibe el paquete dentro de la misma transaccion (la compra del apoderado).
+    """
     plan = paquetes.POR_CODIGO.get(request.POST.get('plan', ''))
     profesor = _profesor_habilitado(request.POST.get('profesor'))
     if not (plan and profesor):
@@ -835,11 +848,14 @@ def comprar_paquete(request):
     except Exception:  # Transbank caido o rechazo la orden: no se cobra ni se crea el paquete
         return render(request, 'alumnos/confirmacion.html', {'aprobado': False, 'items': []})
 
-    PaqueteClases.objects.create(
-        alumno_id=request.session['alumno_id'], profesor=profesor, plan=plan.codigo,
-        clases=plan.clases, tarifa=profesor.tarifa, monto=monto, dias=plan.vigencia_dias,
-        buy_order=buy_order,
-    )
+    with transaction.atomic():  # paquete y registro del apoderado: ambos o ninguno
+        paquete = PaqueteClases.objects.create(
+            alumno_id=alumno_id, profesor=profesor, plan=plan.codigo,
+            clases=plan.clases, tarifa=profesor.tarifa, monto=monto, dias=plan.vigencia_dias,
+            buy_order=buy_order,
+        )
+        if al_crear:
+            al_crear(paquete)
     return render(request, 'alumnos/redirect_webpay.html', {'url': response['url'], 'token': response['token']})
 
 

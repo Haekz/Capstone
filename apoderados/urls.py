@@ -9,6 +9,7 @@ urlpatterns = [
     path('mi-cuenta/reenviar/', views.reenviar, name='apoderado_reenviar_correo'),
     path('mi-cuenta/estudiantes/nuevo/', views.registrar_estudiante, name='apoderado_registrar_estudiante'),
     path('mi-cuenta/estudiantes/<int:id_vinculo>/clave/', views.clave_estudiante, name='apoderado_clave_estudiante'),
+    path('mi-cuenta/estudiantes/<int:id_vinculo>/comprar/', views.comprar_paquete, name='apoderado_comprar_paquete'),
     path('invitacion/<str:token>/', views.invitacion, name='apoderado_invitacion'),
     # Adolescentes de 14 a 17 (fase 1b-ii): su cuenta es de alumno, restringida.
     path('estudiantes/registro/', views.registro_adolescente, name='adolescente_registro'),
