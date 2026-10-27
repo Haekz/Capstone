@@ -2,13 +2,16 @@
 
 Fase 1a: cuenta del apoderado y verificacion de su identidad.
 Fase 1b: vinculo con cada estudiante menor, verificado uno por uno con el
-certificado de nacimiento (solo madre o padre en el MVP).
+certificado de nacimiento (solo madre o padre en el MVP). El vinculo lo inicia
+el apoderado (1b-i) o un adolescente de 14 a 17 que lo invita por correo (1b-ii).
 
 Una cuenta o un vinculo verificados NO habilitan reservas, compras ni clases:
 eso llega con la contratacion por el apoderado (fase 1c). Minimizacion de
 datos: no se guardan copias de documentos ni la IP; solo la evidencia de que un
 administrador reviso, y que version de cada declaracion se acepto.
 """
+
+from datetime import timedelta
 
 from django.conf import settings
 from django.db import models, transaction
@@ -133,6 +136,11 @@ class Vinculo(models.Model):
     def ultima_revision(self):
         return self.revisiones.first()
 
+    @property
+    def apoderado_define_clave(self):
+        """Solo si el apoderado creo la cuenta (1b-i): el adolescente maneja la suya (1b-ii)."""
+        return not SolicitudAdolescente.objects.filter(alumno_id=self.alumno_id).exists()
+
     def aplicar_revision(self, revision, administrador):
         revision.vinculo = self
         _registrar_decision(self, revision, administrador)
@@ -146,3 +154,82 @@ class RevisionVinculo(Revision):
     class Meta(Revision.Meta):
         verbose_name = 'revisión de vínculo'
         verbose_name_plural = 'revisiones de vínculos'
+
+
+class SolicitudAdolescente(models.Model):
+    """Un adolescente de 14 a 17 crea su cuenta y pide vincularse con su madre o padre.
+
+    La invitacion al apoderado sale recien cuando el adolescente confirma su
+    correo: asi el formulario no sirve para mandar correos a cualquiera.
+    """
+    alumno = models.OneToOneField('alumnos.Alumno', on_delete=models.CASCADE,
+                                  related_name='solicitud_apoderado')
+    correo_apoderado = models.EmailField('correo de la madre o el padre')
+    correo_confirmado = models.DateTimeField(null=True, blank=True)
+    version_declaracion = models.CharField(max_length=10)
+    declaracion_aceptada = models.DateTimeField()
+    creada = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'solicitud de adolescente'
+        verbose_name_plural = 'solicitudes de adolescentes'
+
+    @property
+    def user(self):
+        return self.alumno.user
+
+    @property
+    def ultima_invitacion(self):
+        return self.invitaciones.first()
+
+    def confirmar_correo(self):
+        """True solo la primera vez: la invitacion al apoderado sale una sola vez."""
+        if self.correo_confirmado is not None:
+            return False
+        self.correo_confirmado = timezone.now()
+        self.save(update_fields=['correo_confirmado'])
+        return True
+
+    def invitar(self, correo):
+        """Nueva invitacion; las anteriores dejan de servir (solo vale la ultima)."""
+        self.correo_apoderado = correo
+        with transaction.atomic():
+            self.save(update_fields=['correo_apoderado'])
+            return self.invitaciones.create(correo=correo)
+
+
+class Invitacion(models.Model):
+    """El correo solo entrega el enlace: la prueba del vinculo es el certificado."""
+    VIGENCIA = timedelta(days=7)
+    LIMITE_DIARIO = 5
+
+    solicitud = models.ForeignKey(SolicitudAdolescente, on_delete=models.CASCADE, related_name='invitaciones')
+    correo = models.EmailField('correo indicado por el estudiante')
+    enviada = models.DateTimeField(auto_now_add=True)
+    usada = models.DateTimeField(null=True, blank=True)
+    vinculo = models.ForeignKey(Vinculo, on_delete=models.SET_NULL, null=True, blank=True,
+                                related_name='invitaciones')
+
+    class Meta:
+        verbose_name = 'invitación'
+        verbose_name_plural = 'invitaciones'
+        ordering = ['-enviada', '-id']
+
+    @property
+    def vence(self):
+        return self.enviada + self.VIGENCIA
+
+    def vigente(self):
+        return (self.usada is None and timezone.now() < self.vence
+                and self.solicitud.ultima_invitacion == self)
+
+    def aceptar(self, apoderado, parentesco, version_declaracion):
+        """Crea el vinculo pendiente: lo verifica un admin con el certificado de nacimiento."""
+        with transaction.atomic():
+            self.vinculo = Vinculo.objects.create(
+                apoderado=apoderado, alumno=self.solicitud.alumno, parentesco=parentesco,
+                version_declaracion=version_declaracion, declaracion_aceptada=timezone.now(),
+            )
+            self.usada = timezone.now()
+            self.save(update_fields=['vinculo', 'usada'])
+        return self.vinculo

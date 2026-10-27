@@ -75,7 +75,8 @@
                 <tr>
                     <td><strong>{{ v.alumno.user.first_name }}</strong><br><small>RUT {{ v.alumno.user.rut }} · Nacimiento: {{ v.alumno.user.fecha_nacimiento|date:"d-m-Y" }}</small></td>
                     <td>{{ v.apoderado.nombre }} ({{ v.get_parentesco_display }})<br><small>RUT {{ v.apoderado.user.rut }}</small></td>
-                    <td><small>Declaración v{{ v.version_declaracion }} aceptada el {{ v.declaracion_aceptada|date:"d-m-Y H:i" }}</small></td>
+                    <td><small>Declaración v{{ v.version_declaracion }} aceptada el {{ v.declaracion_aceptada|date:"d-m-Y H:i" }}</small>
+                        {% for inv in v.invitaciones.all %}<br><small>El estudiante invitó a {{ inv.correo }}</small>{% endfor %}</td>
                     <td>
                         <form method="post" action="{% url 'apoderado_revisar_vinculo' v.pk %}" style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
                             {% csrf_token %}

@@ -368,6 +368,7 @@ def alumno_pag1(request):
         'mis_paquetes': mis_paquetes,
         'pagos': pagos,
         'es_menor': es_menor(alumno.user),
+        'tiene_solicitud': hasattr(alumno, 'solicitud_apoderado'),  # adolescente de 14 a 17 (apoderados)
     }
 
     return render(

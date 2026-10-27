@@ -10,29 +10,36 @@ from django.contrib import messages
 from django.contrib.auth import login as auth_login, logout as auth_logout
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.utils.encoding import DjangoUnicodeDecodeError, force_str
-from django.utils.http import urlsafe_base64_decode
 from django.views.decorators.cache import never_cache
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_POST
 
-from alumnos.decorators import admin_required, apoderado_required
+from alumnos.decorators import admin_required, alumno_required, apoderado_required
 from alumnos.models import Tutor
-from alumnos.roles import APODERADO, abrir_sesion_rol, redirigir_a_portal, rol_en_sesion
+from alumnos.roles import ALUMNO, APODERADO, abrir_sesion_rol, redirigir_a_portal, rol_en_sesion
 
-from .correo import enviar_confirmacion
-from .forms import (ClaveEstudianteForm, RegistroApoderadoForm, RegistroEstudianteForm,
-                    RevisionIdentidadForm, RevisionVinculoForm)
-from .models import Apoderado, Revision, RevisionIdentidad, RevisionVinculo, Vinculo
-from .tokens import token_correo
+from .correo import enviar_confirmacion, enviar_confirmacion_adolescente, enviar_invitacion
+from .forms import (VERSION_DECLARACION_VINCULO, AceptarInvitacionForm, ClaveEstudianteForm,
+                    InvitacionForm, RegistroAdolescenteForm, RegistroApoderadoForm,
+                    RegistroEstudianteForm, RevisionIdentidadForm, RevisionVinculoForm)
+from .models import (Apoderado, Revision, RevisionIdentidad, RevisionVinculo, SolicitudAdolescente,
+                     Vinculo)
+from .tokens import invitacion_vigente, token_correo, token_correo_adolescente, user_id_de_uid
 
 ESPERA_REENVIO = 60  # segundos entre correos de confirmacion
 CLAVE_ENVIO = 'apoderado_correo_enviado'
+CLAVE_INVITACION = 'invitacion_pendiente'  # enlace guardado mientras el apoderado entra o se registra
+BACKEND = 'alumnos.backends.RutOrEmailBackend'
 
 
 def _apoderado_en_sesion(request):
     return get_object_or_404(Apoderado.objects.select_related('user'),
                              id_apoderado=request.session[APODERADO.clave_sesion])
+
+
+def _solicitud_en_sesion(request):
+    return get_object_or_404(SolicitudAdolescente.objects.select_related('alumno__user'),
+                             alumno_id=request.session[ALUMNO.clave_sesion])
 
 
 def _formulario(request, form, **textos):
@@ -44,12 +51,19 @@ def _segundos_para_reenviar(request):
     return max(0, int(falta))
 
 
-def _enviar(request, apoderado):
-    if enviar_confirmacion(request, apoderado):
+def _avisar_envio(request, enviado, correo):
+    if enviado:
         request.session[CLAVE_ENVIO] = time.time()
-        messages.success(request, f'Te enviamos un enlace a {apoderado.user.email} para confirmar tu correo.')
+        messages.success(request, f'Te enviamos un enlace a {correo} para confirmar tu correo.')
     else:
         messages.error(request, 'No pudimos enviar el correo de confirmación. Inténtalo de nuevo en unos minutos.')
+
+
+def _con_token_valido(perfiles, campo_user, uidb64, token, generador):
+    """El perfil (con ``.user``) del enlace de confirmacion, o None si el enlace no sirve."""
+    user_id = user_id_de_uid(uidb64)
+    perfil = perfiles.filter(**{campo_user: user_id}).first() if user_id else None
+    return perfil if perfil is not None and generador.check_token(perfil.user, token) else None
 
 
 @sensitive_post_parameters('password', 'confirmar_password')
@@ -61,9 +75,9 @@ def registro(request):
     form = RegistroApoderadoForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
         apoderado = form.save()
-        auth_login(request, apoderado.user, backend='alumnos.backends.RutOrEmailBackend')
+        auth_login(request, apoderado.user, backend=BACKEND)
         abrir_sesion_rol(request, APODERADO, apoderado)
-        _enviar(request, apoderado)
+        _avisar_envio(request, enviar_confirmacion(request, apoderado), apoderado.user.email)
         return redirect(APODERADO.ruta_portal)
     return _formulario(
         request, form, titulo='Crea tu cuenta de apoderado', subtitulo='Tus datos', boton='Crear cuenta',
@@ -76,13 +90,9 @@ def registro(request):
 
 @never_cache
 def confirmar_correo(request, uidb64, token):
-    try:
-        user_id = force_str(urlsafe_base64_decode(uidb64))
-    except (ValueError, TypeError, OverflowError, DjangoUnicodeDecodeError):
-        user_id = None
-    apoderado = (Apoderado.objects.select_related('user').filter(user_id=user_id).first()
-                 if user_id and user_id.isdigit() else None)
-    if apoderado is None or not token_correo.check_token(apoderado.user, token):
+    apoderado = _con_token_valido(Apoderado.objects.select_related('user'), 'user_id',
+                                  uidb64, token, token_correo)
+    if apoderado is None:
         return render(request, 'apoderados/enlace_invalido.html', status=400)
     apoderado.confirmar_correo()
     messages.success(request, 'Correo confirmado. Ahora un administrador revisará tu identidad.')
@@ -93,11 +103,14 @@ def confirmar_correo(request, uidb64, token):
 @apoderado_required
 def portal(request):
     apoderado = _apoderado_en_sesion(request)
+    token = request.session.get(CLAVE_INVITACION)
     return render(request, 'apoderados/portal.html', {
         'apoderado': apoderado,
         'revision': apoderado.ultima_revision,
         'espera': _segundos_para_reenviar(request),
         'vinculos': apoderado.vinculos.select_related('alumno__user').prefetch_related('revisiones'),
+        'invitacion': invitacion_vigente(token) if token else None,
+        'token_invitacion': token,
     })
 
 
@@ -110,7 +123,7 @@ def reenviar(request):
     elif _segundos_para_reenviar(request):
         messages.error(request, 'Espera un minuto antes de pedir otro enlace.')
     else:
-        _enviar(request, apoderado)
+        _avisar_envio(request, enviar_confirmacion(request, apoderado), apoderado.user.email)
     return redirect(APODERADO.ruta_portal)
 
 
@@ -140,11 +153,13 @@ def registrar_estudiante(request):
 @never_cache
 @apoderado_required
 def clave_estudiante(request, id_vinculo):
-    # Solo vinculos propios y no rechazados: un vinculo ajeno o rechazado responde 404.
+    # Solo vinculos propios, no rechazados y de cuentas que creo el apoderado
+    # (Vinculo.apoderado_define_clave): lo demas responde 404.
     vinculo = get_object_or_404(
         Vinculo.objects.select_related('alumno__user'), pk=id_vinculo,
         apoderado_id=request.session[APODERADO.clave_sesion],
         estado__in=[Vinculo.PENDIENTE, Vinculo.VERIFICADO],
+        alumno__solicitud_apoderado__isnull=True,
     )
     estudiante = vinculo.alumno.user
     form = ClaveEstudianteForm(estudiante, request.POST or None)
@@ -156,6 +171,125 @@ def clave_estudiante(request, id_vinculo):
         request, form, titulo=f'Contraseña de {estudiante.first_name}', subtitulo='Nueva contraseña',
         boton='Guardar contraseña', volver_url=reverse(APODERADO.ruta_portal),
         intro=f'{estudiante.first_name} entra con su RUT ({estudiante.rut}) y esta contraseña.',
+    )
+
+
+# --- Fase 1b-ii: el adolescente de 14 a 17 invita a su madre o padre ---
+
+@sensitive_post_parameters('password', 'confirmar_password')
+@never_cache
+def registro_adolescente(request):
+    rol = rol_en_sesion(request)
+    if rol is not None:
+        return redirigir_a_portal(rol)
+    form = RegistroAdolescenteForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        alumno = form.save()
+        auth_login(request, alumno.user, backend=BACKEND)
+        abrir_sesion_rol(request, ALUMNO, alumno)
+        _avisar_envio(request, enviar_confirmacion_adolescente(request, alumno.user), alumno.user.email)
+        return redirect('adolescente_solicitud')
+    return _formulario(
+        request, form, titulo='Crea tu cuenta de estudiante', subtitulo='Tus datos', boton='Crear cuenta',
+        volver_url=reverse('opcion_user'),
+        intro=('Para estudiantes de 14 a 17 años. Cuando confirmes tu correo, invitaremos a tu madre o a tu '
+               'padre a ser tu apoderado. Hasta que verifiquemos el vínculo, solo podrás ver el catálogo.'),
+    )
+
+
+@never_cache
+def confirmar_correo_adolescente(request, uidb64, token):
+    solicitud = _con_token_valido(SolicitudAdolescente.objects.select_related('alumno__user'),
+                                  'alumno__user_id', uidb64, token, token_correo_adolescente)
+    if solicitud is None:
+        return render(request, 'apoderados/enlace_invalido.html', status=400)
+    if solicitud.confirmar_correo():
+        _enviar_invitacion(request, solicitud, solicitud.correo_apoderado)
+    return redirect('adolescente_solicitud' if request.session.get(ALUMNO.clave_sesion) else 'login')
+
+
+def _enviar_invitacion(request, solicitud, correo):
+    if enviar_invitacion(request, solicitud.invitar(correo)):
+        messages.success(request, f'Enviamos la invitación a {correo}.')
+    else:
+        messages.error(request, 'No pudimos enviar la invitación. Inténtalo de nuevo en unos minutos.')
+
+
+@never_cache
+@alumno_required
+def solicitud_adolescente(request):
+    solicitud = _solicitud_en_sesion(request)
+    return render(request, 'apoderados/solicitud.html', {
+        'solicitud': solicitud,
+        'invitacion': solicitud.ultima_invitacion,
+        'vinculos': solicitud.alumno.vinculos_apoderado.select_related('apoderado__user'),
+        'form': InvitacionForm(solicitud=solicitud),
+        'espera': _segundos_para_reenviar(request),
+    })
+
+
+@require_POST
+@alumno_required
+def reenviar_correo_adolescente(request):
+    solicitud = _solicitud_en_sesion(request)
+    if solicitud.correo_confirmado:
+        messages.info(request, 'Tu correo ya está confirmado.')
+    elif _segundos_para_reenviar(request):
+        messages.error(request, 'Espera un minuto antes de pedir otro enlace.')
+    else:
+        user = solicitud.alumno.user
+        _avisar_envio(request, enviar_confirmacion_adolescente(request, user), user.email)
+    return redirect('adolescente_solicitud')
+
+
+@require_POST
+@alumno_required
+def invitar(request):
+    solicitud = _solicitud_en_sesion(request)
+    form = InvitacionForm(request.POST, solicitud=solicitud)
+    if solicitud.correo_confirmado is None:
+        messages.error(request, 'Primero confirma tu correo.')
+    elif form.is_valid():
+        _enviar_invitacion(request, solicitud, form.cleaned_data['correo_apoderado'])
+    else:
+        messages.error(request, next(iter(form.errors.values()))[0])
+    return redirect('adolescente_solicitud')
+
+
+@never_cache
+def invitacion(request, token):
+    pendiente = invitacion_vigente(token)
+    if pendiente is None:
+        return render(request, 'apoderados/enlace_invalido.html', status=400, context={
+            'detalle': 'Pídele al estudiante que te envíe una invitación nueva desde su cuenta.'})
+    estudiante = pendiente.solicitud.alumno
+    rol = rol_en_sesion(request)
+    if rol is not APODERADO:
+        # Se guarda el enlace: al entrar o registrarse, el portal ofrece aceptarlo.
+        request.session[CLAVE_INVITACION] = token
+        return render(request, 'apoderados/invitacion.html', {
+            'nombre': estudiante.user.first_name, 'otra_sesion': rol is not None})
+
+    apoderado = _apoderado_en_sesion(request)
+    if apoderado.estado == Apoderado.RECHAZADO:
+        messages.error(request, 'No puedes aceptar invitaciones porque tu verificación fue rechazada.')
+        return redirect(APODERADO.ruta_portal)
+    if apoderado.vinculos.filter(alumno=estudiante).exists():
+        request.session.pop(CLAVE_INVITACION, None)
+        messages.info(request, f'Ya tienes un vínculo con {estudiante.user.first_name}.')
+        return redirect(APODERADO.ruta_portal)
+    form = AceptarInvitacionForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        pendiente.aceptar(apoderado, form.cleaned_data['parentesco'], VERSION_DECLARACION_VINCULO)
+        request.session.pop(CLAVE_INVITACION, None)
+        messages.success(request, f'Aceptaste la invitación de {estudiante.user.first_name}. Un administrador '
+                                  'revisará su certificado de nacimiento para verificar el vínculo.')
+        return redirect(APODERADO.ruta_portal)
+    return _formulario(
+        request, form, titulo=f'Invitación de {estudiante.user.first_name}', subtitulo='Confirma el vínculo',
+        boton='Aceptar invitación', volver_url=reverse(APODERADO.ruta_portal),
+        intro=('Si eres su madre o su padre, acepta la invitación. Un administrador revisará tu identidad y el '
+               'certificado de nacimiento del estudiante antes de verificar el vínculo.'),
     )
 
 
@@ -171,8 +305,9 @@ def revision(request):
         'admin': get_object_or_404(Tutor, id_tutor=request.session['admin_id']),
         'pendientes': Apoderado.objects.filter(estado=Apoderado.REVISION_PENDIENTE).select_related('user'),
         'historial': RevisionIdentidad.objects.select_related('apoderado__user', 'administrador')[:50],
-        'vinculos_pendientes': (Vinculo.objects.filter(estado=Vinculo.PENDIENTE)
-                                .select_related('apoderado__user', 'alumno__user')),
+        # Solo los que se pueden revisar: el apoderado ya tiene su identidad verificada.
+        'vinculos_pendientes': (Vinculo.objects.filter(estado=Vinculo.PENDIENTE, apoderado__estado=Apoderado.VERIFICADO)
+                                .select_related('apoderado__user', 'alumno__user').prefetch_related('invitaciones')),
         'historial_vinculos': (RevisionVinculo.objects
                                .select_related('vinculo__apoderado__user', 'vinculo__alumno__user', 'administrador')[:50]),
         'documentos': RevisionIdentidad.DOCUMENTOS,

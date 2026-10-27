@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import SetPasswordForm
@@ -9,7 +11,8 @@ from alumnos.models import Alumno
 from alumnos.utils import (EDAD_ADULTA, EDAD_MINIMA_ESTUDIANTE, edad, error_fecha_nacimiento,
                            usuario_existe, validar_rut_chileno)
 
-from .models import Apoderado, Revision, RevisionIdentidad, RevisionVinculo, Vinculo
+from .models import (Apoderado, Invitacion, Revision, RevisionIdentidad, RevisionVinculo,
+                     SolicitudAdolescente, Vinculo)
 
 # Al cambiar un texto, subir su version: cada registro guarda la que se acepto.
 # Textos provisorios, sujetos a la revision juridica (decision 15).
@@ -26,6 +29,32 @@ DECLARACION_VINCULO = (
     'mostraré su certificado de nacimiento para que LBWUS verifique el vínculo. Entiendo que, '
     'mientras tanto, la cuenta del estudiante no podrá reservar, comprar ni entrar a clases.'
 )
+VERSION_DECLARACION_ADOLESCENTE = '1'
+DECLARACION_ADOLESCENTE = (
+    'Declaro que mis datos son verdaderos y que el correo que indico es de mi madre o de mi padre. '
+    'Entiendo que, hasta que LBWUS verifique el vínculo con mi certificado de nacimiento, solo podré '
+    'ver el catálogo de clases.'
+)
+EDAD_SOLICITUD_PROPIA = 14  # desde esta edad el estudiante puede iniciar la solicitud
+NIVELES_EDUCACION = Alumno._meta.get_field('nivel_educacion').choices
+
+
+def _validar_edad_menor(fecha, edad_minima):
+    error = error_fecha_nacimiento(fecha, edad_minima=edad_minima)
+    if not error and edad(fecha) >= EDAD_ADULTA:
+        error = 'Desde los 18 años, el estudiante crea su propia cuenta en el registro de alumnos.'
+    if error:
+        raise forms.ValidationError(error)
+    return fecha
+
+
+def _crear_estudiante(datos):
+    """Cuenta de alumno de un menor: entra con su RUT; el correo puede venir vacio."""
+    user = get_user_model().objects.create_user(
+        username=datos['rut'], rut=datos['rut'], email=datos['correo'], rol='alumno',
+        password=datos['password'], first_name=datos['nombre'], fecha_nacimiento=datos['fecha_nacimiento'],
+    )
+    return Alumno.objects.create(user=user, nivel_educacion=datos['nivel_educacion'])
 
 
 class AccesibleMixin:
@@ -105,8 +134,7 @@ class RegistroEstudianteForm(_CuentaForm):
     """El apoderado crea la cuenta del menor: entra con su RUT y la contrasena que se define aqui."""
     fecha_nacimiento = forms.DateField(label='Fecha de nacimiento del estudiante',
                                        widget=forms.DateInput(attrs={'type': 'date'}))
-    nivel_educacion = forms.ChoiceField(label='Nivel de educación',
-                                        choices=Alumno._meta.get_field('nivel_educacion').choices)
+    nivel_educacion = forms.ChoiceField(label='Nivel de educación', choices=NIVELES_EDUCACION)
     parentesco = forms.ChoiceField(label='Tu parentesco con el estudiante', choices=Vinculo.PARENTESCOS)
     correo = forms.EmailField(label='Correo del estudiante (opcional)', required=False)
     acepta_declaracion = forms.BooleanField(label=DECLARACION_VINCULO)
@@ -119,27 +147,76 @@ class RegistroEstudianteForm(_CuentaForm):
         self.apoderado = apoderado
 
     def clean_fecha_nacimiento(self):
-        fecha = self.cleaned_data['fecha_nacimiento']
-        error = error_fecha_nacimiento(fecha, edad_minima=EDAD_MINIMA_ESTUDIANTE)
-        if not error and edad(fecha) >= EDAD_ADULTA:
-            error = 'Si el estudiante tiene 18 años o más, debe crear su propia cuenta.'
-        if error:
-            raise forms.ValidationError(error)
-        return fecha
+        return _validar_edad_menor(self.cleaned_data['fecha_nacimiento'], EDAD_MINIMA_ESTUDIANTE)
 
     def save(self):
         datos = self.cleaned_data
         with transaction.atomic():
-            user = get_user_model().objects.create_user(
-                username=datos['rut'], rut=datos['rut'], email=datos['correo'], rol='alumno',
-                password=datos['password'], first_name=datos['nombre'],
-                fecha_nacimiento=datos['fecha_nacimiento'],
-            )
-            alumno = Alumno.objects.create(user=user, nivel_educacion=datos['nivel_educacion'])
             return Vinculo.objects.create(
-                apoderado=self.apoderado, alumno=alumno, parentesco=datos['parentesco'],
+                apoderado=self.apoderado, alumno=_crear_estudiante(datos), parentesco=datos['parentesco'],
                 version_declaracion=VERSION_DECLARACION_VINCULO, declaracion_aceptada=timezone.now(),
             )
+
+
+class _CorreoApoderadoMixin:
+    """El correo de la madre o el padre no puede ser el del propio estudiante."""
+    def clean_correo_apoderado(self):
+        correo = self.cleaned_data['correo_apoderado']
+        if correo.lower() == (self.correo_propio() or '').lower():
+            raise forms.ValidationError('Escribe el correo de tu madre o de tu padre, no el tuyo.')
+        return correo
+
+
+class RegistroAdolescenteForm(_CorreoApoderadoMixin, _CuentaForm):
+    """El adolescente de 14 a 17 crea su cuenta e indica el correo de su madre o padre."""
+    correo = forms.EmailField(label='Tu correo electrónico')
+    fecha_nacimiento = forms.DateField(label='Fecha de nacimiento',
+                                       widget=forms.DateInput(attrs={'type': 'date'}))
+    nivel_educacion = forms.ChoiceField(label='Nivel de educación', choices=NIVELES_EDUCACION)
+    correo_apoderado = forms.EmailField(label='Correo de tu madre o de tu padre')
+    acepta_declaracion = forms.BooleanField(label=DECLARACION_ADOLESCENTE)
+
+    field_order = ['nombre', 'rut', 'correo', 'fecha_nacimiento', 'nivel_educacion', 'correo_apoderado',
+                   'password', 'confirmar_password', 'acepta_declaracion']
+
+    def correo_propio(self):
+        return self.data.get('correo')
+
+    def clean_fecha_nacimiento(self):
+        return _validar_edad_menor(self.cleaned_data['fecha_nacimiento'], EDAD_SOLICITUD_PROPIA)
+
+    def save(self):
+        datos = self.cleaned_data
+        with transaction.atomic():
+            alumno = _crear_estudiante(datos)
+            SolicitudAdolescente.objects.create(
+                alumno=alumno, correo_apoderado=datos['correo_apoderado'],
+                version_declaracion=VERSION_DECLARACION_ADOLESCENTE, declaracion_aceptada=timezone.now(),
+            )
+            return alumno
+
+
+class InvitacionForm(_CorreoApoderadoMixin, AccesibleMixin, forms.Form):
+    correo_apoderado = forms.EmailField(label='Correo de tu madre o de tu padre')
+
+    def __init__(self, *args, solicitud, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.solicitud = solicitud
+        self.fields['correo_apoderado'].initial = solicitud.correo_apoderado
+
+    def correo_propio(self):
+        return self.solicitud.alumno.user.email
+
+    def clean(self):
+        hace_un_dia = timezone.now() - timedelta(days=1)
+        if self.solicitud.invitaciones.filter(enviada__gte=hace_un_dia).count() >= Invitacion.LIMITE_DIARIO:
+            raise forms.ValidationError('Ya enviaste varias invitaciones hoy. Inténtalo de nuevo mañana.')
+        return super().clean()
+
+
+class AceptarInvitacionForm(AccesibleMixin, forms.Form):
+    parentesco = forms.ChoiceField(label='Tu parentesco con el estudiante', choices=Vinculo.PARENTESCOS)
+    acepta_declaracion = forms.BooleanField(label=DECLARACION_VINCULO)
 
 
 class ClaveEstudianteForm(AccesibleMixin, SetPasswordForm):

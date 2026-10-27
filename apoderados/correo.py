@@ -1,4 +1,7 @@
-"""Envio del enlace de confirmacion de correo."""
+"""Correos del modulo: confirmaciones de correo e invitacion al apoderado.
+
+Cada funcion devuelve False si el correo no salio (se puede reenviar).
+"""
 
 import logging
 
@@ -9,25 +12,47 @@ from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
-from .tokens import token_correo
+from .tokens import firmar_invitacion, token_correo, token_correo_adolescente
 
 logger = logging.getLogger(__name__)
 
 
-def enviar_confirmacion(request, apoderado):
-    """Envia el enlace. Devuelve False si el correo no salio (se puede reenviar)."""
-    user = apoderado.user
-    ruta = reverse('apoderado_confirmar_correo', args=[
-        urlsafe_base64_encode(force_bytes(user.pk)), token_correo.make_token(user),
-    ])
-    cuerpo = render_to_string('apoderados/correo_confirmacion.txt', {
-        'nombre': apoderado.nombre,
-        'enlace': request.build_absolute_uri(ruta),
-        'horas': settings.PASSWORD_RESET_TIMEOUT // 3600,
-    })
+def _enviar(asunto, plantilla, contexto, destinatario):
     try:
-        send_mail('Confirma tu correo - LBWUS', cuerpo, settings.DEFAULT_FROM_EMAIL, [user.email])
-    except Exception:  # SMTP caido, timeout, credenciales: el apoderado puede reenviar
-        logger.exception('No se pudo enviar la confirmacion al apoderado %s', apoderado.pk)
+        send_mail(f'{asunto} - LBWUS', render_to_string(plantilla, contexto),
+                  settings.DEFAULT_FROM_EMAIL, [destinatario])
+    except Exception:  # SMTP caido, timeout, credenciales: se puede reenviar
+        logger.exception('No se pudo enviar el correo "%s"', asunto)
         return False
     return True
+
+
+def _enlace_confirmacion(request, ruta, user, generador):
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+    return request.build_absolute_uri(reverse(ruta, args=[uid, generador.make_token(user)]))
+
+
+def enviar_confirmacion(request, apoderado):
+    user = apoderado.user
+    return _enviar('Confirma tu correo', 'apoderados/correo_confirmacion.txt', {
+        'nombre': apoderado.nombre,
+        'enlace': _enlace_confirmacion(request, 'apoderado_confirmar_correo', user, token_correo),
+        'horas': settings.PASSWORD_RESET_TIMEOUT // 3600,
+    }, user.email)
+
+
+def enviar_confirmacion_adolescente(request, user):
+    return _enviar('Confirma tu correo', 'apoderados/correo_confirmacion_adolescente.txt', {
+        'nombre': user.first_name,
+        'enlace': _enlace_confirmacion(request, 'adolescente_confirmar_correo', user, token_correo_adolescente),
+        'horas': settings.PASSWORD_RESET_TIMEOUT // 3600,
+    }, user.email)
+
+
+def enviar_invitacion(request, invitacion):
+    # Solo el nombre del estudiante: ni RUT ni fecha de nacimiento (minimizacion).
+    return _enviar('Invitación para ser apoderado', 'apoderados/correo_invitacion.txt', {
+        'nombre': invitacion.solicitud.alumno.user.first_name,
+        'enlace': request.build_absolute_uri(reverse('apoderado_invitacion', args=[firmar_invitacion(invitacion)])),
+        'dias': invitacion.VIGENCIA.days,
+    }, invitacion.correo)
