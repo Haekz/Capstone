@@ -85,10 +85,12 @@
                     </button>
                 </li>
                 <li>
+                    {% if not es_menor %}{# Menores: sin mensajeria privada (decisiones de menores) #}
                     <button class="sidebar-nav-item sidebar-view-btn" data-view="view-inbox">
                         <i class="bi bi-chat-text-fill"></i>
                         <span>Buzón de Dudas</span>
                     </button>
+                    {% endif %}
                 </li>
                 <li>
                     <button class="sidebar-nav-item sidebar-view-btn" data-view="view-progress">
@@ -169,6 +171,10 @@
                                 <span class="welcome-eyebrow">Portal del alumno</span>
                                 <h1>¡Hola de nuevo, {{ alumno.user.first_name }}!</h1>
                                 <p>Bienvenido a tu panel de control personalizado. Aquí podrás gestionar tu aprendizaje.</p>
+                                {% if es_menor %}
+                                <p class="aviso-menor" role="status"><strong>Cuenta de estudiante menor de edad.</strong>
+                                    Puedes revisar el catálogo de clases. Las reservas y compras las hará tu apoderado; esta función todavía no está disponible.</p>
+                                {% endif %}
                             </div>
                             <button class="btn-principal ap-btn-setup" id="dashboard-setup-btn">Configurar Intereses</button>
                         </div>

@@ -63,6 +63,48 @@
 
 <div class="panel" style="margin-top:28px;">
     <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-people-fill"></i> Vínculos por verificar ({{ vinculos_pendientes|length }})</span>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="user-table">
+            <thead>
+                <tr><th>Estudiante</th><th>Apoderado</th><th>Evidencia</th><th>Decisión</th></tr>
+            </thead>
+            <tbody>
+                {% for v in vinculos_pendientes %}
+                <tr>
+                    <td><strong>{{ v.alumno.user.first_name }}</strong><br><small>RUT {{ v.alumno.user.rut }} · Nacimiento: {{ v.alumno.user.fecha_nacimiento|date:"d-m-Y" }}</small></td>
+                    <td>{{ v.apoderado.nombre }} ({{ v.get_parentesco_display }})<br><small>RUT {{ v.apoderado.user.rut }}</small></td>
+                    <td><small>Declaración v{{ v.version_declaracion }} aceptada el {{ v.declaracion_aceptada|date:"d-m-Y H:i" }}</small></td>
+                    <td>
+                        <form method="post" action="{% url 'apoderado_revisar_vinculo' v.pk %}" style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+                            {% csrf_token %}
+                            <select name="canal" aria-label="Canal de la revisión del vínculo de {{ v.alumno.user.first_name }}"
+                                style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--bg-card); color:var(--text-primary);">
+                                <option value="">Canal</option>
+                                {% for valor, texto in canales %}<option value="{{ valor }}">{{ texto }}</option>{% endfor %}
+                            </select>
+                            <label style="display:inline-flex; gap:6px; align-items:center;">
+                                <input type="checkbox" name="certificado_coincide" value="on"> El certificado de nacimiento confirma el parentesco y los datos
+                            </label>
+                            <input type="text" name="observacion" maxlength="300" placeholder="Observación (obligatoria para rechazar)"
+                                aria-label="Observación sobre el vínculo de {{ v.alumno.user.first_name }}"
+                                style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--bg-card); color:var(--text-primary);">
+                            <button type="submit" name="decision" value="aprobar" class="btn-primary"><i class="bi bi-check-lg"></i> Verificar</button>
+                            <button type="submit" name="decision" value="rechazar" class="btn-secondary"><i class="bi bi-x-lg"></i> Rechazar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4">No hay vínculos por verificar.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="panel" style="margin-top:28px;">
+    <div class="panel-header">
         <span class="panel-title"><i class="bi bi-clock-history"></i> Registro de decisiones (últimas 50)</span>
     </div>
     <div style="overflow-x:auto;">
@@ -83,6 +125,34 @@
                 </tr>
                 {% empty %}
                 <tr><td colspan="7">Todavía no hay decisiones registradas.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="panel" style="margin-top:28px;">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-clock-history"></i> Registro de vínculos (últimos 50)</span>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="user-table">
+            <thead>
+                <tr><th>Fecha</th><th>Estudiante</th><th>Apoderado</th><th>Decisión</th><th>Canal</th><th>Observación</th><th>Administrador</th></tr>
+            </thead>
+            <tbody>
+                {% for r in historial_vinculos %}
+                <tr>
+                    <td>{{ r.fecha|date:"d-m-Y H:i" }}</td>
+                    <td>{{ r.vinculo.alumno.user.first_name }}</td>
+                    <td>{{ r.vinculo.apoderado.nombre }} ({{ r.vinculo.get_parentesco_display }})</td>
+                    <td><span class="badge">{{ r.get_decision_display }}</span></td>
+                    <td>{{ r.get_canal_display|default:"—" }}</td>
+                    <td>{{ r.observacion|default:"—" }}</td>
+                    <td>{{ r.administrador.first_name|default:"Cuenta eliminada" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7">Todavía no hay decisiones sobre vínculos.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

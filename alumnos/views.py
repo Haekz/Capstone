@@ -30,6 +30,7 @@ from .forms import AlumnoForm, FiltroClasesForm
 from .decorators import alumno_required
 from .exceptions import InscripcionError
 from .services import InscripcionService
+from .utils import es_menor
 from .templatetags.dinero import clp as _clp  # mismo formato en vistas y plantillas
 from .roles import (
     ALUMNO,
@@ -366,6 +367,7 @@ def alumno_pag1(request):
         'plan_activo': _plan_para_js(alumno),
         'mis_paquetes': mis_paquetes,
         'pagos': pagos,
+        'es_menor': es_menor(alumno.user),
     }
 
     return render(
@@ -814,6 +816,9 @@ def reprogramar_inscripcion(request, pk):
 @require_POST
 def comprar_paquete(request):
     """Inicia Webpay por un paquete. El monto lo calcula el servidor con la tarifa del profesor."""
+    # Menores: la contratacion sera del apoderado (fase 1c). Unico inicio de Webpay.
+    if es_menor(get_object_or_404(Alumno, id_alumno=request.session['alumno_id']).user):
+        return redirect('alumno_pag1')
     plan = paquetes.POR_CODIGO.get(request.POST.get('plan', ''))
     profesor = _profesor_habilitado(request.POST.get('profesor'))
     if not (plan and profesor):
@@ -973,7 +978,8 @@ def sala_virtual(request, clase_id):
     )
     # Nadie mas entra: ni administradores, ni staff, ni el campo ``rol``. Antes
     # bastaba rol 'admin'/'tutor' para abrir cualquier clase (decision 10, menores).
-    if not (es_profesor or es_alumno):
+    # Menores: sin clases virtuales hasta la fase 1c, aunque tengan inscripcion.
+    if not (es_profesor or (es_alumno and not es_menor(request.user))):
         from django.http import HttpResponseForbidden
         return HttpResponseForbidden("Acceso denegado: debes estar inscrito en la clase o ser el profesor asignado.")
 

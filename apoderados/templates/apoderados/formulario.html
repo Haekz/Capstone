@@ -1,7 +1,7 @@
 {% extends 'alumnos/base.html' %}
 {% load static %}
 
-{% block title %}Cuenta de apoderado | LBWUS{% endblock %}
+{% block title %}{{ titulo }} | LBWUS{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'alumnos/css/perfil_profesor.css' %}">
@@ -10,21 +10,19 @@
 
 {% block content %}
 <div class="perfil-prof">
-    <a class="perfil-prof__volver" href="{% url 'opcion_user' %}">
+    <a class="perfil-prof__volver" href="{{ volver_url }}">
         <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver
     </a>
 
     <header class="perfil-prof__cabecera">
         <div>
-            <h1>Crea tu cuenta de apoderado</h1>
-            <p class="perfil-prof__vacio">Para madres, padres y adultos responsables de estudiantes menores de edad.
-                Antes de habilitar tu cuenta confirmaremos tu correo y un administrador revisará tu identidad.
-                No te pediremos subir documentos.</p>
+            <h1>{{ titulo }}</h1>
+            <p class="perfil-prof__vacio">{{ intro }}</p>
         </div>
     </header>
 
-    <section class="perfil-prof__bloque" aria-labelledby="registro-titulo">
-        <h2 id="registro-titulo">Tus datos</h2>
+    <section class="perfil-prof__bloque" aria-labelledby="formulario-titulo">
+        <h2 id="formulario-titulo">{{ subtitulo }}</h2>
         {% for error in form.non_field_errors %}<p class="apod-form__error" role="alert">{{ error }}</p>{% endfor %}
 
         <form method="post" class="apod-form" novalidate>
@@ -48,7 +46,7 @@
             {% endif %}
             {% endfor %}
             <button type="submit" class="perfil-prof__reservar">
-                <i class="bi bi-person-check-fill" aria-hidden="true"></i> Crear cuenta
+                <i class="bi bi-check-lg" aria-hidden="true"></i> {{ boton }}
             </button>
         </form>
     </section>

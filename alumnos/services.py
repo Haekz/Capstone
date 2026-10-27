@@ -6,6 +6,7 @@ import logging
 from django.db import transaction, IntegrityError
 from django.utils import timezone
 from .models import Alumno, Clase, SesionClase, Inscripcion, PaqueteClases
+from .utils import es_menor
 from .exceptions import (
     InscripcionError,
     CupoAgotadoError,
@@ -15,6 +16,19 @@ from .exceptions import (
 )
 
 logger = logging.getLogger(__name__)
+
+MENSAJE_MENOR = ('Las reservas y compras de estudiantes menores de edad las hará su apoderado. '
+                 'Esta función todavía no está disponible.')
+
+
+def exigir_mayor_de_edad(alumno):
+    """Menores: nada transaccional hasta la contratacion por el apoderado (fase 1c).
+
+    Aqui pasan todas las reservas (inscribir, reservar, reprogramar), asi que el
+    bloqueo cubre tambien cualquier vista nueva que use este servicio.
+    """
+    if es_menor(alumno.user):
+        raise InscripcionError(MENSAJE_MENOR)
 
 
 def _paquete_con_clases(alumno, profesor, hasta):
@@ -63,6 +77,7 @@ class InscripcionService:
             InscripcionDuplicadaError: Si el alumno ya está inscrito activamente en la sesión (o colisión de BD).
             CupoAgotadoError: Si el número de inscripciones activas alcanza o supera el cupo máximo.
         """
+        exigir_mayor_de_edad(alumno)
         with transaction.atomic():
             # 1. Bloqueo pesimista a nivel de fila (select_for_update)
             try:
@@ -127,6 +142,7 @@ class InscripcionService:
         Mantiene el flujo preexistente de inscripción general pero protegido con select_for_update
         y control de unicidad a nivel de PostgreSQL.
         """
+        exigir_mayor_de_edad(alumno)
         with transaction.atomic():
             try:
                 clase = Clase.objects.select_for_update().get(pk=clase_id)
@@ -203,6 +219,7 @@ class InscripcionService:
         debe estar programada, ser futura, tener cupo, no estar ya reservada por el
         alumno y caer dentro de la vigencia del paquete (si la reserva sale de uno).
         """
+        exigir_mayor_de_edad(alumno)
         with transaction.atomic():
             try:
                 # of=('self',): PostgreSQL no bloquea el lado nulo de un outer join (paquete, sesion)
