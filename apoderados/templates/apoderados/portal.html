@@ -66,16 +66,21 @@
             {% for v in vinculos %}
             <li>
                 <strong>{{ v.alumno.user.first_name }}</strong> · RUT {{ v.alumno.user.rut }} · {{ v.get_parentesco_display }}<br>
-                <span class="apod-estado">Vínculo: {{ v.get_estado_display }}</span>
+                <span class="apod-estado">Vínculo: {% if v.termino_por_edad %}Terminado{% else %}{{ v.get_estado_display }}{% endif %}</span>
+                {% if v.termino_por_edad %}
+                <br><small>{{ v.alumno.user.first_name }} cumplió 18 años: su cuenta ahora es solo suya y el vínculo terminó.</small>
+                {% else %}
                 {% if v.estado == 'pendiente' %}<br><small>Un administrador revisará el certificado de nacimiento contigo, de forma presencial o por videollamada.</small>{% endif %}
                 {% if v.estado == 'rechazado' and v.ultima_revision.observacion %}<br><small><strong>Motivo:</strong> {{ v.ultima_revision.observacion }}</small>{% endif %}
-                {% if v.estado != 'rechazado' and v.apoderado_define_clave %}<br><a href="{% url 'apoderado_clave_estudiante' v.pk %}">Cambiar su contraseña</a>{% endif %}
+                {% if v.estado == 'pendiente' or v.estado == 'verificado' %}{% if v.apoderado_define_clave %}<br><a href="{% url 'apoderado_clave_estudiante' v.pk %}">Cambiar su contraseña</a>{% endif %}{% endif %}
                 {% if v.estado == 'verificado' and apoderado.estado == 'verificado' %}
                 <br><a href="{% url 'apoderado_clases_estudiante' v.pk %}">Ver y reservar sus clases</a>
                 · <a href="{% url 'planes' %}?estudiante={{ v.pk }}">Contratar clases para {{ v.alumno.user.first_name }}</a>
                 {% for c in v.compras.all %}{% with p=c.paquete %}
                 <br><small>{{ p.get_plan_display }} con {{ p.profesor.nombre|default:"—" }} · {{ p.get_estado_display }}{% if p.fecha_fin %} · vence el {{ p.fecha_fin|date:"d-m-Y" }}{% endif %}</small>
                 {% endwith %}{% endfor %}
+                {% endif %}
+                {% if v.estado == 'pendiente' or v.estado == 'verificado' %}<br><a href="{% url 'apoderado_revocar_vinculo' v.pk %}">Desvincularme</a>{% endif %}
                 {% endif %}
             </li>
             {% endfor %}

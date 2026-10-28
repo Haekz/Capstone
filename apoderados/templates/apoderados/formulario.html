@@ -28,7 +28,7 @@
         <form method="post" class="apod-form" novalidate>
             {% csrf_token %}
             {% for campo in form %}
-            {% if campo.name == 'acepta_declaracion' %}
+            {% if campo.field.widget.input_type == 'checkbox' %}
             <div class="apod-form__declaracion">
                 {{ campo }}
                 <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
