@@ -423,8 +423,9 @@ def _es_admin(request):
 
     Antes bastaba is_staff, pero un staff sin perfil Tutor no tiene portal
     admin (ver alumnos/roles.py): la regla ahora es la misma en todo el sitio.
+    La cuenta debe seguir activa: desactivarla no borra la sesion abierta (S-07).
     """
-    return bool(request.session.get(ADMIN.clave_sesion))
+    return bool(request.session.get(ADMIN.clave_sesion)) and request.user.is_active
 
 
 def regis_tutor(request):
