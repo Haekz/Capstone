@@ -8,6 +8,7 @@ import time
 
 from django.contrib import messages
 from django.contrib.auth import login as auth_login, logout as auth_logout
+from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.cache import never_cache
@@ -17,13 +18,15 @@ from django.views.decorators.http import require_POST
 from alumnos.decorators import admin_required, alumno_required, apoderado_required
 from alumnos.models import Tutor
 from alumnos.roles import ALUMNO, APODERADO, abrir_sesion_rol, redirigir_a_portal, rol_en_sesion
+from alumnos.views import iniciar_compra_paquete  # unico inicio de Webpay para paquetes
 
 from .correo import enviar_confirmacion, enviar_confirmacion_adolescente, enviar_invitacion
 from .forms import (VERSION_DECLARACION_VINCULO, AceptarInvitacionForm, ClaveEstudianteForm,
                     InvitacionForm, RegistroAdolescenteForm, RegistroApoderadoForm,
                     RegistroEstudianteForm, RevisionIdentidadForm, RevisionVinculoForm)
-from .models import (Apoderado, Revision, RevisionIdentidad, RevisionVinculo, SolicitudAdolescente,
-                     Vinculo)
+from .models import (Apoderado, CompraApoderado, Revision, RevisionIdentidad, RevisionVinculo,
+                     SolicitudAdolescente, Vinculo)
+from .permisos import vinculo_contratable
 from .tokens import invitacion_vigente, token_correo, token_correo_adolescente, user_id_de_uid
 
 ESPERA_REENVIO = 60  # segundos entre correos de confirmacion
@@ -108,7 +111,8 @@ def portal(request):
         'apoderado': apoderado,
         'revision': apoderado.ultima_revision,
         'espera': _segundos_para_reenviar(request),
-        'vinculos': apoderado.vinculos.select_related('alumno__user').prefetch_related('revisiones'),
+        'vinculos': apoderado.vinculos.select_related('alumno__user')
+                    .prefetch_related('revisiones', 'compras__paquete__profesor__user'),
         'invitacion': invitacion_vigente(token) if token else None,
         'token_invitacion': token,
     })
@@ -172,6 +176,19 @@ def clave_estudiante(request, id_vinculo):
         boton='Guardar contraseña', volver_url=reverse(APODERADO.ruta_portal),
         intro=f'{estudiante.first_name} entra con su RUT ({estudiante.rut}) y esta contraseña.',
     )
+
+
+# --- Fase 1c-i: el apoderado contrata clases para su estudiante ---
+
+@require_POST
+@apoderado_required
+def comprar_paquete(request, id_vinculo):
+    """Mismo Webpay que el alumno; el paquete queda a nombre del estudiante."""
+    vinculo = vinculo_contratable(request, id_vinculo)
+    if vinculo is None:
+        raise Http404
+    return iniciar_compra_paquete(request, vinculo.alumno_id, al_crear=lambda paquete: (
+        CompraApoderado.objects.create(paquete=paquete, apoderado=vinculo.apoderado, vinculo=vinculo)))
 
 
 # --- Fase 1b-ii: el adolescente de 14 a 17 invita a su madre o padre ---

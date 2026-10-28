@@ -43,7 +43,11 @@
 
         <div class="conf-acciones">
             <a href="{% url 'home' %}" class="btn-conf-home"><i class="bi bi-house-fill"></i> Ir al Inicio</a>
+            {% if request.session.apoderado_id %}{# compra del apoderado para su estudiante (fase 1c) #}
+            <a href="{% url 'portal_apoderado' %}" class="btn-conf-planes"><i class="bi bi-people-fill"></i> Volver a mi cuenta</a>
+            {% else %}
             <a href="{% url 'alumno_pag1' %}" class="btn-conf-planes"><i class="bi bi-calendar-check"></i> Reservar mis clases</a>
+            {% endif %}
         </div>
 
         {% else %}
