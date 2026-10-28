@@ -72,9 +72,9 @@ body.dark-mode .selection-header::before {
 /* ---------- Grilla: 2 tarjetas centradas ---------- */
 .selection-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 28px;
-    max-width: 860px;
+    max-width: 1180px;
     margin: 0 auto;
     align-items: stretch;
 }

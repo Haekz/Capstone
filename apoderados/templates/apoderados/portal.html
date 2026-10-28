@@ -1,0 +1,51 @@
+{% extends 'alumnos/base.html' %}
+{% load static %}
+
+{% block title %}Mi cuenta de apoderado | LBWUS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'alumnos/css/perfil_profesor.css' %}">
+<link rel="stylesheet" href="{% static 'apoderados/apoderados.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="perfil-prof">
+    <header class="perfil-prof__cabecera">
+        <div>
+            <h1>Hola, {{ apoderado.nombre }}</h1>
+            <p class="perfil-prof__vacio">Cuenta de apoderado · {{ apoderado.user.email }}</p>
+        </div>
+    </header>
+
+    <section class="perfil-prof__bloque" aria-labelledby="estado-titulo">
+        <h2 id="estado-titulo">Estado de tu cuenta</h2>
+        {% include 'apoderados/_mensajes.html' %}
+
+        {% if apoderado.estado == 'correo_pendiente' %}
+        <p class="apod-estado"><i class="bi bi-envelope-exclamation-fill" aria-hidden="true"></i> {{ apoderado.get_estado_display }}</p>
+        <p>Te enviamos un enlace a <strong>{{ apoderado.user.email }}</strong>. Ábrelo para confirmar que el correo es tuyo.</p>
+        <form method="post" action="{% url 'apoderado_reenviar_correo' %}" class="apod-form">
+            {% csrf_token %}
+            <button type="submit" class="perfil-prof__reservar" {% if espera %}disabled aria-disabled="true"{% endif %}>
+                <i class="bi bi-arrow-repeat" aria-hidden="true"></i> Reenviar enlace
+            </button>
+            {% if espera %}<small class="perfil-prof__vacio">Podrás pedir otro enlace en {{ espera }} segundos.</small>{% endif %}
+        </form>
+
+        {% elif apoderado.estado == 'revision_pendiente' %}
+        <p class="apod-estado"><i class="bi bi-hourglass-split" aria-hidden="true"></i> {{ apoderado.get_estado_display }}</p>
+        <p>Tu correo está confirmado. Un administrador de LBWUS se comunicará contigo para revisar tu documento de
+            identidad, de forma presencial o por videollamada. No guardamos copias de tus documentos.</p>
+
+        {% elif apoderado.estado == 'verificado' %}
+        <p class="apod-estado"><i class="bi bi-patch-check-fill" aria-hidden="true"></i> {{ apoderado.get_estado_display }}</p>
+        <p>Tu identidad está verificada. Pronto podrás registrar a los estudiantes a tu cargo; cada vínculo se revisará por separado.</p>
+
+        {% else %}
+        <p class="apod-estado"><i class="bi bi-x-octagon-fill" aria-hidden="true"></i> {{ apoderado.get_estado_display }}</p>
+        {% if revision.observacion %}<p><strong>Motivo:</strong> {{ revision.observacion }}</p>{% endif %}
+        <p>Si crees que es un error, escríbenos desde la página de contacto.</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

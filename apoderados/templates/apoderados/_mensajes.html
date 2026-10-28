@@ -1,0 +1,5 @@
+{% if messages %}
+<div class="apod-mensajes" role="status">
+    {% for m in messages %}<p class="apod-mensajes__item apod-mensajes__item--{{ m.tags }}">{{ m }}</p>{% endfor %}
+</div>
+{% endif %}

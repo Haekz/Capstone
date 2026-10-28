@@ -36,6 +36,16 @@
                 <a href="{% url 'regis_prof' %}" class="btn-card-select">Registrarme como Profesor</a>
             </div>
 
+            <!-- Apoderado: adulto responsable de estudiantes menores de edad (app apoderados). -->
+            <div class="selection-card">
+                <div class="icon-box">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <h2>Apoderado</h2>
+                <p>Para madres, padres y adultos responsables de estudiantes menores de edad. Verificamos tu identidad antes de habilitar la cuenta.</p>
+                <a href="{% url 'registro_apoderado' %}" class="btn-card-select">Registrarme como Apoderado</a>
+            </div>
+
             <!-- La tarjeta de registro de Administrador se quito a proposito:
                  las cuentas de administrador las crea otro administrador desde
                  su panel, no se ofrecen como autoservicio publico. -->
