@@ -16,11 +16,13 @@ from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_POST
 
 from alumnos.decorators import admin_required, alumno_required, apoderado_required
-from alumnos.models import Tutor
+from alumnos.exceptions import InscripcionError
+from alumnos.models import Inscripcion, PaqueteClases, SesionClase, Tutor
 from alumnos.roles import ALUMNO, APODERADO, abrir_sesion_rol, redirigir_a_portal, rol_en_sesion
+from alumnos.services import InscripcionService
 from alumnos.views import iniciar_compra_paquete  # unico inicio de Webpay para paquetes
 
-from .correo import enviar_confirmacion, enviar_confirmacion_adolescente, enviar_invitacion
+from .correo import avisar_apoderados, enviar_confirmacion, enviar_confirmacion_adolescente, enviar_invitacion
 from .forms import (VERSION_DECLARACION_VINCULO, AceptarInvitacionForm, ClaveEstudianteForm,
                     InvitacionForm, RegistroAdolescenteForm, RegistroApoderadoForm,
                     RegistroEstudianteForm, RevisionIdentidadForm, RevisionVinculoForm)
@@ -178,17 +180,83 @@ def clave_estudiante(request, id_vinculo):
     )
 
 
-# --- Fase 1c-i: el apoderado contrata clases para su estudiante ---
+# --- Fase 1c: el apoderado contrata y reserva por su estudiante ---
+
+def _vinculo_o_404(request, id_vinculo):
+    vinculo = vinculo_contratable(request, id_vinculo)
+    if vinculo is None:
+        raise Http404
+    return vinculo
+
 
 @require_POST
 @apoderado_required
 def comprar_paquete(request, id_vinculo):
     """Mismo Webpay que el alumno; el paquete queda a nombre del estudiante."""
-    vinculo = vinculo_contratable(request, id_vinculo)
-    if vinculo is None:
-        raise Http404
+    vinculo = _vinculo_o_404(request, id_vinculo)
     return iniciar_compra_paquete(request, vinculo.alumno_id, al_crear=lambda paquete: (
         CompraApoderado.objects.create(paquete=paquete, apoderado=vinculo.apoderado, vinculo=vinculo)))
+
+
+@never_cache
+@apoderado_required
+def clases_estudiante(request, id_vinculo):
+    vinculo = _vinculo_o_404(request, id_vinculo)
+    alumno = vinculo.alumno
+    paquetes = list(PaqueteClases.objects.vigentes().filter(alumno=alumno).select_related('profesor__user'))
+    reservas = list(Inscripcion.objects.proximas().filter(alumno=alumno)
+                    .select_related('clase__asignatura', 'clase__profesor__user', 'sesion'))
+    con_clases = [p for p in paquetes if p.clases_disponibles]
+    # Sesiones que el servicio aceptaria: de profesores con clases libres y dentro de la vigencia.
+    sesiones = (SesionClase.objects.disponibles()
+                .filter(clase__profesor_id__in={p.profesor_id for p in con_clases},
+                        fecha_hora_inicio__lte=max(p.fecha_fin for p in con_clases))
+                .exclude(pk__in=[r.sesion_id for r in reservas if r.sesion_id])
+                .select_related('clase__asignatura', 'clase__profesor__user')
+                .order_by('fecha_hora_inicio')[:30]) if con_clases else []
+    return render(request, 'apoderados/clases.html', {
+        'vinculo': vinculo, 'paquetes': paquetes, 'reservas': reservas, 'sesiones': sesiones,
+    })
+
+
+def _operar(request, id_vinculo, accion, operacion):
+    """Reserva, cancela o reprograma por el estudiante y avisa a sus apoderados."""
+    vinculo = _vinculo_o_404(request, id_vinculo)
+    try:
+        inscripcion = operacion(vinculo)
+    except ValueError:
+        messages.error(request, 'Elige una sesión válida.')
+    except InscripcionError as error:
+        messages.error(request, str(error))
+    else:
+        avisar_apoderados(inscripcion, accion, vinculo.apoderado.nombre)
+        messages.success(request, 'Cambio guardado. Avisamos por correo a los apoderados del estudiante.')
+    return redirect('apoderado_clases_estudiante', vinculo.pk)
+
+
+def _sesion_del_post(request):
+    return int(request.POST.get('id_sesion', ''))
+
+
+@require_POST
+@apoderado_required
+def reservar_clase(request, id_vinculo):
+    return _operar(request, id_vinculo, 'reservó', lambda v: InscripcionService.inscribir_alumno_en_sesion(
+        v.alumno, _sesion_del_post(request), vinculo=v))
+
+
+@require_POST
+@apoderado_required
+def cancelar_clase(request, id_vinculo, id_inscripcion):
+    return _operar(request, id_vinculo, 'canceló', lambda v: InscripcionService.cancelar_inscripcion(
+        v.alumno, id_inscripcion, vinculo=v))
+
+
+@require_POST
+@apoderado_required
+def reprogramar_clase(request, id_vinculo, id_inscripcion):
+    return _operar(request, id_vinculo, 'reprogramó', lambda v: InscripcionService.reprogramar_inscripcion(
+        v.alumno, id_inscripcion, _sesion_del_post(request), vinculo=v))
 
 
 # --- Fase 1b-ii: el adolescente de 14 a 17 invita a su madre o padre ---

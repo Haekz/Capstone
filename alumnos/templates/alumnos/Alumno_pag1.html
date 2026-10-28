@@ -173,7 +173,7 @@
                                 <p>Bienvenido a tu panel de control personalizado. Aquí podrás gestionar tu aprendizaje.</p>
                                 {% if es_menor %}
                                 <p class="aviso-menor" role="status"><strong>Cuenta de estudiante menor de edad.</strong>
-                                    Puedes revisar el catálogo de clases. Las reservas y compras las hará tu apoderado; esta función todavía no está disponible.
+                                    Puedes revisar el catálogo y entrar a las clases que reserve tu apoderado. Las reservas, cancelaciones y compras las hace tu apoderado desde su cuenta.
                                     {% if tiene_solicitud %}<a href="{% url 'adolescente_solicitud' %}">Ver mi solicitud de apoderado</a>{% endif %}</p>
                                 {% endif %}
                             </div>
@@ -311,13 +311,14 @@
                                             <i class="bi bi-camera-video-fill"></i> Unirse a la Clase
                                         </a>
                                         {% endif %}
-                                        {% if insc.puede_cancelar and insc.sesion_id %}
+                                        {# Menores: cancelar y reprogramar lo hace su apoderado (fase 1c). #}
+                                        {% if insc.puede_cancelar and insc.sesion_id and not es_menor %}
                                         <button type="button" class="ap-btn-cancel" title="Reprogramar clase" aria-label="Reprogramar clase" style="border:none; cursor:pointer; background:transparent;"
                                                 onclick="abrirModalHorarios({{ insc.clase.id_clase }}, '{{ insc.clase.asignatura.nombre|escapejs }}', '{{ insc.clase.profesor.user.first_name|escapejs }}', {{ insc.id_inscripcion }})">
                                             <i class="bi bi-calendar2-week"></i>
                                         </button>
                                         {% endif %}
-                                        {% if insc.puede_cancelar %}
+                                        {% if insc.puede_cancelar and not es_menor %}
                                         <form method="POST" action="{% url 'cancelar_inscripcion' insc.id_inscripcion %}" onsubmit="return confirm('¿Seguro que deseas cancelar tu inscripción? La clase vuelve a tu paquete.')" style="display:inline;">
                                             {% csrf_token %}
                                             <button type="submit" class="ap-btn-cancel" title="Cancelar Inscripción" style="border:none; cursor:pointer; background:transparent;">

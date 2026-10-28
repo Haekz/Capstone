@@ -1,0 +1,93 @@
+{% extends 'alumnos/base.html' %}
+{% load static %}
+
+{% block title %}Clases de {{ vinculo.alumno.user.first_name }} | LBWUS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'alumnos/css/perfil_profesor.css' %}">
+<link rel="stylesheet" href="{% static 'apoderados/apoderados.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="perfil-prof">
+    <a class="perfil-prof__volver" href="{% url 'portal_apoderado' %}">
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a mi cuenta
+    </a>
+
+    <header class="perfil-prof__cabecera">
+        <div>
+            <h1>Clases de {{ vinculo.alumno.user.first_name }}</h1>
+            <p class="perfil-prof__vacio">Solo tú y los demás apoderados verificados pueden reservar, cancelar o reprogramar sus clases. Les avisamos por correo cada cambio.</p>
+        </div>
+    </header>
+
+    {% include 'apoderados/_mensajes.html' %}
+
+    <section class="perfil-prof__bloque" aria-labelledby="paquetes-titulo">
+        <h2 id="paquetes-titulo">Paquetes vigentes</h2>
+        {% if paquetes %}
+        <ul class="apod-vinculos">
+            {% for p in paquetes %}
+            <li>{{ p.get_plan_display }} con <strong>{{ p.profesor.nombre|default:"—" }}</strong> · {{ p.clases_disponibles }} de {{ p.clases }} clase{{ p.clases|pluralize }} disponible{{ p.clases_disponibles|pluralize }} · vence el {{ p.fecha_fin|date:"d-m-Y" }}</li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="perfil-prof__vacio">No tiene paquetes vigentes.</p>
+        {% endif %}
+        <a class="perfil-prof__reservar" href="{% url 'planes' %}?estudiante={{ vinculo.pk }}">
+            <i class="bi bi-bag-plus-fill" aria-hidden="true"></i> Contratar clases
+        </a>
+    </section>
+
+    <section class="perfil-prof__bloque" aria-labelledby="reservas-titulo">
+        <h2 id="reservas-titulo">Próximas clases</h2>
+        {% if reservas %}
+        <ul class="apod-vinculos">
+            {% for r in reservas %}
+            <li>
+                <strong>{{ r.clase.asignatura.nombre }}</strong> con {{ r.clase.profesor.nombre }}{% if r.sesion %} · {{ r.sesion.fecha_hora_inicio|date:"d-m-Y H:i" }}{% endif %}
+                {% if r.puede_cancelar %}
+                <form method="post" action="{% url 'apoderado_cancelar_clase' vinculo.pk r.pk %}" class="apod-form">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-secondary">Cancelar clase</button>
+                </form>
+                <form method="post" action="{% url 'apoderado_reprogramar_clase' vinculo.pk r.pk %}" class="apod-form">
+                    {% csrf_token %}
+                    <label for="mover-{{ r.pk }}">Mover a</label>
+                    <select id="mover-{{ r.pk }}" name="id_sesion">
+                        {% for s in sesiones %}{% if s.clase.profesor_id == r.clase.profesor_id %}
+                        <option value="{{ s.pk }}">{{ s.clase.asignatura.nombre }} · {{ s.fecha_hora_inicio|date:"d-m-Y H:i" }}</option>
+                        {% endif %}{% endfor %}
+                    </select>
+                    <button type="submit" class="btn-secondary">Reprogramar</button>
+                </form>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="perfil-prof__vacio">No tiene clases reservadas.</p>
+        {% endif %}
+    </section>
+
+    <section class="perfil-prof__bloque" aria-labelledby="sesiones-titulo">
+        <h2 id="sesiones-titulo">Reservar una clase</h2>
+        {% if sesiones %}
+        <ul class="apod-vinculos">
+            {% for s in sesiones %}
+            <li>
+                <strong>{{ s.clase.asignatura.nombre }}</strong> con {{ s.clase.profesor.nombre }} · {{ s.clase.get_modalidad_display }} · {{ s.fecha_hora_inicio|date:"d-m-Y H:i" }}
+                <form method="post" action="{% url 'apoderado_reservar_clase' vinculo.pk %}" class="apod-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="id_sesion" value="{{ s.pk }}">
+                    <button type="submit" class="perfil-prof__reservar">Reservar</button>
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="perfil-prof__vacio">No hay sesiones disponibles con los profesores de sus paquetes vigentes.</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

@@ -141,6 +141,11 @@ class Vinculo(models.Model):
         """Solo si el apoderado creo la cuenta (1b-i): el adolescente maneja la suya (1b-ii)."""
         return not SolicitudAdolescente.objects.filter(alumno_id=self.alumno_id).exists()
 
+    def autoriza(self, alumno):
+        """Puede actuar por ``alumno``: vinculo verificado de ese estudiante y apoderado verificado."""
+        return (self.estado == self.VERIFICADO and self.alumno_id == alumno.pk
+                and self.apoderado.estado == Apoderado.VERIFICADO)
+
     def aplicar_revision(self, revision, administrador):
         revision.vinculo = self
         _registrar_decision(self, revision, administrador)
