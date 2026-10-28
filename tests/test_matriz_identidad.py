@@ -4,17 +4,11 @@ Cada prueba es una fila de docs/MATRIZ_IDENTIDAD.md. Lo que ya cubren otros arch
 (portales por rol, decorador con usuario desactivado, anonimo, 5 intentos por usuario)
 no se repite aqui: la matriz los referencia.
 
-Las pruebas con @hallazgo_abierto describen el comportamiento SEGURO y hoy fallan:
-son los hallazgos S-03, S-06 (cuenta huerfana) y S-07 (admin con sesion) del informe
-de seguridad, que siguen abiertos. S-05 y el resto de S-06/S-07 los cerro S4-02.
-Cuando se corrija uno, unittest avisara "unexpected success": ahi se quita el decorador.
-
-Para ver el fallo real de cada hallazgo (evidencia):
-    VER_HALLAZGOS=1 python manage.py test tests.test_matriz_identidad
+Los hallazgos S-03, S-05, S-06 y S-07 del informe de seguridad estan cerrados: cada
+prueba describe el comportamiento SEGURO y pasa. Si aparece un hallazgo nuevo, su
+prueba se marca con unittest.expectedFailure hasta corregirlo.
 """
 
-import os
-import unittest
 from datetime import date
 
 from allauth.account.adapter import get_adapter as adaptador_de_cuentas
@@ -36,9 +30,8 @@ from tests.test_google_y_titulo import BaseGoogle, google_login
 
 User = get_user_model()
 CLAVE = 'clave12345'
+CLAVE_SEGURA = 'Pelicano-Verde-2026'
 BLOQUEO = 'Demasiados intentos fallidos'
-
-hallazgo_abierto = (lambda prueba: prueba) if os.environ.get('VER_HALLAZGOS') else unittest.expectedFailure
 
 
 def crear_usuario(rut, genero, **extra):
@@ -79,13 +72,18 @@ class LoginTests(BaseIdentidad):
 
 class S03ClaveInicialTests(TestCase):
 
-    @hallazgo_abierto
     def test_alumno_creado_por_admin_no_entra_con_su_rut(self):
-        form = AdminAlumnoForm(data={
+        datos = {
             'nombre': 'Creada por admin', 'rut': '12345678-5', 'direccion': 'C',
             'fecha_nacimiento': '2000-01-01', 'correo_electronico': 'nueva@demo.cl',
             'nivel_educacion': 'media',
-        })
+        }
+        # Sin clave, o con el RUT como clave, el admin no puede crear la cuenta (S4-02).
+        for clave in ('', '12345678-5'):
+            with self.subTest(clave=clave):
+                form = AdminAlumnoForm(data={**datos, 'password': clave, 'confirm_password': clave})
+                self.assertFalse(form.is_valid())
+        form = AdminAlumnoForm(data={**datos, 'password': CLAVE_SEGURA, 'confirm_password': CLAVE_SEGURA})
         self.assertTrue(form.is_valid(), form.errors)
         form.save()
 
@@ -160,7 +158,6 @@ class GoogleConSesion(BaseGoogle):
 
 class S06CuentaHuerfanaTests(GoogleConSesion):
 
-    @hallazgo_abierto
     def test_completar_con_google_anula_la_clave_previa(self):
         # Cuenta sin perfil creada antes por otra persona con el correo de la victima.
         User.objects.create_user('atacante', email='nuevo@demo.cl', password='clave-del-atacante')
@@ -177,7 +174,6 @@ class S06CuentaHuerfanaTests(GoogleConSesion):
 
 class S07CuentasDesactivadasTests(BaseIdentidad):
 
-    @hallazgo_abierto
     def test_admin_desactivado_con_sesion_no_entra_a_crear_administradores(self):
         admin = crear_usuario('33333333-3', self.genero)
         Tutor.objects.create(user=admin)
