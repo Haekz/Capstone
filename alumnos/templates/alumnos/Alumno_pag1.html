@@ -173,7 +173,8 @@
                                 <p>Bienvenido a tu panel de control personalizado. Aquí podrás gestionar tu aprendizaje.</p>
                                 {% if es_menor %}
                                 <p class="aviso-menor" role="status"><strong>Cuenta de estudiante menor de edad.</strong>
-                                    Puedes revisar el catálogo de clases. Las reservas y compras las hará tu apoderado; esta función todavía no está disponible.</p>
+                                    Puedes revisar el catálogo de clases. Las reservas y compras las hará tu apoderado; esta función todavía no está disponible.
+                                    {% if tiene_solicitud %}<a href="{% url 'adolescente_solicitud' %}">Ver mi solicitud de apoderado</a>{% endif %}</p>
                                 {% endif %}
                             </div>
                             <button class="btn-principal ap-btn-setup" id="dashboard-setup-btn">Configurar Intereses</button>

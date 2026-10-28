@@ -17,6 +17,16 @@
         </div>
     </header>
 
+    {% if invitacion %}
+    <section class="perfil-prof__bloque" aria-labelledby="invitacion-titulo">
+        <h2 id="invitacion-titulo">Tienes una invitación pendiente</h2>
+        <p>{{ invitacion.solicitud.alumno.user.first_name }} te pidió que seas su apoderado.</p>
+        <a class="perfil-prof__reservar" href="{% url 'apoderado_invitacion' token_invitacion %}">
+            <i class="bi bi-envelope-open-fill" aria-hidden="true"></i> Revisar invitación
+        </a>
+    </section>
+    {% endif %}
+
     <section class="perfil-prof__bloque" aria-labelledby="estado-titulo">
         <h2 id="estado-titulo">Estado de tu cuenta</h2>
         {% include 'apoderados/_mensajes.html' %}
@@ -48,7 +58,7 @@
         {% endif %}
     </section>
 
-    {% if apoderado.estado == 'verificado' %}
+    {% if apoderado.estado == 'verificado' or vinculos %}
     <section class="perfil-prof__bloque" aria-labelledby="estudiantes-titulo">
         <h2 id="estudiantes-titulo">Estudiantes a tu cargo</h2>
         {% if vinculos %}
@@ -59,7 +69,7 @@
                 <span class="apod-estado">Vínculo: {{ v.get_estado_display }}</span>
                 {% if v.estado == 'pendiente' %}<br><small>Un administrador revisará el certificado de nacimiento contigo, de forma presencial o por videollamada.</small>{% endif %}
                 {% if v.estado == 'rechazado' and v.ultima_revision.observacion %}<br><small><strong>Motivo:</strong> {{ v.ultima_revision.observacion }}</small>{% endif %}
-                {% if v.estado != 'rechazado' %}<br><a href="{% url 'apoderado_clave_estudiante' v.pk %}">Cambiar su contraseña</a>{% endif %}
+                {% if v.estado != 'rechazado' and v.apoderado_define_clave %}<br><a href="{% url 'apoderado_clave_estudiante' v.pk %}">Cambiar su contraseña</a>{% endif %}
             </li>
             {% endfor %}
         </ul>
@@ -67,9 +77,11 @@
         <p class="perfil-prof__vacio">Todavía no registras estudiantes.</p>
         {% endif %}
         <p class="perfil-prof__vacio">Mientras no exista la contratación por el apoderado, los estudiantes menores solo pueden ver el catálogo: no pueden reservar, comprar ni entrar a clases.</p>
+        {% if apoderado.estado == 'verificado' %}
         <a class="perfil-prof__reservar" href="{% url 'apoderado_registrar_estudiante' %}">
             <i class="bi bi-person-plus-fill" aria-hidden="true"></i> Registrar estudiante
         </a>
+        {% endif %}
     </section>
     {% endif %}
 </div>
