@@ -983,15 +983,9 @@ def sala_virtual(request, clase_id):
         insc.puede_unirse
         for insc in Inscripcion.objects.filter(propias, clase=clase).select_related('sesion')
     )
-    # 3. Administrador o Tutor
-    es_admin = bool(
-        request.user.is_superuser
-        or request.user.is_staff
-        or request.session.get('tutor_id')
-        or getattr(request.user, 'rol', None) in ('admin', 'tutor')
-    )
-
-    if not (es_profesor or es_alumno or es_admin):
+    # Nadie mas entra: ni administradores, ni staff, ni el campo ``rol``. Antes
+    # bastaba rol 'admin'/'tutor' para abrir cualquier clase (decision 10, menores).
+    if not (es_profesor or es_alumno):
         from django.http import HttpResponseForbidden
         return HttpResponseForbidden("Acceso denegado: debes estar inscrito en la clase o ser el profesor asignado.")
 

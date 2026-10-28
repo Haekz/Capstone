@@ -69,24 +69,11 @@ class AlumnoForm(forms.ModelForm):
 
     def clean_fecha_nacimiento(self):
         fecha = self.cleaned_data.get('fecha_nacimiento')
-        if not fecha:
-            return fecha
-
-        from datetime import date
-        today = date.today()
-
-        if fecha == today:
-            raise forms.ValidationError("No puedes elegir la fecha actual.")
-
-        if fecha > today:
-            raise forms.ValidationError("La fecha de nacimiento no puede ser una fecha futura.")
-
-        # Calcular edad
-        age = today.year - fecha.year - ((today.month, today.day) < (fecha.month, fecha.day))
-
-        if age < 18:
-            raise forms.ValidationError("Debes ser mayor o igual a 18 años.")
-
+        if fecha:
+            from .utils import error_fecha_nacimiento
+            error = error_fecha_nacimiento(fecha)
+            if error:
+                raise forms.ValidationError(error)
         return fecha
 
     def clean_rut(self):
