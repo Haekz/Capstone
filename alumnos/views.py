@@ -17,7 +17,6 @@ from django.db.models import F, Q
 from .models import (
     Alumno,
     Genero,
-    Tutor,
     Profesor,
     Reporte,
     Clase,
@@ -390,7 +389,7 @@ def alumno_pag1(request):
 # ============================================================
 
 def _obtener_ip(request):
-    """IP del cliente para el limite de intentos (S4-02 / S-07).
+    """IP del cliente para el limite de intentos.
 
     X-Forwarded-For lo escribe el propio cliente, salvo la ultima IP, que la agrega
     el proxy de confianza (Railway). Por eso solo se usa esa: con la primera bastaba
@@ -430,7 +429,7 @@ def custom_login(request):
         )
 
         ip = _obtener_ip(request)
-        # Mismo contador para todas las formas de escribir el RUT (S4-02 / S-05).
+        # Mismo contador para todas las formas de escribir el RUT.
         canon_user = obtener_identificador_rate_limit(username)
         clave_cache_ip = f'intentos_login_ip_{ip}'
         clave_cache_user = f'intentos_login_user_{canon_user}'
@@ -472,8 +471,7 @@ def custom_login(request):
                 cache.delete(clave_cache_user)
 
                 # El rol lo define el perfil asociado (ver alumnos/roles.py).
-                # Sin perfil no se abre sesion: antes se guardaba user.id
-                # como si fuera id de alumno/tutor y se mezclaban portales.
+                # Sin perfil no se abre sesion.
                 rol, perfil = resolver_rol(user)
 
                 if rol is None:
@@ -800,8 +798,7 @@ def cancelar_inscripcion(request, pk):
     try:
         InscripcionService.cancelar_inscripcion(alumno, inscripcion.pk)
     except InscripcionError:
-        # Ya empezo o no esta activa. Antes se borraba la inscripcion: con
-        # paquetes eso devolveria una clase ya tomada.
+        # Ya empezo o no esta activa: no se cancela, porque devolveria una clase ya tomada.
         pass
 
     return redirect('alumno_pag1')
@@ -833,14 +830,14 @@ def reprogramar_inscripcion(request, pk):
 @require_POST
 def comprar_paquete(request):
     """Inicia Webpay por un paquete. El monto lo calcula el servidor con la tarifa del profesor."""
-    # Menores: la contratacion sera del apoderado (fase 1c). Unico inicio de Webpay.
+    # Menores: contrata su apoderado. Unico inicio de Webpay.
     if es_menor(get_object_or_404(Alumno, id_alumno=request.session['alumno_id']).user):
         return redirect('alumno_pag1')
     return iniciar_compra_paquete(request, request.session['alumno_id'])
 
 
 def iniciar_compra_paquete(request, alumno_id, al_crear=None):
-    """Unico inicio de Webpay para paquetes: lo usan el alumno y el apoderado (fase 1c).
+    """Unico inicio de Webpay para paquetes: lo usan el alumno y el apoderado.
 
     Plan y profesor vienen del POST; el monto lo calcula el servidor. ``al_crear``
     recibe el paquete dentro de la misma transaccion (la compra del apoderado).
@@ -919,7 +916,7 @@ def confirmacion(request):
         # El buy_order viene de Transbank (commit), no del navegador.
         # confirmar_pago es idempotente: repetir el token no activa dos veces.
         buy_order = resp.get('buy_order', '')
-        # El monto autorizado por Transbank debe ser el del paquete pedido (idea de la rama Franco).
+        # El monto autorizado por Transbank debe ser el del paquete pedido.
         paquete = PaqueteClases.objects.filter(buy_order=buy_order).first() if buy_order else None
         if paquete and int(resp.get('amount') or 0) != paquete.monto:
             aprobado = False
@@ -998,7 +995,7 @@ def sala_virtual(request, clase_id):
              or request.session.get('profesor_id') == getattr(clase.profesor, 'id_profesor', None))
     )
     # 2. Alumno con una inscripcion que permita entrar (Inscripcion.puede_unirse).
-    #    Menores: solo clases pagadas por su apoderado con vinculo vigente (fase 1c).
+    #    Menores: solo clases pagadas por su apoderado con vinculo vigente.
     propias = Q(alumno__user=request.user)
     if request.session.get('alumno_id'):
         propias |= Q(alumno_id=request.session['alumno_id'])
@@ -1007,8 +1004,7 @@ def sala_virtual(request, clase_id):
         insc.puede_unirse and (not menor or clase_pagada_por_apoderado(insc))
         for insc in Inscripcion.objects.filter(propias, clase=clase).select_related('sesion', 'alumno')
     )
-    # Nadie mas entra: ni administradores, ni staff, ni el campo ``rol``. Antes
-    # bastaba rol 'admin'/'tutor' para abrir cualquier clase (decision 10, menores).
+    # Nadie mas entra: ni administradores, ni staff, ni el campo ``rol``.
     if not (es_profesor or es_alumno):
         from django.http import HttpResponseForbidden
         return HttpResponseForbidden("Acceso denegado: debes estar inscrito en la clase o ser el profesor asignado.")

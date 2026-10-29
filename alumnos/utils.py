@@ -37,9 +37,8 @@ def error_fecha_nacimiento(fecha, edad_minima=EDAD_ADULTA):
     """Mensaje de error para una fecha de nacimiento, o None si sirve.
 
     Unica regla de edad para crear alumnos: registro publico, Google y portal
-    admin. Sigue en 18 hasta que exista el modulo de apoderados (decisiones de
-    menores 1 y 15): ningun camino puede crear cuentas de menores antes.
-    Los menores solo los registra un apoderado verificado (app apoderados).
+    admin exigen 18. Los menores solo los registra un apoderado verificado
+    (app apoderados).
     """
     if fecha >= date.today(): return "La fecha de nacimiento no puede ser actual ni futura."
     if edad(fecha) < edad_minima: return f"Debes ser mayor o igual a {edad_minima} años."

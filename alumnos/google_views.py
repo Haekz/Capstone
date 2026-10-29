@@ -56,8 +56,7 @@ def google_reenviar(request):
 def _cuenta_a_completar(sociallogin, correo):
     """Cuenta sin perfil que ya existe para esta persona, o None.
 
-    Pasa con quienes entraron con Google antes de este arreglo: allauth les
-    creo un usuario vacio. Se reutiliza en vez de duplicarlo.
+    Por ejemplo, un usuario vacio que creo allauth. Se reutiliza en vez de duplicarlo.
     """
     if sociallogin.is_existing:
         return sociallogin.user

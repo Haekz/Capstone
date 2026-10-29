@@ -1,9 +1,9 @@
-"""Fase 1b-i de menores: el apoderado registra al estudiante y se verifica el vinculo.
+"""El apoderado registra al estudiante y se verifica el vinculo.
 
 Datos ficticios. Cubre registro del menor (validaciones), revision del vinculo
 (evidencia obligatoria), cambio de contrasena por el apoderado y los bloqueos:
 un menor, aun con vinculo verificado y un paquete pagado, no reserva, no compra
-ni entra a clases hasta la contratacion por el apoderado (fase 1c).
+ni entra a clases hasta la contratacion por el apoderado.
 """
 
 from datetime import date, time as hora

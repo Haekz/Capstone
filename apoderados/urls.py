@@ -20,7 +20,7 @@ urlpatterns = [
     path('mi-cuenta/estudiantes/<int:id_vinculo>/clases/<int:id_inscripcion>/reprogramar/', views.reprogramar_clase,
          name='apoderado_reprogramar_clase'),
     path('invitacion/<str:token>/', views.invitacion, name='apoderado_invitacion'),
-    # Adolescentes de 14 a 17 (fase 1b-ii): su cuenta es de alumno, restringida.
+    # Adolescentes de 14 a 17: su cuenta es de alumno, restringida.
     path('estudiantes/registro/', views.registro_adolescente, name='adolescente_registro'),
     path('estudiantes/confirmar/<str:uidb64>/<str:token>/', views.confirmar_correo_adolescente,
          name='adolescente_confirmar_correo'),

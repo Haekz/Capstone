@@ -13,12 +13,8 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 from pathlib import Path
 import os
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-lbwus-secret-key-for-local-development")
@@ -28,11 +24,11 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-lbwus-secret-key-for-
 DOCUMENTOS_CLAVE = os.environ.get("DOCUMENTOS_CLAVE", "")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# En Railway se define DEBUG=False. Sin la variable queda en True, como antes.
+# En Railway se define DEBUG=False. Sin la variable queda en True.
 DEBUG = os.environ.get('DEBUG', 'True').lower() in ('1', 'true', 'si')
 
 # '.up.railway.app' (con punto) acepta cualquier subdominio. Django no
-# entiende comodines tipo '*.dominio': esa forma no coincidia con nada.
+# acepta comodines tipo '*.dominio'.
 ALLOWED_HOSTS = ['lbwus.xyz', '.up.railway.app', 'localhost', '127.0.0.1']
 
 CSRF_TRUSTED_ORIGINS = [
@@ -135,7 +131,6 @@ WSGI_APPLICATION = 'lbwus.wsgi.application'
 
 
 # Database
-# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 import dj_database_url
 
@@ -183,7 +178,6 @@ DEFAULT_EXCEPTION_REPORTER_FILTER = 'lbwus.reporte_errores.FiltroReporteErrores'
 
 
 # Password validation
-# https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -202,12 +196,10 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 # Internationalization
-# https://docs.djangoproject.com/en/5.0/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
 
 # Las horas se guardan en UTC (USE_TZ) y se muestran/ingresan en hora de Chile.
-# Con 'UTC' una sesion de las 18:00 se mostraba y comparaba 3-4 horas corrida.
 TIME_ZONE = 'America/Santiago'
 
 USE_I18N = True
@@ -216,7 +208,6 @@ USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
@@ -233,7 +224,6 @@ MEDIA_URL = '/media/'
 TITULO_MAX_MB = 5
 
 # Default primary key field type
-# https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -277,7 +267,6 @@ DEFAULT_FROM_EMAIL = os.environ.get(
 PASSWORD_RESET_TIMEOUT = 3600
 
 # Backends de autenticación centralizada (RUT, Correo o Usuario) + allauth.
-# Antes habia DOS definiciones y la de abajo pisaba a la de allauth.
 AUTHENTICATION_BACKENDS = [
     'alumnos.backends.RutOrEmailBackend',
     'django.contrib.auth.backends.ModelBackend',
@@ -293,7 +282,7 @@ AUTH_USER_MODEL = 'alumnos.CustomUser'
 
 
 # ============================================================
-# CACHÉ PERSISTENTE Y COMPARTIDO (S4-02 / S-07)
+# CACHÉ PERSISTENTE Y COMPARTIDO
 # ============================================================
 # En desarrollo y producción se utiliza DatabaseCache, garantizando que el rate
 # limiting de login y el conteo de intentos persistan entre procesos worker

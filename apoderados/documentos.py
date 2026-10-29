@@ -1,4 +1,4 @@
-"""Documentos por revisar (fase 2a): carnet del apoderado y documento del vinculo.
+"""Documentos por revisar: carnet del apoderado y documento del vinculo.
 
 Se guardan cifrados en la base de datos (PostgreSQL), nunca en disco: Railway borra
 el disco en cada deploy. Solo JPG o PNG: al subirlos se vuelven a codificar, asi se

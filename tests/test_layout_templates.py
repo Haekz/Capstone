@@ -1,4 +1,3 @@
-from alumnos.models import Especialidad
 'El layout comun debe salir una sola vez y en todas las paginas publicas.\n\nNavbar y footer viven en alumnos/templates/alumnos/includes/. Estos tests\ndetectan tanto una copia pegada a mano como un include roto.\n'
 from django.test import TestCase
 from django.urls import reverse

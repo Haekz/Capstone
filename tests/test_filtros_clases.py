@@ -1,6 +1,6 @@
 """Filtros combinados del catalogo de clases (especialidad, modalidad, disponibilidad).
 
-La disponibilidad efectiva es la de SCRUM-33: una clase esta disponible si tiene
+Una clase esta disponible si tiene
 al menos una SesionClase programada, futura y con cupo (SesionClase.disponibles).
 Solo se ofrecen clases de profesores con titulo aprobado.
 """

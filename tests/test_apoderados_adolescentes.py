@@ -1,4 +1,4 @@
-"""Fase 1b-ii de menores: el adolescente de 14 a 17 invita a su madre o padre.
+"""El adolescente de 14 a 17 invita a su madre o padre.
 
 Datos ficticios. El correo del apoderado solo entrega el enlace: la prueba del
 vinculo sigue siendo la revision de identidad (1a) y del certificado (1b-i).

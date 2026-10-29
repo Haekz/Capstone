@@ -16,7 +16,7 @@ from .models import (Apoderado, ClaveDelApoderado, Documento, Invitacion, Revisi
                      RevisionVinculo, SolicitudAdolescente, Vinculo)
 
 # Al cambiar un texto, subir su version: cada registro guarda la que se acepto.
-# Textos provisorios, sujetos a la revision juridica (decision 15).
+# Textos provisorios, sujetos a revision juridica.
 VERSION_DECLARACION = '2'
 DECLARACION = (
     'Declaro que soy mayor de edad, que los datos que entrego son verdaderos y que solo '
@@ -161,7 +161,7 @@ class RegistroApoderadoForm(_CuentaForm):
 
 class _VinculoForm(AccesibleMixin, forms.Form):
     """Parentesco, documento que lo acredita y declaracion: comun al registro del estudiante
-    (1b-i) y a la invitacion aceptada (1b-ii)."""
+    y a la invitacion aceptada."""
     parentesco = forms.ChoiceField(label='Tu parentesco con el estudiante', choices=Vinculo.PARENTESCOS)
     documento = DocumentoField(label='Certificado de nacimiento (madre o padre) o resolución del tribunal '
                                      '(tutor legal o cuidado personal)')
@@ -192,7 +192,7 @@ class RegistroEstudianteForm(_CuentaForm, _VinculoForm):
         datos = self.cleaned_data
         with transaction.atomic():
             alumno = _crear_estudiante(datos)
-            ClaveDelApoderado.objects.create(user=alumno.user)  # al cumplir 18 define la suya (1d)
+            ClaveDelApoderado.objects.create(user=alumno.user)  # al cumplir 18 define la suya
             vinculo = Vinculo.objects.create(
                 apoderado=self.apoderado, alumno=alumno, parentesco=datos['parentesco'],
                 version_declaracion=VERSION_DECLARACION_VINCULO, declaracion_aceptada=timezone.now(),
@@ -259,7 +259,7 @@ class InvitacionForm(_CorreoApoderadoMixin, AccesibleMixin, forms.Form):
 
 class AceptarInvitacionForm(_VinculoForm):
     """El apoderado acepta la invitacion del adolescente y adjunta el documento del vinculo.
-    La invitacion (1b-ii) es para su madre o su padre: se acredita con el certificado de nacimiento."""
+    La invitacion es para su madre o su padre: se acredita con el certificado de nacimiento."""
     parentesco = forms.ChoiceField(label='Tu parentesco con el estudiante',
                                    choices=[p for p in Vinculo.PARENTESCOS if p[0] != Vinculo.TUTOR])
     documento = DocumentoField(label='Certificado de nacimiento del estudiante')
@@ -298,7 +298,7 @@ class RevocarVinculoForm(AccesibleMixin, forms.Form):
 
 
 class _RevisionForm(forms.ModelForm):
-    """Desde la fase 2a se revisa el documento subido: sin el documento no se aprueba."""
+    """Se revisa el documento subido: sin el documento no se aprueba."""
 
     def __init__(self, *args, revisado, **kwargs):
         super().__init__(*args, **kwargs)

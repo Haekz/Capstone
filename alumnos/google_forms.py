@@ -87,7 +87,7 @@ class CompletarRegistroGoogleForm(forms.Form):
         user.fecha_nacimiento = d['fecha_nacimiento']
         user.genero = d['genero']
         # Siempre, no solo en cuentas nuevas: la clave previa de una cuenta huerfana
-        # pudo ponerla otra persona con este correo (S-06). Se entra con Google.
+        # pudo ponerla otra persona con este correo. Se entra con Google.
         user.set_unusable_password()
         user.save()
 

@@ -1,4 +1,4 @@
-"""Fase 1c-i de menores: el apoderado contrata clases para su estudiante.
+"""El apoderado contrata clases para su estudiante.
 
 Datos ficticios; Webpay va con mock. El paquete queda a nombre del estudiante
 y sigue el mismo flujo de pago; CompraApoderado registra quien lo pago. El

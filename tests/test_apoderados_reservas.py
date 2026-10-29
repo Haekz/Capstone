@@ -1,4 +1,4 @@
-"""Fase 1c-ii de menores: el apoderado reserva, cancela y reprograma por su estudiante.
+"""El apoderado reserva, cancela y reprograma por su estudiante.
 
 Datos ficticios. Solo un apoderado con vinculo verificado actua por el menor;
 el menor no reserva, cancela ni reprograma por su cuenta, entra a la sala solo

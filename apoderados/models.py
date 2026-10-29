@@ -1,18 +1,16 @@
-"""Modulo de apoderados (decisiones de menores).
+"""Modulo de apoderados de estudiantes menores.
 
-Fase 1a: cuenta del apoderado y verificacion de su identidad.
-Fase 1b: vinculo con cada estudiante menor, verificado uno por uno con el
-certificado de nacimiento (madre o padre) o, desde la fase 2a, la resolucion del
-tribunal (tutor legal). El vinculo lo inicia
-el apoderado (1b-i) o un adolescente de 14 a 17 que lo invita por correo (1b-ii).
-
-Fase 1c: el apoderado contrata y reserva por su estudiante (Vinculo.autoriza).
-Fase 1d: el vinculo se revoca (apoderado o administrador) o termina solo
-cuando el estudiante cumple 18.
-Fase 2a: el apoderado sube su carnet y el documento del vinculo (certificado de
-nacimiento o resolucion del tribunal). Minimizacion de datos: se guardan cifrados
-solo mientras se revisan y se borran al decidir; no se guarda la IP. Queda la
-evidencia de que un administrador reviso y que version de cada declaracion se acepto.
+- Cuenta del apoderado y verificacion de su identidad.
+- Vinculo con cada estudiante menor, verificado uno por uno con el certificado de
+  nacimiento (madre o padre) o la resolucion del tribunal (tutor legal). Lo inicia
+  el apoderado o un adolescente de 14 a 17 que lo invita por correo.
+- El apoderado contrata y reserva por su estudiante (Vinculo.autoriza).
+- El vinculo se revoca (apoderado o administrador) o termina solo cuando el
+  estudiante cumple 18.
+- Documentos: carnet del apoderado y documento del vinculo. Minimizacion de datos: se
+  guardan cifrados solo mientras se revisan y se borran al decidir; no se guarda la
+  IP. Queda la evidencia de que un administrador reviso y que version de cada
+  declaracion se acepto.
 """
 
 from datetime import timedelta
@@ -31,8 +29,8 @@ class Revision(models.Model):
     RECHAZAR = 'rechazar'
     DECISIONES = [(APROBAR, 'Aprobar'), (RECHAZAR, 'Rechazar')]
     DOCUMENTO_SUBIDO = 'documento'
-    # Desde la fase 2a se revisa el documento subido; presencial y videollamada quedan
-    # para las revisiones anteriores.
+    # Se revisa el documento subido; presencial y videollamada solo aparecen en
+    # revisiones registradas antes de existir los documentos.
     CANALES = [(DOCUMENTO_SUBIDO, 'Documento subido'), ('presencial', 'Presencial'), ('videollamada', 'Videollamada')]
 
     # SET_NULL: si se borra la cuenta del admin, la evidencia sigue registrada.
@@ -50,7 +48,7 @@ class Revision(models.Model):
 
 def _registrar_decision(revisado, revision, administrador):
     """Guarda la evidencia y el nuevo estado juntos: o quedan ambos o ninguno.
-    Al decidir (aprobar o rechazar) se borran los documentos: ya no hacen falta."""
+    Al decidir (aprobar o rechazar) se borran los documentos."""
     revision.administrador = administrador
     revisado.estado = revisado.VERIFICADO if revision.decision == Revision.APROBAR else revisado.RECHAZADO
     with transaction.atomic():
@@ -96,7 +94,7 @@ class Apoderado(models.Model):
 
     @property
     def documentos_completos(self):
-        """Subio su carnet por ambos lados (fase 2a): sin eso no se puede aprobar."""
+        """Subio su carnet por ambos lados: sin eso no se puede aprobar."""
         return set(Documento.CARNET) <= set(self.documentos.values_list('tipo', flat=True))
 
     def confirmar_correo(self):
@@ -135,7 +133,7 @@ class Vinculo(models.Model):
     REVOCABLES = (PENDIENTE, VERIFICADO)
     TUTOR = 'tutor'
     # Madre o padre se acreditan con el certificado de nacimiento; el tutor legal o quien
-    # tiene el cuidado personal, con la resolucion del tribunal que lo nombra (fase 2a).
+    # tiene el cuidado personal, con la resolucion del tribunal que lo nombra.
     PARENTESCOS = [('madre', 'Madre'), ('padre', 'Padre'), (TUTOR, 'Tutor legal o cuidado personal')]
 
     apoderado = models.ForeignKey(Apoderado, on_delete=models.CASCADE, related_name='vinculos')
@@ -160,7 +158,7 @@ class Vinculo(models.Model):
 
     @property
     def apoderado_define_clave(self):
-        """Solo si el apoderado creo la cuenta (1b-i): el adolescente maneja la suya (1b-ii)."""
+        """Solo si el apoderado creo la cuenta: el adolescente que lo invito maneja la suya."""
         return not SolicitudAdolescente.objects.filter(alumno_id=self.alumno_id).exists()
 
     @property
@@ -173,7 +171,7 @@ class Vinculo(models.Model):
 
     def autoriza(self, alumno):
         """Puede actuar por ``alumno``: vinculo verificado de ese estudiante, apoderado
-        verificado y estudiante aun menor (a los 18 el vinculo termina solo, fase 1d)."""
+        verificado y estudiante aun menor (a los 18 el vinculo termina solo)."""
         return (self.estado == self.VERIFICADO and self.alumno_id == alumno.pk
                 and self.apoderado.estado == Apoderado.VERIFICADO and es_menor(alumno.user))
 
@@ -288,7 +286,7 @@ class Invitacion(models.Model):
 
 
 class CompraApoderado(models.Model):
-    """Paquete de clases que un apoderado pago para su estudiante (fase 1c).
+    """Paquete de clases que un apoderado pago para su estudiante.
 
     El paquete (alumnos.PaqueteClases) queda a nombre del estudiante y sigue el
     mismo flujo de Webpay; aqui solo se registra quien lo pago y con que vinculo.
@@ -307,7 +305,7 @@ class CompraApoderado(models.Model):
 
 
 class Revocacion(models.Model):
-    """Evidencia de una revocacion (fase 1d): quien, cuando y por que."""
+    """Evidencia de una revocacion: quien, cuando y por que."""
     vinculo = models.OneToOneField(Vinculo, on_delete=models.CASCADE, related_name='revocacion')
     # SET_NULL: si se borra la cuenta del autor, la evidencia sigue registrada.
     autor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='+')
@@ -320,7 +318,7 @@ class Revocacion(models.Model):
 
 
 class ClaveDelApoderado(models.Model):
-    """Cuenta cuya contrasena definio el apoderado: al cumplir 18 se exige una nueva (fase 1d)."""
+    """Cuenta cuya contrasena definio el apoderado: al cumplir 18 se exige una nueva."""
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
                                 related_name='clave_del_apoderado')
     definida = models.DateTimeField(auto_now=True)
@@ -331,7 +329,7 @@ class ClaveDelApoderado(models.Model):
 
 
 class Documento(models.Model):
-    """Copia cifrada de un documento por revisar (fase 2a, ver apoderados/documentos.py).
+    """Copia cifrada de un documento por revisar (ver apoderados/documentos.py).
 
     Es del apoderado (su carnet) o de un vinculo (certificado o resolucion). Vive solo
     mientras se revisa: se borra al aprobar o rechazar, o a los 30 dias (VIGENCIA).

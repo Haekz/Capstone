@@ -30,7 +30,7 @@ def variaciones_rut(texto):
 
 def normalizar_rut_canonico(texto):
     """
-    Normaliza cualquier formato de RUT a una clave canónica única (S4-02 / S-05):
+    Normaliza cualquier formato de RUT a una clave canónica única:
     sin puntos, con guión y DV en mayúsculas (ej: '11111111-1', '12345678-K').
     Si no corresponde a un RUT (ej. es un correo), retorna el texto en minúsculas y limpio.
     """

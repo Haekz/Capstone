@@ -1,11 +1,9 @@
-"""Prerrequisitos de seguridad antes de admitir menores (decisiones 1, 7 y 10).
+"""Prerrequisitos de seguridad para admitir menores.
 
 - Sala virtual: solo el profesor de la clase y el alumno con inscripcion valida.
   Ni administradores, ni staff, ni el campo ``rol`` abren clases ajenas.
-- Una sola regla de edad para los tres caminos de alta de alumnos. Sigue en 18
-  hasta que exista el modulo de apoderados.
-
-S-03 (clave inicial = RUT) lo corrige la rama de Franco (S4-02), no esta.
+- Una sola regla de edad (18) para los tres caminos de alta de alumnos: a los
+  menores solo los registra un apoderado.
 """
 
 from datetime import date, time

@@ -1,12 +1,10 @@
-from django.test import TestCase, Client
+from django.test import TestCase
 from django.urls import reverse
 from alumnos.models import CustomUser, Alumno, Profesor, Tutor
-from datetime import date
 
 class AuthenticationIntegrationTests(TestCase):
     @classmethod
     def setUpTestData(cls):
-        # Configurar datos iniciales que no cambian entre pruebas
         cls.alumno_user = CustomUser.objects.create_user(
             username='11111111-1', rut='11111111-1', email='alumno@test.com', password='password123', rol='alumno',
             first_name='Juan', last_name='Perez'
@@ -24,10 +22,6 @@ class AuthenticationIntegrationTests(TestCase):
             first_name='Carlos', last_name='Soto'
         )
         cls.admin_profile = Tutor.objects.create(user=cls.admin_user)
-
-    def setUp(self):
-        # Se ejecuta antes de cada prueba individual
-        self.client = Client()
 
     def test_login_rut_normal(self):
         """Regresión: Probar inicio de sesión con RUT normal (con guión)."""

@@ -1,4 +1,4 @@
-"""Fase 2a: documentos de apoderados (carnet y documento del vinculo).
+"""Documentos de apoderados (carnet y documento del vinculo).
 
 Datos ficticios. Cubre la subida (cifrado, sin metadatos, solo JPG o PNG de hasta
 5 MB, documento segun parentesco), la revision (sin documento no se aprueba; al

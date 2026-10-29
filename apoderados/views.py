@@ -173,7 +173,7 @@ def clave_estudiante(request, id_vinculo):
         alumno__solicitud_apoderado__isnull=True,
     )
     estudiante = vinculo.alumno.user
-    if not es_menor(estudiante):  # a los 18 la contrasena es solo suya (fase 1d)
+    if not es_menor(estudiante):  # a los 18 la contrasena es solo suya
         raise Http404
     form = ClaveEstudianteForm(estudiante, request.POST or None)
     if request.method == 'POST' and form.is_valid():
@@ -187,7 +187,7 @@ def clave_estudiante(request, id_vinculo):
     )
 
 
-# --- Fase 1c: el apoderado contrata y reserva por su estudiante ---
+# --- El apoderado contrata y reserva por su estudiante ---
 
 def _vinculo_o_404(request, id_vinculo):
     vinculo = vinculo_contratable(request, id_vinculo)
@@ -266,7 +266,7 @@ def reprogramar_clase(request, id_vinculo, id_inscripcion):
         v.alumno, id_inscripcion, _sesion_del_post(request), vinculo=v))
 
 
-# --- Fase 1d: revocar el vinculo y contrasena propia al cumplir 18 ---
+# --- Revocar el vinculo y contrasena propia al cumplir 18 ---
 
 def _revocar(request, vinculo, volver, motivo_obligatorio):
     form = RevocarVinculoForm(request.POST or None, motivo_obligatorio=motivo_obligatorio)
@@ -320,7 +320,7 @@ def nueva_clave_estudiante(request):
     )
 
 
-# --- Fase 1b-ii: el adolescente de 14 a 17 invita a su madre o padre ---
+# --- El adolescente de 14 a 17 invita a su madre o padre ---
 
 @sensitive_post_parameters('password', 'confirmar_password')
 @never_cache

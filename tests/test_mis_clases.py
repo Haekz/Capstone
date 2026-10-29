@@ -1,4 +1,4 @@
-"""SCRUM-29: "Mis clases" del portal muestra cuando es cada sesion reservada.
+""""Mis clases" del portal muestra cuando es cada sesion reservada.
 
 Proximas = inscripciones activas cuya sesion aun no termina (o a la clase sin
 sesion puntual), en orden de fecha. Las sesiones ya realizadas van al historial.

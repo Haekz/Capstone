@@ -1,5 +1,4 @@
 from django import forms
-from django.contrib.auth.hashers import make_password
 from .models import Alumno, Clase, Especialidad, Genero
 from django.contrib.auth import get_user_model
 
@@ -30,7 +29,7 @@ class FiltroClasesForm(forms.Form):
         super().__init__(*args, **kwargs)
 
 class AlumnoForm(forms.ModelForm):
-    # Campos que ahora pertenecen a CustomUser
+    # Campos de CustomUser
     nombre = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre Completo'}), label='Nombre Completo')
     rut = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'RUT (ej: 12.345.678-9)'}), label='RUT')
     direccion = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Dirección'}), label='Dirección')
@@ -62,7 +61,7 @@ class AlumnoForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Los selects mostraban '---------': el usuario no sabia que elegir.
+        # Texto guia en vez de '---------' en los selects.
         nivel = self.fields['nivel_educacion']
         nivel.choices = [('', 'Selecciona tu nivel')] + [c for c in nivel.choices if c[0]]
         self.fields['genero'].empty_label = 'Selecciona tu género'

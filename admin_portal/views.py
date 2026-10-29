@@ -1,13 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponse
-from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
-from alumnos.models import Alumno, Asignatura, Genero, Profesor, Tutor, Clase, Reporte
+from alumnos.models import Alumno, Asignatura, Profesor, Tutor, Clase, Reporte
 from alumnos.decorators import admin_required
 
-# Ruta antigua del menú: ya no tiene template, solo redirige al panel.
-# Se mantiene porque regis_tutor.html envía aquí tras registrarse.
+# Solo redirige al panel: regis_tutor.html envía aquí tras registrarse.
 def menu(request):
     admin_id = request.session.get('admin_id')
     if admin_id:
@@ -116,7 +114,7 @@ def contactos_adm(request):
     context = {}
     return render(request, 'admin_portal/contactos_adm.html', context)
 
-# --- Vistas CRUD movidas desde alumnos ---
+# --- Vistas CRUD ---
 @never_cache
 @admin_required
 def crud(request):
@@ -162,13 +160,9 @@ def alumnos_del(request, pk):
     
     alumno = get_object_or_404(Alumno, id_alumno=pk)
     
-    # IMPORTANTE: al borrar el Alumno, quizás también queramos borrar el CustomUser asociado
-    # Si queremos que se mantenga el usuario pero pierda el rol de alumno, no lo borramos.
-    # En este caso, borramos ambos para mantener la base de datos limpia.
+    # Se borra también la cuenta (CustomUser); el perfil de alumno cae en cascada.
     if alumno.user:
         alumno.user.delete() 
-    # El perfil de alumno se borrará en cascada por el OneToOneField de CustomUser, 
-    # o si no, lo borramos manualmente (dependiendo de on_delete).
     if Alumno.objects.filter(id_alumno=pk).exists():
         alumno.delete()
 

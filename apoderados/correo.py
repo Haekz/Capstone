@@ -60,7 +60,7 @@ def enviar_invitacion(request, invitacion):
 
 
 def avisar_apoderados(inscripcion, accion, autor):
-    """Avisa a cada apoderado con vinculo verificado del estudiante (fase 1c).
+    """Avisa a cada apoderado con vinculo verificado del estudiante.
 
     Un correo por persona: ningun apoderado ve la direccion del otro. Un fallo
     de SMTP no deshace la reserva, que ya quedo guardada.

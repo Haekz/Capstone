@@ -10,7 +10,6 @@ Requiere el servidor de demo en http://127.0.0.1:8765 (levantar_demo.bat).
 """
 import argparse
 import json
-import re
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
