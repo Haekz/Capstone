@@ -514,18 +514,27 @@ class PortalYSaldoTests(Escenario):
         self.assertContains(r, 'Aún no tienes paquetes vigentes')
 
     def test_el_profesor_recibe_el_85_por_ciento_de_cada_clase_tomada(self):
-        dar_paquete(self.ana, self.profe, 'intensivo')
-        for dias in (1, 2):
-            InscripcionService.inscribir_alumno_en_sesion(self.ana, crear_sesion(self.clase, dias=dias).pk)
+        paquete = dar_paquete(self.ana, self.profe, 'intensivo')
+        for dias in (-1, -2):
+            Inscripcion.objects.create(alumno=self.ana, clase=self.clase, paquete=paquete,
+                                       sesion=crear_sesion(self.clase, dias=dias))
         saldos = calcular_saldos(self.profe)
         self.assertEqual(saldos['total_ganado'], 2 * 14500)
         self.assertEqual(saldos['disponible'], 2 * paquetes.pago_profesor(14500))
         self.assertEqual(saldos['pendiente'], 2 * (14500 - paquetes.pago_profesor(14500)))
 
+    def test_reserva_futura_no_suma_saldo_hasta_dictarse(self):
+        dar_paquete(self.ana, self.profe, 'intensivo')
+        InscripcionService.inscribir_alumno_en_sesion(self.ana, crear_sesion(self.clase, dias=1).pk)
+        saldos = calcular_saldos(self.profe)
+        self.assertEqual(saldos['total_ganado'], 0)
+        self.assertEqual(saldos['disponible'], 0)
+
     def test_clase_cancelada_no_le_paga_al_profesor(self):
-        dar_paquete(self.ana, self.profe, 'flexible')
-        insc = InscripcionService.inscribir_alumno_en_sesion(self.ana, crear_sesion(self.clase, dias=1).pk)
-        InscripcionService.cancelar_inscripcion(self.ana, insc.pk)
+        paquete = dar_paquete(self.ana, self.profe, 'flexible')
+        Inscripcion.objects.create(alumno=self.ana, clase=self.clase, paquete=paquete,
+                                   sesion=crear_sesion(self.clase, dias=-1),
+                                   estado=Inscripcion.ESTADO_CANCELADA)
         self.assertEqual(calcular_saldos(self.profe)['total_ganado'], 0)
 
     def test_el_profesor_cambia_su_tarifa_desde_el_panel_con_validacion(self):
