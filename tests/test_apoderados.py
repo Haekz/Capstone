@@ -5,6 +5,7 @@ uso, vencimiento, manipulacion), revision del admin (evidencia obligatoria) y
 restricciones: una cuenta verificada no abre nada de alumnos, profesores ni admin.
 """
 
+import io
 import re
 from datetime import date, datetime, time as hora, timedelta
 from unittest import mock
@@ -13,14 +14,17 @@ from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core import mail
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import models
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
+from PIL import Image
 
 from alumnos.models import Asignatura, Clase, Genero, Tutor
+from apoderados.documentos import preparar
 from apoderados.forms import VERSION_DECLARACION
-from apoderados.models import Apoderado, RevisionIdentidad
+from apoderados.models import Apoderado, Documento, RevisionIdentidad
 from apoderados.tokens import token_correo
 from apoderados.views import CLAVE_ENVIO
 from tests.test_especialidad import crear_profesor
@@ -33,10 +37,24 @@ RUT = '12345678-5'
 ENLACE = re.compile(r'https?://[^/\s]+(/apoderados/confirmar/\S+/)')
 
 
+def imagen(nombre='documento.jpg', formato='JPEG', **info):
+    """Foto ficticia de un documento, como la subiria el apoderado."""
+    salida = io.BytesIO()
+    Image.new('RGB', (120, 80), 'white').save(salida, formato, **info)
+    return SimpleUploadedFile(nombre, salida.getvalue(), content_type=f'image/{formato.lower()}')
+
+
+def adjuntar(tipo, **titular):
+    """Documento ya subido y cifrado, como lo deja el formulario."""
+    contenido, formato = preparar(imagen())
+    return Documento.objects.create(tipo=tipo, contenido=contenido, formato=formato, **titular)
+
+
 def datos_registro(**cambios):
     datos = {
         'nombre': 'Carla Ficticia', 'rut': RUT, 'correo': 'carla@demo.cl', 'telefono': '',
         'fecha_nacimiento': '1985-05-10', 'password': CLAVE, 'confirmar_password': CLAVE,
+        'carnet_frente': imagen('frente.jpg'), 'carnet_reverso': imagen('reverso.jpg'),
         'acepta_declaracion': 'on',
     }
     datos.update(cambios)
@@ -187,24 +205,23 @@ class RevisionIdentidadTests(TestCase):
 
     def setUp(self):
         self.apoderado = crear_apoderado(RUT, Apoderado.REVISION_PENDIENTE)
+        for tipo in Documento.CARNET:
+            adjuntar(tipo, apoderado=self.apoderado)
         entrar(self.client, self.admin, admin_id=self.tutor.id_tutor)
 
     def revisar(self, apoderado=None, **datos):
         return self.client.post(reverse('apoderado_revisar', args=[(apoderado or self.apoderado).pk]), datos)
 
     def test_aprobar_registra_la_evidencia(self):
-        self.revisar(decision='aprobar', documento='cedula', canal='videollamada', rut_coincide='on')
+        self.revisar(decision='aprobar', rut_coincide='on')
         self.apoderado.refresh_from_db()
         self.assertEqual(self.apoderado.estado, Apoderado.VERIFICADO)
         revision = self.apoderado.revisiones.get()
         self.assertEqual((revision.administrador, revision.documento, revision.canal, revision.rut_coincide),
-                         (self.admin, 'cedula', 'videollamada', True))
+                         (self.admin, 'cedula', 'documento', True))
 
-    def test_aprobar_exige_documento_canal_y_rut_coincidente(self):
-        completos = dict(decision='aprobar', documento='cedula', canal='presencial', rut_coincide='on')
-        for falta in ('documento', 'canal', 'rut_coincide'):
-            with self.subTest(falta=falta):
-                self.revisar(**{k: v for k, v in completos.items() if k != falta})
+    def test_aprobar_exige_rut_coincidente(self):
+        self.revisar(decision='aprobar')
         self.apoderado.refresh_from_db()
         self.assertEqual(self.apoderado.estado, Apoderado.REVISION_PENDIENTE)
         self.assertFalse(RevisionIdentidad.objects.exists())
@@ -288,9 +305,16 @@ class RestriccionesDeAccesoTests(TestCase):
 
 class MinimizacionDeDatosTests(TestCase):
 
-    def test_la_app_no_guarda_archivos_ni_direcciones_ip(self):
+    def test_la_app_no_guarda_archivos_en_disco_ni_direcciones_ip(self):
         prohibidos = (models.FileField, models.GenericIPAddressField)
         for modelo in apps.get_app_config('apoderados').get_models():
             for campo in modelo._meta.get_fields():
                 with self.subTest(campo=f'{modelo.__name__}.{campo.name}'):
                     self.assertNotIsInstance(campo, prohibidos)
+
+    def test_los_documentos_solo_se_guardan_en_documento_contenido(self):
+        # Fase 2a: el unico binario es el documento cifrado, que se borra al decidir.
+        binarios = [f'{modelo.__name__}.{campo.name}'
+                    for modelo in apps.get_app_config('apoderados').get_models()
+                    for campo in modelo._meta.get_fields() if isinstance(campo, models.BinaryField)]
+        self.assertEqual(binarios, ['Documento.contenido'])

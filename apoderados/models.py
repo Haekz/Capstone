@@ -2,14 +2,17 @@
 
 Fase 1a: cuenta del apoderado y verificacion de su identidad.
 Fase 1b: vinculo con cada estudiante menor, verificado uno por uno con el
-certificado de nacimiento (solo madre o padre en el MVP). El vinculo lo inicia
+certificado de nacimiento (madre o padre) o, desde la fase 2a, la resolucion del
+tribunal (tutor legal). El vinculo lo inicia
 el apoderado (1b-i) o un adolescente de 14 a 17 que lo invita por correo (1b-ii).
 
 Fase 1c: el apoderado contrata y reserva por su estudiante (Vinculo.autoriza).
 Fase 1d: el vinculo se revoca (apoderado o administrador) o termina solo
-cuando el estudiante cumple 18. Minimizacion de
-datos: no se guardan copias de documentos ni la IP; solo la evidencia de que un
-administrador reviso, y que version de cada declaracion se acepto.
+cuando el estudiante cumple 18.
+Fase 2a: el apoderado sube su carnet y el documento del vinculo (certificado de
+nacimiento o resolucion del tribunal). Minimizacion de datos: se guardan cifrados
+solo mientras se revisan y se borran al decidir; no se guarda la IP. Queda la
+evidencia de que un administrador reviso y que version de cada declaracion se acepto.
 """
 
 from datetime import timedelta
@@ -27,7 +30,10 @@ class Revision(models.Model):
     APROBAR = 'aprobar'
     RECHAZAR = 'rechazar'
     DECISIONES = [(APROBAR, 'Aprobar'), (RECHAZAR, 'Rechazar')]
-    CANALES = [('presencial', 'Presencial'), ('videollamada', 'Videollamada')]
+    DOCUMENTO_SUBIDO = 'documento'
+    # Desde la fase 2a se revisa el documento subido; presencial y videollamada quedan
+    # para las revisiones anteriores.
+    CANALES = [(DOCUMENTO_SUBIDO, 'Documento subido'), ('presencial', 'Presencial'), ('videollamada', 'Videollamada')]
 
     # SET_NULL: si se borra la cuenta del admin, la evidencia sigue registrada.
     administrador = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
@@ -43,12 +49,14 @@ class Revision(models.Model):
 
 
 def _registrar_decision(revisado, revision, administrador):
-    """Guarda la evidencia y el nuevo estado juntos: o quedan ambos o ninguno."""
+    """Guarda la evidencia y el nuevo estado juntos: o quedan ambos o ninguno.
+    Al decidir (aprobar o rechazar) se borran los documentos: ya no hacen falta."""
     revision.administrador = administrador
     revisado.estado = revisado.VERIFICADO if revision.decision == Revision.APROBAR else revisado.RECHAZADO
     with transaction.atomic():
         revision.save()
         revisado.save(update_fields=['estado'])
+        revisado.documentos.all().delete()
 
 
 class Apoderado(models.Model):
@@ -86,6 +94,11 @@ class Apoderado(models.Model):
     def ultima_revision(self):
         return self.revisiones.first()
 
+    @property
+    def documentos_completos(self):
+        """Subio su carnet por ambos lados (fase 2a): sin eso no se puede aprobar."""
+        return set(Documento.CARNET) <= set(self.documentos.values_list('tipo', flat=True))
+
     def confirmar_correo(self):
         """Marca el correo como propio. El token deja de servir (un solo uso)."""
         if self.estado != self.CORREO_PENDIENTE:
@@ -120,8 +133,10 @@ class Vinculo(models.Model):
     ESTADOS = [(PENDIENTE, 'Por verificar'), (VERIFICADO, 'Verificado'), (RECHAZADO, 'Rechazado'),
                (REVOCADO, 'Revocado')]
     REVOCABLES = (PENDIENTE, VERIFICADO)
-    # MVP: solo se acepta el certificado de nacimiento, que acredita madre o padre.
-    PARENTESCOS = [('madre', 'Madre'), ('padre', 'Padre')]
+    TUTOR = 'tutor'
+    # Madre o padre se acreditan con el certificado de nacimiento; el tutor legal o quien
+    # tiene el cuidado personal, con la resolucion del tribunal que lo nombra (fase 2a).
+    PARENTESCOS = [('madre', 'Madre'), ('padre', 'Padre'), (TUTOR, 'Tutor legal o cuidado personal')]
 
     apoderado = models.ForeignKey(Apoderado, on_delete=models.CASCADE, related_name='vinculos')
     alumno = models.ForeignKey('alumnos.Alumno', on_delete=models.CASCADE, related_name='vinculos_apoderado')
@@ -147,6 +162,14 @@ class Vinculo(models.Model):
     def apoderado_define_clave(self):
         """Solo si el apoderado creo la cuenta (1b-i): el adolescente maneja la suya (1b-ii)."""
         return not SolicitudAdolescente.objects.filter(alumno_id=self.alumno_id).exists()
+
+    @property
+    def documento_requerido(self):
+        return Documento.RESOLUCION if self.parentesco == self.TUTOR else Documento.CERTIFICADO
+
+    @property
+    def documentos_completos(self):
+        return self.documentos.filter(tipo=self.documento_requerido).exists()
 
     def autoriza(self, alumno):
         """Puede actuar por ``alumno``: vinculo verificado de ese estudiante, apoderado
@@ -178,7 +201,7 @@ class Vinculo(models.Model):
 class RevisionVinculo(Revision):
     vinculo = models.ForeignKey(Vinculo, on_delete=models.CASCADE, related_name='revisiones')
     certificado_coincide = models.BooleanField(
-        'el certificado de nacimiento confirma el parentesco y los datos', default=False)
+        'el documento confirma el parentesco y los datos', default=False)
 
     class Meta(Revision.Meta):
         verbose_name = 'revisión de vínculo'
@@ -305,3 +328,55 @@ class ClaveDelApoderado(models.Model):
     class Meta:
         verbose_name = 'contraseña definida por el apoderado'
         verbose_name_plural = 'contraseñas definidas por apoderados'
+
+
+class Documento(models.Model):
+    """Copia cifrada de un documento por revisar (fase 2a, ver apoderados/documentos.py).
+
+    Es del apoderado (su carnet) o de un vinculo (certificado o resolucion). Vive solo
+    mientras se revisa: se borra al aprobar o rechazar, o a los 30 dias (VIGENCIA).
+    """
+    CARNET_FRENTE = 'carnet_frente'
+    CARNET_REVERSO = 'carnet_reverso'
+    CERTIFICADO = 'certificado'
+    RESOLUCION = 'resolucion'
+    TIPOS = [(CARNET_FRENTE, 'Carnet (frente)'), (CARNET_REVERSO, 'Carnet (reverso)'),
+             (CERTIFICADO, 'Certificado de nacimiento'), (RESOLUCION, 'Resolución del tribunal')]
+    CARNET = (CARNET_FRENTE, CARNET_REVERSO)
+    VIGENCIA = timedelta(days=30)
+
+    apoderado = models.ForeignKey(Apoderado, on_delete=models.CASCADE, null=True, blank=True,
+                                  related_name='documentos')
+    vinculo = models.ForeignKey(Vinculo, on_delete=models.CASCADE, null=True, blank=True,
+                                related_name='documentos')
+    tipo = models.CharField(max_length=15, choices=TIPOS)
+    formato = models.CharField(max_length=4)  # JPEG o PNG
+    contenido = models.BinaryField()  # cifrado: nunca la imagen en claro
+    subido = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['subido']
+        constraints = [models.CheckConstraint(
+            condition=models.Q(apoderado__isnull=False, vinculo__isnull=True)
+            | models.Q(apoderado__isnull=True, vinculo__isnull=False),
+            name='documento_de_apoderado_o_de_vinculo')]
+
+    @property
+    def titular(self):
+        """Apoderado que lo subio, sea su carnet o el documento de un vinculo."""
+        return self.apoderado or self.vinculo.apoderado
+
+
+class AccesoDocumento(models.Model):
+    """Cada vez que un administrador abre un documento. Queda aunque el documento se borre."""
+    administrador = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+                                      null=True, related_name='+')
+    apoderado = models.ForeignKey(Apoderado, on_delete=models.CASCADE, related_name='accesos_a_documentos')
+    vinculo = models.ForeignKey(Vinculo, on_delete=models.CASCADE, null=True, blank=True, related_name='+')
+    tipo = models.CharField(max_length=15, choices=Documento.TIPOS)
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'acceso a un documento'
+        verbose_name_plural = 'accesos a documentos'
+        ordering = ['-fecha', '-id']

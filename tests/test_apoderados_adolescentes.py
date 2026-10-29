@@ -18,7 +18,7 @@ from alumnos.models import Alumno, Genero, Tutor
 from apoderados.forms import VERSION_DECLARACION_ADOLESCENTE, VERSION_DECLARACION_VINCULO
 from apoderados.models import Apoderado, Invitacion, SolicitudAdolescente, Vinculo
 from apoderados.tokens import firmar_invitacion
-from tests.test_apoderados import CLAVE, RUT, crear_apoderado, datos_registro, entrar
+from tests.test_apoderados import CLAVE, RUT, crear_apoderado, datos_registro, entrar, imagen
 from tests.test_progreso_alumno import crear_alumno
 
 User = get_user_model()
@@ -88,7 +88,7 @@ class FlujoCompletoTests(TestCase):
         self.assertContains(self.client.get(reverse('portal_apoderado')), 'Tienes una invitación pendiente')
 
         # 4. Acepta (aun sin identidad verificada): vinculo pendiente, enlace usado.
-        self.client.post(link, {'parentesco': 'madre', 'acepta_declaracion': 'on'})
+        self.client.post(link, {'parentesco': 'madre', 'acepta_declaracion': 'on', 'documento': imagen()})
         vinculo = Vinculo.objects.get()
         self.assertEqual((vinculo.alumno, vinculo.estado, vinculo.version_declaracion),
                          (solicitud.alumno, Vinculo.PENDIENTE, VERSION_DECLARACION_VINCULO))
@@ -138,7 +138,7 @@ class AceptarInvitacionTests(TestCase):
 
     def aceptar(self, invitacion=None, **datos):
         return self.client.post(url_invitacion(invitacion or self.invitacion),
-                                {'parentesco': 'padre', 'acepta_declaracion': 'on', **datos})
+                                {'parentesco': 'padre', 'acepta_declaracion': 'on', 'documento': imagen(), **datos})
 
     def test_enlaces_que_no_sirven(self):
         token = firmar_invitacion(self.invitacion)

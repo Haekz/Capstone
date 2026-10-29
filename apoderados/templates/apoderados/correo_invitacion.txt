@@ -6,7 +6,7 @@ Para responder, abre el siguiente enlace:
 
 {{ enlace }}
 
-El enlace sirve una sola vez y vence en {{ dias }} días. Para aceptar necesitarás una cuenta de apoderado. Después, un administrador revisará tu identidad y el certificado de nacimiento del estudiante, de forma presencial o por videollamada. No te pediremos enviar copias de documentos por correo.
+El enlace sirve una sola vez y vence en {{ dias }} días. Para aceptar necesitarás una cuenta de apoderado. Después, un administrador revisará tu identidad y el documento que acredita el vínculo, que subirás dentro de LBWUS. Nunca te pediremos enviar documentos por correo.
 
 Si no conoces a {{ nombre }} o no eres su madre ni su padre, ignora este mensaje: no se creará ningún vínculo.
 
