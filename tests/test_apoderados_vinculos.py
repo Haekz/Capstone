@@ -17,8 +17,8 @@ from django.utils import timezone
 from alumnos.models import Alumno, Asignatura, Clase, Genero, Inscripcion, PaqueteClases, Tutor
 from alumnos.services import MENSAJE_MENOR
 from apoderados.forms import VERSION_DECLARACION_VINCULO
-from apoderados.models import Apoderado, RevisionVinculo, Vinculo
-from tests.test_apoderados import CLAVE, RUT, crear_apoderado, entrar
+from apoderados.models import Apoderado, Documento, RevisionVinculo, Vinculo
+from tests.test_apoderados import CLAVE, RUT, adjuntar, crear_apoderado, entrar, imagen
 from tests.test_especialidad import crear_profesor
 from tests.test_filtros_clases import crear_sesion
 from tests.test_paquetes import dar_paquete
@@ -37,7 +37,8 @@ def datos_estudiante(**cambios):
     datos = {
         'nombre': 'Tomás Ficticio', 'rut': RUT_NINO, 'fecha_nacimiento': hace_anios(10).isoformat(),
         'nivel_educacion': 'basica', 'parentesco': 'madre', 'correo': '',
-        'password': CLAVE_NINO, 'confirmar_password': CLAVE_NINO, 'acepta_declaracion': 'on',
+        'password': CLAVE_NINO, 'confirmar_password': CLAVE_NINO, 'documento': imagen('certificado.jpg'),
+        'acepta_declaracion': 'on',
     }
     datos.update(cambios)
     return datos
@@ -123,25 +124,23 @@ class RevisionVinculoTests(TestCase):
     def setUp(self):
         self.apoderado = crear_apoderado(RUT, Apoderado.VERIFICADO)
         self.vinculo = crear_menor_vinculado(self.apoderado, estado=Vinculo.PENDIENTE)
+        adjuntar(Documento.CERTIFICADO, vinculo=self.vinculo)
         entrar(self.client, self.admin, admin_id=self.tutor.id_tutor)
 
     def revisar(self, vinculo=None, **datos):
         return self.client.post(reverse('apoderado_revisar_vinculo', args=[(vinculo or self.vinculo).pk]), datos)
 
-    def test_verificar_exige_canal_y_certificado_coincidente(self):
-        completos = dict(decision='aprobar', canal='presencial', certificado_coincide='on')
-        for falta in ('canal', 'certificado_coincide'):
-            with self.subTest(falta=falta):
-                self.revisar(**{k: v for k, v in completos.items() if k != falta})
+    def test_verificar_exige_documento_coincidente(self):
+        self.revisar(decision='aprobar')
         self.vinculo.refresh_from_db()
         self.assertEqual(self.vinculo.estado, Vinculo.PENDIENTE)
 
-        self.revisar(**completos)
+        self.revisar(decision='aprobar', certificado_coincide='on')
         self.vinculo.refresh_from_db()
         self.assertEqual(self.vinculo.estado, Vinculo.VERIFICADO)
         revision = RevisionVinculo.objects.get()
         self.assertEqual((revision.administrador, revision.canal, revision.certificado_coincide),
-                         (self.admin, 'presencial', True))
+                         (self.admin, 'documento', True))
 
     def test_rechazar_exige_motivo_y_el_apoderado_lo_ve(self):
         self.revisar(decision='rechazar')

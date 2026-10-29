@@ -23,6 +23,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-lbwus-secret-key-for-local-development")
 
+# Clave Fernet de los documentos de apoderados (apoderados/documentos.py). Sin ella se
+# deriva de SECRET_KEY. Generarla con: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+DOCUMENTOS_CLAVE = os.environ.get("DOCUMENTOS_CLAVE", "")
+
 # SECURITY WARNING: don't run with debug turned on in production!
 # En Railway se define DEBUG=False. Sin la variable queda en True, como antes.
 DEBUG = os.environ.get('DEBUG', 'True').lower() in ('1', 'true', 'si')

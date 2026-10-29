@@ -11,24 +11,28 @@ from alumnos.models import Alumno
 from alumnos.utils import (EDAD_ADULTA, EDAD_MINIMA_ESTUDIANTE, edad, error_fecha_nacimiento,
                            usuario_existe, validar_rut_chileno)
 
-from .models import (Apoderado, ClaveDelApoderado, Invitacion, Revision, RevisionIdentidad, RevisionVinculo,
-                     SolicitudAdolescente, Vinculo)
+from .documentos import preparar
+from .models import (Apoderado, ClaveDelApoderado, Documento, Invitacion, Revision, RevisionIdentidad,
+                     RevisionVinculo, SolicitudAdolescente, Vinculo)
 
 # Al cambiar un texto, subir su version: cada registro guarda la que se acepto.
 # Textos provisorios, sujetos a la revision juridica (decision 15).
-VERSION_DECLARACION = '1'
+VERSION_DECLARACION = '2'
 DECLARACION = (
     'Declaro que soy mayor de edad, que los datos que entrego son verdaderos y que solo '
     'solicitaré vincular a estudiantes respecto de quienes tengo la representación legal o el '
-    'cuidado personal. Entiendo que LBWUS revisará mi identidad antes de habilitar la cuenta, y '
-    'que una cuenta verificada no da, por sí sola, permisos sobre ningún estudiante.'
+    'cuidado personal. Entiendo que LBWUS revisará mi identidad con mi carnet antes de habilitar la '
+    'cuenta, y que una cuenta verificada no da, por sí sola, permisos sobre ningún estudiante.'
 )
-VERSION_DECLARACION_VINCULO = '1'
+VERSION_DECLARACION_VINCULO = '2'
 DECLARACION_VINCULO = (
-    'Declaro que soy la madre o el padre de este estudiante, que sus datos son verdaderos y que '
-    'mostraré su certificado de nacimiento para que LBWUS verifique el vínculo. Entiendo que, '
-    'mientras tanto, la cuenta del estudiante no podrá reservar, comprar ni entrar a clases.'
+    'Declaro que soy la madre, el padre o el tutor legal de este estudiante, que sus datos son '
+    'verdaderos y que el documento que adjunto (certificado de nacimiento o resolución del tribunal) es '
+    'auténtico. Entiendo que, mientras LBWUS lo revisa, la cuenta del estudiante no podrá reservar, '
+    'comprar ni entrar a clases.'
 )
+AVISO_DOCUMENTO = ('Foto o imagen JPG o PNG, de hasta 5 MB. Se guarda cifrada, solo la ve el equipo que '
+                   'revisa tu solicitud y se elimina apenas la aprueba o la rechaza, o a los 30 días.')
 VERSION_DECLARACION_ADOLESCENTE = '1'
 DECLARACION_ADOLESCENTE = (
     'Declaro que mis datos son verdaderos y que el correo que indico es de mi madre o de mi padre. '
@@ -60,10 +64,30 @@ def _crear_estudiante(datos):
 class AccesibleMixin:
     def full_clean(self):
         super().full_clean()
-        # El lector de pantalla anuncia el error junto a su campo.
+        # El lector de pantalla anuncia el error junto a su campo (y la ayuda, si la tiene).
         for nombre in self.errors:
             if nombre in self.fields:
-                self.fields[nombre].widget.attrs['aria-describedby'] = f'{self[nombre].auto_id}-error'
+                ids = [f'{self[nombre].auto_id}-error']
+                if self.fields[nombre].help_text:
+                    ids.append(f'{self[nombre].auto_id}_helptext')
+                self.fields[nombre].widget.attrs['aria-describedby'] = ' '.join(ids)
+
+
+class DocumentoField(forms.FileField):
+    """Imagen de un documento: limpia, devuelve (contenido cifrado, formato)."""
+    widget = forms.FileInput(attrs={'accept': 'image/jpeg,image/png'})
+
+    def __init__(self, **kwargs):
+        super().__init__(help_text=AVISO_DOCUMENTO, **kwargs)
+
+    def clean(self, data, initial=None):
+        archivo = super().clean(data, initial)
+        return preparar(archivo) if archivo else None
+
+
+def _guardar_documento(cifrado, tipo, **titular):
+    contenido, formato = cifrado
+    Documento.objects.create(tipo=tipo, contenido=contenido, formato=formato, **titular)
 
 
 class _CuentaForm(AccesibleMixin, forms.Form):
@@ -106,10 +130,12 @@ class RegistroApoderadoForm(_CuentaForm):
                                widget=forms.TextInput(attrs={'type': 'tel'}))
     fecha_nacimiento = forms.DateField(label='Fecha de nacimiento',
                                        widget=forms.DateInput(attrs={'type': 'date'}))
+    carnet_frente = DocumentoField(label='Foto de tu carnet (frente)')
+    carnet_reverso = DocumentoField(label='Foto de tu carnet (reverso)')
     acepta_declaracion = forms.BooleanField(label=DECLARACION)
 
     field_order = ['nombre', 'rut', 'correo', 'telefono', 'fecha_nacimiento',
-                   'password', 'confirmar_password', 'acepta_declaracion']
+                   'password', 'confirmar_password', 'carnet_frente', 'carnet_reverso', 'acepta_declaracion']
 
     def clean_fecha_nacimiento(self):
         fecha = self.cleaned_data['fecha_nacimiento']
@@ -126,21 +152,34 @@ class RegistroApoderadoForm(_CuentaForm):
                 password=datos['password'], first_name=datos['nombre'],
                 telefono=datos['telefono'], fecha_nacimiento=datos['fecha_nacimiento'],
             )
-            return Apoderado.objects.create(user=user, version_declaracion=VERSION_DECLARACION,
-                                            declaracion_aceptada=timezone.now())
+            apoderado = Apoderado.objects.create(user=user, version_declaracion=VERSION_DECLARACION,
+                                                 declaracion_aceptada=timezone.now())
+            _guardar_documento(datos['carnet_frente'], Documento.CARNET_FRENTE, apoderado=apoderado)
+            _guardar_documento(datos['carnet_reverso'], Documento.CARNET_REVERSO, apoderado=apoderado)
+            return apoderado
 
 
-class RegistroEstudianteForm(_CuentaForm):
+class _VinculoForm(AccesibleMixin, forms.Form):
+    """Parentesco, documento que lo acredita y declaracion: comun al registro del estudiante
+    (1b-i) y a la invitacion aceptada (1b-ii)."""
+    parentesco = forms.ChoiceField(label='Tu parentesco con el estudiante', choices=Vinculo.PARENTESCOS)
+    documento = DocumentoField(label='Certificado de nacimiento (madre o padre) o resolución del tribunal '
+                                     '(tutor legal o cuidado personal)')
+    acepta_declaracion = forms.BooleanField(label=DECLARACION_VINCULO)
+
+    def guardar_documento(self, vinculo):
+        _guardar_documento(self.cleaned_data['documento'], vinculo.documento_requerido, vinculo=vinculo)
+
+
+class RegistroEstudianteForm(_CuentaForm, _VinculoForm):
     """El apoderado crea la cuenta del menor: entra con su RUT y la contrasena que se define aqui."""
     fecha_nacimiento = forms.DateField(label='Fecha de nacimiento del estudiante',
                                        widget=forms.DateInput(attrs={'type': 'date'}))
     nivel_educacion = forms.ChoiceField(label='Nivel de educación', choices=NIVELES_EDUCACION)
-    parentesco = forms.ChoiceField(label='Tu parentesco con el estudiante', choices=Vinculo.PARENTESCOS)
     correo = forms.EmailField(label='Correo del estudiante (opcional)', required=False)
-    acepta_declaracion = forms.BooleanField(label=DECLARACION_VINCULO)
 
     field_order = ['nombre', 'rut', 'fecha_nacimiento', 'nivel_educacion', 'parentesco', 'correo',
-                   'password', 'confirmar_password', 'acepta_declaracion']
+                   'password', 'confirmar_password', 'documento', 'acepta_declaracion']
 
     def __init__(self, *args, apoderado, **kwargs):
         super().__init__(*args, **kwargs)
@@ -154,10 +193,12 @@ class RegistroEstudianteForm(_CuentaForm):
         with transaction.atomic():
             alumno = _crear_estudiante(datos)
             ClaveDelApoderado.objects.create(user=alumno.user)  # al cumplir 18 define la suya (1d)
-            return Vinculo.objects.create(
+            vinculo = Vinculo.objects.create(
                 apoderado=self.apoderado, alumno=alumno, parentesco=datos['parentesco'],
                 version_declaracion=VERSION_DECLARACION_VINCULO, declaracion_aceptada=timezone.now(),
             )
+            self.guardar_documento(vinculo)
+            return vinculo
 
 
 class _CorreoApoderadoMixin:
@@ -216,9 +257,12 @@ class InvitacionForm(_CorreoApoderadoMixin, AccesibleMixin, forms.Form):
         return super().clean()
 
 
-class AceptarInvitacionForm(AccesibleMixin, forms.Form):
-    parentesco = forms.ChoiceField(label='Tu parentesco con el estudiante', choices=Vinculo.PARENTESCOS)
-    acepta_declaracion = forms.BooleanField(label=DECLARACION_VINCULO)
+class AceptarInvitacionForm(_VinculoForm):
+    """El apoderado acepta la invitacion del adolescente y adjunta el documento del vinculo.
+    La invitacion (1b-ii) es para su madre o su padre: se acredita con el certificado de nacimiento."""
+    parentesco = forms.ChoiceField(label='Tu parentesco con el estudiante',
+                                   choices=[p for p in Vinculo.PARENTESCOS if p[0] != Vinculo.TUTOR])
+    documento = DocumentoField(label='Certificado de nacimiento del estudiante')
 
 
 class ClaveEstudianteForm(AccesibleMixin, SetPasswordForm):
@@ -254,9 +298,17 @@ class RevocarVinculoForm(AccesibleMixin, forms.Form):
 
 
 class _RevisionForm(forms.ModelForm):
+    """Desde la fase 2a se revisa el documento subido: sin el documento no se aprueba."""
+
+    def __init__(self, *args, revisado, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.revisado = revisado
+
     def clean(self):
         datos = super().clean()
         if datos.get('decision') == Revision.APROBAR:
+            if not self.revisado.documentos_completos:
+                raise forms.ValidationError('Falta el documento: no se puede aprobar sin revisarlo.')
             self.validar_aprobacion(datos)
         elif datos.get('decision') == Revision.RECHAZAR and not datos.get('observacion'):
             raise forms.ValidationError('Para rechazar escribe el motivo: el apoderado lo verá.')
@@ -265,26 +317,30 @@ class _RevisionForm(forms.ModelForm):
     def validar_aprobacion(self, datos):
         raise NotImplementedError
 
+    def save(self, commit=True):
+        self.instance.canal = Revision.DOCUMENTO_SUBIDO
+        return super().save(commit)
+
 
 class RevisionIdentidadForm(_RevisionForm):
     class Meta:
         model = RevisionIdentidad
-        fields = ['decision', 'documento', 'canal', 'rut_coincide', 'observacion']
+        fields = ['decision', 'rut_coincide', 'observacion']
 
     def validar_aprobacion(self, datos):
-        if not datos.get('documento') or not datos.get('canal'):
-            raise forms.ValidationError('Para aprobar indica qué documento revisaste y por qué canal.')
         if not datos.get('rut_coincide'):
-            raise forms.ValidationError('Solo puedes aprobar si el RUT del documento coincide.')
+            raise forms.ValidationError('Solo puedes aprobar si el RUT del carnet coincide.')
+
+    def save(self, commit=True):
+        self.instance.documento = 'cedula'  # el carnet subido
+        return super().save(commit)
 
 
 class RevisionVinculoForm(_RevisionForm):
     class Meta:
         model = RevisionVinculo
-        fields = ['decision', 'canal', 'certificado_coincide', 'observacion']
+        fields = ['decision', 'certificado_coincide', 'observacion']
 
     def validar_aprobacion(self, datos):
-        if not datos.get('canal'):
-            raise forms.ValidationError('Para aprobar indica por qué canal revisaste el certificado.')
         if not datos.get('certificado_coincide'):
-            raise forms.ValidationError('Solo puedes aprobar si el certificado de nacimiento confirma el parentesco.')
+            raise forms.ValidationError('Solo puedes aprobar si el documento confirma el parentesco y los datos.')

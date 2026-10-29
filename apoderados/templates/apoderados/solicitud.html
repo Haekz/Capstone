@@ -41,7 +41,7 @@
         <ul class="apod-vinculos">
             {% for v in vinculos %}
             <li><strong>{{ v.apoderado.nombre }}</strong> ({{ v.get_parentesco_display }}) · Vínculo: {{ v.get_estado_display }}
-                {% if v.estado == 'pendiente' %}<br><small>Un administrador revisará su identidad y tu certificado de nacimiento.</small>{% endif %}
+                {% if v.estado == 'pendiente' %}<br><small>Un administrador revisará su identidad y el documento que acredita el vínculo.</small>{% endif %}
             </li>
             {% endfor %}
         </ul>

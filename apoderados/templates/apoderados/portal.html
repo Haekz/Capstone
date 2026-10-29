@@ -44,8 +44,8 @@
 
         {% elif apoderado.estado == 'revision_pendiente' %}
         <p class="apod-estado"><i class="bi bi-hourglass-split" aria-hidden="true"></i> {{ apoderado.get_estado_display }}</p>
-        <p>Tu correo está confirmado. Un administrador de LBWUS se comunicará contigo para revisar tu documento de
-            identidad, de forma presencial o por videollamada. No guardamos copias de tus documentos.</p>
+        <p>Tu correo está confirmado. Un administrador de LBWUS revisará las fotos de tu carnet. Se guardan cifradas
+            y se eliminan apenas se aprueba o se rechaza la revisión, o a los 30 días.</p>
 
         {% elif apoderado.estado == 'verificado' %}
         <p class="apod-estado"><i class="bi bi-patch-check-fill" aria-hidden="true"></i> {{ apoderado.get_estado_display }}</p>
@@ -70,7 +70,7 @@
                 {% if v.termino_por_edad %}
                 <br><small>{{ v.alumno.user.first_name }} cumplió 18 años: su cuenta ahora es solo suya y el vínculo terminó.</small>
                 {% else %}
-                {% if v.estado == 'pendiente' %}<br><small>Un administrador revisará el certificado de nacimiento contigo, de forma presencial o por videollamada.</small>{% endif %}
+                {% if v.estado == 'pendiente' %}<br><small>Un administrador revisará el documento que adjuntaste para verificar el vínculo.</small>{% endif %}
                 {% if v.estado == 'rechazado' and v.ultima_revision.observacion %}<br><small><strong>Motivo:</strong> {{ v.ultima_revision.observacion }}</small>{% endif %}
                 {% if v.estado == 'pendiente' or v.estado == 'verificado' %}{% if v.apoderado_define_clave %}<br><a href="{% url 'apoderado_clave_estudiante' v.pk %}">Cambiar su contraseña</a>{% endif %}{% endif %}
                 {% if v.estado == 'verificado' and apoderado.estado == 'verificado' %}

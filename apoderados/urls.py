@@ -29,6 +29,7 @@ urlpatterns = [
     path('estudiantes/mi-solicitud/invitar/', views.invitar, name='adolescente_invitar'),
     path('salir/', views.logout_apoderado, name='logout_apoderado'),
     path('revision/', views.revision, name='apoderados_revision'),
+    path('revision/documentos/<int:id_documento>/', views.ver_documento, name='apoderado_documento'),
     path('revision/vinculos/<int:id_vinculo>/revocar/', views.revocar_vinculo_admin, name='apoderados_revocar_vinculo'),
     path('<int:id_apoderado>/revisar/', views.revisar, name='apoderado_revisar'),
     path('vinculos/<int:id_vinculo>/revisar/', views.revisar_vinculo, name='apoderado_revisar_vinculo'),

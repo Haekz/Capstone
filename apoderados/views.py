@@ -6,11 +6,14 @@ muestra su cuenta y sus vinculos: no abre nada de alumnos, profesores ni admin.
 
 import time
 
+from cryptography.fernet import InvalidToken
 from django.contrib import messages
 from django.contrib.auth import login as auth_login, logout as auth_logout, update_session_auth_hash
-from django.http import Http404
+from django.db import transaction
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_POST
@@ -24,11 +27,12 @@ from alumnos.utils import es_menor
 from alumnos.views import iniciar_compra_paquete  # unico inicio de Webpay para paquetes
 
 from .correo import avisar_apoderados, enviar_confirmacion, enviar_confirmacion_adolescente, enviar_invitacion
+from .documentos import con_marca_de_agua
 from .forms import (VERSION_DECLARACION_VINCULO, AceptarInvitacionForm, ClaveEstudianteForm,
                     InvitacionForm, NuevaClaveForm, RegistroAdolescenteForm, RegistroApoderadoForm,
                     RegistroEstudianteForm, RevisionIdentidadForm, RevisionVinculoForm, RevocarVinculoForm)
-from .models import (Apoderado, CompraApoderado, Revision, RevisionIdentidad, RevisionVinculo,
-                     Revocacion, SolicitudAdolescente, Vinculo)
+from .models import (AccesoDocumento, Apoderado, CompraApoderado, Documento, RevisionIdentidad,
+                     RevisionVinculo, Revocacion, SolicitudAdolescente, Vinculo)
 from .permisos import debe_renovar_clave, vinculo_contratable
 from .tokens import invitacion_vigente, token_correo, token_correo_adolescente, user_id_de_uid
 
@@ -78,7 +82,7 @@ def registro(request):
     rol = rol_en_sesion(request)
     if rol is not None:
         return redirigir_a_portal(rol)
-    form = RegistroApoderadoForm(request.POST or None)
+    form = RegistroApoderadoForm(request.POST or None, request.FILES or None)
     if request.method == 'POST' and form.is_valid():
         apoderado = form.save()
         auth_login(request, apoderado.user, backend=BACKEND)
@@ -88,9 +92,9 @@ def registro(request):
     return _formulario(
         request, form, titulo='Crea tu cuenta de apoderado', subtitulo='Tus datos', boton='Crear cuenta',
         volver_url=reverse('opcion_user'),
-        intro=('Para madres, padres y adultos responsables de estudiantes menores de edad. Antes de '
-               'habilitar tu cuenta confirmaremos tu correo y un administrador revisará tu identidad. '
-               'No te pediremos subir documentos.'),
+        intro=('Para madres, padres y tutores legales de estudiantes menores de edad. Antes de habilitar tu '
+               'cuenta confirmaremos tu correo y un administrador revisará tu identidad con una foto de tu '
+               'carnet por ambos lados.'),
     )
 
 
@@ -142,17 +146,17 @@ def registrar_estudiante(request):
     if apoderado.estado != Apoderado.VERIFICADO:
         messages.error(request, 'Podrás registrar estudiantes cuando tu identidad esté verificada.')
         return redirect(APODERADO.ruta_portal)
-    form = RegistroEstudianteForm(request.POST or None, apoderado=apoderado)
+    form = RegistroEstudianteForm(request.POST or None, request.FILES or None, apoderado=apoderado)
     if request.method == 'POST' and form.is_valid():
         vinculo = form.save()
         messages.success(request, f'Registramos a {vinculo.alumno.user.first_name}. Un administrador '
-                                  'revisará su certificado de nacimiento para verificar el vínculo.')
+                                  'revisará el documento que adjuntaste para verificar el vínculo.')
         return redirect(APODERADO.ruta_portal)
     return _formulario(
         request, form, titulo='Registrar a un estudiante', subtitulo='Datos del estudiante',
         boton='Registrar estudiante', volver_url=reverse(APODERADO.ruta_portal),
         intro=('El estudiante entrará con su RUT y la contraseña que definas aquí. Hasta que verifiquemos '
-               'el vínculo con su certificado de nacimiento, solo podrá ver el catálogo.'),
+               'el vínculo con el documento que adjuntes, solo podrá ver el catálogo.'),
     )
 
 
@@ -420,18 +424,20 @@ def invitacion(request, token):
         request.session.pop(CLAVE_INVITACION, None)
         messages.info(request, f'Ya tienes un vínculo con {estudiante.user.first_name}.')
         return redirect(APODERADO.ruta_portal)
-    form = AceptarInvitacionForm(request.POST or None)
+    form = AceptarInvitacionForm(request.POST or None, request.FILES or None)
     if request.method == 'POST' and form.is_valid():
-        pendiente.aceptar(apoderado, form.cleaned_data['parentesco'], VERSION_DECLARACION_VINCULO)
+        with transaction.atomic():
+            vinculo = pendiente.aceptar(apoderado, form.cleaned_data['parentesco'], VERSION_DECLARACION_VINCULO)
+            form.guardar_documento(vinculo)
         request.session.pop(CLAVE_INVITACION, None)
         messages.success(request, f'Aceptaste la invitación de {estudiante.user.first_name}. Un administrador '
-                                  'revisará su certificado de nacimiento para verificar el vínculo.')
+                                  'revisará el documento que adjuntaste para verificar el vínculo.')
         return redirect(APODERADO.ruta_portal)
     return _formulario(
         request, form, titulo=f'Invitación de {estudiante.user.first_name}', subtitulo='Confirma el vínculo',
         boton='Aceptar invitación', volver_url=reverse(APODERADO.ruta_portal),
-        intro=('Si eres su madre o su padre, acepta la invitación. Un administrador revisará tu identidad y el '
-               'certificado de nacimiento del estudiante antes de verificar el vínculo.'),
+        intro=('Si eres su madre o su padre, acepta la invitación y adjunta su certificado de nacimiento. Un '
+               'administrador revisará tu identidad y ese documento antes de verificar el vínculo.'),
     )
 
 
@@ -445,24 +451,44 @@ def logout_apoderado(request):
 def revision(request):
     return render(request, 'apoderados/revision.html', {
         'admin': get_object_or_404(Tutor, id_tutor=request.session['admin_id']),
-        'pendientes': Apoderado.objects.filter(estado=Apoderado.REVISION_PENDIENTE).select_related('user'),
+        'pendientes': (Apoderado.objects.filter(estado=Apoderado.REVISION_PENDIENTE)
+                       .select_related('user').prefetch_related('documentos')),
         'historial': RevisionIdentidad.objects.select_related('apoderado__user', 'administrador')[:50],
         # Solo los que se pueden revisar: el apoderado ya tiene su identidad verificada.
         'vinculos_pendientes': (Vinculo.objects.filter(estado=Vinculo.PENDIENTE, apoderado__estado=Apoderado.VERIFICADO)
-                                .select_related('apoderado__user', 'alumno__user').prefetch_related('invitaciones')),
+                                .select_related('apoderado__user', 'alumno__user')
+                                .prefetch_related('invitaciones', 'documentos')),
         'historial_vinculos': (RevisionVinculo.objects
                                .select_related('vinculo__apoderado__user', 'vinculo__alumno__user', 'administrador')[:50]),
         'vinculos_vigentes': (Vinculo.objects.filter(estado=Vinculo.VERIFICADO)
                               .select_related('apoderado__user', 'alumno__user')),
         'revocaciones': Revocacion.objects.select_related('vinculo__apoderado__user', 'vinculo__alumno__user',
                                                           'autor').order_by('-fecha')[:50],
-        'documentos': RevisionIdentidad.DOCUMENTOS,
-        'canales': Revision.CANALES,
+        'accesos': AccesoDocumento.objects.select_related('administrador', 'apoderado__user')[:50],
     })
 
 
+@never_cache
+@admin_required
+def ver_documento(request, id_documento):
+    """Documento por revisar, con marca de agua de quien lo abre. Cada apertura queda registrada."""
+    documento = get_object_or_404(Documento.objects.select_related('apoderado', 'vinculo__apoderado'),
+                                  pk=id_documento)
+    texto = f'LBWUS - solo revision - {request.user.first_name or request.user.username} - ' \
+            f'{timezone.localtime():%d-%m-%Y %H:%M}'
+    try:
+        imagen = con_marca_de_agua(documento.contenido, texto)
+    except InvalidToken:  # cambio la clave de cifrado: hay que pedir el documento de nuevo
+        raise Http404('El documento ya no se puede leer.')
+    AccesoDocumento.objects.create(administrador=request.user, apoderado=documento.titular,
+                                   vinculo=documento.vinculo, tipo=documento.tipo)
+    respuesta = HttpResponse(imagen, content_type='image/jpeg')
+    respuesta['Content-Disposition'] = 'inline'  # se ve en el navegador, sin descarga directa
+    return respuesta
+
+
 def _revisar(request, revisado, formulario, nombre):
-    form = formulario(request.POST)
+    form = formulario(request.POST, revisado=revisado)
     if form.is_valid():
         revisado.aplicar_revision(form.save(commit=False), request.user)
         messages.success(request, f'{nombre}: {revisado.get_estado_display().lower()}.')

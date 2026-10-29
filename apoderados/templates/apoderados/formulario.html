@@ -25,7 +25,7 @@
         <h2 id="formulario-titulo">{{ subtitulo }}</h2>
         {% for error in form.non_field_errors %}<p class="apod-form__error" role="alert">{{ error }}</p>{% endfor %}
 
-        <form method="post" class="apod-form" novalidate>
+        <form method="post" class="apod-form" novalidate{% if form.is_multipart %} enctype="multipart/form-data"{% endif %}>
             {% csrf_token %}
             {% for campo in form %}
             {% if campo.field.widget.input_type == 'checkbox' %}
@@ -37,6 +37,7 @@
             <div class="apod-form__campo">
                 <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
                 {{ campo }}
+                {% if campo.help_text %}<small id="{{ campo.auto_id }}_helptext">{{ campo.help_text }}</small>{% endif %}
             </div>
             {% endif %}
             {% if campo.errors %}
