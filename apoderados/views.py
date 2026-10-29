@@ -95,7 +95,7 @@ def registro(request):
         request, form, titulo='Crea tu cuenta de apoderado', subtitulo='Tus datos', boton='Crear cuenta',
         volver_url=reverse('opcion_user'),
         intro=('Para madres, padres y tutores legales de estudiantes menores de edad. Antes de habilitar tu '
-               'cuenta confirmaremos tu correo y un administrador revisará tu identidad con una foto de tu '
+               'cuenta confirmaremos tu correo y nuestro equipo de soporte revisará tu identidad con una foto de tu '
                'carnet por ambos lados.'),
     )
 
@@ -107,7 +107,7 @@ def confirmar_correo(request, uidb64, token):
     if apoderado is None:
         return render(request, 'apoderados/enlace_invalido.html', status=400)
     apoderado.confirmar_correo()
-    messages.success(request, 'Correo confirmado. Ahora un administrador revisará tu identidad.')
+    messages.success(request, 'Correo confirmado. Ahora nuestro equipo de soporte revisará tu identidad.')
     return redirect(APODERADO.ruta_portal if request.session.get(APODERADO.clave_sesion) else 'login')
 
 
@@ -151,7 +151,7 @@ def registrar_estudiante(request):
     form = RegistroEstudianteForm(request.POST or None, request.FILES or None, apoderado=apoderado)
     if request.method == 'POST' and form.is_valid():
         vinculo = form.save()
-        messages.success(request, f'Registramos a {vinculo.alumno.user.first_name}. Un administrador '
+        messages.success(request, f'Registramos a {vinculo.alumno.user.first_name}. Nuestro equipo de soporte '
                                   'revisará el documento que adjuntaste para verificar el vínculo.')
         return redirect(APODERADO.ruta_portal)
     return _formulario(
@@ -432,14 +432,14 @@ def invitacion(request, token):
             vinculo = pendiente.aceptar(apoderado, form.cleaned_data['parentesco'], VERSION_DECLARACION_VINCULO)
             form.guardar_documento(vinculo)
         request.session.pop(CLAVE_INVITACION, None)
-        messages.success(request, f'Aceptaste la invitación de {estudiante.user.first_name}. Un administrador '
+        messages.success(request, f'Aceptaste la invitación de {estudiante.user.first_name}. Nuestro equipo de soporte '
                                   'revisará el documento que adjuntaste para verificar el vínculo.')
         return redirect(APODERADO.ruta_portal)
     return _formulario(
         request, form, titulo=f'Invitación de {estudiante.user.first_name}', subtitulo='Confirma el vínculo',
         boton='Aceptar invitación', volver_url=reverse(APODERADO.ruta_portal),
-        intro=('Si eres su madre o su padre, acepta la invitación y adjunta su certificado de nacimiento. Un '
-               'administrador revisará tu identidad y ese documento antes de verificar el vínculo.'),
+        intro=('Si eres su madre o su padre, acepta la invitación y adjunta su certificado de nacimiento. Nuestro '
+               'equipo de soporte revisará tu identidad y ese documento antes de verificar el vínculo.'),
     )
 
 

@@ -7,7 +7,7 @@
     <div class="titulo-aviso-cuerpo">
         {% if profesor.titulo_estado == 'en_revision' %}
         <h2 id="titulo-aviso-h">Tu título está en revisión</h2>
-        <p>Un administrador lo está revisando. Cuando lo apruebe podrás hacer clases y aparecerás para los alumnos.</p>
+        <p>Nuestro equipo de soporte lo está revisando. Cuando lo apruebe podrás hacer clases y aparecerás para los alumnos.</p>
         {% else %}
         <h2 id="titulo-aviso-h">{% if profesor.titulo_estado == 'rechazado' %}Tu título fue rechazado{% else %}Sube tu título profesional{% endif %}</h2>
         <p>

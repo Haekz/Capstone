@@ -383,7 +383,7 @@ class Documento(models.Model):
 
 
 class AccesoDocumento(models.Model):
-    """Cada vez que un administrador abre un documento. Queda aunque el documento se borre."""
+    """Cada vez que un agente de soporte abre un documento. Queda aunque el documento se borre."""
     administrador = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
                                       null=True, related_name='+')
     apoderado = models.ForeignKey(Apoderado, on_delete=models.CASCADE, related_name='accesos_a_documentos')
