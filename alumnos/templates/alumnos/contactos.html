@@ -52,21 +52,21 @@
 
                 <div class="form-group">
                     <label for="nombre">Nombre completo</label>
-                    <input type="text" class="form-control" id="nombre" name="nombre"
+                    <input type="text" class="form-control" id="nombre" name="nombre" maxlength="120"
                         placeholder="Ingresa tu nombre completo" required>
                     <div class="invalid-feedback">Por favor, dinos tu nombre.</div>
                 </div>
 
                 <div class="form-group">
                     <label for="email-contact">Correo electrónico</label>
-                    <input type="email" class="form-control" id="email-contact" name="email"
+                    <input type="email" class="form-control" id="email-contact" name="correo"
                         placeholder="ejemplo@correo.com" required>
                     <div class="invalid-feedback">Por favor, ingresa un correo válido.</div>
                 </div>
 
                 <div class="form-group">
                     <label for="mensaje">Tu mensaje</label>
-                    <textarea class="form-control" id="mensaje" name="mensaje" rows="5"
+                    <textarea class="form-control" id="mensaje" name="mensaje" rows="5" maxlength="2000"
                         placeholder="¿En qué te podemos ayudar?" required></textarea>
                     <div class="invalid-feedback">Por favor, escribe tu mensaje.</div>
                 </div>
@@ -179,15 +179,29 @@
                 event.stopPropagation();
             } else {
                 event.preventDefault();
-                Swal.fire({
-                    title: '¡Mensaje Enviado!',
-                    text: 'Gracias por contactarnos. Responderemos a tu consulta a la brevedad.',
-                    icon: 'success',
-                    confirmButtonColor: '#7c3aed'
-                }).then(() => {
-                    form.reset();
-                    form.classList.remove('was-validated');
-                });
+                // Se guarda en el servidor; el aviso de exito sale solo si de verdad llego.
+                fetch(window.location.pathname, { method: 'POST', body: new FormData(form) })
+                    .then(function (respuesta) { return respuesta.json(); })
+                    .then(function (datos) {
+                        if (!datos.success) throw { mensaje: datos.message };
+                        return Swal.fire({
+                            title: '¡Mensaje Enviado!',
+                            text: 'Gracias por contactarnos. Responderemos a tu consulta a la brevedad.',
+                            icon: 'success',
+                            confirmButtonColor: '#7c3aed'
+                        }).then(() => {
+                            form.reset();
+                            form.classList.remove('was-validated');
+                        });
+                    })
+                    .catch(function (error) {
+                        Swal.fire({
+                            title: 'No pudimos enviar tu mensaje',
+                            text: (error && error.mensaje) || 'Intenta de nuevo en unos minutos.',
+                            icon: 'error',
+                            confirmButtonColor: '#7c3aed'
+                        });
+                    });
             }
             form.classList.add('was-validated');
         }, false);

@@ -5,6 +5,8 @@ from django.views.decorators.http import require_POST
 from alumnos.models import Alumno, Asignatura, Profesor, Tutor, Clase, Reporte
 from alumnos.decorators import admin_required
 
+from .models import MensajeContacto
+
 # Solo redirige al panel: regis_tutor.html envía aquí tras registrarse.
 def menu(request):
     admin_id = request.session.get('admin_id')
@@ -111,7 +113,7 @@ def nosotros_adm(request):
 @never_cache
 @admin_required
 def contactos_adm(request):
-    context = {}
+    context = {'mensajes': MensajeContacto.objects.all()[:100]}  # los 100 mas recientes
     return render(request, 'admin_portal/contactos_adm.html', context)
 
 # --- Vistas CRUD ---

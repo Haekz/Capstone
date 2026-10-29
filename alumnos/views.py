@@ -30,6 +30,7 @@ from . import paquetes
 from django.db import transaction
 from apoderados.permisos import clase_pagada_por_apoderado, vinculo_contratable
 from .forms import AlumnoForm, FiltroClasesForm
+from admin_portal.forms import MensajeContactoForm
 from .decorators import alumno_required
 from .exceptions import InscripcionError
 from .services import InscripcionService
@@ -143,13 +144,34 @@ def nosotros(request):
     )
 
 
+# Formulario publico: tope de mensajes por IP en una hora, como el limite de intentos del login.
+LIMITE_CONTACTO = 5
+
+
 def contactos(request):
+    if request.method == 'POST':
+        return _recibir_contacto(request)
     context = {}
     return render(
         request,
         'alumnos/contactos.html',
         context
     )
+
+
+def _recibir_contacto(request):
+    clave = f'contacto_ip_{_obtener_ip(request)}'
+    enviados = cache.get(clave, 0)
+    if enviados >= LIMITE_CONTACTO:
+        return JsonResponse({'success': False, 'message': 'Ya enviaste varios mensajes. Intenta de nuevo en una hora.'},
+                            status=429)
+    form = MensajeContactoForm(request.POST)
+    if not form.is_valid():
+        primer_error = next(iter(form.errors.values()))[0]
+        return JsonResponse({'success': False, 'message': primer_error}, status=400)
+    form.save()
+    cache.set(clave, enviados + 1, 3600)
+    return JsonResponse({'success': True})
 
 
 def simulador(request):
