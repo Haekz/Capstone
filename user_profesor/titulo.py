@@ -1,17 +1,20 @@
 """Titulo profesional del profesor: subirlo, validarlo y revisarlo.
 
-Regla: sin titulo APROBADO por un admin el profesor no puede hacer clases
+Regla: sin titulo APROBADO por soporte el profesor no puede hacer clases
 (no se le asignan, no aparece para los alumnos y no se puede inscribir
-nadie en sus clases).
+nadie en sus clases). Cada titulo en revision es un ticket de soporte.
 """
 
 from pathlib import Path
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.utils import timezone
 
 from alumnos.models import Profesor
+from soporte.models import Ticket
+from soporte.tickets import abrir_ticket, cerrar_tickets
 
 EXTENSIONES = {'.pdf', '.jpg', '.jpeg', '.png'}
 # Primeros bytes de cada formato: la extension sola se falsifica facil.
@@ -43,11 +46,13 @@ def subir(profesor, archivo):
     profesor.titulo_estado = Profesor.TITULO_EN_REVISION
     profesor.titulo_observacion = ''
     profesor.titulo_actualizado = timezone.now()
-    profesor.save()
+    with transaction.atomic():
+        profesor.save()
+        abrir_ticket(Ticket.TITULOS, profesor=profesor)
 
 
 def resolver(profesor, aprobar, observacion=''):
-    """Decision del admin sobre un titulo en revision."""
+    """Decision del agente de soporte sobre un titulo en revision."""
     if profesor.titulo_estado != Profesor.TITULO_EN_REVISION:
         raise ValidationError('Ese título no está pendiente de revisión.')
     if not aprobar and not observacion.strip():
@@ -55,4 +60,6 @@ def resolver(profesor, aprobar, observacion=''):
     profesor.titulo_estado = Profesor.TITULO_APROBADO if aprobar else Profesor.TITULO_RECHAZADO
     profesor.titulo_observacion = '' if aprobar else observacion.strip()[:200]
     profesor.titulo_actualizado = timezone.now()
-    profesor.save()
+    with transaction.atomic():
+        profesor.save()
+        cerrar_tickets(profesor.tickets)

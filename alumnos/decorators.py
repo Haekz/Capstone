@@ -16,7 +16,7 @@ from django.shortcuts import redirect
 
 from apoderados.permisos import debe_renovar_clave
 
-from .roles import ADMIN, ALUMNO, APODERADO, PROFESOR, redirigir_a_portal, rol_en_sesion
+from .roles import ADMIN, ALUMNO, APODERADO, PROFESOR, SOPORTE, redirigir_a_portal, rol_en_sesion
 
 
 def _rol_requerido(rol, anonimo, json=False):
@@ -52,6 +52,7 @@ def _sesion_invalida_json(_request):
 
 admin_required = _rol_requerido(ADMIN, _al_login)
 apoderado_required = _rol_requerido(APODERADO, _al_login)
+soporte_required = _rol_requerido(SOPORTE, _al_login)
 
 # Solo el rol, sin la regla de abajo: para la pantalla donde se cumple esa regla.
 alumno_sesion_required = _rol_requerido(ALUMNO, _al_login)

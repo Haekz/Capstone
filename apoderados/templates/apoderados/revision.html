@@ -1,6 +1,6 @@
-{% extends 'admin_portal/base_admin.html' %}
+{% extends 'soporte/base_soporte.html' %}
 
-{% block title %}Apoderados — Admin LBWUS{% endblock %}
+{% block title %}Apoderados — Soporte LBWUS{% endblock %}
 {% block page_title %}Verificación de Apoderados{% endblock %}
 {% block page_subtitle %}Revisa el carnet y el documento del vínculo que subió el apoderado. Se borran al aprobar o rechazar; cada vez que abres uno queda registrado.{% endblock %}
 {% block nav_apoderados %}active{% endblock %}
@@ -91,6 +91,7 @@
     </div>
 </div>
 
+{% if agente.es_lider %}
 <div class="panel" style="margin-top:28px;">
     <div class="panel-header">
         <span class="panel-title"><i class="bi bi-clock-history"></i> Registro de decisiones (últimas 50)</span>
@@ -98,7 +99,7 @@
     <div style="overflow-x:auto;">
         <table class="user-table">
             <thead>
-                <tr><th>Fecha</th><th>Apoderado</th><th>Decisión</th><th>Documento</th><th>Canal</th><th>Observación</th><th>Administrador</th></tr>
+                <tr><th>Fecha</th><th>Apoderado</th><th>Decisión</th><th>Documento</th><th>Canal</th><th>Observación</th><th>Revisó</th></tr>
             </thead>
             <tbody>
                 {% for r in historial %}
@@ -126,7 +127,7 @@
     <div style="overflow-x:auto;">
         <table class="user-table">
             <thead>
-                <tr><th>Fecha</th><th>Estudiante</th><th>Apoderado</th><th>Decisión</th><th>Canal</th><th>Observación</th><th>Administrador</th></tr>
+                <tr><th>Fecha</th><th>Estudiante</th><th>Apoderado</th><th>Decisión</th><th>Canal</th><th>Observación</th><th>Revisó</th></tr>
             </thead>
             <tbody>
                 {% for r in historial_vinculos %}
@@ -205,7 +206,7 @@
     <div style="overflow-x:auto;">
         <table class="user-table">
             <thead>
-                <tr><th>Fecha</th><th>Documento</th><th>Apoderado</th><th>Administrador</th></tr>
+                <tr><th>Fecha</th><th>Documento</th><th>Apoderado</th><th>Abrió</th></tr>
             </thead>
             <tbody>
                 {% for acceso in accesos %}
@@ -222,5 +223,6 @@
         </table>
     </div>
 </div>
+{% endif %}
 
 {% endblock %}

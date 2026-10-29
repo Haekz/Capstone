@@ -1,0 +1,39 @@
+{% extends 'admin_portal/base_admin.html' %}
+{% comment %}Mismo diseño del portal admin: cambian la marca, la ficha, el menú y la salida.{% endcomment %}
+
+{% block title %}Soporte — LBWUS{% endblock %}
+{% block portal_url %}{% url 'panel_soporte' %}{% endblock %}
+{% block portal_nombre %}Soporte{% endblock %}
+{% block page_subtitle %}LBWUS - Soporte{% endblock %}
+
+{% block sidebar_usuario %}
+<div class="sidebar-user-avatar">
+    {{ agente.nombre|slice:":1"|upper|default:"S" }}
+</div>
+<div class="sidebar-user-info">
+    <div class="sidebar-user-name">{{ agente.nombre|default:"Soporte" }}</div>
+    <div class="sidebar-user-role">{{ agente.cargo }}</div>
+</div>
+{% endblock %}
+
+{% block sidebar_nav %}
+<span class="nav-label">Tickets</span>
+
+<a id="nav-panel" class="nav-item {% block nav_panel %}{% endblock %}" href="{% url 'panel_soporte' %}">
+    <i class="bi bi-inbox-fill"></i>
+    Mis tickets
+</a>
+
+<a id="nav-apoderados" class="nav-item {% block nav_apoderados %}{% endblock %}" href="{% url 'apoderados_revision' %}">
+    <i class="bi bi-person-vcard-fill"></i>
+    Apoderados
+</a>
+
+<a id="nav-titulos" class="nav-item {% block nav_titulos %}{% endblock %}" href="{% url 'titulos_adm' %}">
+    <i class="bi bi-mortarboard-fill"></i>
+    Títulos de Profesores
+</a>
+{% endblock %}
+
+{% block logout_url %}{% url 'logout_soporte' %}{% endblock %}
+{% block topbar_acciones %}{% endblock %}

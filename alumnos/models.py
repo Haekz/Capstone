@@ -23,6 +23,7 @@ class CustomUser(AbstractUser):
         ('profesor', 'Profesor'),
         ('admin', 'Administrador'),
         ('apoderado', 'Apoderado'),
+        ('soporte', 'Soporte'),
     )
     rol = models.CharField(max_length=15, choices=ROLES, default='alumno')
     rut = models.CharField(max_length=12, unique=True, null=True, blank=True)
@@ -112,7 +113,7 @@ class Profesor(models.Model):
     especialidad = models.ForeignKey(Especialidad, on_delete=models.SET_NULL, null=True)
     telefono_publico = models.BooleanField(default=False, help_text='¿Mostrar teléfono a los alumnos?')
 
-    # Documento privado: se sirve solo a admins (ver admin_portal.ver_titulo),
+    # Documento privado: se sirve solo al agente de soporte con el ticket (ver admin_portal.ver_titulo),
     # nunca por MEDIA_URL publico.
     titulo_archivo = models.FileField(upload_to='titulos/', blank=True)
     titulo_estado = models.CharField(max_length=12, choices=ESTADOS_TITULO, default=TITULO_PENDIENTE)

@@ -1,0 +1,133 @@
+{% extends 'soporte/base_soporte.html' %}
+
+{% block page_title %}Tickets de Soporte{% endblock %}
+{% block page_subtitle %}Tus tickets abiertos. Los documentos se revisan desde la pantalla de cada categoría.{% endblock %}
+{% block nav_panel %}active{% endblock %}
+
+{% block content %}
+
+{% if messages %}
+<div class="panel" role="status" style="margin-bottom:20px; padding:14px 18px;">
+    {% for m in messages %}<div>{{ m }}</div>{% endfor %}
+</div>
+{% endif %}
+
+<div class="panel">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-inbox-fill"></i> Mis tickets ({{ mis_tickets|length }})</span>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="user-table">
+            <thead>
+                <tr><th>Ticket</th><th>Categoría</th><th>Asunto</th><th>Abierto el</th><th>Acción</th></tr>
+            </thead>
+            <tbody>
+                {% for t in mis_tickets %}
+                <tr>
+                    <td>#{{ t.pk }}</td>
+                    <td><span class="badge">{{ t.get_categoria_display }}</span></td>
+                    <td>{{ t.asunto }}</td>
+                    <td>{{ t.creado|date:"d-m-Y H:i" }}</td>
+                    <td><a href="{% if t.categoria == 'titulos' %}{% url 'titulos_adm' %}{% else %}{% url 'apoderados_revision' %}{% endif %}">Revisar</a></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5">No tienes tickets abiertos.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if agente.es_lider %}
+<div class="panel" style="margin-top:28px;">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-list-task"></i> Todos los tickets abiertos ({{ abiertos|length }})</span>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="user-table">
+            <thead>
+                <tr><th>Ticket</th><th>Categoría</th><th>Asunto</th><th>Abierto el</th><th>Asignado a</th><th>Reasignar</th></tr>
+            </thead>
+            <tbody>
+                {% for t in abiertos %}
+                <tr>
+                    <td>#{{ t.pk }}</td>
+                    <td><span class="badge">{{ t.get_categoria_display }}</span></td>
+                    <td>{{ t.asunto }}</td>
+                    <td>{{ t.creado|date:"d-m-Y H:i" }}</td>
+                    <td>{% if t.asignado %}{{ t.asignado.nombre }}{% else %}<span class="badge">Sin asignar</span>{% endif %}</td>
+                    <td>
+                        {% if t.candidatos %}
+                        <form method="post" action="{% url 'soporte_reasignar' t.pk %}" style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+                            {% csrf_token %}
+                            <select name="agente" aria-label="Agente para el ticket #{{ t.pk }}"
+                                style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--bg-card); color:var(--text-primary);">
+                                {% for a in t.candidatos %}
+                                <option value="{{ a.pk }}"{% if a.pk == t.asignado_id %} selected{% endif %}>{{ a.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn-primary"><i class="bi bi-arrow-left-right"></i> Asignar</button>
+                        </form>
+                        {% else %}
+                        <small>Nadie atiende esta categoría.</small>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6">No hay tickets abiertos.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="panel" style="margin-top:28px;">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-people-fill"></i> Equipo de soporte</span>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="user-table">
+            <thead>
+                <tr><th>Agente</th><th>Cargo</th><th>Categorías</th><th>Tickets abiertos</th></tr>
+            </thead>
+            <tbody>
+                {% for a in equipo %}
+                <tr>
+                    <td>{{ a.nombre }}{% if not a.user.is_active %} <small>(cuenta desactivada)</small>{% endif %}</td>
+                    <td>{{ a.cargo }}</td>
+                    <td>{% for h in a.habilitaciones.all %}<span class="badge">{{ h.get_categoria_display }}</span> {% empty %}—{% endfor %}</td>
+                    <td>{{ a.carga }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="panel" style="margin-top:28px;">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-clock-history"></i> Asignaciones (últimas 50)</span>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="user-table">
+            <thead>
+                <tr><th>Fecha</th><th>Ticket</th><th>Asignado a</th><th>Asignó</th></tr>
+            </thead>
+            <tbody>
+                {% for s in asignaciones %}
+                <tr>
+                    <td>{{ s.fecha|date:"d-m-Y H:i" }}</td>
+                    <td>#{{ s.ticket_id }} <small>{{ s.ticket.get_categoria_display }}</small></td>
+                    <td>{{ s.agente.nombre|default:"Cuenta eliminada" }}</td>
+                    <td>{% if s.autor %}{{ s.autor.first_name }}{% else %}Automática{% endif %}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4">Todavía no hay asignaciones.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

@@ -14,11 +14,12 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from alumnos.models import Alumno, Asignatura, Clase, Genero, Inscripcion, PaqueteClases, Tutor
+from alumnos.models import Alumno, Asignatura, Clase, Genero, Inscripcion, PaqueteClases
 from alumnos.services import MENSAJE_MENOR
 from apoderados.forms import VERSION_DECLARACION_VINCULO
 from apoderados.models import Apoderado, Documento, RevisionVinculo, Vinculo
-from tests.test_apoderados import CLAVE, RUT, adjuntar, crear_apoderado, entrar, imagen
+from soporte.models import Ticket
+from tests.test_apoderados import CLAVE, RUT, adjuntar, crear_agente, crear_apoderado, entrar, entrar_soporte, imagen
 from tests.test_especialidad import crear_profesor
 from tests.test_filtros_clases import crear_sesion
 from tests.test_paquetes import dar_paquete
@@ -118,14 +119,14 @@ class RevisionVinculoTests(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.admin = User.objects.create_user('10101010-1', password=CLAVE, rol='admin', first_name='Admin')
-        cls.tutor = Tutor.objects.create(user=cls.admin)
+        cls.revisor = crear_agente('10101010-1', Ticket.APODERADOS)
 
     def setUp(self):
         self.apoderado = crear_apoderado(RUT, Apoderado.VERIFICADO)
         self.vinculo = crear_menor_vinculado(self.apoderado, estado=Vinculo.PENDIENTE)
         adjuntar(Documento.CERTIFICADO, vinculo=self.vinculo)
-        entrar(self.client, self.admin, admin_id=self.tutor.id_tutor)
+        self.vinculo.abrir_ticket_si_revisable()
+        entrar_soporte(self.client, self.revisor)
 
     def revisar(self, vinculo=None, **datos):
         return self.client.post(reverse('apoderado_revisar_vinculo', args=[(vinculo or self.vinculo).pk]), datos)
@@ -140,7 +141,7 @@ class RevisionVinculoTests(TestCase):
         self.assertEqual(self.vinculo.estado, Vinculo.VERIFICADO)
         revision = RevisionVinculo.objects.get()
         self.assertEqual((revision.administrador, revision.canal, revision.certificado_coincide),
-                         (self.admin, 'documento', True))
+                         (self.revisor.user, 'documento', True))
 
     def test_rechazar_exige_motivo_y_el_apoderado_lo_ve(self):
         self.revisar(decision='rechazar')

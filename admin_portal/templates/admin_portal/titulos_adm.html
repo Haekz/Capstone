@@ -1,6 +1,6 @@
-{% extends 'admin_portal/base_admin.html' %}
+{% extends 'soporte/base_soporte.html' %}
 
-{% block title %}Títulos — Admin LBWUS{% endblock %}
+{% block title %}Títulos — Soporte LBWUS{% endblock %}
 {% block page_title %}Títulos Profesionales{% endblock %}
 {% block page_subtitle %}Revisa los títulos de los profesores: sin título aprobado no pueden hacer clases{% endblock %}
 {% block nav_titulos %}active{% endblock %}
@@ -48,6 +48,7 @@
     </div>
 </div>
 
+{% if agente.es_lider %}
 <div class="panel" style="margin-top:28px;">
     <div class="panel-header">
         <span class="panel-title"><i class="bi bi-mortarboard-fill"></i> Resto de profesores</span>
@@ -55,7 +56,7 @@
     <div style="overflow-x:auto;">
         <table class="user-table">
             <thead>
-                <tr><th>Profesor</th><th>Especialidad</th><th>Estado</th><th>Observación</th><th>Archivo</th></tr>
+                <tr><th>Profesor</th><th>Especialidad</th><th>Estado</th><th>Observación</th></tr>
             </thead>
             <tbody>
                 {% for p in otros %}
@@ -64,14 +65,14 @@
                     <td>{{ p.especialidad }}</td>
                     <td><span class="badge {% if p.puede_hacer_clases %}badge-activo{% endif %}">{{ p.get_titulo_estado_display }}</span></td>
                     <td>{{ p.titulo_observacion|default:"—" }}</td>
-                    <td>{% if p.titulo_archivo %}<a href="{% url 'ver_titulo' p.id_profesor %}" target="_blank" rel="noopener">Ver</a>{% else %}—{% endif %}</td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="5">No hay profesores registrados.</td></tr>
+                <tr><td colspan="4">No hay profesores registrados.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
+{% endif %}
 
 {% endblock %}

@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     'comunidad',
     'resenas',
     'apoderados',
+    'soporte',
     'django_extensions',
 ]
 

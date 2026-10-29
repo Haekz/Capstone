@@ -198,6 +198,7 @@ class RegistroEstudianteForm(_CuentaForm, _VinculoForm):
                 version_declaracion=VERSION_DECLARACION_VINCULO, declaracion_aceptada=timezone.now(),
             )
             self.guardar_documento(vinculo)
+            vinculo.abrir_ticket_si_revisable()
             return vinculo
 
 
@@ -291,7 +292,7 @@ class RevocarVinculoForm(AccesibleMixin, forms.Form):
 
     def __init__(self, *args, motivo_obligatorio=False, **kwargs):
         super().__init__(*args, **kwargs)
-        if motivo_obligatorio:  # el administrador siempre deja el motivo (p. ej. resolucion judicial)
+        if motivo_obligatorio:  # el lider de soporte siempre deja el motivo (p. ej. resolucion judicial)
             self.fields['motivo'].required = True
             self.fields['confirmar'].label = ('Entiendo que se cancelarán las clases futuras pagadas con '
                                               'este vínculo y que el apoderado no podrá volver a actuar.')

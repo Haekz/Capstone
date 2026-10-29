@@ -26,6 +26,8 @@ from alumnos import codigo_google
 from alumnos.google_adapter import buscar_usuario_por_correo
 from alumnos.models import (Alumno, Asignatura, Clase, Especialidad, Genero, Inscripcion,
                             Profesor, Tutor)
+from soporte.models import Ticket
+from tests.test_apoderados import crear_agente, entrar_soporte
 
 User = get_user_model()
 PDF = b'%PDF-1.4 titulo de prueba'
@@ -206,6 +208,7 @@ class TituloProfesorTests(TestCase):
                                        rut='11111111-1', direccion='C', fecha_nacimiento=date(2000, 1, 1),
                                        email='a@demo.cl', genero=g)
         cls.alumno = Alumno.objects.create(user=ual, nivel_educacion='media')
+        cls.revisor = crear_agente('34343434-3', Ticket.TITULOS)  # recibe el ticket al subir el titulo
 
     def setUp(self):
         import tempfile
@@ -274,12 +277,12 @@ class TituloProfesorTests(TestCase):
         self.assertTrue(r['success'], r['message'])
         self.assertTrue(Inscripcion.objects.filter(alumno=self.alumno, clase=clase).exists())
 
-    def test_admin_aprueba_y_el_profesor_queda_habilitado(self):
+    def test_soporte_aprueba_y_el_profesor_queda_habilitado(self):
         self.entrar('22222222-2')
         self.subir()
         self.client.logout()
 
-        self.entrar('33333333-3')
+        entrar_soporte(self.client, self.revisor)
         self.assertEqual(self.client.get(reverse('ver_titulo', args=[self.profesor.id_profesor])).status_code, 200)
         self.client.post(reverse('resolver_titulo', args=[self.profesor.id_profesor]), {'decision': 'aprobar'})
 
@@ -290,7 +293,7 @@ class TituloProfesorTests(TestCase):
         self.entrar('22222222-2')
         self.subir()
         self.client.logout()
-        self.entrar('33333333-3')
+        entrar_soporte(self.client, self.revisor)
         url = reverse('resolver_titulo', args=[self.profesor.id_profesor])
         self.client.post(url, {'decision': 'rechazar'})
         self.profesor.refresh_from_db()
@@ -305,7 +308,7 @@ class TituloProfesorTests(TestCase):
         self.assertContains(self.client.get(reverse('panel_profesor')), 'Ilegible')
         self.assertTrue(self.subir()['success'])
 
-    def test_archivo_del_titulo_solo_lo_ven_admins(self):
+    def test_archivo_del_titulo_solo_lo_ve_soporte(self):
         self.entrar('22222222-2')
         self.subir()
         url = reverse('ver_titulo', args=[self.profesor.id_profesor])

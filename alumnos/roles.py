@@ -1,6 +1,6 @@
 """Unica fuente de verdad para los roles del sistema.
 
-El rol lo define el PERFIL asociado (Alumno, Profesor, Tutor o Apoderado),
+El rol lo define el PERFIL asociado (Alumno, Profesor, Tutor, AgenteSoporte o Apoderado),
 porque la sesion guarda el id de ese perfil. No se usa ``CustomUser.rol``: su
 valor por defecto es 'alumno' y mandaria a ese portal a cuentas sin perfil.
 Sin perfil no hay portal. El orden de ROLES es la precedencia si alguien tuviera dos.
@@ -29,12 +29,15 @@ PROFESOR = Rol('profesor', 'perfil_profesor', 'id_profesor', 'profesor_id',
                'panel_profesor', 'logout_prof', 'Profesor', 'Mi panel')
 ADMIN = Rol('admin', 'perfil_tutor', 'id_tutor', 'admin_id',
             'dashboard_admin', 'logout_admin', 'Administrador', 'Panel admin')
+# Equipo de soporte (app soporte): revisa verificaciones con documentos.
+SOPORTE = Rol('soporte', 'perfil_soporte', 'id_agente', 'soporte_id',
+              'panel_soporte', 'logout_soporte', 'Soporte', 'Panel soporte')
 # Adulto responsable de menores (app apoderados). Ultimo: no gana a ningun otro
 # rol, y su sesion no abre nada de los demas portales.
 APODERADO = Rol('apoderado', 'perfil_apoderado', 'id_apoderado', 'apoderado_id',
                 'portal_apoderado', 'logout_apoderado', 'Apoderado', 'Mi cuenta')
 
-ROLES = (ALUMNO, PROFESOR, ADMIN, APODERADO)
+ROLES = (ALUMNO, PROFESOR, ADMIN, SOPORTE, APODERADO)
 
 
 def perfil_de(user, rol):

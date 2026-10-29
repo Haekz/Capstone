@@ -26,16 +26,17 @@
     <!-- Menú lateral izquierdo de navegación común -->
     <aside class="sidebar" id="sidebar">
 
-        <a class="sidebar-brand" href="{% url 'dashboard_admin' %}">
+        <a class="sidebar-brand" href="{% block portal_url %}{% url 'dashboard_admin' %}{% endblock %}">
             <img src="{% static 'alumnos/img/Logo.png' %}" alt="Logo LBWUS">
             <div class="sidebar-brand-text">
                 <span class="sidebar-brand-name">LBWUS</span>
-                <span class="sidebar-brand-role">Admin Portal</span>
+                <span class="sidebar-brand-role">{% block portal_nombre %}Admin Portal{% endblock %}</span>
             </div>
         </a>
 
         <!-- Mini ficha del perfil del administrador que tiene la sesión activa -->
         <div class="sidebar-user">
+            {% block sidebar_usuario %}
             <div class="sidebar-user-avatar">
                 {{ admin.user.first_name|slice:":1"|upper|default:"A" }}
             </div>
@@ -43,10 +44,12 @@
                 <div class="sidebar-user-name">{{ admin.user.first_name|default:"Administrador" }}</div>
                 <div class="sidebar-user-role">Administrador</div>
             </div>
+            {% endblock %}
         </div>
 
         <!-- Enlaces principales del menú para navegar entre secciones -->
         <nav class="sidebar-nav">
+            {% block sidebar_nav %}
             <span class="nav-label">Principal</span>
 
             <a id="nav-resumen" class="nav-item {% block nav_resumen %}{% endblock %}" href="{% url 'dashboard_admin' %}">
@@ -68,19 +71,9 @@
                 {% endif %}
             </a>
 
-            <a id="nav-titulos" class="nav-item {% block nav_titulos %}{% endblock %}" href="{% url 'titulos_adm' %}">
-                <i class="bi bi-mortarboard-fill"></i>
-                Títulos de Profesores
-            </a>
-
             <a id="nav-resenas" class="nav-item {% block nav_resenas %}{% endblock %}" href="{% url 'resenas_moderacion' %}">
                 <i class="bi bi-star-half"></i>
                 Reseñas
-            </a>
-
-            <a id="nav-apoderados" class="nav-item {% block nav_apoderados %}{% endblock %}" href="{% url 'apoderados_revision' %}">
-                <i class="bi bi-person-vcard-fill"></i>
-                Apoderados
             </a>
 
             <span class="nav-label">Contenido</span>
@@ -116,6 +109,7 @@
                 <i class="bi bi-gear-fill"></i>
                 Ajustes
             </a>
+            {% endblock %}
         </nav>
 
         <!-- Volver al sitio publico (sin cerrar sesion) y cerrar sesion -->
@@ -124,7 +118,7 @@
                 <i class="bi bi-house-door"></i>
                 Volver al inicio
             </a>
-            <a href="{% url 'logout_admin' %}" class="sidebar-logout">
+            <a href="{% block logout_url %}{% url 'logout_admin' %}{% endblock %}" class="sidebar-logout">
                 <i class="bi bi-box-arrow-left"></i>
                 Cerrar Sesión
             </a>
@@ -147,6 +141,7 @@
                 </div>
             </div>
             <div class="topbar-right">
+                {% block topbar_acciones %}
                 <!-- Botón de búsqueda flotante (Ctrl + K) -->
                 <button class="theme-btn" onclick="openSearchModal()" title="Buscar (Ctrl + K)">
                     <i class="bi bi-search"></i>
@@ -156,6 +151,7 @@
                     <i class="bi bi-bell-fill"></i>
                     <span class="notification-badge-dot" id="notif-badge-dot"></span>
                 </button>
+                {% endblock %}
                 <!-- Botón de alternar tema claro/oscuro -->
                 <button class="theme-btn" onclick="toggleTheme()" title="Cambiar tema">
                     <i class="bi bi-sun-fill" id="theme-icon"></i>

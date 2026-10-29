@@ -68,22 +68,33 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **opciones):
+        superusuario = not opciones['no_superuser']
+        user = self.crear_cuenta(
+            lambda user: Tutor.objects.create(user=user),
+            rol='admin', is_staff=superusuario, is_superuser=superusuario,
+        )
+        acceso = 'con acceso a /admin/' if superusuario else 'sin acceso a /admin/'
+        self.stdout.write(self.style.SUCCESS(
+            f'Administrador {user.rut} creado ({acceso}). '
+            'Ya puede iniciar sesión en el portal.'
+        ))
+
+    def crear_cuenta(self, crear_perfil, **campos):
+        """Pide los datos y la contrasena, y crea el usuario con su perfil.
+        Tambien la usa crear_soporte. Lanza CommandError sin crear nada."""
         try:
             datos = self._pedir_datos()
             password = self._pedir_password()
         except (EOFError, KeyboardInterrupt):
             raise CommandError('Cancelado. No se creó nada.')
 
-        superusuario = not opciones['no_superuser']
         user = get_user_model()(
             username=datos['rut'],
             rut=datos['rut'],
             first_name=datos['first_name'],
             last_name=datos['last_name'],
             email=datos['email'],
-            rol='admin',
-            is_staff=superusuario,
-            is_superuser=superusuario,
+            **campos,
         )
         # Con el usuario armado, el validador de similitud compara la
         # contrasena con el RUT, el nombre y el correo.
@@ -99,17 +110,12 @@ class Command(BaseCommand):
         try:
             with transaction.atomic():
                 user.save()
-                Tutor.objects.create(user=user)
+                crear_perfil(user)
         except IntegrityError:
             raise CommandError(
                 'Ya existe un usuario con ese RUT o correo. No se creó nada.'
             )
-
-        acceso = 'con acceso a /admin/' if superusuario else 'sin acceso a /admin/'
-        self.stdout.write(self.style.SUCCESS(
-            f'Administrador {user.rut} creado ({acceso}). '
-            'Ya puede iniciar sesión en el portal.'
-        ))
+        return user
 
     def _pedir_datos(self):
         form = DatosAdminForm()
