@@ -19,7 +19,7 @@
     <div style="overflow-x:auto;">
         <table class="user-table">
             <thead>
-                <tr><th>Ticket</th><th>Categoría</th><th>Asunto</th><th>Abierto el</th><th>Acción</th></tr>
+                <tr><th>Ticket</th><th>Categoría</th><th>Asunto</th><th>Abierto el</th><th>Vence</th><th>Acción</th></tr>
             </thead>
             <tbody>
                 {% for t in mis_tickets %}
@@ -28,10 +28,11 @@
                     <td><span class="badge">{{ t.get_categoria_display }}</span></td>
                     <td>{{ t.asunto }}</td>
                     <td>{{ t.creado|date:"d-m-Y H:i" }}</td>
+                    <td>{{ t.vence|date:"d-m-Y H:i" }}{% if t.atrasado %} <span class="badge">Atrasado</span>{% endif %}</td>
                     <td><a href="{% if t.categoria == 'titulos' %}{% url 'titulos_adm' %}{% else %}{% url 'apoderados_revision' %}{% endif %}">Revisar</a></td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="5">No tienes tickets abiertos.</td></tr>
+                <tr><td colspan="6">No tienes tickets abiertos.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -46,7 +47,7 @@
     <div style="overflow-x:auto;">
         <table class="user-table">
             <thead>
-                <tr><th>Ticket</th><th>Categoría</th><th>Asunto</th><th>Abierto el</th><th>Asignado a</th><th>Reasignar</th></tr>
+                <tr><th>Ticket</th><th>Categoría</th><th>Asunto</th><th>Abierto el</th><th>Vence</th><th>Asignado a</th><th>Reasignar</th></tr>
             </thead>
             <tbody>
                 {% for t in abiertos %}
@@ -55,6 +56,7 @@
                     <td><span class="badge">{{ t.get_categoria_display }}</span></td>
                     <td>{{ t.asunto }}</td>
                     <td>{{ t.creado|date:"d-m-Y H:i" }}</td>
+                    <td>{{ t.vence|date:"d-m-Y H:i" }}{% if t.atrasado %} <span class="badge">Atrasado</span>{% endif %}</td>
                     <td>{% if t.asignado %}{{ t.asignado.nombre }}{% else %}<span class="badge">Sin asignar</span>{% endif %}</td>
                     <td>
                         {% if t.candidatos %}
@@ -74,7 +76,7 @@
                     </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="6">No hay tickets abiertos.</td></tr>
+                <tr><td colspan="7">No hay tickets abiertos.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

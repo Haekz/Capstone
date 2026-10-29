@@ -3,29 +3,15 @@
 Cada funcion devuelve False si el correo no salio (se puede reenviar).
 """
 
-import logging
-
 from django.conf import settings
-from django.core.mail import send_mail
-from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
+from alumnos.correo import enviar as _enviar
+
 from .models import Apoderado, Vinculo
 from .tokens import firmar_invitacion, token_correo, token_correo_adolescente
-
-logger = logging.getLogger(__name__)
-
-
-def _enviar(asunto, plantilla, contexto, destinatario):
-    try:
-        send_mail(f'{asunto} - LBWUS', render_to_string(plantilla, contexto),
-                  settings.DEFAULT_FROM_EMAIL, [destinatario])
-    except Exception:  # SMTP caido, timeout, credenciales: se puede reenviar
-        logger.exception('No se pudo enviar el correo "%s"', asunto)
-        return False
-    return True
 
 
 def _enlace_confirmacion(request, ruta, user, generador):

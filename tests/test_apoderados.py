@@ -131,7 +131,7 @@ class RegistroTests(TestCase):
         self.assertEqual(len(mail.outbox), 0)
 
     def test_si_el_correo_falla_la_cuenta_queda_creada_y_se_avisa(self):
-        with mock.patch('apoderados.correo.send_mail', side_effect=OSError('sin servidor')):
+        with mock.patch('alumnos.correo.send_mail', side_effect=OSError('sin servidor')):
             respuesta = self.client.post(reverse('registro_apoderado'), datos_registro(), follow=True)
         self.assertTrue(Apoderado.objects.filter(user__rut=RUT).exists())
         self.assertContains(respuesta, 'No pudimos enviar el correo de confirmación')

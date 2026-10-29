@@ -1,0 +1,9 @@
+Hola {{ nombre }},
+
+{% if lider %}Estos tickets del equipo ya vencieron:{% else %}Estos tickets tuyos ya vencieron:{% endif %}
+
+{% for t in tickets %}- Ticket #{{ t.pk }}: {{ t.get_categoria_display }}. Venció el {{ t.vence|date:"d-m-Y H:i" }}{% if lider %}. {% if t.asignado %}Asignado a {{ t.asignado.nombre }}{% else %}Sin asignar{% endif %}{% endif %}
+{% endfor %}
+Revísalos en el panel de soporte de LBWUS. Este aviso se repite cada día hábil mientras sigan abiertos.
+
+Equipo LBWUS

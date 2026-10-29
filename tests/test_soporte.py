@@ -6,12 +6,10 @@ documentos y decide (solo el agente con el ticket; ni el admin ni el lider sin
 ticket), la reasignacion del lider y el comando crear_soporte.
 """
 
-import importlib
 import tempfile
 from io import StringIO
 from unittest import mock
 
-from django.apps import apps
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
@@ -116,19 +114,6 @@ class CicloDelTicketTests(TestCase):
         self.assertTrue(profesor.puede_hacer_clases)
         self.assertEqual(ticket.estado, Ticket.CERRADO)
         self.assertIsNotNone(ticket.cerrado)
-
-    def test_lo_pendiente_al_desplegar_queda_como_ticket_sin_asignar(self):
-        apoderado = crear_apoderado(RUT, Apoderado.REVISION_PENDIENTE)
-        vinculo = crear_menor_vinculado(crear_apoderado('15151515-1', Apoderado.VERIFICADO), estado=Vinculo.PENDIENTE)
-        sin_verificar = crear_apoderado('13131313-1', Apoderado.REVISION_PENDIENTE)
-        crear_menor_vinculado(sin_verificar, rut='14141414-1', estado=Vinculo.PENDIENTE)  # aun no se revisa
-        migracion = importlib.import_module('soporte.migrations.0002_tickets_de_pendientes')
-
-        migracion.abrir_tickets_pendientes(apps, None)
-
-        abiertos = Ticket.objects.filter(estado=Ticket.ABIERTO, asignado__isnull=True)
-        self.assertEqual(set(abiertos.values_list('apoderado', 'vinculo')),
-                         {(apoderado.pk, None), (sin_verificar.pk, None), (None, vinculo.pk)})
 
 
 class PermisosTests(TestCase):

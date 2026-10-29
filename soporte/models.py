@@ -7,11 +7,14 @@
   abiertos; el lider de soporte puede reasignarlo.
 - Solo el agente asignado ve los documentos y decide. El administrador no.
 - Cada asignacion queda registrada: quien tuvo el ticket, desde cuando y quien lo asigno.
+- Plazo en dias habiles por categoria (soporte/plazos.py). Reasignar no lo reinicia:
+  el plazo es para quien espera la respuesta.
 """
 
 from django.conf import settings
 from django.db import models
 from django.db.models import Q
+from django.utils import timezone
 
 
 class AgenteSoporte(models.Model):
@@ -46,6 +49,7 @@ class Ticket(models.Model):
     APODERADOS = 'apoderados'
     TITULOS = 'titulos'
     CATEGORIAS = [(APODERADOS, 'Apoderados y menores'), (TITULOS, 'Títulos de profesores')]
+    DIAS_HABILES = {APODERADOS: 5, TITULOS: 5}
     ABIERTO = 'abierto'
     CERRADO = 'cerrado'
     ESTADOS = [(ABIERTO, 'Abierto'), (CERRADO, 'Cerrado')]
@@ -63,6 +67,7 @@ class Ticket(models.Model):
     profesor = models.ForeignKey('alumnos.Profesor', on_delete=models.CASCADE, null=True, blank=True,
                                  related_name='tickets')
     creado = models.DateTimeField(auto_now_add=True)
+    vence = models.DateTimeField()
     cerrado = models.DateTimeField(null=True, blank=True)
 
     class Meta:
@@ -93,6 +98,10 @@ class Ticket(models.Model):
         if self.vinculo_id:
             return f'Vínculo {self.vinculo.apoderado.nombre} - {self.vinculo.alumno.user.first_name}'
         return f'Título de {self.profesor.nombre}'
+
+    @property
+    def atrasado(self):
+        return self.estado == self.ABIERTO and timezone.now() > self.vence
 
 
 class Habilitacion(models.Model):

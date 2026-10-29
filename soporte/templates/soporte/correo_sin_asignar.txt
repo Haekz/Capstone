@@ -1,0 +1,9 @@
+Hola {{ nombre }},
+
+El ticket #{{ ticket.pk }} ({{ ticket.get_categoria_display }}) quedó sin asignar: nadie del equipo atiende esa categoría.
+
+- Vence: {{ ticket.vence|date:"d-m-Y H:i" }} (hora de Chile)
+
+Asígnalo desde el panel de soporte de LBWUS.
+
+Equipo LBWUS

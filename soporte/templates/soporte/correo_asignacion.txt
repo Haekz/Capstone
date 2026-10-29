@@ -1,0 +1,10 @@
+Hola {{ nombre }},
+
+Tienes un ticket nuevo en LBWUS:
+
+- Ticket #{{ ticket.pk }}: {{ ticket.get_categoria_display }}
+- Vence: {{ ticket.vence|date:"d-m-Y H:i" }} (hora de Chile)
+
+Revísalo en el panel de soporte de LBWUS. Por seguridad, los datos y documentos solo se ven ahí.
+
+Equipo LBWUS
