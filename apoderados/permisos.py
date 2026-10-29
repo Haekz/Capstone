@@ -21,7 +21,7 @@ def vinculo_contratable(request, id_vinculo):
 
 
 def debe_renovar_clave(user):
-    """Fase 1d: adulto que sigue con la contrasena que definio su apoderado."""
+    """Adulto que sigue con la contrasena que definio su apoderado."""
     return not es_menor(user) and ClaveDelApoderado.objects.filter(user=user).exists()
 
 

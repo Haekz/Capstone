@@ -1,4 +1,4 @@
-"""SCRUM-36: reseñas y calificaciones verificadas.
+"""Reseñas y calificaciones verificadas.
 
 Cubre las decisiones del equipo: solo califica quien completó una clase, una
 reseña por paquete o inscripción, edición solo tras una clase nueva del

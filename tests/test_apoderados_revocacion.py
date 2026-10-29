@@ -1,4 +1,4 @@
-"""Fase 1d de menores: revocar el vinculo y transicion al cumplir 18.
+"""Revocar el vinculo y transicion al cumplir 18.
 
 Datos ficticios. Revocan el apoderado (desde su cuenta) y el administrador (con
 motivo obligatorio); se cancelan solo las clases futuras pagadas con ese

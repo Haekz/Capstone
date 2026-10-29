@@ -2,7 +2,6 @@
 
 Los carga el comando ``python manage.py cargar_catalogos``. Se pueden editar
 aqui sin tocar el comando; el comando solo agrega los que falten.
-Listas aprobadas por Benjamin el 11-10-2026.
 """
 
 # Genero.descripcion

@@ -1,15 +1,9 @@
 """Unica fuente de verdad para los roles del sistema.
 
-Antes la regla "que rol tiene este usuario" estaba copiada en cuatro
-lugares (custom_login, login_prof, login_admin y el context processor) y
-cada copia decidia distinto. Ademas miraba el campo ``CustomUser.rol``,
-cuyo valor por defecto es 'alumno': un superusuario o un tutor creado sin
-``rol`` explicito terminaba en el portal de alumno con ``alumno_id =
-user.id``, un numero que no es un id de alumno.
-
-Regla actual: el rol lo define el PERFIL asociado (Alumno, Profesor, Tutor o
-Apoderado), porque la sesion guarda el id de ese perfil. Sin perfil no hay
-portal. El orden de ROLES es la precedencia si alguien tuviera dos.
+El rol lo define el PERFIL asociado (Alumno, Profesor, Tutor o Apoderado),
+porque la sesion guarda el id de ese perfil. No se usa ``CustomUser.rol``: su
+valor por defecto es 'alumno' y mandaria a ese portal a cuentas sin perfil.
+Sin perfil no hay portal. El orden de ROLES es la precedencia si alguien tuviera dos.
 """
 
 from dataclasses import dataclass

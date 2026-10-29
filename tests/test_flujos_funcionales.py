@@ -1,4 +1,4 @@
-"""Validaciones funcionales de flujos clave de LBWUS y Cobertura de Seguridad del Pago (Sprint 3).
+"""Validaciones funcionales de flujos clave de LBWUS y Cobertura de Seguridad del Pago.
 
 Cubre:
 1. Seguridad del flujo de pago Webpay Plus (Transbank):
@@ -12,7 +12,6 @@ Cubre:
 3. Accesos y visualizaciones públicas sin fugas de datos.
 """
 
-from datetime import date, time
 import json
 from unittest.mock import MagicMock, patch
 

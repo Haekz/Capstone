@@ -22,7 +22,7 @@ MENSAJE_MENOR = ('Las reservas y compras de estudiantes menores de edad las hace
 
 
 def exigir_mayor_de_edad(alumno, vinculo=None):
-    """Menores: solo su apoderado reserva, cancela o reprograma por ellos (fase 1c).
+    """Menores: solo su apoderado reserva, cancela o reprograma por ellos.
 
     Aqui pasan todas las reservas, asi que el bloqueo cubre tambien cualquier
     vista nueva. ``vinculo`` lo pasan solo las vistas del apoderado; debe
@@ -113,7 +113,7 @@ class InscripcionService:
             if total_ocupados >= sesion.cupo_maximo:
                 raise CupoAgotadoError("No quedan cupos disponibles para esta sesión.")
 
-            # 5. Cada reserva consume una clase de un paquete pagado (F-11)
+            # 5. Cada reserva consume una clase de un paquete pagado
             paquete = _paquete_con_clases(alumno, sesion.clase.profesor, sesion.fecha_hora_inicio)
 
             # 6. Persistencia protegida contra race-conditions en BD mediante UniqueConstraint

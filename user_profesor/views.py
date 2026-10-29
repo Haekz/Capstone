@@ -4,16 +4,14 @@ from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from alumnos.models import Especialidad, Genero, Profesor, Clase, Inscripcion, Tutor
 from alumnos.decorators import profesor_required, profesor_required_json
-from alumnos.roles import ADMIN, PROFESOR, abrir_sesion_rol, resolver_rol
+from alumnos.roles import ADMIN, PROFESOR, abrir_sesion_rol
 from django.core.exceptions import ValidationError
 from django.http import FileResponse, Http404
 from . import foto
 from alumnos import paquetes
 
-# Tarifas por inscripcion real. Antes estaban escritas a mano dentro de cada
-# vista, junto a un saldo de regalo para las cuentas sin actividad.
-# Inscripciones de antes de los paquetes (sin paquete): valor fijo por inscripcion.
-# Las nuevas valen lo que pago el alumno por esa clase y el profesor recibe 85%.
+# Tarifas por inscripcion real. Inscripciones sin paquete: valor fijo por inscripcion.
+# Con paquete valen lo que pago el alumno por esa clase y el profesor recibe 85%.
 VALOR_INSCRIPCION = 15000
 PAGO_PROFESOR = paquetes.pago_profesor(VALOR_INSCRIPCION)
 
@@ -27,8 +25,6 @@ def calcular_saldos(profesor):
     """Devuelve los saldos de un profesor a partir de sus inscripciones.
 
     Sin inscripciones el resultado es 0: una cuenta nueva no tiene dinero.
-    Antes se devolvian 45000/36000 de relleno y el profesor podia pedir un
-    retiro por plata que nunca existio.
     """
     from django.db.models import Sum
 
@@ -56,11 +52,7 @@ def calcular_saldos(profesor):
 
 
 def buscar_especialidad(especialidad_id):
-    """Especialidad del catalogo segun el id que manda el <select>, o None.
-
-    Antes se recibia texto libre y se hacia get_or_create, asi que cada
-    profesor podia agregar especialidades nuevas (o duplicadas) al catalogo.
-    """
+    """Especialidad del catalogo segun el id que manda el <select>, o None."""
     if not especialidad_id.isdecimal():
         return None
     return Especialidad.objects.filter(pk=especialidad_id).first()
@@ -214,8 +206,7 @@ def panel_profesor(request):
     current_month = timezone.localdate().month  # mes en Chile, no el del servidor
     rendimiento_meses = []
 
-    # Un mes sin inscripciones vale 0. Antes se rellenaba con mock_values y el
-    # grafico mostraba actividad inventada.
+    # Un mes sin inscripciones vale 0.
     tope_grafico = 40
     for i in range(4, -1, -1):
         month_idx = (current_month - i - 1) % 12
@@ -281,7 +272,7 @@ def subir_titulo(request):
 def foto_profesor(request, id_profesor):
     """Foto de perfil: la ve el propio profesor y, si esta habilitado, cualquier usuario con sesion.
 
-    Misma regla que el perfil publico (SCRUM-32); sin MEDIA_URL publico.
+    Misma regla que el perfil publico; sin MEDIA_URL publico.
     """
     if not request.user.is_authenticated:
         raise Http404
@@ -419,19 +410,15 @@ def solicitar_retiro(request):
 
 
 def _es_admin(request):
-    """Solo un administrador con sesion activa puede crear otro.
+    """Solo un administrador con sesion activa (perfil Tutor) puede crear otro.
 
-    Antes bastaba is_staff, pero un staff sin perfil Tutor no tiene portal
-    admin (ver alumnos/roles.py): la regla ahora es la misma en todo el sitio.
-    La cuenta debe seguir activa: desactivarla no borra la sesion abierta (S-07).
+    La cuenta debe seguir activa: desactivarla no borra la sesion abierta.
     """
     return bool(request.session.get(ADMIN.clave_sesion)) and request.user.is_active
 
 
 def regis_tutor(request):
-    # esta parte es de registrar un nuevo administrador usando el modelo Tutor.
-    # NO es un registro publico: crear administradores desde internet permitia
-    # que cualquiera se diera acceso al portal y al /admin/ de Django.
+    # Registro de un nuevo administrador (modelo Tutor). No es un registro publico.
     if not _es_admin(request):
         if request.method == 'POST':
             return JsonResponse(

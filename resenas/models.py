@@ -1,6 +1,6 @@
-"""SCRUM-36: reseñas verificadas de profesores.
+"""Reseñas verificadas de profesores.
 
-Reglas (decisiones del equipo):
+Reglas:
 - Solo califica el alumno con una clase completada (Inscripcion.completadas()).
 - Una reseña por contratación: por paquete (1, 4 u 8 clases) o, si la clase no
   salió de un paquete, por inscripción. Lo garantiza la base de datos.

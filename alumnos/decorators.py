@@ -58,7 +58,7 @@ alumno_sesion_required = _rol_requerido(ALUMNO, _al_login)
 
 
 def alumno_required(vista):
-    """Rol alumno y, al cumplir 18, contrasena propia (fase 1d de menores):
+    """Rol alumno y, al cumplir 18, contrasena propia:
     si sigue con la que definio su apoderado, primero define una nueva."""
     @wraps(vista)
     def con_clave_propia(request, *args, **kwargs):

@@ -1,4 +1,4 @@
-"""Fase 1a de menores: cuenta del apoderado y verificacion de su identidad.
+"""Cuenta del apoderado y verificacion de su identidad.
 
 Datos ficticios. Cubre registro (validaciones), confirmacion de correo (un solo
 uso, vencimiento, manipulacion), revision del admin (evidencia obligatoria) y
@@ -313,7 +313,7 @@ class MinimizacionDeDatosTests(TestCase):
                     self.assertNotIsInstance(campo, prohibidos)
 
     def test_los_documentos_solo_se_guardan_en_documento_contenido(self):
-        # Fase 2a: el unico binario es el documento cifrado, que se borra al decidir.
+        # El unico binario es el documento cifrado, que se borra al decidir.
         binarios = [f'{modelo.__name__}.{campo.name}'
                     for modelo in apps.get_app_config('apoderados').get_models()
                     for campo in modelo._meta.get_fields() if isinstance(campo, models.BinaryField)]

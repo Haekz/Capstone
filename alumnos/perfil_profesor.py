@@ -1,4 +1,4 @@
-"""SCRUM-32: perfil profesional del profesor que ven los alumnos.
+"""Perfil profesional del profesor que ven los alumnos.
 
 Privacidad:
 - Solo profesores habilitados (titulo aprobado); el resto responde 404.
@@ -6,7 +6,7 @@ Privacidad:
   clases y proximas sesiones.
 - El telefono solo si el profesor lo autorizo (Profesor.telefono_publico).
 - Nunca RUT, correo, direccion, fecha de nacimiento ni el archivo del titulo.
-- SCRUM-36: solo reseñas verificadas y visibles (resenas/consultas.py).
+- Solo reseñas verificadas y visibles (resenas/consultas.py).
 """
 
 from django.shortcuts import get_object_or_404, render

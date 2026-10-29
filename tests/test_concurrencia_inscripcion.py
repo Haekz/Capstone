@@ -34,7 +34,6 @@ from alumnos.exceptions import (
     InscripcionError,
     CupoAgotadoError,
     InscripcionDuplicadaError,
-    SesionNoDisponibleError,
     SinClasesDisponiblesError,
 )
 

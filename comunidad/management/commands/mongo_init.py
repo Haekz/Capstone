@@ -4,7 +4,6 @@ Hace ping, aplica los validadores $jsonSchema y crea los indices de las
 colecciones de comunidad/esquemas.py. Es idempotente.
 """
 
-from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from pymongo.errors import PyMongoError
 

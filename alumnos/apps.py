@@ -4,7 +4,7 @@ from django.db.models.signals import post_migrate
 
 
 def crear_tabla_cache(using, **kwargs):
-    """Tabla de la cache compartida del limite de intentos (S4-02). Omite la que ya existe."""
+    """Tabla de la cache compartida del limite de intentos. Omite la que ya existe."""
     call_command('createcachetable', database=using, verbosity=0)
 
 

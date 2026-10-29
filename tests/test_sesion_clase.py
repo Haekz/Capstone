@@ -3,13 +3,12 @@ Pruebas exhaustivas para el modelo SesionClase, constraints de base de datos,
 validaciones a nivel de modelo, QuerySets de disponibilidad, concurrencia y retrocompatibilidad.
 """
 
-from datetime import date, datetime, time, timedelta
+from datetime import time, timedelta
 from decimal import Decimal
-import threading
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError
 from django.test import TestCase, TransactionTestCase
 from django.utils import timezone
 

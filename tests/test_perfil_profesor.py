@@ -1,4 +1,4 @@
-"""SCRUM-32: perfil profesional del profesor, con informacion real y privacidad.
+"""Perfil profesional del profesor, con informacion real y privacidad.
 
 Solo profesores habilitados. Se muestran datos profesionales; el telefono solo
 si el profesor lo autorizo. Nunca RUT, correo, direccion ni fecha de nacimiento.

@@ -1,4 +1,4 @@
-"""SCRUM-36: vistas de reseñas verificadas.
+"""Vistas de reseñas verificadas.
 
 Permisos: cada vista usa el decorador de rol existente, y cada consulta filtra
 por el dueño, así que el recurso de otra persona responde 404.

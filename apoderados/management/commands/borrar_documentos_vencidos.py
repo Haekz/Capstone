@@ -1,4 +1,4 @@
-"""Borra los documentos de apoderados con mas de 30 dias sin revisar (fase 2a).
+"""Borra los documentos de apoderados con mas de 30 dias sin revisar.
 
 Pensado para un cron diario en Railway: python manage.py borrar_documentos_vencidos
 Al aprobar o rechazar ya se borran; esto cubre las solicitudes que nadie resolvio.

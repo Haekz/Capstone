@@ -1,6 +1,6 @@
 from datetime import timedelta
 from decimal import Decimal
-from django.db import models, transaction
+from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -9,7 +9,6 @@ from django.utils import timezone
 
 from . import paquetes
 
-# Create your models here.
 
 class Genero(models.Model):
     id_genero = models.AutoField(primary_key=True)
@@ -35,18 +34,6 @@ class CustomUser(AbstractUser):
 
     def __str__(self):
         return f"{self.username} ({self.get_rol_display()})"
-
-    @property
-    def is_alumno(self):
-        return self.rol == 'alumno'
-
-    @property
-    def is_profesor(self):
-        return self.rol == 'profesor'
-
-    @property
-    def is_administrador(self):
-        return self.rol == 'admin' or self.is_staff or self.is_superuser
 
 
 class Tutor(models.Model):
@@ -541,7 +528,7 @@ class Suscripcion(models.Model):
     el pago (se busca por buy_order: la vuelta desde Webpay puede llegar sin la
     cookie de sesion). Es la unica fuente de verdad del plan: nada de localStorage.
     """
-    # Los valores son los ids de los planes en el carrito (planes.html).
+    # Codigos de plan que envia el formulario de planes.html.
     PLAN_BASICO = '1'
     PLANES = [
         (PLAN_BASICO, 'Plan Básico'),

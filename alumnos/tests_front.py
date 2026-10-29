@@ -1,29 +1,9 @@
-from alumnos.models import Especialidad
 'Smoke tests del rediseño de front: cada página renderiza, sus CSS/imágenes\nexisten y trae lo necesario para funcionar en móvil (viewport + menú móvil).'
-import re
-from datetime import date
 from django.contrib.auth import get_user_model
 User = get_user_model()
-from django.contrib.auth.tokens import default_token_generator
-from django.contrib.staticfiles import finders
 from django.test import TestCase
 from django.urls import reverse
-from django.utils.encoding import force_bytes
-from django.utils.http import urlsafe_base64_encode
 from alumnos.models import Alumno, Genero, Tutor
-STATIC_REF = re.compile('(?:href|src)="/static/([^"?#]+)')
-STATIC_HASH = re.compile('\\.[0-9a-f]{8,64}(?=\\.[^.]+$)')
-
-def ruta_static_original(ruta):
-    """Devuelve la ruta fuente de un static versionado por Django.
-
-    Ejemplos:
-    alumnos/css/styles.248bc9a549eb.css -> alumnos/css/styles.css
-    alumnos/img/Logo.9a9827ced254.png -> alumnos/img/Logo.png
-
-    Si la ruta no tiene hash, se devuelve sin cambios.
-    """
-    return STATIC_HASH.sub('', ruta)
 
 class BotonAtrasTests(TestCase):
     """Con "atras" el navegador no debe mostrar copias guardadas.
@@ -35,7 +15,7 @@ class BotonAtrasTests(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        genero = Genero.objects.create(descripcion='Otro')
+        Genero.objects.create(descripcion='Otro')
         cls.user = User.objects.create_user(username='88888888-8', password='clave12345')
         cls.alumno = Alumno.objects.create(user=cls.user, nivel_educacion='basica')
         cls.admin_user = User.objects.create_user(username='99999999-9', password='clave12345')

@@ -1,9 +1,7 @@
-"""Foto de perfil del profesor (pendiente de SCRUM-32).
+"""Foto de perfil del profesor.
 
-Antes el formulario tenia el campo pero ninguna vista guardaba el archivo, y
-MEDIA_URL no esta publicado, asi que la foto nunca se podia mostrar.
-Ahora: se valida, se re-codifica a JPEG sin EXIF (las fotos de celular traen
-GPS) y se sirve con la misma regla que el perfil publico.
+Se valida, se re-codifica a JPEG sin EXIF (las fotos de celular traen GPS) y se
+sirve con la misma regla que el perfil publico (MEDIA_URL no esta publicado).
 """
 
 import shutil
