@@ -5,42 +5,77 @@ from alumnos.models import Especialidad, Genero, Profesor, Clase, Inscripcion, T
 from alumnos.decorators import profesor_required, profesor_required_json
 from alumnos.roles import ADMIN, PROFESOR, abrir_sesion_rol, resolver_rol
 
-# Tarifas por inscripcion real. Antes estaban escritas a mano dentro de cada
-# vista, junto a un saldo de regalo para las cuentas sin actividad.
-VALOR_INSCRIPCION = 15000   # lo que paga el alumno
-PAGO_PROFESOR = 12000       # lo que le corresponde al profesor
+# Tarifas por inscripcion real y reglas comerciales oficiales (S4-03).
+# Comisión LBWUS 15% IVA incluido sobre precio final; importes brutos tutor: $12.750/$50.150/$98.600.
+VALOR_INSCRIPCION = 15000   # Precio de referencia por clase
+PAGO_PROFESOR = 12750       # 85% bruto correspondiente al tutor (S4-03)
+COMISION_LBWUS = 2250       # 15% comisión plataforma LBWUS IVA incluido
 
 
 def calcular_saldos(profesor):
-    """Devuelve los saldos de un profesor a partir de sus inscripciones.
+    """Devuelve los saldos de un profesor a partir de sus inscripciones y planes vendidos (S4-03).
 
-    Sin inscripciones el resultado es 0: una cuenta nueva no tiene dinero.
-    Antes se devolvian 45000/36000 de relleno y el profesor podia pedir un
-    retiro por plata que nunca existio.
+    Sin inscripciones ni planes el resultado es 0.
+    Aplica regla comercial S4-03:
+    - Comisión LBWUS 15% IVA incluido sobre precio final.
+    - Tutor recibe el 85% ($12.750 por clase de referencia de $15.000).
+    - No activar cobros anticipados: solo clases dictadas/confirmadas liberan saldo disponible.
+    - Clases de planes adquiridos pero aún no consumidas quedan protegidas en 'pendiente'.
     """
+    from decimal import Decimal
     from django.db.models import Sum
+    from alumnos.models import SolicitudRetiro, Pago, Inscripcion, PlanAlumno
+    from alumnos.services import PlanesService
 
-    from alumnos.models import SolicitudRetiro
+    tarifa_base = PlanesService.obtener_tarifa_base_profesor(profesor)
+    calc_ref = PlanesService.calcular_precios_plan('flexible', tarifa_base=tarifa_base)
+    valor_unitario = calc_ref['precio_total']
+    pago_unitario = calc_ref['monto_tutor']
 
-    from alumnos.models import Pago
-
-    # La remuneración se basa únicamente en transacciones confirmadas
+    # 1. Inscripciones individuales confirmadas con pago pagado
     inscripciones = Inscripcion.objects.filter(
         clase__profesor=profesor,
         estado=Inscripcion.ESTADO_CONFIRMADA,
         pago__estado=Pago.ESTADO_PAGADA
     ).count()
 
-    total_ganado = inscripciones * VALOR_INSCRIPCION
-    corresponde_al_profesor = inscripciones * PAGO_PROFESOR
+    total_ganado_inscripciones = inscripciones * valor_unitario
+    corresponde_tutor_inscripciones = inscripciones * pago_unitario
+
+    # 2. Planes vendidos asociados directamente a este profesor
+    planes = PlanAlumno.objects.filter(
+        profesor=profesor,
+        pago__estado=Pago.ESTADO_PAGADA,
+        estado__in=[PlanAlumno.ESTADO_ACTIVO, PlanAlumno.ESTADO_AGOTADO]
+    )
+
+    total_ganado_planes = 0
+    corresponde_tutor_planes_consumido = 0
+    tutor_planes_pendiente = 0
+
+    for plan in planes:
+        total_ganado_planes += plan.monto_total
+        if plan.total_clases > 0:
+            monto_por_clase_tutor = plan.monto_tutor / plan.total_clases
+            consumido = int(round(monto_por_clase_tutor * plan.clases_consumidas))
+            pendiente_clases = plan.monto_tutor - consumido
+            corresponde_tutor_planes_consumido += consumido
+            tutor_planes_pendiente += pendiente_clases
+        else:
+            corresponde_tutor_planes_consumido += plan.monto_tutor
+
+    total_ganado = total_ganado_inscripciones + total_ganado_planes
+    bruto_tutor_acumulado = corresponde_tutor_inscripciones + corresponde_tutor_planes_consumido
 
     retiros = SolicitudRetiro.objects.filter(profesor=profesor)
     aprobados = retiros.filter(estado='aprobado').aggregate(Sum('monto'))['monto__sum'] or 0
-    pendientes = retiros.filter(estado='pendiente').aggregate(Sum('monto'))['monto__sum'] or 0
+    retiros_pendientes = retiros.filter(estado='pendiente').aggregate(Sum('monto'))['monto__sum'] or 0
 
-    disponible = max(0, corresponde_al_profesor - aprobados - pendientes)
-    # La comision de la plataforma mas lo que aun esta en tramite.
-    pendiente = (total_ganado - corresponde_al_profesor) + pendientes
+    disponible = max(0, bruto_tutor_acumulado - aprobados - retiros_pendientes)
+
+    # Fondos pendientes: comisión retenida + saldo de clases no ejecutadas aún + retiros en trámite
+    comision_plataforma = total_ganado - (bruto_tutor_acumulado + tutor_planes_pendiente)
+    pendiente = comision_plataforma + tutor_planes_pendiente + retiros_pendientes
 
     return {
         'total_ganado': total_ganado,
@@ -236,6 +271,10 @@ def panel_profesor(request):
     mis_retiros = SolicitudRetiro.objects.filter(profesor=profesor).order_by('-fecha_solicitud')
     generos = Genero.objects.all()
 
+    # S4-09: Desglose económico detallado de operaciones bajo comisión LBWUS 15%
+    from alumnos.models import DesgloseOperacion
+    desgloses_profesor = DesgloseOperacion.objects.filter(profesor=profesor).order_by('-fecha_operacion')[:20]
+
     context = {
         'profesor': profesor,
         'clases': clases,
@@ -249,6 +288,7 @@ def panel_profesor(request):
         'saldo_disponible_raw': saldo_disponible,
         'saldo_pendiente': saldo_pendiente_fmt,
         'mis_retiros': mis_retiros,
+        'desgloses_profesor': desgloses_profesor,
         'generos': generos,
         'especialidades': Especialidad.objects.order_by('nombre'),
     }

@@ -76,14 +76,14 @@ def _clp(n):
 
 
 PRECIOS_PLANES_OFICIALES = {
-    # Planes vigentes (S4-04): Tarifa base .000
+    # Planes vigentes (S4-03): Tarifa base $15.000 / $59.000 / $116.000
     'plan_flexible': 15000,
     'plan_progreso': 59000,
     'plan_intensivo': 116000,
     'flexible': 15000,
     'progreso': 59000,
     'intensivo': 116000,
-    # Retrocompatibilidad con planes heredados
+    # Retrocompatibilidad con planes heredados (Sprint 3 / Tests)
     '1': 89990,
     '2': 139990,
     '3': 189990,
@@ -137,6 +137,7 @@ def planes(request):
             profesor = None
 
     planes_data = PlanesService.calcular_planes(profesor=profesor)
+    tarifa_base_ref = PlanesService.obtener_tarifa_base_profesor(profesor)
 
     if request.GET.get('format') == 'json' or request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return JsonResponse({
@@ -144,6 +145,7 @@ def planes(request):
             'profesor': {
                 'id': profesor.id_profesor,
                 'nombre': profesor.nombre,
+                'tarifa_base': tarifa_base_ref,
             } if profesor else None,
             'status': 'ok'
         })
@@ -151,7 +153,7 @@ def planes(request):
     context = {
         'planes': planes_data,
         'profesor_seleccionado': profesor,
-        'tarifa_base_referencia': PlanesService.TARIFA_BASE_DEFECTO,
+        'tarifa_base_referencia': tarifa_base_ref,
     }
     return render(
         request,
@@ -1153,6 +1155,30 @@ def confirmacion(request):
             pago.ultimos_digitos_tarjeta = card.get('card_number', '')
             pago.fecha_transaccion = timezone.now()
             pago.save()
+
+            # S4-03 / S4-09: Activación, desglose y acreditación contable para el alumno
+            if pago.alumno:
+                from .models import PlanAlumno, DesgloseOperacion
+                from .services import LiquidacionService
+                tiene_planes = False
+                for item in pago.detalle_carrito:
+                    item_id = str(item.get('id', ''))
+                    if item_id in PRECIOS_PLANES_OFICIALES:
+                        tiene_planes = True
+                        # Evitar duplicados por idempotencia de webhook/callback
+                        if not PlanAlumno.objects.filter(pago=pago, tipo_plan=item_id).exists():
+                            PlanesService.crear_plan_desde_pago(
+                                alumno=pago.alumno,
+                                tipo_plan_str=item_id,
+                                pago=pago
+                            )
+                # Si la compra fue puntual (no paquete), registrar desglose individual
+                if not tiene_planes and not DesgloseOperacion.objects.filter(pago=pago).exists():
+                    LiquidacionService.registrar_compra(
+                        pago=pago,
+                        alumno=pago.alumno,
+                        tipo_operacion=DesgloseOperacion.TIPO_CLASE_INDIVIDUAL
+                    )
         else:
             pago.estado = Pago.ESTADO_RECHAZADA
             pago.save(update_fields=['estado', 'updated_at'])

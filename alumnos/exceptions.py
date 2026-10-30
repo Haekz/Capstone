@@ -28,3 +28,15 @@ class SesionNoDisponibleError(InscripcionError):
     """Se dispara cuando una sesión no está disponible (cancelada, en el pasado, profesor no habilitado)."""
     def __init__(self, message="La sesión solicitada no se encuentra disponible para reservas.", code="no_disponible", params=None):
         super().__init__(message=message, code=code, params=params)
+
+
+class PlanError(ValidationError):
+    """Excepción base para operaciones con planes comerciales de alumnos (S4-03)."""
+    def __init__(self, message="Error en la gestión del plan.", code=None, params=None):
+        super().__init__(message=message, code=code, params=params)
+
+
+class PlanSinSaldoError(PlanError):
+    """Se dispara cuando el alumno no tiene clases disponibles en su plan."""
+    def __init__(self, message="El plan no cuenta con clases disponibles para consumir.", code="sin_saldo", params=None):
+        super().__init__(message=message, code=code, params=params)

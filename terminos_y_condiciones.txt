@@ -48,22 +48,31 @@ El servicio incluye:
   asumirá como autorizada por el titular.
 
 --------------------------------------------------------------------------------
-4. PLANES, TARIFAS Y CONDICIONES DE PAGO
+4. PLANES, TARIFAS Y CONDICIONES DE PAGO (REGLAS S4-03)
 --------------------------------------------------------------------------------
-LBWUS ofrece diferentes modalidades de contratación de planes de estudio:
-- **Planes Estándar:** Básico, Medio y Superior, con horas y condiciones fijas.
+LBWUS ofrece diferentes modalidades comerciales de paquetes de clases:
+- **Planes Estándar Oficiales:**
+  * **Plan Flexible:** 1 clase individual ($15.000 CLP de referencia).
+  * **Plan Progreso:** Paquete de 4 clases ($59.000 CLP de referencia).
+  * **Plan Intensivo:** Paquete de 8 clases ($116.000 CLP de referencia).
 - **Planes Personalizados:** Cotizados a través de nuestro constructor virtual 
   según la modalidad, horas semanales, cantidad de asignaturas, nivel del 
   profesor, lugar físico (sede o domicilio) y situaciones especiales (NEE).
 
-Condiciones de Facturación:
+Condiciones Comerciales y de Facturación:
 - Todos los valores se expresan en pesos chilenos (CLP) e incluyen los impuestos 
-  legales correspondientes.
+  legales correspondientes (19% de IVA incluido sobre el precio final).
+- Comisión de Plataforma: LBWUS retiene una comisión del 15% IVA incluido sobre 
+  el precio final pagado. El 85% restante constituye el importe bruto correspondiente 
+  al tutor/docente ($12.750 / $50.150 / $98.600 en valores de referencia).
+- Ausencia de Renovación Automática: La contratación opera bajo la modalidad de 
+  paquetes prepagados por evento. No existen renovaciones automáticas recurrentes 
+  ni suscripciones obligatorias.
+- Control de Saldo: Las clases adquiridas se acreditan al saldo del alumno de forma 
+  inmediata tras la confirmación del pago en Webpay y se consumen a medida que 
+  se agendan y confirman las sesiones con el profesor.
 - Los pagos se procesan a través de la pasarela integrada compatible con 
-  Transbank Webpay.
-- La suscripción se realiza de manera mensual. El no pago oportuno de la 
-  tarifa mensual conllevará la suspensión temporal del acceso a la reserva de 
-  clases y el material exclusivo de la Plataforma.
+  Transbank Webpay Plus.
 
 --------------------------------------------------------------------------------
 5. POLÍTICAS DE CANCELACIÓN Y REPROGRAMACIÓN

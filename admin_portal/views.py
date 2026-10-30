@@ -37,7 +37,7 @@ def dashboard_admin(request):
     ultimos_alumnos = alumnos.order_by('-id_alumno')[:3]
     ultimos_profesores = profesores.order_by('-id_profesor')[:3]
 
-    from alumnos.models import SolicitudRetiro, Inscripcion
+    from alumnos.models import SolicitudRetiro, Inscripcion, DesgloseOperacion
     from django.db.models import Sum
 
     todas_solicitudes_retiro = SolicitudRetiro.objects.all().order_by('-fecha_solicitud')
@@ -46,9 +46,15 @@ def dashboard_admin(request):
     retiros_pagados = SolicitudRetiro.objects.filter(estado='aprobado').aggregate(Sum('monto'))['monto__sum'] or 0
     retiros_pendientes = SolicitudRetiro.objects.filter(estado='pendiente').aggregate(Sum('monto'))['monto__sum'] or 0
 
+    # S4-09: Auditoría consolidada de comisiones de plataforma e importes en custodia
+    comisiones_lbwus_totales = DesgloseOperacion.objects.exclude(estado='reembolsado').aggregate(Sum('comision_lbwus'))['comision_lbwus__sum'] or 0
+    fondos_en_custodia = DesgloseOperacion.objects.filter(estado='pendiente').aggregate(Sum('monto_tutor'))['monto_tutor__sum'] or 0
+
     ingresos_totales_fmt = f"${ingresos_totales:,}".replace(",", ".")
     retiros_pagados_fmt = f"${retiros_pagados:,}".replace(",", ".")
     retiros_pendientes_fmt = f"${retiros_pendientes:,}".replace(",", ".")
+    comisiones_lbwus_fmt = f"${comisiones_lbwus_totales:,}".replace(",", ".")
+    fondos_en_custodia_fmt = f"${fondos_en_custodia:,}".replace(",", ".")
 
     context = {
         'admin': admin,
@@ -68,6 +74,8 @@ def dashboard_admin(request):
         'ingresos_totales': ingresos_totales_fmt,
         'retiros_pagados': retiros_pagados_fmt,
         'retiros_pendientes': retiros_pendientes_fmt,
+        'comisiones_lbwus_totales': comisiones_lbwus_fmt,
+        'fondos_en_custodia': fondos_en_custodia_fmt,
     }
     return render(request, 'admin_portal/dashboard_admin.html', context)
 
