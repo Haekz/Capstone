@@ -40,3 +40,47 @@ def usuario_existe(rut, correo, excluir_user=None):
     if usuarios.filter(Q(username__iexact=rut) | Q(rut__iexact=rut)).exists():
         return "El RUT ingresado ya está registrado en el sistema."
     return None
+
+
+def formato_clp(valor):
+    """Formatea un monto numérico como peso chileno (ej: '$15.000')."""
+    try:
+        monto = int(round(float(valor or 0)))
+    except (TypeError, ValueError):
+        monto = 0
+    return f"${monto:,}".replace(",", ".")
+
+
+def validar_imagen_perfil(archivo):
+    """Valida extensión, tamaño (<=5MB) y magic bytes/integridad de imagen subida."""
+    import os
+    from PIL import Image
+
+    if not archivo:
+        return "No se recibió ningún archivo."
+
+    max_bytes = 5 * 1024 * 1024
+    if getattr(archivo, "size", 0) > max_bytes:
+        return "La imagen no puede superar los 5 MB."
+
+    ext = os.path.splitext(getattr(archivo, "name", ""))[1].lower()
+    if ext not in {".jpg", ".jpeg", ".png", ".webp"}:
+        return "Formato no permitido. Usa JPG, PNG o WebP."
+
+    cabecera = archivo.read(16)
+    archivo.seek(0)
+    es_jpeg = cabecera.startswith(b"\xff\xd8\xff")
+    es_png = cabecera.startswith(b"\x89PNG\r\n\x1a\n")
+    es_webp = cabecera.startswith(b"RIFF") and cabecera[8:12] == b"WEBP"
+    if not (es_jpeg or es_png or es_webp):
+        return "El archivo no corresponde a una imagen válida."
+
+    try:
+        img = Image.open(archivo)
+        img.verify()
+        archivo.seek(0)
+    except Exception:
+        archivo.seek(0)
+        return "El archivo de imagen está dañado o no es válido."
+
+    return None

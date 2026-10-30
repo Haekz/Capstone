@@ -344,3 +344,49 @@ class SeguridadWebpayYHonorariosTests(TestCase):
         self.assertEqual(pago.monto, 89990)
         self.assertEqual(pago.alumno, self.alumno)
         self.assertTrue(pago.buy_order.startswith('LB-SIM-'))
+
+    # -------------------------------------------------------------------------
+    # 7. ESTRATEGIA DE CREDENCIALES Y SALVAGUARDA DE COBROS REALES (S-08 / 7.6)
+    # -------------------------------------------------------------------------
+    def test_10_estrategia_credenciales_salvaguarda_modo_test_por_defecto(self):
+        """Por defecto _tx() opera forzosamente en IntegrationType.TEST (Sandbox oficial Transbank), sin cobros reales."""
+        from alumnos.views import _tx
+        from transbank.common.integration_type import IntegrationType
+        from transbank.common.integration_commerce_codes import IntegrationCommerceCodes
+
+        with self.settings(TRANSBANK_PRODUCCION_HABILITADA=False):
+            tx = _tx()
+            self.assertEqual(tx.options.integration_type, IntegrationType.TEST)
+            self.assertEqual(tx.options.commerce_code, IntegrationCommerceCodes.WEBPAY_PLUS)
+
+    def test_11_salvaguarda_impide_cobro_real_si_produccion_no_esta_autorizada(self):
+        """Aunque existan credenciales ficticias de producción, si TRANSBANK_PRODUCCION_HABILITADA es False, no se activa LIVE."""
+        from alumnos.views import _tx
+        from transbank.common.integration_type import IntegrationType
+        from transbank.common.integration_commerce_codes import IntegrationCommerceCodes
+
+        with self.settings(
+            TRANSBANK_PRODUCCION_HABILITADA=False,
+            TRANSBANK_ENVIRONMENT='LIVE',
+            TRANSBANK_COMMERCE_CODE='597012345678',
+            TRANSBANK_API_KEY='api_key_secreta_real'
+        ):
+            tx = _tx()
+            # La salvaguarda bloquea LIVE y fuerza TEST
+            self.assertEqual(tx.options.integration_type, IntegrationType.TEST)
+            self.assertEqual(tx.options.commerce_code, IntegrationCommerceCodes.WEBPAY_PLUS)
+
+    def test_12_estrategia_permite_produccion_solo_con_autorizacion_y_credenciales(self):
+        """Solo con autorización explícita (TRANSBANK_PRODUCCION_HABILITADA=True) y credenciales LIVE se inicializa el comercio productivo."""
+        from alumnos.views import _tx
+        from transbank.common.integration_type import IntegrationType
+
+        with self.settings(
+            TRANSBANK_PRODUCCION_HABILITADA=True,
+            TRANSBANK_ENVIRONMENT='LIVE',
+            TRANSBANK_COMMERCE_CODE='597012345678',
+            TRANSBANK_API_KEY='api_key_secreta_real'
+        ):
+            tx = _tx()
+            self.assertEqual(tx.options.integration_type, IntegrationType.LIVE)
+            self.assertEqual(tx.options.commerce_code, '597012345678')

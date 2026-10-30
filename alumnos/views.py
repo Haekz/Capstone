@@ -28,9 +28,10 @@ from .models import (
 )
 from django.core.exceptions import ValidationError
 from .forms import AlumnoForm
-from .decorators import alumno_required
+from .decorators import alumno_required, profesor_required_json
 from .exceptions import InscripcionError
 from .services import InscripcionService, PlanesService
+from .utils import formato_clp
 from .backends import obtener_identificador_rate_limit
 from .roles import (
     ALUMNO,
@@ -62,6 +63,28 @@ PERIODOS = {
 
 
 def _tx():
+    """Construye la instancia de Transaction de Webpay Plus según la estrategia de credenciales (S-08 / 7.6).
+
+    Salvaguarda estricta:
+    - Salvo que TRANSBANK_PRODUCCION_HABILITADA sea True Y se provean credenciales válidas en LIVE,
+      el sistema opera forzosamente en IntegrationType.TEST (Sandbox oficial Transbank).
+    - Evita cualquier cobro real o uso no autorizado en ambientes de prueba o desarrollo.
+    """
+    produccion_habilitada = getattr(settings, 'TRANSBANK_PRODUCCION_HABILITADA', False)
+    cc = getattr(settings, 'TRANSBANK_COMMERCE_CODE', '')
+    api_key = getattr(settings, 'TRANSBANK_API_KEY', '')
+    env_str = getattr(settings, 'TRANSBANK_ENVIRONMENT', 'TEST')
+
+    if produccion_habilitada and env_str == 'LIVE' and cc and api_key:
+        return Transaction(
+            WebpayOptions(
+                cc,
+                api_key,
+                IntegrationType.LIVE,
+            )
+        )
+
+    # Por defecto / Salvaguarda de no cobro real (Modo Integración / Sandbox oficial):
     return Transaction(
         WebpayOptions(
             IntegrationCommerceCodes.WEBPAY_PLUS,
@@ -72,7 +95,7 @@ def _tx():
 
 
 def _clp(n):
-    return '$' + f'{int(n):,}'.replace(',', '.')
+    return formato_clp(n)
 
 
 PRECIOS_PLANES_OFICIALES = {
@@ -270,57 +293,8 @@ def regis_alum(request):
 
 
 def alumnos_reg(request):
-
-    if request.method == 'POST':
-
-        form = AlumnoForm(request.POST)
-
-        if form.is_valid():
-
-            alumno = form.save()
-
-            auth_login(
-                request,
-                alumno.user,
-                backend='alumnos.backends.RutOrEmailBackend'
-            )
-
-            abrir_sesion_rol(request, ALUMNO, alumno)
-
-            return JsonResponse({
-                "success": True,
-                "message": "Alumno registrado exitosamente."
-            })
-
-        else:
-
-            errors = []
-
-            for field, errs in form.errors.items():
-
-                if field in form.fields:
-                    label = form.fields[field].label
-                else:
-                    label = field
-
-                errors.append(
-                    f"{label}: {errs[0]}"
-                )
-
-            return JsonResponse({
-                "success": False,
-                "message": " | ".join(errors)
-            })
-
-    generos = Genero.objects.all()
-
-    return render(
-        request,
-        'alumnos/regis_alum.html',
-        {
-            'generos': generos
-        }
-    )
+    """Alias de compatibilidad hacia regis_alum para mantener DRY y contexto completo."""
+    return regis_alum(request)
 
 
 # ============================================================
@@ -334,27 +308,38 @@ def alumno_pag1(request):
     alumno_id = request.session['alumno_id']
 
     alumno = get_object_or_404(
-        Alumno,
+        Alumno.objects.select_related('user', 'user__genero'),
         id_alumno=alumno_id
     )
 
-    mis_reportes = Reporte.objects.filter(
-        remitente=alumno.user
-    ).order_by(
-        '-fecha_reporte'
+    mis_reportes = list(
+        Reporte.objects.filter(
+            remitente=alumno.user
+        ).order_by(
+            '-fecha_reporte'
+        )
     )
 
     # Solo profesores con titulo aprobado pueden hacer clases.
-    profesores_list = Profesor.objects.habilitados().select_related(
-        'user',
-        'especialidad'
+    profesores_list = list(
+        Profesor.objects.habilitados().select_related(
+            'user',
+            'especialidad'
+        )
     )
 
-    clases_disponibles = Clase.objects.all().select_related(
-        'profesor'
+    clases_disponibles = list(
+        Clase.objects.filter(
+            profesor__titulo_estado=Profesor.TITULO_APROBADO
+        ).select_related(
+            'asignatura',
+            'profesor',
+            'profesor__user',
+            'profesor__especialidad',
+        )
     )
 
-    mis_inscripciones = (
+    mis_inscripciones = list(
         Inscripcion.objects
         .filter(
             alumno=alumno,
@@ -362,23 +347,23 @@ def alumno_pag1(request):
         )
         .select_related(
             'clase',
-            'clase__profesor'
+            'clase__asignatura',
+            'clase__profesor',
+            'clase__profesor__user',
+            'clase__profesor__especialidad',
+            'sesion',
+            'plan_origen',
         )
         .order_by(
             '-fecha_inscripcion'
         )
     )
 
-    inscritas_ids = list(
-        mis_inscripciones.values_list(
-            'clase_id',
-            flat=True
-        )
-    )
+    inscritas_ids = [i.clase_id for i in mis_inscripciones]
 
-    sesiones_disponibles = (
+    sesiones_disponibles = list(
         SesionClase.objects.disponibles()
-        .select_related('clase', 'clase__asignatura', 'clase__profesor', 'clase__profesor__user')
+        .select_related('clase', 'clase__asignatura', 'clase__profesor', 'clase__profesor__user', 'clase__profesor__especialidad')
         .order_by('fecha_hora_inicio')
     )
 
@@ -542,8 +527,11 @@ def custom_login(request):
 # LOGOUT ALUMNO
 # ============================================================
 
+@never_cache
+@require_POST
 def logout_alumno(request):
     auth_logout(request)
+    request.session.flush()
     return redirect('home')
 
 
@@ -1227,11 +1215,15 @@ def confirmacion(request):
 
 
 
+@never_cache
 def sala_virtual(request, clase_id):
     if not request.user.is_authenticated:
         return redirect('custom_login_alumno')
 
-    clase = get_object_or_404(Clase, id_clase=clase_id)
+    clase = get_object_or_404(
+        Clase.objects.select_related('asignatura', 'profesor', 'profesor__user', 'profesor__especialidad'),
+        id_clase=clase_id
+    )
 
     # Validar autorización:
     # 1. Profesor de la clase
@@ -1240,25 +1232,32 @@ def sala_virtual(request, clase_id):
         and (clase.profesor.user_id == request.user.id
              or request.session.get('profesor_id') == getattr(clase.profesor, 'id_profesor', None))
     )
-    # 2. Alumno inscrito en la clase
+    # 2. Alumno con inscripción activa (confirmada o pendiente) en la clase
+    estados_activos = [Inscripcion.ESTADO_CONFIRMADA, Inscripcion.ESTADO_PENDIENTE]
     es_alumno = Inscripcion.objects.filter(
         clase=clase,
-        alumno__user=request.user
+        alumno__user=request.user,
+        estado__in=estados_activos,
     ).exists() or bool(
         request.session.get('alumno_id')
-        and Inscripcion.objects.filter(clase=clase, alumno_id=request.session['alumno_id']).exists()
+        and Inscripcion.objects.filter(
+            clase=clase,
+            alumno_id=request.session['alumno_id'],
+            estado__in=estados_activos,
+        ).exists()
     )
     # 3. Administrador o Tutor
     es_admin = bool(
         request.user.is_superuser
         or request.user.is_staff
+        or request.session.get('admin_id')
         or request.session.get('tutor_id')
         or getattr(request.user, 'rol', None) in ('admin', 'tutor')
     )
 
     if not (es_profesor or es_alumno or es_admin):
         from django.http import HttpResponseForbidden
-        return HttpResponseForbidden("Acceso denegado: debes estar inscrito en la clase o ser el profesor asignado.")
+        return HttpResponseForbidden("Acceso denegado: debes estar inscrito activamente en la clase o ser el profesor asignado.")
 
     context = {
         'clase': clase,
@@ -1267,23 +1266,22 @@ def sala_virtual(request, clase_id):
     return render(request, 'alumnos/sala_virtual.html', context)
 
 
-from django.views.decorators.http import require_POST
-
+@profesor_required_json
 @require_POST
 def iniciar_directo(request, clase_id):
-    clase = get_object_or_404(Clase, id_clase=clase_id)
-    
-    # Solo el profesor de la clase puede iniciar
+    clase = get_object_or_404(Clase.objects.select_related('profesor'), id_clase=clase_id)
+
+    # Solo el profesor titular de la clase puede iniciar
     profesor_id = request.session.get('profesor_id')
     if not profesor_id or str(clase.profesor.id_profesor) != str(profesor_id):
-        return JsonResponse({'success': False, 'message': 'No tienes permiso.'})
-        
-    descripcion = request.POST.get('descripcion_vivo', '')
-    temas = request.POST.get('temas_vivo', '')
-    
+        return JsonResponse({'success': False, 'message': 'No tienes permiso.'}, status=403)
+
+    descripcion = request.POST.get('descripcion_vivo', '').strip()[:2000]
+    temas = request.POST.get('temas_vivo', '').strip()[:255]
+
     clase.descripcion_vivo = descripcion
     clase.temas_vivo = temas
     clase.en_vivo = True
-    clase.save()
-    
+    clase.save(update_fields=['descripcion_vivo', 'temas_vivo', 'en_vivo'])
+
     return JsonResponse({'success': True})

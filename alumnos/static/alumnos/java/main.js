@@ -209,14 +209,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function actualizarCarrito() {
         limpiarHTML();
+        const esc = window.escaparHtml || (s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;'));
         if (tbody) {
             articulosCarrito.forEach(curso => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${curso.titulo}</td>
-                    <td>${curso.precio}</td>
-                    <td>${curso.cantidad}</td>
-                    <td><button class="borrar-curso" data-id="${curso.id}">X</button></td>
+                    <td>${esc(curso.titulo)}</td>
+                    <td>${esc(curso.precio)}</td>
+                    <td>${esc(curso.cantidad)}</td>
+                    <td><button class="borrar-curso" data-id="${esc(curso.id)}">X</button></td>
                 `;
                 tbody.appendChild(row);
             });

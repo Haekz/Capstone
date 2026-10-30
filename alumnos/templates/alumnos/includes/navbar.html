@@ -3,7 +3,7 @@
 <header class="header">
     <nav class="nav-box">
         <div class="logo">
-            <img src="{% static 'alumnos/img/Logo.png' %}" alt="LBWUS Logo">
+            <img src="{% static 'alumnos/img/Logo.png' %}" alt="LBWUS Logo" width="42" height="42">
             <a href="{% url 'home' %}"><span class="logo-text">LBWUS</span></a>
         </div>
 
@@ -20,7 +20,12 @@
                     <li class="mobile-only"><a href="{{ usuario_sesion.url_panel }}">{{ usuario_sesion.texto_panel }}</a></li>
                 {% endif %}
                 <li class="mobile-only"><a href="{{ usuario_sesion.url_cambiar_clave }}">Cambiar contraseña</a></li>
-                <li class="mobile-only"><a href="{{ usuario_sesion.url_logout }}">Cerrar sesión</a></li>
+                <li class="mobile-only">
+                    <form method="post" action="{{ usuario_sesion.url_logout }}" class="form-logout-mobile">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-logout-mobile">Cerrar sesión</button>
+                    </form>
+                </li>
             {% else %}
                 <li class="mobile-only"><a href="{% url 'login' %}">Iniciar Sesión</a></li>
                 <li class="mobile-only"><a href="{% url 'opcion_user' %}">Registrarse</a></li>
@@ -83,9 +88,12 @@
                         <a href="{{ usuario_sesion.url_cambiar_clave }}" class="cuenta-item">
                             <i class="bi bi-key"></i> Cambiar contraseña
                         </a>
-                        <a href="{{ usuario_sesion.url_logout }}" class="cuenta-item cuenta-item--salir">
-                            <i class="bi bi-box-arrow-right"></i> Cerrar sesión
-                        </a>
+                        <form method="post" action="{{ usuario_sesion.url_logout }}" class="form-logout-desktop">
+                            {% csrf_token %}
+                            <button type="submit" class="cuenta-item cuenta-item--salir btn-logout-cuenta">
+                                <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+                            </button>
+                        </form>
                     </div>
                 </div>
             {% else %}
@@ -98,4 +106,3 @@
         </div>
     </nav>
 </header>
-

@@ -963,3 +963,18 @@ body.dark-mode .titulo-aviso--rechazado { background: rgba(239, 68, 68, 0.10); b
 
 
 
+
+/* S-19: Logout vía POST en sidebar profesor */
+.form-prof-logout {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.btn-prof-logout {
+    background: transparent;
+    border: none;
+    width: 100%;
+    cursor: pointer;
+    font-family: inherit;
+}

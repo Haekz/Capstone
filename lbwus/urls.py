@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
@@ -9,9 +10,6 @@ from lbwus.puerta import puerta
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # Rutas para probar las pantallas de error
-    path('test404/', TemplateView.as_view(template_name='404.html')),
-    path('test500/', TemplateView.as_view(template_name='500.html')),
     
     # Ruta raíz que muestra la página de inicio.
     # Este es el UNICO lugar donde se registra name='home'.
@@ -24,16 +22,16 @@ urlpatterns = [
     path('profesor/', include('user_profesor.urls')),
     path('comunidad/', include('comunidad.urls')),
     path('accounts/login/', custom_login, name='login'),
-path(
-    'accounts/password_reset/',
-    auth_views.PasswordResetView.as_view(
-        template_name='registration/recuperar_formulario.html',
-        email_template_name='registration/correo_recuperacion_clave.txt',
-        html_email_template_name='registration/correo_recuperacion_clave.html',
-        subject_template_name='registration/asunto_recuperacion_clave.txt',
+    path(
+        'accounts/password_reset/',
+        auth_views.PasswordResetView.as_view(
+            template_name='registration/recuperar_formulario.html',
+            email_template_name='registration/correo_recuperacion_clave.txt',
+            html_email_template_name='registration/correo_recuperacion_clave.html',
+            subject_template_name='registration/asunto_recuperacion_clave.txt',
+        ),
+        name='password_reset'
     ),
-    name='password_reset'
-),
     path('accounts/password_reset/done/', auth_views.PasswordResetDoneView.as_view(template_name='registration/recuperar_enviado.html'), name='password_reset_done'),
     path('accounts/reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(template_name='registration/recuperar_confirmar.html'), name='password_reset_confirm'),
     path('accounts/reset/done/', auth_views.PasswordResetCompleteView.as_view(template_name='registration/recuperar_completado.html'), name='password_reset_complete'),
@@ -49,3 +47,11 @@ path(
     path('accounts/google/completar/', google_views.google_completar, name='google_completar'),
     path("accounts/", include("allauth.urls")),
 ]
+
+# S-21: Rutas de prueba de errores restringidas estrictamente a DEBUG.
+# En producción (DEBUG=False) jamás deben exponerse en la tabla de rutas.
+if settings.DEBUG:
+    urlpatterns += [
+        path('test404/', TemplateView.as_view(template_name='404.html'), name='test404'),
+        path('test500/', TemplateView.as_view(template_name='500.html'), name='test500'),
+    ]

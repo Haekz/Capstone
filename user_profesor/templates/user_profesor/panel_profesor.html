@@ -95,9 +95,12 @@ input:checked + .slider:before {
         
         <!-- esta parte es del botón de cerrar sesión abajo del menú lateral -->
         <div class="prof-sidebar-footer">
-            <a href="{% url 'logout_prof' %}" class="prof-logout-btn">
-                <i class="bi bi-box-arrow-left"></i> Cerrar Sesión
-            </a>
+            <form method="post" action="{% url 'logout_prof' %}" class="form-prof-logout">
+                {% csrf_token %}
+                <button type="submit" class="prof-logout-btn btn-prof-logout">
+                    <i class="bi bi-box-arrow-left"></i> Cerrar Sesión
+                </button>
+            </form>
         </div>
     </aside>
 
@@ -150,7 +153,7 @@ input:checked + .slider:before {
                                     <i class="bi bi-clock"></i> {{ ch.horario }}
                                 </div>
                                 <div class="prof-schedule-details">
-                                    <h4>{{ ch.asignatura.nombre }}</h4>
+                                    <h4>{{ ch.nombre_curso }}</h4>
                                     <p>Alumno: <strong>{{ ch.alumno }}</strong></p>
                                 </div>
                                 <div class="prof-schedule-status">
@@ -225,7 +228,7 @@ input:checked + .slider:before {
                     
                     <div class="prof-form-group">
                         <label for="prof-nombre" class="prof-form-label">Nombre Completo</label>
-                        <input type="text" id="prof-nombre" name="nombre" class="prof-form-input" value="{{ profesor.user.first_name }} {{ profesor.user.last_name }}" required>
+                        <input type="text" id="prof-nombre" name="nombre" class="prof-form-input" value="{{ profesor.nombre }}" required>
                     </div>
 
                     <div class="prof-form-row">
@@ -721,15 +724,21 @@ input:checked + .slider:before {
                 renderTeacherInbox();
             };
             
+            const escHtml = (str) => String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+            const safeInitials = escHtml(chat.initials);
+            const safeStudentName = escHtml(chat.studentName);
+            const safeCourseName = escHtml(chat.courseName);
+            const safeLastTime = escHtml(lastMsg ? lastMsg.time : '');
+            const safeLastText = escHtml(lastMsg ? lastMsg.text : '');
             item.innerHTML = `
-                <div class="profe-chat-avatar">${chat.initials}</div>
+                <div class="profe-chat-avatar">${safeInitials}</div>
                 <div class="profe-chat-info">
                     <div class="profe-chat-title-row">
-                        <span class="profe-chat-student-name">${chat.studentName}</span>
-                        <span class="profe-chat-time">${lastMsg ? lastMsg.time : ''}</span>
+                        <span class="profe-chat-student-name">${safeStudentName}</span>
+                        <span class="profe-chat-time">${safeLastTime}</span>
                     </div>
-                    <div class="profe-chat-course-label">${chat.courseName}</div>
-                    <div class="profe-chat-last-msg">${lastMsg ? lastMsg.text : ''}</div>
+                    <div class="profe-chat-course-label">${safeCourseName}</div>
+                    <div class="profe-chat-last-msg">${safeLastText}</div>
                 </div>
             `;
             chatListEl.appendChild(item);
@@ -740,24 +749,28 @@ input:checked + .slider:before {
         const msgsEl = document.getElementById('profe-chat-messages-container');
         
         if (activeChat && headerEl && msgsEl) {
+            const safeActiveInitials = escHtml(activeChat.initials);
+            const safeActiveStudent = escHtml(activeChat.studentName);
+            const safeActiveCourse = escHtml(activeChat.courseName);
             headerEl.innerHTML = `
                 <div style="display: flex; align-items: center; gap: 12px;">
-                    <div class="profe-chat-avatar" style="width: 40px; height: 40px; font-size: 0.9rem;">${activeChat.initials}</div>
+                    <div class="profe-chat-avatar" style="width: 40px; height: 40px; font-size: 0.9rem;">${safeActiveInitials}</div>
                     <div>
-                        <h4 style="margin: 0; font-size: 1rem; font-weight: 700; color: var(--text);">${activeChat.studentName}</h4>
-                        <span style="font-size: 0.75rem; color: var(--text-light);">${activeChat.courseName}</span>
+                        <h4 style="margin: 0; font-size: 1rem; font-weight: 700; color: var(--text);">${safeActiveStudent}</h4>
+                        <span style="font-size: 0.75rem; color: var(--text-light);">${safeActiveCourse}</span>
                     </div>
                 </div>
             `;
             
             msgsEl.innerHTML = '';
+            const escHtml = (str) => String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
             activeChat.messages.forEach(msg => {
                 const bubble = document.createElement('div');
                 bubble.className = `profe-chat-bubble-row ${msg.sender === 'teacher' ? 'sent' : 'received'}`;
                 bubble.innerHTML = `
                     <div class="profe-chat-bubble">
-                        <p>${msg.text}</p>
-                        <span class="profe-chat-msg-time">${msg.time}</span>
+                        <p>${escHtml(msg.text)}</p>
+                        <span class="profe-chat-msg-time">${escHtml(msg.time)}</span>
                     </div>
                 `;
                 msgsEl.appendChild(bubble);
@@ -814,22 +827,26 @@ input:checked + .slider:before {
         const counterEl = document.getElementById('profe-stat-videos-count');
         if (counterEl) counterEl.innerText = `${teacherVideos.length} Lecciones`;
 
+        const escVideo = (str) => String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
         teacherVideos.forEach(video => {
             const card = document.createElement('div');
             card.className = 'profe-cursos-card';
+            const safeTitle = escVideo(video.title);
+            const safeDuration = escVideo(video.duration);
+            const safeCourse = escVideo(video.course);
             card.innerHTML = `
                 <div class="profe-cursos-thumb">
                     <i class="bi bi-play-circle-fill"></i>
-                    <span class="profe-cursos-badge-duration">${video.duration}</span>
+                    <span class="profe-cursos-badge-duration">${safeDuration}</span>
                 </div>
                 <div class="profe-cursos-body">
-                    <h4 class="profe-cursos-title" title="${video.title}">${video.title}</h4>
-                    <span class="profe-cursos-category">${video.course}</span>
+                    <h4 class="profe-cursos-title" title="${safeTitle}">${safeTitle}</h4>
+                    <span class="profe-cursos-category">${safeCourse}</span>
                     <div class="profe-cursos-meta">
-                        <span><i class="bi bi-eye"></i> ${video.views} vistas</span>
-                        <span><i class="bi bi-calendar"></i> ${video.date}</span>
+                        <span><i class="bi bi-eye"></i> ${escVideo(video.views)} vistas</span>
+                        <span><i class="bi bi-calendar"></i> ${escVideo(video.date)}</span>
                     </div>
-                    <button class="profe-cursos-delete-btn" onclick="deleteTeacherVideo(${video.id})">
+                    <button class="profe-cursos-delete-btn" onclick="deleteTeacherVideo(${Number(video.id) || 0})">
                         <i class="bi bi-trash3-fill"></i> Eliminar Clase
                     </button>
                 </div>
@@ -1110,7 +1127,8 @@ input:checked + .slider:before {
                 const msg = mockMessages[index];
                 const msgEl = document.createElement('div');
                 msgEl.className = 'profe-studio-chat-msg';
-                msgEl.innerHTML = `<strong>${msg.name}:</strong> <span>${msg.text}</span>`;
+                const escFn = window.escaparHtml || ((str) => String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;'));
+                msgEl.innerHTML = `<strong>${escFn(msg.name)}:</strong> <span>${escFn(msg.text)}</span>`;
                 chatContainer.appendChild(msgEl);
                 chatContainer.scrollTop = chatContainer.scrollHeight;
                 index++;

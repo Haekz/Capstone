@@ -88,7 +88,10 @@ MIDDLEWARE = [
 
 SITE_ID = 1
 
-SOCIALACCOUNT_LOGIN_ON_GET = True
+# S-20 (OWASP Login CSRF): La autenticacion OAuth con proveedores sociales
+# NUNCA debe iniciarse por peticiones GET, pues permite ataques de inicio de
+# sesion involuntario / CSRF. Se exige solicitud POST con token CSRF valido.
+SOCIALACCOUNT_LOGIN_ON_GET = False
 
 # Google entra con su correo verificado, pero las cuentas de LBWUS no se
 # crean solas: el adaptador busca la cuenta por correo y, si no existe, manda
@@ -274,8 +277,15 @@ CODIGO_GOOGLE_INTENTOS = 5
 AUTH_USER_MODEL = 'alumnos.CustomUser'
 
 # ============================================================
-# WEBPAY PLUS & MODO SIMULACION DE PRUEBAS
+# WEBPAY PLUS & ESTRATEGIA DE CREDENCIALES (S-08 / 7.6)
 # ============================================================
+# Salvaguarda: NUNCA habilitar cobros reales sin autorización formal de Transbank.
+# Por defecto permanece estrictamente en modo TEST / Integración (Sandbox oficial Transbank).
+TRANSBANK_PRODUCCION_HABILITADA = os.environ.get('TRANSBANK_PRODUCCION_HABILITADA', 'False').lower() in ('true', '1')
+TRANSBANK_COMMERCE_CODE = os.environ.get('TRANSBANK_COMMERCE_CODE', '').strip()
+TRANSBANK_API_KEY = os.environ.get('TRANSBANK_API_KEY', '').strip()
+TRANSBANK_ENVIRONMENT = os.environ.get('TRANSBANK_ENVIRONMENT', 'TEST').upper()
+
 WEBPAY_SIMULACION_ACTIVADA = os.environ.get('WEBPAY_SIMULACION', 'True').lower() in ('true', '1', 'yes')
 USUARIOS_SIMULACION_WEBPAY = ['*']
 
