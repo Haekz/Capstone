@@ -739,6 +739,9 @@
                                             </form>
                                         </div>
                                         {% elif r.estado == 'aprobado' %}
+                                        {% with cuenta=r.profesor.cuenta_bancaria %}
+                                        <small style="display:block; margin-bottom:6px;">{% if cuenta %}Transferir a {{ cuenta.banco }} · {{ cuenta.get_tipo_cuenta_display }} · N.º {{ cuenta.numero }} · RUT {{ r.profesor.user.rut }}{% else %}El profesor no tiene cuenta registrada.{% endif %}</small>
+                                        {% endwith %}
                                         <form method="POST" action="{% url 'marcar_pagado_retiro' r.id_solicitud %}" style="display:flex; gap:6px;">
                                             {% csrf_token %}
                                             <input type="text" name="numero_operacion" required maxlength="40" placeholder="N.º de operación" aria-label="Número de operación de la transferencia" style="padding:4px 8px; border-radius:6px; font-size:0.8rem;">

@@ -7,14 +7,13 @@ ubicacion GPS de una foto). Al verlos se les pone marca de agua con el nombre de
 quien los abre. Se borran al aprobar o rechazar la revision, o a los 30 dias.
 """
 
-import base64
-import hashlib
 import io
 
-from cryptography.fernet import Fernet
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from PIL import Image, ImageDraw, ImageFont, ImageOps, UnidentifiedImageError
+
+from alumnos.cifrado import cifrador
 
 TAMANO_MAXIMO = 5 * 1024 * 1024
 LADO_MAXIMO = 2000  # pixeles: suficiente para leer un carnet o un certificado
@@ -25,9 +24,7 @@ ERROR_FORMATO = 'Sube una foto o imagen en formato JPG o PNG.'
 def _cifrador():
     # Sin DOCUMENTOS_CLAVE se deriva de SECRET_KEY. Si la clave cambia, los documentos
     # pendientes dejan de leerse y hay que pedirlos de nuevo (viven 30 dias como maximo).
-    clave = settings.DOCUMENTOS_CLAVE or base64.urlsafe_b64encode(
-        hashlib.sha256(f'documentos-apoderados:{settings.SECRET_KEY}'.encode()).digest())
-    return Fernet(clave)
+    return cifrador('documentos-apoderados', settings.DOCUMENTOS_CLAVE)
 
 
 def preparar(archivo):

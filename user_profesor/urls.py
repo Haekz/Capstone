@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import logout_prof, regis_prof, regis_tutor, panel_profesor, actualizar_perfil_prof, solicitar_retiro, subir_titulo, foto_profesor
+from .views import logout_prof, regis_prof, regis_tutor, panel_profesor, actualizar_perfil_prof, solicitar_retiro, subir_titulo, foto_profesor, guardar_cuenta_bancaria
 
 urlpatterns = [
     path('registro_profesor', regis_prof, name='regis_prof'),
@@ -7,6 +7,7 @@ urlpatterns = [
     path('panel', panel_profesor, name='panel_profesor'),
     path('actualizar_perfil', actualizar_perfil_prof, name='actualizar_perfil_prof'),
     path('solicitar_retiro', solicitar_retiro, name='solicitar_retiro'),
+    path('cuenta_bancaria', guardar_cuenta_bancaria, name='guardar_cuenta_bancaria'),
     path('logout', logout_prof, name='logout_prof'),
     path('subir_titulo', subir_titulo, name='subir_titulo'),
     path('foto/<int:id_profesor>', foto_profesor, name='foto_profesor'),

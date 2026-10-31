@@ -17,24 +17,32 @@ from user_profesor.views import calcular_saldos
 RUT_ADMIN = '66666666-6'
 
 
+def crear_admin():
+    admin = get_user_model().objects.create_user(
+        username=RUT_ADMIN, rut=RUT_ADMIN, password='AdminClave123!', rol='admin', first_name='Admin')
+    return admin, Tutor.objects.create(user=admin)
+
+
+def entrar_admin(client, admin, tutor):
+    client.force_login(admin)
+    sesion = client.session
+    sesion['admin_id'] = tutor.id_tutor
+    sesion.save()
+
+
 class RetirosTests(Escenario):
 
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
-        cls.admin = get_user_model().objects.create_user(
-            username=RUT_ADMIN, rut=RUT_ADMIN, password='AdminClave123!', rol='admin', first_name='Admin')
-        cls.tutor = Tutor.objects.create(user=cls.admin)
+        cls.admin, cls.tutor = crear_admin()
 
     def setUp(self):
         self.retiro = SolicitudRetiro.objects.create(profesor=self.profe, monto=10000)
 
     def post(self, vista, **datos):
         """POST del admin sobre self.retiro; devuelve el dashboard con su mensaje."""
-        self.client.force_login(self.admin)
-        sesion = self.client.session
-        sesion['admin_id'] = self.tutor.id_tutor
-        sesion.save()
+        entrar_admin(self.client, self.admin, self.tutor)
         respuesta = self.client.post(reverse(vista, args=[self.retiro.pk]), datos, follow=True)
         self.retiro.refresh_from_db()
         return respuesta

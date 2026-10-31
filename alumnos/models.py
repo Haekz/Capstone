@@ -7,7 +7,8 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.utils import timezone
 
-from . import paquetes
+from . import catalogos, paquetes
+from .cifrado import cifrador
 
 
 class Genero(models.Model):
@@ -643,6 +644,42 @@ class Reporte(models.Model):
         return f"Reporte de {self.remitente.first_name}"
 
 
+TIPOS_CUENTA = [('rut_vista', 'Cuenta Rut / Vista'), ('corriente', 'Cuenta Corriente'), ('ahorro', 'Cuenta de Ahorro')]
+
+
+class CuentaBancaria(models.Model):
+    """Cuenta donde se le paga al profesor: una sola y a su nombre.
+
+    El titular es siempre el RUT del profesor; al transferir con ese RUT, el banco
+    rechaza una cuenta ajena. El numero va cifrado y se muestra enmascarado.
+    """
+    profesor = models.OneToOneField(Profesor, on_delete=models.CASCADE, related_name='cuenta_bancaria')
+    banco = models.CharField(max_length=40, choices=[(b, b) for b in catalogos.BANCOS])
+    tipo_cuenta = models.CharField(max_length=10, choices=TIPOS_CUENTA)
+    numero_cifrado = models.BinaryField()
+    ultimos_digitos = models.CharField(max_length=4)
+    actualizada = models.DateTimeField(auto_now=True)
+
+    @staticmethod
+    def _cifrador():
+        return cifrador('cuentas-bancarias')
+
+    def asignar_numero(self, valor):
+        numero = (valor or '').replace(' ', '').replace('-', '')
+        if not numero.isdigit() or not 5 <= len(numero) <= 20:
+            raise ValidationError('El número de cuenta debe tener entre 5 y 20 dígitos.')
+        self.numero_cifrado = self._cifrador().encrypt(numero.encode())
+        self.ultimos_digitos = numero[-4:]
+
+    @property
+    def numero(self):
+        return self._cifrador().decrypt(bytes(self.numero_cifrado)).decode()  # PostgreSQL entrega un memoryview
+
+    @property
+    def enmascarado(self):
+        return f'•••• {self.ultimos_digitos}'
+
+
 class SolicitudRetiro(models.Model):
     """Retiro de saldo de un profesor. Los estados solo avanzan:
     pendiente -> aprobado -> pagado, o pendiente -> rechazado.
@@ -658,7 +695,7 @@ class SolicitudRetiro(models.Model):
     fecha_solicitud = models.DateTimeField(auto_now_add=True)
     estado = models.CharField(max_length=15, choices=[(PENDIENTE, 'Pendiente'), (APROBADO, 'Aprobado'), (PAGADO, 'Pagado'), (RECHAZADO, 'Rechazado')], default=PENDIENTE)
     banco = models.ForeignKey(Banco, on_delete=models.SET_NULL, null=True)
-    tipo_cuenta = models.CharField(max_length=40, choices=[('rut_vista', 'Cuenta Rut / Vista'), ('corriente', 'Cuenta Corriente'), ('ahorro', 'Cuenta de Ahorro')], default='rut_vista')
+    tipo_cuenta = models.CharField(max_length=40, choices=TIPOS_CUENTA, default='rut_vista')
     numero_cuenta = models.CharField(max_length=40, blank=True, default='')
     fecha_resolucion = models.DateTimeField(null=True, blank=True)
     # SET_NULL: si se borra la cuenta del admin, el retiro se conserva.

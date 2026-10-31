@@ -41,7 +41,8 @@ def dashboard_admin(request):
     from alumnos.models import SolicitudRetiro, Inscripcion
     from django.db.models import Sum
 
-    todas_solicitudes_retiro = SolicitudRetiro.objects.all().order_by('-fecha_solicitud')
+    todas_solicitudes_retiro = SolicitudRetiro.objects.select_related(
+        'banco', 'profesor__user', 'profesor__cuenta_bancaria').order_by('-fecha_solicitud')
     total_inscripciones_global = Inscripcion.objects.count()
     ingresos_totales = max(total_inscripciones_global * 15000, 180000)
     retiros_pagados = SolicitudRetiro.objects.filter(estado=SolicitudRetiro.PAGADO).aggregate(Sum('monto'))['monto__sum'] or 0

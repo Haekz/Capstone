@@ -2,13 +2,14 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
-from alumnos.models import Especialidad, Genero, Profesor, Clase, Inscripcion, Tutor
+from alumnos.models import Especialidad, Genero, Profesor, Clase, Inscripcion, Tutor, CuentaBancaria, TIPOS_CUENTA
 from alumnos.decorators import profesor_required, profesor_required_json
 from alumnos.roles import ADMIN, PROFESOR, abrir_sesion_rol
 from django.core.exceptions import ValidationError
 from django.http import FileResponse, Http404
+from django.views.decorators.http import require_POST
 from . import foto
-from alumnos import paquetes
+from alumnos import catalogos, paquetes
 
 # Tarifas por inscripcion real. Inscripciones sin paquete: valor fijo por inscripcion.
 # Con paquete valen lo que pago el alumno por esa clase y el profesor recibe 85%.
@@ -249,6 +250,9 @@ def panel_profesor(request):
         'saldo_disponible_raw': saldo_disponible,
         'saldo_pendiente': saldo_pendiente_fmt,
         'mis_retiros': mis_retiros,
+        'cuenta_bancaria': CuentaBancaria.objects.filter(profesor=profesor).first(),
+        'bancos': catalogos.BANCOS,
+        'tipos_cuenta': TIPOS_CUENTA,
         'generos': generos,
         'especialidades': Especialidad.objects.order_by('nombre'),
     }
@@ -366,6 +370,25 @@ def actualizar_perfil_prof(request):
 # _json: el panel llama esta vista con fetch y espera {'success': ...};
 # un redirect le romperia el res.json().
 @profesor_required_json
+@require_POST
+def guardar_cuenta_bancaria(request):
+    """Registra o reemplaza la cuenta donde se le paga al profesor (titular: su propio RUT)."""
+    profesor_id = request.session.get('profesor_id')
+    cuenta = CuentaBancaria.objects.filter(profesor_id=profesor_id).first() or CuentaBancaria(profesor_id=profesor_id)
+    cuenta.banco = request.POST.get('banco', '')
+    cuenta.tipo_cuenta = request.POST.get('tipo_cuenta', '')
+    try:
+        cuenta.asignar_numero(request.POST.get('numero_cuenta'))
+        cuenta.full_clean(exclude=['profesor'])  # valida banco y tipo contra las listas cerradas
+    except ValidationError as e:
+        return JsonResponse({"success": False, "message": e.messages[0]})
+    cuenta.save()
+    return JsonResponse({"success": True, "message": f"Cuenta guardada: {cuenta.banco} {cuenta.enmascarado}."})
+
+
+# _json: el panel llama esta vista con fetch y espera {'success': ...};
+# un redirect le romperia el res.json().
+@profesor_required_json
 def solicitar_retiro(request):
     profesor_id = request.session.get('profesor_id')
 
@@ -376,12 +399,13 @@ def solicitar_retiro(request):
         try:
             monto_str = request.POST.get('monto', '').replace('.', '').replace('$', '').strip()
             monto = int(monto_str)
-            banco = request.POST.get('banco', 'Banco Estado').strip()[:50]
-            tipo_cuenta = request.POST.get('tipo_cuenta', 'Cuenta Rut / Vista').strip()[:50]
-            numero_cuenta = request.POST.get('numero_cuenta', '').strip()[:30]
 
             if monto <= 0:
                 return JsonResponse({"success": False, "message": "El monto a retirar debe ser mayor a cero."})
+
+            cuenta = CuentaBancaria.objects.filter(profesor_id=profesor_id).first()
+            if cuenta is None:
+                return JsonResponse({"success": False, "message": "Registra tu cuenta bancaria antes de solicitar un retiro."})
 
             with transaction.atomic():
                 profesor = Profesor.objects.select_for_update().get(id_profesor=profesor_id)
@@ -396,13 +420,13 @@ def solicitar_retiro(request):
                 if monto > saldo_disponible:
                     return JsonResponse({"success": False, "message": f"El monto ingresado excede tu saldo disponible ({formato_clp(saldo_disponible)})."})
 
-                banco_obj, _ = Banco.objects.get_or_create(nombre=banco if banco else 'Banco Estado')
+                # Copia enmascarada: el numero completo solo vive cifrado en la cuenta.
                 SolicitudRetiro.objects.create(
                     profesor=profesor,
                     monto=monto,
-                    banco=banco_obj,
-                    tipo_cuenta=tipo_cuenta if tipo_cuenta else 'Cuenta Rut / Vista',
-                    numero_cuenta=numero_cuenta
+                    banco=Banco.objects.get_or_create(nombre=cuenta.banco)[0],
+                    tipo_cuenta=cuenta.tipo_cuenta,
+                    numero_cuenta=cuenta.enmascarado
                 )
             return JsonResponse({"success": True, "message": f"Solicitud de retiro por ${monto:,} registrada con éxito. Se procesará en 24 a 48 horas hábiles.".replace(",", ".")})
         except ValueError:
