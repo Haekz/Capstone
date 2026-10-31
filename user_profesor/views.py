@@ -454,7 +454,7 @@ def actualizar_perfil_prof(request):
             profesor.user.rut = rut
             profesor.user.username = rut
             profesor.especialidad = especialidad
-profesor.telefono_publico = request.POST.get('telefono_publico') in ('on', 'true', '1')
+            profesor.telefono_publico = request.POST.get('telefono_publico') in ('on', 'true', '1')
             profesor.tarifa = tarifa
             profesor.user.direccion = direccion
             profesor.user.email = correo
