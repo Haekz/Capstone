@@ -1,16 +1,21 @@
-"""Correos del modulo: confirmaciones, invitacion al apoderado y avisos de clases.
+"""Correos del modulo: confirmaciones, invitacion al apoderado, avisos de clases y
+aviso de documentos por vencer.
 
 Cada funcion devuelve False si el correo no salio (se puede reenviar).
 """
 
 from django.conf import settings
+from django.db.models import Q
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
 from alumnos.correo import enviar as _enviar
+from soporte.correo import avisar_documentos_por_vencer
+from soporte.models import Ticket
 
-from .models import Apoderado, Vinculo
+from .models import Apoderado, Documento, Vinculo
 from .tokens import firmar_invitacion, token_correo, token_correo_adolescente
 
 
@@ -59,3 +64,19 @@ def avisar_apoderados(inscripcion, accion, autor):
                 'clase': inscripcion.clase, 'sesion': inscripcion.sesion}
     return all([_enviar(f'Clases de {estudiante}', 'apoderados/correo_aviso_clase.txt', contexto, correo)
                 for correo in destinatarios])
+
+
+def avisar_vencimientos():
+    """Avisa una sola vez al agente de cada ticket abierto que sus documentos se borran
+    dentro de Documento.AVISO_ANTES. Devuelve cuantos tickets se avisaron."""
+    ahora = timezone.now()
+    por_vencer = Documento.objects.filter(avisado=False, subido__gte=ahora - Documento.VIGENCIA,
+                                          subido__lt=ahora - (Documento.VIGENCIA - Documento.AVISO_ANTES))
+    tickets = (Ticket.objects.filter(estado=Ticket.ABIERTO)
+               .filter(Q(apoderado__documentos__in=por_vencer) | Q(vinculo__documentos__in=por_vencer))
+               .distinct().select_related('asignado__user', 'apoderado', 'vinculo'))
+    for ticket in tickets:
+        revisado = ticket.apoderado or ticket.vinculo
+        avisar_documentos_por_vencer(ticket, revisado.documentos.earliest('subido').subido + Documento.VIGENCIA)
+        revisado.documentos.update(avisado=True)
+    return len(tickets)

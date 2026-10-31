@@ -359,6 +359,7 @@ class Documento(models.Model):
              (CERTIFICADO, 'Certificado de nacimiento'), (RESOLUCION, 'Resolución del tribunal')]
     CARNET = (CARNET_FRENTE, CARNET_REVERSO)
     VIGENCIA = timedelta(days=30)
+    AVISO_ANTES = timedelta(days=5)  # se avisa al agente del ticket antes de borrarlos
 
     apoderado = models.ForeignKey(Apoderado, on_delete=models.CASCADE, null=True, blank=True,
                                   related_name='documentos')
@@ -368,6 +369,7 @@ class Documento(models.Model):
     formato = models.CharField(max_length=4)  # JPEG o PNG
     contenido = models.BinaryField()  # cifrado: nunca la imagen en claro
     subido = models.DateTimeField(auto_now_add=True)
+    avisado = models.BooleanField(default=False)  # ya se aviso al agente que se borra pronto
 
     class Meta:
         ordering = ['subido']

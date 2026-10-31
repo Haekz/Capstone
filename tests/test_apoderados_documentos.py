@@ -10,6 +10,7 @@ import io
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
+from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.test import TestCase
@@ -193,3 +194,49 @@ class VencimientoTests(TestCase):
         call_command('borrar_documentos_vencidos', stdout=io.StringIO())
 
         self.assertEqual(list(Documento.objects.values_list('pk', flat=True)), [reciente.pk])
+
+    def con_documentos_de(self, dias):
+        """Apoderado con su carnet subido hace ``dias`` dias y ticket abierto."""
+        apoderado = crear_apoderado(RUT, Apoderado.REVISION_PENDIENTE)
+        for tipo in Documento.CARNET:
+            adjuntar(tipo, apoderado=apoderado)
+        abrir_ticket(Ticket.APODERADOS, apoderado=apoderado)
+        Documento.objects.update(subido=timezone.now() - timedelta(days=dias))
+        mail.outbox.clear()
+        return apoderado
+
+    def correr(self):
+        call_command('borrar_documentos_vencidos', stdout=io.StringIO())
+
+    def test_avisa_una_sola_vez_al_agente_5_dias_antes_y_sin_datos_personales(self):
+        agente = crear_agente('10000001-9', Ticket.APODERADOS)
+        apoderado = self.con_documentos_de(26)
+        self.correr()
+        self.correr()  # al dia siguiente no repite
+
+        correo, = mail.outbox
+        self.assertEqual(correo.to, [agente.user.email])
+        self.assertIn(f'Ticket #{Ticket.objects.get().pk}: documentos por vencer', correo.subject)
+        for dato in (apoderado.nombre, apoderado.user.rut, apoderado.user.email):
+            self.assertNotIn(dato, correo.body)
+
+    def test_antes_de_los_5_dias_no_avisa(self):
+        crear_agente('10000001-9', Ticket.APODERADOS)
+        self.con_documentos_de(24)
+        self.correr()
+        self.assertEqual(mail.outbox, [])
+
+    def test_sin_agente_avisa_a_los_lideres(self):
+        lider = crear_agente('10000003-5', lider=True)
+        self.con_documentos_de(26)
+        self.correr()
+        correo, = mail.outbox
+        self.assertEqual(correo.to, [lider.user.email])
+        self.assertIn('(sin asignar)', correo.body)
+
+    def test_lo_ya_vencido_se_borra_sin_aviso_atrasado(self):
+        crear_agente('10000001-9', Ticket.APODERADOS)
+        self.con_documentos_de(31)
+        self.correr()
+        self.assertEqual(mail.outbox, [])
+        self.assertFalse(Documento.objects.exists())

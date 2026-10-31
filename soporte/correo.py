@@ -1,4 +1,5 @@
-"""Correos de soporte: ticket asignado, ticket sin asignar y resumen de atrasados.
+"""Correos de soporte: ticket asignado, ticket sin asignar, documentos por vencer y
+resumen de atrasados.
 
 Sin datos personales de apoderados ni profesores: solo numero, categoria y plazo.
 El detalle se ve en el panel de soporte. Devuelven False si algun correo no salio.
@@ -26,6 +27,14 @@ def avisar_sin_asignar(ticket):
     return all([enviar(f'Ticket #{ticket.pk} sin asignar', 'soporte/correo_sin_asignar.txt',
                        {'nombre': lider.nombre, 'ticket': ticket}, lider.user.email)
                 for lider in _lideres()])
+
+
+def avisar_documentos_por_vencer(ticket, borra_el):
+    """Al agente del ticket; si no tiene, a los lideres."""
+    destinos = [ticket.asignado] if ticket.asignado else _lideres()
+    return all([enviar(f'Ticket #{ticket.pk}: documentos por vencer', 'soporte/correo_documentos_por_vencer.txt',
+                       {'nombre': agente.nombre, 'ticket': ticket, 'borra_el': borra_el}, agente.user.email)
+                for agente in destinos])
 
 
 def _toca_avisar(ticket, hoy):
