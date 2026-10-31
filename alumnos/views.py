@@ -325,7 +325,7 @@ def alumno_pag1(request):
     )
 
     # Solo profesores con titulo aprobado pueden hacer clases.
-profesores_list = Profesor.objects.habilitados().select_related(
+    profesores_list = Profesor.objects.habilitados().select_related(
         'user',
         'especialidad'
     ).order_by('user__first_name', 'user__last_name')
@@ -906,7 +906,7 @@ def confirmacion(request):
 
     if token:
 
-try:
+        try:
             resp = _tx().commit(token)
         except Exception:
             resp = {}
@@ -955,86 +955,6 @@ try:
         })
     else:
         return redirect('planes')
-        except Exception:  # token invalido/expirado o Transbank caido: no se activa nada
-            resp = {}
-
-        aprobado = (
-            resp.get(
-                'response_code'
-            ) == 0
-            and
-            resp.get(
-                'status'
-            ) == 'AUTHORIZED'
-        )
-
-        card = (
-            resp.get(
-                'card_detail'
-            )
-            or {}
-        )
-
-        # El buy_order viene de Transbank (commit), no del navegador.
-        # confirmar_pago es idempotente: repetir el token no activa dos veces.
-        buy_order = resp.get('buy_order', '')
-        # El monto autorizado por Transbank debe ser el del paquete pedido.
-        paquete = PaqueteClases.objects.filter(buy_order=buy_order).first() if buy_order else None
-        if paquete and int(resp.get('amount') or 0) != paquete.monto:
-            aprobado = False
-        Suscripcion.confirmar_pago(buy_order, aprobado)
-        PaqueteClases.confirmar_pago(buy_order, aprobado)
-        ctx['items'] = [
-            {'titulo': f'{p.get_plan_display()}: {p.clases} clase(s) con {p.profesor.nombre if p.profesor else "—"}',
-             'cantidad': 1, 'precio': _clp(p.monto)}
-            for p in PaqueteClases.objects.filter(buy_order=buy_order).select_related('profesor__user')
-        ] if buy_order else []
-
-        ctx.update({
-            'aprobado': aprobado,
-
-            'orden': buy_order,
-
-            'monto': _clp(
-                resp.get(
-                    'amount',
-                    0
-                )
-            ),
-
-            'codigo_autorizacion': (
-                resp.get(
-                    'authorization_code',
-                    ''
-                )
-            ),
-
-            'tarjeta': card.get(
-                'card_number',
-                ''
-            ),
-
-            'fecha': resp.get(
-                'transaction_date',
-                ''
-            ),
-        })
-
-    # Pago cancelado/anulado
-
-    elif tbk_token:
-
-        ctx.update({
-            'aprobado': False,
-            'anulado': True
-        })
-
-    else:
-
-        return redirect(
-            'planes'
-        )
-
     return render(
         request,
         'alumnos/confirmacion.html',

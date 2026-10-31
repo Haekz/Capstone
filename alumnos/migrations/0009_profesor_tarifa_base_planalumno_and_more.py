@@ -9,7 +9,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('alumnos', '0008_create_cache_table'),
+        ('alumnos', '0008_sesiones_hora_chile'),
     ]
 
     operations = [

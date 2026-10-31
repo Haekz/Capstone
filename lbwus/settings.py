@@ -217,7 +217,14 @@ STATICFILES_DIRS = [
     BASE_DIR / 'lbwus' / 'static',
 ]
 STATIC_ROOT = BASE_DIR/'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+    },
+}
 
 # Archivos subidos (titulos de profesores). NO se publica MEDIA_URL en urls:
 # son documentos privados y solo los ve un admin por una vista protegida.
