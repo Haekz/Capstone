@@ -22,6 +22,7 @@ from .models import (
     Clase,
     SesionClase,
     Inscripcion,
+    Pago,
     PaqueteClases,
     Suscripcion,
 )

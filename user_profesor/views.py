@@ -300,9 +300,8 @@ def panel_profesor(request):
 
     # 2. Métricas del Día
     # Dinero generado hoy segun las inscripciones reales de esas clases.
-    inscripciones_hoy = inscripciones.filter(
-        clase_id__in=[c.id_clase for c in clases[:6]]
-    ).select_related('paquete')
+    ids_hoy = {c.id_clase for c in clases[:6]}
+    inscripciones_hoy = [i for i in inscripciones if i.clase_id in ids_hoy]
     dinero_hoy_val = sum(paquetes.pago_profesor(_valor_clase(i)) for i in inscripciones_hoy)
     dinero_hoy = formato_clp(dinero_hoy_val)
     clases_disponibles = max(0, 8 - len(clases_hoy_lista))
