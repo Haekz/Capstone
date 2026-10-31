@@ -1,7 +1,8 @@
 """Avisa los tickets de soporte vencidos: un resumen a cada agente y otro a los lideres.
 
 Pensado para un cron diario en Railway: python manage.py avisar_tickets_atrasados
-Los sabados, domingos y feriados no envia nada: el aviso es de cada dia habil.
+Cada ticket se avisa el primer dia habil de atraso y despues cada 3 dias habiles
+(Ticket.AVISO_CADA). Los sabados, domingos y feriados no envia nada.
 """
 
 from django.core.management.base import BaseCommand
@@ -15,7 +16,8 @@ class Command(BaseCommand):
     help = 'Avisa los tickets de soporte vencidos (solo en dias habiles).'
 
     def handle(self, *args, **options):
-        if not es_habil(timezone.localdate()):
+        hoy = timezone.localdate()
+        if not es_habil(hoy):
             self.stdout.write('Hoy no es día hábil: no se envían avisos.')
             return
-        self.stdout.write(f'Tickets atrasados avisados: {avisar_atrasados()}')
+        self.stdout.write(f'Tickets atrasados avisados: {avisar_atrasados(hoy)}')

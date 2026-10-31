@@ -16,6 +16,11 @@ def es_habil(dia):
     return dia.weekday() < 5 and dia not in _feriados(dia.year)
 
 
+def dias_habiles_entre(desde, hasta):
+    """Dias habiles despues de ``desde`` y hasta ``hasta`` inclusive (fechas)."""
+    return sum(es_habil(desde + timedelta(days=n)) for n in range(1, (hasta - desde).days + 1))
+
+
 def vencimiento(desde, dias_habiles):
     """Fin del dia habil numero ``dias_habiles`` despues de ``desde``, en hora de Chile.
 

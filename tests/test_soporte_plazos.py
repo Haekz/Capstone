@@ -18,7 +18,7 @@ from django.utils import timezone
 
 from apoderados.models import Apoderado, Vinculo
 from soporte.models import Ticket
-from soporte.plazos import es_habil, vencimiento
+from soporte.plazos import dias_habiles_entre, es_habil, vencimiento
 from soporte.tickets import abrir_ticket, reasignar
 from tests.test_apoderados import RUT, crear_agente, crear_apoderado, entrar_soporte
 from tests.test_apoderados_vinculos import crear_menor_vinculado
@@ -51,6 +51,11 @@ class PlazosTests(TestCase):
         self.assertTrue(es_habil(date(2026, 9, 21)))
         self.assertFalse(es_habil(date(2026, 9, 18)))  # feriado
         self.assertFalse(es_habil(date(2026, 9, 26)))  # sabado
+
+    def test_dias_habiles_entre_dos_fechas(self):
+        self.assertEqual(dias_habiles_entre(date(2026, 9, 17), date(2026, 9, 21)), 1)  # 18 y 19 feriados
+        self.assertEqual(dias_habiles_entre(date(2026, 9, 14), date(2026, 9, 21)), 4)
+        self.assertEqual(dias_habiles_entre(date(2026, 9, 21), date(2026, 9, 21)), 0)
 
 
 class PlazoDelTicketTests(TestCase):
@@ -184,10 +189,11 @@ class AvisoDeAtrasosTests(TestCase):
         abrir_ticket(Ticket.APODERADOS, apoderado=crear_apoderado(RUT, Apoderado.REVISION_PENDIENTE))
         self.atrasado = Ticket.objects.get()
         sin_agente = crear_apoderado('13131313-1', Apoderado.REVISION_PENDIENTE)
-        Ticket.objects.filter(pk=self.atrasado.pk).update(vence=timezone.now() - timedelta(days=1))
+        # El lunes 21/09 (18 y 19 feriados) el primero lleva 1 dia habil de atraso y el otro 4.
+        Ticket.objects.filter(pk=self.atrasado.pk).update(vence=fin_del_dia(date(2026, 9, 17)))
         self.agente.habilitaciones.all().delete()  # el siguiente queda sin asignar
         abrir_ticket(Ticket.APODERADOS, apoderado=sin_agente)
-        Ticket.objects.filter(apoderado=sin_agente).update(vence=timezone.now() - timedelta(days=2))
+        Ticket.objects.filter(apoderado=sin_agente).update(vence=fin_del_dia(date(2026, 9, 14)))
         mail.outbox.clear()
 
     def avisar(self, dia):
@@ -206,6 +212,13 @@ class AvisoDeAtrasosTests(TestCase):
         self.assertEqual(correos[self.agente.user.email].count('Ticket #'), 1)
         self.assertEqual(correos[self.lider.user.email].count('Ticket #'), 2)
         self.assertIn('Sin asignar', correos[self.lider.user.email])
+
+    def test_entre_un_aviso_y_otro_no_envia_nada(self):
+        self.assertIn('Tickets atrasados avisados: 0', self.avisar(date(2026, 9, 22)))
+        self.assertEqual(mail.outbox, [])
+
+    def test_vuelve_a_avisar_cada_tres_dias_habiles(self):
+        self.assertIn('Tickets atrasados avisados: 2', self.avisar(date(2026, 9, 24)))  # atrasos de 4 y 7
 
     def test_en_fin_de_semana_o_feriado_no_envia_nada(self):
         for dia in (date(2026, 9, 18), date(2026, 9, 19), date(2026, 9, 20)):

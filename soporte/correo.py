@@ -9,6 +9,7 @@ from django.utils import timezone
 from alumnos.correo import enviar
 
 from .models import AgenteSoporte, Ticket
+from .plazos import dias_habiles_entre
 
 
 def _lideres():
@@ -27,11 +28,17 @@ def avisar_sin_asignar(ticket):
                 for lider in _lideres()])
 
 
-def avisar_atrasados():
-    """Un resumen a cada agente con sus tickets vencidos y otro a cada lider con todos.
-    Devuelve cuantos tickets estan atrasados."""
-    atrasados = list(Ticket.objects.filter(estado=Ticket.ABIERTO, vence__lt=timezone.now())
-                     .select_related('asignado__user').order_by('vence', 'id'))
+def _toca_avisar(ticket, hoy):
+    """El primer dia habil de atraso y despues cada Ticket.AVISO_CADA dias habiles."""
+    atraso = dias_habiles_entre(timezone.localtime(ticket.vence).date(), hoy)
+    return (atraso - 1) % Ticket.AVISO_CADA == 0
+
+
+def avisar_atrasados(hoy):
+    """Un resumen a cada agente con sus tickets atrasados que toca avisar hoy y otro
+    a cada lider con todos ellos. Devuelve cuantos tickets se avisaron."""
+    atrasados = [ticket for ticket in Ticket.objects.filter(estado=Ticket.ABIERTO, vence__date__lt=hoy)
+                 .select_related('asignado__user').order_by('vence', 'id') if _toca_avisar(ticket, hoy)]
     por_agente = {}
     for ticket in atrasados:
         if ticket.asignado is not None:

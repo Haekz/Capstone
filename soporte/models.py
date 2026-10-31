@@ -50,6 +50,7 @@ class Ticket(models.Model):
     TITULOS = 'titulos'
     CATEGORIAS = [(APODERADOS, 'Apoderados y menores'), (TITULOS, 'Títulos de profesores')]
     DIAS_HABILES = {APODERADOS: 5, TITULOS: 5}
+    AVISO_CADA = 3  # dias habiles entre avisos de atraso (casos normales)
     ABIERTO = 'abierto'
     CERRADO = 'cerrado'
     ESTADOS = [(ABIERTO, 'Abierto'), (CERRADO, 'Cerrado')]
