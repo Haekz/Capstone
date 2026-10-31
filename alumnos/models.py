@@ -7,7 +7,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.utils import timezone
 
-from . import catalogos, paquetes
+from . import catalogos, liquidacion, paquetes
 from .cifrado import cifrador
 
 
@@ -126,6 +126,10 @@ class Profesor(models.Model):
         validators=[MinValueValidator(paquetes.TARIFA_MIN), MaxValueValidator(paquetes.TARIFA_MAX)],
         help_text='Valor de una clase de 60 minutos, en pesos.',
     )
+    # Ciclo de pago (alumnos/liquidacion.py). Un cambio rige desde frecuencia_nueva_desde.
+    frecuencia_pago = models.CharField(max_length=10, choices=liquidacion.FRECUENCIAS, default=liquidacion.SEMANAL)
+    frecuencia_nueva = models.CharField(max_length=10, choices=liquidacion.FRECUENCIAS, blank=True, default='')
+    frecuencia_nueva_desde = models.DateField(null=True, blank=True)
 
     objects = ProfesorQuerySet.as_manager()
 

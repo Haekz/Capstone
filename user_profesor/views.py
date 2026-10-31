@@ -256,7 +256,9 @@ def panel_profesor(request):
         'tipos_cuenta': TIPOS_CUENTA,
         'minimo_retiro': formato_clp(liquidacion.MINIMO),
         'minimo_retiro_raw': liquidacion.MINIMO,
-        'proximo_pago': liquidacion.dia_de_pago(liquidacion.proximo_corte(timezone.localdate())),
+        'proximo_pago': liquidacion.proximo_pago(profesor, timezone.localdate()),
+        'frecuencia_vigente': liquidacion.frecuencia_vigente(profesor, timezone.localdate()),
+        'frecuencias': liquidacion.FRECUENCIAS,
         'generos': generos,
         'especialidades': Especialidad.objects.order_by('nombre'),
     }
@@ -416,6 +418,23 @@ def confirmar_cambio_cuenta(request, token):
 # _json: el panel llama esta vista con fetch y espera {'success': ...};
 # un redirect le romperia el res.json().
 @profesor_required_json
+@require_POST
+def guardar_frecuencia_pago(request):
+    """Semanal o mensual; el cambio rige desde el ciclo siguiente (F4)."""
+    profesor = Profesor.objects.get(id_profesor=request.session.get('profesor_id'))
+    try:
+        desde = liquidacion.cambiar_frecuencia(profesor, request.POST.get('frecuencia', ''), timezone.localdate())
+    except ValidationError as e:
+        return JsonResponse({"success": False, "message": e.messages[0]})
+    if desde is None:
+        return JsonResponse({"success": True, "message": f"Sigues con pago {profesor.get_frecuencia_pago_display().lower()}."})
+    return JsonResponse({"success": True, "message": f"Desde el {desde:%d/%m/%Y} tu pago será "
+                                                    f"{profesor.get_frecuencia_nueva_display().lower()}. El ciclo en curso no cambia."})
+
+
+# _json: el panel llama esta vista con fetch y espera {'success': ...};
+# un redirect le romperia el res.json().
+@profesor_required_json
 def solicitar_retiro(request):
     profesor_id = request.session.get('profesor_id')
 
@@ -454,7 +473,7 @@ def solicitar_retiro(request):
                     banco=Banco.objects.get_or_create(nombre=cuenta.banco)[0],
                     tipo_cuenta=cuenta.tipo_cuenta,
                     numero_cuenta=cuenta.enmascarado,
-                    pagar_el=liquidacion.dia_de_pago(liquidacion.proximo_corte(timezone.localdate())),
+                    pagar_el=liquidacion.proximo_pago(profesor, timezone.localdate()),
                 )
             return JsonResponse({"success": True, "message": f"Solicitud de retiro por {formato_clp(monto)} registrada. Se paga el {retiro.pagar_el:%d/%m/%Y}."})
         except ValueError:

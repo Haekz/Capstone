@@ -332,9 +332,9 @@ input:checked + .slider:before {
             <!-- esta parte es del formulario para solicitar la transferencia de los fondos disponibles -->
             <div class="prof-card" style="margin-top: 30px;">
                 <h2 class="prof-card-title"><i class="bi bi-bank"></i> Solicitar Transferencia de Fondos</h2>
-                <p class="prof-card-subtitle">Corte los viernes: lo que pidas hasta el viernes se paga el lunes siguiente (o el siguiente día hábil). Próximo pago: {{ proximo_pago|date:"d/m/Y" }}. Mínimo por retiro: {{ minimo_retiro }}.</p>
+                <p class="prof-card-subtitle">Pago {{ frecuencia_vigente }}: corte {% if frecuencia_vigente == 'mensual' %}el último viernes del mes{% else %}los viernes{% endif %}; lo que pidas hasta el corte se paga el lunes siguiente (o el siguiente día hábil). Próximo pago: {{ proximo_pago|date:"d/m/Y" }}. Mínimo por retiro: {{ minimo_retiro }}.</p>
                 
-                <form id="formCuentaBancaria" onsubmit="submitCuentaForm(event)" style="margin-top: 20px;">
+                <form id="formCuentaBancaria" action="{% url 'guardar_cuenta_bancaria' %}" onsubmit="submitFormJson(event)" style="margin-top: 20px;">
                     <h3 style="font-size: 1rem; margin-bottom: 6px;">Tu cuenta bancaria</h3>
                     <p style="font-size: 0.85rem; margin: 0 0 12px;">Solo cuentas a tu nombre: el titular es tu RUT ({{ profesor.user.rut }}).{% if cuenta_bancaria %} Actual: <strong>{{ cuenta_bancaria.banco }} {{ cuenta_bancaria.enmascarado }}</strong> ({{ cuenta_bancaria.get_tipo_cuenta_display }}).{% if cuenta_bancaria.bloqueada %} Por seguridad, los pagos a esta cuenta se habilitan el {{ cuenta_bancaria.pagable_desde|date:"d/m/Y H:i" }}.{% endif %}{% endif %}</p>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; align-items: end;">
@@ -363,6 +363,20 @@ input:checked + .slider:before {
                         <button type="submit" class="prof-form-btn" style="padding: 10px 24px;">
                             <i class="bi bi-shield-lock"></i> {% if cuenta_bancaria %}Cambiar cuenta{% else %}Guardar cuenta{% endif %}
                         </button>
+                    </div>
+                </form>
+
+                <form id="formFrecuenciaPago" action="{% url 'guardar_frecuencia_pago' %}" onsubmit="submitFormJson(event)" style="margin-top: 20px;">
+                    <h3 style="font-size: 1rem; margin-bottom: 6px;">Frecuencia de pago</h3>
+                    <p style="font-size: 0.85rem; margin: 0 0 12px;">Un cambio rige desde el ciclo siguiente.{% if profesor.frecuencia_nueva and profesor.frecuencia_nueva != frecuencia_vigente %} <strong>Desde el {{ profesor.frecuencia_nueva_desde|date:"d/m/Y" }} tu pago será {{ profesor.get_frecuencia_nueva_display|lower }}.</strong>{% endif %}</p>
+                    <div style="display: flex; gap: 15px; align-items: end; flex-wrap: wrap;">
+                        <div>
+                            <label for="frecuencia_pago" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px;">Cobrar</label>
+                            <select id="frecuencia_pago" name="frecuencia" style="padding: 10px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.15);">
+                                {% for valor, nombre in frecuencias %}<option value="{{ valor }}"{% if valor == profesor.frecuencia_nueva|default:frecuencia_vigente %} selected{% endif %}>{{ nombre }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="prof-form-btn" style="padding: 10px 24px;"><i class="bi bi-calendar-check"></i> Guardar frecuencia</button>
                     </div>
                 </form>
 
@@ -662,9 +676,9 @@ input:checked + .slider:before {
         });
     }
 
-    function submitCuentaForm(event) {
+    function submitFormJson(event) {
         event.preventDefault();
-        fetch("{% url 'guardar_cuenta_bancaria' %}", {
+        fetch(event.target.action, {
             method: 'POST',
             headers: { 'X-CSRFToken': '{{ csrf_token }}' },
             body: new FormData(event.target)
@@ -675,7 +689,7 @@ input:checked + .slider:before {
             text: data.message,
             icon: data.success ? 'success' : 'warning'
         }).then(() => { if (data.success) window.location.reload(); }))
-        .catch(() => Swal.fire('Error', 'Hubo un error de conexión al guardar la cuenta.', 'error'));
+        .catch(() => Swal.fire('Error', 'Hubo un error de conexión al guardar.', 'error'));
     }
 
     // esta parte es del renderizado de la bandeja de mensajes docente
