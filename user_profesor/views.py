@@ -1,3 +1,4 @@
+from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.utils import timezone
@@ -8,7 +9,7 @@ from alumnos.roles import ADMIN, PROFESOR, abrir_sesion_rol
 from django.core.exceptions import ValidationError
 from django.http import FileResponse, Http404
 from django.views.decorators.http import require_POST
-from . import foto
+from . import cambio_cuenta, foto
 from alumnos import catalogos, paquetes
 
 # Tarifas por inscripcion real. Inscripciones sin paquete: valor fijo por inscripcion.
@@ -372,9 +373,13 @@ def actualizar_perfil_prof(request):
 @profesor_required_json
 @require_POST
 def guardar_cuenta_bancaria(request):
-    """Registra o reemplaza la cuenta donde se le paga al profesor (titular: su propio RUT)."""
+    """Registra la cuenta donde se le paga al profesor (titular: su propio RUT).
+
+    La primera se guarda al tiro; cambiarla exige la contrasena y el enlace del correo.
+    """
     profesor_id = request.session.get('profesor_id')
-    cuenta = CuentaBancaria.objects.filter(profesor_id=profesor_id).first() or CuentaBancaria(profesor_id=profesor_id)
+    actual = CuentaBancaria.objects.select_related('profesor__user').filter(profesor_id=profesor_id).first()
+    cuenta = CuentaBancaria(profesor_id=profesor_id)
     cuenta.banco = request.POST.get('banco', '')
     cuenta.tipo_cuenta = request.POST.get('tipo_cuenta', '')
     try:
@@ -382,8 +387,27 @@ def guardar_cuenta_bancaria(request):
         cuenta.full_clean(exclude=['profesor'])  # valida banco y tipo contra las listas cerradas
     except ValidationError as e:
         return JsonResponse({"success": False, "message": e.messages[0]})
-    cuenta.save()
-    return JsonResponse({"success": True, "message": f"Cuenta guardada: {cuenta.banco} {cuenta.enmascarado}."})
+    if actual is None:
+        cuenta.save()
+        return JsonResponse({"success": True, "message": f"Cuenta guardada: {cuenta.banco} {cuenta.enmascarado}."})
+    if not request.user.check_password(request.POST.get('password', '')):
+        return JsonResponse({"success": False, "message": "La contraseña no es correcta."})
+    if not cambio_cuenta.pedir(request, actual, cuenta):
+        return JsonResponse({"success": False, "message": "No pudimos enviar el correo de confirmación. Intenta más tarde."})
+    return JsonResponse({"success": True, "message": "Te enviamos un enlace a tu correo para confirmar el cambio. Vence en 24 horas."})
+
+
+@profesor_required
+def confirmar_cambio_cuenta(request, token):
+    try:
+        cuenta = cambio_cuenta.confirmar(request.session.get('profesor_id'), token)
+    except ValidationError as e:
+        messages.error(request, e.messages[0])
+    else:
+        desde = timezone.localtime(cuenta.pagable_desde).strftime('%d/%m/%Y %H:%M')
+        messages.success(request, f'Cuenta cambiada a {cuenta.banco} {cuenta.enmascarado}. '
+                                  f'Por seguridad, los pagos a esta cuenta se habilitan el {desde}.')
+    return redirect('panel_profesor')
 
 
 # _json: el panel llama esta vista con fetch y espera {'success': ...};

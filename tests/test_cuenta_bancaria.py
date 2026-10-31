@@ -5,20 +5,29 @@ DECISIONES_SOPORTE_Y_PAGOS.md, P2: solo cuentas cuyo titular es el mismo profeso
 
 import base64
 import hashlib
+import re
+import time
+from datetime import timedelta
+from unittest.mock import patch
 
 from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
+from django.core import mail
+from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from alumnos.cifrado import cifrador
 from alumnos.models import CuentaBancaria, Inscripcion, SolicitudRetiro
+from tests.test_especialidad import CLAVE
 from tests.test_filtros_clases import crear_sesion
-from tests.test_paquetes import RUT_PROFE, Escenario, dar_paquete
+from tests.test_paquetes import RUT_OTRO, RUT_PROFE, Escenario, dar_paquete
 from tests.test_retiros import crear_admin, entrar_admin
 
 NUMERO = '9876543210'
 CUENTA = {'banco': 'BancoEstado', 'tipo_cuenta': 'rut_vista', 'numero_cuenta': NUMERO}
+NUEVA = {'banco': 'Banco de Chile', 'tipo_cuenta': 'corriente', 'numero_cuenta': '11112222'}
 
 
 class CifradoTests(SimpleTestCase):
@@ -60,11 +69,84 @@ class CuentaBancariaTests(Escenario):
                 self.assertFalse(self.guardar(**cambio)['success'])
         self.assertFalse(CuentaBancaria.objects.exists())
 
-    def test_cambiar_la_cuenta_reemplaza_la_anterior(self):
-        self.guardar()
-        self.guardar(banco='Banco de Chile', tipo_cuenta='corriente', numero_cuenta='11112222')
-        cuenta = CuentaBancaria.objects.get()
-        self.assertEqual((cuenta.banco, cuenta.numero), ('Banco de Chile', '11112222'))
+
+class CambioCuentaTests(Escenario):
+    """Paso 3b: cambiar una cuenta existente exige contrasena, enlace al correo y 48 h sin pagos."""
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.admin, cls.tutor = crear_admin()
+
+    def setUp(self):
+        self.entrar(RUT_PROFE)
+        self.client.post(reverse('guardar_cuenta_bancaria'), CUENTA)
+        mail.outbox.clear()
+
+    def pedir(self, password=CLAVE):
+        return self.client.post(reverse('guardar_cuenta_bancaria'), {**NUEVA, 'password': password}).json()
+
+    def enlace(self):
+        return re.search(r'http://testserver(\S+)', mail.outbox[0].body).group(1)
+
+    def cuenta(self):
+        return CuentaBancaria.objects.get(profesor=self.profe)
+
+    def test_sin_la_contrasena_correcta_no_pide_el_cambio(self):
+        for password in ('', 'otra-clave'):
+            with self.subTest(password=password):
+                self.assertFalse(self.pedir(password)['success'])
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertEqual(self.cuenta().numero, NUMERO)
+
+    def test_el_cambio_se_aplica_solo_al_abrir_el_enlace_y_avisa(self):
+        self.assertTrue(self.pedir()['success'])
+        self.assertEqual(self.cuenta().numero, NUMERO)
+        self.assertNotIn('11112222', mail.outbox[0].body)
+
+        respuesta = self.client.get(self.enlace(), follow=True)
+        self.assertContains(respuesta, 'Cuenta cambiada a Banco de Chile')
+        cuenta = self.cuenta()
+        self.assertEqual((cuenta.banco, cuenta.tipo_cuenta, cuenta.numero), ('Banco de Chile', 'corriente', '11112222'))
+        self.assertTrue(cuenta.bloqueada)
+        self.assertIn('Tu cuenta bancaria cambió', mail.outbox[1].subject)
+
+    def test_el_enlace_sirve_una_sola_vez(self):
+        self.pedir()
+        enlace = self.enlace()
+        self.client.get(enlace)
+        self.assertContains(self.client.get(enlace, follow=True), 'ya se usó')
+
+    def test_el_enlace_vence_a_las_24_horas(self):
+        self.pedir()
+        with patch('django.core.signing.time.time', return_value=time.time() + 25 * 3600):
+            respuesta = self.client.get(self.enlace(), follow=True)
+        self.assertContains(respuesta, 'venció')
+        self.assertEqual(self.cuenta().numero, NUMERO)
+
+    def test_el_enlace_no_sirve_con_la_sesion_de_otro_profesor(self):
+        self.pedir()
+        enlace = self.enlace()
+        self.entrar(RUT_OTRO)
+        self.assertContains(self.client.get(enlace, follow=True), 'ya se usó')
+        self.assertEqual(self.cuenta().numero, NUMERO)
+
+    def test_no_se_paga_a_una_cuenta_recien_cambiada(self):
+        self.pedir()
+        self.client.get(self.enlace())
+        retiro = SolicitudRetiro.objects.create(profesor=self.profe, monto=5000)
+        retiro.aprobar(self.admin)
+
+        entrar_admin(self.client, self.admin, self.tutor)
+        dashboard = self.client.get(reverse('dashboard_admin'))
+        self.assertContains(dashboard, 'no pagar hasta')
+        self.assertNotContains(dashboard, '11112222')
+        with self.assertRaisesMessage(ValidationError, 'menos de 48 h'):
+            retiro.marcar_pagado(self.admin, 'OP-1')
+
+        CuentaBancaria.objects.filter(profesor=self.profe).update(cambiada_en=timezone.now() - timedelta(hours=49))
+        retiro.marcar_pagado(self.admin, 'OP-1')
+        self.assertEqual(retiro.estado, SolicitudRetiro.PAGADO)
 
 
 class RetiroConCuentaTests(Escenario):

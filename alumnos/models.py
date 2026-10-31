@@ -652,13 +652,25 @@ class CuentaBancaria(models.Model):
 
     El titular es siempre el RUT del profesor; al transferir con ese RUT, el banco
     rechaza una cuenta ajena. El numero va cifrado y se muestra enmascarado.
+    Tras un cambio confirmado no se le paga durante ESPERA_CAMBIO (P3).
     """
+    ESPERA_CAMBIO = timedelta(hours=48)
+
     profesor = models.OneToOneField(Profesor, on_delete=models.CASCADE, related_name='cuenta_bancaria')
     banco = models.CharField(max_length=40, choices=[(b, b) for b in catalogos.BANCOS])
     tipo_cuenta = models.CharField(max_length=10, choices=TIPOS_CUENTA)
     numero_cifrado = models.BinaryField()
     ultimos_digitos = models.CharField(max_length=4)
     actualizada = models.DateTimeField(auto_now=True)
+    cambiada_en = models.DateTimeField(null=True, blank=True)  # None: es la primera cuenta
+
+    @property
+    def pagable_desde(self):
+        return self.cambiada_en + self.ESPERA_CAMBIO if self.cambiada_en else None
+
+    @property
+    def bloqueada(self):
+        return self.cambiada_en is not None and timezone.now() < self.pagable_desde
 
     @staticmethod
     def _cifrador():
@@ -730,6 +742,10 @@ class SolicitudRetiro(models.Model):
 
     def marcar_pagado(self, usuario, numero_operacion):
         self._exigir(self.APROBADO)
+        cuenta = CuentaBancaria.objects.filter(profesor_id=self.profesor_id).first()
+        if cuenta is not None and cuenta.bloqueada:
+            desde = timezone.localtime(cuenta.pagable_desde).strftime('%d/%m/%Y %H:%M')
+            raise ValidationError(f'La cuenta del profesor cambió hace menos de 48 h: se puede pagar desde el {desde}.')
         numero = numero_operacion.strip()
         if not numero:
             raise ValidationError('Escribe el número de operación de la transferencia.')

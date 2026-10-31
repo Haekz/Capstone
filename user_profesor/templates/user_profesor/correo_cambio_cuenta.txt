@@ -1,0 +1,12 @@
+Hola {{ nombre }},
+
+Pediste cambiar la cuenta donde LBWUS te paga a: {{ banco }} {{ enmascarado }}.
+Para confirmar el cambio, inicia sesión y abre este enlace:
+
+{{ enlace }}
+
+El enlace sirve una sola vez y vence en {{ horas }} hora{{ horas|pluralize }}. Por seguridad, durante las 48 horas siguientes al cambio no se harán pagos a la cuenta nueva.
+
+Si no pediste este cambio, no abras el enlace: cambia tu contraseña y escríbenos a soporte.
+
+Equipo LBWUS

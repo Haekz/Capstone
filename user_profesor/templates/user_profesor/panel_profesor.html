@@ -56,6 +56,12 @@ input:checked + .slider:before {
 }
 </style>
 
+{% if messages %}
+<div class="prof-card" role="status" style="margin: 20px; padding: 14px 18px;">
+    {% for m in messages %}<div>{{ m }}</div>{% endfor %}
+</div>
+{% endif %}
+
 <div class="prof-dashboard-layout">
     
     <!-- esta parte es del menú lateral del panel, aquí están los botones para navegar entre secciones -->
@@ -330,7 +336,7 @@ input:checked + .slider:before {
                 
                 <form id="formCuentaBancaria" onsubmit="submitCuentaForm(event)" style="margin-top: 20px;">
                     <h3 style="font-size: 1rem; margin-bottom: 6px;">Tu cuenta bancaria</h3>
-                    <p style="font-size: 0.85rem; margin: 0 0 12px;">Solo cuentas a tu nombre: el titular es tu RUT ({{ profesor.user.rut }}).{% if cuenta_bancaria %} Actual: <strong>{{ cuenta_bancaria.banco }} {{ cuenta_bancaria.enmascarado }}</strong> ({{ cuenta_bancaria.get_tipo_cuenta_display }}).{% endif %}</p>
+                    <p style="font-size: 0.85rem; margin: 0 0 12px;">Solo cuentas a tu nombre: el titular es tu RUT ({{ profesor.user.rut }}).{% if cuenta_bancaria %} Actual: <strong>{{ cuenta_bancaria.banco }} {{ cuenta_bancaria.enmascarado }}</strong> ({{ cuenta_bancaria.get_tipo_cuenta_display }}).{% if cuenta_bancaria.bloqueada %} Por seguridad, los pagos a esta cuenta se habilitan el {{ cuenta_bancaria.pagable_desde|date:"d/m/Y H:i" }}.{% endif %}{% endif %}</p>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; align-items: end;">
                         <div>
                             <label for="cuenta_banco" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px;">Banco</label>
@@ -348,6 +354,12 @@ input:checked + .slider:before {
                             <label for="cuenta_numero" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px;">Número de cuenta</label>
                             <input id="cuenta_numero" type="text" name="numero_cuenta" inputmode="numeric" autocomplete="off" required placeholder="Ej. 12345678" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.15);">
                         </div>
+                        {% if cuenta_bancaria %}
+                        <div>
+                            <label for="cuenta_password" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px;">Tu contraseña</label>
+                            <input id="cuenta_password" type="password" name="password" autocomplete="current-password" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.15);">
+                        </div>
+                        {% endif %}
                         <button type="submit" class="prof-form-btn" style="padding: 10px 24px;">
                             <i class="bi bi-shield-lock"></i> {% if cuenta_bancaria %}Cambiar cuenta{% else %}Guardar cuenta{% endif %}
                         </button>
@@ -659,7 +671,7 @@ input:checked + .slider:before {
         })
         .then(res => res.json())
         .then(data => Swal.fire({
-            title: data.success ? 'Cuenta guardada' : 'Atención',
+            title: data.success ? 'Listo' : 'Atención',
             text: data.message,
             icon: data.success ? 'success' : 'warning'
         }).then(() => { if (data.success) window.location.reload(); }))
