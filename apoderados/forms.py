@@ -90,6 +90,25 @@ def _guardar_documento(cifrado, tipo, **titular):
     Documento.objects.create(tipo=tipo, contenido=contenido, formato=formato, **titular)
 
 
+class CarnetForm(AccesibleMixin, forms.Form):
+    """Carnet por ambos lados: al registrarse o al volver a subirlo si vencio sin revisar."""
+    carnet_frente = DocumentoField(label='Foto de tu carnet (frente)')
+    carnet_reverso = DocumentoField(label='Foto de tu carnet (reverso)')
+
+    def guardar_carnet(self, apoderado):
+        for tipo in Documento.CARNET:  # los nombres de los campos son los tipos
+            _guardar_documento(self.cleaned_data[tipo], tipo, apoderado=apoderado)
+
+
+class DocumentoVinculoForm(AccesibleMixin, forms.Form):
+    """Documento que acredita el vinculo: al crearlo o al volver a subirlo si vencio."""
+    documento = DocumentoField(label='Certificado de nacimiento (madre o padre) o resolución del tribunal '
+                                     '(tutor legal o cuidado personal)')
+
+    def guardar_documento(self, vinculo):
+        _guardar_documento(self.cleaned_data['documento'], vinculo.documento_requerido, vinculo=vinculo)
+
+
 class _CuentaForm(AccesibleMixin, forms.Form):
     """Datos comunes para crear una cuenta: nombre, RUT y contrasena."""
     nombre = forms.CharField(label='Nombre completo', max_length=60)
@@ -124,14 +143,12 @@ class _CuentaForm(AccesibleMixin, forms.Form):
         return datos
 
 
-class RegistroApoderadoForm(_CuentaForm):
+class RegistroApoderadoForm(_CuentaForm, CarnetForm):
     correo = forms.EmailField(label='Correo electrónico')
     telefono = forms.CharField(label='Teléfono (opcional)', max_length=20, required=False,
                                widget=forms.TextInput(attrs={'type': 'tel'}))
     fecha_nacimiento = forms.DateField(label='Fecha de nacimiento',
                                        widget=forms.DateInput(attrs={'type': 'date'}))
-    carnet_frente = DocumentoField(label='Foto de tu carnet (frente)')
-    carnet_reverso = DocumentoField(label='Foto de tu carnet (reverso)')
     acepta_declaracion = forms.BooleanField(label=DECLARACION)
 
     field_order = ['nombre', 'rut', 'correo', 'telefono', 'fecha_nacimiento',
@@ -154,21 +171,17 @@ class RegistroApoderadoForm(_CuentaForm):
             )
             apoderado = Apoderado.objects.create(user=user, version_declaracion=VERSION_DECLARACION,
                                                  declaracion_aceptada=timezone.now())
-            _guardar_documento(datos['carnet_frente'], Documento.CARNET_FRENTE, apoderado=apoderado)
-            _guardar_documento(datos['carnet_reverso'], Documento.CARNET_REVERSO, apoderado=apoderado)
+            self.guardar_carnet(apoderado)
             return apoderado
 
 
-class _VinculoForm(AccesibleMixin, forms.Form):
+class _VinculoForm(DocumentoVinculoForm):
     """Parentesco, documento que lo acredita y declaracion: comun al registro del estudiante
     y a la invitacion aceptada."""
     parentesco = forms.ChoiceField(label='Tu parentesco con el estudiante', choices=Vinculo.PARENTESCOS)
-    documento = DocumentoField(label='Certificado de nacimiento (madre o padre) o resolución del tribunal '
-                                     '(tutor legal o cuidado personal)')
     acepta_declaracion = forms.BooleanField(label=DECLARACION_VINCULO)
 
-    def guardar_documento(self, vinculo):
-        _guardar_documento(self.cleaned_data['documento'], vinculo.documento_requerido, vinculo=vinculo)
+    field_order = ['parentesco', 'documento', 'acepta_declaracion']
 
 
 class RegistroEstudianteForm(_CuentaForm, _VinculoForm):

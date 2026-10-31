@@ -44,8 +44,15 @@
 
         {% elif apoderado.estado == 'revision_pendiente' %}
         <p class="apod-estado"><i class="bi bi-hourglass-split" aria-hidden="true"></i> {{ apoderado.get_estado_display }}</p>
+        {% if apoderado.documentos_completos %}
         <p>Tu correo está confirmado. El equipo de soporte de LBWUS revisará las fotos de tu carnet. Se guardan cifradas
             y se eliminan apenas se aprueba o se rechaza la revisión, o a los 30 días.</p>
+        {% else %}
+        <p>Las fotos de tu carnet vencieron sin revisión y las borramos por seguridad. Súbelas de nuevo para que soporte revise tu identidad.</p>
+        <a class="perfil-prof__reservar" href="{% url 'apoderado_subir_carnet' %}">
+            <i class="bi bi-upload" aria-hidden="true"></i> Subir carnet de nuevo
+        </a>
+        {% endif %}
 
         {% elif apoderado.estado == 'verificado' %}
         <p class="apod-estado"><i class="bi bi-patch-check-fill" aria-hidden="true"></i> {{ apoderado.get_estado_display }}</p>
@@ -70,7 +77,7 @@
                 {% if v.termino_por_edad %}
                 <br><small>{{ v.alumno.user.first_name }} cumplió 18 años: su cuenta ahora es solo suya y el vínculo terminó.</small>
                 {% else %}
-                {% if v.estado == 'pendiente' %}<br><small>Nuestro equipo de soporte revisará el documento que adjuntaste para verificar el vínculo.</small>{% endif %}
+                {% if v.estado == 'pendiente' %}{% if v.documentos_completos %}<br><small>Nuestro equipo de soporte revisará el documento que adjuntaste para verificar el vínculo.</small>{% else %}<br><small>El documento venció sin revisión y lo borramos por seguridad.</small> <a href="{% url 'apoderado_subir_documento_vinculo' v.pk %}">Subirlo de nuevo</a>{% endif %}{% endif %}
                 {% if v.estado == 'rechazado' and v.ultima_revision.observacion %}<br><small><strong>Motivo:</strong> {{ v.ultima_revision.observacion }}</small>{% endif %}
                 {% if v.estado == 'pendiente' or v.estado == 'verificado' %}{% if v.apoderado_define_clave %}<br><a href="{% url 'apoderado_clave_estudiante' v.pk %}">Cambiar su contraseña</a>{% endif %}{% endif %}
                 {% if v.estado == 'verificado' and apoderado.estado == 'verificado' %}

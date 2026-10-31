@@ -236,7 +236,7 @@ class VencimientoTests(TestCase):
 
     def test_lo_ya_vencido_se_borra_sin_aviso_atrasado(self):
         crear_agente('10000001-9', Ticket.APODERADOS)
-        self.con_documentos_de(31)
+        apoderado = self.con_documentos_de(31)
         self.correr()
-        self.assertEqual(mail.outbox, [])
+        self.assertEqual([c.to for c in mail.outbox], [[apoderado.user.email]])  # al agente, nada
         self.assertFalse(Documento.objects.exists())

@@ -30,9 +30,10 @@ from soporte.permisos import agente_en_sesion, lider_required, ticket_asignado, 
 
 from .correo import avisar_apoderados, enviar_confirmacion, enviar_confirmacion_adolescente, enviar_invitacion
 from .documentos import con_marca_de_agua
-from .forms import (VERSION_DECLARACION_VINCULO, AceptarInvitacionForm, ClaveEstudianteForm,
-                    InvitacionForm, NuevaClaveForm, RegistroAdolescenteForm, RegistroApoderadoForm,
-                    RegistroEstudianteForm, RevisionIdentidadForm, RevisionVinculoForm, RevocarVinculoForm)
+from .forms import (VERSION_DECLARACION_VINCULO, AceptarInvitacionForm, CarnetForm, ClaveEstudianteForm,
+                    DocumentoVinculoForm, InvitacionForm, NuevaClaveForm, RegistroAdolescenteForm,
+                    RegistroApoderadoForm, RegistroEstudianteForm, RevisionIdentidadForm, RevisionVinculoForm,
+                    RevocarVinculoForm)
 from .models import (AccesoDocumento, Apoderado, CompraApoderado, Documento, RevisionIdentidad,
                      RevisionVinculo, Revocacion, SolicitudAdolescente, Vinculo)
 from .permisos import debe_renovar_clave, vinculo_contratable
@@ -187,6 +188,47 @@ def clave_estudiante(request, id_vinculo):
         boton='Guardar contraseña', volver_url=reverse(APODERADO.ruta_portal),
         intro=f'{estudiante.first_name} entra con su RUT ({estudiante.rut}) y esta contraseña.',
     )
+
+
+# --- Documentos que vencieron sin revisar: se vuelven a subir y se abre un ticket nuevo ---
+
+@never_cache
+@apoderado_required
+def subir_carnet(request):
+    apoderado = _apoderado_en_sesion(request)
+    if apoderado.estado != Apoderado.REVISION_PENDIENTE or apoderado.documentos_completos:
+        raise Http404
+    form = CarnetForm(request.POST or None, request.FILES or None)
+    if request.method == 'POST' and form.is_valid():
+        with transaction.atomic():
+            form.guardar_carnet(apoderado)
+            apoderado.abrir_ticket_si_revisable()
+        messages.success(request, 'Recibimos tu carnet. Nuestro equipo de soporte lo revisará.')
+        return redirect(APODERADO.ruta_portal)
+    return _formulario(request, form, titulo='Vuelve a subir tu carnet', subtitulo='Carnet por ambos lados',
+                       boton='Subir carnet', volver_url=reverse(APODERADO.ruta_portal),
+                       intro='Los documentos anteriores vencieron sin revisión y los borramos por seguridad.')
+
+
+@never_cache
+@apoderado_required
+def subir_documento_vinculo(request, id_vinculo):
+    vinculo = get_object_or_404(Vinculo.objects.select_related('alumno__user', 'apoderado'), pk=id_vinculo,
+                                apoderado_id=request.session[APODERADO.clave_sesion], estado=Vinculo.PENDIENTE)
+    if vinculo.documentos_completos:
+        raise Http404
+    form = DocumentoVinculoForm(request.POST or None, request.FILES or None)
+    form.fields['documento'].label = dict(Documento.TIPOS)[vinculo.documento_requerido]
+    if request.method == 'POST' and form.is_valid():
+        with transaction.atomic():
+            form.guardar_documento(vinculo)
+            vinculo.abrir_ticket_si_revisable()
+        messages.success(request, 'Recibimos el documento. Nuestro equipo de soporte lo revisará.')
+        return redirect(APODERADO.ruta_portal)
+    return _formulario(request, form, titulo=f'Vínculo con {vinculo.alumno.user.first_name}',
+                       subtitulo='Vuelve a subir el documento', boton='Subir documento',
+                       volver_url=reverse(APODERADO.ruta_portal),
+                       intro='El documento anterior venció sin revisión y lo borramos por seguridad.')
 
 
 # --- El apoderado contrata y reserva por su estudiante ---

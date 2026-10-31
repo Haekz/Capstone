@@ -17,6 +17,7 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.db import models, transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from alumnos.models import Inscripcion
@@ -59,6 +60,20 @@ def _registrar_decision(revisado, revision, administrador):
         revisado.save(update_fields=['estado'])
         revisado.documentos.all().delete()
         cerrar_tickets(revisado.tickets)
+
+
+def vencer_documentos():
+    """Borra los documentos con mas de Documento.VIGENCIA sin revisar y cierra sus
+    tickets: sin documentos no hay nada que revisar. Devuelve los apoderados a quienes
+    pedirles que los suban de nuevo; al subirlos se abre un ticket con plazo nuevo."""
+    vencidos = Documento.objects.filter(subido__lt=timezone.now() - Documento.VIGENCIA)
+    de_ellos = Q(documentos__in=vencidos) | Q(vinculos__documentos__in=vencidos)
+    apoderados = list(Apoderado.objects.filter(de_ellos).distinct().select_related('user'))
+    with transaction.atomic():
+        cerrar_tickets(Ticket.objects.filter(Q(apoderado__documentos__in=vencidos)
+                                             | Q(vinculo__documentos__in=vencidos)))
+        vencidos.delete()
+    return apoderados
 
 
 class Apoderado(models.Model):
@@ -109,6 +124,12 @@ class Apoderado(models.Model):
         self.estado = self.REVISION_PENDIENTE
         with transaction.atomic():
             self.save(update_fields=['correo_verificado', 'estado'])
+            self.abrir_ticket_si_revisable()
+
+    def abrir_ticket_si_revisable(self):
+        """Con el correo confirmado y el carnet subido. Si el carnet vencio sin revisar,
+        el ticket se abre cuando lo vuelve a subir (ver vencer_documentos)."""
+        if self.estado == self.REVISION_PENDIENTE and self.documentos_completos:
             abrir_ticket(Ticket.APODERADOS, apoderado=self)
 
     def aplicar_revision(self, revision, administrador):
@@ -190,8 +211,9 @@ class Vinculo(models.Model):
 
     def abrir_ticket_si_revisable(self):
         """El ticket se abre cuando el vinculo ya se puede revisar: con la identidad
-        del apoderado verificada. Antes no hay nada que decidir."""
-        if self.estado == self.PENDIENTE and self.apoderado.estado == Apoderado.VERIFICADO:
+        del apoderado verificada y su documento subido. Antes no hay nada que decidir."""
+        if (self.estado == self.PENDIENTE and self.apoderado.estado == Apoderado.VERIFICADO
+                and self.documentos_completos):
             abrir_ticket(Ticket.APODERADOS, vinculo=self)
 
     def revocar(self, autor, motivo=''):

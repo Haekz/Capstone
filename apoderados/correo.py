@@ -1,5 +1,5 @@
 """Correos del modulo: confirmaciones, invitacion al apoderado, avisos de clases y
-aviso de documentos por vencer.
+avisos de documentos por vencer y vencidos.
 
 Cada funcion devuelve False si el correo no salio (se puede reenviar).
 """
@@ -80,3 +80,9 @@ def avisar_vencimientos():
         avisar_documentos_por_vencer(ticket, revisado.documentos.earliest('subido').subido + Documento.VIGENCIA)
         revisado.documentos.update(avisado=True)
     return len(tickets)
+
+
+def avisar_documentos_vencidos(apoderado):
+    """Se borraron sin revisar: que los vuelva a subir desde su portal."""
+    return _enviar('Vuelve a subir tus documentos', 'apoderados/correo_documentos_vencidos.txt',
+                   {'nombre': apoderado.nombre}, apoderado.user.email)

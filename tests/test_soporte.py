@@ -43,6 +43,8 @@ class AsignacionTests(TestCase):
         self.assertEqual(Ticket.objects.get().asignado, cargado)  # empate: el mas antiguo
 
         apoderado = crear_apoderado(RUT, Apoderado.CORREO_PENDIENTE)
+        for tipo in Documento.CARNET:  # sin carnet no hay ticket (paso 5c)
+            adjuntar(tipo, apoderado=apoderado)
         apoderado.confirmar_correo()
 
         ticket = apoderado.tickets.get()
@@ -85,6 +87,7 @@ class CicloDelTicketTests(TestCase):
         apoderado = crear_apoderado(RUT, Apoderado.REVISION_PENDIENTE)
         abrir_ticket(Ticket.APODERADOS, apoderado=apoderado)
         vinculo = crear_menor_vinculado(apoderado, estado=Vinculo.PENDIENTE)
+        adjuntar(Documento.CERTIFICADO, vinculo=vinculo)
         vinculo.abrir_ticket_si_revisable()
         self.assertFalse(vinculo.tickets.exists())  # aun no hay nada que decidir
 
@@ -97,6 +100,7 @@ class CicloDelTicketTests(TestCase):
 
     def test_revocar_un_vinculo_pendiente_cierra_su_ticket(self):
         vinculo = crear_menor_vinculado(crear_apoderado(RUT, Apoderado.VERIFICADO), estado=Vinculo.PENDIENTE)
+        adjuntar(Documento.CERTIFICADO, vinculo=vinculo)
         vinculo.abrir_ticket_si_revisable()
         vinculo.revocar(self.agente.user, 'Disputa ficticia')
         self.assertEqual(vinculo.tickets.get().estado, Ticket.CERRADO)
