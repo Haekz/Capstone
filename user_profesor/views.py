@@ -25,12 +25,14 @@ def calcular_saldos(profesor):
     """Devuelve los saldos de un profesor a partir de sus inscripciones.
 
     Sin inscripciones el resultado es 0: una cuenta nueva no tiene dinero.
+    Solo cuentan las clases ya dictadas: una reserva futura todavia se puede
+    cancelar, y lo no realizado no se liquida (docs/POLITICA_PAQUETES.md, punto 10).
     """
     from django.db.models import Sum
 
     from alumnos.models import SolicitudRetiro
 
-    inscripciones = Inscripcion.objects.filter(clase__profesor=profesor).consumidas().select_related('paquete')
+    inscripciones = Inscripcion.objects.filter(clase__profesor=profesor).completadas().select_related('paquete')
     valores = [_valor_clase(i) for i in inscripciones]
 
     total_ganado = sum(valores)
