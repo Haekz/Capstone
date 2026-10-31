@@ -10,7 +10,7 @@ from django.core.exceptions import ValidationError
 from django.http import FileResponse, Http404
 from django.views.decorators.http import require_POST
 from . import cambio_cuenta, foto
-from alumnos import catalogos, paquetes
+from alumnos import catalogos, liquidacion, paquetes
 
 # Tarifas por inscripcion real. Inscripciones sin paquete: valor fijo por inscripcion.
 # Con paquete valen lo que pago el alumno por esa clase y el profesor recibe 85%.
@@ -254,6 +254,9 @@ def panel_profesor(request):
         'cuenta_bancaria': CuentaBancaria.objects.filter(profesor=profesor).first(),
         'bancos': catalogos.BANCOS,
         'tipos_cuenta': TIPOS_CUENTA,
+        'minimo_retiro': formato_clp(liquidacion.MINIMO),
+        'minimo_retiro_raw': liquidacion.MINIMO,
+        'proximo_pago': liquidacion.dia_de_pago(liquidacion.proximo_corte(timezone.localdate())),
         'generos': generos,
         'especialidades': Especialidad.objects.order_by('nombre'),
     }
@@ -424,8 +427,8 @@ def solicitar_retiro(request):
             monto_str = request.POST.get('monto', '').replace('.', '').replace('$', '').strip()
             monto = int(monto_str)
 
-            if monto <= 0:
-                return JsonResponse({"success": False, "message": "El monto a retirar debe ser mayor a cero."})
+            if monto < liquidacion.MINIMO:
+                return JsonResponse({"success": False, "message": f"El mínimo para retirar es {formato_clp(liquidacion.MINIMO)}. Tu saldo se acumula hasta alcanzarlo."})
 
             cuenta = CuentaBancaria.objects.filter(profesor_id=profesor_id).first()
             if cuenta is None:
@@ -445,14 +448,15 @@ def solicitar_retiro(request):
                     return JsonResponse({"success": False, "message": f"El monto ingresado excede tu saldo disponible ({formato_clp(saldo_disponible)})."})
 
                 # Copia enmascarada: el numero completo solo vive cifrado en la cuenta.
-                SolicitudRetiro.objects.create(
+                retiro = SolicitudRetiro.objects.create(
                     profesor=profesor,
                     monto=monto,
                     banco=Banco.objects.get_or_create(nombre=cuenta.banco)[0],
                     tipo_cuenta=cuenta.tipo_cuenta,
-                    numero_cuenta=cuenta.enmascarado
+                    numero_cuenta=cuenta.enmascarado,
+                    pagar_el=liquidacion.dia_de_pago(liquidacion.proximo_corte(timezone.localdate())),
                 )
-            return JsonResponse({"success": True, "message": f"Solicitud de retiro por ${monto:,} registrada con éxito. Se procesará en 24 a 48 horas hábiles.".replace(",", ".")})
+            return JsonResponse({"success": True, "message": f"Solicitud de retiro por {formato_clp(monto)} registrada. Se paga el {retiro.pagar_el:%d/%m/%Y}."})
         except ValueError:
             return JsonResponse({"success": False, "message": "Por favor ingresa un monto numérico válido."})
         except Exception:

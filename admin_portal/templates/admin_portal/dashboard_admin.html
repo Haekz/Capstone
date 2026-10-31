@@ -704,7 +704,7 @@
                                             </div>
                                             <div>
                                                 <div class="user-cell-name">{{ r.profesor.user.first_name }}</div>
-                                                <small style="color: var(--text-muted); font-size: 0.75rem;">{{ r.banco }} · {{ r.numero_cuenta }}</small>
+                                                <small style="color: var(--text-muted); font-size: 0.75rem;">{{ r.banco }} · {{ r.numero_cuenta }}{% if r.pagar_el %} · Pagar el {{ r.pagar_el|date:"d/m/Y" }}{% endif %}</small>
                                             </div>
                                         </div>
                                     </td>

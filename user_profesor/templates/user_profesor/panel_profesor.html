@@ -332,7 +332,7 @@ input:checked + .slider:before {
             <!-- esta parte es del formulario para solicitar la transferencia de los fondos disponibles -->
             <div class="prof-card" style="margin-top: 30px;">
                 <h2 class="prof-card-title"><i class="bi bi-bank"></i> Solicitar Transferencia de Fondos</h2>
-                <p class="prof-card-subtitle">Solicita el depósito de tu saldo disponible. Las transferencias tardan de 24 a 48 horas hábiles en procesarse.</p>
+                <p class="prof-card-subtitle">Corte los viernes: lo que pidas hasta el viernes se paga el lunes siguiente (o el siguiente día hábil). Próximo pago: {{ proximo_pago|date:"d/m/Y" }}. Mínimo por retiro: {{ minimo_retiro }}.</p>
                 
                 <form id="formCuentaBancaria" onsubmit="submitCuentaForm(event)" style="margin-top: 20px;">
                     <h3 style="font-size: 1rem; margin-bottom: 6px;">Tu cuenta bancaria</h3>
@@ -370,12 +370,12 @@ input:checked + .slider:before {
                 <div style="padding: 20px; background: rgba(245, 158, 11, 0.08); border-radius: 8px; border-left: 4px solid #f59e0b; margin-top: 15px;">
                     <p style="margin: 0; color: #92400e; font-size: 0.92rem;"><i class="bi bi-info-circle-fill"></i> Registra tu cuenta bancaria para poder solicitar retiros.</p>
                 </div>
-                {% elif saldo_disponible_raw > 0 %}
+                {% elif saldo_disponible_raw >= minimo_retiro_raw %}
                 <form id="formSolicitarRetiro" onsubmit="submitRetiroForm(event)" style="margin-top: 20px;">
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px;">
                         <div>
                             <label for="retiro_monto" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px;">Monto a Retirar ($)</label>
-                            <input type="number" name="monto" id="retiro_monto" value="{{ saldo_disponible_raw }}" max="{{ saldo_disponible_raw }}" min="1000" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.15);">
+                            <input type="number" name="monto" id="retiro_monto" value="{{ saldo_disponible_raw }}" max="{{ saldo_disponible_raw }}" min="{{ minimo_retiro_raw }}" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.15);">
                             <small style="color: var(--primary); font-size: 0.78rem;">Máximo disponible: ${{ saldo_disponible_raw }} · Se transfiere a {{ cuenta_bancaria.banco }} {{ cuenta_bancaria.enmascarado }}</small>
                         </div>
                     </div>
@@ -387,7 +387,7 @@ input:checked + .slider:before {
                 </form>
                 {% else %}
                 <div style="padding: 20px; background: rgba(245, 158, 11, 0.08); border-radius: 8px; border-left: 4px solid #f59e0b; margin-top: 15px;">
-                    <p style="margin: 0; color: #92400e; font-size: 0.92rem;"><i class="bi bi-info-circle-fill"></i> No cuentas con saldo disponible suficiente para solicitar un retiro en este momento. Las clases impartidas acreditarán tu saldo automáticamente.</p>
+                    <p style="margin: 0; color: #92400e; font-size: 0.92rem;"><i class="bi bi-info-circle-fill"></i> Tu saldo disponible ({{ saldo_disponible }}) se acumula hasta llegar al mínimo de {{ minimo_retiro }}. Las clases dictadas se suman automáticamente.</p>
                 </div>
                 {% endif %}
             </div>

@@ -718,6 +718,7 @@ class SolicitudRetiro(models.Model):
                                    related_name='+')
     numero_operacion = models.CharField(max_length=40, blank=True, default='')
     fecha_pago = models.DateTimeField(null=True, blank=True)
+    pagar_el = models.DateField(null=True, blank=True)  # lunes siguiente al corte (alumnos/liquidacion.py)
 
     def __str__(self):
         return f"Retiro #{self.id_solicitud} - {self.profesor.user.first_name} (${self.monto})"

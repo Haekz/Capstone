@@ -7,7 +7,7 @@ import base64
 import hashlib
 import re
 import time
-from datetime import timedelta
+from datetime import date, timedelta
 from unittest.mock import patch
 
 from cryptography.fernet import Fernet, InvalidToken
@@ -162,10 +162,24 @@ class RetiroConCuentaTests(Escenario):
                                    sesion=crear_sesion(self.clase, dias=-1))
         self.entrar(RUT_PROFE)
 
-    def retirar(self):
+    def retirar(self, monto='10000'):
         # Los datos bancarios del formulario se ignoran: manda la cuenta registrada.
         return self.client.post(reverse('solicitar_retiro'),
-                                {'monto': '5000', 'banco': 'Banco Falso', 'numero_cuenta': '111'}).json()
+                                {'monto': monto, 'banco': 'Banco Falso', 'numero_cuenta': '111'}).json()
+
+    def test_bajo_el_minimo_no_se_puede_retirar(self):
+        self.client.post(reverse('guardar_cuenta_bancaria'), CUENTA)
+        respuesta = self.retirar('9999')
+        self.assertFalse(respuesta['success'])
+        self.assertIn('$10.000', respuesta['message'])
+        self.assertFalse(SolicitudRetiro.objects.exists())
+
+    def test_el_retiro_se_paga_el_lunes_siguiente_al_corte(self):
+        self.client.post(reverse('guardar_cuenta_bancaria'), CUENTA)
+        with patch('user_profesor.views.timezone.localdate', return_value=date(2026, 10, 28)):
+            respuesta = self.retirar()
+        self.assertIn('02/11/2026', respuesta['message'])
+        self.assertEqual(SolicitudRetiro.objects.get().pagar_el, date(2026, 11, 2))
 
     def test_sin_cuenta_registrada_no_se_puede_retirar(self):
         respuesta = self.retirar()
