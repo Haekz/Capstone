@@ -91,6 +91,12 @@ input:checked + .slider:before {
             <li class="prof-menu-item" id="menu-saldo" onclick="switchSection('saldo')">
                 <i class="bi bi-cash-stack"></i> Saldo Generado
             </li>
+            {# Página aparte: un enlace real, usable con teclado. #}
+            <li class="prof-menu-item">
+                <a href="{% url 'resenas_profesor' %}" style="color:inherit; text-decoration:none; display:flex; align-items:center; gap:inherit;">
+                    <i class="bi bi-star-half"></i> Mis Reseñas
+                </a>
+            </li>
         </ul>
         
         <!-- esta parte es del botón de cerrar sesión abajo del menú lateral -->
@@ -215,14 +221,14 @@ input:checked + .slider:before {
                     {% csrf_token %}
                     <div class="prof-form-group" style="text-align: center; margin-bottom: 25px;">
                         {% if profesor.user.foto_perfil %}
-                            <img src="{{ profesor.user.foto_perfil.url }}" alt="Foto de Perfil" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; margin-bottom: 15px; border: 3px solid var(--primary);">
+                            <img src="{% url 'foto_profesor' profesor.id_profesor %}" alt="Tu foto de perfil" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; margin-bottom: 15px; border: 3px solid var(--primary);">
                         {% else %}
                             <div style="width: 120px; height: 120px; border-radius: 50%; background: var(--bg-card); display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto; border: 3px dashed var(--border);">
                                 <i class="bi bi-person" style="font-size: 3rem; color: var(--text-muted);"></i>
                             </div>
                         {% endif %}
                         <label for="prof-foto" class="prof-form-label" style="display: block;">Subir Foto de Perfil (Pública)</label>
-                        <input type="file" id="prof-foto" name="foto_perfil" class="prof-form-input" accept="image/*" style="border: none; padding: 0;">
+                        <input type="file" id="prof-foto" name="foto_perfil" class="prof-form-input" accept="image/jpeg,image/png,image/webp" style="border: none; padding: 0;">
                     </div>
 
                     
@@ -256,6 +262,11 @@ input:checked + .slider:before {
                         <div class="prof-form-group">
                             <label for="prof-correo" class="prof-form-label">Correo Electrónico</label>
                             <input type="email" id="prof-correo" name="correo_electronico" class="prof-form-input" value="{{ profesor.user.email }}" required>
+                        </div>
+                        <div class="prof-form-group">
+                            <label for="prof-tarifa" class="prof-form-label">Tarifa por clase de 60 min (CLP)</label>
+                            <input type="number" id="prof-tarifa" name="tarifa" class="prof-form-input" value="{{ profesor.tarifa }}" min="10000" max="50000" step="1000" required>
+                            <small>Entre $10.000 y $50.000. Define el precio de tus paquetes; lo ya vendido no cambia. Incluye la comisión de LBWUS (15%, IVA incluido).</small>
                         </div>
                         <div class="prof-form-group">
                             <label for="prof-telefono" class="prof-form-label">Teléfono de Contacto</label>

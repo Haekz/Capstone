@@ -2230,70 +2230,6 @@ body.dark-mode .ns-story-panel {
     grid-column: span 2;
 }
 
-/* ---------- Testimonios ---------- */
-.ns-testimonials {
-    background: var(--surface);
-}
-
-.ns-testimonials-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 24px;
-}
-
-.ns-quote {
-    margin: 0;
-    position: relative;
-    background: var(--bg);
-    border: 1px solid var(--line);
-    border-radius: var(--r-md);
-    padding: 36px 32px 28px;
-    display: flex;
-    flex-direction: column;
-}
-
-.ns-quote-mark {
-    font-size: 2.6rem;
-    line-height: 1;
-    color: var(--primary);
-    opacity: 0.35;
-    margin-bottom: 8px;
-}
-
-.ns-quote blockquote {
-    font-size: 1.15rem;
-    line-height: 1.55;
-    color: var(--text);
-    flex: 1;
-    margin-bottom: 24px;
-}
-
-.ns-quote figcaption {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding-top: 20px;
-    border-top: 1px solid var(--line);
-}
-
-.ns-quote figcaption img {
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    object-fit: cover;
-    object-position: center 22%;
-    flex-shrink: 0;
-}
-
-.ns-quote figcaption strong {
-    display: block;
-    font-size: 1rem;
-}
-
-.ns-quote figcaption span {
-    font-size: 0.88rem;
-    color: var(--text-light);
-}
 
 /* ---------- CTA final ---------- */
 .ns-cta {
@@ -2361,10 +2297,6 @@ body.dark-mode .ns-cta .btn-outline {
     }
 
     .ns-values-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .ns-testimonials-grid {
         grid-template-columns: 1fr;
     }
 }

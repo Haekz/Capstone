@@ -1,0 +1,91 @@
+/* Formularios y estados del modulo de apoderados. Usa las variables del tema global. */
+.apod-form {
+    display: grid;
+    gap: 14px;
+    margin-top: 10px;
+}
+
+.apod-form__campo {
+    display: grid;
+    gap: 6px;
+}
+
+.apod-form__campo label {
+    font-weight: 600;
+}
+
+.apod-form__campo input:not([type="checkbox"]) {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-sm);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+}
+
+.apod-form__declaracion {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    line-height: 1.5;
+}
+
+.apod-form__declaracion input {
+    margin-top: 4px;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.apod-form__error,
+.apod-mensajes__item--error {
+    /* El rojo va en el borde: el texto mantiene el contraste en ambos temas. */
+    border-left: 4px solid #dc2626;
+    padding-left: 10px;
+    color: var(--text);
+    font-weight: 600;
+}
+
+.apod-form .perfil-prof__reservar {
+    width: fit-content;
+    border: none;
+    cursor: pointer;
+}
+
+.apod-mensajes {
+    margin-bottom: 14px;
+}
+
+.apod-mensajes__item {
+    padding: 10px 14px;
+    border-radius: var(--r-sm);
+    background: var(--surface);
+    border-left: 4px solid var(--line);
+}
+
+.apod-mensajes__item--success {
+    border-left-color: #16a34a;
+}
+
+.apod-estado {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+}
+
+.apod-vinculos {
+    display: grid;
+    gap: 12px;
+    margin: 10px 0 16px;
+    padding: 0;
+    list-style: none;
+}
+
+.apod-vinculos li {
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-sm);
+    line-height: 1.6;
+}

@@ -1,0 +1,13 @@
+Hola {{ nombre }},
+
+Gracias por crear tu cuenta de apoderado en LBWUS. Para confirmar que este correo es tuyo, abre el siguiente enlace:
+
+{{ enlace }}
+
+El enlace sirve una sola vez y vence en {{ horas }} hora{{ horas|pluralize }}. Si vence, inicia sesión y pide uno nuevo desde tu cuenta.
+
+Después, un administrador revisará las fotos de tu carnet que subiste en LBWUS. Nunca te pediremos enviar documentos por correo.
+
+Si no creaste esta cuenta, ignora este mensaje.
+
+Equipo LBWUS

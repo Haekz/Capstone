@@ -1,0 +1,70 @@
+{% extends 'alumnos/base.html' %}
+{% load static %}
+
+{% block title %}Mi solicitud de apoderado | LBWUS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'alumnos/css/perfil_profesor.css' %}">
+<link rel="stylesheet" href="{% static 'apoderados/apoderados.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="perfil-prof">
+    <a class="perfil-prof__volver" href="{% url 'alumno_pag1' %}">
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> Ir al catálogo
+    </a>
+
+    <header class="perfil-prof__cabecera">
+        <div>
+            <h1>Hola, {{ solicitud.alumno.user.first_name }}</h1>
+            <p class="perfil-prof__vacio">Hasta que verifiquemos el vínculo con tu madre o tu padre, solo puedes ver el catálogo de clases.</p>
+        </div>
+    </header>
+
+    <section class="perfil-prof__bloque" aria-labelledby="solicitud-titulo">
+        <h2 id="solicitud-titulo">Tu solicitud</h2>
+        {% include 'apoderados/_mensajes.html' %}
+
+        {% if not solicitud.correo_confirmado %}
+        <p class="apod-estado"><i class="bi bi-envelope-exclamation-fill" aria-hidden="true"></i> Correo por confirmar</p>
+        <p>Te enviamos un enlace a <strong>{{ solicitud.alumno.user.email }}</strong>. Cuando lo abras, invitaremos a <strong>{{ solicitud.correo_apoderado }}</strong>.</p>
+        <form method="post" action="{% url 'adolescente_reenviar_correo' %}" class="apod-form">
+            {% csrf_token %}
+            <button type="submit" class="perfil-prof__reservar" {% if espera %}disabled aria-disabled="true"{% endif %}>
+                <i class="bi bi-arrow-repeat" aria-hidden="true"></i> Reenviar enlace
+            </button>
+            {% if espera %}<small class="perfil-prof__vacio">Podrás pedir otro enlace en {{ espera }} segundos.</small>{% endif %}
+        </form>
+
+        {% else %}
+        {% if vinculos %}
+        <ul class="apod-vinculos">
+            {% for v in vinculos %}
+            <li><strong>{{ v.apoderado.nombre }}</strong> ({{ v.get_parentesco_display }}) · Vínculo: {{ v.get_estado_display }}
+                {% if v.estado == 'pendiente' %}<br><small>Un administrador revisará su identidad y el documento que acredita el vínculo.</small>{% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+        {% elif invitacion %}
+        <p class="apod-estado"><i class="bi bi-send-fill" aria-hidden="true"></i> Invitación enviada</p>
+        <p>Invitamos a <strong>{{ invitacion.correo }}</strong> el {{ invitacion.enviada|date:"d-m-Y" }}. El enlace vence el {{ invitacion.vence|date:"d-m-Y" }}.</p>
+        {% endif %}
+
+        <h3>Enviar una invitación nueva</h3>
+        <p class="perfil-prof__vacio">La invitación anterior dejará de servir.</p>
+        <form method="post" action="{% url 'adolescente_invitar' %}" class="apod-form" novalidate>
+            {% csrf_token %}
+            {% for campo in form %}
+            <div class="apod-form__campo">
+                <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+                {{ campo }}
+            </div>
+            {% endfor %}
+            <button type="submit" class="perfil-prof__reservar">
+                <i class="bi bi-send" aria-hidden="true"></i> Enviar invitación
+            </button>
+        </form>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

@@ -1,0 +1,5 @@
+{% if messages %}
+<div class="resena-mensajes" role="status">
+    {% for m in messages %}<p class="resena-mensajes__item resena-mensajes__item--{{ m.tags }}">{{ m }}</p>{% endfor %}
+</div>
+{% endif %}

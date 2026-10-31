@@ -2,6 +2,7 @@ import datetime
 import logging
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
+from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 from django.db.models import Sum, Q
@@ -12,14 +13,20 @@ from alumnos.models import (
 from alumnos.decorators import profesor_required, profesor_required_json
 from alumnos.roles import ADMIN, PROFESOR, abrir_sesion_rol
 from alumnos.utils import formato_clp, validar_rut_chileno, usuario_existe, validar_imagen_perfil
+from django.core.exceptions import ValidationError
+from django.http import FileResponse, Http404
+from . import foto
+from alumnos import paquetes
 
 logger = logging.getLogger(__name__)
 
-# Tarifas por inscripcion real y reglas comerciales oficiales (S4-03).
-# Comisión LBWUS 15% IVA incluido sobre precio final; importes brutos tutor: $12.750/$50.150/$98.600.
-VALOR_INSCRIPCION = 15000   # Precio de referencia por clase
-PAGO_PROFESOR = 12750       # 85% bruto correspondiente al tutor (S4-03)
-COMISION_LBWUS = 2250       # 15% comisión plataforma LBWUS IVA incluido
+VALOR_INSCRIPCION = 15000
+COMISION_LBWUS = 2250
+PAGO_PROFESOR = 12750
+
+def _valor_clase(inscripcion):
+    """Lo que pago el alumno por esa clase."""
+    return inscripcion.paquete.precio_por_clase if getattr(inscripcion, 'paquete_id', None) else VALOR_INSCRIPCION
 
 
 def calcular_saldos(profesor, retiros_lista=None):
@@ -31,15 +38,64 @@ def calcular_saldos(profesor, retiros_lista=None):
     valor_unitario = calc_ref['precio_total']
     pago_unitario = calc_ref['monto_tutor']
 
-    # 1. Inscripciones individuales confirmadas con pago pagado
-    inscripciones = Inscripcion.objects.filter(
-        clase__profesor=profesor,
-        estado=Inscripcion.ESTADO_CONFIRMADA,
-        pago__estado=Pago.ESTADO_PAGADA
-    ).count()
+    # 1. Inscripciones individuales o con Paquetes
+    inscripciones_qs = Inscripcion.objects.filter(clase__profesor=profesor)
+    if hasattr(inscripciones_qs, 'consumidas'):
+        inscripciones_consumidas = inscripciones_qs.consumidas().select_related('paquete')
+    else:
+        inscripciones_consumidas = inscripciones_qs.filter(estado=Inscripcion.ESTADO_CONFIRMADA).select_related('paquete')
 
-    total_ganado_inscripciones = inscripciones * valor_unitario
-    corresponde_tutor_inscripciones = inscripciones * pago_unitario
+    valores = [_valor_clase(i) for i in inscripciones_consumidas]
+    total_ganado_inscripciones = sum(valores)
+    corresponde_tutor_inscripciones = sum(paquetes.pago_profesor(v) for v in valores)
+
+    # 2. Planes vendidos asociados directamente a este profesor (PlanAlumno S4-03)
+    planes = PlanAlumno.objects.filter(
+        profesor=profesor,
+        pago__estado=Pago.ESTADO_PAGADA,
+        estado__in=[PlanAlumno.ESTADO_ACTIVO, PlanAlumno.ESTADO_AGOTADO]
+    ).only('monto_total', 'monto_tutor', 'total_clases', 'clases_consumidas')
+
+    total_ganado_planes = 0
+    corresponde_tutor_planes_consumido = 0
+    tutor_planes_pendiente = 0
+
+    for plan in planes:
+        total_ganado_planes += plan.monto_total
+        if plan.total_clases > 0:
+            monto_por_clase_tutor = plan.monto_tutor / plan.total_clases
+            consumido = int(round(monto_por_clase_tutor * plan.clases_consumidas))
+            pendiente_clases = plan.monto_tutor - consumido
+            corresponde_tutor_planes_consumido += consumido
+            tutor_planes_pendiente += pendiente_clases
+        else:
+            corresponde_tutor_planes_consumido += plan.monto_tutor
+
+    total_ganado = total_ganado_inscripciones + total_ganado_planes
+    bruto_tutor_acumulado = corresponde_tutor_inscripciones + corresponde_tutor_planes_consumido
+
+    if retiros_lista is not None:
+        aprobados = sum(r.monto for r in retiros_lista if r.estado == 'aprobado')
+        retiros_pendientes = sum(r.monto for r in retiros_lista if r.estado == 'pendiente')
+    else:
+        agregados_retiros = SolicitudRetiro.objects.filter(profesor=profesor).aggregate(
+            aprobados=Sum('monto', filter=Q(estado='aprobado')),
+            pendientes=Sum('monto', filter=Q(estado='pendiente')),
+        )
+        aprobados = agregados_retiros['aprobados'] or 0
+        retiros_pendientes = agregados_retiros['pendientes'] or 0
+
+    disponible = max(0, bruto_tutor_acumulado - aprobados - retiros_pendientes)
+
+    # Fondos pendientes: comisión retenida + saldo de clases no ejecutadas aún + retiros en trámite
+    comision_plataforma = total_ganado - (bruto_tutor_acumulado + tutor_planes_pendiente)
+    pendiente = comision_plataforma + tutor_planes_pendiente + retiros_pendientes
+
+    return {
+        'total_ganado': total_ganado,
+        'disponible': disponible,
+        'pendiente': pendiente,
+    }
 
     # 2. Planes vendidos asociados directamente a este profesor
     planes = PlanAlumno.objects.filter(
@@ -243,14 +299,19 @@ def panel_profesor(request):
         })
 
     # 2. Métricas del Día
-    dinero_hoy_val = inscripciones_hoy * PAGO_PROFESOR
+    # Dinero generado hoy segun las inscripciones reales de esas clases.
+    inscripciones_hoy = inscripciones.filter(
+        clase_id__in=[c.id_clase for c in clases[:6]]
+    ).select_related('paquete')
+    dinero_hoy_val = sum(paquetes.pago_profesor(_valor_clase(i)) for i in inscripciones_hoy)
     dinero_hoy = formato_clp(dinero_hoy_val)
     clases_disponibles = max(0, 8 - len(clases_hoy_lista))
 
     # 3. Gráfico de solicitudes mensuales (Últimos 5 meses)
     meses_nombres = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
-    current_month = datetime.datetime.now().month
+    current_month = timezone.localdate().month  # mes en Chile, no el del servidor
     rendimiento_meses = []
+# Un mes sin inscripciones vale 0.
     tope_grafico = 40
     for i in range(4, -1, -1):
         month_idx = (current_month - i - 1) % 12
@@ -308,7 +369,6 @@ def panel_profesor(request):
 def subir_titulo(request):
     if request.method != 'POST':
         return JsonResponse({"success": False, "message": "Método no permitido."})
-    from django.core.exceptions import ValidationError
     from . import titulo
 
     profesor = get_object_or_404(Profesor, id_profesor=request.session['profesor_id'])
@@ -320,6 +380,25 @@ def subir_titulo(request):
         "success": True,
         "message": "Título recibido. Un administrador lo revisará y te habilitará para hacer clases.",
     })
+
+
+@never_cache
+def foto_profesor(request, id_profesor):
+    """Foto de perfil: la ve el propio profesor y, si esta habilitado, cualquier usuario con sesion.
+
+    Misma regla que el perfil publico; sin MEDIA_URL publico.
+    """
+    if not request.user.is_authenticated:
+        raise Http404
+    profesor = get_object_or_404(Profesor.objects.select_related('user'), id_profesor=id_profesor)
+    es_dueno = profesor.user_id == request.user.id
+    visible = es_dueno or Profesor.objects.habilitados().filter(pk=profesor.pk).exists()
+    if not (visible and profesor.user.foto_perfil):
+        raise Http404
+    try:
+        return FileResponse(profesor.user.foto_perfil.open('rb'))
+    except FileNotFoundError:
+        raise Http404
 
 
 @profesor_required_json
@@ -356,23 +435,33 @@ def actualizar_perfil_prof(request):
             if error_msg:
                 return JsonResponse({"success": False, "message": error_msg})
 
-            foto_perfil = request.FILES.get('foto_perfil')
-            if foto_perfil is not None:
-                err_img = validar_imagen_perfil(foto_perfil)
-                if err_img:
-                    return JsonResponse({"success": False, "message": err_img}, status=400)
-                profesor.user.foto_perfil = foto_perfil
+# La foto se valida antes de guardar nada: si no sirve, el perfil queda igual.
+            archivo_foto = request.FILES.get('foto_perfil')
+            try:
+                foto_jpeg = foto.procesar(archivo_foto) if archivo_foto else None
+            except ValidationError as e:
+                return JsonResponse({"success": False, "message": e.messages[0]})
+
+            # Tarifa por clase: opcional; solo afecta a los paquetes que se vendan despues.
+            tarifa_txt = request.POST.get('tarifa', '').strip()
+            try:
+                tarifa = paquetes.validar_tarifa(tarifa_txt) if tarifa_txt else profesor.tarifa
+            except ValidationError as e:
+                return JsonResponse({"success": False, "message": e.messages[0]})
 
             profesor.user.first_name = nombre
             profesor.user.last_name = ''
             profesor.user.rut = rut
             profesor.user.username = rut
             profesor.especialidad = especialidad
-            profesor.telefono_publico = request.POST.get('telefono_publico') in ('on', 'true', '1')
+profesor.telefono_publico = request.POST.get('telefono_publico') in ('on', 'true', '1')
+            profesor.tarifa = tarifa
             profesor.user.direccion = direccion
             profesor.user.email = correo
             profesor.user.telefono = telefono
             profesor.user.genero = genero
+            if foto_jpeg:
+                foto.guardar(profesor.user, foto_jpeg)
             profesor.user.save()
             profesor.save()
 
@@ -432,11 +521,15 @@ def solicitar_retiro(request):
 
 
 def _es_admin(request):
-    """Solo un administrador con sesion activa puede crear otro."""
-    return bool(request.session.get(ADMIN.clave_sesion))
+    """Solo un administrador con sesion activa (perfil Tutor) puede crear otro.
+
+    La cuenta debe seguir activa: desactivarla no borra la sesion abierta.
+    """
+    return bool(request.session.get(ADMIN.clave_sesion)) and request.user.is_active
 
 
 def regis_tutor(request):
+    # Registro de un nuevo administrador (modelo Tutor). No es un registro publico.
     if not _es_admin(request):
         if request.method == 'POST':
             return JsonResponse(

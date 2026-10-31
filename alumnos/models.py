@@ -1,12 +1,14 @@
+from datetime import timedelta
 from decimal import Decimal
-from django.db import models, transaction
+from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.validators import MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.utils import timezone
 
-# Create your models here.
+from . import paquetes
+
 
 class Genero(models.Model):
     id_genero = models.AutoField(primary_key=True)
@@ -20,7 +22,7 @@ class CustomUser(AbstractUser):
         ('alumno', 'Alumno'),
         ('profesor', 'Profesor'),
         ('admin', 'Administrador'),
-        ('tutor', 'Tutor'),
+        ('apoderado', 'Apoderado'),
     )
     rol = models.CharField(max_length=15, choices=ROLES, default='alumno')
     rut = models.CharField(max_length=12, unique=True, null=True, blank=True)
@@ -33,24 +35,10 @@ class CustomUser(AbstractUser):
     def __str__(self):
         return f"{self.username} ({self.get_rol_display()})"
 
-    @property
-    def is_alumno(self):
-        return self.rol == 'alumno'
-
-    @property
-    def is_profesor(self):
-        return self.rol == 'profesor'
-        
-    @property
-    def is_tutor(self):
-        return self.rol == 'tutor'
-
-    @property
-    def is_administrador(self):
-        return self.rol == 'admin' or self.is_staff or self.is_superuser
-
 
 class Tutor(models.Model):
+    # Perfil del ADMINISTRADOR (ver roles.ADMIN), no un tutor legal: no reutilizar
+    # para apoderados de menores, porque tener este perfil abre el portal admin.
     id_tutor = models.AutoField(primary_key=True)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='perfil_tutor')
 
@@ -62,10 +50,25 @@ class Alumno(models.Model):
     id_alumno = models.AutoField(primary_key=True)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='perfil_alumno')
     nivel_educacion = models.CharField(max_length=10, choices=[('basica', 'Básica'), ('media', 'Media'), ('superior', 'Superior')])
-    tutor = models.ForeignKey(Tutor, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
         return f"Alumno: {self.user.first_name} {self.user.last_name}"
+
+    def resumen_progreso(self):
+        """Horas, clases y ramos de las clases que el alumno ya completo (vista Mi Progreso)."""
+        completadas = list(
+            Inscripcion.objects.filter(alumno=self).completadas().select_related('sesion', 'clase')
+        )
+        minutos = sum(i.sesion.duracion_minutos for i in completadas)
+        return {
+            'horas': round(minutos / 60, 1),
+            'clases': len(completadas),
+            'ramos': len({i.clase.asignatura_id for i in completadas}),
+        }
+
+    def plan_vigente(self):
+        """Suscripcion activa que vence mas tarde, o None si no tiene plan."""
+        return self.suscripciones.vigentes().order_by('-fecha_fin').first()
 
 
 class Especialidad(models.Model):
@@ -123,6 +126,12 @@ class Profesor(models.Model):
     titulo_estado = models.CharField(max_length=12, choices=ESTADOS_TITULO, default=TITULO_PENDIENTE)
     titulo_observacion = models.CharField(max_length=200, blank=True)
     titulo_actualizado = models.DateTimeField(null=True, blank=True)
+    # Valor de una clase de 60 min; de aqui salen los precios de los paquetes.
+    tarifa = models.PositiveIntegerField(
+        default=paquetes.TARIFA_BASE,
+        validators=[MinValueValidator(paquetes.TARIFA_MIN), MaxValueValidator(paquetes.TARIFA_MAX)],
+        help_text='Valor de una clase de 60 minutos, en pesos.',
+    )
 
     objects = ProfesorQuerySet.as_manager()
 
@@ -149,15 +158,43 @@ class Asignatura(models.Model):
         return self.nombre
 
 
+class ClaseQuerySet(models.QuerySet):
+    """Filtros del catalogo de clases que ve el alumno."""
+
+    def habilitadas(self):
+        """Clases de profesores con titulo aprobado (los unicos que pueden hacer clases)."""
+        return self.filter(profesor__titulo_estado=Profesor.TITULO_APROBADO)
+
+    def con_disponibilidad(self):
+        """Clases con al menos una sesion programada, futura y con cupo (ver SesionClaseQuerySet.disponibles)."""
+        sesiones = SesionClase.objects.disponibles().filter(clase=models.OuterRef('pk'))
+        return self.filter(models.Exists(sesiones))
+
+    def filtrar(self, especialidad=None, modalidad=None, solo_disponibles=False):
+        """Combina los filtros; los que vienen vacios no se aplican."""
+        clases = self
+        if especialidad:
+            clases = clases.filter(profesor__especialidad=especialidad)
+        if modalidad:
+            clases = clases.filter(modalidad=modalidad)
+        if solo_disponibles:
+            clases = clases.con_disponibilidad()
+        return clases
+
+
 class Clase(models.Model):
+    MODALIDADES = [('online', 'Online'), ('presencial', 'Presencial')]
+
     id_clase = models.AutoField(primary_key=True)
     asignatura = models.ForeignKey(Asignatura, on_delete=models.CASCADE)
-    modalidad = models.CharField(max_length=10, choices=[('online', 'Online'), ('presencial', 'Presencial')])
+    modalidad = models.CharField(max_length=10, choices=MODALIDADES)
     horario = models.TimeField()
     profesor = models.ForeignKey(Profesor, on_delete=models.CASCADE)
     en_vivo = models.BooleanField(default=False)
     descripcion_vivo = models.TextField(blank=True, null=True)
     temas_vivo = models.CharField(max_length=255, blank=True, null=True)
+
+    objects = ClaseQuerySet.as_manager()
 
     def __str__(self):
         return f"{self.asignatura.nombre} - {self.profesor.user.first_name}"
@@ -275,8 +312,17 @@ class SesionClase(models.Model):
         ]
 
     def __str__(self):
-        inicio_str = self.fecha_hora_inicio.strftime('%d/%m/%Y %H:%M') if self.fecha_hora_inicio else 'Sin fecha'
+        inicio_str = self.inicio_local.strftime('%d/%m/%Y %H:%M') if self.fecha_hora_inicio else 'Sin fecha'
         return f"{self.clase.asignatura.nombre} ({inicio_str}) - {self.get_estado_display()}"
+
+    # strftime no convierte zona: para mostrar horas fuera de templates usar estas.
+    @property
+    def inicio_local(self):
+        return timezone.localtime(self.fecha_hora_inicio)
+
+    @property
+    def fin_local(self):
+        return timezone.localtime(self.fecha_hora_fin)
 
     def clean(self):
         super().clean()
@@ -346,46 +392,29 @@ class SesionClase(models.Model):
         return InscripcionService.inscribir_alumno_en_sesion(alumno, self.pk)
 
 
-class Pago(models.Model):
-    """Registro de transacciones de pago con Webpay Plus o Simulación."""
-    ESTADO_INICIADA = 'iniciada'
-    ESTADO_PAGADA = 'pagada'
-    ESTADO_RECHAZADA = 'rechazada'
-    ESTADO_ANULADA = 'anulada'
+class InscripcionQuerySet(models.QuerySet):
+    def proximas(self):
+        """Activas cuya sesion aun no termina (o inscritas a la clase sin sesion puntual)."""
+        return self.filter(
+            models.Q(sesion__isnull=True) | models.Q(sesion__fecha_hora_fin__gt=timezone.now()),
+            estado__in=[Inscripcion.ESTADO_CONFIRMADA, Inscripcion.ESTADO_PENDIENTE],
+        )
 
-    ESTADOS_CHOICES = (
-        (ESTADO_INICIADA, 'Iniciada'),
-        (ESTADO_PAGADA, 'Pagada'),
-        (ESTADO_RECHAZADA, 'Rechazada'),
-        (ESTADO_ANULADA, 'Anulada'),
-    )
+    def completadas(self):
+        """Confirmadas en sesiones que ya terminaron y no se cancelaron."""
+        return self.filter(
+            estado=Inscripcion.ESTADO_CONFIRMADA,
+            sesion__fecha_hora_fin__lte=timezone.now(),
+        ).exclude(sesion__estado=SesionClase.ESTADO_CANCELADA)
 
-    id_pago = models.AutoField(primary_key=True)
-    buy_order = models.CharField(max_length=40, unique=True, db_index=True)
-    session_id = models.CharField(max_length=50, blank=True)
-    token_ws = models.CharField(max_length=100, unique=True, null=True, blank=True, db_index=True)
-    monto = models.PositiveIntegerField()
-    estado = models.CharField(max_length=20, choices=ESTADOS_CHOICES, default=ESTADO_INICIADA, db_index=True)
-    es_simulacion = models.BooleanField(default=False)
+    def consumidas(self):
+        """Las que gastan una clase del paquete (y le pagan al profesor).
 
-    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='pagos')
-    alumno = models.ForeignKey(Alumno, on_delete=models.SET_NULL, null=True, blank=True, related_name='pagos')
-    detalle_carrito = models.JSONField(default=list, blank=True)
-
-    authorization_code = models.CharField(max_length=40, blank=True)
-    ultimos_digitos_tarjeta = models.CharField(max_length=10, blank=True)
-    fecha_transaccion = models.DateTimeField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        verbose_name = 'Pago'
-        verbose_name_plural = 'Pagos'
-        ordering = ['-created_at']
-
-    def __str__(self):
-        tipo = " (Simulación)" if self.es_simulacion else ""
-        return f"Pago {self.buy_order} - ${self.monto} ({self.get_estado_display()}){tipo}"
+        Si el profesor cancela la sesion, la clase vuelve al alumno.
+        """
+        return self.filter(estado__in=Inscripcion.ESTADOS_ACTIVOS).exclude(
+            sesion__estado=SesionClase.ESTADO_CANCELADA
+        )
 
 
 class PlanAlumno(models.Model):
@@ -488,6 +517,7 @@ class Inscripcion(models.Model):
     ESTADO_CONFIRMADA = 'confirmada'
     ESTADO_PENDIENTE = 'pendiente'
     ESTADO_CANCELADA = 'cancelada'
+    ESTADOS_ACTIVOS = [ESTADO_CONFIRMADA, ESTADO_PENDIENTE]  # ocupan cupo y consumen una clase
 
     ESTADOS_CHOICES = [
         (ESTADO_CONFIRMADA, 'Confirmada'),
@@ -499,14 +529,6 @@ class Inscripcion(models.Model):
     fecha_inscripcion = models.DateField(auto_now_add=True)
     alumno = models.ForeignKey(Alumno, on_delete=models.CASCADE)
     clase = models.ForeignKey(Clase, on_delete=models.CASCADE)
-    pago = models.ForeignKey(
-        Pago,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='inscripciones',
-        verbose_name='Pago asociado'
-    )
     sesion = models.ForeignKey(
         SesionClase,
         on_delete=models.CASCADE,
@@ -530,6 +552,16 @@ class Inscripcion(models.Model):
         db_index=True,
         verbose_name='Estado de inscripción'
     )
+    # De que paquete salio la clase. Sin paquete: inscripciones de antes de los paquetes.
+    paquete = models.ForeignKey(
+        'PaqueteClases',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='inscripciones',
+    )
+
+    objects = InscripcionQuerySet.as_manager()
 
     class Meta:
         verbose_name = 'Inscripción'
@@ -559,10 +591,156 @@ class Inscripcion(models.Model):
             self.clase = self.sesion.clase
         super().save(*args, **kwargs)
 
+    @property
+    def puede_unirse(self):
+        """Solo una inscripcion confirmada, de una sesion no cancelada, entra a la sala virtual.
+
+        'pendiente' solo la asigna un admin a mano: aun no esta confirmada.
+        """
+        sesion_cancelada = self.sesion_id is not None and self.sesion.estado == SesionClase.ESTADO_CANCELADA
+        return self.estado == self.ESTADO_CONFIRMADA and not sesion_cancelada
+
+    @property
+    def puede_cancelar(self):
+        """Activa y antes de que empiece la sesion: nadie toma la clase y despues recupera el credito."""
+        empezo = self.sesion_id is not None and self.sesion.fecha_hora_inicio <= timezone.now()
+        return self.estado in self.ESTADOS_ACTIVOS and not empezo
+
     def __str__(self):
         if self.sesion:
             return f'{self.alumno} inscrito en {self.clase} (Sesión #{self.sesion.pk})'
         return f'{self.alumno} inscrito en {self.clase}'
+
+
+class SuscripcionQuerySet(models.QuerySet):
+    def vigentes(self):
+        return self.filter(estado=Suscripcion.ESTADO_ACTIVA, fecha_fin__gt=timezone.now())
+
+
+def _activar_pendientes(modelo, buy_order, aprobado):
+    """Activa o rechaza los pagos pendientes de una orden de Webpay (Suscripcion o PaqueteClases).
+
+    Idempotente: si Webpay vuelve dos veces, la segunda no encuentra pendientes.
+    """
+    pendientes = modelo.objects.filter(buy_order=buy_order, estado=modelo.ESTADO_PENDIENTE)
+    if not aprobado:
+        pendientes.update(estado=modelo.ESTADO_RECHAZADA)
+        return
+    ahora = timezone.now()
+    for pago in pendientes:
+        pago.estado = modelo.ESTADO_ACTIVA
+        pago.fecha_fin = ahora + timedelta(days=pago.dias)
+        pago.save(update_fields=['estado', 'fecha_fin'])
+
+
+class Suscripcion(models.Model):
+    """Plan contratado por un alumno.
+
+    Nace pendiente al iniciar Webpay y solo se activa cuando Transbank aprueba
+    el pago (se busca por buy_order: la vuelta desde Webpay puede llegar sin la
+    cookie de sesion). Es la unica fuente de verdad del plan: nada de localStorage.
+    """
+    # Codigos de plan que envia el formulario de planes.html.
+    PLAN_BASICO = '1'
+    PLANES = [
+        (PLAN_BASICO, 'Plan Básico'),
+        ('2', 'Plan Medio'),
+        ('3', 'Plan Superior'),
+        ('5', 'Plan Personalizado'),
+    ]
+    ESTADO_PENDIENTE = 'pendiente'
+    ESTADO_ACTIVA = 'activa'
+    ESTADO_RECHAZADA = 'rechazada'
+    ESTADOS = [
+        (ESTADO_PENDIENTE, 'Pendiente'),
+        (ESTADO_ACTIVA, 'Aprobado'),
+        (ESTADO_RECHAZADA, 'Rechazado'),
+    ]
+
+    alumno = models.ForeignKey(Alumno, on_delete=models.CASCADE, related_name='suscripciones')
+    plan = models.CharField(max_length=2, choices=PLANES)
+    dias = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    monto = models.PositiveIntegerField()
+    buy_order = models.CharField(max_length=26, db_index=True)
+    estado = models.CharField(max_length=10, choices=ESTADOS, default=ESTADO_PENDIENTE)
+    creada = models.DateTimeField(auto_now_add=True)
+    fecha_fin = models.DateTimeField(null=True, blank=True)
+
+    objects = SuscripcionQuerySet.as_manager()
+
+    class Meta:
+        verbose_name = 'Suscripción'
+        verbose_name_plural = 'Suscripciones'
+        ordering = ['-creada']
+
+    def __str__(self):
+        return f'{self.get_plan_display()} - {self.alumno} ({self.get_estado_display()})'
+
+    @property
+    def es_premium(self):
+        return self.plan != self.PLAN_BASICO
+
+    @classmethod
+    def confirmar_pago(cls, buy_order, aprobado):
+        """Activa o rechaza las suscripciones pendientes de la orden."""
+        _activar_pendientes(cls, buy_order, aprobado)
+
+
+class PaqueteClasesQuerySet(models.QuerySet):
+    def vigentes(self):
+        return self.filter(estado=PaqueteClases.ESTADO_ACTIVA, fecha_fin__gt=timezone.now())
+
+
+class PaqueteClases(models.Model):
+    """Paquete Flexible, Progreso o Intensivo comprado a un profesor (ver alumnos/paquetes.py).
+
+    Nace pendiente al iniciar Webpay y solo se activa cuando Transbank aprueba.
+    Plan, clases, tarifa y monto quedan fijos al comprar: si el profesor cambia
+    su tarifa, lo ya vendido no cambia. Cada inscripcion activa consume una
+    clase; al cancelarla vuelve, porque las usadas se cuentan, no se restan.
+    """
+    ESTADO_PENDIENTE = Suscripcion.ESTADO_PENDIENTE
+    ESTADO_ACTIVA = Suscripcion.ESTADO_ACTIVA
+    ESTADO_RECHAZADA = Suscripcion.ESTADO_RECHAZADA
+
+    alumno = models.ForeignKey(Alumno, on_delete=models.CASCADE, related_name='paquetes')
+    # SET_NULL: si se borra el profesor, el pago queda en el historial.
+    profesor = models.ForeignKey(Profesor, on_delete=models.SET_NULL, null=True, related_name='paquetes_vendidos')
+    plan = models.CharField(max_length=10, choices=paquetes.CHOICES)
+    clases = models.PositiveSmallIntegerField(validators=[MinValueValidator(1)])
+    tarifa = models.PositiveIntegerField()
+    monto = models.PositiveIntegerField()
+    dias = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    buy_order = models.CharField(max_length=26, db_index=True)
+    estado = models.CharField(max_length=10, choices=Suscripcion.ESTADOS, default=ESTADO_PENDIENTE)
+    creada = models.DateTimeField(auto_now_add=True)
+    fecha_fin = models.DateTimeField(null=True, blank=True)
+
+    objects = PaqueteClasesQuerySet.as_manager()
+
+    class Meta:
+        verbose_name = 'Paquete de clases'
+        verbose_name_plural = 'Paquetes de clases'
+        ordering = ['-creada']
+
+    def __str__(self):
+        return f'{self.get_plan_display()} - {self.alumno} ({self.get_estado_display()})'
+
+    @property
+    def clases_usadas(self):
+        return self.inscripciones.consumidas().count()
+
+    @property
+    def clases_disponibles(self):
+        return max(0, self.clases - self.clases_usadas)
+
+    @property
+    def precio_por_clase(self):
+        return self.monto // self.clases
+
+    @classmethod
+    def confirmar_pago(cls, buy_order, aprobado):
+        _activar_pendientes(cls, buy_order, aprobado)
 
 
 class Reporte(models.Model):

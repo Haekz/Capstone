@@ -1,6 +1,4 @@
-import json
-from unittest.mock import patch, MagicMock
-from django.test import TestCase, Client
+from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
@@ -160,39 +158,9 @@ class SeguridadBlindajeTests(TestCase):
     # ----------------------------------------------------
     # 3. WEBPAY: PREVENCIÓN DE PRICE TAMPERING
     # ----------------------------------------------------
-    @patch('alumnos.views._tx')
-    def test_06_webpay_price_tampering_plan_estandar_usa_precio_oficial(self, mock_tx):
-        """
-        Si un atacante envía el Plan 1 (Plan Básico, $89.990) alterando el precio
-        del JSON a $350 CLP, el servidor ignora el precio del cliente y cobra
-        los $89.990 oficiales del catálogo.
-        """
-        instancia_mock = MagicMock()
-        instancia_mock.create.return_value = {
-            'url': 'https://webpay3gint.transbank.cl/test',
-            'token': 'mock_token_seguro_test'
-        }
-        mock_tx.return_value = instancia_mock
-
-        # Carrito manipulado: Plan 1 ($89.990) pero precio enviado $350
-        carrito_manipulado = json.dumps([{
-            'id': '1',
-            'titulo': 'Plan Básico',
-            'precio': '$350',  # Intento de descuento malicioso
-            'periodo': 'mensual',
-            'cantidad': 1
-        }])
-
-        resp = self.client.post(reverse('iniciar_webpay'), {
-            'carrito': carrito_manipulado,
-            'amount': '350'
-        })
-        self.assertEqual(resp.status_code, 200)
-
-        # Verificar que a Transbank se le envió el precio oficial ($89.990) y NO $350
-        args, _ = instancia_mock.create.call_args
-        monto_enviado = args[2]
-        self.assertEqual(monto_enviado, 89990)
+    # El price tampering del carrito ya no existe: los paquetes se cobran con el
+    # precio del servidor (tests.test_paquetes.CompraTests, test_el_precio_enviado_
+    # por_el_cliente_se_ignora).
 
     # ----------------------------------------------------
     # 4. INMUTABILIDAD DEL RUT EN PERFIL DE PROFESOR

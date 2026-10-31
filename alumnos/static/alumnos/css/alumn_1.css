@@ -713,6 +713,21 @@ body.dark-mode .teacher-card {
     margin-bottom: 4px;
 }
 
+/* SCRUM-32: enlace al perfil profesional */
+.teacher-profile-link {
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text);
+    text-decoration: underline;
+}
+
+.teacher-profile-link:hover,
+.teacher-profile-link:focus-visible {
+    color: var(--primary);
+}
+
 .teacher-specialty {
     font-size: 0.85rem;
     color: var(--primary);
@@ -720,12 +735,6 @@ body.dark-mode .teacher-card {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: 2px;
-}
-
-.teacher-rating {
-    font-size: 0.85rem;
-    color: var(--accent);
-    font-weight: 600;
 }
 
 .teacher-distance-box {
@@ -736,17 +745,73 @@ body.dark-mode .teacher-card {
     gap: 5px;
 }
 
-.teacher-distance {
-    background-color: rgba(245, 158, 11, 0.08);
-    color: var(--accent);
-    padding: 4px 10px;
+/* Aviso de las pestañas con datos de ejemplo (tutores y videos) */
+.demo-notice {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    border: 1px dashed #d1d5db;
     border-radius: 8px;
-    font-size: 0.8rem;
-    font-weight: 700;
+    padding: 8px 12px;
+    margin-bottom: 12px;
 }
 
-.teacher-distance i {
-    margin-right: 4px;
+body.dark-mode .demo-notice {
+    border-color: #4b5563;
+}
+
+/* Filtros del catálogo de clases (los colores salen de los tokens: modo oscuro incluido) */
+.catalog-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px 16px;
+    margin-bottom: 18px;
+}
+
+.catalog-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-light);
+}
+
+.catalog-filter--check {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+}
+
+.catalog-filter-input {
+    min-width: 180px;
+    min-height: 40px;
+    padding: 8px 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background-color: var(--white);
+    color: var(--text);
+    font-size: 0.9rem;
+}
+
+.catalog-filter-input:focus-visible,
+.catalog-filter--check input:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+#portal-alumno .catalog-filters .btn-join-class--primary {
+    width: auto;
+    min-height: 40px;
+    padding: 8px 18px;
+}
+
+.catalog-filter-clear {
+    align-self: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--primary-ink);
 }
 
 .btn-contact-teacher {
@@ -1682,215 +1747,9 @@ body.dark-mode .premium-lock-overlay {
     margin: 0 0 10px 0;
 }
 
-/* esta parte es del carrusel deslizable de cursos */
-.courses-carousel-wrapper {
-    position: relative;
-    padding: 0 10px;
-}
 
-.courses-carousel-track {
-    display: flex;
-    gap: 20px;
-    overflow-x: auto;
-    scroll-behavior: smooth;
-    padding: 15px 5px;
-    scrollbar-width: none; /* Firefox */
-}
 
-.courses-carousel-track::-webkit-scrollbar {
-    display: none; /* Safari and Chrome */
-}
 
-/* esta parte es del diseño de las tarjetas de curso */
-.course-card {
-    width: 220px;
-    flex-shrink: 0;
-    background-color: var(--white);
-    border: 1px solid rgba(168, 85, 247, 0.08);
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
-    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-}
-
-body.dark-mode .course-card {
-    background-color: #1f2937;
-    border-color: rgba(255, 255, 255, 0.05);
-}
-
-.course-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 12px 25px rgba(168, 85, 247, 0.08);
-    border-color: var(--primary-light);
-}
-
-.course-thumb-box {
-    height: 120px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--white);
-    font-size: 2.6rem;
-    position: relative;
-}
-
-.course-card-body {
-    padding: 12px 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    flex: 1;
-}
-
-.course-title {
-    font-size: 0.88rem;
-    font-weight: 700;
-    color: var(--text);
-    margin: 0;
-    line-height: 1.4;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    height: 2.8em;
-}
-
-.course-author {
-    font-size: 0.75rem;
-    color: var(--text-light);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.course-rating-row {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 0.78rem;
-}
-
-.rating-val {
-    font-weight: 700;
-    color: #b45309; /* star rating color */
-}
-
-body.dark-mode .rating-val {
-    color: #fbbf24;
-}
-
-.stars-box {
-    display: flex;
-    gap: 1px;
-    font-size: 0.7rem;
-}
-
-.review-count {
-    color: var(--text-light);
-}
-
-/* esta parte es de las etiquetas y precios de los cursos */
-.course-price-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 2px;
-}
-
-.price-now {
-    font-size: 0.95rem;
-    font-weight: 800;
-    color: var(--text);
-}
-
-.price-was {
-    font-size: 0.82rem;
-    text-decoration: line-through;
-    color: var(--text-light);
-}
-
-.course-badges-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: auto;
-    padding-top: 6px;
-}
-
-.badge-premium {
-    background-color: rgba(168, 85, 247, 0.1);
-    color: var(--primary);
-    font-size: 0.72rem;
-    font-weight: 700;
-    padding: 3px 8px;
-    border-radius: 4px;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-}
-
-body.dark-mode .badge-premium {
-    background-color: rgba(168, 85, 247, 0.2);
-    color: var(--primary-light);
-}
-
-.badge-bestseller {
-    background-color: #ccfbf1;
-    color: #0f766e;
-    font-size: 0.72rem;
-    font-weight: 700;
-    padding: 3px 8px;
-    border-radius: 4px;
-}
-
-body.dark-mode .badge-bestseller {
-    background-color: rgba(13, 148, 136, 0.2);
-    color: #2dd4bf;
-}
-
-/* esta parte es de los botones de navegacion del carrusel */
-.carousel-nav-btn {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: var(--white);
-    border: 1px solid rgba(168, 85, 247, 0.15);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.1rem;
-    color: var(--text);
-    cursor: pointer;
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 10;
-    transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
-}
-
-body.dark-mode .carousel-nav-btn {
-    background-color: #1f2937;
-    border-color: rgba(255, 255, 255, 0.08);
-    color: var(--white);
-}
-
-.carousel-nav-btn:hover {
-    transform: translateY(-50%) scale(1.1);
-    background-color: var(--primary);
-    color: var(--white);
-}
-
-.carousel-nav-btn.next {
-    right: -15px;
-}
-
-.carousel-nav-btn.prev {
-    left: -15px;
-}
 
 /* esta parte es del diseño de dos columnas del buzon de dudas */
 .inbox-layout {
@@ -2340,171 +2199,7 @@ body.dark-mode .feedback-card-item {
     margin-bottom: 12px;
 }
 
-/* esta parte es de los estilos para el reproductor de video interactivo */
-.video-layout-grid {
-    display: grid;
-    grid-template-columns: 2.2fr 1fr;
-    gap: 25px;
-    margin-top: 10px;
-}
 
-@media (max-width: 900px) {
-    .video-layout-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-.video-player-column {
-    display: flex;
-    flex-direction: column;
-}
-
-.video-player-wrapper {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 16/9;
-    background-color: #000;
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-}
-
-.video-playlist-column {
-    display: flex;
-    flex-direction: column;
-    background: rgba(168, 85, 247, 0.02);
-    border: 1px solid rgba(168, 85, 247, 0.08);
-    border-radius: 16px;
-    padding: 20px;
-    max-height: 480px;
-}
-
-body.dark-mode .video-playlist-column {
-    background: #111827;
-    border-color: rgba(255, 255, 255, 0.05);
-}
-
-.video-lessons-list {
-    flex-grow: 1;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding-right: 5px;
-}
-
-.playlist-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 16px;
-    border-radius: 12px;
-    background: var(--white);
-    border: 1.5px solid rgba(168, 85, 247, 0.06);
-    cursor: pointer;
-    transition: all 0.25s ease;
-}
-
-body.dark-mode .playlist-item {
-    background: #1f2937;
-    border-color: rgba(255, 255, 255, 0.05);
-}
-
-.playlist-item:hover {
-    border-color: var(--primary);
-    background: rgba(168, 85, 247, 0.03);
-    transform: translateY(-2px);
-}
-
-.playlist-item.active {
-    background: var(--primary-light);
-    border-color: var(--primary);
-}
-
-body.dark-mode .playlist-item.active {
-    background: rgba(168, 85, 247, 0.15);
-    border-color: var(--primary);
-}
-
-.playlist-item-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    width: 80%;
-}
-
-.playlist-item-left .lesson-num {
-    font-size: 0.95rem;
-    font-weight: 800;
-    color: var(--text-light);
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(168, 85, 247, 0.05);
-    border-radius: 50%;
-    flex-shrink: 0;
-}
-
-.playlist-item.active .playlist-item-left .lesson-num {
-    background: var(--primary);
-    color: var(--white);
-}
-
-.playlist-item-left .lesson-details {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    overflow: hidden;
-}
-
-.playlist-item-left .lesson-title {
-    font-size: 0.88rem;
-    font-weight: 700;
-    color: var(--text);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.playlist-item-left .lesson-duration {
-    font-size: 0.75rem;
-    color: var(--text-light);
-}
-
-.playlist-item-right i {
-    font-size: 1.2rem;
-    color: var(--text-light);
-    transition: color 0.2s;
-}
-
-.playlist-item:hover .playlist-item-right i,
-.playlist-item.active .playlist-item-right i {
-    color: var(--primary);
-}
-
-/* esta parte es del menu de pestañas dentro del modal de video */
-.video-tab-btn {
-    background: none;
-    border: none;
-    padding: 8px 16px;
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: var(--text-light);
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    transition: all 0.2s ease;
-}
-
-.video-tab-btn:hover {
-    color: var(--primary);
-}
-
-.video-tab-btn.active {
-    color: var(--primary);
-    border-bottom-color: var(--primary);
-}
 
 /* esta parte es de los estilos para las ventanas modales emergentes */
 .custom-modal-overlay {
@@ -3056,8 +2751,7 @@ body.dark-mode .sidebar-slider-box {
 .plan-card-display, body.dark-mode .plan-card-display,
 .progress-stat-card, body.dark-mode .progress-stat-card,
 .progress-details-card, body.dark-mode .progress-details-card,
-.inbox-layout, body.dark-mode .inbox-layout,
-.video-playlist-column, body.dark-mode .video-playlist-column {
+.inbox-layout, body.dark-mode .inbox-layout {
     background-color: var(--white);
     border: 1px solid var(--line);
     box-shadow: var(--shadow);
@@ -3076,8 +2770,7 @@ body.dark-mode .sidebar-slider-box {
 .class-item-card,
 .classes-table-container,
 .plan-card-display,
-.progress-stat-card,
-.video-playlist-column {
+.progress-stat-card {
     border-radius: var(--r-md);
 }
 
@@ -3100,9 +2793,7 @@ body.dark-mode .support-list-card h3 {
 /* ── Tarjetas internas (listas de profesores, videos, cursos, tickets) ── */
 .teacher-card, body.dark-mode .teacher-card,
 .video-card, body.dark-mode .video-card,
-.course-card, body.dark-mode .course-card,
 .ticket-item, body.dark-mode .ticket-item,
-.playlist-item, body.dark-mode .playlist-item,
 .feedback-card-item, body.dark-mode .feedback-card-item {
     background-color: var(--white);
     border: 1px solid var(--line);
@@ -3110,13 +2801,11 @@ body.dark-mode .support-list-card h3 {
 }
 
 .teacher-card,
-.video-card,
-.course-card {
+.video-card {
     border-radius: var(--r-md);
 }
 
 .ticket-item,
-.playlist-item,
 .feedback-card-item {
     border-radius: var(--r-sm);
 }
@@ -3126,21 +2815,13 @@ body.dark-mode .support-list-card h3 {
 .teacher-card:hover,
 .video-card:hover,
 .class-item-card:hover,
-.course-card:hover,
-.ticket-item:hover,
-.playlist-item:hover {
+.ticket-item:hover {
     transform: none;
     border-color: var(--primary);
     box-shadow: 0 8px 22px hsl(var(--hue) 70% 40% / 0.08);
 }
 
 .plan-card-display:hover {
-    border-color: var(--primary);
-}
-
-.playlist-item.active,
-body.dark-mode .playlist-item.active {
-    background: var(--primary-soft);
     border-color: var(--primary);
 }
 
@@ -3259,10 +2940,6 @@ body.dark-mode .tab-btn.active {
     background-color: transparent;
     color: var(--primary-ink);
     border-bottom-color: var(--primary);
-}
-
-.video-tab-btn.active {
-    color: var(--primary-ink);
 }
 
 /* ── Buscador ── */
@@ -3477,21 +3154,6 @@ body.dark-mode .summary-details {
     border-top-color: var(--line);
 }
 
-/* ── Carrusel de cursos ── */
-.carousel-nav-btn,
-body.dark-mode .carousel-nav-btn {
-    background-color: var(--white);
-    border: 1px solid var(--line);
-    color: var(--text);
-    box-shadow: var(--shadow);
-}
-
-.carousel-nav-btn:hover,
-body.dark-mode .carousel-nav-btn:hover {
-    background-color: var(--primary);
-    border-color: var(--primary);
-    color: #ffffff;
-}
 
 /* ── Barras de progreso ── */
 .progress-bar-container {
@@ -3507,11 +3169,9 @@ body.dark-mode .carousel-nav-btn:hover {
    (antes usaban var(--white) y en modo oscuro quedaban ilegibles) ── */
 .video-play-btn,
 .btn-contact-teacher,
-.course-thumb-box,
 .lock-icon-wrapper,
 .message-row.sent .message-bubble,
-.btn-chat-send,
-.playlist-item.active .playlist-item-left .lesson-num {
+.btn-chat-send {
     color: #ffffff;
 }
 
@@ -3958,6 +3618,27 @@ body.dark-mode .carrito-dropdown {
 .pp-wrap {
     max-width: 1080px;
     margin: 0 auto;
+}
+
+.pp-vacio {
+    text-align: center;
+    color: var(--text-light);
+    margin-bottom: 24px;
+}
+
+.pp-acciones {
+    display: flex;
+    justify-content: center;
+    margin-top: 28px;
+}
+
+.pp-acciones .pp-btn {
+    width: auto;
+    text-decoration: none;
+}
+
+.pp-card .pp-btn {
+    text-decoration: none;
 }
 
 .pp-header {
@@ -4928,69 +4609,6 @@ body.dark-mode .stat-icon {
     font-size: 1.05rem;
 }
 
-#portal-alumno .ap-carousel-block {
-    margin-bottom: 45px;
-    position: relative;
-}
-
-#portal-alumno .ap-cat-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 15px;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-#portal-alumno .ap-cat-title-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-#portal-alumno .ap-cat-title {
-    font-size: 1.45rem;
-    font-weight: 800;
-    color: var(--text);
-    margin: 0;
-}
-
-#portal-alumno .ap-edit-profession {
-    font-size: 0.88rem;
-    font-weight: 700;
-    color: var(--primary);
-    text-decoration: none;
-}
-
-#portal-alumno .ap-cat-meta {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-#portal-alumno .ap-badge-new {
-    background-color: #d1fae5;
-    color: #065f46;
-    font-size: 0.78rem;
-    font-weight: 700;
-    padding: 4px 10px;
-    border-radius: 6px;
-}
-
-#portal-alumno .ap-cat-hint {
-    font-size: 0.85rem;
-    color: var(--text-light);
-}
-
-#portal-alumno .ap-relative {
-    position: relative;
-}
-
-#portal-alumno .ap-mb-15 {
-    margin-bottom: 15px;
-}
-
 #portal-alumno .ap-section-medium {
     max-width: 1000px;
     margin: 0 auto;
@@ -5037,192 +4655,6 @@ body.dark-mode .stat-icon {
 
 #portal-alumno .ap-mt-30 {
     margin-top: 30px;
-}
-
-#portal-alumno .ap-modal-sm {
-    max-width: 550px;
-}
-
-#portal-alumno .ap-detail-title {
-    margin: 0;
-    font-weight: 800;
-    font-size: 1.35rem;
-    color: var(--text);
-}
-
-#portal-alumno .ap-detail-banner {
-    height: 180px;
-    border-radius: 12px;
-    margin-bottom: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 2.2rem;
-    font-weight: 800;
-    text-align: center;
-    padding: 20px;
-    text-shadow: 0 4px 8px rgba(0,0,0,0.3);
-}
-
-#portal-alumno .ap-detail-badges {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 15px;
-    flex-wrap: wrap;
-}
-
-#portal-alumno .ap-detail-desc {
-    color: var(--text-light);
-    font-size: 0.95rem;
-    line-height: 1.6;
-    margin-bottom: 20px;
-}
-
-#portal-alumno .ap-detail-meta {
-    border-top: 1px solid rgba(168, 85, 247, 0.1);
-    padding-top: 15px;
-    margin-bottom: 20px;
-}
-
-#portal-alumno .ap-detail-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-}
-
-#portal-alumno .ap-detail-label {
-    color: var(--text-light);
-    font-size: 0.9rem;
-}
-
-#portal-alumno .ap-text-strong {
-    color: var(--text);
-}
-
-#portal-alumno .ap-detail-rating {
-    color: var(--text);
-    font-weight: 700;
-}
-
-#portal-alumno .ap-detail-row-last {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-#portal-alumno .ap-detail-price {
-    font-size: 1.35rem;
-    font-weight: 800;
-    color: var(--primary);
-    margin-right: 8px;
-}
-
-#portal-alumno .ap-detail-oldprice {
-    text-decoration: line-through;
-    color: var(--text-light);
-    font-size: 0.95rem;
-}
-
-#portal-alumno .ap-modal-video {
-    max-width: 1000px;
-    width: 95%;
-    padding: 25px;
-}
-
-#portal-alumno .ap-video-title {
-    margin: 0;
-    font-size: 1.3rem;
-    font-weight: 800;
-    color: var(--text);
-}
-
-#portal-alumno .ap-video-title-icon {
-    color: var(--primary);
-    margin-right: 8px;
-}
-
-#portal-alumno .ap-video-player {
-    width: 100%;
-    height: 100%;
-    border-radius: 12px;
-    background: #000;
-    outline: none;
-}
-
-#portal-alumno .ap-mt-15 {
-    margin-top: 15px;
-}
-
-#portal-alumno .ap-video-tabs-nav {
-    display: flex;
-    gap: 10px;
-    border-bottom: 1px solid rgba(168, 85, 247, 0.1);
-    padding-bottom: 10px;
-    margin-bottom: 15px;
-}
-
-#portal-alumno .ap-video-desc {
-    font-size: 0.9rem;
-    color: var(--text-light);
-    line-height: 1.6;
-}
-
-#portal-alumno .ap-resource-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-#portal-alumno .ap-resource-btn {
-    display: flex;
-    width: 100%;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 15px;
-    border-radius: 8px;
-    border: 1px solid rgba(168, 85, 247, 0.1);
-    background: rgba(168, 85, 247, 0.01);
-    color: var(--text);
-    text-decoration: none;
-    font-size: 0.88rem;
-    font-family: inherit;
-    text-align: left;
-    cursor: pointer;
-}
-
-#portal-alumno .ap-pdf-icon {
-    color: #ef4444;
-    margin-right: 8px;
-}
-
-#portal-alumno .ap-video-tutor-text {
-    font-size: 0.9rem;
-    color: var(--text-light);
-    line-height: 1.6;
-    margin-bottom: 12px;
-}
-
-#portal-alumno .ap-btn-sm {
-    border-radius: 8px;
-    padding: 8px 16px;
-    font-size: 0.85rem;
-}
-
-#portal-alumno .ap-mr-6 {
-    margin-right: 6px;
-}
-
-#portal-alumno .ap-side-title {
-    margin: 0 0 12px 0;
-    font-size: 0.95rem;
-    font-weight: 800;
-    color: var(--text);
 }
 
 #portal-alumno .ap-transactions {

@@ -1,0 +1,226 @@
+{% extends 'admin_portal/base_admin.html' %}
+
+{% block title %}Apoderados — Admin LBWUS{% endblock %}
+{% block page_title %}Verificación de Apoderados{% endblock %}
+{% block page_subtitle %}Revisa el carnet y el documento del vínculo que subió el apoderado. Se borran al aprobar o rechazar; cada vez que abres uno queda registrado.{% endblock %}
+{% block nav_apoderados %}active{% endblock %}
+
+{% block content %}
+
+{% if messages %}
+<div class="panel" role="status" style="margin-bottom:20px; padding:14px 18px;">
+    {% for m in messages %}<div>{{ m }}</div>{% endfor %}
+</div>
+{% endif %}
+
+<div class="panel">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-person-vcard-fill"></i> Identidad por revisar ({{ pendientes|length }})</span>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="user-table">
+            <thead>
+                <tr><th>Apoderado</th><th>Datos a comparar con el documento</th><th>Evidencia</th><th>Decisión</th></tr>
+            </thead>
+            <tbody>
+                {% for a in pendientes %}
+                <tr>
+                    <td><strong>{{ a.nombre }}</strong><br><small>{{ a.user.email }}{% if a.user.telefono %} · {{ a.user.telefono }}{% endif %}</small></td>
+                    <td>RUT {{ a.user.rut }}<br><small>Nacimiento: {{ a.user.fecha_nacimiento|date:"d-m-Y" }}</small></td>
+                    <td><small>Correo confirmado el {{ a.correo_verificado|date:"d-m-Y H:i" }}<br>
+                        Declaración v{{ a.version_declaracion }} aceptada el {{ a.declaracion_aceptada|date:"d-m-Y H:i" }}</small>
+                        {% for d in a.documentos.all %}<br><a href="{% url 'apoderado_documento' d.pk %}" target="_blank" rel="noopener">Ver {{ d.get_tipo_display|lower }}</a>{% empty %}<br><small>Sin carnet subido</small>{% endfor %}</td>
+                    <td>
+                        <form method="post" action="{% url 'apoderado_revisar' a.pk %}" style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+                            {% csrf_token %}
+                            <label style="display:inline-flex; gap:6px; align-items:center;">
+                                <input type="checkbox" name="rut_coincide" value="on"> El RUT del carnet coincide
+                            </label>
+                            <input type="text" name="observacion" maxlength="300" placeholder="Observación (obligatoria para rechazar)"
+                                aria-label="Observación sobre {{ a.nombre }}"
+                                style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--bg-card); color:var(--text-primary);">
+                            <button type="submit" name="decision" value="aprobar" class="btn-primary"><i class="bi bi-check-lg"></i> Aprobar</button>
+                            <button type="submit" name="decision" value="rechazar" class="btn-secondary"><i class="bi bi-x-lg"></i> Rechazar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4">No hay apoderados por revisar.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="panel" style="margin-top:28px;">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-people-fill"></i> Vínculos por verificar ({{ vinculos_pendientes|length }})</span>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="user-table">
+            <thead>
+                <tr><th>Estudiante</th><th>Apoderado</th><th>Evidencia</th><th>Decisión</th></tr>
+            </thead>
+            <tbody>
+                {% for v in vinculos_pendientes %}
+                <tr>
+                    <td><strong>{{ v.alumno.user.first_name }}</strong><br><small>RUT {{ v.alumno.user.rut }} · Nacimiento: {{ v.alumno.user.fecha_nacimiento|date:"d-m-Y" }}</small></td>
+                    <td>{{ v.apoderado.nombre }} ({{ v.get_parentesco_display }})<br><small>RUT {{ v.apoderado.user.rut }}</small></td>
+                    <td><small>Declaración v{{ v.version_declaracion }} aceptada el {{ v.declaracion_aceptada|date:"d-m-Y H:i" }}</small>
+                        {% for inv in v.invitaciones.all %}<br><small>El estudiante invitó a {{ inv.correo }}</small>{% endfor %}
+                        {% for d in v.documentos.all %}<br><a href="{% url 'apoderado_documento' d.pk %}" target="_blank" rel="noopener">Ver {{ d.get_tipo_display|lower }}</a>{% empty %}<br><small>Sin documento subido</small>{% endfor %}</td>
+                    <td>
+                        <form method="post" action="{% url 'apoderado_revisar_vinculo' v.pk %}" style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+                            {% csrf_token %}
+                            <label style="display:inline-flex; gap:6px; align-items:center;">
+                                <input type="checkbox" name="certificado_coincide" value="on"> El documento confirma el parentesco y los datos
+                            </label>
+                            <input type="text" name="observacion" maxlength="300" placeholder="Observación (obligatoria para rechazar)"
+                                aria-label="Observación sobre el vínculo de {{ v.alumno.user.first_name }}"
+                                style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--bg-card); color:var(--text-primary);">
+                            <button type="submit" name="decision" value="aprobar" class="btn-primary"><i class="bi bi-check-lg"></i> Verificar</button>
+                            <button type="submit" name="decision" value="rechazar" class="btn-secondary"><i class="bi bi-x-lg"></i> Rechazar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4">No hay vínculos por verificar.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="panel" style="margin-top:28px;">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-clock-history"></i> Registro de decisiones (últimas 50)</span>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="user-table">
+            <thead>
+                <tr><th>Fecha</th><th>Apoderado</th><th>Decisión</th><th>Documento</th><th>Canal</th><th>Observación</th><th>Administrador</th></tr>
+            </thead>
+            <tbody>
+                {% for r in historial %}
+                <tr>
+                    <td>{{ r.fecha|date:"d-m-Y H:i" }}</td>
+                    <td>{{ r.apoderado.nombre }}</td>
+                    <td><span class="badge">{{ r.get_decision_display }}</span></td>
+                    <td>{{ r.get_documento_display|default:"—" }}</td>
+                    <td>{{ r.get_canal_display|default:"—" }}</td>
+                    <td>{{ r.observacion|default:"—" }}</td>
+                    <td>{{ r.administrador.first_name|default:"Cuenta eliminada" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7">Todavía no hay decisiones registradas.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="panel" style="margin-top:28px;">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-clock-history"></i> Registro de vínculos (últimos 50)</span>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="user-table">
+            <thead>
+                <tr><th>Fecha</th><th>Estudiante</th><th>Apoderado</th><th>Decisión</th><th>Canal</th><th>Observación</th><th>Administrador</th></tr>
+            </thead>
+            <tbody>
+                {% for r in historial_vinculos %}
+                <tr>
+                    <td>{{ r.fecha|date:"d-m-Y H:i" }}</td>
+                    <td>{{ r.vinculo.alumno.user.first_name }}</td>
+                    <td>{{ r.vinculo.apoderado.nombre }} ({{ r.vinculo.get_parentesco_display }})</td>
+                    <td><span class="badge">{{ r.get_decision_display }}</span></td>
+                    <td>{{ r.get_canal_display|default:"—" }}</td>
+                    <td>{{ r.observacion|default:"—" }}</td>
+                    <td>{{ r.administrador.first_name|default:"Cuenta eliminada" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7">Todavía no hay decisiones sobre vínculos.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="panel" style="margin-top:28px;">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-link-45deg"></i> Vínculos verificados</span>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="user-table">
+            <thead>
+                <tr><th>Estudiante</th><th>Apoderado</th><th>Estado</th><th>Acción</th></tr>
+            </thead>
+            <tbody>
+                {% for v in vinculos_vigentes %}
+                <tr>
+                    <td>{{ v.alumno.user.first_name }} · RUT {{ v.alumno.user.rut }}</td>
+                    <td>{{ v.apoderado.nombre }} ({{ v.get_parentesco_display }})</td>
+                    <td>{% if v.termino_por_edad %}Terminó: cumplió 18{% else %}Vigente{% endif %}</td>
+                    <td><a href="{% url 'apoderados_revocar_vinculo' v.pk %}">Revocar</a></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4">No hay vínculos verificados.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="panel" style="margin-top:28px;">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-x-octagon"></i> Revocaciones (últimas 50)</span>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="user-table">
+            <thead>
+                <tr><th>Fecha</th><th>Estudiante</th><th>Apoderado</th><th>Motivo</th><th>Revocó</th></tr>
+            </thead>
+            <tbody>
+                {% for r in revocaciones %}
+                <tr>
+                    <td>{{ r.fecha|date:"d-m-Y H:i" }}</td>
+                    <td>{{ r.vinculo.alumno.user.first_name }}</td>
+                    <td>{{ r.vinculo.apoderado.nombre }}</td>
+                    <td>{{ r.motivo|default:"—" }}</td>
+                    <td>{{ r.autor.first_name|default:"Cuenta eliminada" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5">Todavía no hay revocaciones.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="panel" style="margin-top:28px;">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-eye-fill"></i> Accesos a documentos (últimos 50)</span>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="user-table">
+            <thead>
+                <tr><th>Fecha</th><th>Documento</th><th>Apoderado</th><th>Administrador</th></tr>
+            </thead>
+            <tbody>
+                {% for acceso in accesos %}
+                <tr>
+                    <td>{{ acceso.fecha|date:"d-m-Y H:i" }}</td>
+                    <td>{{ acceso.get_tipo_display }}</td>
+                    <td>{{ acceso.apoderado.nombre }}</td>
+                    <td>{{ acceso.administrador.first_name|default:"Cuenta eliminada" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4">Todavía nadie ha abierto un documento.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

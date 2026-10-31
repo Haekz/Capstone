@@ -1,10 +1,8 @@
-"""Validaciones funcionales de flujos clave de LBWUS y Cobertura de Seguridad del Pago (Sprint 3).
+"""Validaciones funcionales de flujos clave de LBWUS y Cobertura de Seguridad del Pago.
 
 Cubre:
 1. Seguridad del flujo de pago Webpay Plus (Transbank):
-   - Intento GET rechazado hacia iniciar_webpay.
-   - Carrito inválido, vacío o con manipulación de precios (tampering).
-   - Creación de orden y sesión protegida.
+   - (La compra y el price tampering de los paquetes: tests/test_paquetes.py.)
    - Confirmación de pago aprobado por pasarela.
    - Rechazo de pago por pasarela (status FAILED / response_code != 0).
    - Anulación de pago por el usuario (TBK_TOKEN).
@@ -14,7 +12,6 @@ Cubre:
 3. Accesos y visualizaciones públicas sin fugas de datos.
 """
 
-from datetime import date, time
 import json
 from unittest.mock import MagicMock, patch
 
@@ -22,7 +19,7 @@ from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from alumnos.models import Alumno, Genero
+from alumnos.models import Alumno, Genero, PaqueteClases
 
 User = get_user_model()
 
@@ -32,9 +29,14 @@ class SeguridadPagoWebpayTests(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.url_iniciar = reverse('iniciar_webpay')
         self.url_confirmacion = reverse('confirmacion')
         self.url_planes = reverse('planes')
+
+        # Pagar exige alumna logueada (el plan necesita un dueño).
+        user = User.objects.create_user('44444444-4', rut='44444444-4',
+                                        password='Clave12345!', rol='alumno')
+        Alumno.objects.create(user=user, nivel_educacion='media')
+        self.client.post(reverse('login'), {'username': '44444444-4', 'password': 'Clave12345!'})
 
         # Carrito válido de prueba
         self.carrito_valido = [
@@ -47,89 +49,6 @@ class SeguridadPagoWebpayTests(TestCase):
             }
         ]
         self.carrito_json = json.dumps(self.carrito_valido)
-
-    def test_01_iniciar_webpay_metodo_get_rechazado_y_redirige(self):
-        """Peticiones GET al endpoint de inicio de pago son rechazadas y redirigen a planes."""
-        resp = self.client.get(self.url_iniciar)
-        self.assertEqual(resp.status_code, 302)
-        self.assertRedirects(resp, self.url_planes)
-
-    def test_02_iniciar_webpay_carrito_vacio_o_invalido_redirige(self):
-        """Si el carrito enviado está vacío, no es JSON o es inválido, se rechaza la orden."""
-        casos = [
-            '',
-            '[]',
-            '{}',
-            'no-json-invalido',
-            json.dumps({'mal': 'formato'}),
-        ]
-        for caso in casos:
-            with self.subTest(carrito=caso):
-                resp = self.client.post(self.url_iniciar, {'carrito': caso, 'amount': '25000'})
-                self.assertEqual(resp.status_code, 302)
-                self.assertRedirects(resp, self.url_planes)
-
-    def test_03_iniciar_webpay_monto_minimo_y_tampering_protegido(self):
-        """
-        Si el cliente manipula el campo amount enviando un valor ínfimo (ej. $1)
-        o menor al mínimo de Transbank ($350 CLP), el backend calcula el precio
-        real server-side evitando fraude.
-        """
-        # Carrito con precio simulado menor a 350
-        carrito_irrisorio = json.dumps([{'precio': '10', 'periodo': 'mensual', 'cantidad': 1}])
-
-        # 1. Monto < 350 tanto en carrito como en POST: debe ser rechazado
-        resp = self.client.post(self.url_iniciar, {
-            'carrito': carrito_irrisorio,
-            'amount': '10'
-        })
-        self.assertEqual(resp.status_code, 302)
-        self.assertRedirects(resp, self.url_planes)
-
-        # 2. Tampering: cliente envía amount='1' pero carrito vale $25.000:
-        # El backend debe respetar monto_calculado >= 350 y procesar los $25.000 reales
-        with patch('alumnos.views._tx') as mock_tx:
-            instancia_mock = MagicMock()
-            instancia_mock.create.return_value = {
-                'url': 'https://webpay3gint.transbank.cl/webpayserver/initTransaction',
-                'token': 'mock_token_seguro_123'
-            }
-            mock_tx.return_value = instancia_mock
-
-            resp_tamper = self.client.post(self.url_iniciar, {
-                'carrito': self.carrito_json,
-                'amount': '1'  # Intento de pagar $1
-            })
-            self.assertEqual(resp_tamper.status_code, 200)
-
-            # Verificar que a Transbank se le envió el monto calculado ($25.000) y no $1
-            args, _ = instancia_mock.create.call_args
-            amount_enviado_a_transbank = args[2]
-            self.assertEqual(amount_enviado_a_transbank, 25000)
-
-    @patch('alumnos.views._tx')
-    def test_04_iniciar_webpay_exitoso_guarda_orden_pendiente_en_sesion(self, mock_tx):
-        """Una orden legítima guarda 'orden_pendiente' en la sesión de Django y renderiza redirect."""
-        instancia_mock = MagicMock()
-        instancia_mock.create.return_value = {
-            'url': 'https://webpay3gint.transbank.cl/test',
-            'token': 'tok_xyz_987'
-        }
-        mock_tx.return_value = instancia_mock
-
-        resp = self.client.post(self.url_iniciar, {
-            'carrito': self.carrito_json,
-            'amount': '25000'
-        })
-        self.assertEqual(resp.status_code, 200)
-        self.assertTemplateUsed(resp, 'alumnos/redirect_webpay.html')
-        self.assertEqual(resp.context['token'], 'tok_xyz_987')
-
-        # Verificar que la sesión contiene la orden pendiente
-        orden = self.client.session.get('orden_pendiente')
-        self.assertIsNotNone(orden)
-        self.assertTrue(orden['buy_order'].startswith('LB'))
-        self.assertEqual(orden['carrito'], self.carrito_json)
 
     @patch('alumnos.views._tx')
     def test_05_confirmacion_pago_aprobado_webpay(self, mock_tx):
@@ -201,24 +120,20 @@ class SeguridadPagoWebpayTests(TestCase):
         self.assertTrue(resp.context['anulado'])
 
     @patch('alumnos.views._tx')
-    def test_08_seguridad_replay_attack_prevenido_por_session_pop(self, mock_tx):
+    def test_08_seguridad_replay_attack_no_activa_dos_veces(self, mock_tx):
         """
-        Ataque de repetición (Replay Attack):
-        Una vez procesada la confirmación, la orden es eliminada de la sesión con .pop().
-        Un re-envío malicioso del mismo token no debe volver a acreditar la orden pendiente.
+        Ataque de repetición (Replay Attack): el pedido vive en la base, no en la sesión.
+        Re-enviar el mismo token no vuelve a activar el paquete ni extiende su vigencia.
         """
-        session = self.client.session
-        session['orden_pendiente'] = {
-            'buy_order': 'LB7778889',
-            'carrito': self.carrito_json
-        }
-        session.save()
+        alumno = Alumno.objects.get(user__rut='44444444-4')
+        PaqueteClases.objects.create(alumno=alumno, plan='flexible', clases=1, tarifa=15000,
+                                     monto=15000, dias=30, buy_order='LB7778889')
 
         instancia_mock = MagicMock()
         instancia_mock.commit.return_value = {
             'response_code': 0,
             'status': 'AUTHORIZED',
-            'amount': 25000,
+            'amount': 15000,  # el monto del paquete: si no coincide, se rechaza
             'buy_order': 'LB7778889'
         }
         mock_tx.return_value = instancia_mock
@@ -227,13 +142,15 @@ class SeguridadPagoWebpayTests(TestCase):
         resp1 = self.client.post(self.url_confirmacion, {'token_ws': 'token_unico_abc'})
         self.assertEqual(resp1.status_code, 200)
 
-        # La orden ya no existe en la sesión
-        self.assertNotIn('orden_pendiente', self.client.session)
+        paquete = PaqueteClases.objects.get()
+        self.assertEqual(paquete.estado, PaqueteClases.ESTADO_ACTIVA)
+        vence = paquete.fecha_fin
 
         # 2. Intento de replay con el mismo cliente y token
-        resp2 = self.client.post(self.url_confirmacion, {'token_ws': 'token_unico_abc'})
-        # Los items deben estar vacíos porque la orden ya fue consumida
-        self.assertEqual(resp2.context['items'], [])
+        self.client.post(self.url_confirmacion, {'token_ws': 'token_unico_abc'})
+        paquete.refresh_from_db()
+        self.assertEqual(paquete.fecha_fin, vence)
+        self.assertEqual(PaqueteClases.objects.vigentes().count(), 1)
 
     def test_09_confirmacion_sin_parametros_redirige_a_planes(self):
         """Si un usuario intenta entrar directamente a /confirmacion sin tokens, se le redirige a planes."""

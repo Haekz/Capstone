@@ -37,3 +37,15 @@ Prerrequisitos
 Python 3.13+
 pip
 Git
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Pruebas
+
+Rapidas (SQLite local): python manage.py test
+
+Contra PostgreSQL, la base de produccion (reservas, bloqueos y concurrencia se validan de verdad solo aqui).
+EXIGIR_POSTGRES=1 detiene la ejecucion si falta DATABASE_URL, en vez de caer en SQLite sin avisar:
+
+Windows:  set EXIGIR_POSTGRES=1& set DATABASE_URL=postgresql://usuario:clave@localhost:5432/lbwus& python manage.py test
+Linux:    EXIGIR_POSTGRES=1 DATABASE_URL=postgresql://usuario:clave@localhost:5432/lbwus python manage.py test

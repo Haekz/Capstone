@@ -86,8 +86,9 @@ class CompletarRegistroGoogleForm(forms.Form):
         user.direccion = d['direccion']
         user.fecha_nacimiento = d['fecha_nacimiento']
         user.genero = d['genero']
-        if not user.pk:
-            user.set_unusable_password()
+        # Siempre, no solo en cuentas nuevas: la clave previa de una cuenta huerfana
+        # pudo ponerla otra persona con este correo. Se entra con Google.
+        user.set_unusable_password()
         user.save()
 
         if d['tipo'] == ALUMNO:

@@ -1,0 +1,82 @@
+{% extends 'alumnos/base.html' %}
+{% load static %}
+
+{% block title %}{{ profesor.nombre }} | Perfil profesional | LBWUS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'alumnos/css/perfil_profesor.css' %}">
+<link rel="stylesheet" href="{% static 'resenas/resenas.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="perfil-prof">
+    <a class="perfil-prof__volver" href="{% url 'alumno_pag1' %}">
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a mi portal
+    </a>
+
+    <header class="perfil-prof__cabecera">
+        {% if profesor.user.foto_perfil %}
+        <img class="perfil-prof__avatar" src="{% url 'foto_profesor' profesor.id_profesor %}" alt="Foto de {{ profesor.nombre }}">
+        {% else %}
+        <div class="perfil-prof__avatar" aria-hidden="true">{{ profesor.nombre|slice:":1"|upper }}</div>
+        {% endif %}
+        <div>
+            <h1>{{ profesor.nombre }}</h1>
+            <p class="perfil-prof__especialidad">{{ profesor.especialidad.nombre|default:"Especialidad no informada" }}</p>
+            <p class="perfil-prof__verificado">
+                <i class="bi bi-patch-check-fill" aria-hidden="true"></i> Título profesional verificado por LBWUS
+            </p>
+        </div>
+    </header>
+
+    <section class="perfil-prof__bloque" aria-labelledby="perfil-resumen">
+        <h2 id="perfil-resumen">Resumen</h2>
+        <dl class="perfil-prof__datos">
+            <div><dt>Clases que ofrece</dt><dd>{{ clases|length }}</dd></div>
+            <div><dt>Sesiones realizadas</dt><dd>{{ sesiones_realizadas }}</dd></div>
+            <div>
+                <dt>Teléfono</dt>
+                <dd>{% if telefono %}<a href="tel:{{ telefono }}">{{ telefono }}</a>{% else %}No publicado por el profesor{% endif %}</dd>
+            </div>
+        </dl>
+    </section>
+
+    <section class="perfil-prof__bloque" aria-labelledby="perfil-clases">
+        <h2 id="perfil-clases">Clases</h2>
+        {% if clases %}
+        <ul class="perfil-prof__lista">
+            {% for clase in clases %}
+            <li>
+                <strong>{{ clase.asignatura.nombre }}</strong>
+                <span>{{ clase.get_modalidad_display }} · {{ clase.horario|time:"H:i" }} hrs</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="perfil-prof__vacio">Este profesor aún no publica clases.</p>
+        {% endif %}
+    </section>
+
+    <section class="perfil-prof__bloque" aria-labelledby="perfil-sesiones">
+        <h2 id="perfil-sesiones">Próximos horarios disponibles</h2>
+        {% if proximas_sesiones %}
+        <ul class="perfil-prof__lista">
+            {% for sesion in proximas_sesiones %}
+            <li>
+                <strong>{{ sesion.clase.asignatura.nombre }}</strong>
+                <span>{{ sesion.fecha_hora_inicio|date:"d/m/Y" }} · {{ sesion.fecha_hora_inicio|time:"H:i" }} - {{ sesion.fecha_hora_fin|time:"H:i" }} hrs · {{ sesion.cupos_disponibles }} cupo{{ sesion.cupos_disponibles|pluralize }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {# El catalogo se abre solo cuando la URL trae filtros (ver hay_filtros en el portal). #}
+        <a class="perfil-prof__reservar" href="{% url 'alumno_pag1' %}?{% if profesor.especialidad_id %}especialidad={{ profesor.especialidad_id }}&amp;{% endif %}disponible=on">
+            <i class="bi bi-calendar-plus" aria-hidden="true"></i> Reservar un horario
+        </a>
+        {% else %}
+        <p class="perfil-prof__vacio">No hay horarios disponibles por ahora.</p>
+        {% endif %}
+    </section>
+
+    {% include 'resenas/_bloque.html' %}
+</div>
+{% endblock %}

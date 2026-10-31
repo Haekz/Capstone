@@ -1,10 +1,35 @@
 from django import forms
-from django.contrib.auth.hashers import make_password
-from .models import Alumno, Genero
+from .models import Alumno, Clase, Especialidad, Genero
 from django.contrib.auth import get_user_model
 
+
+class FiltroClasesForm(forms.Form):
+    """Filtros del catalogo del portal del alumno (GET).
+
+    Las opciones salen de la base (Especialidad) y del modelo (Clase.MODALIDADES),
+    no de valores fijos en el HTML. Un valor invalido no rompe la pagina: ese
+    campo queda fuera de cleaned_data y simplemente no filtra.
+    """
+    especialidad = forms.ModelChoiceField(
+        queryset=Especialidad.objects.order_by('nombre'), required=False,
+        empty_label='Todas', label='Especialidad',
+        widget=forms.Select(attrs={'class': 'catalog-filter-input'}),
+    )
+    modalidad = forms.ChoiceField(
+        choices=[('', 'Todas')] + Clase.MODALIDADES, required=False, label='Modalidad',
+        widget=forms.Select(attrs={'class': 'catalog-filter-input'}),
+    )
+    disponible = forms.BooleanField(
+        required=False, label='Solo con horarios y cupos disponibles',
+    )
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('auto_id', 'filtro-%s')
+        kwargs.setdefault('label_suffix', '')
+        super().__init__(*args, **kwargs)
+
 class AlumnoForm(forms.ModelForm):
-    # Campos que ahora pertenecen a CustomUser
+    # Campos de CustomUser
     nombre = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre Completo'}), label='Nombre Completo')
     rut = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'RUT (ej: 12.345.678-9)'}), label='RUT')
     direccion = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Dirección'}), label='Dirección')
@@ -36,31 +61,18 @@ class AlumnoForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Los selects mostraban '---------': el usuario no sabia que elegir.
+        # Texto guia en vez de '---------' en los selects.
         nivel = self.fields['nivel_educacion']
         nivel.choices = [('', 'Selecciona tu nivel')] + [c for c in nivel.choices if c[0]]
         self.fields['genero'].empty_label = 'Selecciona tu género'
 
     def clean_fecha_nacimiento(self):
         fecha = self.cleaned_data.get('fecha_nacimiento')
-        if not fecha:
-            return fecha
-
-        from datetime import date
-        today = date.today()
-
-        if fecha == today:
-            raise forms.ValidationError("No puedes elegir la fecha actual.")
-
-        if fecha > today:
-            raise forms.ValidationError("La fecha de nacimiento no puede ser una fecha futura.")
-
-        # Calcular edad
-        age = today.year - fecha.year - ((today.month, today.day) < (fecha.month, fecha.day))
-
-        if age < 18:
-            raise forms.ValidationError("Debes ser mayor o igual a 18 años.")
-
+        if fecha:
+            from .utils import error_fecha_nacimiento
+            error = error_fecha_nacimiento(fecha)
+            if error:
+                raise forms.ValidationError(error)
         return fecha
 
     def clean_rut(self):

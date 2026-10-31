@@ -1,0 +1,20 @@
+{# Cuando es la clase: la sesion reservada si existe; si no, el horario general de la clase. #}
+{% if insc.sesion %}
+<div class="class-info-item">
+    <i class="bi bi-calendar-event" aria-hidden="true"></i>
+    <span>Sesión: {{ insc.sesion.fecha_hora_inicio|date:"d/m/Y" }}</span>
+</div>
+<div class="class-info-item">
+    <i class="bi bi-clock" aria-hidden="true"></i>
+    <span>{{ insc.sesion.fecha_hora_inicio|time:"H:i" }} - {{ insc.sesion.fecha_hora_fin|time:"H:i" }} hrs ({{ insc.clase.get_modalidad_display }})</span>
+</div>
+{% else %}
+<div class="class-info-item">
+    <i class="bi bi-calendar-event" aria-hidden="true"></i>
+    <span>Fecha de inscripción: {{ insc.fecha_inscripcion|date:"d/m/Y" }}</span>
+</div>
+<div class="class-info-item">
+    <i class="bi bi-clock" aria-hidden="true"></i>
+    <span>Horario: {{ insc.clase.horario|time:"H:i" }} hrs ({{ insc.clase.get_modalidad_display }})</span>
+</div>
+{% endif %}

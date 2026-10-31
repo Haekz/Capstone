@@ -1,5 +1,5 @@
 {% extends 'alumnos/base.html' %}
-{% load static %}
+{% load static dinero %}
 
 {% block title %}LBWUS | Planes{% endblock %}
 
@@ -8,164 +8,110 @@
 {% endblock %}
 
 {% block content %}
-<!-- esta parte es de la introducción de la página de planes -->
+{# Todos los precios vienen del servidor (alumnos/paquetes.py): esta pagina no calcula nada. #}
 <section class="sv-intro pl-intro">
     <div class="contenedor">
         <span class="sv-eyebrow">Planes</span>
-        <h1>Elige el plan ideal para ti</h1>
-        <p>Todos nuestros planes están diseñados para brindarte el mejor acompañamiento en tu aprendizaje.</p>
+        <h1>Elige cuántas clases quieres</h1>
+        <p>Compras un paquete de clases con el profesor que elijas. Mientras más clases, menor el precio de cada una.</p>
         <div class="pl-intro-notes">
-            <span><i class="bi bi-calendar-week"></i> Paga mensual o por 1, 2 o 3 semanas</span>
-            <span><i class="bi bi-arrow-repeat"></i> Cambia el período desde el carrito</span>
+            <span><i class="bi bi-clock" aria-hidden="true"></i> Clases de {{ duracion_clase }} minutos</span>
+            <span><i class="bi bi-receipt" aria-hidden="true"></i> Comisión LBWUS de {{ comision_pct }}% incluida (IVA incluido)</span>
+            <span><i class="bi bi-credit-card" aria-hidden="true"></i> Pago con Webpay</span>
         </div>
     </div>
 </section>
 
 <div class="planes-container">
 
-    <!-- Primer bloque: Planes estándar oficiales (S4-03) -->
-    <div class="planes-grid" id="lista-cursos">
-        <!-- Tarjeta del plan Flexible (1 clase) -->
-        <div class="plan-card card">
-            <div class="plan-card-body">
-                <div class="plan-badge-placeholder"></div>
-                <h3 class="plan-title">Plan Flexible</h3>
-                <div class="plan-price-box">
-                    <span class="plan-price">$15.000</span>
-                    <span class="plan-period">/paquete</span>
-                </div>
-                <p class="plan-billing-info"><i class="bi bi-shield-check text-success"></i> Pago único (1 clase) · Sin renovación obligatoria</p>
-                <button class="plan-btn-action agregar-carrito" data-id="plan_flexible">Contratar Plan</button>
-
-                <div class="plan-divider"></div>
-
-                <p class="plan-features-title">Beneficios incluidos:</p>
-                <ul class="plan-features-list">
-                    <li><i class="bi bi-check-lg check-icon"></i> <strong>1 clase individual</strong> personalizada</li>
-                    <li><i class="bi bi-check-lg check-icon"></i> Resolución de dudas y reforzamiento puntual</li>
-                    <li><i class="bi bi-check-lg check-icon"></i> Material digital de apoyo del docente</li>
-                    <li><i class="bi bi-check-lg check-icon"></i> Coordinación directa de fecha y hora</li>
-                    <li><i class="bi bi-check-lg check-icon"></i> Sin suscripción recurrente</li>
-                </ul>
-            </div>
+    <form class="pl-selector" method="get" action="{% url 'planes' %}">
+        {% if estudiante %}<input type="hidden" name="estudiante" value="{{ estudiante.pk }}">{% endif %}
+        <label for="pl-profesor">Profesor</label>
+        <div class="pl-selector-fila">
+            <select id="pl-profesor" name="profesor">
+                <option value="">Precio de referencia ({{ tarifa_base|clp }} por clase)</option>
+                {% for p in profesores %}
+                <option value="{{ p.id_profesor }}"{% if p == profesor %} selected{% endif %}>{{ p.nombre }}{% if p.especialidad %} · {{ p.especialidad }}{% endif %} · {{ p.tarifa|clp }} por clase</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="plan-btn-action pl-selector-btn">Ver precios</button>
         </div>
+        {% if not profesores %}
+        <p class="pl-selector-nota">Todavía no hay profesores habilitados para vender clases.</p>
+        {% endif %}
+    </form>
 
-        <!-- Tarjeta del plan Progreso (4 clases - Destacado) -->
-        <div class="plan-card card featured">
-            <div class="plan-card-body">
-                <div class="plan-badge">Ahorro $1.000 · Más Popular</div>
-                <h3 class="plan-title">Plan Progreso</h3>
-                <div class="plan-price-box">
-                    <span class="plan-price">$59.000</span>
-                    <span class="plan-period">/paquete</span>
-                </div>
-                <p class="plan-billing-info"><i class="bi bi-star-fill text-warning"></i> Paquete de 4 clases ($14.750 c/u) · Sin renovación</p>
-                <button class="plan-btn-action agregar-carrito" data-id="plan_progreso">Contratar Plan</button>
-
-                <div class="plan-divider"></div>
-
-                <p class="plan-features-title">Beneficios incluidos:</p>
-                <ul class="plan-features-list">
-                    <li><i class="bi bi-check-lg check-icon"></i> <strong>4 clases individuales</strong> programables</li>
-                    <li><i class="bi bi-check-lg check-icon"></i> Acompañamiento continuo y seguimiento mensual</li>
-                    <li><i class="bi bi-check-lg check-icon"></i> Ejercicios prácticos y resolución de guías</li>
-                    <li><i class="bi bi-check-lg check-icon"></i> Flexibilidad para agendar las 4 sesiones</li>
-                    <li><i class="bi bi-check-lg check-icon"></i> Control estricto de saldo de clases</li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- Tarjeta del plan Intensivo (8 clases) -->
-        <div class="plan-card card">
-            <div class="plan-card-body">
-                <div class="plan-badge" style="background: linear-gradient(135deg, #10b981, #059669);">Ahorro $4.000 · Mejor Valor</div>
-                <h3 class="plan-title">Plan Intensivo</h3>
-                <div class="plan-price-box">
-                    <span class="plan-price">$116.000</span>
-                    <span class="plan-period">/paquete</span>
-                </div>
-                <p class="plan-billing-info"><i class="bi bi-lightning-charge-fill text-info"></i> Paquete de 8 clases ($14.500 c/u) · Sin renovación</p>
-                <button class="plan-btn-action agregar-carrito" data-id="plan_intensivo">Contratar Plan</button>
-
-                <div class="plan-divider"></div>
-
-                <p class="plan-features-title">Beneficios incluidos:</p>
-                <ul class="plan-features-list">
-                    <li><i class="bi bi-check-lg check-icon"></i> <strong>8 clases individuales</strong> de alto impacto</li>
-                    <li><i class="bi bi-check-lg check-icon"></i> Preparación integral para exámenes y nivelaciones</li>
-                    <li><i class="bi bi-check-lg check-icon"></i> Cobertura profunda de contenidos y ensayos</li>
-                    <li><i class="bi bi-check-lg check-icon"></i> Tutoría prioritaria y feedback formativo</li>
-                    <li><i class="bi bi-check-lg check-icon"></i> Pago único por evento sin ataduras</li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- Tarjeta oculta utilizada como puente para agregar planes personalizados al carrito -->
-        <div class="card" id="hidden-custom-card" style="display: none;">
-            <h3>Plan Personalizado</h3>
-            <span id="hidden-custom-price">$40.000</span>
-            <button class="agregar-carrito" id="hidden-custom-add-btn" data-id="5">Agregar</button>
-        </div>
+    <div class="planes-header">
+        {% if estudiante %}<p role="status"><strong>Contratando para {{ estudiante.alumno.user.first_name }}.</strong> El paquete quedará a su nombre y lo pagas tú con Webpay.</p>{% endif %}
+        {% if profesor %}
+        <h2>Precios con {{ profesor.nombre }}</h2>
+        <p>Tarifa de {{ tarifa|clp }} por clase.{% if es_alumno %} <a href="{% url 'perfil_profesor' profesor.id_profesor %}">Ver perfil del profesor</a>{% endif %}</p>
+        {% else %}
+        <h2>Precios de referencia</h2>
+        <p>Para una tarifa de {{ tarifa|clp }} por clase. Cada profesor define su tarifa: elígelo arriba para ver sus precios y comprar.</p>
+        {% endif %}
     </div>
 
-    <div class="planes-header planes-header--extra">
-        <span class="sv-eyebrow">A tu medida</span>
-        <h2>Planes especiales y flexibles</h2>
-        <p>¿Buscas una solución a tu medida? Revisa nuestras opciones alternativas.</p>
-    </div>
-
-    <!-- Segundo bloque: Planes extra -->
-    <div class="planes-grid-extra">
-        <!-- Tarjeta 4: Plan de Material Específico -->
-        <div class="plan-card card">
+    <div class="planes-grid">
+        {% for c in cotizaciones %}
+        <article class="plan-card card{% if forloop.last %} featured{% endif %}" aria-labelledby="plan-{{ c.plan.codigo }}">
             <div class="plan-card-body">
-                <div class="plan-badge-placeholder"></div>
-                <h3 class="plan-title">Material Específico</h3>
+                {% if forloop.last %}<div class="plan-badge">Mayor descuento</div>{% endif %}
+                <h3 class="plan-title" id="plan-{{ c.plan.codigo }}">Plan {{ c.plan.nombre }}</h3>
                 <div class="plan-price-box">
-                    <span class="plan-price">Variable</span>
+                    <span class="plan-price">{{ c.precio|clp }}</span>
                 </div>
-                <p class="plan-billing-info">Pago directo por clase al profesor</p>
+                <p class="plan-billing-info">{{ c.plan.clases }} clase{{ c.plan.clases|pluralize }} de {{ duracion_clase }} min · {{ c.precio_por_clase|clp }} por clase · Sin renovación obligatoria</p>
 
-                <!-- Redirecciona a contacto ya que requiere coordinación y cotización directa -->
-                <a href="{% url 'contactos' %}" class="plan-btn-action">Consultar profesores</a>
+                {% if profesor and estudiante %}
+                <form method="post" action="{% url 'apoderado_comprar_paquete' estudiante.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="profesor" value="{{ profesor.id_profesor }}">
+                    <input type="hidden" name="plan" value="{{ c.plan.codigo }}">
+                    <button type="submit" class="plan-btn-action">Contratar {{ c.plan.nombre }} para {{ estudiante.alumno.user.first_name }}</button>
+                </form>
+                {% elif profesor and es_alumno %}
+                <form method="post" action="{% url 'comprar_paquete' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="profesor" value="{{ profesor.id_profesor }}">
+                    <input type="hidden" name="plan" value="{{ c.plan.codigo }}">
+                    <button type="submit" class="plan-btn-action">Comprar {{ c.plan.nombre }}</button>
+                </form>
+                {% elif profesor %}
+                <a href="{% url 'login' %}" class="plan-btn-action">Inicia sesión como alumno para comprar</a>
+                {% else %}
+                <a href="#pl-profesor" class="plan-btn-action">Elige un profesor para comprar</a>
+                {% endif %}
 
                 <div class="plan-divider"></div>
 
-                <p class="plan-features-title">Características del plan:</p>
                 <ul class="plan-features-list">
-                    <li><i class="bi bi-check-lg check-icon"></i> Pago clase a clase directamente al profesor</li>
-                    <li><i class="bi bi-check-lg check-icon"></i> Enfocado en 1 o 2 temas específicos</li>
-                    <li><i class="bi bi-check-lg check-icon"></i> Valores definidos por el profesor seleccionado</li>
-                    <li><i class="bi bi-check-lg check-icon"></i> Material focalizado en tus dudas puntuales</li>
-                    <li><i class="bi bi-check-lg check-icon"></i> Flexibilidad total de fechas</li>
+                    <li><i class="bi bi-tag check-icon" aria-hidden="true"></i>
+                        {% if c.descuento_por_clase %}Descuento de {{ c.descuento_por_clase|clp }} por clase ({{ c.descuento_pct }}%){% else %}Sin descuento: pagas la tarifa del profesor{% endif %}</li>
+                    {% if c.ahorro_total %}
+                    <li><i class="bi bi-piggy-bank check-icon" aria-hidden="true"></i> Ahorras {{ c.ahorro_total|clp }} frente a {{ c.plan.clases }} clases sueltas</li>
+                    {% endif %}
+                    <li><i class="bi bi-calendar-check check-icon" aria-hidden="true"></i> Vigencia de {{ c.plan.vigencia_dias }} días desde el pago</li>
+                    <li><i class="bi bi-receipt check-icon" aria-hidden="true"></i> Incluye comisión LBWUS de {{ comision_pct }}%: {{ c.comision|clp }} (IVA incluido: {{ c.iva_comision|clp }})</li>
+                    <li><i class="bi bi-person-check check-icon" aria-hidden="true"></i> El profesor recibe {{ c.pago_profesor|clp }}</li>
                 </ul>
             </div>
-        </div>
-
-        <!-- Tarjeta 5: Plan Personalizado -->
-        <div class="plan-card card">
-            <div class="plan-card-body">
-                <div class="plan-badge-placeholder"></div>
-                <h3 class="plan-title">Plan Personalizado</h3>
-                <div class="plan-price-box">
-                    <span class="plan-price">A medida</span>
-                </div>
-                <p class="plan-billing-info">Valores según tus selecciones</p>
-                <button class="plan-btn-action" id="open-builder-btn">Diseñar mi Plan</button>
-
-                <div class="plan-divider"></div>
-
-                <p class="plan-features-title">Características del plan:</p>
-                <ul class="plan-features-list">
-                    <li><i class="bi bi-check-lg check-icon"></i> Diseña tu propio horario y cantidad de días</li>
-                    <li><i class="bi bi-check-lg check-icon"></i> Ajusta las asignaturas que necesitas</li>
-                    <li><i class="bi bi-check-lg check-icon"></i> Decide si prefieres online o presencial</li>
-                    <li><i class="bi bi-check-lg check-icon"></i> Añade o quita simulaciones de pruebas</li>
-                    <li><i class="bi bi-check-lg check-icon"></i> Logra un plan muy económico o ultra completo</li>
-                </ul>
-            </div>
-        </div>
+        </article>
+        {% endfor %}
     </div>
+
+    <section class="pl-condiciones" aria-labelledby="pl-condiciones-titulo">
+        <h2 id="pl-condiciones-titulo">Condiciones</h2>
+        <ul>
+            <li>El paquete es con el profesor que elijas y se activa cuando Webpay aprueba el pago.</li>
+            <li>Cada reserva usa 1 clase del paquete. Puedes reservar sesiones que sean dentro de la vigencia: 30 días (Flexible), 60 días (Progreso) o 90 días (Intensivo).</li>
+            <li>Si cancelas una reserva antes de que empiece la clase, la clase vuelve a tu paquete. Una vez iniciada, ya no se puede cancelar.</li>
+            <li>Si el profesor cancela la sesión, la clase vuelve a tu paquete.</li>
+            <li>Las clases que no uses dentro de la vigencia vencen.</li>
+            <li>El precio queda fijo al comprar: si después el profesor cambia su tarifa, tu paquete no cambia.</li>
+            <li>Precios en pesos chilenos. Incluyen la comisión de servicio de LBWUS ({{ comision_pct }}%, IVA incluido); el resto es para el profesor.</li>
+        </ul>
+    </section>
 
     <!-- esta parte es de las preguntas frecuentes sobre los planes -->
     <div class="pl-faq">
@@ -173,19 +119,16 @@
             <h2>Preguntas frecuentes</h2>
         </div>
         <details class="pl-faq-item">
-            <summary>¿Puedo pagar por semana en vez de por mes?</summary>
-            <p>Sí. Al agregar un plan al carrito puedes elegir pagar mensual o por 1, 2 o 3 semanas, y el valor se
-                ajusta automáticamente.</p>
+            <summary>¿Puedo usar un paquete con varios profesores?</summary>
+            <p>No. Cada paquete es con un profesor y su tarifa. Para tomar clases con otro profesor, compra un paquete con él.</p>
+        </details>
+        <details class="pl-faq-item">
+            <summary>¿Dónde veo cuántas clases me quedan?</summary>
+            <p>En tu portal, en la sección Planes, aparecen tus paquetes vigentes con las clases disponibles y la fecha de vencimiento.</p>
         </details>
         <details class="pl-faq-item">
             <summary>¿Las clases son online o presenciales?</summary>
-            <p>Los planes Básico y Medio son online. El Plan Superior puede ser presencial u online, y en el Plan
-                Personalizado eliges la modalidad que prefieras.</p>
-        </details>
-        <details class="pl-faq-item">
-            <summary>¿Qué hago si ningún plan se ajusta a lo que necesito?</summary>
-            <p>Puedes diseñar tu propio Plan Personalizado o, si solo necesitas reforzar un tema puntual, consultar
-                por Material Específico y pagar clase a clase.</p>
+            <p>Depende de la clase que reserves: cada clase del catálogo indica su modalidad.</p>
         </details>
     </div>
 </div>
@@ -201,173 +144,6 @@
         <button class="modal-info-close" id="close-modal-btn">Entendido</button>
     </div>
 </section>
-
-<!-- Modal Diseñador de Plan Personalizado (Sobrepuesto) -->
-<section class="modal-info" id="custom-plan-modal" style="display: none;">
-    <div class="modal-info-content custom-builder-modal">
-        <button class="close-builder-btn" id="close-builder-btn">&times;</button>
-        <h2>Diseña tu Plan a Medida</h2>
-        <p>Personaliza cada aspecto de tu aprendizaje sin límites y calcula tu valor mensual inmediatamente.</p>
-
-        <div class="builder-layout">
-            <!-- Controles Interactivos -->
-            <div class="builder-controls">
-                <!-- Modalidad -->
-                <div class="control-group">
-                    <label class="control-label">Modalidad de Clases</label>
-                    <div class="radio-toggle radio-toggle-triple">
-                        <input type="radio" id="mode-online" name="modalidad" value="online" checked>
-                        <label for="mode-online">Online</label>
-
-                        <input type="radio" id="mode-presencial" name="modalidad" value="presencial">
-                        <label for="mode-presencial">Presencial</label>
-
-                        <input type="radio" id="mode-grabado" name="modalidad" value="grabado">
-                        <label for="mode-grabado">Grabado</label>
-                    </div>
-                </div>
-
-                <!-- Horas semanales (Range Slider) -->
-                <div class="control-group">
-                    <label class="control-label" id="label-horas">Horas semanales: 2 horas</label>
-                    <input type="range" id="input-horas" min="1" max="20" value="2" class="slider-horas">
-                </div>
-
-                <!-- Días de la semana (Chips de selección) -->
-                <div class="control-group">
-                    <label class="control-label">Días de la semana preferidos</label>
-                    <div class="chips-group" id="dias-chips">
-                        <div class="chip-item">
-                            <input type="checkbox" id="day-lunes" name="dias" value="Lunes" checked>
-                            <label for="day-lunes">Lu</label>
-                        </div>
-                        <div class="chip-item">
-                            <input type="checkbox" id="day-martes" name="dias" value="Martes">
-                            <label for="day-martes">Ma</label>
-                        </div>
-                        <div class="chip-item">
-                            <input type="checkbox" id="day-miercoles" name="dias" value="Miércoles">
-                            <label for="day-miercoles">Mi</label>
-                        </div>
-                        <div class="chip-item">
-                            <input type="checkbox" id="day-jueves" name="dias" value="Jueves">
-                            <label for="day-jueves">Ju</label>
-                        </div>
-                        <div class="chip-item">
-                            <input type="checkbox" id="day-viernes" name="dias" value="Viernes" checked>
-                            <label for="day-viernes">Vi</label>
-                        </div>
-                        <div class="chip-item">
-                            <input type="checkbox" id="day-sabado" name="dias" value="Sábado">
-                            <label for="day-sabado">Sá</label>
-                        </div>
-                        <div class="chip-item">
-                            <input type="checkbox" id="day-domingo" name="dias" value="Domingo">
-                            <label for="day-domingo">Do</label>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Asignaturas (Chips de selección) -->
-                <div class="control-group">
-                    <label class="control-label">Asignaturas (Ramos)</label>
-                    <div class="chips-group" id="asignaturas-chips">
-                        <div class="chip-item">
-                            <input type="checkbox" id="subject-mate" name="asignaturas" value="Matemáticas" checked>
-                            <label for="subject-mate">Matemáticas</label>
-                        </div>
-                        <div class="chip-item">
-                            <input type="checkbox" id="subject-fisica" name="asignaturas" value="Física">
-                            <label for="subject-fisica">Física</label>
-                        </div>
-                        <div class="chip-item">
-                            <input type="checkbox" id="subject-quimica" name="asignaturas" value="Química">
-                            <label for="subject-quimica">Química</label>
-                        </div>
-                        <div class="chip-item">
-                            <input type="checkbox" id="subject-lengua" name="asignaturas" value="Lenguaje">
-                            <label for="subject-lengua">Lenguaje</label>
-                        </div>
-                        <div class="chip-item">
-                            <input type="checkbox" id="subject-ingles" name="asignaturas" value="Inglés">
-                            <label for="subject-ingles">Inglés</label>
-                        </div>
-                        <div class="chip-item">
-                            <input type="checkbox" id="subject-prog" name="asignaturas" value="Programación">
-                            <label for="subject-prog">Programación</label>
-                        </div>
-                        <div class="chip-item">
-                            <input type="checkbox" id="subject-otro" name="asignaturas" value="Otro">
-                            <label for="subject-otro">Otro</label>
-                        </div>
-                    </div>
-                    <div id="custom-subject-container" style="display: none; margin-top: 10px;">
-                        <input type="text" id="input-custom-subject" placeholder="Escribe la asignatura (ej. Historia)"
-                            class="builder-text-input">
-                    </div>
-                </div>
-
-                <!-- Temas a tratar -->
-                <div class="control-group">
-                    <label class="control-label" for="input-temas">Temas específicos a tratar</label>
-                    <input type="text" id="input-temas" placeholder="Ej: Álgebra lineal, Mecánica clásica, etc."
-                        class="builder-text-input">
-                </div>
-
-                <!-- Nivel del Profesor -->
-                <div class="control-group">
-                    <label class="control-label" for="input-profesor">Nivel del Profesor</label>
-                    <select id="input-profesor" class="builder-select">
-                        <option value="junior">Estudiante Tutor (Junior)</option>
-                        <option value="senior" selected>Profesor Profesional (Senior)</option>
-                        <option value="master">Experto Académico (Master/PhD)</option>
-                    </select>
-                </div>
-
-                <!-- Lugar de Clases (Condicional para Presencial) -->
-                <div class="control-group" id="lugar-container" style="display: none;">
-                    <label class="control-label" for="input-lugar">Lugar de Clases Presenciales</label>
-                    <select id="input-lugar" class="builder-select">
-                        <option value="sede" selected>En Sede LBWUS (Sin costo extra)</option>
-                        <option value="domicilio">A Domicilio (+ $20.000)</option>
-                        <option value="publico">Lugar Público (Biblioteca, Café) (+ $10.000)</option>
-                    </select>
-                </div>
-
-                <!-- Situación del Alumno -->
-                <div class="control-group">
-                    <label class="control-label" for="input-situacion">Situación del Alumno</label>
-                    <select id="input-situacion" class="builder-select">
-                        <option value="estandar" selected>Reforzamiento Estándar</option>
-                        <option value="examen">Preparación Examen Final (+ $15.000)</option>
-                        <option value="nivelacion">Nivelación Intensiva (+ $30.000)</option>
-                        <option value="nee">Necesidades Educativas Especiales (NEE) (+ $25.000)</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Resumen de Costos y Compra -->
-            <div class="builder-summary">
-                <div class="summary-badge" id="summary-price-badge">¡Muy Económico!</div>
-                <div class="summary-price-box">
-                    <span class="summary-price" id="calc-total-price">$40.000</span>
-                    <span class="summary-period">/mes</span>
-                </div>
-                <ul class="summary-details">
-                    <li id="sum-modalidad">Clases Online</li>
-                    <li id="sum-horas">2 horas semanales</li>
-                    <li id="sum-dias">Días: Lu, Vi</li>
-                    <li id="sum-asignaturas">Asignaturas: Matemáticas</li>
-                    <li id="sum-profesor">Profesor: Senior</li>
-                    <li id="sum-lugar" style="display: none;">Lugar: Sede</li>
-                    <li id="sum-situacion">Reforzamiento Estándar</li>
-                    <li id="sum-temas" style="display: none;">Temas: N/A</li>
-                </ul>
-                <button class="plan-btn-action" id="btn-agregar-custom">Contratar Plan</button>
-            </div>
-        </div>
-    </div>
-</section>
 {% endblock %}
 
 {% block extra_js %}
@@ -380,211 +156,6 @@
             closeBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 modal.style.display = 'none';
-            });
-        }
-
-        // Interceptar clicks en "Contratar Plan" de los planes estándar
-        const listaCursos = document.getElementById('lista-cursos');
-        if (listaCursos) {
-            listaCursos.addEventListener('click', (e) => {
-                if (e.target.classList.contains('agregar-carrito')) {
-                    e.stopPropagation();
-                    const card = e.target.closest('.card');
-                    if (card) {
-                        const id = e.target.getAttribute('data-id');
-                        const titulo = card.querySelector('h3') ? card.querySelector('h3').textContent.trim() : 'Plan';
-                        const precio = card.querySelector('.plan-price') ? card.querySelector('.plan-price').textContent.trim() : (card.querySelector('span') ? card.querySelector('span').textContent.trim() : '$0');
-                        agregarAlCarrito(id, titulo, precio);
-                    }
-                }
-            });
-        }
-
-        // =========================================
-        // LÓGICA DEL CONSTRUCTOR DE PLAN PERSONALIZADO
-        // =========================================
-        const customModal = document.getElementById('custom-plan-modal');
-        const openBuilderBtn = document.getElementById('open-builder-btn');
-        const closeBuilderBtn = document.getElementById('close-builder-btn');
-
-        if (openBuilderBtn && customModal) {
-            openBuilderBtn.addEventListener('click', () => {
-                customModal.style.display = 'flex';
-                calcularPlan();
-            });
-        }
-        if (closeBuilderBtn && customModal) {
-            closeBuilderBtn.addEventListener('click', () => {
-                customModal.style.display = 'none';
-            });
-        }
-
-        const radioOnline = document.getElementById('mode-online');
-        const radioPresencial = document.getElementById('mode-presencial');
-        const radioGrabado = document.getElementById('mode-grabado');
-        const inputHoras = document.getElementById('input-horas');
-        const labelHoras = document.getElementById('label-horas');
-        const inputCustomSubject = document.getElementById('input-custom-subject');
-        const customSubjectContainer = document.getElementById('custom-subject-container');
-        const inputTemas = document.getElementById('input-temas');
-        const inputProfesor = document.getElementById('input-profesor');
-        const inputLugar = document.getElementById('input-lugar');
-        const lugarContainer = document.getElementById('lugar-container');
-        const inputSituacion = document.getElementById('input-situacion');
-
-        const calcTotalPrice = document.getElementById('calc-total-price');
-        const summaryBadge = document.getElementById('summary-price-badge');
-        const sumModalidad = document.getElementById('sum-modalidad');
-        const sumHoras = document.getElementById('sum-horas');
-        const sumDias = document.getElementById('sum-dias');
-        const sumAsignaturas = document.getElementById('sum-asignaturas');
-        const sumProfesor = document.getElementById('sum-profesor');
-        const sumLugar = document.getElementById('sum-lugar');
-        const sumSituacion = document.getElementById('sum-situacion');
-        const sumTemas = document.getElementById('sum-temas');
-        const btnAgregarCustom = document.getElementById('btn-agregar-custom');
-
-        function calcularPlan() {
-            let total = 0;
-
-            let modalidad = 'online';
-            if (radioPresencial && radioPresencial.checked) {
-                modalidad = 'presencial';
-            } else if (radioGrabado && radioGrabado.checked) {
-                modalidad = 'grabado';
-            }
-
-            let baseCost = 20000;
-            let hourRate = 8000;
-            if (modalidad === 'presencial') {
-                baseCost = 45000;
-                hourRate = 12000;
-                if (lugarContainer) lugarContainer.style.display = 'block';
-                if (sumLugar) sumLugar.style.display = 'list-item';
-            } else {
-                if (lugarContainer) lugarContainer.style.display = 'none';
-                if (sumLugar) sumLugar.style.display = 'none';
-            }
-            if (modalidad === 'grabado') {
-                baseCost = 10000;
-                hourRate = 5000;
-            }
-
-            total += baseCost;
-            if (sumModalidad) {
-                sumModalidad.textContent = `Modalidad: ${modalidad.charAt(0).toUpperCase() + modalidad.slice(1)}`;
-            }
-
-            const horas = parseInt(inputHoras.value) || 1;
-            if (labelHoras) {
-                labelHoras.textContent = `Horas semanales: ${horas} ${horas === 1 ? 'hora' : 'horas'}`;
-            }
-            if (sumHoras) {
-                sumHoras.textContent = `${horas} ${horas === 1 ? 'hora' : 'horas'} semanales`;
-            }
-            total += horas * hourRate;
-
-            const selectedDays = [];
-            document.querySelectorAll('#dias-chips input[type="checkbox"]').forEach(cb => {
-                if (cb.checked) selectedDays.push(cb.value);
-            });
-            const numDays = selectedDays.length;
-            if (numDays > 1) total += (numDays - 1) * 5000;
-            if (sumDias) {
-                sumDias.textContent = `Días: ${selectedDays.length > 0 ? selectedDays.join(', ') : 'Ninguno'}`;
-            }
-
-            const selectedSubjects = [];
-            let hasOtro = false;
-            document.querySelectorAll('#asignaturas-chips input[type="checkbox"]').forEach(cb => {
-                if (cb.checked) {
-                    if (cb.value === 'Otro') hasOtro = true;
-                    else selectedSubjects.push(cb.value);
-                }
-            });
-            if (customSubjectContainer) {
-                if (hasOtro) {
-                    customSubjectContainer.style.display = 'block';
-                    const customValue = inputCustomSubject.value.trim();
-                    selectedSubjects.push(customValue || 'Otro');
-                } else {
-                    customSubjectContainer.style.display = 'none';
-                }
-            }
-            const numSubjects = selectedSubjects.length;
-            if (numSubjects > 1) total += (numSubjects - 1) * 10000;
-            if (sumAsignaturas) {
-                sumAsignaturas.textContent = `Asignaturas: ${selectedSubjects.length > 0 ? selectedSubjects.join(', ') : 'Ninguna'}`;
-            }
-
-            const profesorVal = inputProfesor.value;
-            let labelProfesor = 'Junior';
-            if (profesorVal === 'senior') { total += 25000; labelProfesor = 'Senior'; }
-            else if (profesorVal === 'master') { total += 60000; labelProfesor = 'Experto (Master/PhD)'; }
-            if (sumProfesor) sumProfesor.textContent = `Profesor: ${labelProfesor}`;
-
-            if (modalidad === 'presencial' && inputLugar) {
-                const lugarVal = inputLugar.value;
-                let labelLugar = 'En Sede';
-                if (lugarVal === 'domicilio') { total += 20000; labelLugar = 'A Domicilio'; }
-                else if (lugarVal === 'publico') { total += 10000; labelLugar = 'Lugar Público'; }
-                if (sumLugar) sumLugar.textContent = `Lugar: ${labelLugar}`;
-            }
-
-            const situacionVal = inputSituacion.value;
-            let labelSituacion = 'Reforzamiento Estándar';
-            if (situacionVal === 'examen') { total += 15000; labelSituacion = 'Examen Final'; }
-            else if (situacionVal === 'nivelacion') { total += 30000; labelSituacion = 'Nivelación Intensiva'; }
-            else if (situacionVal === 'nee') { total += 25000; labelSituacion = 'NEE'; }
-            if (sumSituacion) sumSituacion.textContent = `Situación: ${labelSituacion}`;
-
-            const temasVal = inputTemas.value.trim();
-            if (sumTemas) {
-                if (temasVal) { sumTemas.style.display = 'list-item'; sumTemas.textContent = `Temas: ${temasVal}`; }
-                else { sumTemas.style.display = 'none'; }
-            }
-
-            const formattedTotal = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(total);
-            calcTotalPrice.textContent = formattedTotal.replace('CLP', '$').trim();
-
-            if (total < 60000) {
-                summaryBadge.textContent = "¡Muy Económico!";
-                summaryBadge.style.backgroundColor = "rgba(74, 222, 128, 0.15)";
-                summaryBadge.style.color = "#16a34a";
-            } else if (total >= 60000 && total <= 120000) {
-                summaryBadge.textContent = "Balanceado";
-                summaryBadge.style.backgroundColor = "rgba(59, 130, 246, 0.15)";
-                summaryBadge.style.color = "#2563eb";
-            } else if (total > 120000 && total <= 180000) {
-                summaryBadge.textContent = "Plan Avanzado";
-                summaryBadge.style.backgroundColor = "rgba(245, 158, 11, 0.15)";
-                summaryBadge.style.color = "#d97706";
-            } else {
-                summaryBadge.textContent = "¡Excesivamente Caro (Premium)!";
-                summaryBadge.style.backgroundColor = "rgba(239, 68, 68, 0.15)";
-                summaryBadge.style.color = "#dc2626";
-            }
-        }
-
-        const inputsToBind = [
-            radioOnline, radioPresencial, radioGrabado, inputHoras,
-            inputCustomSubject, inputTemas, inputProfesor, inputLugar, inputSituacion
-        ];
-        inputsToBind.forEach(el => {
-            if (el) {
-                el.addEventListener('input', calcularPlan);
-                el.addEventListener('change', calcularPlan);
-            }
-        });
-        document.querySelectorAll('#dias-chips input[type="checkbox"]').forEach(cb => cb.addEventListener('change', calcularPlan));
-        document.querySelectorAll('#asignaturas-chips input[type="checkbox"]').forEach(cb => cb.addEventListener('change', calcularPlan));
-
-        if (btnAgregarCustom) {
-            btnAgregarCustom.addEventListener('click', (e) => {
-                e.preventDefault();
-                const precio = calcTotalPrice ? calcTotalPrice.textContent.trim() : '$0';
-                agregarAlCarrito('5', 'Plan Personalizado', precio);
-                customModal.style.display = 'none';
             });
         }
     });

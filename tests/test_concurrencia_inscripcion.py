@@ -14,6 +14,8 @@ Verifica:
 """
 from datetime import time, timedelta
 from decimal import Decimal
+from time import sleep
+from unittest.mock import patch
 import threading
 
 from django.contrib.auth import get_user_model
@@ -24,17 +26,52 @@ from django.utils import timezone
 
 from alumnos.models import (
     Alumno, Asignatura, Clase, Genero,
-    Inscripcion, Profesor, SesionClase
+    Inscripcion, PaqueteClases, Profesor, SesionClase
 )
 from alumnos.services import InscripcionService
+from tests.test_paquetes import dar_paquete
 from alumnos.exceptions import (
     InscripcionError,
     CupoAgotadoError,
     InscripcionDuplicadaError,
-    SesionNoDisponibleError,
+    SinClasesDisponiblesError,
 )
 
 User = get_user_model()
+
+# Produccion usa PostgreSQL: ahi select_for_update bloquea filas de verdad y el
+# resultado de una carrera debe ser exacto. SQLite bloquea la base entera y algunos
+# hilos fallan con 'database is locked', asi que en SQLite solo se exige no sobrepasar.
+ES_POSTGRES = connection.vendor == 'postgresql'
+
+
+def en_paralelo(tarea, argumentos):
+    """Corre tarea(argumento) en un hilo por argumento, todos largando a la vez.
+
+    Devuelve (exitos, rechazos, otros): rechazos son InscripcionError (sin cupo,
+    sin clases...); otros, cualquier otra excepcion.
+    """
+    exitos, rechazos, otros = [], [], []
+    largada = threading.Barrier(len(argumentos))
+
+    def correr(argumento):
+        try:
+            largada.wait()
+            tarea(argumento)
+            exitos.append(argumento)
+        except InscripcionError as exc:
+            rechazos.append(exc)
+        except Exception as exc:
+            otros.append(exc)
+        finally:
+            connection.close()  # cada hilo abre su propia conexion
+
+    hilos = [threading.Thread(target=correr, args=(argumento,)) for argumento in argumentos]
+    for hilo in hilos:
+        hilo.start()
+    for hilo in hilos:
+        hilo.join()
+    return exitos, rechazos, otros
 
 
 class TestBlindajeTransaccionalInscripcion(TestCase):
@@ -83,6 +120,7 @@ class TestBlindajeTransaccionalInscripcion(TestCase):
             )
             alumno = Alumno.objects.create(user=u_al)
             self.alumnos.append(alumno)
+            dar_paquete(alumno, self.profesor, 'intensivo')  # reservar consume una clase pagada
 
         # Sesión con cupo limitado de 2 plazas
         self.ahora = timezone.now()
@@ -238,6 +276,7 @@ class TestConcurrenciaMultihiloInscripcion(TransactionTestCase):
             )
             alumno = Alumno.objects.create(user=u_al)
             self.alumnos.append(alumno)
+            dar_paquete(alumno, self.profesor, 'intensivo')  # reservar consume una clase pagada
 
         # Sesión estricta con cupo = 2 para 6 solicitantes simultáneos
         self.ahora = timezone.now()
@@ -252,38 +291,14 @@ class TestConcurrenciaMultihiloInscripcion(TransactionTestCase):
 
     def test_concurrencia_exacta_sin_sobrecupo(self):
         """
-        6 hilos concurrentes intentan reservar simultáneamente una sesión con cupo_maximo = 2.
-        Exactamente 2 logran el cupo y los restantes 4 son rechazados limpiamente por CupoAgotadoError.
+        6 hilos concurrentes intentan reservar simultaneamente una sesion con cupo_maximo = 2.
+        Nunca hay sobrecupo; en PostgreSQL exactamente 2 entran y 4 reciben CupoAgotadoError.
         """
-        resultados_exito = []
-        errores_cupo = []
-        otros_errores = []
+        exitos, rechazos, otros = en_paralelo(
+            lambda alumno: InscripcionService.inscribir_alumno_en_sesion(alumno, self.sesion.pk),
+            self.alumnos,
+        )
 
-        def intentar_reserva(alumno):
-            connection.close()
-            try:
-                insc = InscripcionService.inscribir_alumno_en_sesion(alumno, self.sesion.pk)
-                resultados_exito.append(alumno.pk)
-            except CupoAgotadoError:
-                errores_cupo.append(alumno.pk)
-            except Exception as e:
-                otros_errores.append(str(e))
-            finally:
-                connection.close()
-
-        threads = [
-            threading.Thread(target=intentar_reserva, args=(alumno,))
-            for alumno in self.alumnos
-        ]
-
-        # Lanzar todos los hilos simultáneamente
-        for t in threads:
-            t.start()
-
-        for t in threads:
-            t.join()
-
-        # En motores con bloqueo o locks SQLite/PostgreSQL, el conteo total de inscritos nunca puede superar cupo_maximo
         total_en_bd = Inscripcion.objects.filter(
             sesion=self.sesion,
             estado=Inscripcion.ESTADO_CONFIRMADA
@@ -293,8 +308,48 @@ class TestConcurrenciaMultihiloInscripcion(TransactionTestCase):
             total_en_bd, self.sesion.cupo_maximo,
             f"Sobrecupo detectado: hay {total_en_bd} inscripciones en BD cuando el cupo máximo es {self.sesion.cupo_maximo}"
         )
-        self.assertEqual(len(resultados_exito), total_en_bd)
-        self.assertEqual(len(resultados_exito) + len(errores_cupo) + len(otros_errores), 6)
+        self.assertEqual(len(exitos), total_en_bd)
+        self.assertEqual(len(exitos) + len(rechazos) + len(otros), 6)
+        if ES_POSTGRES:
+            self.assertEqual(otros, [])
+            self.assertEqual(len(exitos), 2)
+            self.assertEqual([type(exc) for exc in rechazos], [CupoAgotadoError] * 4)
+
+    def test_ultima_clase_del_paquete_no_se_gasta_dos_veces(self):
+        """Dos reservas simultaneas del mismo alumno, en sesiones distintas, por su ultima clase.
+
+        El cupo no las frena (son sesiones distintas): solo el bloqueo del paquete.
+        """
+        alumno = self.alumnos[0]
+        alumno.paquetes.update(clases=1)
+        otra_sesion = SesionClase.objects.create(
+            clase=self.clase,
+            fecha_hora_inicio=self.ahora + timedelta(days=4),
+            fecha_hora_fin=self.ahora + timedelta(days=4, hours=1),
+            cupo_maximo=2,
+            precio=Decimal('20000.00'),
+            estado=SesionClase.ESTADO_PROGRAMADA
+        )
+
+        contar = PaqueteClases.clases_disponibles.fget
+
+        def contar_lento(paquete):
+            disponibles = contar(paquete)
+            sleep(0.3)  # ensancha la carrera: sin bloqueo, ambos hilos leerian "1 libre"
+            return disponibles
+
+        with patch.object(PaqueteClases, 'clases_disponibles', property(contar_lento)):
+            exitos, rechazos, otros = en_paralelo(
+                lambda sesion: InscripcionService.inscribir_alumno_en_sesion(alumno, sesion.pk),
+                [self.sesion, otra_sesion],
+            )
+
+        self.assertLessEqual(len(exitos), 1, 'Se gasto dos veces la misma clase del paquete')
+        self.assertEqual(Inscripcion.objects.filter(alumno=alumno).count(), len(exitos))
+        if ES_POSTGRES:
+            self.assertEqual(otros, [])
+            self.assertEqual(len(exitos), 1)
+            self.assertEqual([type(exc) for exc in rechazos], [SinClasesDisponiblesError])
 
 
 class TestFiltrosSesionClase(TestCase):

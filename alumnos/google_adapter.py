@@ -1,10 +1,6 @@
-﻿"""Que pasa cuando alguien vuelve de Google.
+"""Que pasa cuando alguien vuelve de Google.
 
-Antes allauth creaba un CustomUser vacio (sin RUT ni perfil) y lo dejaba
-logueado, pero los portales piden un perfil Alumno/Profesor/Tutor
-(alumnos/roles.py), asi que la persona quedaba afuera sin explicacion.
-
-Ahora, con el correo VERIFICADO que entrega Google:
+Con el correo VERIFICADO que entrega Google:
 
 1. Si el correo es de una cuenta LBWUS con perfil -> entra a su portal
    (y la cuenta Google queda vinculada para la proxima vez).
@@ -12,7 +8,7 @@ Ahora, con el correo VERIFICADO que entrega Google:
    se envia un codigo al correo y se piden los datos que faltan
    (ver alumnos/google_views.py). Sin esos datos no hay cuenta funcional.
 3. Si la cuenta existe pero esta desactivada (is_active = False) -> se rechaza
-   el acceso de inmediato por seguridad (S4-02 / S-16).
+   el acceso de inmediato.
 """
 
 from allauth.account.adapter import DefaultAccountAdapter
@@ -62,7 +58,7 @@ def entrar_al_portal(request, user):
 
 class LbwusAccountAdapter(DefaultAccountAdapter):
     """
-    Adaptador de cuentas locales para allauth (S4-02 / S-15).
+    Adaptador de cuentas locales para allauth.
     Deshabilita el endpoint público de registro directo (/accounts/signup/)
     para que nadie pueda registrar cuentas huérfanas sin perfil ni validación de RUT.
     """
@@ -82,7 +78,7 @@ class LbwusSocialAdapter(DefaultSocialAccountAdapter):
         # sociallogin.user ya viene cargado si esta cuenta Google estaba vinculada.
         user = sociallogin.user if sociallogin.is_existing else buscar_usuario_por_correo(correo)
 
-        # Control de acceso estricto para cuentas desactivadas (S4-02 / S-16)
+        # Las cuentas desactivadas no entran
         if user is not None and not user.is_active:
             messages.error(
                 request,

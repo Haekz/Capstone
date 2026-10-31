@@ -14,8 +14,7 @@ from alumnos.utils import formato_clp
 logger = logging.getLogger(__name__)
 
 
-# Ruta antigua del menú: ya no tiene template, solo redirige al panel.
-# Se mantiene porque regis_tutor.html envía aquí tras registrarse.
+# Solo redirige al panel: regis_tutor.html envía aquí tras registrarse.
 def menu(request):
     admin_id = request.session.get('admin_id')
     if admin_id:
@@ -129,8 +128,7 @@ def contactos_adm(request):
     context = {}
     return render(request, 'admin_portal/contactos_adm.html', context)
 
-
-# --- Vistas CRUD movidas desde alumnos ---
+# --- Vistas CRUD ---
 @never_cache
 @admin_required
 def crud(request):
@@ -180,6 +178,7 @@ def alumnos_findEdit(request, pk):
 def alumnos_del(request, pk):
     alumno = get_object_or_404(Alumno.objects.select_related('user'), id_alumno=pk)
 
+    # Se borra también la cuenta (CustomUser); el perfil de alumno cae en cascada.
     if alumno.user:
         alumno.user.delete()
     if Alumno.objects.filter(id_alumno=pk).exists():

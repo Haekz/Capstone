@@ -1,0 +1,114 @@
+/* SCRUM-36: reseñas verificadas. Complementa perfil_profesor.css y usa sus tokens (modo oscuro incluido). */
+.resena-resumen {
+    margin-bottom: 14px;
+    font-size: 1.05rem;
+}
+
+.resena-resumen .bi-star-fill,
+.resena-estrellas {
+    color: #d97706; /* contraste >= 3:1 en fondo claro y oscuro */
+}
+
+.resena-lista li {
+    display: block; /* perfil-prof__lista usa flex en una fila; aquí cada reseña se apila */
+}
+
+.resena__cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 6px 16px;
+}
+
+.resena__verificada {
+    display: inline-flex;
+    gap: 6px;
+    margin: 6px 0;
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+.resena__comentario {
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+
+.resena__reporte {
+    margin-top: 8px;
+}
+
+.resena__reporte summary {
+    width: fit-content;
+    color: var(--text-light);
+    cursor: pointer;
+}
+
+.resena__reporte summary:hover,
+.resena__reporte summary:focus-visible {
+    color: var(--text);
+    text-decoration: underline;
+}
+
+.resena__reporte form,
+.resena-form {
+    display: grid;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.resena__reporte select,
+.resena__reporte textarea,
+.resena-form textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-sm);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+}
+
+.resena-form__puntaje {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    border: none;
+}
+
+.resena-form__puntaje legend {
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+
+.resena-form__opcion {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.resena-form .perfil-prof__reservar,
+.resena__reporte .perfil-prof__reservar {
+    width: fit-content;
+    border: none;
+    cursor: pointer;
+}
+
+.resena-form__error,
+.resena-mensajes__item--error {
+    /* El rojo va en el borde: el texto mantiene el contraste en ambos temas. */
+    border-left: 4px solid #dc2626;
+    padding-left: 10px;
+    color: var(--text);
+    font-weight: 600;
+}
+
+.resena-mensajes {
+    margin-bottom: 14px;
+}
+
+.resena-mensajes__item {
+    padding: 10px 14px;
+    border-radius: var(--r-sm);
+    background: var(--primary-soft);
+}

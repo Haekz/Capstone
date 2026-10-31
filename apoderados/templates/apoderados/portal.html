@@ -1,0 +1,100 @@
+{% extends 'alumnos/base.html' %}
+{% load static %}
+
+{% block title %}Mi cuenta de apoderado | LBWUS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'alumnos/css/perfil_profesor.css' %}">
+<link rel="stylesheet" href="{% static 'apoderados/apoderados.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="perfil-prof">
+    <header class="perfil-prof__cabecera">
+        <div>
+            <h1>Hola, {{ apoderado.nombre }}</h1>
+            <p class="perfil-prof__vacio">Cuenta de apoderado · {{ apoderado.user.email }}</p>
+        </div>
+    </header>
+
+    {% if invitacion %}
+    <section class="perfil-prof__bloque" aria-labelledby="invitacion-titulo">
+        <h2 id="invitacion-titulo">Tienes una invitación pendiente</h2>
+        <p>{{ invitacion.solicitud.alumno.user.first_name }} te pidió que seas su apoderado.</p>
+        <a class="perfil-prof__reservar" href="{% url 'apoderado_invitacion' token_invitacion %}">
+            <i class="bi bi-envelope-open-fill" aria-hidden="true"></i> Revisar invitación
+        </a>
+    </section>
+    {% endif %}
+
+    <section class="perfil-prof__bloque" aria-labelledby="estado-titulo">
+        <h2 id="estado-titulo">Estado de tu cuenta</h2>
+        {% include 'apoderados/_mensajes.html' %}
+
+        {% if apoderado.estado == 'correo_pendiente' %}
+        <p class="apod-estado"><i class="bi bi-envelope-exclamation-fill" aria-hidden="true"></i> {{ apoderado.get_estado_display }}</p>
+        <p>Te enviamos un enlace a <strong>{{ apoderado.user.email }}</strong>. Ábrelo para confirmar que el correo es tuyo.</p>
+        <form method="post" action="{% url 'apoderado_reenviar_correo' %}" class="apod-form">
+            {% csrf_token %}
+            <button type="submit" class="perfil-prof__reservar" {% if espera %}disabled aria-disabled="true"{% endif %}>
+                <i class="bi bi-arrow-repeat" aria-hidden="true"></i> Reenviar enlace
+            </button>
+            {% if espera %}<small class="perfil-prof__vacio">Podrás pedir otro enlace en {{ espera }} segundos.</small>{% endif %}
+        </form>
+
+        {% elif apoderado.estado == 'revision_pendiente' %}
+        <p class="apod-estado"><i class="bi bi-hourglass-split" aria-hidden="true"></i> {{ apoderado.get_estado_display }}</p>
+        <p>Tu correo está confirmado. Un administrador de LBWUS revisará las fotos de tu carnet. Se guardan cifradas
+            y se eliminan apenas se aprueba o se rechaza la revisión, o a los 30 días.</p>
+
+        {% elif apoderado.estado == 'verificado' %}
+        <p class="apod-estado"><i class="bi bi-patch-check-fill" aria-hidden="true"></i> {{ apoderado.get_estado_display }}</p>
+        <p>Tu identidad está verificada. Ya puedes registrar a los estudiantes a tu cargo; cada vínculo se revisa por separado.</p>
+
+        {% else %}
+        <p class="apod-estado"><i class="bi bi-x-octagon-fill" aria-hidden="true"></i> {{ apoderado.get_estado_display }}</p>
+        {% if revision.observacion %}<p><strong>Motivo:</strong> {{ revision.observacion }}</p>{% endif %}
+        <p>Si crees que es un error, escríbenos desde la página de contacto.</p>
+        {% endif %}
+    </section>
+
+    {% if apoderado.estado == 'verificado' or vinculos %}
+    <section class="perfil-prof__bloque" aria-labelledby="estudiantes-titulo">
+        <h2 id="estudiantes-titulo">Estudiantes a tu cargo</h2>
+        {% if vinculos %}
+        <ul class="apod-vinculos">
+            {% for v in vinculos %}
+            <li>
+                <strong>{{ v.alumno.user.first_name }}</strong> · RUT {{ v.alumno.user.rut }} · {{ v.get_parentesco_display }}<br>
+                <span class="apod-estado">Vínculo: {% if v.termino_por_edad %}Terminado{% else %}{{ v.get_estado_display }}{% endif %}</span>
+                {% if v.termino_por_edad %}
+                <br><small>{{ v.alumno.user.first_name }} cumplió 18 años: su cuenta ahora es solo suya y el vínculo terminó.</small>
+                {% else %}
+                {% if v.estado == 'pendiente' %}<br><small>Un administrador revisará el documento que adjuntaste para verificar el vínculo.</small>{% endif %}
+                {% if v.estado == 'rechazado' and v.ultima_revision.observacion %}<br><small><strong>Motivo:</strong> {{ v.ultima_revision.observacion }}</small>{% endif %}
+                {% if v.estado == 'pendiente' or v.estado == 'verificado' %}{% if v.apoderado_define_clave %}<br><a href="{% url 'apoderado_clave_estudiante' v.pk %}">Cambiar su contraseña</a>{% endif %}{% endif %}
+                {% if v.estado == 'verificado' and apoderado.estado == 'verificado' %}
+                <br><a href="{% url 'apoderado_clases_estudiante' v.pk %}">Ver y reservar sus clases</a>
+                · <a href="{% url 'planes' %}?estudiante={{ v.pk }}">Contratar clases para {{ v.alumno.user.first_name }}</a>
+                {% for c in v.compras.all %}{% with p=c.paquete %}
+                <br><small>{{ p.get_plan_display }} con {{ p.profesor.nombre|default:"—" }} · {{ p.get_estado_display }}{% if p.fecha_fin %} · vence el {{ p.fecha_fin|date:"d-m-Y" }}{% endif %}</small>
+                {% endwith %}{% endfor %}
+                {% endif %}
+                {% if v.estado == 'pendiente' or v.estado == 'verificado' %}<br><a href="{% url 'apoderado_revocar_vinculo' v.pk %}">Desvincularme</a>{% endif %}
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="perfil-prof__vacio">Todavía no registras estudiantes.</p>
+        {% endif %}
+        <p class="perfil-prof__vacio">Para cada estudiante con vínculo verificado puedes contratar clases y reservarlas. El estudiante ve el catálogo y entra a las clases que reserves; no puede reservar, cancelar ni comprar por su cuenta.</p>
+        {% if apoderado.estado == 'verificado' %}
+        <a class="perfil-prof__reservar" href="{% url 'apoderado_registrar_estudiante' %}">
+            <i class="bi bi-person-plus-fill" aria-hidden="true"></i> Registrar estudiante
+        </a>
+        {% endif %}
+    </section>
+    {% endif %}
+</div>
+{% endblock %}

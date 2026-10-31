@@ -3,7 +3,6 @@
 La proteccion la aplica el decorador alumnos.decorators.admin_required.
 Estos tests detectan si se quita o si falta en una vista nueva.
 """
-from datetime import date
 from django.contrib.auth import get_user_model
 User = get_user_model()
 from django.test import Client, TestCase
@@ -16,7 +15,7 @@ class AccesoPortalAdminTests(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        genero = Genero.objects.create(descripcion='Otro')
+        Genero.objects.create(descripcion='Otro')
         cls.user_admin = User.objects.create_user('10101010-1', password='clave12345')
         cls.tutor = Tutor.objects.create(user=cls.user_admin)
 

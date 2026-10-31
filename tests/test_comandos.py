@@ -1,4 +1,4 @@
-"""Comandos de la fase 0b: cargar_catalogos y crear_admin.
+"""Comandos cargar_catalogos y crear_admin.
 
 crear_admin pide los datos con input() y la contrasena con getpass; aqui se
 simulan ambos con unittest.mock.

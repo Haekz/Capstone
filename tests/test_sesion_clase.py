@@ -3,17 +3,17 @@ Pruebas exhaustivas para el modelo SesionClase, constraints de base de datos,
 validaciones a nivel de modelo, QuerySets de disponibilidad, concurrencia y retrocompatibilidad.
 """
 
-from datetime import date, datetime, time, timedelta
+from datetime import time, timedelta
 from decimal import Decimal
-import threading
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError
 from django.test import TestCase, TransactionTestCase
 from django.utils import timezone
 
 from alumnos.models import Alumno, Asignatura, Clase, Genero, Inscripcion, Profesor, SesionClase
+from tests.test_paquetes import dar_paquete
 
 User = get_user_model()
 
@@ -65,6 +65,10 @@ def crear_fixture_base():
         horario=time(10, 0),
         profesor=profesor
     )
+
+    # Reservar consume una clase de un paquete pagado: ambos alumnos tienen uno.
+    for alumno in (alumno1, alumno2):
+        dar_paquete(alumno, profesor, 'intensivo')
 
     return {
         'profesor': profesor,
@@ -371,6 +375,7 @@ class ConcurrenciaSimuladaTests(TransactionTestCase):
                 genero=genero
             )
             self.alumnos.append(Alumno.objects.create(user=u))
+            dar_paquete(self.alumnos[-1], f['profesor'], 'intensivo')
 
     def test_reservas_sucesivas_respetan_cupo_maximo_estricto(self):
         """Verifica que solicitudes sucesivas se bloqueen al alcanzar el límite de cupos."""

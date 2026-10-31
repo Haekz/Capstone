@@ -1,4 +1,4 @@
-﻿from django.test import TestCase, Client, RequestFactory
+from django.test import TestCase, Client, RequestFactory
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.core.cache import cache
@@ -11,7 +11,7 @@ from allauth.core.exceptions import ImmediateHttpResponse
 
 from alumnos.models import Genero, Alumno, Tutor
 from admin_portal.forms import AdminAlumnoForm
-from alumnos.backends import normalizar_rut_canonico, obtener_identificador_rate_limit
+from alumnos.backends import normalizar_rut_canonico
 from alumnos.google_adapter import LbwusSocialAdapter, LbwusAccountAdapter
 
 User = get_user_model()

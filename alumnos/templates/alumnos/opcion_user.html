@@ -24,6 +24,8 @@
                 <h2>Alumno</h2>
                 <p>Accede a tutorías personalizadas de alta calidad, simula exámenes oficiales, realiza un seguimiento de tu aprendizaje y conecta con los mejores expertos.</p>
                 <a href="{% url 'regis_alum' %}" class="btn-card-select">Registrarme como Alumno</a>
+                <!-- 14 a 17 anios: registro aparte con invitacion al apoderado (app apoderados, fase 1b-ii). -->
+                <a href="{% url 'adolescente_registro' %}" style="display:block; margin-top:12px;">¿Tienes entre 14 y 17 años? Crea tu cuenta aquí</a>
             </div>
 
             <!-- esta parte es de la tarjeta para registrarse como Profesor -->
@@ -34,6 +36,16 @@
                 <h2>Profesor</h2>
                 <p>Comparte tus conocimientos, publica tus cursos o especialidades, gestiona tus clases y define tus propios precios y horarios flexibles.</p>
                 <a href="{% url 'regis_prof' %}" class="btn-card-select">Registrarme como Profesor</a>
+            </div>
+
+            <!-- Apoderado: adulto responsable de estudiantes menores de edad (app apoderados). -->
+            <div class="selection-card">
+                <div class="icon-box">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <h2>Apoderado</h2>
+                <p>Para madres, padres y adultos responsables de estudiantes menores de edad. Verificamos tu identidad antes de habilitar la cuenta.</p>
+                <a href="{% url 'registro_apoderado' %}" class="btn-card-select">Registrarme como Apoderado</a>
             </div>
 
             <!-- La tarjeta de registro de Administrador se quito a proposito:

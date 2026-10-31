@@ -18,14 +18,16 @@ from .views import (
     enviar_reporte,
     inscribir_clase,
     cancelar_inscripcion,
+    reprogramar_inscripcion,
     listar_sesiones_disponibles,
     reservar_sesion,
-    pago,
     confirmacion,
-    iniciar_webpay,
+    comprar_paquete,
 )
+from .perfil_profesor import perfil_profesor
 
 urlpatterns = [
+    path('profesores/<int:id_profesor>/', perfil_profesor, name='perfil_profesor'),
     path('sala-virtual/<int:clase_id>/', sala_virtual, name='sala_virtual'),
     path('sala-virtual/<int:clase_id>/iniciar/', iniciar_directo, name='iniciar_directo'),
     # Sitio público
@@ -56,9 +58,9 @@ urlpatterns = [
         cancelar_inscripcion,
         name='cancelar_inscripcion'
     ),
+    path('reprogramar_inscripcion/<int:pk>/', reprogramar_inscripcion, name='reprogramar_inscripcion'),
 
     # Pago / Transbank
-    path('pago', pago, name='pago'),
     path('confirmacion', confirmacion, name='confirmacion'),
-    path('iniciar-webpay/', iniciar_webpay, name='iniciar_webpay'),
+    path('comprar-paquete/', comprar_paquete, name='comprar_paquete'),
 ]

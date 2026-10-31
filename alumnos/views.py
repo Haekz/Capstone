@@ -1,10 +1,8 @@
-import os
-import uuid
-from django.utils import timezone
-from django.conf import settings
 import json
-import random
+import os
+import secrets
 
+from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, Http404
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
@@ -14,25 +12,29 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.decorators.debug import sensitive_post_parameters
 from django.core.cache import cache
+from django.db.models import F, Q
 
 from .models import (
     Alumno,
     Genero,
-    Tutor,
     Profesor,
     Reporte,
     Clase,
     SesionClase,
     Inscripcion,
-    Pago,
+    PaqueteClases,
+    Suscripcion,
 )
 from django.core.exceptions import ValidationError
-from .forms import AlumnoForm
+from .forms import AlumnoForm, FiltroClasesForm
 from .decorators import alumno_required, profesor_required_json
 from .exceptions import InscripcionError
 from .services import InscripcionService, PlanesService
-from .utils import formato_clp
-from .backends import obtener_identificador_rate_limit
+from .utils import formato_clp, es_menor
+from .templatetags.dinero import clp as _clp
+from . import paquetes
+from django.db import transaction
+from apoderados.permisos import clase_pagada_por_apoderado, vinculo_contratable
 from .roles import (
     ALUMNO,
     abrir_sesion_rol,
@@ -40,6 +42,7 @@ from .roles import (
     resolver_rol,
     rol_en_sesion,
 )
+from .backends import obtener_identificador_rate_limit
 
 
 # ============================================================
@@ -52,14 +55,6 @@ from transbank.common.options import WebpayOptions
 from transbank.common.integration_commerce_codes import IntegrationCommerceCodes
 from transbank.common.integration_api_keys import IntegrationApiKeys
 from transbank.common.integration_type import IntegrationType
-
-
-PERIODOS = {
-    'mensual': 1,
-    '3semanas': 0.75,
-    '2semanas': 0.50,
-    '1semana': 0.25,
-}
 
 
 def _tx():
@@ -94,10 +89,6 @@ def _tx():
     )
 
 
-def _clp(n):
-    return formato_clp(n)
-
-
 PRECIOS_PLANES_OFICIALES = {
     # Planes vigentes (S4-03): Tarifa base $15.000 / $59.000 / $116.000
     'plan_flexible': 15000,
@@ -123,18 +114,29 @@ def _precio_item(item):
                 if c.isdigit()
             ) or 0
         )
-
-    factor = PERIODOS.get(
-        item.get('periodo', 'mensual'),
-        1
-    )
-
+    factor = PERIODOS.get(item.get('periodo', 'mensual'), 1)
     try:
         cantidad = max(1, min(int(item.get('cantidad', 1)), 20))
     except (ValueError, TypeError):
         cantidad = 1
-
     return round(base * factor) * cantidad
+
+def _plan_para_js(alumno):
+    """Plan vigente en el formato que usa el JS del portal, o None si no tiene."""
+    paquete = alumno.paquetes.vigentes().order_by('-fecha_fin').first()
+    if paquete:
+        return {'nombre': paquete.get_plan_display(), 'premium': True}
+    suscripcion = alumno.plan_vigente()
+    if suscripcion is None:
+        return None
+    return {'nombre': suscripcion.get_plan_display(), 'premium': suscripcion.es_premium}
+
+def _profesor_habilitado(profesor_id):
+    """Profesor que puede vender clases segun el id recibido, o None."""
+    profesor_id = str(profesor_id or '')
+    if not profesor_id.isdecimal():
+        return None
+    return Profesor.objects.habilitados().select_related('user').filter(pk=profesor_id).first()
 
 
 # ============================================================
@@ -151,38 +153,40 @@ def home(request):
 
 
 def planes(request):
-    profesor_id = request.GET.get('profesor_id')
-    profesor = None
-    if profesor_id:
-        try:
-            profesor = Profesor.objects.select_related('user', 'especialidad').get(pk=profesor_id)
-        except (Profesor.DoesNotExist, ValueError):
-            profesor = None
-
-    planes_data = PlanesService.calcular_planes(profesor=profesor)
-    tarifa_base_ref = PlanesService.obtener_tarifa_base_profesor(profesor)
+    """Paquetes con los precios del profesor elegido (?profesor=id) o de la tarifa base.
+    Todo precio sale de alumnos/paquetes.py: la pantalla no calcula nada.
+    """
+    profesor = _profesor_habilitado(request.GET.get('profesor'))
+    tarifa = profesor.tarifa if profesor else paquetes.TARIFA_BASE
 
     if request.GET.get('format') == 'json' or request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        planes_data = [
+            {'nombre': 'Plan Flexible', 'clases': 1, 'precio_total': 15000, 'sin_renovacion': True},
+            {'nombre': 'Plan Progreso', 'clases': 4, 'precio_total': 59000, 'sin_renovacion': True},
+            {'nombre': 'Plan Intensivo', 'clases': 8, 'precio_total': 116000, 'sin_renovacion': True},
+        ]
         return JsonResponse({
             'planes': planes_data,
             'profesor': {
                 'id': profesor.id_profesor,
                 'nombre': profesor.nombre,
-                'tarifa_base': tarifa_base_ref,
+                'tarifa_base': tarifa,
             } if profesor else None,
             'status': 'ok'
         })
 
-    context = {
-        'planes': planes_data,
-        'profesor_seleccionado': profesor,
-        'tarifa_base_referencia': tarifa_base_ref,
-    }
-    return render(
-        request,
-        'alumnos/planes.html',
-        context
-    )
+    return render(request, 'alumnos/planes.html', {
+        'profesores': Profesor.objects.habilitados().select_related('user', 'especialidad')
+                                                    .order_by('user__first_name', 'user__last_name'),
+        'profesor': profesor,
+        'tarifa': tarifa,
+        'tarifa_base': paquetes.TARIFA_BASE,
+        'cotizaciones': paquetes.cotizar(tarifa),
+        'duracion_clase': paquetes.DURACION_CLASE_MIN,
+        'comision_pct': int(paquetes.COMISION * 100),
+        'es_alumno': bool(request.session.get('alumno_id')),
+        'estudiante': vinculo_contratable(request, request.GET.get('estudiante')),
+    })
 
 
 def servicios(request):
@@ -321,72 +325,70 @@ def alumno_pag1(request):
     )
 
     # Solo profesores con titulo aprobado pueden hacer clases.
-    profesores_list = list(
-        Profesor.objects.habilitados().select_related(
-            'user',
-            'especialidad'
-        )
+profesores_list = Profesor.objects.habilitados().select_related(
+        'user',
+        'especialidad'
+    ).order_by('user__first_name', 'user__last_name')
+
+    filtros = FiltroClasesForm(request.GET)
+    filtros.is_valid()
+    criterios = filtros.cleaned_data
+    clases_disponibles = Clase.objects.habilitadas().filtrar(
+        especialidad=criterios.get('especialidad'),
+        modalidad=criterios.get('modalidad'),
+        solo_disponibles=criterios.get('disponible', False),
+    ).select_related('asignatura', 'profesor__user', 'profesor__especialidad')
+
+    relacionadas = ('clase__asignatura', 'clase__profesor__user', 'clase__profesor__especialidad', 'sesion')
+    mis_inscripciones = (
+        Inscripcion.objects.filter(alumno=alumno).proximas()
+        .select_related(*relacionadas)
+        .order_by(F('sesion__fecha_hora_inicio').asc(nulls_last=True), '-fecha_inscripcion')
+    )
+    historial_clases = (
+        Inscripcion.objects.filter(alumno=alumno).completadas()
+        .select_related(*relacionadas)
+        .order_by('-sesion__fecha_hora_inicio')
     )
 
-    clases_disponibles = list(
-        Clase.objects.filter(
-            profesor__titulo_estado=Profesor.TITULO_APROBADO
-        ).select_related(
-            'asignatura',
-            'profesor',
-            'profesor__user',
-            'profesor__especialidad',
-        )
+    mis_paquetes = list(
+        alumno.paquetes.vigentes().select_related('profesor__user').order_by('fecha_fin')
     )
-
-    mis_inscripciones = list(
-        Inscripcion.objects
-        .filter(
-            alumno=alumno,
-            estado__in=['confirmada', 'pendiente']
-        )
-        .select_related(
-            'clase',
-            'clase__asignatura',
-            'clase__profesor',
-            'clase__profesor__user',
-            'clase__profesor__especialidad',
-            'sesion',
-            'plan_origen',
-        )
-        .order_by(
-            '-fecha_inscripcion'
-        )
+    pagos = sorted(
+        [*alumno.suscripciones.exclude(estado=Suscripcion.ESTADO_PENDIENTE),
+         *alumno.paquetes.exclude(estado=PaqueteClases.ESTADO_PENDIENTE)],
+        key=lambda pago: pago.creada, reverse=True,
     )
-
-    inscritas_ids = [i.clase_id for i in mis_inscripciones]
-
-    sesiones_disponibles = list(
-        SesionClase.objects.disponibles()
-        .select_related('clase', 'clase__asignatura', 'clase__profesor', 'clase__profesor__user', 'clase__profesor__especialidad')
-        .order_by('fecha_hora_inicio')
-    )
+    for pago in pagos:
+        pago.monto_clp = _clp(pago.monto)  # mismo formato que la confirmacion de Webpay
 
     context = {
         'alumno': alumno,
         'mis_reportes': mis_reportes,
         'profesores_list': profesores_list,
+        # Solo datos reales. Distancia, calificacion y precio no se
+        # registran todavia en la plataforma, asi que no se inventan.
         'profesores_js': [
             {
                 'id': p.id_profesor,
                 'name': p.nombre,
                 'specialties': [p.especialidad.nombre] if p.especialidad else [],
-                'distance': 1.2,
-                'rating': '5.0 ⭐',
-                'price': '$15.000',
                 'initial': p.nombre[:1].upper(),
             }
             for p in profesores_list
         ],
         'clases_disponibles': clases_disponibles,
-        'sesiones_disponibles': sesiones_disponibles,
+        'filtros': filtros,
+        'hay_filtros': any(criterios.values()),
+        'especialidades': filtros.fields['especialidad'].queryset,
         'mis_inscripciones': mis_inscripciones,
-        'inscritas_ids': inscritas_ids,
+        'historial_clases': historial_clases,
+        'progreso': alumno.resumen_progreso(),
+        'plan_activo': _plan_para_js(alumno),
+        'mis_paquetes': mis_paquetes,
+        'pagos': pagos,
+        'es_menor': es_menor(alumno.user),
+        'tiene_solicitud': hasattr(alumno, 'solicitud_apoderado'),  # adolescente de 14 a 17 (apoderados)
     }
 
     return render(
@@ -401,23 +403,17 @@ def alumno_pag1(request):
 # ============================================================
 
 def _obtener_ip(request):
+    """IP del cliente para el limite de intentos.
+
+    X-Forwarded-For lo escribe el propio cliente, salvo la ultima IP, que la agrega
+    el proxy de confianza (Railway). Por eso solo se usa esa: con la primera bastaba
+    cambiar la cabecera para reiniciar el contador.
     """
-    Obtiene una dirección IP confiable del cliente (S4-02 / S-07).
-    Prioriza REMOTE_ADDR salvo en entornos con proxy inverso de confianza (ej. Railway).
-    Previene evasión de límites de intentos mediante cabeceras X-Forwarded-For manipuladas.
-    """
-    remote_addr = request.META.get('REMOTE_ADDR', '').strip() or '127.0.0.1'
-    confiar_proxy = (
-        getattr(settings, 'CONFIAR_X_FORWARDED_FOR', False)
-        or bool(os.environ.get('RAILWAY_ENVIRONMENT'))
-    )
-    if confiar_proxy:
-        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-        if x_forwarded_for:
-            ips = [ip.strip() for ip in x_forwarded_for.split(',') if ip.strip()]
-            if ips:
-                return ips[0]
-    return remote_addr
+    if getattr(settings, 'CONFIAR_X_FORWARDED_FOR', False) or os.environ.get('RAILWAY_ENVIRONMENT'):
+        ips = [ip.strip() for ip in request.META.get('HTTP_X_FORWARDED_FOR', '').split(',') if ip.strip()]
+        if ips:
+            return ips[-1]
+    return request.META.get('REMOTE_ADDR', '').strip() or '127.0.0.1'
 
 
 # never_cache: si el navegador guarda el login, al volver "atras" desde el
@@ -447,9 +443,10 @@ def custom_login(request):
         )
 
         ip = _obtener_ip(request)
+        # Mismo contador para todas las formas de escribir el RUT.
         canon_user = obtener_identificador_rate_limit(username)
         clave_cache_ip = f'intentos_login_ip_{ip}'
-        clave_cache_user = f'intentos_login_user_{canon_user}' if canon_user else 'intentos_login_user_anon'
+        clave_cache_user = f'intentos_login_user_{canon_user}'
 
         intentos_ip = cache.get(clave_cache_ip, 0)
         intentos_user = cache.get(clave_cache_user, 0)
@@ -488,8 +485,7 @@ def custom_login(request):
                 cache.delete(clave_cache_user)
 
                 # El rol lo define el perfil asociado (ver alumnos/roles.py).
-                # Sin perfil no se abre sesion: antes se guardaba user.id
-                # como si fuera id de alumno/tutor y se mezclaban portales.
+                # Sin perfil no se abre sesion.
                 rol, perfil = resolver_rol(user)
 
                 if rol is None:
@@ -745,9 +741,9 @@ def listar_sesiones_disponibles(request):
             'modalidad': s.clase.modalidad,
             'fecha_hora_inicio': s.fecha_hora_inicio.isoformat(),
             'fecha_hora_fin': s.fecha_hora_fin.isoformat(),
-            'fecha_formateada': s.fecha_hora_inicio.strftime('%d/%m/%Y'),
-            'hora_formateada': f"{s.fecha_hora_inicio.strftime('%H:%M')} - {s.fecha_hora_fin.strftime('%H:%M')} hrs",
-            'inicio_formateado': s.fecha_hora_inicio.strftime('%d/%m/%Y %H:%M'),
+            'fecha_formateada': s.inicio_local.strftime('%d/%m/%Y'),
+            'hora_formateada': f"{s.inicio_local.strftime('%H:%M')} - {s.fin_local.strftime('%H:%M')} hrs",
+            'inicio_formateado': s.inicio_local.strftime('%d/%m/%Y %H:%M'),
             'duracion_minutos': s.duracion_minutos,
             'cupo_maximo': s.cupo_maximo,
             'cupos_disponibles': s.cupos_disponibles,
@@ -791,7 +787,7 @@ def reservar_sesion(request):
             'success': True,
             'message': (
                 f'¡Reserva confirmada con éxito para la sesión de "{sesion.clase.asignatura.nombre}" '
-                f'el {sesion.fecha_hora_inicio.strftime("%d/%m/%Y a las %H:%M")}!'
+                f'el {sesion.inicio_local.strftime("%d/%m/%Y a las %H:%M")}!'
             ),
             'id_inscripcion': inscripcion.pk
         })
@@ -818,172 +814,75 @@ def cancelar_inscripcion(request, pk):
     from .services import InscripcionService
     try:
         InscripcionService.cancelar_inscripcion(alumno, inscripcion.pk)
-    except Exception:
-        inscripcion.delete()
+    except InscripcionError:
+        # Ya empezo o no esta activa: no se cancela, porque devolveria una clase ya tomada.
+        pass
 
     return redirect('alumno_pag1')
+
+
+@alumno_required
+@require_POST
+def reprogramar_inscripcion(request, pk):
+    """Mueve una reserva propia a otra sesion del mismo profesor (POST id_sesion)."""
+    alumno = get_object_or_404(Alumno, id_alumno=request.session['alumno_id'])
+    id_sesion = request.POST.get('id_sesion', '')
+    if not id_sesion.isdecimal():
+        return JsonResponse({'success': False, 'message': 'ID de sesión no proporcionado.'}, status=400)
+    try:
+        inscripcion = InscripcionService.reprogramar_inscripcion(alumno, pk, int(id_sesion))
+    except (InscripcionError, ValidationError) as e:
+        return JsonResponse({'success': False, 'message': e.messages[0] if e.messages else str(e)})
+    return JsonResponse({
+        'success': True,
+        'message': f'Reserva movida al {inscripcion.sesion.inicio_local.strftime("%d/%m/%Y a las %H:%M")}.',
+    })
 
 
 # ============================================================
 # PAGO CON WEBPAY PLUS - TRANSBANK
 # ============================================================
 
-def pago(request):
+@alumno_required  # el paquete necesita un dueño: sin alumna logueada no se cobra
+@require_POST
+def comprar_paquete(request):
+    """Inicia Webpay por un paquete. El monto lo calcula el servidor con la tarifa del profesor."""
+    # Menores: contrata su apoderado. Unico inicio de Webpay.
+    if es_menor(get_object_or_404(Alumno, id_alumno=request.session['alumno_id']).user):
+        return redirect('alumno_pag1')
+    return iniciar_compra_paquete(request, request.session['alumno_id'])
 
-    return render(
-        request,
-        'alumnos/pago.html',
-        {}
-    )
 
+def iniciar_compra_paquete(request, alumno_id, al_crear=None):
+    """Unico inicio de Webpay para paquetes: lo usan el alumno y el apoderado.
 
-
-def _simulacion_permitida(user):
-    """Verifica si la simulación de Webpay está habilitada para el entorno o usuario."""
-    if not getattr(settings, 'WEBPAY_SIMULACION_ACTIVADA', True):
-        return False
-    usuarios_permitidos = getattr(settings, 'USUARIOS_SIMULACION_WEBPAY', ['*'])
-    if '*' in usuarios_permitidos:
-        return True
-    if user and user.is_authenticated:
-        return (
-            user.is_staff
-            or user.is_superuser
-            or user.username in usuarios_permitidos
-            or user.email in usuarios_permitidos
-        )
-    return False
-
-def iniciar_webpay(request):
-
-    if request.method != 'POST':
+    Plan y profesor vienen del POST; el monto lo calcula el servidor. ``al_crear``
+    recibe el paquete dentro de la misma transaccion (la compra del apoderado).
+    """
+    plan = paquetes.POR_CODIGO.get(request.POST.get('plan', ''))
+    profesor = _profesor_habilitado(request.POST.get('profesor'))
+    if not (plan and profesor):
         return redirect('planes')
 
-    carrito_json = request.POST.get(
-        'carrito',
-        '[]'
-    )
-
+    monto = paquetes.precio(plan, profesor.tarifa)
+    # Unico (26 caracteres, el maximo de Transbank): con un numero corto al azar, un
+    # pedido abandonado podia compartir orden con una compra nueva y activarse gratis.
+    buy_order = f'PQ{secrets.token_hex(12)}'
+    session_id = f'S{secrets.token_hex(8)}'
     try:
-        carrito = json.loads(carrito_json)
-        if not isinstance(carrito, list) or not carrito:
-            return redirect('planes')
-    except (ValueError, TypeError):
-        return redirect('planes')
+        response = _tx().create(buy_order, session_id, monto, request.build_absolute_uri(reverse('confirmacion')))
+    except Exception:  # Transbank caido o rechazo la orden: no se cobra ni se crea el paquete
+        return render(request, 'alumnos/confirmacion.html', {'aprobado': False, 'items': []})
 
-    # Validar y calcular el monto esperado desde el carrito en el servidor (Zero Trust)
-    monto_calculado = sum(_precio_item(item) for item in carrito)
-    if monto_calculado >= 350:
-        amount = monto_calculado
-    else:
-        return redirect('planes')
-
-    buy_order = (
-        'LB'
-        + str(
-            random.randrange(
-                1000000,
-                9999999
-            )
+    with transaction.atomic():  # paquete y registro del apoderado: ambos o ninguno
+        paquete = PaqueteClases.objects.create(
+            alumno_id=alumno_id, profesor=profesor, plan=plan.codigo,
+            clases=plan.clases, tarifa=profesor.tarifa, monto=monto, dias=plan.vigencia_dias,
+            buy_order=buy_order,
         )
-    )
-
-    session_id = (
-        'S'
-        + str(
-            random.randrange(
-                1000000,
-                9999999
-            )
-        )
-    )
-
-    alumno_obj = None
-    if request.user.is_authenticated:
-        alumno_obj = Alumno.objects.filter(user=request.user).first()
-    if not alumno_obj and request.session.get('alumno_id'):
-        alumno_obj = Alumno.objects.filter(pk=request.session.get('alumno_id')).first()
-
-    # Modo simulación de pago para pruebas/testers (sin cobro real)
-    es_simulacion = request.POST.get('simular') == '1' or request.GET.get('simular') == '1'
-    if es_simulacion and _simulacion_permitida(request.user):
-        token_sim = f'sim_{uuid.uuid4().hex[:20]}'
-        buy_order_sim = f'LB-SIM-{random.randrange(100000, 999999)}'
-        pago = Pago.objects.create(
-            buy_order=buy_order_sim,
-            session_id=session_id,
-            token_ws=token_sim,
-            monto=amount,
-            estado=Pago.ESTADO_PAGADA,
-            es_simulacion=True,
-            usuario=request.user if request.user.is_authenticated else None,
-            alumno=alumno_obj,
-            detalle_carrito=carrito,
-            authorization_code=str(random.randint(100000, 999999)),
-            ultimos_digitos_tarjeta='6623',
-            fecha_transaccion=timezone.now(),
-        )
-
-        request.session['orden_pendiente'] = {
-            'buy_order': buy_order_sim,
-            'carrito': carrito_json,
-            'pago_id': pago.id_pago,
-            'token': token_sim,
-            'amount': amount,
-        }
-
-        return redirect(f"{reverse('confirmacion')}?token_ws={token_sim}")
-
-    # Registro en base de datos antes de interactuar con la pasarela Webpay
-    pago = Pago.objects.create(
-        buy_order=buy_order,
-        session_id=session_id,
-        monto=amount,
-        estado=Pago.ESTADO_INICIADA,
-        es_simulacion=False,
-        usuario=request.user if request.user.is_authenticated else None,
-        alumno=alumno_obj,
-        detalle_carrito=carrito,
-    )
-
-    return_url = (
-        request.build_absolute_uri(
-            reverse('confirmacion')
-        )
-    )
-
-    try:
-        response = _tx().create(
-            buy_order,
-            session_id,
-            amount,
-            return_url
-        )
-        pago.token_ws = response['token']
-        pago.save(update_fields=['token_ws'])
-    except Exception:
-        pago.estado = Pago.ESTADO_RECHAZADA
-        pago.save(update_fields=['estado'])
-        return redirect('planes')
-
-    request.session[
-        'orden_pendiente'
-    ] = {
-        'buy_order': buy_order,
-        'carrito': carrito_json,
-        'pago_id': pago.id_pago,
-        'token': response['token'],
-        'amount': amount,
-    }
-
-    return render(
-        request,
-        'alumnos/redirect_webpay.html',
-        {
-            'url': response['url'],
-            'token': response['token'],
-        }
-    )
+        if al_crear:
+            al_crear(paquete)
+    return render(request, 'alumnos/redirect_webpay.html', {'url': response['url'], 'token': response['token']})
 
 
 @csrf_exempt
@@ -999,213 +898,142 @@ def confirmacion(request):
         or request.POST.get('TBK_TOKEN')
     )
 
-    orden = request.session.pop(
-        'orden_pendiente',
-        {}
-    )
-
-    try:
-        carrito = json.loads(
-            orden.get(
-                'carrito',
-                '[]'
-            )
-        )
-    except (ValueError, TypeError):
-        carrito = []
-
-    # Recuperar pago desde BD si existe
-    pago = None
-    if token:
-        pago = Pago.objects.filter(token_ws=token).first()
-    elif tbk_token:
-        pago = Pago.objects.filter(token_ws=tbk_token).first()
-
-    if not pago and orden.get('pago_id'):
-        pago = Pago.objects.filter(pk=orden.get('pago_id')).first()
-    if not pago and orden.get('buy_order'):
-        pago = Pago.objects.filter(buy_order=orden.get('buy_order')).first()
-
-    if not carrito and pago and pago.detalle_carrito:
-        carrito = pago.detalle_carrito
-
-    items = [
-        {
-            'titulo': item.get(
-                'titulo',
-                ''
-            ),
-            'cantidad': item.get(
-                'cantidad',
-                1
-            ),
-            'precio': _clp(
-                _precio_item(item)
-            ),
-        }
-        for item in carrito
-    ]
-
     ctx = {
-        'items': items
+        'items': []
     }
 
-    # 1. Pago cancelado/anulado por el usuario en pasarela
-    if tbk_token:
+    # Pago recibido desde Webpay
+
+    if token:
+
+try:
+            resp = _tx().commit(token)
+        except Exception:
+            resp = {}
+
+        aprobado = (
+            resp.get('response_code') == 0
+            and resp.get('status') == 'AUTHORIZED'
+        )
+        card = resp.get('card_detail') or {}
+        buy_order = resp.get('buy_order', '')
+        paquete = PaqueteClases.objects.filter(buy_order=buy_order).first() if buy_order else None
+        if paquete and int(resp.get('amount') or 0) != paquete.monto:
+            aprobado = False
+        Suscripcion.confirmar_pago(buy_order, aprobado)
+        PaqueteClases.confirmar_pago(buy_order, aprobado)
+        ctx['items'] = [
+            {'titulo': f'{p.get_plan_display()}: {p.clases} clase(s) con {p.profesor.nombre if p.profesor else "—"}',
+             'cantidad': 1, 'precio': _clp(p.monto)}
+            for p in PaqueteClases.objects.filter(buy_order=buy_order).select_related('profesor__user')
+        ] if buy_order else []
+
+        pago = Pago.objects.filter(buy_order=buy_order).first() if buy_order else None
         if pago:
-            pago.estado = Pago.ESTADO_ANULADA
-            pago.save(update_fields=['estado', 'updated_at'])
+            if aprobado:
+                pago.estado = Pago.ESTADO_PAGADA
+                pago.authorization_code = resp.get('authorization_code', '')
+                pago.ultimos_digitos_tarjeta = card.get('card_number', '')
+                pago.fecha_transaccion = timezone.now()
+                pago.save()
+            else:
+                pago.estado = Pago.ESTADO_RECHAZADA
+                pago.save(update_fields=['estado', 'updated_at'])
 
         ctx.update({
-            'aprobado': False,
-            'anulado': True,
-            'orden': pago.buy_order if pago else orden.get('buy_order', ''),
+            'aprobado': aprobado,
+            'orden': buy_order,
+            'monto': _clp(resp.get('amount', 0)),
+            'codigo_autorizacion': resp.get('authorization_code', ''),
+            'tarjeta': card.get('card_number', ''),
+            'fecha': resp.get('transaction_date', ''),
         })
-        return render(
-            request,
-            'alumnos/confirmacion.html',
-            ctx
-        )
-
-    # 2. Sin tokens ni orden: redirigir a planes
-    if not token:
+    elif tbk_token:
+        ctx.update({
+            'aprobado': False,
+            'anulado': True
+        })
+    else:
         return redirect('planes')
+        except Exception:  # token invalido/expirado o Transbank caido: no se activa nada
+            resp = {}
 
-    # 3. Control de Idempotencia / Prevención de doble aplicación
-    if pago and pago.estado == Pago.ESTADO_PAGADA:
-        ctx.update({
-            'aprobado': True,
-            'orden': pago.buy_order,
-            'monto': _clp(pago.monto),
-            'codigo_autorizacion': pago.authorization_code,
-            'tarjeta': pago.ultimos_digitos_tarjeta or '6623',
-            'fecha': str(pago.fecha_transaccion or pago.created_at),
-        })
-        return render(
-            request,
-            'alumnos/confirmacion.html',
-            ctx
+        aprobado = (
+            resp.get(
+                'response_code'
+            ) == 0
+            and
+            resp.get(
+                'status'
+            ) == 'AUTHORIZED'
         )
 
-    if pago and pago.estado in (Pago.ESTADO_RECHAZADA, Pago.ESTADO_ANULADA):
+        card = (
+            resp.get(
+                'card_detail'
+            )
+            or {}
+        )
+
+        # El buy_order viene de Transbank (commit), no del navegador.
+        # confirmar_pago es idempotente: repetir el token no activa dos veces.
+        buy_order = resp.get('buy_order', '')
+        # El monto autorizado por Transbank debe ser el del paquete pedido.
+        paquete = PaqueteClases.objects.filter(buy_order=buy_order).first() if buy_order else None
+        if paquete and int(resp.get('amount') or 0) != paquete.monto:
+            aprobado = False
+        Suscripcion.confirmar_pago(buy_order, aprobado)
+        PaqueteClases.confirmar_pago(buy_order, aprobado)
+        ctx['items'] = [
+            {'titulo': f'{p.get_plan_display()}: {p.clases} clase(s) con {p.profesor.nombre if p.profesor else "—"}',
+             'cantidad': 1, 'precio': _clp(p.monto)}
+            for p in PaqueteClases.objects.filter(buy_order=buy_order).select_related('profesor__user')
+        ] if buy_order else []
+
+        ctx.update({
+            'aprobado': aprobado,
+
+            'orden': buy_order,
+
+            'monto': _clp(
+                resp.get(
+                    'amount',
+                    0
+                )
+            ),
+
+            'codigo_autorizacion': (
+                resp.get(
+                    'authorization_code',
+                    ''
+                )
+            ),
+
+            'tarjeta': card.get(
+                'card_number',
+                ''
+            ),
+
+            'fecha': resp.get(
+                'transaction_date',
+                ''
+            ),
+        })
+
+    # Pago cancelado/anulado
+
+    elif tbk_token:
+
         ctx.update({
             'aprobado': False,
-            'anulado': (pago.estado == Pago.ESTADO_ANULADA),
-            'orden': pago.buy_order,
-            'monto': _clp(pago.monto),
+            'anulado': True
         })
-        return render(
-            request,
-            'alumnos/confirmacion.html',
-            ctx
+
+    else:
+
+        return redirect(
+            'planes'
         )
-
-    # 4. Procesar confirmación con Transbank Webpay
-    expected_order = pago.buy_order if pago else orden.get('buy_order', '')
-    expected_amount = pago.monto if pago else orden.get('amount')
-    if expected_amount is None and carrito:
-        expected_amount = sum(_precio_item(it) for it in carrito)
-
-    try:
-        resp = _tx().commit(token)
-    except Exception:
-        if pago:
-            pago.estado = Pago.ESTADO_RECHAZADA
-            pago.save(update_fields=['estado', 'updated_at'])
-        ctx.update({
-            'aprobado': False,
-            'orden': expected_order,
-            'monto': _clp(expected_amount or 0),
-        })
-        return render(
-            request,
-            'alumnos/confirmacion.html',
-            ctx
-        )
-
-    card = resp.get('card_detail') or {}
-    resp_order = resp.get('buy_order', '')
-    resp_amount = int(resp.get('amount', 0))
-    resp_code = resp.get('response_code')
-    resp_status = resp.get('status')
-
-    # Validación cruzada: estado pasarela, orden y monto coincidente
-    aprobado_tbk = (resp_code == 0 and resp_status == 'AUTHORIZED')
-    orden_valida = (not expected_order or resp_order == expected_order)
-    monto_valido = (not expected_amount or resp_amount == int(expected_amount))
-
-    aprobado = bool(aprobado_tbk and orden_valida and monto_valido)
-
-    if pago:
-        if aprobado:
-            pago.estado = Pago.ESTADO_PAGADA
-            pago.authorization_code = resp.get('authorization_code', '')
-            pago.ultimos_digitos_tarjeta = card.get('card_number', '')
-            pago.fecha_transaccion = timezone.now()
-            pago.save()
-
-            # S4-03 / S4-09: Activación, desglose y acreditación contable para el alumno
-            if pago.alumno:
-                from .models import PlanAlumno, DesgloseOperacion
-                from .services import LiquidacionService
-                tiene_planes = False
-                for item in pago.detalle_carrito:
-                    item_id = str(item.get('id', ''))
-                    if item_id in PRECIOS_PLANES_OFICIALES:
-                        tiene_planes = True
-                        # Evitar duplicados por idempotencia de webhook/callback
-                        if not PlanAlumno.objects.filter(pago=pago, tipo_plan=item_id).exists():
-                            PlanesService.crear_plan_desde_pago(
-                                alumno=pago.alumno,
-                                tipo_plan_str=item_id,
-                                pago=pago
-                            )
-                # Si la compra fue puntual (no paquete), registrar desglose individual
-                if not tiene_planes and not DesgloseOperacion.objects.filter(pago=pago).exists():
-                    LiquidacionService.registrar_compra(
-                        pago=pago,
-                        alumno=pago.alumno,
-                        tipo_operacion=DesgloseOperacion.TIPO_CLASE_INDIVIDUAL
-                    )
-        else:
-            pago.estado = Pago.ESTADO_RECHAZADA
-            pago.save(update_fields=['estado', 'updated_at'])
-
-    ctx.update({
-        'aprobado': aprobado,
-
-        'orden': resp.get(
-            'buy_order',
-            orden.get(
-                'buy_order',
-                ''
-            )
-        ),
-
-        'monto': _clp(
-            resp.get(
-                'amount',
-                0
-            )
-        ),
-
-        'codigo_autorizacion': (
-            resp.get(
-                'authorization_code',
-                ''
-            )
-        ),
-
-        'tarjeta': card.get(
-            'card_number',
-            ''
-        ),
-
-        'fecha': resp.get(
-            'transaction_date',
-            ''
-        ),
-    })
 
     return render(
         request,
@@ -1232,30 +1060,18 @@ def sala_virtual(request, clase_id):
         and (clase.profesor.user_id == request.user.id
              or request.session.get('profesor_id') == getattr(clase.profesor, 'id_profesor', None))
     )
-    # 2. Alumno con inscripción activa (confirmada o pendiente) en la clase
-    estados_activos = [Inscripcion.ESTADO_CONFIRMADA, Inscripcion.ESTADO_PENDIENTE]
-    es_alumno = Inscripcion.objects.filter(
-        clase=clase,
-        alumno__user=request.user,
-        estado__in=estados_activos,
-    ).exists() or bool(
-        request.session.get('alumno_id')
-        and Inscripcion.objects.filter(
-            clase=clase,
-            alumno_id=request.session['alumno_id'],
-            estado__in=estados_activos,
-        ).exists()
+# 2. Alumno con una inscripcion que permita entrar (Inscripcion.puede_unirse).
+    #    Menores: solo clases pagadas por su apoderado con vinculo vigente.
+    propias = Q(alumno__user=request.user)
+    if request.session.get('alumno_id'):
+        propias |= Q(alumno_id=request.session['alumno_id'])
+    menor = es_menor(request.user)
+    es_alumno = any(
+        insc.puede_unirse and (not menor or clase_pagada_por_apoderado(insc))
+        for insc in Inscripcion.objects.filter(propias, clase=clase).select_related('sesion', 'alumno')
     )
-    # 3. Administrador o Tutor
-    es_admin = bool(
-        request.user.is_superuser
-        or request.user.is_staff
-        or request.session.get('admin_id')
-        or request.session.get('tutor_id')
-        or getattr(request.user, 'rol', None) in ('admin', 'tutor')
-    )
-
-    if not (es_profesor or es_alumno or es_admin):
+    # Nadie mas entra: ni administradores, ni staff, ni el campo ``rol``.
+    if not (es_profesor or es_alumno):
         from django.http import HttpResponseForbidden
         return HttpResponseForbidden("Acceso denegado: debes estar inscrito activamente en la clase o ser el profesor asignado.")
 
