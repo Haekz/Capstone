@@ -3,7 +3,7 @@ from .views import (
     menu, reporte_alumnos, home_adm, planes_adm, nosotros_adm, contactos_adm,
     crud, alumnos_Add, alumnos_del, alumnos_findEdit, alumnos_Update,
     dashboard_admin, resolver_reporte, logout_admin, crear_clase, eliminar_clase,
-    aprobar_retiro, rechazar_retiro
+    aprobar_retiro, rechazar_retiro, marcar_pagado_retiro
 )
 from .titulos import titulos_adm, ver_titulo, resolver_titulo
 
@@ -21,6 +21,7 @@ urlpatterns = [
     path('eliminar_clase/<int:pk>/', eliminar_clase, name='eliminar_clase'),
     path('aprobar_retiro/<int:pk>/', aprobar_retiro, name='aprobar_retiro'),
     path('rechazar_retiro/<int:pk>/', rechazar_retiro, name='rechazar_retiro'),
+    path('pagar_retiro/<int:pk>/', marcar_pagado_retiro, name='marcar_pagado_retiro'),
 
     # Titulos profesionales de profesores
     path('titulos/', titulos_adm, name='titulos_adm'),

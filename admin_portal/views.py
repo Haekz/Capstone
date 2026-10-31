@@ -1,3 +1,6 @@
+from django.contrib import messages
+from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.cache import never_cache
@@ -41,8 +44,11 @@ def dashboard_admin(request):
     todas_solicitudes_retiro = SolicitudRetiro.objects.all().order_by('-fecha_solicitud')
     total_inscripciones_global = Inscripcion.objects.count()
     ingresos_totales = max(total_inscripciones_global * 15000, 180000)
-    retiros_pagados = SolicitudRetiro.objects.filter(estado='aprobado').aggregate(Sum('monto'))['monto__sum'] or 0
-    retiros_pendientes = SolicitudRetiro.objects.filter(estado='pendiente').aggregate(Sum('monto'))['monto__sum'] or 0
+    retiros_pagados = SolicitudRetiro.objects.filter(estado=SolicitudRetiro.PAGADO).aggregate(Sum('monto'))['monto__sum'] or 0
+    # Pendientes de pagar: los que esperan revision y los aprobados sin transferir.
+    retiros_pendientes = SolicitudRetiro.objects.filter(
+        estado__in=[SolicitudRetiro.PENDIENTE, SolicitudRetiro.APROBADO]
+    ).aggregate(Sum('monto'))['monto__sum'] or 0
 
     ingresos_totales_fmt = f"${ingresos_totales:,}".replace(",", ".")
     retiros_pagados_fmt = f"${retiros_pagados:,}".replace(",", ".")
@@ -235,28 +241,40 @@ def eliminar_clase(request, pk):
     return redirect('dashboard_admin')
 
 
+def _avanzar_retiro(request, pk, accion, exito):
+    """Aplica un paso al retiro con la fila bloqueada: un doble clic o dos admins no lo repiten."""
+    from alumnos.models import SolicitudRetiro
+    with transaction.atomic():
+        retiro = get_object_or_404(SolicitudRetiro.objects.select_for_update(), id_solicitud=pk)
+        try:
+            accion(retiro)
+        except ValidationError as e:
+            messages.error(request, e.messages[0])
+        else:
+            messages.success(request, f'Retiro #{pk} {exito}.')
+    return redirect('dashboard_admin')
+
+
 @admin_required
 @require_POST
 def aprobar_retiro(request, pk):
-    from alumnos.models import SolicitudRetiro
-    from django.utils import timezone
-    retiro = get_object_or_404(SolicitudRetiro, id_solicitud=pk)
-    retiro.estado = 'aprobado'
-    retiro.fecha_resolucion = timezone.now()
-    retiro.save()
-    return redirect('dashboard_admin')
+    return _avanzar_retiro(request, pk, lambda r: r.aprobar(request.user),
+                           'aprobado. Transfiere y luego registra el número de operación')
 
 
 @admin_required
 @require_POST
 def rechazar_retiro(request, pk):
-    from alumnos.models import SolicitudRetiro
-    from django.utils import timezone
-    retiro = get_object_or_404(SolicitudRetiro, id_solicitud=pk)
-    retiro.estado = 'rechazado'
-    retiro.fecha_resolucion = timezone.now()
-    retiro.save()
-    return redirect('dashboard_admin')
+    return _avanzar_retiro(request, pk, lambda r: r.rechazar(request.user, request.POST.get('motivo', '')),
+                           'rechazado')
+
+
+@admin_required
+@require_POST
+def marcar_pagado_retiro(request, pk):
+    return _avanzar_retiro(request, pk,
+                           lambda r: r.marcar_pagado(request.user, request.POST.get('numero_operacion', '')),
+                           'registrado como pagado')
 
 
 

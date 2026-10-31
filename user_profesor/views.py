@@ -39,8 +39,10 @@ def calcular_saldos(profesor):
     corresponde_al_profesor = sum(paquetes.pago_profesor(v) for v in valores)
 
     retiros = SolicitudRetiro.objects.filter(profesor=profesor)
-    aprobados = retiros.filter(estado='aprobado').aggregate(Sum('monto'))['monto__sum'] or 0
-    pendientes = retiros.filter(estado='pendiente').aggregate(Sum('monto'))['monto__sum'] or 0
+    aprobados = retiros.filter(
+        estado__in=[SolicitudRetiro.APROBADO, SolicitudRetiro.PAGADO]
+    ).aggregate(Sum('monto'))['monto__sum'] or 0
+    pendientes = retiros.filter(estado=SolicitudRetiro.PENDIENTE).aggregate(Sum('monto'))['monto__sum'] or 0
 
     disponible = max(0, corresponde_al_profesor - aprobados - pendientes)
     # La comision de la plataforma mas lo que aun esta en tramite.

@@ -399,9 +399,13 @@ input:checked + .slider:before {
                                     {% if ret.estado == 'pendiente' %}
                                     <span style="background: rgba(245, 158, 11, 0.15); color: #b45309; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.8rem;"><i class="bi bi-clock"></i> Pendiente</span>
                                     {% elif ret.estado == 'aprobado' %}
-                                    <span style="background: rgba(16, 185, 129, 0.15); color: #047857; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.8rem;"><i class="bi bi-check-circle-fill"></i> Aprobado / Transferido</span>
+                                    <span style="background: rgba(16, 185, 129, 0.15); color: #047857; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.8rem;"><i class="bi bi-check-circle-fill"></i> Aprobado, pago en proceso</span>
+                                    {% elif ret.estado == 'pagado' %}
+                                    <span style="background: rgba(16, 185, 129, 0.15); color: #047857; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.8rem;"><i class="bi bi-cash-coin"></i> Pagado</span>
+                                    <br><small>{{ ret.fecha_pago|date:"d/m/Y" }} · Op. {{ ret.numero_operacion }}</small>
                                     {% else %}
                                     <span style="background: rgba(239, 68, 68, 0.15); color: #b91c1c; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.8rem;"><i class="bi bi-x-circle-fill"></i> Rechazado</span>
+                                    {% if ret.motivo_rechazo %}<br><small><strong>Motivo:</strong> {{ ret.motivo_rechazo }}</small>{% endif %}
                                     {% endif %}
                                 </td>
                             </tr>

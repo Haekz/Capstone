@@ -13,6 +13,12 @@
 
 {% block content %}
 
+{% if messages %}
+<div class="panel" role="status" style="margin-bottom:20px; padding:14px 18px;">
+    {% for m in messages %}<div>{{ m }}</div>{% endfor %}
+</div>
+{% endif %}
+
                 <!-- ============ SECCIÓN: RESUMEN GENERAL ============ -->
                 <div class="admin-section active" id="section-resumen">
 
@@ -708,7 +714,9 @@
                                         {% if r.estado == 'pendiente' %}
                                         <span class="badge badge-pendiente"><i class="bi bi-clock-fill"></i> Pendiente</span>
                                         {% elif r.estado == 'aprobado' %}
-                                        <span class="badge badge-resuelto"><i class="bi bi-check-circle-fill"></i> Aprobado</span>
+                                        <span class="badge badge-resuelto"><i class="bi bi-check-circle-fill"></i> Aprobado, por pagar</span>
+                                        {% elif r.estado == 'pagado' %}
+                                        <span class="badge badge-resuelto"><i class="bi bi-cash-coin"></i> Pagado</span>
                                         {% else %}
                                         <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;"><i class="bi bi-x-circle-fill"></i> Rechazado</span>
                                         {% endif %}
@@ -716,21 +724,30 @@
                                     <td>
                                         {% if r.estado == 'pendiente' %}
                                         <div style="display:flex; gap:6px;">
-                                            <form method="POST" action="{% url 'aprobar_retiro' r.id_solicitud %}" onsubmit="return confirm('¿Aprobar y marcar como transferido este retiro?')" style="display:inline;">
+                                            <form method="POST" action="{% url 'aprobar_retiro' r.id_solicitud %}" onsubmit="return confirm('¿Aprobar este retiro? Después transfiere y registra el número de operación.')" style="display:inline;">
                                                 {% csrf_token %}
-                                                <button type="submit" class="btn-action edit" style="border:none; background:rgba(16,185,129,0.12); color:#10b981; display:flex; align-items:center; justify-content:center; cursor:pointer; width:32px; height:32px; border-radius:6px;" title="Aprobar Transferencia">
+                                                <button type="submit" class="btn-action edit" style="border:none; background:rgba(16,185,129,0.12); color:#10b981; display:flex; align-items:center; justify-content:center; cursor:pointer; width:32px; height:32px; border-radius:6px;" title="Aprobar retiro" aria-label="Aprobar retiro">
                                                     <i class="bi bi-check-lg"></i>
                                                 </button>
                                             </form>
-                                            <form method="POST" action="{% url 'rechazar_retiro' r.id_solicitud %}" onsubmit="return confirm('¿Rechazar esta solicitud de retiro?')" style="display:inline;">
+                                            <form method="POST" action="{% url 'rechazar_retiro' r.id_solicitud %}" onsubmit="return confirm('¿Rechazar esta solicitud de retiro?')" style="display:flex; gap:6px;">
                                                 {% csrf_token %}
-                                                <button type="submit" class="btn-action delete" style="border:none; background:rgba(239,68,68,0.12); color:#ef4444; display:flex; align-items:center; justify-content:center; cursor:pointer; width:32px; height:32px; border-radius:6px;" title="Rechazar Retiro">
+                                                <input type="text" name="motivo" required maxlength="300" placeholder="Motivo del rechazo" aria-label="Motivo del rechazo (lo verá el profesor)" style="padding:4px 8px; border-radius:6px; font-size:0.8rem;">
+                                                <button type="submit" class="btn-action delete" style="border:none; background:rgba(239,68,68,0.12); color:#ef4444; display:flex; align-items:center; justify-content:center; cursor:pointer; width:32px; height:32px; border-radius:6px;" title="Rechazar retiro" aria-label="Rechazar retiro">
                                                     <i class="bi bi-x-lg"></i>
                                                 </button>
                                             </form>
                                         </div>
+                                        {% elif r.estado == 'aprobado' %}
+                                        <form method="POST" action="{% url 'marcar_pagado_retiro' r.id_solicitud %}" style="display:flex; gap:6px;">
+                                            {% csrf_token %}
+                                            <input type="text" name="numero_operacion" required maxlength="40" placeholder="N.º de operación" aria-label="Número de operación de la transferencia" style="padding:4px 8px; border-radius:6px; font-size:0.8rem;">
+                                            <button type="submit" class="btn-action edit" style="border:none; background:rgba(16,185,129,0.12); color:#10b981; cursor:pointer; height:32px; padding:0 10px; border-radius:6px;">Registrar pago</button>
+                                        </form>
+                                        {% elif r.estado == 'pagado' %}
+                                        <span style="color:var(--text-muted); font-size:0.8rem;">Pagado el {{ r.fecha_pago|date:"d/m/Y" }} · Op. {{ r.numero_operacion }}</span>
                                         {% else %}
-                                        <span style="color:var(--text-muted); font-size:0.8rem;">Resuelto ({% if r.fecha_resolucion %}{{ r.fecha_resolucion|date:"d/m/Y" }}{% else %}-{% endif %})</span>
+                                        <span style="color:var(--text-muted); font-size:0.8rem;">Rechazado el {% if r.fecha_resolucion %}{{ r.fecha_resolucion|date:"d/m/Y" }}{% else %}-{% endif %}{% if r.motivo_rechazo %}: {{ r.motivo_rechazo }}{% endif %}</span>
                                         {% endif %}
                                     </td>
                                 </tr>

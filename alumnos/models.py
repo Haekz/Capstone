@@ -644,17 +644,60 @@ class Reporte(models.Model):
 
 
 class SolicitudRetiro(models.Model):
+    """Retiro de saldo de un profesor. Los estados solo avanzan:
+    pendiente -> aprobado -> pagado, o pendiente -> rechazado.
+
+    Aprobar no es pagar: la plata se mueve en el banco y despues se registra
+    aqui el numero de operacion. Cada paso guarda quien lo hizo.
+    """
+    PENDIENTE, APROBADO, PAGADO, RECHAZADO = 'pendiente', 'aprobado', 'pagado', 'rechazado'
+
     id_solicitud = models.AutoField(primary_key=True)
     profesor = models.ForeignKey(Profesor, on_delete=models.CASCADE, related_name='retiros')
     monto = models.IntegerField()
     fecha_solicitud = models.DateTimeField(auto_now_add=True)
-    estado = models.CharField(max_length=15, choices=[('pendiente', 'Pendiente'), ('aprobado', 'Aprobado'), ('rechazado', 'Rechazado')], default='pendiente')
+    estado = models.CharField(max_length=15, choices=[(PENDIENTE, 'Pendiente'), (APROBADO, 'Aprobado'), (PAGADO, 'Pagado'), (RECHAZADO, 'Rechazado')], default=PENDIENTE)
     banco = models.ForeignKey(Banco, on_delete=models.SET_NULL, null=True)
     tipo_cuenta = models.CharField(max_length=40, choices=[('rut_vista', 'Cuenta Rut / Vista'), ('corriente', 'Cuenta Corriente'), ('ahorro', 'Cuenta de Ahorro')], default='rut_vista')
     numero_cuenta = models.CharField(max_length=40, blank=True, default='')
     fecha_resolucion = models.DateTimeField(null=True, blank=True)
+    # SET_NULL: si se borra la cuenta del admin, el retiro se conserva.
+    resuelto_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                     related_name='+')
+    motivo_rechazo = models.TextField(blank=True, default='')
+    pagado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name='+')
+    numero_operacion = models.CharField(max_length=40, blank=True, default='')
+    fecha_pago = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"Retiro #{self.id_solicitud} - {self.profesor.user.first_name} (${self.monto})"
+
+    def _exigir(self, estado):
+        if self.estado != estado:
+            raise ValidationError(f'No se puede: el retiro #{self.id_solicitud} está {self.get_estado_display().lower()}.')
+
+    def aprobar(self, usuario):
+        self._exigir(self.PENDIENTE)
+        self.estado, self.resuelto_por, self.fecha_resolucion = self.APROBADO, usuario, timezone.now()
+        self.save()
+
+    def rechazar(self, usuario, motivo):
+        self._exigir(self.PENDIENTE)
+        motivo = motivo.strip()
+        if not motivo:
+            raise ValidationError('Escribe el motivo del rechazo: el profesor lo verá.')
+        self.estado, self.resuelto_por, self.fecha_resolucion = self.RECHAZADO, usuario, timezone.now()
+        self.motivo_rechazo = motivo
+        self.save()
+
+    def marcar_pagado(self, usuario, numero_operacion):
+        self._exigir(self.APROBADO)
+        numero = numero_operacion.strip()
+        if not numero:
+            raise ValidationError('Escribe el número de operación de la transferencia.')
+        self.estado, self.pagado_por, self.fecha_pago = self.PAGADO, usuario, timezone.now()
+        self.numero_operacion = numero[:40]
+        self.save()
 
 
