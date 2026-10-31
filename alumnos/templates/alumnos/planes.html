@@ -57,11 +57,11 @@
         <article class="plan-card card{% if forloop.last %} featured{% endif %}" aria-labelledby="plan-{{ c.plan.codigo }}">
             <div class="plan-card-body">
                 {% if forloop.last %}<div class="plan-badge">Mayor descuento</div>{% endif %}
-                <h3 class="plan-title" id="plan-{{ c.plan.codigo }}">{{ c.plan.nombre }}</h3>
+                <h3 class="plan-title" id="plan-{{ c.plan.codigo }}">Plan {{ c.plan.nombre }}</h3>
                 <div class="plan-price-box">
                     <span class="plan-price">{{ c.precio|clp }}</span>
                 </div>
-                <p class="plan-billing-info">{{ c.plan.clases }} clase{{ c.plan.clases|pluralize }} de {{ duracion_clase }} min · {{ c.precio_por_clase|clp }} por clase</p>
+                <p class="plan-billing-info">{{ c.plan.clases }} clase{{ c.plan.clases|pluralize }} de {{ duracion_clase }} min · {{ c.precio_por_clase|clp }} por clase · Sin renovación obligatoria</p>
 
                 {% if profesor and estudiante %}
                 <form method="post" action="{% url 'apoderado_comprar_paquete' estudiante.pk %}">

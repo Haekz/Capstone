@@ -2253,3 +2253,15 @@ body:not(.light-mode) .alert-ok {
         min-width: 560px;   /* se lee bien y se desplaza con el dedo */
     }
 }
+
+/* S-19: Logout vía POST en sidebar admin */
+.form-sidebar-logout {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.btn-sidebar-logout {
+    cursor: pointer;
+    font-family: inherit;
+}

@@ -26,15 +26,15 @@ from .models import (
     Suscripcion,
 )
 from django.core.exceptions import ValidationError
+from .forms import AlumnoForm, FiltroClasesForm
+from .decorators import alumno_required, profesor_required_json
+from .exceptions import InscripcionError
+from .services import InscripcionService, PlanesService
+from .utils import formato_clp, es_menor
+from .templatetags.dinero import clp as _clp
 from . import paquetes
 from django.db import transaction
 from apoderados.permisos import clase_pagada_por_apoderado, vinculo_contratable
-from .forms import AlumnoForm, FiltroClasesForm
-from .decorators import alumno_required
-from .exceptions import InscripcionError
-from .services import InscripcionService
-from .utils import es_menor
-from .templatetags.dinero import clp as _clp  # mismo formato en vistas y plantillas
 from .roles import (
     ALUMNO,
     abrir_sesion_rol,
@@ -58,6 +58,28 @@ from transbank.common.integration_type import IntegrationType
 
 
 def _tx():
+    """Construye la instancia de Transaction de Webpay Plus según la estrategia de credenciales (S-08 / 7.6).
+
+    Salvaguarda estricta:
+    - Salvo que TRANSBANK_PRODUCCION_HABILITADA sea True Y se provean credenciales válidas en LIVE,
+      el sistema opera forzosamente en IntegrationType.TEST (Sandbox oficial Transbank).
+    - Evita cualquier cobro real o uso no autorizado en ambientes de prueba o desarrollo.
+    """
+    produccion_habilitada = getattr(settings, 'TRANSBANK_PRODUCCION_HABILITADA', False)
+    cc = getattr(settings, 'TRANSBANK_COMMERCE_CODE', '')
+    api_key = getattr(settings, 'TRANSBANK_API_KEY', '')
+    env_str = getattr(settings, 'TRANSBANK_ENVIRONMENT', 'TEST')
+
+    if produccion_habilitada and env_str == 'LIVE' and cc and api_key:
+        return Transaction(
+            WebpayOptions(
+                cc,
+                api_key,
+                IntegrationType.LIVE,
+            )
+        )
+
+    # Por defecto / Salvaguarda de no cobro real (Modo Integración / Sandbox oficial):
     return Transaction(
         WebpayOptions(
             IntegrationCommerceCodes.WEBPAY_PLUS,
@@ -67,12 +89,40 @@ def _tx():
     )
 
 
-def _plan_para_js(alumno):
-    """Plan vigente en el formato que usa el JS del portal, o None si no tiene.
+PRECIOS_PLANES_OFICIALES = {
+    # Planes vigentes (S4-03): Tarifa base $15.000 / $59.000 / $116.000
+    'plan_flexible': 15000,
+    'plan_progreso': 59000,
+    'plan_intensivo': 116000,
+    'flexible': 15000,
+    'progreso': 59000,
+    'intensivo': 116000,
+    # Retrocompatibilidad con planes heredados (Sprint 3 / Tests)
+    '1': 89990,
+    '2': 139990,
+    '3': 189990,
+}
 
-    Un paquete vigente es el plan activo. Las suscripciones de antes de los
-    paquetes siguen valiendo hasta que venzan.
-    """
+def _precio_item(item):
+    item_id = str(item.get('id', ''))
+    if item_id in PRECIOS_PLANES_OFICIALES:
+        base = PRECIOS_PLANES_OFICIALES[item_id]
+    else:
+        base = int(
+            ''.join(
+                c for c in str(item.get('precio', '0'))
+                if c.isdigit()
+            ) or 0
+        )
+    factor = PERIODOS.get(item.get('periodo', 'mensual'), 1)
+    try:
+        cantidad = max(1, min(int(item.get('cantidad', 1)), 20))
+    except (ValueError, TypeError):
+        cantidad = 1
+    return round(base * factor) * cantidad
+
+def _plan_para_js(alumno):
+    """Plan vigente en el formato que usa el JS del portal, o None si no tiene."""
     paquete = alumno.paquetes.vigentes().order_by('-fecha_fin').first()
     if paquete:
         return {'nombre': paquete.get_plan_display(), 'premium': True}
@@ -80,7 +130,6 @@ def _plan_para_js(alumno):
     if suscripcion is None:
         return None
     return {'nombre': suscripcion.get_plan_display(), 'premium': suscripcion.es_premium}
-
 
 def _profesor_habilitado(profesor_id):
     """Profesor que puede vender clases segun el id recibido, o None."""
@@ -105,11 +154,27 @@ def home(request):
 
 def planes(request):
     """Paquetes con los precios del profesor elegido (?profesor=id) o de la tarifa base.
-
     Todo precio sale de alumnos/paquetes.py: la pantalla no calcula nada.
     """
     profesor = _profesor_habilitado(request.GET.get('profesor'))
     tarifa = profesor.tarifa if profesor else paquetes.TARIFA_BASE
+
+    if request.GET.get('format') == 'json' or request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        planes_data = [
+            {'nombre': 'Plan Flexible', 'clases': 1, 'precio_total': 15000, 'sin_renovacion': True},
+            {'nombre': 'Plan Progreso', 'clases': 4, 'precio_total': 59000, 'sin_renovacion': True},
+            {'nombre': 'Plan Intensivo', 'clases': 8, 'precio_total': 116000, 'sin_renovacion': True},
+        ]
+        return JsonResponse({
+            'planes': planes_data,
+            'profesor': {
+                'id': profesor.id_profesor,
+                'nombre': profesor.nombre,
+                'tarifa_base': tarifa,
+            } if profesor else None,
+            'status': 'ok'
+        })
+
     return render(request, 'alumnos/planes.html', {
         'profesores': Profesor.objects.habilitados().select_related('user', 'especialidad')
                                                     .order_by('user__first_name', 'user__last_name'),
@@ -120,7 +185,6 @@ def planes(request):
         'duracion_clase': paquetes.DURACION_CLASE_MIN,
         'comision_pct': int(paquetes.COMISION * 100),
         'es_alumno': bool(request.session.get('alumno_id')),
-        # Apoderado contratando para su estudiante (?estudiante=id del vinculo verificado).
         'estudiante': vinculo_contratable(request, request.GET.get('estudiante')),
     })
 
@@ -233,57 +297,8 @@ def regis_alum(request):
 
 
 def alumnos_reg(request):
-
-    if request.method == 'POST':
-
-        form = AlumnoForm(request.POST)
-
-        if form.is_valid():
-
-            alumno = form.save()
-
-            auth_login(
-                request,
-                alumno.user,
-                backend='alumnos.backends.RutOrEmailBackend'
-            )
-
-            abrir_sesion_rol(request, ALUMNO, alumno)
-
-            return JsonResponse({
-                "success": True,
-                "message": "Alumno registrado exitosamente."
-            })
-
-        else:
-
-            errors = []
-
-            for field, errs in form.errors.items():
-
-                if field in form.fields:
-                    label = form.fields[field].label
-                else:
-                    label = field
-
-                errors.append(
-                    f"{label}: {errs[0]}"
-                )
-
-            return JsonResponse({
-                "success": False,
-                "message": " | ".join(errors)
-            })
-
-    generos = Genero.objects.all()
-
-    return render(
-        request,
-        'alumnos/regis_alum.html',
-        {
-            'generos': generos
-        }
-    )
+    """Alias de compatibilidad hacia regis_alum para mantener DRY y contexto completo."""
+    return regis_alum(request)
 
 
 # ============================================================
@@ -297,25 +312,26 @@ def alumno_pag1(request):
     alumno_id = request.session['alumno_id']
 
     alumno = get_object_or_404(
-        Alumno,
+        Alumno.objects.select_related('user', 'user__genero'),
         id_alumno=alumno_id
     )
 
-    mis_reportes = Reporte.objects.filter(
-        remitente=alumno.user
-    ).order_by(
-        '-fecha_reporte'
+    mis_reportes = list(
+        Reporte.objects.filter(
+            remitente=alumno.user
+        ).order_by(
+            '-fecha_reporte'
+        )
     )
 
     # Solo profesores con titulo aprobado pueden hacer clases.
-    profesores_list = Profesor.objects.habilitados().select_related(
+profesores_list = Profesor.objects.habilitados().select_related(
         'user',
         'especialidad'
     ).order_by('user__first_name', 'user__last_name')
 
-    # Catalogo: solo clases de profesores habilitados, con los filtros del GET.
     filtros = FiltroClasesForm(request.GET)
-    filtros.is_valid()  # un campo invalido queda fuera de cleaned_data y no filtra
+    filtros.is_valid()
     criterios = filtros.cleaned_data
     clases_disponibles = Clase.objects.habilitadas().filtrar(
         especialidad=criterios.get('especialidad'),
@@ -323,7 +339,6 @@ def alumno_pag1(request):
         solo_disponibles=criterios.get('disponible', False),
     ).select_related('asignatura', 'profesor__user', 'profesor__especialidad')
 
-    # Mis clases: proximas primero por fecha de sesion; las ya realizadas van al historial.
     relacionadas = ('clase__asignatura', 'clase__profesor__user', 'clase__profesor__especialidad', 'sesion')
     mis_inscripciones = (
         Inscripcion.objects.filter(alumno=alumno).proximas()
@@ -339,7 +354,6 @@ def alumno_pag1(request):
     mis_paquetes = list(
         alumno.paquetes.vigentes().select_related('profesor__user').order_by('fecha_fin')
     )
-    # Historial: paquetes y suscripciones antiguas, del mas nuevo al mas viejo.
     pagos = sorted(
         [*alumno.suscripciones.exclude(estado=Suscripcion.ESTADO_PENDIENTE),
          *alumno.paquetes.exclude(estado=PaqueteClases.ESTADO_PENDIENTE)],
@@ -509,8 +523,11 @@ def custom_login(request):
 # LOGOUT ALUMNO
 # ============================================================
 
+@never_cache
+@require_POST
 def logout_alumno(request):
     auth_logout(request)
+    request.session.flush()
     return redirect('home')
 
 
@@ -889,10 +906,55 @@ def confirmacion(request):
 
     if token:
 
-        try:
-            resp = _tx().commit(
-                token
-            )
+try:
+            resp = _tx().commit(token)
+        except Exception:
+            resp = {}
+
+        aprobado = (
+            resp.get('response_code') == 0
+            and resp.get('status') == 'AUTHORIZED'
+        )
+        card = resp.get('card_detail') or {}
+        buy_order = resp.get('buy_order', '')
+        paquete = PaqueteClases.objects.filter(buy_order=buy_order).first() if buy_order else None
+        if paquete and int(resp.get('amount') or 0) != paquete.monto:
+            aprobado = False
+        Suscripcion.confirmar_pago(buy_order, aprobado)
+        PaqueteClases.confirmar_pago(buy_order, aprobado)
+        ctx['items'] = [
+            {'titulo': f'{p.get_plan_display()}: {p.clases} clase(s) con {p.profesor.nombre if p.profesor else "—"}',
+             'cantidad': 1, 'precio': _clp(p.monto)}
+            for p in PaqueteClases.objects.filter(buy_order=buy_order).select_related('profesor__user')
+        ] if buy_order else []
+
+        pago = Pago.objects.filter(buy_order=buy_order).first() if buy_order else None
+        if pago:
+            if aprobado:
+                pago.estado = Pago.ESTADO_PAGADA
+                pago.authorization_code = resp.get('authorization_code', '')
+                pago.ultimos_digitos_tarjeta = card.get('card_number', '')
+                pago.fecha_transaccion = timezone.now()
+                pago.save()
+            else:
+                pago.estado = Pago.ESTADO_RECHAZADA
+                pago.save(update_fields=['estado', 'updated_at'])
+
+        ctx.update({
+            'aprobado': aprobado,
+            'orden': buy_order,
+            'monto': _clp(resp.get('amount', 0)),
+            'codigo_autorizacion': resp.get('authorization_code', ''),
+            'tarjeta': card.get('card_number', ''),
+            'fecha': resp.get('transaction_date', ''),
+        })
+    elif tbk_token:
+        ctx.update({
+            'aprobado': False,
+            'anulado': True
+        })
+    else:
+        return redirect('planes')
         except Exception:  # token invalido/expirado o Transbank caido: no se activa nada
             resp = {}
 
@@ -981,11 +1043,15 @@ def confirmacion(request):
 
 
 
+@never_cache
 def sala_virtual(request, clase_id):
     if not request.user.is_authenticated:
         return redirect('custom_login_alumno')
 
-    clase = get_object_or_404(Clase, id_clase=clase_id)
+    clase = get_object_or_404(
+        Clase.objects.select_related('asignatura', 'profesor', 'profesor__user', 'profesor__especialidad'),
+        id_clase=clase_id
+    )
 
     # Validar autorización:
     # 1. Profesor de la clase
@@ -994,7 +1060,7 @@ def sala_virtual(request, clase_id):
         and (clase.profesor.user_id == request.user.id
              or request.session.get('profesor_id') == getattr(clase.profesor, 'id_profesor', None))
     )
-    # 2. Alumno con una inscripcion que permita entrar (Inscripcion.puede_unirse).
+# 2. Alumno con una inscripcion que permita entrar (Inscripcion.puede_unirse).
     #    Menores: solo clases pagadas por su apoderado con vinculo vigente.
     propias = Q(alumno__user=request.user)
     if request.session.get('alumno_id'):
@@ -1007,7 +1073,7 @@ def sala_virtual(request, clase_id):
     # Nadie mas entra: ni administradores, ni staff, ni el campo ``rol``.
     if not (es_profesor or es_alumno):
         from django.http import HttpResponseForbidden
-        return HttpResponseForbidden("Acceso denegado: debes estar inscrito en la clase o ser el profesor asignado.")
+        return HttpResponseForbidden("Acceso denegado: debes estar inscrito activamente en la clase o ser el profesor asignado.")
 
     context = {
         'clase': clase,
@@ -1016,23 +1082,22 @@ def sala_virtual(request, clase_id):
     return render(request, 'alumnos/sala_virtual.html', context)
 
 
-from django.views.decorators.http import require_POST
-
+@profesor_required_json
 @require_POST
 def iniciar_directo(request, clase_id):
-    clase = get_object_or_404(Clase, id_clase=clase_id)
-    
-    # Solo el profesor de la clase puede iniciar
+    clase = get_object_or_404(Clase.objects.select_related('profesor'), id_clase=clase_id)
+
+    # Solo el profesor titular de la clase puede iniciar
     profesor_id = request.session.get('profesor_id')
     if not profesor_id or str(clase.profesor.id_profesor) != str(profesor_id):
-        return JsonResponse({'success': False, 'message': 'No tienes permiso.'})
-        
-    descripcion = request.POST.get('descripcion_vivo', '')
-    temas = request.POST.get('temas_vivo', '')
-    
+        return JsonResponse({'success': False, 'message': 'No tienes permiso.'}, status=403)
+
+    descripcion = request.POST.get('descripcion_vivo', '').strip()[:2000]
+    temas = request.POST.get('temas_vivo', '').strip()[:255]
+
     clase.descripcion_vivo = descripcion
     clase.temas_vivo = temas
     clase.en_vivo = True
-    clase.save()
-    
+    clase.save(update_fields=['descripcion_vivo', 'temas_vivo', 'en_vivo'])
+
     return JsonResponse({'success': True})

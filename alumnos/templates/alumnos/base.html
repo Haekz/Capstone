@@ -8,6 +8,8 @@
     <title>{% block title %}LBWUS | Learn Better With Us{% endblock %}</title>
     <link rel="icon" href="{% static 'alumnos/img/Logo.png' %}">
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -29,6 +31,18 @@
     {% include 'alumnos/includes/footer.html' %}
 
     <script>
+        // ===== ESCAPE CONTEXTUAL SEGURO ANTI-XSS (S-23) =====
+        function escaparHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+        window.escaparHtml = escaparHtml;
+
         function toggleTheme() {
             const body = document.body;
             body.classList.toggle('dark-mode');
@@ -48,12 +62,12 @@
             updateThemeIcon(document.body.classList.contains('dark-mode'));
         });
 
-        // Efecto translúcido del navbar al hacer scroll
+        // Efecto translúcido del navbar al hacer scroll (listener pasivo para no bloquear el hilo principal)
         window.addEventListener('scroll', () => {
             const header = document.querySelector('.header');
             if (!header) return;
             header.classList.toggle('scrolled', window.scrollY > 40);
-        });
+        }, { passive: true });
 
         // Menu de cuenta (circulo con iniciales): abre/cierra, Escape y clic afuera
         (function () {
@@ -70,6 +84,110 @@
             document.addEventListener('click', () => abrir(false));
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape' && !menu.hidden) { abrir(false); btn.focus(); }
+            });
+        // ===== CARRITO GLOBAL SEGURO (heredado en todas las páginas) =====
+        (function () {
+            const PERIODOS = [
+                { valor: 'mensual', label: 'Mensual', factor: 1 },
+                { valor: '3semanas', label: '3 Semanas', factor: 0.75 },
+                { valor: '2semanas', label: '2 Semanas', factor: 0.50 },
+                { valor: '1semana', label: '1 Semana', factor: 0.25 }
+            ];
+            const clpFmt = n => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(n).replace('CLP', '$').trim();
+            const parsePrecio = s => parseInt((s || '0').replace(/[^0-9]/g, ''), 10) || 0;
+
+            let articulos = [];
+
+            function cargar() {
+                try { articulos = JSON.parse(localStorage.getItem('carrito')) || []; }
+                catch (e) { articulos = []; }
+                articulos.forEach(a => { if (!a.periodo) a.periodo = 'mensual'; });
+            }
+            function guardar() { localStorage.setItem('carrito', JSON.stringify(articulos)); }
+
+            function actualizarContador() {
+                const c = document.getElementById('contador-carrito');
+                if (!c) return;
+                const total = articulos.reduce((s, a) => s + a.cantidad, 0);
+                c.textContent = total;
+                c.style.display = total > 0 ? 'flex' : 'none';
+            }
+
+            function render() {
+                const tbody = document.querySelector('#lista-carrito tbody');
+                if (!tbody) return;
+                tbody.innerHTML = '';
+
+                if (articulos.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:12px;color:var(--text-light)">Sin planes en el carrito</td></tr>';
+                } else {
+                    articulos.forEach(item => {
+                        const factor = (PERIODOS.find(p => p.valor === (item.periodo || 'mensual')) || PERIODOS[0]).factor;
+                        const precioAjustado = Math.round(parsePrecio(item.precio) * factor);
+                        const opciones = PERIODOS.map(p =>
+                            `<option value="${escaparHtml(p.valor)}" ${p.valor === (item.periodo || 'mensual') ? 'selected' : ''}>${escaparHtml(p.label)}</option>`
+                        ).join('');
+                        const tr = document.createElement('tr');
+                        // S-23: Escape contextual de campos del carrito contra XSS
+                        tr.innerHTML = `
+                            <td class="cart-item-name">${escaparHtml(item.titulo)}</td>
+                            <td><select class="cart-periodo-select" data-id="${escaparHtml(item.id)}">${opciones}</select></td>
+                            <td class="cart-item-price">${escaparHtml(clpFmt(precioAjustado))}</td>
+                            <td>${escaparHtml(item.cantidad)}</td>
+                            <td><button class="cart-remove-btn" data-id="${escaparHtml(item.id)}">&times;</button></td>`;
+                        tbody.appendChild(tr);
+                    });
+                }
+
+                actualizarContador();
+                const btnPagar = document.getElementById('btn-ir-pago');
+                if (btnPagar) btnPagar.style.display = articulos.length > 0 ? 'block' : 'none';
+
+                tbody.querySelectorAll('.cart-periodo-select').forEach(sel => {
+                    sel.addEventListener('change', function () {
+                        const item = articulos.find(a => a.id === this.dataset.id);
+                        if (item) { item.periodo = this.value; guardar(); render(); }
+                    });
+                });
+                tbody.querySelectorAll('.cart-remove-btn').forEach(btn => {
+                    btn.addEventListener('click', function () {
+                        articulos = articulos.filter(a => a.id !== this.dataset.id);
+                        guardar(); render();
+                    });
+                });
+            }
+
+            // Función GLOBAL: la usan los botones "Contratar Plan" de Planes
+            window.agregarAlCarrito = function (id, titulo, precio) {
+                const existe = articulos.find(a => a.id === id);
+                if (existe) existe.cantidad += 1;
+                else articulos.push({ id, titulo, precio, cantidad: 1, periodo: 'mensual' });
+                guardar(); render();
+            };
+
+            document.addEventListener('DOMContentLoaded', () => {
+                cargar();
+                render();
+
+                const cartButton = document.getElementById('cart-button');
+                const carrito = document.getElementById('carrito');
+                if (cartButton && carrito) {
+                    cartButton.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        carrito.style.display = (carrito.style.display === 'block') ? 'none' : 'block';
+                    });
+                    document.addEventListener('click', () => { carrito.style.display = 'none'; });
+                    carrito.addEventListener('click', (e) => e.stopPropagation());
+                }
+
+                const vaciarBtn = document.getElementById('vaciar-carrito');
+                if (vaciarBtn) {
+                    vaciarBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        articulos = [];
+                        guardar(); render();
+                    });
+                }
             });
         })();
     </script>

@@ -1,48 +1,143 @@
+import datetime
+import logging
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
-from alumnos.models import Especialidad, Genero, Profesor, Clase, Inscripcion, Tutor
+from django.views.decorators.http import require_POST
+from django.db.models import Sum, Q
+from alumnos.models import (
+    Especialidad, Genero, Profesor, Clase, Inscripcion, Tutor,
+    SolicitudRetiro, Pago, PlanAlumno, DesgloseOperacion, Banco,
+)
 from alumnos.decorators import profesor_required, profesor_required_json
 from alumnos.roles import ADMIN, PROFESOR, abrir_sesion_rol
+from alumnos.utils import formato_clp, validar_rut_chileno, usuario_existe, validar_imagen_perfil
 from django.core.exceptions import ValidationError
 from django.http import FileResponse, Http404
 from . import foto
 from alumnos import paquetes
 
-# Tarifas por inscripcion real. Inscripciones sin paquete: valor fijo por inscripcion.
-# Con paquete valen lo que pago el alumno por esa clase y el profesor recibe 85%.
-VALOR_INSCRIPCION = 15000
-PAGO_PROFESOR = paquetes.pago_profesor(VALOR_INSCRIPCION)
+logger = logging.getLogger(__name__)
 
+VALOR_INSCRIPCION = 15000
+COMISION_LBWUS = 2250
+PAGO_PROFESOR = 12750
 
 def _valor_clase(inscripcion):
     """Lo que pago el alumno por esa clase."""
-    return inscripcion.paquete.precio_por_clase if inscripcion.paquete_id else VALOR_INSCRIPCION
+    return inscripcion.paquete.precio_por_clase if getattr(inscripcion, 'paquete_id', None) else VALOR_INSCRIPCION
 
 
-def calcular_saldos(profesor):
-    """Devuelve los saldos de un profesor a partir de sus inscripciones.
+def calcular_saldos(profesor, retiros_lista=None):
+    """Devuelve los saldos de un profesor a partir de sus inscripciones y planes vendidos (S4-03)."""
+    from alumnos.services import PlanesService
 
-    Sin inscripciones el resultado es 0: una cuenta nueva no tiene dinero.
-    """
-    from django.db.models import Sum
+    tarifa_base = PlanesService.obtener_tarifa_base_profesor(profesor)
+    calc_ref = PlanesService.calcular_precios_plan('flexible', tarifa_base=tarifa_base)
+    valor_unitario = calc_ref['precio_total']
+    pago_unitario = calc_ref['monto_tutor']
 
-    from alumnos.models import SolicitudRetiro
+    # 1. Inscripciones individuales o con Paquetes
+    inscripciones_qs = Inscripcion.objects.filter(clase__profesor=profesor)
+    if hasattr(inscripciones_qs, 'consumidas'):
+        inscripciones_consumidas = inscripciones_qs.consumidas().select_related('paquete')
+    else:
+        inscripciones_consumidas = inscripciones_qs.filter(estado=Inscripcion.ESTADO_CONFIRMADA).select_related('paquete')
 
-    inscripciones = Inscripcion.objects.filter(clase__profesor=profesor).consumidas().select_related('paquete')
-    valores = [_valor_clase(i) for i in inscripciones]
+    valores = [_valor_clase(i) for i in inscripciones_consumidas]
+    total_ganado_inscripciones = sum(valores)
+    corresponde_tutor_inscripciones = sum(paquetes.pago_profesor(v) for v in valores)
 
-    total_ganado = sum(valores)
-    corresponde_al_profesor = sum(paquetes.pago_profesor(v) for v in valores)
+    # 2. Planes vendidos asociados directamente a este profesor (PlanAlumno S4-03)
+    planes = PlanAlumno.objects.filter(
+        profesor=profesor,
+        pago__estado=Pago.ESTADO_PAGADA,
+        estado__in=[PlanAlumno.ESTADO_ACTIVO, PlanAlumno.ESTADO_AGOTADO]
+    ).only('monto_total', 'monto_tutor', 'total_clases', 'clases_consumidas')
 
-    retiros = SolicitudRetiro.objects.filter(profesor=profesor)
-    aprobados = retiros.filter(estado='aprobado').aggregate(Sum('monto'))['monto__sum'] or 0
-    pendientes = retiros.filter(estado='pendiente').aggregate(Sum('monto'))['monto__sum'] or 0
+    total_ganado_planes = 0
+    corresponde_tutor_planes_consumido = 0
+    tutor_planes_pendiente = 0
 
-    disponible = max(0, corresponde_al_profesor - aprobados - pendientes)
-    # La comision de la plataforma mas lo que aun esta en tramite.
-    pendiente = (total_ganado - corresponde_al_profesor) + pendientes
+    for plan in planes:
+        total_ganado_planes += plan.monto_total
+        if plan.total_clases > 0:
+            monto_por_clase_tutor = plan.monto_tutor / plan.total_clases
+            consumido = int(round(monto_por_clase_tutor * plan.clases_consumidas))
+            pendiente_clases = plan.monto_tutor - consumido
+            corresponde_tutor_planes_consumido += consumido
+            tutor_planes_pendiente += pendiente_clases
+        else:
+            corresponde_tutor_planes_consumido += plan.monto_tutor
+
+    total_ganado = total_ganado_inscripciones + total_ganado_planes
+    bruto_tutor_acumulado = corresponde_tutor_inscripciones + corresponde_tutor_planes_consumido
+
+    if retiros_lista is not None:
+        aprobados = sum(r.monto for r in retiros_lista if r.estado == 'aprobado')
+        retiros_pendientes = sum(r.monto for r in retiros_lista if r.estado == 'pendiente')
+    else:
+        agregados_retiros = SolicitudRetiro.objects.filter(profesor=profesor).aggregate(
+            aprobados=Sum('monto', filter=Q(estado='aprobado')),
+            pendientes=Sum('monto', filter=Q(estado='pendiente')),
+        )
+        aprobados = agregados_retiros['aprobados'] or 0
+        retiros_pendientes = agregados_retiros['pendientes'] or 0
+
+    disponible = max(0, bruto_tutor_acumulado - aprobados - retiros_pendientes)
+
+    # Fondos pendientes: comisión retenida + saldo de clases no ejecutadas aún + retiros en trámite
+    comision_plataforma = total_ganado - (bruto_tutor_acumulado + tutor_planes_pendiente)
+    pendiente = comision_plataforma + tutor_planes_pendiente + retiros_pendientes
+
+    return {
+        'total_ganado': total_ganado,
+        'disponible': disponible,
+        'pendiente': pendiente,
+    }
+
+    # 2. Planes vendidos asociados directamente a este profesor
+    planes = PlanAlumno.objects.filter(
+        profesor=profesor,
+        pago__estado=Pago.ESTADO_PAGADA,
+        estado__in=[PlanAlumno.ESTADO_ACTIVO, PlanAlumno.ESTADO_AGOTADO]
+    ).only('monto_total', 'monto_tutor', 'total_clases', 'clases_consumidas')
+
+    total_ganado_planes = 0
+    corresponde_tutor_planes_consumido = 0
+    tutor_planes_pendiente = 0
+
+    for plan in planes:
+        total_ganado_planes += plan.monto_total
+        if plan.total_clases > 0:
+            monto_por_clase_tutor = plan.monto_tutor / plan.total_clases
+            consumido = int(round(monto_por_clase_tutor * plan.clases_consumidas))
+            pendiente_clases = plan.monto_tutor - consumido
+            corresponde_tutor_planes_consumido += consumido
+            tutor_planes_pendiente += pendiente_clases
+        else:
+            corresponde_tutor_planes_consumido += plan.monto_tutor
+
+    total_ganado = total_ganado_inscripciones + total_ganado_planes
+    bruto_tutor_acumulado = corresponde_tutor_inscripciones + corresponde_tutor_planes_consumido
+
+    if retiros_lista is not None:
+        aprobados = sum(r.monto for r in retiros_lista if r.estado == 'aprobado')
+        retiros_pendientes = sum(r.monto for r in retiros_lista if r.estado == 'pendiente')
+    else:
+        agregados_retiros = SolicitudRetiro.objects.filter(profesor=profesor).aggregate(
+            aprobados=Sum('monto', filter=Q(estado='aprobado')),
+            pendientes=Sum('monto', filter=Q(estado='pendiente')),
+        )
+        aprobados = agregados_retiros['aprobados'] or 0
+        retiros_pendientes = agregados_retiros['pendientes'] or 0
+
+    disponible = max(0, bruto_tutor_acumulado - aprobados - retiros_pendientes)
+
+    # Fondos pendientes: comisión retenida + saldo de clases no ejecutadas aún + retiros en trámite
+    comision_plataforma = total_ganado - (bruto_tutor_acumulado + tutor_planes_pendiente)
+    pendiente = comision_plataforma + tutor_planes_pendiente + retiros_pendientes
 
     return {
         'total_ganado': total_ganado,
@@ -56,11 +151,6 @@ def buscar_especialidad(especialidad_id):
     if not especialidad_id.isdecimal():
         return None
     return Especialidad.objects.filter(pk=especialidad_id).first()
-
-
-def formato_clp(monto):
-    """12345 -> '$12.345'."""
-    return f"${monto:,}".replace(",", ".")
 
 
 # --- Vistas de Registro y Acceso de Profesor ---
@@ -79,7 +169,6 @@ def regis_prof(request):
             password = request.POST.get('password', '').strip()
             confirm_password = request.POST.get('confirm_password', '').strip()
 
-            # Validar que todos los campos obligatorios estén presentes
             if not all([nombre, rut, especialidad_id, direccion, fecha_nacimiento, correo_electronico, telefono, genero_id, password, confirm_password]):
                 return JsonResponse({"success": False, "message": "Todos los campos del registro son obligatorios."})
 
@@ -100,9 +189,6 @@ def regis_prof(request):
             except DjangoValidationError as e:
                 return JsonResponse({"success": False, "message": " | ".join(e.messages)})
 
-            from alumnos.utils import validar_rut_chileno, usuario_existe
-            from datetime import datetime, date
-
             if not validar_rut_chileno(rut):
                 return JsonResponse({"success": False, "message": "El RUT ingresado no es válido."})
 
@@ -111,8 +197,8 @@ def regis_prof(request):
                 return JsonResponse({"success": False, "message": error_msg})
 
             try:
-                fnac = datetime.strptime(fecha_nacimiento, '%Y-%m-%d').date()
-                today = date.today()
+                fnac = datetime.datetime.strptime(fecha_nacimiento, '%Y-%m-%d').date()
+                today = datetime.date.today()
                 if fnac >= today:
                     return JsonResponse({"success": False, "message": "La fecha de nacimiento no puede ser actual ni futura."})
                 age = today.year - fnac.year - ((today.month, today.day) < (fnac.month, fnac.day))
@@ -125,7 +211,6 @@ def regis_prof(request):
 
             from django.contrib.auth import get_user_model
             User = get_user_model()
-            # Crear usuario CustomUser centralizado
             user = User.objects.create_user(
                 username=rut,
                 rut=rut,
@@ -139,13 +224,11 @@ def regis_prof(request):
                 genero=genero
             )
 
-            # Crear el registro del Profesor vinculado al User
             profesor = Profesor.objects.create(
                 user=user,
                 especialidad=especialidad
             )
 
-            # Iniciar sesión automáticamente
             from django.contrib.auth import login as auth_login
             auth_login(request, user, backend='alumnos.backends.RutOrEmailBackend')
             abrir_sesion_rol(request, PROFESOR, profesor)
@@ -154,8 +237,9 @@ def regis_prof(request):
                 "success": True,
                 "message": "Profesor registrado exitosamente. Entrando al panel..."
             })
-        except Exception as e:
-            return JsonResponse({"success": False, "message": f"Error al registrar: {str(e)}"})
+        except Exception:
+            logger.exception("Error interno en regis_prof")
+            return JsonResponse({"success": False, "message": "Error interno al registrar el profesor. Intenta nuevamente."}, status=500)
 
     generos = Genero.objects.all()
     context = {
@@ -171,19 +255,42 @@ def panel_profesor(request):
     if not request.user.is_authenticated or (getattr(request.user, 'rol', None) != 'profesor' and not hasattr(request.user, 'perfil_profesor')):
         return redirect('custom_login_alumno')
 
-    profesor = getattr(request.user, 'perfil_profesor', None) or get_object_or_404(Profesor, user=request.user)
-    clases = Clase.objects.filter(profesor=profesor)
-    inscripciones = Inscripcion.objects.filter(
-        clase__profesor=profesor,
-        estado__in=['confirmada', 'pendiente']
+    profesor = (
+        Profesor.objects.select_related('user', 'user__genero', 'especialidad')
+        .filter(user=request.user)
+        .first()
+    )
+    if not profesor:
+        return redirect('custom_login_alumno')
+
+    # Carga optimizada en memoria para evitar consultas N+1 y bucles de queries
+    clases = list(
+        Clase.objects.filter(profesor=profesor).select_related('asignatura', 'profesor', 'profesor__user')
+    )
+    inscripciones = list(
+        Inscripcion.objects.filter(
+            clase__profesor=profesor,
+            estado__in=['confirmada', 'pendiente']
+        ).select_related('alumno', 'alumno__user', 'clase', 'clase__asignatura')
     )
 
+    inscripciones_por_clase = {}
+    conteo_por_mes = {}
+    for insc in inscripciones:
+        inscripciones_por_clase.setdefault(insc.clase_id, []).append(insc)
+        if insc.fecha_inscripcion:
+            mes_num = insc.fecha_inscripcion.month
+            conteo_por_mes[mes_num] = conteo_por_mes.get(mes_num, 0) + 1
+
     # 1. Clases del día (Máximo 6)
+    clases_top6 = clases[:6]
     clases_hoy_lista = []
-    for clase in clases[:6]:
-        # Buscar primer alumno inscrito
-        insc = inscripciones.filter(clase=clase).first()
-        alumno_nombre = insc.alumno.user.first_name if insc else "Sin asignar"
+    inscripciones_hoy = 0
+    for clase in clases_top6:
+        insc_lista = inscripciones_por_clase.get(clase.id_clase, [])
+        inscripciones_hoy += len(insc_lista)
+        primera_insc = insc_lista[0] if insc_lista else None
+        alumno_nombre = primera_insc.alumno.user.first_name if primera_insc else "Sin asignar"
         clases_hoy_lista.append({
             'nombre_curso': clase.asignatura.nombre,
             'horario': clase.horario,
@@ -198,21 +305,18 @@ def panel_profesor(request):
     ).select_related('paquete')
     dinero_hoy_val = sum(paquetes.pago_profesor(_valor_clase(i)) for i in inscripciones_hoy)
     dinero_hoy = formato_clp(dinero_hoy_val)
-    # Contador de clases disponibles diarias (base 8 máximo diario)
     clases_disponibles = max(0, 8 - len(clases_hoy_lista))
 
     # 3. Gráfico de solicitudes mensuales (Últimos 5 meses)
     meses_nombres = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
     current_month = timezone.localdate().month  # mes en Chile, no el del servidor
     rendimiento_meses = []
-
-    # Un mes sin inscripciones vale 0.
+# Un mes sin inscripciones vale 0.
     tope_grafico = 40
     for i in range(4, -1, -1):
         month_idx = (current_month - i - 1) % 12
         month_name = meses_nombres[month_idx]
-        real_count = inscripciones.filter(fecha_inscripcion__month=(month_idx + 1)).count()
-
+        real_count = conteo_por_mes.get(month_idx + 1, 0)
         rendimiento_meses.append({
             'mes': month_name,
             'cantidad': real_count,
@@ -220,17 +324,26 @@ def panel_profesor(request):
         })
 
     # 4. Saldo generado y gestión de retiros
-    from alumnos.models import SolicitudRetiro
-
-    saldos = calcular_saldos(profesor)
+    mis_retiros = list(
+        SolicitudRetiro.objects.filter(profesor=profesor)
+        .select_related('banco')
+        .order_by('-fecha_solicitud')
+    )
+    saldos = calcular_saldos(profesor, retiros_lista=mis_retiros)
     saldo_disponible = saldos['disponible']
 
     saldo_total_fmt = formato_clp(saldos['total_ganado'])
     saldo_disponible_fmt = formato_clp(saldo_disponible)
     saldo_pendiente_fmt = formato_clp(saldos['pendiente'])
 
-    mis_retiros = SolicitudRetiro.objects.filter(profesor=profesor).order_by('-fecha_solicitud')
-    generos = Genero.objects.all()
+    generos = list(Genero.objects.all())
+
+    # S4-09: Desglose económico detallado de operaciones bajo comisión LBWUS 15%
+    desgloses_profesor = list(
+        DesgloseOperacion.objects.filter(profesor=profesor)
+        .select_related('alumno', 'alumno__user', 'inscripcion', 'inscripcion__clase', 'inscripcion__clase__asignatura', 'plan_alumno')
+        .order_by('-fecha_operacion')[:20]
+    )
 
     context = {
         'profesor': profesor,
@@ -245,8 +358,9 @@ def panel_profesor(request):
         'saldo_disponible_raw': saldo_disponible,
         'saldo_pendiente': saldo_pendiente_fmt,
         'mis_retiros': mis_retiros,
+        'desgloses_profesor': desgloses_profesor,
         'generos': generos,
-        'especialidades': Especialidad.objects.order_by('nombre'),
+        'especialidades': list(Especialidad.objects.order_by('nombre')),
     }
     return render(request, 'user_profesor/panel_profesor.html', context)
 
@@ -291,8 +405,7 @@ def foto_profesor(request, id_profesor):
 def actualizar_perfil_prof(request):
     if request.method == 'POST':
         profesor_id = request.session['profesor_id']
-
-        profesor = get_object_or_404(Profesor, id_profesor=profesor_id)
+        profesor = get_object_or_404(Profesor.objects.select_related('user'), id_profesor=profesor_id)
 
         try:
             nombre = request.POST.get('nombre', '').strip()
@@ -312,8 +425,6 @@ def actualizar_perfil_prof(request):
 
             genero = get_object_or_404(Genero, id_genero=genero_id)
 
-            from alumnos.utils import validar_rut_chileno, usuario_existe
-
             if not validar_rut_chileno(rut):
                 return JsonResponse({"success": False, "message": "El RUT ingresado no es válido."})
 
@@ -324,7 +435,7 @@ def actualizar_perfil_prof(request):
             if error_msg:
                 return JsonResponse({"success": False, "message": error_msg})
 
-            # La foto se valida antes de guardar nada: si no sirve, el perfil queda igual.
+# La foto se valida antes de guardar nada: si no sirve, el perfil queda igual.
             archivo_foto = request.FILES.get('foto_perfil')
             try:
                 foto_jpeg = foto.procesar(archivo_foto) if archivo_foto else None
@@ -339,9 +450,11 @@ def actualizar_perfil_prof(request):
                 return JsonResponse({"success": False, "message": e.messages[0]})
 
             profesor.user.first_name = nombre
+            profesor.user.last_name = ''
             profesor.user.rut = rut
             profesor.user.username = rut
             profesor.especialidad = especialidad
+profesor.telefono_publico = request.POST.get('telefono_publico') in ('on', 'true', '1')
             profesor.tarifa = tarifa
             profesor.user.direccion = direccion
             profesor.user.email = correo
@@ -353,21 +466,19 @@ def actualizar_perfil_prof(request):
             profesor.save()
 
             return JsonResponse({"success": True, "message": "Tu perfil ha sido actualizado con éxito."})
-        except Exception as e:
-            return JsonResponse({"success": False, "message": f"Error al guardar los cambios: {str(e)}"})
+        except Exception:
+            logger.exception("Error interno en actualizar_perfil_prof")
+            return JsonResponse({"success": False, "message": "Error interno al guardar los cambios del perfil."}, status=500)
 
     return JsonResponse({"success": False, "message": "Método no permitido."})
 
 
-# _json: el panel llama esta vista con fetch y espera {'success': ...};
-# un redirect le romperia el res.json().
 @profesor_required_json
 def solicitar_retiro(request):
     profesor_id = request.session.get('profesor_id')
 
     if request.method == 'POST':
         from django.db import transaction
-        from alumnos.models import SolicitudRetiro, Banco
 
         try:
             monto_str = request.POST.get('monto', '').replace('.', '').replace('$', '').strip()
@@ -383,7 +494,6 @@ def solicitar_retiro(request):
                 profesor = Profesor.objects.select_for_update().get(id_profesor=profesor_id)
                 list(SolicitudRetiro.objects.select_for_update().filter(profesor=profesor))
 
-                # Validar saldo disponible con la misma regla que muestra el panel.
                 saldo_disponible = calcular_saldos(profesor)['disponible']
 
                 if saldo_disponible <= 0:
@@ -400,10 +510,11 @@ def solicitar_retiro(request):
                     tipo_cuenta=tipo_cuenta if tipo_cuenta else 'Cuenta Rut / Vista',
                     numero_cuenta=numero_cuenta
                 )
-            return JsonResponse({"success": True, "message": f"Solicitud de retiro por ${monto:,} registrada con éxito. Se procesará en 24 a 48 horas hábiles.".replace(",", ".")})
+            return JsonResponse({"success": True, "message": f"Solicitud de retiro por {formato_clp(monto)} registrada con éxito. Se procesará en 24 a 48 horas hábiles."})
         except ValueError:
             return JsonResponse({"success": False, "message": "Por favor ingresa un monto numérico válido."})
         except Exception:
+            logger.exception("Error interno en solicitar_retiro")
             return JsonResponse({"success": False, "message": "Ocurrió un error al procesar la solicitud de retiro. Intenta nuevamente."})
 
     return JsonResponse({"success": False, "message": "Método no permitido."})
@@ -459,9 +570,6 @@ def regis_tutor(request):
             except DjangoValidationError as e:
                 return JsonResponse({"success": False, "message": " | ".join(e.messages)})
 
-            from alumnos.utils import validar_rut_chileno, usuario_existe
-            from datetime import datetime, date
-
             if not validar_rut_chileno(rut):
                 return JsonResponse({"success": False, "message": "El RUT ingresado no es válido."})
 
@@ -470,8 +578,8 @@ def regis_tutor(request):
                 return JsonResponse({"success": False, "message": error_msg})
 
             try:
-                fnac = datetime.strptime(fecha_nacimiento, '%Y-%m-%d').date()
-                today = date.today()
+                fnac = datetime.datetime.strptime(fecha_nacimiento, '%Y-%m-%d').date()
+                today = datetime.date.today()
                 if fnac >= today:
                     return JsonResponse({"success": False, "message": "La fecha de nacimiento no puede ser actual ni futura."})
                 age = today.year - fnac.year - ((today.month, today.day) < (fnac.month, fnac.day))
@@ -496,16 +604,10 @@ def regis_tutor(request):
                 fecha_nacimiento=fecha_nacimiento,
                 genero=genero
             )
-            # Sin is_staff: el acceso al portal lo da el perfil Tutor, no el
-            # flag de Django. is_staff abre /admin/, que es otra cosa y debe
-            # concederse a mano desde la consola.
             user.save()
 
-            tutor = Tutor.objects.create(
-                user=user
-            )
+            tutor = Tutor.objects.create(user=user)
 
-            # Iniciar sesión de administrador
             from django.contrib.auth import login as auth_login
             auth_login(request, user, backend='alumnos.backends.RutOrEmailBackend')
             abrir_sesion_rol(request, ADMIN, tutor)
@@ -514,17 +616,21 @@ def regis_tutor(request):
                 "success": True,
                 "message": "Administrador registrado exitosamente. Ingresando al panel..."
             })
-        except Exception as e:
-            return JsonResponse({"success": False, "message": f"Error al registrar: {str(e)}"})
+        except Exception:
+            logger.exception("Error interno en regis_tutor")
+            return JsonResponse({"success": False, "message": "Error interno al registrar el administrador."}, status=500)
 
     generos = Genero.objects.all()
     context = {'generos': generos}
     return render(request, 'user_profesor/regis_tutor.html', context)
 
 
-
 from django.contrib.auth import logout as auth_logout
 
+
+@never_cache
+@require_POST
 def logout_prof(request):
     auth_logout(request)
+    request.session.flush()
     return redirect('home')

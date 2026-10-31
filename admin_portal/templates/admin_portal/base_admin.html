@@ -124,10 +124,13 @@
                 <i class="bi bi-house-door"></i>
                 Volver al inicio
             </a>
-            <a href="{% url 'logout_admin' %}" class="sidebar-logout">
-                <i class="bi bi-box-arrow-left"></i>
-                Cerrar Sesión
-            </a>
+            <form method="post" action="{% url 'logout_admin' %}" class="form-sidebar-logout">
+                {% csrf_token %}
+                <button type="submit" class="sidebar-logout btn-sidebar-logout">
+                    <i class="bi bi-box-arrow-left"></i>
+                    <span>Cerrar Sesión</span>
+                </button>
+            </form>
         </div>
     </aside>
 
@@ -321,11 +324,14 @@
         window.location.href = "{% url 'dashboard_admin' %}#" + section;
     }
 
-    // Simular filtrado básico en búsqueda global
+    // S-23: Búsqueda global con escape contextual anti-XSS y eliminación de mocks innecesarios
     function handleGlobalSearch() {
-        const query = document.getElementById('search-modal-input').value.toLowerCase();
+        const query = (document.getElementById('search-modal-input')?.value || '').toLowerCase().trim();
         const resultsBox = document.getElementById('search-modal-results');
-        
+        if (!resultsBox) return;
+
+        const esc = window.escaparHtml || (s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;'));
+
         if (!query) {
             resultsBox.innerHTML = `
                 <div class="search-section-label">Sugerencias rápidas</div>
@@ -348,25 +354,33 @@
             return;
         }
 
-        // Simulación de búsqueda en tiempo real
-        resultsBox.innerHTML = `
-            <div class="search-section-label">Resultados encontrados</div>
-            <div class="search-result-item" onclick="navigateFromSearch('usuarios')">
-                <i class="bi bi-person-fill"></i>
-                <span>Francheska (Alumno)</span>
-                <span class="search-result-type">Registro</span>
-            </div>
-            <div class="search-result-item" onclick="navigateFromSearch('usuarios')">
-                <i class="bi bi-person-workspace"></i>
-                <span>Franco (Profesor)</span>
-                <span class="search-result-type">Registro</span>
-            </div>
-            <div class="search-result-item" onclick="navigateFromSearch('reportes')">
-                <i class="bi bi-exclamation-triangle-fill"></i>
-                <span>Problema de Conexión</span>
-                <span class="search-result-type">Reporte</span>
-            </div>
-        `;
+        const secciones = [
+            { id: 'usuarios', titulo: 'Gestión de Usuarios', tipo: 'Sección', icono: 'bi-people' },
+            { id: 'reportes', titulo: 'Reportes Pendientes', tipo: 'Sección', icono: 'bi-flag' },
+            { id: 'clases', titulo: 'Agenda de Clases', tipo: 'Sección', icono: 'bi-calendar' }
+        ];
+
+        const coincidencias = secciones.filter(s => s.titulo.toLowerCase().includes(query));
+
+        if (coincidencias.length > 0) {
+            resultsBox.innerHTML = `
+                <div class="search-section-label">Resultados encontrados</div>
+                ${coincidencias.map(c => `
+                    <div class="search-result-item" onclick="navigateFromSearch('${esc(c.id)}')">
+                        <i class="bi ${esc(c.icono)}"></i>
+                        <span>${esc(c.titulo)}</span>
+                        <span class="search-result-type">${esc(c.tipo)}</span>
+                    </div>
+                `).join('')}
+            `;
+        } else {
+            resultsBox.innerHTML = `
+                <div class="search-section-label">Búsqueda</div>
+                <div style="padding: 16px; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+                    No se encontraron secciones para "<strong>${esc(query)}</strong>"
+                </div>
+            `;
+        }
     }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

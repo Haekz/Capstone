@@ -3070,3 +3070,59 @@ body.dark-mode .ct-info {
         padding: 22px 24px 0;
     }
 }
+
+/* ---------- Logout con formulario POST seguro (S-19) ---------- */
+.form-logout-desktop {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+}
+
+.btn-logout-cuenta {
+    background: transparent;
+    border: none;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.form-logout-mobile {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.btn-logout-mobile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 12px 20px;
+    border-radius: 50px;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #dc2626;
+    background: transparent;
+    border: 1.5px solid rgba(220, 38, 38, 0.25);
+    cursor: pointer;
+    transition: var(--transition, 0.2s ease);
+}
+
+.btn-logout-mobile:hover,
+.btn-logout-mobile:focus-visible {
+    background: rgba(220, 38, 38, 0.08);
+    border-color: #dc2626;
+}
+
+body.dark-mode .btn-logout-mobile {
+    color: #f87171;
+    border-color: rgba(248, 113, 113, 0.35);
+}
+
+body.dark-mode .btn-logout-mobile:hover,
+body.dark-mode .btn-logout-mobile:focus-visible {
+    background: rgba(248, 113, 113, 0.14);
+    border-color: #f87171;
+}

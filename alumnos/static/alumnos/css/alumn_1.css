@@ -4705,3 +4705,16 @@ body.dark-mode .stat-icon {
     padding: 14px;
     margin-top: 20px;
 }
+
+/* S-19: Logout vía POST en sidebar alumno */
+.form-sb-logout {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.btn-sb-logout {
+    width: 100%;
+    cursor: pointer;
+    font-family: inherit;
+}

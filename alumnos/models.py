@@ -111,6 +111,14 @@ class Profesor(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='perfil_profesor')
     especialidad = models.ForeignKey(Especialidad, on_delete=models.SET_NULL, null=True)
     telefono_publico = models.BooleanField(default=False, help_text='¿Mostrar teléfono a los alumnos?')
+    tarifa_base = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal('15000.00'),
+        validators=[MinValueValidator(Decimal('0.00'))],
+        help_text='Tarifa base por clase individual definida por el docente',
+        verbose_name='Tarifa base por clase'
+    )
 
     # Documento privado: se sirve solo a admins (ver admin_portal.ver_titulo),
     # nunca por MEDIA_URL publico.
@@ -409,6 +417,102 @@ class InscripcionQuerySet(models.QuerySet):
         )
 
 
+class PlanAlumno(models.Model):
+    """Representa un paquete de clases adquirido por un alumno bajo reglas comerciales (S4-03).
+    
+    Planes oficiales:
+    - Flexible: 1 clase ($15.000 ref, $12.750 tutor, 15% comisión LBWUS).
+    - Progreso: 4 clases ($59.000 ref, $50.150 tutor, 15% comisión LBWUS).
+    - Intensivo: 8 clases ($116.000 ref, $98.600 tutor, 15% comisión LBWUS).
+
+    No es suscripción obligatoria ni cuenta con renovación automática (pago único por paquete).
+    """
+    PLAN_FLEXIBLE = 'flexible'
+    PLAN_PROGRESO = 'progreso'
+    PLAN_INTENSIVO = 'intensivo'
+    PLAN_PERSONALIZADO = 'personalizado'
+
+    PLANES_CHOICES = [
+        (PLAN_FLEXIBLE, 'Plan Flexible (1 clase)'),
+        (PLAN_PROGRESO, 'Plan Progreso (4 clases)'),
+        (PLAN_INTENSIVO, 'Plan Intensivo (8 clases)'),
+        (PLAN_PERSONALIZADO, 'Plan Personalizado'),
+    ]
+
+    ESTADO_PENDIENTE = 'pendiente'
+    ESTADO_ACTIVO = 'activo'
+    ESTADO_AGOTADO = 'agotado'
+    ESTADO_CANCELADO = 'cancelado'
+
+    ESTADOS_CHOICES = [
+        (ESTADO_PENDIENTE, 'Pendiente de pago'),
+        (ESTADO_ACTIVO, 'Activo'),
+        (ESTADO_AGOTADO, 'Agotado'),
+        (ESTADO_CANCELADO, 'Cancelado / Reembolsado'),
+    ]
+
+    id_plan_alumno = models.AutoField(primary_key=True)
+    alumno = models.ForeignKey(Alumno, on_delete=models.CASCADE, related_name='planes_adquiridos')
+    profesor = models.ForeignKey(Profesor, on_delete=models.SET_NULL, null=True, blank=True, related_name='planes_vendidos')
+    tipo_plan = models.CharField(max_length=20, choices=PLANES_CHOICES, db_index=True)
+
+    total_clases = models.PositiveSmallIntegerField(default=1)
+    clases_disponibles = models.PositiveSmallIntegerField(default=1)
+    clases_consumidas = models.PositiveSmallIntegerField(default=0)
+
+    monto_total = models.PositiveIntegerField(help_text="Precio final pagado por el alumno (CLP)")
+    comision_lbwus = models.PositiveIntegerField(help_text="Comisión de la plataforma LBWUS (15% IVA incluido)")
+    monto_tutor = models.PositiveIntegerField(help_text="Importe bruto correspondiente al tutor (85%)")
+
+    pago = models.ForeignKey(Pago, on_delete=models.SET_NULL, null=True, blank=True, related_name='planes_asociados')
+    estado = models.CharField(max_length=20, choices=ESTADOS_CHOICES, default=ESTADO_PENDIENTE, db_index=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Plan de Alumno'
+        verbose_name_plural = 'Planes de Alumnos'
+        ordering = ['-created_at']
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(clases_disponibles__gte=0),
+                name='plan_alumno_clases_disponibles_no_negativo'
+            ),
+            models.CheckConstraint(
+                check=models.Q(clases_consumidas__gte=0),
+                name='plan_alumno_clases_consumidas_no_negativo'
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.get_tipo_plan_display()} - {self.alumno} ({self.clases_disponibles}/{self.total_clases} disp.)"
+
+    @property
+    def tiene_saldo(self):
+        return self.estado == self.ESTADO_ACTIVO and self.clases_disponibles > 0
+
+    def consumir_clase(self):
+        """Descuenta de manera segura 1 clase del saldo disponible."""
+        if not self.tiene_saldo:
+            raise ValidationError("El plan no tiene clases disponibles o no está activo.")
+        self.clases_disponibles -= 1
+        self.clases_consumidas += 1
+        if self.clases_disponibles == 0:
+            self.estado = self.ESTADO_AGOTADO
+        self.save(update_fields=['clases_disponibles', 'clases_consumidas', 'estado', 'updated_at'])
+
+    def reembolsar_clase(self):
+        """Devuelve 1 clase al saldo disponible en caso de cancelación válida."""
+        if self.clases_consumidas <= 0:
+            raise ValidationError("No hay clases consumidas para restituir.")
+        self.clases_consumidas -= 1
+        self.clases_disponibles += 1
+        if self.estado == self.ESTADO_AGOTADO:
+            self.estado = self.ESTADO_ACTIVO
+        self.save(update_fields=['clases_disponibles', 'clases_consumidas', 'estado', 'updated_at'])
+
+
 class Inscripcion(models.Model):
     ESTADO_CONFIRMADA = 'confirmada'
     ESTADO_PENDIENTE = 'pendiente'
@@ -432,6 +536,14 @@ class Inscripcion(models.Model):
         blank=True,
         related_name='inscripciones',
         verbose_name='Sesión puntual'
+    )
+    plan_origen = models.ForeignKey(
+        PlanAlumno,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='inscripciones',
+        verbose_name='Plan de origen'
     )
     estado = models.CharField(
         max_length=20,
@@ -657,3 +769,98 @@ class SolicitudRetiro(models.Model):
         return f"Retiro #{self.id_solicitud} - {self.profesor.user.first_name} (${self.monto})"
 
 
+
+
+class DesgloseOperacion(models.Model):
+    """Registro contable y de auditoría financiera de operaciones comerciales (S4-09).
+
+    Aplica la regla de comisión LBWUS del 15% IVA incluido sobre el precio final.
+    Verifica importes de referencia:
+    - CLP 15.000 -> Comisión bruta CLP 2.250 | Tutor CLP 12.750
+    - CLP 59.000 -> Comisión bruta CLP 8.850 | Tutor CLP 50.150
+    - CLP 116.000 -> Comisión bruta CLP 17.400 | Tutor CLP 98.600
+    """
+    TIPO_COMPRA_PLAN = 'compra_plan'
+    TIPO_CLASE_INDIVIDUAL = 'clase_individual'
+    TIPO_CONSUMO_CLASE = 'consumo_clase'
+    TIPO_REEMBOLSO = 'reembolso'
+
+    TIPOS_OPERACION = [
+        (TIPO_COMPRA_PLAN, 'Compra de Plan'),
+        (TIPO_CLASE_INDIVIDUAL, 'Pago de Clase Individual'),
+        (TIPO_CONSUMO_CLASE, 'Devengo por Clase Ejecutada'),
+        (TIPO_REEMBOLSO, 'Reembolso / Anulación'),
+    ]
+
+    ESTADO_PENDIENTE = 'pendiente'      # Fondos en custodia / no liberados (clase no dictada)
+    ESTADO_DISPONIBLE = 'disponible'    # Fondos liberados para retiro por el docente
+    ESTADO_LIQUIDADO = 'liquidado'      # Fondos transferidos/retirados por el docente
+    ESTADO_REEMBOLSADO = 'reembolsado'  # Fondos reintegrados al alumno
+
+    ESTADOS_LIQUIDACION = [
+        (ESTADO_PENDIENTE, 'Pendiente / En Custodia'),
+        (ESTADO_DISPONIBLE, 'Disponible para Retiro'),
+        (ESTADO_LIQUIDADO, 'Liquidado / Pagado'),
+        (ESTADO_REEMBOLSADO, 'Reembolsado'),
+    ]
+
+    id_desglose = models.AutoField(primary_key=True)
+    pago = models.ForeignKey(
+        Pago,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='desgloses_financieros',
+        verbose_name='Pago de origen'
+    )
+    alumno = models.ForeignKey(
+        Alumno,
+        on_delete=models.CASCADE,
+        related_name='desgloses_operaciones',
+        verbose_name='Alumno comprador'
+    )
+    profesor = models.ForeignKey(
+        Profesor,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='liquidaciones_operaciones',
+        verbose_name='Profesor asignado'
+    )
+    plan_alumno = models.ForeignKey(
+        PlanAlumno,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='desgloses_financieros',
+        verbose_name='Plan de origen'
+    )
+    inscripcion = models.ForeignKey(
+        Inscripcion,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='desgloses_financieros',
+        verbose_name='Clase o Sesión'
+    )
+
+    tipo_operacion = models.CharField(max_length=25, choices=TIPOS_OPERACION, default=TIPO_COMPRA_PLAN, db_index=True)
+    estado = models.CharField(max_length=20, choices=ESTADOS_LIQUIDACION, default=ESTADO_PENDIENTE, db_index=True)
+
+    monto_bruto = models.PositiveIntegerField(help_text="Precio final total de la operación (CLP)")
+    comision_lbwus = models.PositiveIntegerField(help_text="Comisión bruta de la plataforma LBWUS (15% IVA incluido)")
+    iva_comision = models.PositiveIntegerField(default=0, help_text="Componente de IVA débito fiscal (19%) sobre la comisión")
+    neto_comision = models.PositiveIntegerField(default=0, help_text="Comisión neta de LBWUS (sin IVA)")
+    monto_tutor = models.PositiveIntegerField(help_text="Importe bruto que le corresponde al tutor (85%)")
+
+    fecha_operacion = models.DateTimeField(auto_now_add=True)
+    fecha_liberacion = models.DateTimeField(null=True, blank=True)
+    notas_auditoria = models.CharField(max_length=255, blank=True, default='')
+
+    class Meta:
+        verbose_name = 'Desglose de Operación'
+        verbose_name_plural = 'Desgloses de Operaciones'
+        ordering = ['-fecha_operacion']
+
+    def __str__(self):
+        return f"Desglose #{self.id_desglose} - {self.get_tipo_operacion_display()} (${self.monto_bruto} CLP)"

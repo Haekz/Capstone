@@ -126,10 +126,13 @@
                     <i class="bi bi-house-door"></i>
                     Volver al inicio
                 </a>
-                <a href="{% url 'logout_alumno' %}" class="sb-logout">
-                    <i class="bi bi-box-arrow-left"></i>
-                    Cerrar sesión
-                </a>
+                <form method="post" action="{% url 'logout_alumno' %}" class="form-sb-logout">
+                    {% csrf_token %}
+                    <button type="submit" class="sb-logout btn-sb-logout">
+                        <i class="bi bi-box-arrow-left"></i>
+                        <span>Cerrar sesión</span>
+                    </button>
+                </form>
             </div>
         </aside>
 
@@ -873,6 +876,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     {{ profesores_js|json_script:"profesores-data" }}
 
+    <script src="{% static 'alumnos/java/lbwus-utils.js' %}"></script>
     <!-- App Logic -->
     {{ plan_activo|json_script:"plan-activo" }}
     <script>
@@ -885,7 +889,8 @@
             const planBadge = document.querySelector('.profile-title-box .plan-badge');
             if (planBadge) {
                 if (hasPlan) {
-                    planBadge.innerHTML = `<i class="bi bi-check-circle-fill" style="color: #10b981;"></i> Plan Activo: ${activePlanName}`;
+                    const safePlan = window.escaparHtml ? window.escaparHtml(activePlanName) : activePlanName;
+                    planBadge.innerHTML = `<i class="bi bi-check-circle-fill" style="color: #10b981;"></i> Plan Activo: ${safePlan}`;
                     planBadge.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
                     planBadge.style.color = '#10b981';
                     planBadge.style.borderColor = 'rgba(16, 185, 129, 0.2)';
@@ -1422,11 +1427,11 @@
                                 <div class="video-play-btn"><i class="bi bi-play-fill"></i></div>
                             </div>
                             <div class="video-info">
-                                <h4 class="video-title">${v.title}</h4>
-                                <span class="video-specialty">${v.specialty}</span>
+                                <h4 class="video-title">${escaparHtml(v.title)}</h4>
+                                <span class="video-specialty">${escaparHtml(v.specialty)}</span>
                                 <div class="video-meta">
-                                    <span><i class="bi bi-person-video"></i> ${v.teacher}</span>
-                                    <span><i class="bi bi-clock"></i> ${v.duration}</span>
+                                    <span><i class="bi bi-person-video"></i> ${escaparHtml(v.teacher)}</span>
+                                    <span><i class="bi bi-clock"></i> ${escaparHtml(v.duration)}</span>
                                 </div>
                             </div>
                         `;
@@ -1543,8 +1548,7 @@
             });
         });
 
-        // ── LÓGICA DE LAS VISTAS PREMIUM ──
-
+// ── LÓGICA DE LAS VISTAS PREMIUM ──
         // esta parte es de los datos iniciales del chat
         let activeChats = [
             {
@@ -1600,15 +1604,20 @@
                     renderInboxView();
                 };
                 
+                const safeInitials = escaparHtml(chat.initials);
+                const safeTeacherName = escaparHtml(chat.teacherName);
+                const safeSpecialty = escaparHtml(chat.specialty);
+                const safeLastTime = escaparHtml(lastMsg ? lastMsg.time : '');
+                const safeLastText = escaparHtml(lastMsg ? lastMsg.text : '');
                 item.innerHTML = `
-                    <div class="contact-avatar">${chat.initials}</div>
+                    <div class="contact-avatar">${safeInitials}</div>
                     <div class="contact-info">
                         <div class="contact-name-row">
-                            <span class="contact-name">${chat.teacherName}</span>
-                            <span class="contact-time">${lastMsg ? lastMsg.time : ''}</span>
+                            <span class="contact-name">${safeTeacherName}</span>
+                            <span class="contact-time">${safeLastTime}</span>
                         </div>
-                        <div class="contact-meta">${chat.specialty}</div>
-                        <div class="contact-last-msg">${lastMsg ? lastMsg.text : ''}</div>
+                        <div class="contact-meta">${safeSpecialty}</div>
+                        <div class="contact-last-msg">${safeLastText}</div>
                     </div>
                 `;
                 contactListEl.appendChild(item);
@@ -1619,11 +1628,13 @@
             const chatMessagesEl = document.getElementById('chat-messages-container');
             
             if (activeChat && chatHeaderEl && chatMessagesEl) {
+                const safeHdrInitials = escaparHtml(activeChat.initials);
+                const safeHdrName = escaparHtml(activeChat.teacherName);
                 chatHeaderEl.innerHTML = `
                     <div style="display: flex; align-items: center; gap: 12px;">
-                        <div class="contact-avatar" style="width: 42px; height: 42px; font-size: 0.95rem;">${activeChat.initials}</div>
+                        <div class="contact-avatar" style="width: 42px; height: 42px; font-size: 0.95rem;">${safeHdrInitials}</div>
                         <div>
-                            <h4 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text);">${activeChat.teacherName}</h4>
+                            <h4 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text);">${safeHdrName}</h4>
                             <span style="font-size: 0.8rem; color: #10b981;"><i class="bi bi-circle-fill" style="font-size: 0.5rem; margin-right: 4px; vertical-align: middle;"></i> En línea</span>
                         </div>
                     </div>
@@ -1633,10 +1644,12 @@
                 activeChat.messages.forEach(msg => {
                     const bubble = document.createElement('div');
                     bubble.className = `message-row ${msg.sender === 'student' ? 'sent' : 'received'}`;
+                    const safeMsg = window.escaparHtml ? window.escaparHtml(msg.text) : msg.text;
+                    const safeTime = window.escaparHtml ? window.escaparHtml(msg.time) : msg.time;
                     bubble.innerHTML = `
                         <div class="message-bubble">
-                            <p>${msg.text}</p>
-                            <span class="msg-time">${msg.time}</span>
+                            <p>${safeMsg}</p>
+                            <span class="msg-time">${safeTime}</span>
                         </div>
                     `;
                     chatMessagesEl.appendChild(bubble);
@@ -1750,13 +1763,16 @@
                 subjectProgress.forEach(sub => {
                     const item = document.createElement('div');
                     item.className = 'progress-subject-item';
+                    const safeSubName = escaparHtml(sub.name);
+                    const safeSubPct = escaparHtml(sub.progress);
+                    const safeSubColor = escaparHtml(sub.color);
                     item.innerHTML = `
                         <div class="subject-progress-header">
-                            <span class="subject-progress-name">${sub.name}</span>
-                            <span class="subject-progress-pct">${sub.progress}%</span>
+                            <span class="subject-progress-name">${safeSubName}</span>
+                            <span class="subject-progress-pct">${safeSubPct}%</span>
                         </div>
                         <div class="progress-bar-container">
-                            <div class="progress-bar-fill" style="width: ${sub.progress}%; background-color: ${sub.color};"></div>
+                            <div class="progress-bar-fill" style="width: ${safeSubPct}%; background-color: ${safeSubColor};"></div>
                         </div>
                     `;
                     progressListEl.appendChild(item);
@@ -1769,18 +1785,23 @@
                 teacherFeedback.forEach(f => {
                     const card = document.createElement('div');
                     card.className = 'feedback-card-item';
+                    const safeFbInitials = escaparHtml(f.initials);
+                    const safeFbName = escaparHtml(f.teacherName);
+                    const safeFbSub = escaparHtml(f.subject);
+                    const safeFbDate = escaparHtml(f.date);
+                    const safeFbText = escaparHtml(f.text);
                     card.innerHTML = `
                         <div class="feedback-card-header">
                             <div style="display: flex; align-items: center; gap: 10px;">
-                                <div class="contact-avatar" style="width: 36px; height: 36px; font-size: 0.85rem; background: rgba(168, 85, 247, 0.1); color: var(--primary);">${f.initials}</div>
+                                <div class="contact-avatar" style="width: 36px; height: 36px; font-size: 0.85rem; background: rgba(168, 85, 247, 0.1); color: var(--primary);">${safeFbInitials}</div>
                                 <div>
-                                    <h5 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--text);">${f.teacherName}</h5>
-                                    <span style="font-size: 0.75rem; color: var(--text-light);">${f.subject}</span>
+                                    <h5 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--text);">${safeFbName}</h5>
+                                    <span style="font-size: 0.75rem; color: var(--text-light);">${safeFbSub}</span>
                                 </div>
                             </div>
-                            <span style="font-size: 0.8rem; color: var(--text-light);">${f.date}</span>
+                            <span style="font-size: 0.8rem; color: var(--text-light);">${safeFbDate}</span>
                         </div>
-                        <p style="margin: 0; font-size: 0.9rem; color: var(--text-light); line-height: 1.5; font-style: italic;">"${f.text}"</p>
+                        <p style="margin: 0; font-size: 0.9rem; color: var(--text-light); line-height: 1.5; font-style: italic;">"${safeFbText}"</p>
                     `;
                     feedbackListEl.appendChild(card);
                 });
@@ -1815,39 +1836,57 @@
                         listaEl.style.display = 'flex';
                         listaEl.innerHTML = data.sesiones.map(s => {
                             const cuposColor = s.cupos_disponibles <= 2 ? '#ef4444' : '#10b981';
-                            const asignaturaJs = s.asignatura.replace(/'/g, "\\'");
-                            const fechaTexto = `${s.fecha_formateada} ${s.hora_formateada}`;
+const safeIdSesion = Number(s.id_sesion) || 0;
+                            const safeAsignatura = escaparHtml(s.asignatura);
+                            const safeFecha = escaparHtml(s.fecha_formateada);
+                            const safeHora = escaparHtml(s.hora_formateada);
+                            const safeModalidad = escaparHtml(s.modalidad).toUpperCase();
+                            const safePrecio = escaparHtml(s.precio_formateado);
+                            const safeDuracion = Number(s.duracion_minutos) || 0;
+                            const safeCupos = Number(s.cupos_disponibles) || 0;
+
                             const btnHtml = s.ya_inscrito 
                                 ? `<button class="ap-btn-enrolled" disabled style="padding: 8px 16px; font-size: 0.85rem;"><i class="bi bi-check-circle-fill"></i> Ya reservado</button>`
                                 : idInscripcion
-                                ? `<button class="btn-principal" onclick="confirmarReprogramacion(${idInscripcion}, ${s.id_sesion}, '${asignaturaJs}', '${fechaTexto}')" style="padding: 8px 16px; font-size: 0.85rem;"><i class="bi bi-calendar2-check ap-mr-4"></i>Mover a este horario</button>`
-                                : `<button class="btn-principal" onclick="confirmarReservaSesion(${s.id_sesion}, '${asignaturaJs}', '${fechaTexto}')" style="padding: 8px 16px; font-size: 0.85rem;"><i class="bi bi-bookmark-plus-fill ap-mr-4"></i>Reservar este horario</button>`;
+                                ? `<button class="btn-principal btn-mover-sesion" data-id="${safeIdSesion}" data-asig="${safeAsignatura}" data-fechahora="${safeFecha} ${safeHora}" data-inscripcion="${idInscripcion}" style="padding: 8px 16px; font-size: 0.85rem;"><i class="bi bi-calendar2-check ap-mr-4"></i>Mover a este horario</button>`
+                                : `<button class="btn-principal btn-reservar-sesion" data-id="${safeIdSesion}" data-asig="${safeAsignatura}" data-fechahora="${safeFecha} ${safeHora}" style="padding: 8px 16px; font-size: 0.85rem;"><i class="bi bi-bookmark-plus-fill ap-mr-4"></i>Reservar este horario</button>`;
 
                             return `
                                 <div class="sesion-item-card" style="border: 1px solid var(--border-color); background: var(--bg-card); border-radius: 12px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
                                     <div style="display: flex; flex-direction: column; gap: 4px;">
                                         <div style="display: flex; align-items: center; gap: 10px;">
                                             <span style="font-weight: 700; font-size: 1.05rem; color: var(--text);">
-                                                <i class="bi bi-calendar3" style="color: var(--primary); margin-right: 6px;"></i>${s.fecha_formateada}
+                                                <i class="bi bi-calendar3" style="color: var(--primary); margin-right: 6px;"></i>${safeFecha}
                                             </span>
-                                            <span class="class-status-badge class-status-badge--modality">${s.modalidad.toUpperCase()}</span>
+                                            <span class="class-status-badge class-status-badge--modality">${safeModalidad}</span>
                                         </div>
                                         <div style="font-size: 0.88rem; color: var(--text-light); display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-                                            <span><i class="bi bi-clock ap-mr-4"></i>${s.hora_formateada} (${s.duracion_minutos} min)</span>
+                                            <span><i class="bi bi-clock ap-mr-4"></i>${safeHora} (${safeDuracion} min)</span>
                                             <span style="color: ${cuposColor}; font-weight: 600;">
-                                                <i class="bi bi-people-fill ap-mr-4"></i>${s.cupos_disponibles} cupo${s.cupos_disponibles === 1 ? '' : 's'} disponible${s.cupos_disponibles === 1 ? '' : 's'}
+                                                <i class="bi bi-people-fill ap-mr-4"></i>${safeCupos} cupo${safeCupos === 1 ? '' : 's'} disponible${safeCupos === 1 ? '' : 's'}
                                             </span>
                                         </div>
-                                        <div style="font-size: 0.9rem; font-weight: 700; color: var(--primary); margin-top: 2px;">
+<div style="font-size: 0.9rem; font-weight: 700; color: var(--primary); margin-top: 2px;">
                                             ${idInscripcion ? 'No usa otra clase de tu paquete' : 'Usa 1 clase de tu paquete'}
                                         </div>
                                     </div>
-                                    <div>
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <span style="font-weight: 700; font-size: 1rem; color: var(--text);">${safePrecio}</span>
                                         ${btnHtml}
                                     </div>
                                 </div>
                             `;
                         }).join('');
+
+                        listaEl.querySelectorAll('.btn-reservar-sesion').forEach(btn => {
+                            btn.addEventListener('click', function() {
+                                confirmarReservaSesion(
+                                    this.dataset.id,
+                                    this.dataset.asig,
+                                    this.dataset.fechahora
+                                );
+                            });
+                        });
                     } else {
                         emptyEl.style.display = 'block';
                     }
@@ -1873,9 +1912,11 @@
         }
 
         function confirmarReservaSesion(idSesion, nombreAsignatura, fechaHora) {
+            const safeAsig = window.escaparHtml ? window.escaparHtml(nombreAsignatura) : nombreAsignatura;
+            const safeFecha = window.escaparHtml ? window.escaparHtml(fechaHora) : fechaHora;
             Swal.fire({
                 title: 'Confirmar Reserva de Horario',
-                html: `¿Deseas reservar tu cupo para la sesión de <b>"${nombreAsignatura}"</b>?<br><br><span style="color:var(--primary); font-weight:600;"><i class="bi bi-clock"></i> ${fechaHora}</span>`,
+                html: `¿Deseas reservar tu cupo para la sesión de <b>"${safeAsig}"</b>?<br><br><span style="color:var(--primary); font-weight:600;"><i class="bi bi-clock"></i> ${safeFecha}</span>`,
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonText: 'Sí, Reservar Cupo',
@@ -1975,9 +2016,32 @@
         updatePlanUI();
         {% if hay_filtros %}requestClassAccess();  // vuelve al catalogo tras filtrar{% endif %}
     </script>
+<!-- Carrito global compartido desde lbwus-utils.js + navegación del portal -->
+    <script>
+        (function () {
+            // Botón "Agregar al carrito" de la vista Planes del portal
+            window.agregarPlanPortal = function (id, titulo, precio) {
+                if (typeof window.agregarAlCarrito === 'function') {
+                    window.agregarAlCarrito(id, titulo, precio);
+                }
+                if (window.Swal) {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: titulo + ' agregado al carrito',
+                        showConfirmButton: false,
+                        timer: 2200,
+                        timerProgressBar: true
+                    });
+                }
+            };
+
+
     <!-- Título de la barra superior según la vista activa -->
     <script>
         (function () {
+
             // Título de la barra superior según la vista activa (igual que el admin)
             const TITULOS = {
                 'view-dashboard': ['Dashboard', 'Tu panel de aprendizaje'],
@@ -2004,11 +2068,11 @@
             );
             document.addEventListener('DOMContentLoaded', actualizarTitulo);
 
-            // Efecto translúcido del navbar al hacer scroll (igual que el sitio público)
+            // Efecto translúcido del navbar al hacer scroll (listener pasivo para optimizar INP/scroll)
             window.addEventListener('scroll', () => {
                 const nav = document.getElementById('portal-navbar');
                 if (nav) nav.classList.toggle('scrolled', window.scrollY > 20);
-            });
+            }, { passive: true });
         })();
     </script>
 </body>

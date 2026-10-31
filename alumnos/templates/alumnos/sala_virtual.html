@@ -1,4 +1,4 @@
-﻿{% extends 'alumnos/base.html' %}
+{% extends 'alumnos/base.html' %}
 {% load static %}
 
 {% block title %}Sala Virtual - {{ clase.asignatura.nombre }}{% endblock %}
@@ -373,7 +373,7 @@
             height: '100%',
             parentNode: container,
             userInfo: {
-                displayName: '{{ request.user.first_name|default:"Usuario" }}'
+                displayName: '{{ request.user.first_name|default:"Usuario"|escapejs }}'
             },
             configOverwrite: {
                 prejoinPageEnabled: false,
@@ -391,7 +391,7 @@
         const api = new JitsiMeetExternalAPI(domain, options);
     }
     
-    // Lgica del Chat MVP
+    // Lógica del Chat MVP (DOM seguro con textContent para prevenir XSS)
     function sendMessage() {
         const input = document.getElementById('chat-input-text');
         const text = input.value.trim();
@@ -401,15 +401,30 @@
         const now = new Date();
         const timeStr = now.getHours() + ':' + now.getMinutes().toString().padStart(2, '0');
         
-        const msgHtml = '<div class="message">' +
-                '<div class="message-header">' +
-                    '<span class="sender">Tú</span>' +
-                    '<span class="time">' + timeStr + '</span>' +
-                '</div>' +
-                '<div class="text">' + text + '</div>' +
-            '</div>';
-        
-        msgContainer.innerHTML += msgHtml;
+        const msgEl = document.createElement('div');
+        msgEl.className = 'message';
+
+        const headerEl = document.createElement('div');
+        headerEl.className = 'message-header';
+
+        const senderEl = document.createElement('span');
+        senderEl.className = 'sender';
+        senderEl.textContent = 'Tú';
+
+        const timeEl = document.createElement('span');
+        timeEl.className = 'time';
+        timeEl.textContent = timeStr;
+
+        const textEl = document.createElement('div');
+        textEl.className = 'text';
+        textEl.textContent = text;
+
+        headerEl.appendChild(senderEl);
+        headerEl.appendChild(timeEl);
+        msgEl.appendChild(headerEl);
+        msgEl.appendChild(textEl);
+
+        msgContainer.appendChild(msgEl);
         msgContainer.scrollTop = msgContainer.scrollHeight;
         input.value = '';
     }

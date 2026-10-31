@@ -30,6 +30,18 @@ class SesionNoDisponibleError(InscripcionError):
         super().__init__(message=message, code=code, params=params)
 
 
+class PlanError(ValidationError):
+    """Excepción base para operaciones con planes comerciales de alumnos (S4-03)."""
+    def __init__(self, message="Error en la gestión del plan.", code=None, params=None):
+        super().__init__(message=message, code=code, params=params)
+
+
+class PlanSinSaldoError(PlanError):
+    """Se dispara cuando el alumno no tiene clases disponibles en su plan."""
+    def __init__(self, message="El plan no cuenta con clases disponibles para consumir.", code="sin_saldo", params=None):
+        super().__init__(message=message, code=code, params=params)
+
+
 class SinClasesDisponiblesError(InscripcionError):
     """Se dispara cuando el alumno no tiene un paquete vigente con clases disponibles para ese profesor."""
     def __init__(self, message="No tienes clases disponibles con este profesor. Compra un paquete en Planes.", code="sin_clases", params=None):
