@@ -7,12 +7,14 @@ todos); responde y cierra solo el agente asignado.
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
 
 from alumnos.decorators import soporte_required
+from alumnos.models import PaqueteClases
 
 from .forms import MensajeForm, ReporteForm, RespuestaForm
 from .models import Ticket
@@ -49,7 +51,8 @@ def mis_tickets(request):
 @never_cache
 @reporta_required
 def nuevo_ticket(request):
-    form = ReporteForm(request.POST or None, categorias=categorias_que_reporta(request),
+    inicial = _inicial_de_pago(request, request.GET['pago']) if 'pago' in request.GET else None
+    form = ReporteForm(request.POST or None, initial=inicial, categorias=categorias_que_reporta(request),
                        estudiantes=estudiantes_que_reporta(request))
     if request.method == 'POST' and form.is_valid():
         ticket = abrir_reporte(request.user, **form.cleaned_data)
@@ -62,6 +65,20 @@ def nuevo_ticket(request):
         'volver_url': reverse('mis_tickets'),
         'intro': 'Pagos, clases y conducta: respondemos en 2 días hábiles. Lo demás, en 5 días hábiles.',
     })
+
+
+def _inicial_de_pago(request, orden):
+    """Boton "Reportar problema con este pago" (6e): precarga un ticket de Pagos. La orden
+    llega por la URL: se usa solo si es de un paquete del usuario o de su estudiante."""
+    inicial = {'categoria': Ticket.PAGOS}
+    paquete = PaqueteClases.objects.filter(
+        Q(alumno__user=request.user) | Q(alumno__in=estudiantes_que_reporta(request)),
+        buy_order=orden).select_related('alumno').first() if orden else None
+    if paquete:
+        inicial.update(titulo=f'Problema con el pago {orden}', descripcion=f'Orden de compra: {orden}\n\n')
+        if paquete.alumno.user_id != request.user.pk:  # el apoderado reporta por su estudiante
+            inicial['estudiante'] = paquete.alumno.pk
+    return inicial
 
 
 @never_cache

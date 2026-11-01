@@ -16,7 +16,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from alumnos.models import Alumno, Reporte
+from alumnos.models import Alumno, PaqueteClases, Reporte
 from apoderados.models import Apoderado, Vinculo
 from soporte.correo import _toca_avisar, avisar_atrasados
 from soporte.models import Ticket
@@ -354,3 +354,44 @@ class PasarReportesATicketsTests(TestCase):
         self.assertFalse(Ticket.objects.exists())
         reporte.refresh_from_db()
         self.assertEqual(reporte.estado, 'pendiente')
+
+
+def crear_paquete(alumno, orden):
+    return PaqueteClases.objects.create(alumno=alumno, plan='flexible', clases=1, tarifa=15000,
+                                        monto=15000, dias=30, buy_order=orden)
+
+
+class ProblemaConEstePagoTests(TestCase):
+    """6e: tras un rechazo, el usuario abre un ticket de Pagos con la orden ya cargada."""
+
+    def inicial(self, orden):
+        return self.client.get(reverse('nuevo_ticket'), {'pago': orden}).context['form'].initial
+
+    def test_su_orden_queda_precargada(self):
+        alumno = crear_alumno_adulto()
+        crear_paquete(alumno, 'LB1')
+        entrar(self.client, alumno.user, alumno_id=alumno.id_alumno)
+        self.assertEqual(self.inicial('LB1'), {'categoria': Ticket.PAGOS, 'titulo': 'Problema con el pago LB1',
+                                               'descripcion': 'Orden de compra: LB1\n\n'})
+
+    def test_una_orden_ajena_no_se_carga(self):
+        alumno = crear_alumno_adulto()
+        crear_paquete(crear_menor_vinculado(crear_apoderado(RUT, Apoderado.VERIFICADO)).alumno, 'AJENA')
+        entrar(self.client, alumno.user, alumno_id=alumno.id_alumno)
+        self.assertEqual(self.inicial('AJENA'), {'categoria': Ticket.PAGOS})
+
+    def test_el_apoderado_reporta_el_pago_de_su_estudiante(self):
+        apoderado = crear_apoderado(RUT, Apoderado.VERIFICADO)
+        estudiante = crear_menor_vinculado(apoderado).alumno
+        crear_paquete(estudiante, 'LB2')
+        entrar(self.client, apoderado.user, apoderado_id=apoderado.id_apoderado)
+        self.assertEqual(self.inicial('LB2')['estudiante'], estudiante.pk)
+
+    @mock.patch('alumnos.views._tx')
+    def test_el_rechazo_ofrece_el_boton_y_la_anulacion_no(self, mock_tx):
+        mock_tx.return_value.commit.return_value = {'response_code': -1, 'status': 'FAILED', 'buy_order': 'LB3'}
+        rechazo = self.client.post(reverse('confirmacion'), {'token_ws': 'tok'})  # sin sesion, como al volver
+        self.assertContains(rechazo, f"{reverse('nuevo_ticket')}?pago=LB3")
+        self.assertContains(rechazo, 'LB3</strong>')  # el numero, por si debe entrar antes
+        anulado = self.client.post(reverse('confirmacion'), {'TBK_TOKEN': 'tok'})
+        self.assertNotContains(anulado, 'Reportar problema con este pago')

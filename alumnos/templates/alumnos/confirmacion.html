@@ -57,8 +57,12 @@
             {% if anulado %}Cancelaste el pago en Webpay. No se realizó ningún cargo.
             {% else %}La transacción no pudo completarse. Revisa los datos de tu tarjeta o intenta con otro medio de pago.{% endif %}
         </p>
+        {% if not anulado and orden %}<p class="conf-sub">Número de orden: <strong>{{ orden }}</strong></p>{% endif %}
         <div class="conf-acciones">
-            <a href="{% url 'planes' %}" class="btn-conf-home"><i class="bi bi-arrow-counterclockwise"></i> Intentar de nuevo</a>
+            <a href="{% url 'planes' %}" class="btn-conf-home"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Intentar de nuevo</a>
+            {% if not anulado %}{% if not usuario_sesion.autenticado or usuario_sesion.url_ayuda %}{# 6e: lo abre el usuario, no uno por rechazo #}
+            <a href="{% url 'nuevo_ticket' %}?pago={{ orden|urlencode }}" class="btn-conf-planes"><i class="bi bi-headset" aria-hidden="true"></i> Reportar problema con este pago</a>
+            {% endif %}{% endif %}
         </div>
         {% endif %}
 
