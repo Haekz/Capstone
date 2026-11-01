@@ -15,6 +15,8 @@ from django.views.decorators.http import require_POST
 
 from alumnos.decorators import admin_required, alumno_required, profesor_required
 from alumnos.models import Inscripcion, Profesor, Tutor
+from alumnos.utils import es_menor
+from apoderados.correo import avisar_calificacion_baja
 
 from .consultas import RELACIONADAS, contexto_resenas
 from .forms import ModeracionForm, ReporteForm, ResenaForm
@@ -50,6 +52,8 @@ def calificar(request, id_inscripcion):
                 messages.error(request, 'Ya existe una reseña para esta contratación.')
             else:
                 messages.success(request, 'Tu reseña quedó publicada.' if nueva else 'Tu reseña quedó actualizada.')
+                if resena.puntaje <= Resena.PUNTAJE_BAJO and es_menor(inscripcion.alumno.user):
+                    avisar_calificacion_baja(inscripcion)
             return redirect('resena_calificar', id_inscripcion)
 
     return render(request, 'resenas/calificar.html', {

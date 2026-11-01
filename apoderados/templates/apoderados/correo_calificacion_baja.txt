@@ -1,0 +1,7 @@
+Hola,
+
+{{ estudiante }} calificó con nota baja su clase de {{ clase.asignatura.nombre }} con {{ clase.profesor.nombre }} en LBWUS.
+
+Te sugerimos conversarlo con {{ estudiante }}. Si hubo un problema en la clase, puedes abrir un ticket desde tu cuenta de apoderado, en "Ayuda y soporte".
+
+Equipo LBWUS

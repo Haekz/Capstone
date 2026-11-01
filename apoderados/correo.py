@@ -1,5 +1,5 @@
-"""Correos del modulo: confirmaciones, invitacion al apoderado, avisos de clases y
-avisos de documentos por vencer y vencidos.
+"""Correos del modulo: confirmaciones, invitacion al apoderado, avisos de clases,
+calificaciones bajas del estudiante y documentos por vencer y vencidos.
 
 Cada funcion devuelve False si el correo no salio (se puede reenviar).
 """
@@ -50,20 +50,34 @@ def enviar_invitacion(request, invitacion):
     }, invitacion.correo)
 
 
+def _correos_de_apoderados(alumno):
+    """De cada apoderado con vinculo verificado del estudiante."""
+    return (Vinculo.objects.filter(alumno=alumno, estado=Vinculo.VERIFICADO,
+                                   apoderado__estado=Apoderado.VERIFICADO)
+            .values_list('apoderado__user__email', flat=True))
+
+
 def avisar_apoderados(inscripcion, accion, autor):
     """Avisa a cada apoderado con vinculo verificado del estudiante.
 
     Un correo por persona: ningun apoderado ve la direccion del otro. Un fallo
     de SMTP no deshace la reserva, que ya quedo guardada.
     """
-    destinatarios = (Vinculo.objects.filter(alumno=inscripcion.alumno, estado=Vinculo.VERIFICADO,
-                                            apoderado__estado=Apoderado.VERIFICADO)
-                     .values_list('apoderado__user__email', flat=True))
     estudiante = inscripcion.alumno.user.first_name
     contexto = {'accion': accion, 'autor': autor, 'estudiante': estudiante,
                 'clase': inscripcion.clase, 'sesion': inscripcion.sesion}
     return all([_enviar(f'Clases de {estudiante}', 'apoderados/correo_aviso_clase.txt', contexto, correo)
-                for correo in destinatarios])
+                for correo in _correos_de_apoderados(inscripcion.alumno)])
+
+
+def avisar_calificacion_baja(inscripcion):
+    """D21: el estudiante menor califico mal una clase. Sin el comentario: que lo
+    conversen, y si hubo un problema el apoderado abre un ticket."""
+    estudiante = inscripcion.alumno.user.first_name
+    contexto = {'estudiante': estudiante, 'clase': inscripcion.clase}
+    return all([_enviar(f'{estudiante} calificó mal una clase', 'apoderados/correo_calificacion_baja.txt',
+                        contexto, correo)
+                for correo in _correos_de_apoderados(inscripcion.alumno)])
 
 
 def avisar_vencimientos():

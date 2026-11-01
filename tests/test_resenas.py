@@ -9,6 +9,7 @@ con registro, protección de datos personales y retiro del contenido ficticio.
 from datetime import time, timedelta
 
 from django.contrib.auth import get_user_model
+from django.core import mail
 from django.db import IntegrityError, transaction
 from django.test import TestCase
 from django.urls import reverse
@@ -16,7 +17,10 @@ from django.utils import timezone
 
 from alumnos.models import Asignatura, Clase, Genero, Inscripcion, Tutor
 from alumnos.roles import ADMIN, ALUMNO, PROFESOR
+from apoderados.models import Apoderado
 from resenas.models import ModeracionResena, ReporteResena, Resena
+from tests.test_apoderados import crear_apoderado
+from tests.test_apoderados_vinculos import crear_menor_vinculado
 from tests.test_especialidad import crear_profesor
 from tests.test_filtros_clases import crear_sesion
 from tests.test_paquetes import dar_paquete
@@ -300,3 +304,29 @@ class ContenidoFicticioTests(BaseResenas):
         self.assertContains(respuesta, 'Los cursos grabados estarán disponibles próximamente.')
         for texto in ('Lo más vendido', 'Universidad Python', 'oldPrice', 'gtv-videos-bucket'):
             self.assertNotContains(respuesta, texto)
+
+
+class CalificacionBajaDeMenorTests(BaseResenas):
+    """D21: si un menor califica con 1 o 2, se avisa a su apoderado, sin el comentario."""
+
+    def setUp(self):
+        self.apoderado = crear_apoderado('17171717-1', Apoderado.VERIFICADO)
+        self.menor = crear_menor_vinculado(self.apoderado, rut='16161616-1').alumno
+        self.insc_menor = self.inscribir(self.menor, dias=-2)
+        entrar(self.client, self.menor, ALUMNO)
+
+    def test_nota_baja_avisa_al_apoderado_sin_el_comentario(self):
+        self.calificar(self.insc_menor, puntaje=Resena.PUNTAJE_BAJO, comentario='Me gritó')
+        correo, = mail.outbox
+        self.assertEqual(correo.to, [self.apoderado.user.email])
+        self.assertIn('Álgebra', correo.body)
+        self.assertNotIn('Me gritó', correo.body)
+
+    def test_nota_buena_no_avisa(self):
+        self.calificar(self.insc_menor, puntaje=Resena.PUNTAJE_BAJO + 1)
+        self.assertEqual(mail.outbox, [])
+
+    def test_adulto_con_nota_baja_no_avisa_a_nadie(self):
+        entrar(self.client, self.ana, ALUMNO)
+        self.calificar(self.insc_suelta, puntaje=1)
+        self.assertEqual(mail.outbox, [])
