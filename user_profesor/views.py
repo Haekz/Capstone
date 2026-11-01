@@ -439,7 +439,7 @@ def actualizar_perfil_prof(request):
             try:
                 foto_jpeg = foto.procesar(archivo_foto) if archivo_foto else None
             except ValidationError as e:
-                return JsonResponse({"success": False, "message": e.messages[0]})
+                return JsonResponse({"success": False, "message": e.messages[0]}, status=400)
 
             # Tarifa por clase: opcional; solo afecta a los paquetes que se vendan despues.
             tarifa_txt = request.POST.get('tarifa', '').strip()

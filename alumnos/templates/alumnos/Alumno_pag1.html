@@ -2016,29 +2016,7 @@ const safeIdSesion = Number(s.id_sesion) || 0;
         updatePlanUI();
         {% if hay_filtros %}requestClassAccess();  // vuelve al catalogo tras filtrar{% endif %}
     </script>
-<!-- Carrito global compartido desde lbwus-utils.js + navegación del portal -->
-    <script>
-        (function () {
-            // Botón "Agregar al carrito" de la vista Planes del portal
-            window.agregarPlanPortal = function (id, titulo, precio) {
-                if (typeof window.agregarAlCarrito === 'function') {
-                    window.agregarAlCarrito(id, titulo, precio);
-                }
-                if (window.Swal) {
-                    Swal.fire({
-                        toast: true,
-                        position: 'top-end',
-                        icon: 'success',
-                        title: titulo + ' agregado al carrito',
-                        showConfirmButton: false,
-                        timer: 2200,
-                        timerProgressBar: true
-                    });
-                }
-            };
-
-
-    <!-- Título de la barra superior según la vista activa -->
+<!-- Título de la barra superior según la vista activa -->
     <script>
         (function () {
 

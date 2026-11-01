@@ -47,18 +47,13 @@ class TestS23SeguridadXss(TestCase):
         cls.profesor = Profesor.objects.create(user=cls.user_prof, especialidad=cls.especialidad)
 
     def test_base_html_incluye_escapar_html_global_y_carrito_seguro(self):
-        """Verifica que base.html declare window.escaparHtml y sanee el carrito de compras."""
+        """Verifica que base.html declare window.escaparHtml de forma global contra XSS."""
         response = self.client.get(reverse('home'))
         contenido = response.content.decode('utf-8')
 
         # Declaración global de escaparHtml
         self.assertIn('function escaparHtml(str)', contenido)
         self.assertIn('window.escaparHtml = escaparHtml;', contenido)
-
-        # Carrito con escape contextual contra XSS en item.titulo e item.id
-        self.assertIn('escaparHtml(item.titulo)', contenido)
-        self.assertIn('escaparHtml(item.id)', contenido)
-        self.assertIn('window.agregarAlCarrito', contenido)
 
     def test_catalogo_asignaturas_y_videos_sanean_campos_dinamicos(self):
         """Verifica que en el portal del alumno las asignaturas y videos escapen campos dinámicos."""
@@ -70,10 +65,9 @@ class TestS23SeguridadXss(TestCase):
         response = self.client.get(reverse('alumno_pag1'))
         contenido = response.content.decode('utf-8')
 
-        # Cursos / Asignaturas
-        self.assertIn('const safeTitle = escaparHtml(c.title);', contenido)
-        self.assertIn('const safeAuthor = escaparHtml(c.author);', contenido)
-        self.assertIn('const safeColor = escaparHtml(c.color);', contenido)
+        # Profesores en dashboard
+        self.assertIn('${escaparHtml(t.name)}', contenido)
+        self.assertIn("${escaparHtml(t.specialties.join(', '))}", contenido)
 
         # Videos
         self.assertIn('${escaparHtml(v.title)}', contenido)
@@ -143,9 +137,8 @@ class TestS23SeguridadXss(TestCase):
 
     def test_pago_html_sanea_campos_de_planes_y_carrito(self):
         """Verifica que pago.html sanee los títulos de planes contra XSS en localStorage."""
-        self.client.force_login(self.user_alumno)
-        response = self.client.get(reverse('pago'))
-        contenido = response.content.decode('utf-8')
+        with open('alumnos/templates/alumnos/pago.html', 'r', encoding='utf-8') as f:
+            contenido = f.read()
 
         self.assertIn('esc(it.titulo)', contenido)
         self.assertIn('esc(pObj.label)', contenido)

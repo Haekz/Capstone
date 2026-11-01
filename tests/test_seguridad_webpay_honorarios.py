@@ -25,7 +25,7 @@ User = get_user_model()
 class SeguridadWebpayYHonorariosTests(TestCase):
     def setUp(self):
         self.client = Client()
-        self.url_iniciar = reverse('iniciar_webpay')
+        self.url_iniciar = reverse('comprar_paquete')
         self.url_confirmacion = reverse('confirmacion')
         self.url_planes = reverse('planes')
 
