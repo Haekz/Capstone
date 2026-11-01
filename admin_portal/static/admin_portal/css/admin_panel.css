@@ -487,7 +487,7 @@ body.light-mode .sidebar-logout {
 .stat-card.amber  { --stat-color: #f59e0b; --stat-color-rgb: 245,158,11; }
 
 /* =============================================
-   Layout intermedio de dos columnas (últimos registros y reportes)
+   Layout intermedio de dos columnas (gráfico y aviso de soporte)
    ============================================= */
 .middle-row {
     display: grid;
@@ -738,7 +738,7 @@ body.light-mode .sidebar-logout {
 }
 
 /* =============================================
-   Botones redondos de acción rápida (editar, borrar, resolver casos)
+   Botones redondos de acción rápida (editar, borrar, ver)
    ============================================= */
 .btn-action {
     width: 30px;
@@ -778,16 +778,6 @@ body.light-mode .sidebar-logout {
    no existiera (sigue en la misma fila flex que los demas). */
 .form-accion {
     display: contents;
-}
-
-.btn-action.resolve {
-    background: rgba(16,185,129,0.15);
-    color: var(--success);
-}
-
-.btn-action.resolve:hover {
-    background: var(--success);
-    color: white;
 }
 
 .btn-action.view {
@@ -837,21 +827,8 @@ body.light-mode .sidebar-logout {
 }
 
 /* =============================================
-   Ítems individuales de la lista de reportes en el panel principal
+   Icono redondo por rol (lo usa la tabla de retiros de finanzas)
    ============================================= */
-.report-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 14px;
-    padding: 14px 0;
-    border-bottom: 1px solid var(--border);
-}
-
-.report-item:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-}
-
 .report-icon {
     width: 38px;
     height: 38px;
@@ -863,55 +840,9 @@ body.light-mode .sidebar-logout {
     flex-shrink: 0;
 }
 
-.report-icon.alumno {
-    background: rgba(59,130,246,0.15);
-    color: var(--info);
-}
-
 .report-icon.profesor {
     background: rgba(168,85,247,0.15);
     color: var(--primary-light);
-}
-
-.report-meta {
-    flex: 1;
-    min-width: 0;
-}
-
-.report-name {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.report-desc {
-    font-size: 0.78rem;
-    color: var(--text-secondary);
-    margin-top: 3px;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-.report-date {
-    font-size: 0.72rem;
-    color: var(--text-muted);
-    margin-top: 4px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.report-actions {
-    display: flex;
-    gap: 6px;
-    flex-shrink: 0;
-}
-
-/* Estilos para la tabla detallada de reportes en su vista completa */
-.reports-full-panel {
-    margin-top: 0;
 }
 
 /* =============================================
