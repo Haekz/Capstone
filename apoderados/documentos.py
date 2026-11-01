@@ -11,9 +11,9 @@ import base64
 import hashlib
 import io
 
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, MultiFernet
 from django.conf import settings
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ImproperlyConfigured, ValidationError
 from PIL import Image, ImageDraw, ImageFont, ImageOps, UnidentifiedImageError
 
 TAMANO_MAXIMO = 5 * 1024 * 1024
@@ -22,12 +22,24 @@ FORMATOS = ('JPEG', 'PNG')
 ERROR_FORMATO = 'Sube una foto o imagen en formato JPG o PNG.'
 
 
-def _cifrador():
-    # Sin DOCUMENTOS_CLAVE se deriva de SECRET_KEY. Si la clave cambia, los documentos
-    # pendientes dejan de leerse y hay que pedirlos de nuevo (viven 30 dias como maximo).
-    clave = settings.DOCUMENTOS_CLAVE or base64.urlsafe_b64encode(
+def _clave_derivada():
+    return base64.urlsafe_b64encode(
         hashlib.sha256(f'documentos-apoderados:{settings.SECRET_KEY}'.encode()).digest())
-    return Fernet(clave)
+
+
+def _cifrador():
+    """Cifra con DOCUMENTOS_CLAVE; descifra con ella o con la clave derivada de SECRET_KEY.
+
+    La derivada solo sirve para leer lo subido antes de definir DOCUMENTOS_CLAVE
+    (viven 30 dias como maximo). Si se rota SECRET_KEY, lo cifrado con la derivada
+    ya no se lee y hay que pedirlo de nuevo. Por eso, con DEBUG=False,
+    DOCUMENTOS_CLAVE es obligatoria (SCRUM-93); en desarrollo basta la derivada.
+    """
+    if settings.DOCUMENTOS_CLAVE:
+        return MultiFernet([Fernet(settings.DOCUMENTOS_CLAVE), Fernet(_clave_derivada())])
+    if not settings.DEBUG:
+        raise ImproperlyConfigured('Falta la variable DOCUMENTOS_CLAVE: es obligatoria con DEBUG=False.')
+    return Fernet(_clave_derivada())
 
 
 def preparar(archivo):
