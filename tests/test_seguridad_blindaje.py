@@ -147,11 +147,14 @@ class SeguridadBlindajeTests(TestCase):
         self.solicitud.refresh_from_db()
         self.assertEqual(self.solicitud.estado, 'pendiente')
 
-    def test_05_resolver_reporte_por_get_rechazado_con_405(self):
-        """Resolver reporte vía GET es rechazado con HTTP 405."""
+    def test_05_el_admin_no_ve_ni_resuelve_reportes(self):
+        """Paso 6e: los reportes los atiende soporte. El admin no ve su contenido y la
+        ruta para resolverlos ya no existe (ni por GET ni por POST)."""
         self._login_admin()
-        url = reverse('resolver_reporte', args=[self.reporte.id_reporte])
-        self.assertEqual(self.client.get(url).status_code, 405)
+        self.assertNotContains(self.client.get(reverse('dashboard_admin')), 'Problema con el audio')
+        url = f'/admin_portal/resolver_reporte/{self.reporte.id_reporte}/'
+        self.assertEqual(self.client.get(url).status_code, 404)
+        self.assertEqual(self.client.post(url).status_code, 404)
         self.reporte.refresh_from_db()
         self.assertEqual(self.reporte.estado, 'pendiente')
 

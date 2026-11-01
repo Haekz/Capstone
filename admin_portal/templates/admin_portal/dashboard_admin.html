@@ -22,7 +22,7 @@
                 <!-- ============ SECCIÓN: RESUMEN GENERAL ============ -->
                 <div class="admin-section active" id="section-resumen">
 
-                    <!-- Panel de indicadores rápidos (Alumnos, Profesores, Reportes y Clases) -->
+                    <!-- Panel de indicadores rápidos (Alumnos, Profesores y Clases) -->
                     <div class="stats-grid">
 
                         <div class="stat-card purple">
@@ -46,22 +46,6 @@
                                 <div class="stat-label">Profesores Activos</div>
                                 <div class="stat-change up"><i class="bi bi-arrow-up-short"></i> Profesionales inscritos
                                 </div>
-                            </div>
-                        </div>
-
-                        <div class="stat-card amber">
-                            <div class="stat-icon">
-                                <i class="bi bi-flag-fill"></i>
-                            </div>
-                            <div class="stat-info">
-                                <div class="stat-value">{{ reportes_pendientes }}</div>
-                                <div class="stat-label">Reportes Pendientes</div>
-                                {% if reportes_pendientes > 0 %}
-                                <div class="stat-change down"><i class="bi bi-exclamation-circle"></i> Requieren
-                                    atención</div>
-                                {% else %}
-                                <div class="stat-change up"><i class="bi bi-check-circle"></i> Todo resuelto</div>
-                                {% endif %}
                             </div>
                         </div>
 
@@ -145,7 +129,7 @@
                         </div>
                     </div>
 
-                    <!-- Bloque intermedio que divide el gráfico SVG de crecimiento y los reportes pendientes -->
+                    <!-- Bloque intermedio: gráfico SVG de crecimiento y aviso de reportes (los atiende soporte) -->
                     <div class="middle-row">
 
                         <!-- Panel del Gráfico SVG lineal animado (en columna) -->
@@ -203,53 +187,19 @@
                             </div>
                         </div>
 
-                        <!-- Reportes recibidos que aún no han sido procesados por el admin -->
+                        <!-- Los reportes de usuarios los atiende soporte (paso 6e) -->
                         <div class="panel">
                             <div class="panel-header">
                                 <span class="panel-title">
-                                    <i class="bi bi-flag-fill"></i>
-                                    Reportes Recientes
+                                    <i class="bi bi-headset" aria-hidden="true"></i>
+                                    Reportes de usuarios
                                 </span>
-                                <button class="panel-action" onclick="showSection('reportes')">Ver todos →</button>
                             </div>
                             <div class="panel-body">
-                                {% for reporte in reportes_recientes %}
-                                <div class="report-item">
-                                    <div class="report-icon {{ reporte.remitente.rol }}">
-                                        <i
-                                            class="bi bi-{% if reporte.remitente.rol == 'profesor' %}person-workspace{% else %}mortarboard-fill{% endif %}"></i>
-                                    </div>
-                                    <div class="report-meta">
-                                        <div class="report-name">{{ reporte.remitente.first_name }}</div>
-                                        <div class="report-desc">{{ reporte.descripcion }}</div>
-                                        <div class="report-date">
-                                            <i class="bi bi-calendar3"></i>
-                                            {{ reporte.fecha_reporte|date:"d M Y" }}
-                                            &nbsp;·&nbsp;
-                                            <span class="badge badge-{{ reporte.remitente.rol }}">{{
-                                                reporte.remitente.get_rol_display }}</span>
-                                        </div>
-                                    </div>
-                                    <div class="report-actions">
-                                        {% if reporte.estado == 'pendiente' %}
-                                        <form method="POST" action="{% url 'resolver_reporte' reporte.id_reporte %}" style="display:inline;">
-                                            {% csrf_token %}
-                                            <button type="submit" class="btn-action resolve" title="Marcar como resuelto" style="border:none; cursor:pointer;">
-                                                <i class="bi bi-check-lg"></i>
-                                            </button>
-                                        </form>
-                                        {% else %}
-                                        <span class="badge badge-resuelto"><i class="bi bi-check-circle-fill"></i>
-                                            Resuelto</span>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                {% empty %}
                                 <div class="empty-state">
-                                    <i class="bi bi-shield-check"></i>
-                                    <p>No hay reportes recientes</p>
+                                    <i class="bi bi-shield-check" aria-hidden="true"></i>
+                                    <p>Los atiende el equipo de soporte como tickets, con plazo y respuesta escrita. Por privacidad, su contenido no se muestra aquí.</p>
                                 </div>
-                                {% endfor %}
                             </div>
                         </div>
 
@@ -444,99 +394,6 @@
                         </div>
                     </div>
                 </div>
-
-            <!-- ============ SECCIÓN: REPORTES ============ -->
-            <div class="admin-section" id="section-reportes">
-
-                <div class="panel reports-full-panel">
-                    <div class="panel-header">
-                        <span class="panel-title">
-                            <i class="bi bi-flag-fill"></i>
-                            Todos los Reportes
-                        </span>
-                        <!-- Filtro por estado del reporte -->
-                        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                            <button class="filter-tab active" style="border-radius:6px; border:1px solid var(--border);" onclick="filterReports('todos', this)">Todos</button>
-                            <button class="filter-tab" style="border-radius:6px; border:1px solid var(--border);" onclick="filterReports('pendiente', this)">Pendientes</button>
-                            <button class="filter-tab" style="border-radius:6px; border:1px solid var(--border);" onclick="filterReports('resuelto', this)">Resueltos</button>
-                        </div>
-                    </div>
-
-                    <!-- Barra de búsqueda de reportes -->
-                    <div class="users-toolbar">
-                        <div class="search-bar" style="flex:1; max-width:400px;">
-                            <i class="bi bi-search"></i>
-                            <input type="text" id="report-search" placeholder="Buscar por nombre o descripción..." oninput="filterReportRows()">
-                        </div>
-                    </div>
-
-                    <div style="overflow-x:auto;">
-                        <table class="user-table" id="table-reportes">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Remitente</th>
-                                    <th>Tipo</th>
-                                    <th>Descripción</th>
-                                    <th>Fecha</th>
-                                    <th>Estado</th>
-                                    <th>Acción</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for reporte in todos_reportes %}
-                                <tr class="report-row" data-estado="{{ reporte.estado }}" data-name="{{ reporte.remitente.first_name|lower }}" data-desc="{{ reporte.descripcion|lower }}">
-                                    <td style="color:var(--text-muted); font-size:0.78rem;">#{{ reporte.id_reporte }}</td>
-                                    <td>
-                                        <div class="user-cell">
-                                            <div class="report-icon {{ reporte.remitente.rol }}" style="width:32px; height:32px; font-size:0.85rem;">
-                                                <i class="bi bi-{% if reporte.remitente.rol == 'profesor' %}person-workspace{% else %}mortarboard-fill{% endif %}"></i>
-                                            </div>
-                                            <div class="user-cell-name">{{ reporte.remitente.first_name }}</div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span class="badge badge-{{ reporte.remitente.rol }}">{{ reporte.remitente.get_rol_display }}</span>
-                                    </td>
-                                    <td style="max-width:280px; color:var(--text-secondary);">
-                                        {{ reporte.descripcion|truncatechars:80 }}
-                                    </td>
-                                    <td style="color:var(--text-muted); font-size:0.8rem; white-space:nowrap;">
-                                        {{ reporte.fecha_reporte|date:"d/m/Y" }}
-                                    </td>
-                                    <td>
-                                        {% if reporte.estado == 'pendiente' %}
-                                            <span class="badge badge-pendiente"><i class="bi bi-clock-fill"></i> Pendiente</span>
-                                        {% else %}
-                                            <span class="badge badge-resuelto"><i class="bi bi-check-circle-fill"></i> Resuelto</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if reporte.estado == 'pendiente' %}
-                                        <form method="POST" action="{% url 'resolver_reporte' reporte.id_reporte %}" style="display:inline;">
-                                            {% csrf_token %}
-                                            <button type="submit" class="btn-action resolve" title="Marcar como resuelto" style="border:none; cursor:pointer;">
-                                                <i class="bi bi-check-lg"></i>
-                                            </button>
-                                        </form>
-                                        {% else %}
-                                        <span style="color:var(--text-muted); font-size:0.78rem;">-</span>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% empty %}
-                                <tr><td colspan="7">
-                                    <div class="empty-state">
-                                        <i class="bi bi-shield-check"></i>
-                                        <p>No hay reportes en el sistema todavía</p>
-                                    </div>
-                                </td></tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
 
             <!-- ============ SECCIÓN: CALENDARIO DE CLASES ============ -->
             <div class="admin-section" id="section-clases">
@@ -822,12 +679,11 @@
 {% block extra_js %}
 <script>
     // Secciones que el dashboard muestra y oculta sin recargar la pagina.
-    const sections = ['resumen', 'usuarios', 'reportes', 'clases', 'finanzas', 'ajustes'];
+    const sections = ['resumen', 'usuarios', 'clases', 'finanzas', 'ajustes'];
 
     const titles = {
         resumen: ['Resumen General', 'Vista general del sistema LBWUS'],
         usuarios: ['Gestion de Usuarios', 'Administra alumnos, profesores y administradores'],
-        reportes: ['Reportes', 'Revisa y resuelve los reportes del sistema'],
         clases: ['Agenda de Clases', 'Visualiza el horario semanal de clases de la plataforma'],
         finanzas: ['Finanzas y Solicitudes', 'Administra los balances y retiros de fondos de profesores'],
         ajustes: ['Ajustes de Perfil', 'Configura tus opciones personales y apariencia del panel']
@@ -891,28 +747,6 @@
             const rut = row.dataset.rut || '';
             const correo = row.dataset.correo || '';
             row.style.display = (name.includes(query) || rut.includes(query) || correo.includes(query)) ? '' : 'none';
-        });
-    }
-
-    // Filtro de reportes por estado.
-    let activeReportFilter = 'todos';
-
-    function filterReports(estado, btn) {
-        activeReportFilter = estado;
-        btn.closest('.panel-header').querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        filterReportRows();
-    }
-
-    // Buscador de reportes por remitente o descripcion del caso.
-    function filterReportRows() {
-        const query = document.getElementById('report-search').value.toLowerCase();
-        document.querySelectorAll('.report-row').forEach(row => {
-            const name = row.dataset.name || '';
-            const desc = row.dataset.desc || '';
-            const matchFilter = activeReportFilter === 'todos' || row.dataset.estado === activeReportFilter;
-            const matchSearch = name.includes(query) || desc.includes(query);
-            row.style.display = (matchFilter && matchSearch) ? '' : 'none';
         });
     }
 

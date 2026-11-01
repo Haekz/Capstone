@@ -63,14 +63,6 @@
                 Gestión de Alumnos
             </a>
 
-            <a id="nav-reportes" class="nav-item {% block nav_reportes %}{% endblock %}" href="{% url 'dashboard_admin' %}#reportes">
-                <i class="bi bi-flag-fill"></i>
-                Reportes
-                {% if reportes_pendientes > 0 %}
-                <span class="nav-badge">{{ reportes_pendientes }}</span>
-                {% endif %}
-            </a>
-
             <a id="nav-resenas" class="nav-item {% block nav_resenas %}{% endblock %}" href="{% url 'resenas_moderacion' %}">
                 <i class="bi bi-star-half"></i>
                 Reseñas
@@ -196,16 +188,6 @@
                     <span class="notification-time">Hace 2 horas</span>
                 </div>
             </div>
-            <div class="notification-item" id="notif-3">
-                <div class="notification-icon amber">
-                    <i class="bi bi-exclamation-circle-fill"></i>
-                </div>
-                <div class="notification-content">
-                    <p class="notification-title">Reporte Recibido</p>
-                    <p class="notification-desc">Se reportó un problema de conexión en la clase de Matemáticas.</p>
-                    <span class="notification-time">Ayer</span>
-                </div>
-            </div>
         </div>
         <div class="drawer-footer">
             <button class="btn-clear-notifications" onclick="clearNotifications()">Marcar todas como leídas</button>
@@ -217,7 +199,7 @@
         <div class="search-modal" onclick="event.stopPropagation()">
             <div class="search-modal-header">
                 <i class="bi bi-search"></i>
-                <input type="text" class="search-modal-input" id="search-modal-input" placeholder="Buscar alumnos, profesores, reportes..." oninput="handleGlobalSearch()">
+                <input type="text" class="search-modal-input" id="search-modal-input" placeholder="Buscar alumnos, profesores, clases..." oninput="handleGlobalSearch()">
                 <span class="search-esc-badge">ESC</span>
             </div>
             <div class="search-modal-results" id="search-modal-results">
@@ -225,11 +207,6 @@
                 <div class="search-result-item" onclick="navigateFromSearch('usuarios')">
                     <i class="bi bi-people"></i>
                     <span>Gestión de Usuarios</span>
-                    <span class="search-result-type">Sección</span>
-                </div>
-                <div class="search-result-item" onclick="navigateFromSearch('reportes')">
-                    <i class="bi bi-flag"></i>
-                    <span>Reportes Pendientes</span>
                     <span class="search-result-type">Sección</span>
                 </div>
                 <div class="search-result-item" onclick="navigateFromSearch('clases')">
@@ -330,11 +307,6 @@
                     <span>Gestión de Usuarios</span>
                     <span class="search-result-type">Sección</span>
                 </div>
-                <div class="search-result-item" onclick="navigateFromSearch('reportes')">
-                    <i class="bi bi-flag"></i>
-                    <span>Reportes Pendientes</span>
-                    <span class="search-result-type">Sección</span>
-                </div>
                 <div class="search-result-item" onclick="navigateFromSearch('clases')">
                     <i class="bi bi-calendar"></i>
                     <span>Agenda de Clases</span>
@@ -356,11 +328,6 @@
                 <i class="bi bi-person-workspace"></i>
                 <span>Franco (Profesor)</span>
                 <span class="search-result-type">Registro</span>
-            </div>
-            <div class="search-result-item" onclick="navigateFromSearch('reportes')">
-                <i class="bi bi-exclamation-triangle-fill"></i>
-                <span>Problema de Conexión</span>
-                <span class="search-result-type">Reporte</span>
             </div>
         `;
     }

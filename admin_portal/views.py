@@ -5,7 +5,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
-from alumnos.models import Alumno, Asignatura, Profesor, Tutor, Clase, Reporte
+from alumnos.models import Alumno, Asignatura, Profesor, Tutor, Clase
 from alumnos.decorators import admin_required
 
 # Solo redirige al panel: regis_tutor.html envía aquí tras registrarse.
@@ -25,14 +25,12 @@ def dashboard_admin(request):
 
     admin = get_object_or_404(Tutor, id_tutor=admin_id)
 
-    # Consulta a la base de datos de los contadores y reportes del sistema
+    # Consulta a la base de datos de los contadores del sistema. Los reportes de
+    # usuarios los atiende soporte (paso 6e): el admin no ve su contenido.
     alumnos = Alumno.objects.all()
     profesores = Profesor.objects.all()
     admins = Tutor.objects.all()
     clases = Clase.objects.all()
-    todos_reportes = Reporte.objects.all().order_by('-fecha_reporte')
-    reportes_recientes = todos_reportes[:5]
-    reportes_pendientes = todos_reportes.filter(estado='pendiente').count()
 
     # Trae los 3 registros más recientes de alumnos y profesores para la vista previa
     ultimos_alumnos = alumnos.order_by('-id_alumno')[:3]
@@ -64,9 +62,6 @@ def dashboard_admin(request):
         'total_profesores': profesores.count(),
         'total_admins': admins.count(),
         'total_clases': clases.count(),
-        'todos_reportes': todos_reportes,
-        'reportes_recientes': reportes_recientes,
-        'reportes_pendientes': reportes_pendientes,
         'ultimos_alumnos': ultimos_alumnos,
         'ultimos_profesores': ultimos_profesores,
         'todas_solicitudes_retiro': todas_solicitudes_retiro,
@@ -76,17 +71,6 @@ def dashboard_admin(request):
     }
     return render(request, 'admin_portal/dashboard_admin.html', context)
 
-
-# Controlador para cambiar el estado de un reporte a 'resuelto'
-@admin_required
-@require_POST
-def resolver_reporte(request, pk):
-
-    reporte = get_object_or_404(Reporte, id_reporte=pk)
-    reporte.estado = 'resuelto'
-    reporte.save()
-    return redirect('dashboard_admin')
-    
 
 def home_adm(request):
     context = {}
