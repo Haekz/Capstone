@@ -58,3 +58,14 @@ def usuario_existe(rut, correo, excluir_user=None):
     if usuarios.filter(Q(username__iexact=rut) | Q(rut__iexact=rut)).exists():
         return "El RUT ingresado ya está registrado en el sistema."
     return None
+
+
+def validar_clave_nueva(password, rut, correo):
+    """validate_password contra el RUT y el correo de la cuenta que se crea.
+
+    Sin usuario, Django no tiene con que compararla: la clave igual al RUT o al
+    correo pasaba (Seg-3). Lanza ValidationError, como validate_password.
+    """
+    from django.contrib.auth import get_user_model
+    from django.contrib.auth.password_validation import validate_password
+    validate_password(password, get_user_model()(username=rut or '', email=correo or ''))

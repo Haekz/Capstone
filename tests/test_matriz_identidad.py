@@ -24,8 +24,9 @@ from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
 from admin_portal.forms import AdminAlumnoForm
+from alumnos.forms import AlumnoForm
 from alumnos.google_adapter import entrar_al_portal
-from alumnos.models import Alumno, Genero, Tutor
+from alumnos.models import Alumno, Especialidad, Genero, Tutor
 from tests.test_google_y_titulo import BaseGoogle, google_login
 
 User = get_user_model()
@@ -108,6 +109,44 @@ class S03ClaveInicialTests(TestCase):
 
         self.assertNotIn('alumno_id', self.client.session,
                          'S-03: el alumno creado por el admin entra con su RUT como contraseña')
+
+
+class Seg3ClaveIgualAlRutTests(BaseIdentidad):
+    """Seg-3: los registros de alumno, profesor y administrador rechazan la clave igual
+    al RUT (con o sin puntos) o al correo. Antes validaban sin usuario y pasaban."""
+
+    RUT, CORREO = '11111111-1', 'nuevo@demo.cl'
+    CLAVES = ('11111111-1', '11.111.111-1', 'nuevo@demo.cl')
+
+    def datos(self, clave, **extra):
+        return {'nombre': 'Nueva Persona', 'rut': self.RUT, 'direccion': 'Calle 1',
+                'fecha_nacimiento': '1990-01-01', 'correo_electronico': self.CORREO,
+                'telefono': '911111111', 'genero': self.genero.id_genero,
+                'password': clave, 'confirm_password': clave, **extra}
+
+    def comprobar_registro(self, url, **extra):
+        for clave in self.CLAVES:
+            with self.subTest(clave=clave):
+                self.assertFalse(self.client.post(url, self.datos(clave, **extra)).json()['success'])
+                self.assertFalse(User.objects.filter(username=self.RUT).exists())
+        respuesta = self.client.post(url, self.datos(CLAVE_SEGURA, **extra))  # control: el resto es valido
+        self.assertTrue(respuesta.json()['success'], respuesta.json())
+
+    def test_registro_de_profesor(self):
+        fisica = Especialidad.objects.create(nombre='Física')
+        self.comprobar_registro(reverse('regis_prof'), especialidad=fisica.pk)
+
+    def test_crear_administrador(self):
+        Tutor.objects.create(user=crear_usuario('33333333-3', self.genero))
+        self.entrar('33333333-3')
+        self.comprobar_registro(reverse('regis_tutor'))
+
+    def test_registro_de_alumno(self):
+        for clave in self.CLAVES:
+            with self.subTest(clave=clave):
+                form = AlumnoForm(data=self.datos(clave, nivel_educacion='media'))
+                self.assertIn('password', form.errors)
+        self.assertTrue(AlumnoForm(data=self.datos(CLAVE_SEGURA, nivel_educacion='media')).is_valid())
 
 
 class S05LimiteDeIntentosTests(BaseIdentidad):

@@ -83,13 +83,6 @@ class AlumnoForm(forms.ModelForm):
                 raise forms.ValidationError("El RUT ingresado no es válido.")
         return rut
 
-    def clean_password(self):
-        password = self.cleaned_data.get('password')
-        if password:
-            from django.contrib.auth.password_validation import validate_password
-            validate_password(password)
-        return password
-
     def clean(self):
         cleaned_data = super().clean()
         password = cleaned_data.get("password")
@@ -100,6 +93,14 @@ class AlumnoForm(forms.ModelForm):
 
         rut = cleaned_data.get("rut")
         correo = cleaned_data.get("correo_electronico")
+
+        # Aqui y no en clean_password: hace falta el RUT y el correo (Seg-3).
+        if password:
+            from .utils import validar_clave_nueva
+            try:
+                validar_clave_nueva(password, rut, correo)
+            except forms.ValidationError as error:
+                self.add_error('password', error)
 
         if rut and correo:
             from .utils import usuario_existe

@@ -99,10 +99,10 @@ def regis_prof(request):
             if len(password) < 6:
                 return JsonResponse({"success": False, "message": "La contraseña debe tener al menos 6 caracteres."})
 
-            from django.contrib.auth.password_validation import validate_password
+            from alumnos.utils import validar_clave_nueva
             from django.core.exceptions import ValidationError as DjangoValidationError
             try:
-                validate_password(password)
+                validar_clave_nueva(password, rut, correo_electronico)
             except DjangoValidationError as e:
                 return JsonResponse({"success": False, "message": " | ".join(e.messages)})
 
@@ -527,10 +527,10 @@ def regis_tutor(request):
             if len(password) < 6:
                 return JsonResponse({"success": False, "message": "La contraseña debe tener al menos 6 caracteres."})
 
-            from django.contrib.auth.password_validation import validate_password
+            from alumnos.utils import validar_clave_nueva
             from django.core.exceptions import ValidationError as DjangoValidationError
             try:
-                validate_password(password)
+                validar_clave_nueva(password, rut, correo_electronico)
             except DjangoValidationError as e:
                 return JsonResponse({"success": False, "message": " | ".join(e.messages)})
 
