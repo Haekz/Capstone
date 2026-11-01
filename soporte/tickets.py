@@ -8,7 +8,8 @@ from django.db import transaction
 from django.db.models import Count, Q
 from django.utils import timezone
 
-from .correo import avisar_asignacion, avisar_contestacion, avisar_respuesta, avisar_sin_asignar
+from .correo import (avisar_asignacion, avisar_conducta, avisar_contestacion, avisar_respuesta,
+                     avisar_sin_asignar)
 from .models import AgenteSoporte, Asignacion, Mensaje, Ticket
 from .plazos import vencimiento
 
@@ -42,14 +43,17 @@ def abrir_reporte(autor, categoria, titulo, descripcion):
 
 
 def _crear(categoria, **campos):
-    """Crea el ticket con su plazo y lo asigna al agente con menos carga."""
+    """Crea el ticket con su plazo y lo asigna al agente con menos carga. Conducta:
+    los lideres se enteran siempre (N5), y ese aviso ya dice si quedo sin asignar."""
     agente = _agente_con_menos_carga(categoria)
     ticket = Ticket.objects.create(categoria=categoria, asignado=agente,
                                    vence=vencimiento(timezone.now(), Ticket.DIAS_HABILES[categoria]),
                                    **campos)
-    if agente is None:
+    if categoria == Ticket.CONDUCTA:
+        transaction.on_commit(lambda: avisar_conducta(ticket))
+    elif agente is None:
         transaction.on_commit(lambda: avisar_sin_asignar(ticket))
-    else:
+    if agente is not None:
         Asignacion.objects.create(ticket=ticket, agente=agente)
         transaction.on_commit(lambda: avisar_asignacion(ticket))
     return ticket

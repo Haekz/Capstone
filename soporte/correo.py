@@ -33,6 +33,14 @@ def avisar_sin_asignar(ticket):
                 for lider in _lideres()])
 
 
+def avisar_conducta(ticket):
+    """Ruta urgente (N5): los lideres saben de inmediato de cada reporte de conducta,
+    tenga agente o no. Sin el contenido."""
+    return all([enviar(f'Reporte de conducta #{ticket.pk}', 'soporte/correo_conducta.txt',
+                       {'nombre': lider.nombre, 'ticket': ticket}, lider.user.email)
+                for lider in _lideres()])
+
+
 def avisar_respuesta(ticket):
     """Al usuario que abrio el ticket: soporte respondio (o lo cerro). Un menor puede no
     tener correo: lo ve al entrar."""
@@ -58,9 +66,9 @@ def avisar_documentos_por_vencer(ticket, borra_el):
 
 
 def _toca_avisar(ticket, hoy):
-    """El primer dia habil de atraso y despues cada Ticket.AVISO_CADA dias habiles."""
+    """El primer dia habil de atraso y despues cada ticket.aviso_cada dias habiles."""
     atraso = dias_habiles_entre(timezone.localtime(ticket.vence).date(), hoy)
-    return (atraso - 1) % Ticket.AVISO_CADA == 0
+    return (atraso - 1) % ticket.aviso_cada == 0
 
 
 def avisar_atrasados(hoy):

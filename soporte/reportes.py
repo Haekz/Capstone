@@ -58,7 +58,7 @@ def nuevo_ticket(request):
     return render(request, 'apoderados/formulario.html', {
         'form': form, 'titulo': 'Abrir un ticket', 'subtitulo': 'Cuéntanos qué pasó', 'boton': 'Enviar',
         'volver_url': reverse('mis_tickets'),
-        'intro': 'Pagos y clases: respondemos en 2 días hábiles. Lo demás, en 5 días hábiles.',
+        'intro': 'Pagos, clases y conducta: respondemos en 2 días hábiles. Lo demás, en 5 días hábiles.',
     })
 
 

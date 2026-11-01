@@ -1,0 +1,10 @@
+Hola {{ nombre }},
+
+Llegó un reporte de conducta: ticket #{{ ticket.pk }}.
+
+- Vence: {{ ticket.vence|date:"d-m-Y H:i" }} (hora de Chile)
+- {% if ticket.asignado %}Asignado a {{ ticket.asignado.nombre }}{% else %}Sin asignar: nadie está habilitado en Conducta. Asígnalo tú desde el panel{% endif %}
+
+Es prioritario: se avisa cada día hábil de atraso. Revísalo en el panel de soporte de LBWUS; por seguridad, el detalle solo se ve ahí.
+
+Equipo LBWUS

@@ -6,7 +6,7 @@ el detalle lo ve el agente que lo tiene o un lider. Responde y cierra solo el ag
 asignado; los correos avisan sin el texto.
 """
 
-from datetime import timedelta
+from datetime import date, timedelta
 from unittest import mock
 
 from django.core import mail
@@ -16,12 +16,13 @@ from django.utils import timezone
 
 from alumnos.models import Alumno, Reporte
 from apoderados.models import Apoderado, Vinculo
-from soporte.correo import avisar_atrasados
+from soporte.correo import _toca_avisar, avisar_atrasados
 from soporte.models import Ticket
 from soporte.tickets import abrir_reporte, agregar_mensaje
 from tests.test_apoderados import RUT, User, crear_agente, crear_apoderado, entrar, entrar_soporte
 from tests.test_apoderados_vinculos import crear_menor_vinculado, hace_anios
 from tests.test_soporte import crear_profesor
+from tests.test_soporte_plazos import fin_del_dia
 
 
 def crear_alumno_adulto(rut='18181818-1'):
@@ -228,3 +229,48 @@ class PlazoCumplidoTests(TestCase):
         disculpa, = [c for c in mail.outbox if 'va con atraso' in c.subject]
         self.assertEqual(disculpa.to, [self.alumno.user.email])
         self.assertNotIn('Cobro doble', disculpa.body)  # sin datos del caso
+
+
+class ConductaTests(TestCase):
+    """D17 y N5: restringida, 2 dias, aviso diario y los lideres se enteran de inmediato."""
+
+    def setUp(self):
+        self.lider = crear_agente('10000003-5', lider=True)
+        self.otro = crear_agente('10000002-7', Ticket.CLASES)  # no habilitado en conducta
+        self.alumno = crear_alumno_adulto()
+        entrar(self.client, self.alumno.user, alumno_id=self.alumno.id_alumno)
+
+    def reportar(self):
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post(reverse('nuevo_ticket'), datos(categoria=Ticket.CONDUCTA,
+                                                            descripcion='El profesor me insultó.'))
+        return Ticket.objects.get()
+
+    def test_los_lideres_se_enteran_de_inmediato_sin_el_contenido(self):
+        agente = crear_agente('10000001-9', Ticket.CONDUCTA)
+        ticket = self.reportar()
+        self.assertEqual(ticket.asignado, agente)
+        urgente, = [c for c in mail.outbox if c.to == [self.lider.user.email]]
+        self.assertIn('Reporte de conducta', urgente.subject)
+        self.assertIn(agente.nombre, urgente.body)
+        self.assertNotIn('insult', urgente.body)
+
+    def test_sin_agente_de_conducta_un_solo_aviso_al_lider(self):
+        self.assertIsNone(self.reportar().asignado)
+        aviso, = mail.outbox
+        self.assertIn('Sin asignar', aviso.body)
+
+    def test_solo_la_ve_el_agente_de_conducta_o_un_lider(self):
+        crear_agente('10000001-9', Ticket.CONDUCTA)
+        url = reverse('soporte_reporte', args=[self.reportar().pk])
+        entrar_soporte(self.client, self.otro)
+        self.assertEqual(self.client.get(url).status_code, 404)
+        entrar_soporte(self.client, self.lider)
+        self.assertContains(self.client.get(url), 'El profesor me insultó.')
+
+    def test_el_atraso_se_avisa_cada_dia_habil(self):
+        vence = fin_del_dia(date(2026, 9, 7))  # lunes; el miercoles lleva 2 dias habiles de atraso
+        conducta = Ticket(categoria=Ticket.CONDUCTA, vence=vence)
+        clases = Ticket(categoria=Ticket.CLASES, vence=vence)
+        self.assertTrue(_toca_avisar(conducta, date(2026, 9, 9)))
+        self.assertFalse(_toca_avisar(clases, date(2026, 9, 9)))

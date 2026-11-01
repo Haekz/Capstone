@@ -52,14 +52,15 @@ class Ticket(models.Model):
     TITULOS = 'titulos'
     PAGOS = 'pagos'
     CLASES = 'clases'
+    CONDUCTA = 'conducta'
     TECNICO = 'tecnico'
     OTRO = 'otro'
     CATEGORIAS = [(APODERADOS, 'Apoderados y menores'), (TITULOS, 'Títulos de profesores'),
-                  (PAGOS, 'Pagos y retiros'), (CLASES, 'Clases'), (TECNICO, 'Problemas técnicos'),
-                  (OTRO, 'Otro')]
-    DE_USUARIOS = (PAGOS, CLASES, TECNICO, OTRO)  # las que abre el propio usuario (D10)
-    DIAS_HABILES = {APODERADOS: 5, TITULOS: 5, PAGOS: 2, CLASES: 2, TECNICO: 5, OTRO: 5}  # D4 y D16
-    AVISO_CADA = 3  # dias habiles entre avisos de atraso (casos normales)
+                  (PAGOS, 'Pagos y retiros'), (CLASES, 'Clases'), (CONDUCTA, 'Conducta en una clase'),
+                  (TECNICO, 'Problemas técnicos'), (OTRO, 'Otro')]
+    DE_USUARIOS = (PAGOS, CLASES, CONDUCTA, TECNICO, OTRO)  # las que abre el propio usuario (D10)
+    DIAS_HABILES = {APODERADOS: 5, TITULOS: 5, PAGOS: 2, CLASES: 2, CONDUCTA: 2, TECNICO: 5, OTRO: 5}  # D4, D16, D17
+    AVISO_CADA = 3  # dias habiles entre avisos de atraso (casos normales; conducta, cada dia: D17)
     ABIERTO = 'abierto'
     CERRADO = 'cerrado'
     ESTADOS = [(ABIERTO, 'Abierto'), (CERRADO, 'Cerrado')]
@@ -129,6 +130,11 @@ class Ticket(models.Model):
         if self.vinculo_id:
             return self.vinculo.apoderado.user
         return self.profesor.user
+
+    @property
+    def aviso_cada(self):
+        """Dias habiles entre avisos de atraso: conducta es urgente (D17)."""
+        return 1 if self.categoria == self.CONDUCTA else self.AVISO_CADA
 
     @property
     def atrasado(self):
