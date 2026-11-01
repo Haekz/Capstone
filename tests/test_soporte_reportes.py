@@ -1,12 +1,14 @@
-"""Paso 6a: tickets que abren los usuarios (D10, D16, D18).
+"""Pasos 6a y 6b: tickets que abren los usuarios (D10, D16, D18) y su conversacion.
 
 Datos ficticios. Alumno, profesor y apoderado abren tickets y ven solo los suyos; el
 alumno menor solo de clases y tecnicos. Llegan al agente habilitado con su plazo, y
-el detalle lo ve el agente que lo tiene o un lider.
+el detalle lo ve el agente que lo tiene o un lider. Responde y cierra solo el agente
+asignado; los correos avisan sin el texto.
 """
 
 from datetime import timedelta
 
+from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -28,7 +30,7 @@ def crear_alumno_adulto(rut='18181818-1'):
 
 def datos(**cambios):
     return {'categoria': Ticket.PAGOS, 'titulo': 'Me cobraron dos veces',
-            'descripcion': 'Pagu\u00e9 el plan mensual y aparece dos veces en mi cartola.', **cambios}
+            'descripcion': 'Pagué el plan mensual y aparece dos veces en mi cartola.', **cambios}
 
 
 class AbrirTicketTests(TestCase):
@@ -103,17 +105,84 @@ class DetalleEnSoporteTests(TestCase):
 
     def setUp(self):
         self.agente = crear_agente('10000001-9', *Ticket.DE_USUARIOS)
-        self.ticket = abrir_reporte(crear_alumno_adulto().user, Ticket.CLASES, 'Profesor no lleg\u00f3',
-                                    'Esper\u00e9 30 minutos y nadie entr\u00f3 a la clase.')
+        self.ticket = abrir_reporte(crear_alumno_adulto().user, Ticket.CLASES, 'Profesor no llegó',
+                                    'Esperé 30 minutos y nadie entró a la clase.')
         self.url = reverse('soporte_reporte', args=[self.ticket.pk])
 
     def test_el_agente_asignado_lo_ve_desde_su_panel(self):
         entrar_soporte(self.client, self.agente)
         self.assertContains(self.client.get(reverse('panel_soporte')), self.url)
-        self.assertContains(self.client.get(self.url), 'Esper\u00e9 30 minutos')
+        self.assertContains(self.client.get(self.url), 'Esperé 30 minutos')
 
     def test_otro_agente_no_y_el_lider_si(self):
         entrar_soporte(self.client, crear_agente('10000002-7', *Ticket.DE_USUARIOS))
         self.assertEqual(self.client.get(self.url).status_code, 404)
         entrar_soporte(self.client, crear_agente('10000003-5', lider=True))
-        self.assertContains(self.client.get(self.url), 'Esper\u00e9 30 minutos')
+        self.assertContains(self.client.get(self.url), 'Esperé 30 minutos')
+
+
+class ConversacionTests(TestCase):
+
+    def setUp(self):
+        self.agente = crear_agente('10000001-9', *Ticket.DE_USUARIOS)
+        self.alumno = crear_alumno_adulto()
+        self.ticket = abrir_reporte(self.alumno.user, Ticket.CLASES, 'Profesor no llegó', 'Esperé 30 minutos.')
+        self.url = reverse('soporte_reporte', args=[self.ticket.pk])
+        self.url_usuario = reverse('mi_ticket', args=[self.ticket.pk])
+
+    def responder(self, **extra):
+        entrar_soporte(self.client, self.agente)
+        with self.captureOnCommitCallbacks(execute=True):
+            return self.client.post(self.url, {'texto': 'Te devolvimos la clase.', **extra})
+
+    def entrar_alumno(self):
+        entrar(self.client, self.alumno.user, alumno_id=self.alumno.id_alumno)
+
+    def test_el_agente_responde_y_el_usuario_la_lee(self):
+        self.assertRedirects(self.responder(), self.url, fetch_redirect_response=False)
+        correo, = mail.outbox
+        self.assertEqual(correo.to, [self.alumno.user.email])
+        self.assertNotIn('Te devolvimos la clase', correo.body)  # el texto solo se lee en LBWUS
+        self.entrar_alumno()
+        pagina = self.client.get(self.url_usuario)
+        self.assertContains(pagina, 'Te devolvimos la clase.')
+        self.assertContains(pagina, 'Equipo de soporte LBWUS')
+        self.assertNotContains(pagina, self.agente.nombre)
+
+    def test_cerrar_con_la_respuesta_vuelve_al_panel(self):
+        self.assertRedirects(self.responder(cerrar='on'), reverse('panel_soporte'), fetch_redirect_response=False)
+        self.ticket.refresh_from_db()
+        self.assertEqual(self.ticket.estado, Ticket.CERRADO)
+        self.assertIn('cerramos', mail.outbox[0].body)
+
+    def test_el_usuario_contesta_y_se_avisa_al_agente(self):
+        self.entrar_alumno()
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post(self.url_usuario, {'texto': 'Gracias, era la del martes.'})
+        mensaje, = self.ticket.mensajes.all()
+        self.assertEqual((mensaje.de_soporte, mensaje.autor), (False, self.alumno.user))
+        self.assertEqual(mail.outbox[0].to, [self.agente.user.email])
+
+    def test_cerrado_ya_no_se_contesta(self):
+        self.responder(cerrar='on')
+        self.entrar_alumno()
+        self.client.post(self.url_usuario, {'texto': 'Otra cosa'})
+        self.assertEqual(self.ticket.mensajes.count(), 1)
+        self.assertContains(self.client.get(self.url_usuario), 'Este ticket está cerrado')
+
+    def test_responde_solo_el_agente_asignado(self):
+        entrar_soporte(self.client, crear_agente('10000003-5', lider=True))
+        self.client.post(self.url, {'texto': 'Respuesta del líder'})
+        self.assertFalse(self.ticket.mensajes.exists())
+
+    def test_el_ticket_ajeno_no_se_ve(self):
+        otro = crear_alumno_adulto('19191919-1')
+        entrar(self.client, otro.user, alumno_id=otro.id_alumno)
+        self.assertEqual(self.client.get(self.url_usuario).status_code, 404)
+
+    def test_sin_correo_se_guarda_igual(self):
+        self.alumno.user.email = ''
+        self.alumno.user.save(update_fields=['email'])
+        self.responder()
+        self.assertEqual(mail.outbox, [])
+        self.assertEqual(self.ticket.mensajes.count(), 1)

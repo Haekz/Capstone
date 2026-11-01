@@ -5,6 +5,12 @@
 {% block nav_panel %}active{% endblock %}
 
 {% block content %}
+{% if messages %}
+<div class="panel" role="status" style="margin-bottom:20px; padding:14px 18px;">
+    {% for m in messages %}<div>{{ m }}</div>{% endfor %}
+</div>
+{% endif %}
+
 <div class="panel">
     <div class="panel-header">
         <span class="panel-title"><i class="bi bi-chat-left-text-fill" aria-hidden="true"></i> {{ ticket.titulo }}</span>
@@ -18,6 +24,13 @@
     <div style="padding:0 18px 18px;">
         <h2 style="font-size:1rem;">Lo que nos contó</h2>
         <p>{{ ticket.descripcion|linebreaksbr }}</p>
+        <h2 style="font-size:1rem;">Conversación</h2>
+        {% include 'soporte/_conversacion.html' with soporte_ve=True %}
+        {% if form %}
+        {% include 'soporte/_formulario_mensaje.html' with clase_boton='btn-primary' %}
+        {% elif ticket.estado == 'abierto' %}
+        <p><small>Solo el agente asignado responde. Para responder, reasígnatelo desde el panel.</small></p>
+        {% endif %}
     </div>
 </div>
 <p style="margin-top:18px;"><a href="{% url 'panel_soporte' %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a mis tickets</a></p>

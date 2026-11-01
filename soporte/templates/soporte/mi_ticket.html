@@ -1,0 +1,36 @@
+{% extends 'alumnos/base.html' %}
+{% load static %}
+
+{% block title %}Ticket #{{ ticket.pk }} | LBWUS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'alumnos/css/perfil_profesor.css' %}">
+<link rel="stylesheet" href="{% static 'apoderados/apoderados.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="perfil-prof">
+    <a class="perfil-prof__volver" href="{% url 'mis_tickets' %}">
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a mis tickets
+    </a>
+
+    <header class="perfil-prof__cabecera">
+        <div>
+            <h1>#{{ ticket.pk }} · {{ ticket.titulo }}</h1>
+            <p class="perfil-prof__vacio">{{ ticket.get_categoria_display }} · {{ ticket.get_estado_display }} · abierto el {{ ticket.creado|date:"d-m-Y H:i" }}</p>
+        </div>
+    </header>
+
+    <section class="perfil-prof__bloque" aria-labelledby="conversacion-titulo">
+        <h2 id="conversacion-titulo">Conversación</h2>
+        {% include 'apoderados/_mensajes.html' %}
+        <p><strong>Lo que nos contaste:</strong><br>{{ ticket.descripcion|linebreaksbr }}</p>
+        {% include 'soporte/_conversacion.html' with soporte_ve=False %}
+        {% if form %}
+        {% include 'soporte/_formulario_mensaje.html' %}
+        {% else %}
+        <p class="perfil-prof__vacio">Este ticket está cerrado. Si tienes otro problema, abre un ticket nuevo.</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

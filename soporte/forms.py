@@ -18,6 +18,22 @@ class ReporteForm(AccesibleMixin, forms.Form):
         self.fields['categoria'].choices = [(c, nombres[c]) for c in categorias]
 
 
+class MensajeForm(AccesibleMixin, forms.Form):
+    """El usuario contesta en su ticket."""
+    texto = forms.CharField(label='Tu respuesta', max_length=2000, widget=forms.Textarea(attrs={'rows': 4}),
+                            help_text='No escribas contraseñas ni datos de tarjetas.')
+
+
+class RespuestaForm(MensajeForm):
+    """El agente responde y, si ya esta resuelto, cierra el ticket con la misma respuesta."""
+    cerrar = forms.BooleanField(label='Cerrar el ticket con esta respuesta', required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['texto'].label = 'Respuesta al usuario'
+        self.fields['texto'].help_text = 'El usuario la lee en LBWUS; el correo solo le avisa que respondiste.'
+
+
 class ReasignarForm(forms.Form):
     agente = forms.ModelChoiceField(
         queryset=AgenteSoporte.objects.all(),

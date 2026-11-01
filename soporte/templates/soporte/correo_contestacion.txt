@@ -1,0 +1,9 @@
+Hola {{ nombre }},
+
+El usuario contestó en el ticket #{{ ticket.pk }} ({{ ticket.get_categoria_display }}).
+
+- Vence: {{ ticket.vence|date:"d-m-Y H:i" }} (hora de Chile)
+
+Revísalo en el panel de soporte de LBWUS. Por seguridad, el detalle solo se ve ahí.
+
+Equipo LBWUS

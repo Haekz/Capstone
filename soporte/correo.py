@@ -1,8 +1,9 @@
-"""Correos de soporte: ticket asignado, ticket sin asignar, documentos por vencer y
-resumen de atrasados.
+"""Correos de soporte: ticket asignado, ticket sin asignar, documentos por vencer,
+resumen de atrasados y respuestas en tickets de usuarios.
 
 Sin datos personales de apoderados ni profesores: solo numero, categoria y plazo.
-El detalle se ve en el panel de soporte. Devuelven False si algun correo no salio.
+Tampoco el texto de las respuestas. El detalle se ve en LBWUS. Devuelven False si
+algun correo no salio.
 """
 
 from django.utils import timezone
@@ -27,6 +28,22 @@ def avisar_sin_asignar(ticket):
     return all([enviar(f'Ticket #{ticket.pk} sin asignar', 'soporte/correo_sin_asignar.txt',
                        {'nombre': lider.nombre, 'ticket': ticket}, lider.user.email)
                 for lider in _lideres()])
+
+
+def avisar_respuesta(ticket):
+    """Al usuario que abrio el ticket: soporte respondio (o lo cerro). Un menor puede no
+    tener correo: lo ve al entrar."""
+    if not ticket.autor.email:
+        return False
+    return enviar(f'Respuesta en tu ticket #{ticket.pk}', 'soporte/correo_respuesta.txt',
+                  {'nombre': ticket.autor.first_name, 'ticket': ticket}, ticket.autor.email)
+
+
+def avisar_contestacion(ticket):
+    """Al agente del ticket: el usuario contesto."""
+    agente = ticket.asignado
+    return enviar(f'Ticket #{ticket.pk}: el usuario contestó', 'soporte/correo_contestacion.txt',
+                  {'nombre': agente.nombre, 'ticket': ticket}, agente.user.email)
 
 
 def avisar_documentos_por_vencer(ticket, borra_el):

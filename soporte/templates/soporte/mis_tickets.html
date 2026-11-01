@@ -31,7 +31,7 @@
         <ul class="apod-vinculos">
             {% for t in tickets %}
             <li>
-                <strong>#{{ t.pk }} · {{ t.titulo }}</strong> · {{ t.get_categoria_display }}<br>
+                <strong><a href="{% url 'mi_ticket' t.pk %}">#{{ t.pk }} · {{ t.titulo }}</a></strong> · {{ t.get_categoria_display }}<br>
                 <span class="apod-estado">{{ t.get_estado_display }}</span>
                 <small>· abierto el {{ t.creado|date:"d-m-Y" }}{% if t.estado == 'abierto' %} · respuesta a más tardar el {{ t.vence|date:"d-m-Y H:i" }}{% endif %}</small>
             </li>

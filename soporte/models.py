@@ -145,3 +145,15 @@ class Asignacion(models.Model):
         verbose_name = 'asignación'
         verbose_name_plural = 'asignaciones'
         ordering = ['-fecha', '-id']
+
+
+class Mensaje(models.Model):
+    """Conversacion de un ticket de usuario: respuestas del agente y del usuario."""
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='mensajes')
+    autor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='+')
+    de_soporte = models.BooleanField()  # quien escribio, aunque la cuenta ya no exista
+    texto = models.TextField(max_length=2000)
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['fecha', 'id']

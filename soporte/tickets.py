@@ -8,8 +8,8 @@ from django.db import transaction
 from django.db.models import Count, Q
 from django.utils import timezone
 
-from .correo import avisar_asignacion, avisar_sin_asignar
-from .models import AgenteSoporte, Asignacion, Ticket
+from .correo import avisar_asignacion, avisar_contestacion, avisar_respuesta, avisar_sin_asignar
+from .models import AgenteSoporte, Asignacion, Mensaje, Ticket
 from .plazos import vencimiento
 
 
@@ -58,6 +58,22 @@ def _crear(categoria, **campos):
 def cerrar_tickets(tickets):
     """Cierra los tickets abiertos de un related manager (``revisado.tickets``)."""
     tickets.filter(estado=Ticket.ABIERTO).update(estado=Ticket.CERRADO, cerrado=timezone.now())
+
+
+def agregar_mensaje(ticket, autor, texto, de_soporte, cerrar=False):
+    """Respuesta en un ticket de usuario abierto. Soporte puede cerrarlo con ella.
+    Avisa a la otra parte, sin el texto: se lee en LBWUS."""
+    if ticket.estado != Ticket.ABIERTO:
+        raise ValidationError('Ese ticket ya está cerrado.')
+    with transaction.atomic():
+        Mensaje.objects.create(ticket=ticket, autor=autor, texto=texto, de_soporte=de_soporte)
+        if cerrar:
+            cerrar_tickets(Ticket.objects.filter(pk=ticket.pk))
+            ticket.refresh_from_db()
+        if de_soporte:
+            transaction.on_commit(lambda: avisar_respuesta(ticket))
+        elif ticket.asignado_id:
+            transaction.on_commit(lambda: avisar_contestacion(ticket))
 
 
 def reasignar(ticket, agente, autor):
