@@ -40,6 +40,7 @@ VER_HALLAZGOS=1 python manage.py test tests.test_matriz_identidad -v 2 # muestra
 | ID-09 | Cualquiera | Usuario desactivado con sesión abierta, en una vista con decorador de rol | Expulsado | Expulsado | OK | — | `test_seguridad_blindaje.test_08_usuario_con_is_active_false_es_expulsado_por_decorador` |
 | ID-10 | Admin | Admin desactivado con sesión abierta abre "crear administrador" (`/profesor/registro_tutor`) | Redirige al login | Redirige al login | **CERRADO (hallazgos)** | S-07 | `S07CuentasDesactivadasTests.test_admin_desactivado_con_sesion_no_entra_a_crear_administradores` |
 | ID-11 | Alumno | Cuenta desactivada entra con Google | Rechazada | Rechazada | **CERRADO (S4-02)** | S-07 | `S07GoogleTests.test_cuenta_desactivada_no_entra_con_google` |
+| ID-23 | Cualquiera | Login con `?next=` a una ruta interna, a otro dominio o a `//otro` (paso 6e) | Vuelve a la ruta interna; con otro dominio va a su portal (sin redirección abierta) | Igual | OK | — | `LoginTests.test_next_interno_vuelve_ahi_y_externo_va_al_portal`, `LoginTests.test_el_formulario_conserva_solo_un_next_interno` |
 
 ### Registro y cuentas
 

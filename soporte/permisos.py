@@ -2,6 +2,7 @@
 
 from functools import wraps
 
+from django.contrib.auth.views import redirect_to_login
 from django.db.models import F
 from django.shortcuts import get_object_or_404, redirect
 
@@ -65,12 +66,13 @@ def estudiantes_que_reporta(request):
 
 
 def reporta_required(vista):
-    """Alumno, profesor o apoderado con sesion. Otro rol vuelve a su portal; anonimo, al login."""
+    """Alumno, profesor o apoderado con sesion. Otro rol vuelve a su portal; anonimo, al login
+    (con ?next=, para volver aqui tras entrar)."""
     @wraps(vista)
     def envoltura(request, *args, **kwargs):
         if not categorias_que_reporta(request):
             rol = rol_en_sesion(request)
-            return redirigir_a_portal(rol) if rol else redirect('login')
+            return redirigir_a_portal(rol) if rol else redirect_to_login(request.get_full_path(), 'login')
         if debe_renovar_clave(request.user):  # misma regla que alumno_required
             return redirect('nueva_clave_estudiante')
         return vista(request, *args, **kwargs)

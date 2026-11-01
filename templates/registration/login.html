@@ -96,6 +96,7 @@
                 <!-- LOGIN CENTRALIZADO -->
                 <form method="post" action="{% url 'login' %}">
                     {% csrf_token %}
+                    {% if siguiente %}<input type="hidden" name="next" value="{{ siguiente }}">{% endif %}
 
                     {% if form.errors or error %}
                     <div class="error" role="alert">

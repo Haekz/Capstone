@@ -69,6 +69,23 @@ class LoginTests(BaseIdentidad):
         self.assertContains(respuesta, 'RUT/Correo o contraseña incorrectos')
         self.assertNotIn('alumno_id', self.client.session)
 
+    def test_next_interno_vuelve_ahi_y_externo_va_al_portal(self):
+        """6e: volver a la pagina que pidio el login (p. ej. reportar un pago). Solo rutas
+        internas: un next a otro dominio seria una redireccion abierta."""
+        casos = {'/soporte/mis-tickets/nuevo/?pago=LB1': '/soporte/mis-tickets/nuevo/?pago=LB1',
+                 'https://malo.cl/x': reverse('alumno_pag1'), '//malo.cl/x': reverse('alumno_pag1')}
+        for siguiente, destino in casos.items():
+            with self.subTest(next=siguiente):
+                respuesta = self.client.post(reverse('login'), {'username': '12345678-5', 'password': CLAVE,
+                                                                'next': siguiente})
+                self.assertRedirects(respuesta, destino, fetch_redirect_response=False)
+                self.client.logout()
+
+    def test_el_formulario_conserva_solo_un_next_interno(self):
+        self.assertContains(self.client.get(reverse('login'), {'next': '/soporte/mis-tickets/'}),
+                            'name="next" value="/soporte/mis-tickets/"')
+        self.assertNotContains(self.client.get(reverse('login'), {'next': 'https://malo.cl'}), 'name="next"')
+
 
 class S03ClaveInicialTests(TestCase):
 

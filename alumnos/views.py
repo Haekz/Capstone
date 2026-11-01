@@ -29,6 +29,7 @@ from django.core.exceptions import ValidationError
 from . import paquetes
 from django.db import transaction
 from apoderados.permisos import clase_pagada_por_apoderado, vinculo_contratable
+from lbwus.puerta import destino_seguro
 from .forms import AlumnoForm, FiltroClasesForm
 from .decorators import alumno_required
 from .exceptions import InscripcionError
@@ -415,6 +416,10 @@ def custom_login(request):
         return redirigir_a_portal(rol_activo)
 
     error = None
+    # A donde volver tras entrar (p. ej. el boton de un pago rechazado). Solo rutas
+    # internas: destino_seguro rechaza otros dominios; '/' significa "ninguno".
+    siguiente = destino_seguro(request.POST.get('next') or request.GET.get('next'))
+    siguiente = '' if siguiente == '/' else siguiente
 
     if request.method == 'POST':
 
@@ -483,7 +488,7 @@ def custom_login(request):
                 else:
                     auth_login(request, user)
                     abrir_sesion_rol(request, rol, perfil)
-                    return redirigir_a_portal(rol)
+                    return redirect(siguiente) if siguiente else redirigir_a_portal(rol)
 
             else:
                 cache.set(clave_cache_ip, intentos_ip + 1, 300)
@@ -500,7 +505,8 @@ def custom_login(request):
         request,
         'registration/login.html',
         {
-            'error': error
+            'error': error,
+            'siguiente': siguiente,
         }
     )
 

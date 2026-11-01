@@ -92,7 +92,8 @@ class PermisosTests(TestCase):
         self.assertFalse(Ticket.objects.exists())
 
     def test_anonimo_al_login_y_soporte_a_su_panel(self):
-        self.assertRedirects(self.client.get(reverse('mis_tickets')), reverse('login'), fetch_redirect_response=False)
+        self.assertRedirects(self.client.get(reverse('mis_tickets')), f"{reverse('login')}?next={reverse('mis_tickets')}",
+                             fetch_redirect_response=False)  # vuelve aqui tras entrar
         entrar_soporte(self.client, crear_agente('10000001-9'))
         self.assertRedirects(self.client.get(reverse('nuevo_ticket')), reverse('panel_soporte'),
                              fetch_redirect_response=False)
