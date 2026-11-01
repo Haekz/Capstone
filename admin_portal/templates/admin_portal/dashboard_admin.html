@@ -1,5 +1,5 @@
 {% extends 'admin_portal/base_admin.html' %}
-{% load static %}
+{% load static dinero %}
 
 {% block title %}Panel Admin - LBWUS{% endblock %}
 {% block page_title %}Resumen General{% endblock %}
@@ -504,33 +504,51 @@
 
             <!-- ============ SECCIÓN: FINANZAS Y RETIROS ============ -->
             <div class="admin-section" id="section-finanzas">
-                <!-- Tarjetas financieras -->
-                <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 28px; gap: 20px;">
+                <!-- Tarjetas financieras: montos reales (admin_portal/metricas.py, paso 8) -->
+                <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 28px; gap: 20px;">
                     <div class="stat-card purple">
                         <div class="stat-card-inner">
                             <div class="stat-info">
-                                <div class="stat-value">{{ ingresos_totales }}</div>
-                                <div class="stat-label">Ingresos Totales</div>
+                                <div class="stat-value">{{ finanzas.cobrado|clp }}</div>
+                                <div class="stat-label">Cobrado (pagos aprobados)</div>
                             </div>
-                            <div class="stat-icon" style="margin-left:auto;"><i class="bi bi-wallet2"></i></div>
+                            <div class="stat-icon" style="margin-left:auto;"><i class="bi bi-wallet2" aria-hidden="true"></i></div>
                         </div>
                     </div>
                     <div class="stat-card green">
                         <div class="stat-card-inner">
                             <div class="stat-info">
-                                <div class="stat-value">{{ retiros_pagados }}</div>
+                                <div class="stat-value">{{ finanzas.ganancia|clp }}</div>
+                                <div class="stat-label">Ganancia LBWUS (15% de clases dictadas)</div>
+                            </div>
+                            <div class="stat-icon" style="margin-left:auto;"><i class="bi bi-graph-up-arrow" aria-hidden="true"></i></div>
+                        </div>
+                    </div>
+                    <div class="stat-card blue">
+                        <div class="stat-card-inner">
+                            <div class="stat-info">
+                                <div class="stat-value">{{ finanzas.por_dictar|clp }}</div>
+                                <div class="stat-label">Por dictar (aún no es ingreso)</div>
+                            </div>
+                            <div class="stat-icon" style="margin-left:auto;"><i class="bi bi-hourglass-split" aria-hidden="true"></i></div>
+                        </div>
+                    </div>
+                    <div class="stat-card green">
+                        <div class="stat-card-inner">
+                            <div class="stat-info">
+                                <div class="stat-value">{{ finanzas.retiros_pagados|clp }}</div>
                                 <div class="stat-label">Retiros Pagados</div>
                             </div>
-                            <div class="stat-icon" style="margin-left:auto;"><i class="bi bi-cash-coin"></i></div>
+                            <div class="stat-icon" style="margin-left:auto;"><i class="bi bi-cash-coin" aria-hidden="true"></i></div>
                         </div>
                     </div>
                     <div class="stat-card amber">
                         <div class="stat-card-inner">
                             <div class="stat-info">
-                                <div class="stat-value">{{ retiros_pendientes }}</div>
+                                <div class="stat-value">{{ finanzas.retiros_pendientes|clp }}</div>
                                 <div class="stat-label">Retiros Pendientes</div>
                             </div>
-                            <div class="stat-icon" style="margin-left:auto;"><i class="bi bi-clock-history"></i></div>
+                            <div class="stat-icon" style="margin-left:auto;"><i class="bi bi-clock-history" aria-hidden="true"></i></div>
                         </div>
                     </div>
                 </div>

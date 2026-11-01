@@ -8,6 +8,8 @@ from django.views.decorators.http import require_POST
 from alumnos.models import Alumno, Asignatura, Profesor, Tutor, Clase
 from alumnos.decorators import admin_required
 
+from . import metricas
+
 # Solo redirige al panel: regis_tutor.html envía aquí tras registrarse.
 def menu(request):
     admin_id = request.session.get('admin_id')
@@ -36,22 +38,10 @@ def dashboard_admin(request):
     ultimos_alumnos = alumnos.order_by('-id_alumno')[:3]
     ultimos_profesores = profesores.order_by('-id_profesor')[:3]
 
-    from alumnos.models import SolicitudRetiro, Inscripcion
-    from django.db.models import Sum
+    from alumnos.models import SolicitudRetiro
 
     todas_solicitudes_retiro = SolicitudRetiro.objects.select_related(
         'banco', 'profesor__user', 'profesor__cuenta_bancaria').order_by('-fecha_solicitud')
-    total_inscripciones_global = Inscripcion.objects.count()
-    ingresos_totales = max(total_inscripciones_global * 15000, 180000)
-    retiros_pagados = SolicitudRetiro.objects.filter(estado=SolicitudRetiro.PAGADO).aggregate(Sum('monto'))['monto__sum'] or 0
-    # Pendientes de pagar: los que esperan revision y los aprobados sin transferir.
-    retiros_pendientes = SolicitudRetiro.objects.filter(
-        estado__in=[SolicitudRetiro.PENDIENTE, SolicitudRetiro.APROBADO]
-    ).aggregate(Sum('monto'))['monto__sum'] or 0
-
-    ingresos_totales_fmt = f"${ingresos_totales:,}".replace(",", ".")
-    retiros_pagados_fmt = f"${retiros_pagados:,}".replace(",", ".")
-    retiros_pendientes_fmt = f"${retiros_pendientes:,}".replace(",", ".")
 
     context = {
         'admin': admin,
@@ -65,9 +55,7 @@ def dashboard_admin(request):
         'ultimos_alumnos': ultimos_alumnos,
         'ultimos_profesores': ultimos_profesores,
         'todas_solicitudes_retiro': todas_solicitudes_retiro,
-        'ingresos_totales': ingresos_totales_fmt,
-        'retiros_pagados': retiros_pagados_fmt,
-        'retiros_pendientes': retiros_pendientes_fmt,
+        'finanzas': metricas.finanzas(),  # montos reales (paso 8); el template les da formato
     }
     return render(request, 'admin_portal/dashboard_admin.html', context)
 
