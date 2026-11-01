@@ -61,15 +61,17 @@ def cerrar_tickets(tickets):
 
 
 def agregar_mensaje(ticket, autor, texto, de_soporte, cerrar=False):
-    """Respuesta en un ticket de usuario abierto. Soporte puede cerrarlo con ella.
-    Avisa a la otra parte, sin el texto: se lee en LBWUS."""
+    """Respuesta en un ticket de usuario abierto. Soporte puede cerrarlo con ella, y su
+    primera respuesta cumple el plazo. Avisa a la otra parte, sin el texto: se lee en LBWUS."""
     if ticket.estado != Ticket.ABIERTO:
         raise ValidationError('Ese ticket ya está cerrado.')
     with transaction.atomic():
         Mensaje.objects.create(ticket=ticket, autor=autor, texto=texto, de_soporte=de_soporte)
+        if de_soporte:
+            Ticket.objects.filter(pk=ticket.pk, respondido__isnull=True).update(respondido=timezone.now())
         if cerrar:
             cerrar_tickets(Ticket.objects.filter(pk=ticket.pk))
-            ticket.refresh_from_db()
+        ticket.refresh_from_db()
         if de_soporte:
             transaction.on_commit(lambda: avisar_respuesta(ticket))
         elif ticket.asignado_id:

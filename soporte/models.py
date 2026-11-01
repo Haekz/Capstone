@@ -82,6 +82,8 @@ class Ticket(models.Model):
     descripcion = models.TextField(max_length=2000, blank=True)
     creado = models.DateTimeField(auto_now_add=True)
     vence = models.DateTimeField()
+    # Primera respuesta de soporte en un ticket de usuario: cumple el plazo (31-oct).
+    respondido = models.DateTimeField(null=True, blank=True)
     cerrado = models.DateTimeField(null=True, blank=True)
 
     class Meta:
@@ -119,7 +121,8 @@ class Ticket(models.Model):
 
     @property
     def atrasado(self):
-        return self.estado == self.ABIERTO and timezone.now() > self.vence
+        """Misma regla que la consulta de soporte.correo.avisar_atrasados."""
+        return self.estado == self.ABIERTO and self.respondido is None and timezone.now() > self.vence
 
 
 class Habilitacion(models.Model):

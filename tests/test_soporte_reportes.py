@@ -7,6 +7,7 @@ asignado; los correos avisan sin el texto.
 """
 
 from datetime import timedelta
+from unittest import mock
 
 from django.core import mail
 from django.test import TestCase
@@ -15,8 +16,9 @@ from django.utils import timezone
 
 from alumnos.models import Alumno
 from apoderados.models import Apoderado, Vinculo
+from soporte.correo import avisar_atrasados
 from soporte.models import Ticket
-from soporte.tickets import abrir_reporte
+from soporte.tickets import abrir_reporte, agregar_mensaje
 from tests.test_apoderados import RUT, User, crear_agente, crear_apoderado, entrar, entrar_soporte
 from tests.test_apoderados_vinculos import crear_menor_vinculado, hace_anios
 from tests.test_soporte import crear_profesor
@@ -186,3 +188,33 @@ class ConversacionTests(TestCase):
         self.responder()
         self.assertEqual(mail.outbox, [])
         self.assertEqual(self.ticket.mensajes.count(), 1)
+
+
+class PlazoCumplidoTests(TestCase):
+    """La primera respuesta de soporte cumple el plazo (decidido el 31-oct)."""
+
+    def setUp(self):
+        self.agente = crear_agente('10000001-9', *Ticket.DE_USUARIOS)
+        self.alumno = crear_alumno_adulto()
+        self.ticket = abrir_reporte(self.alumno.user, Ticket.PAGOS, 'Cobro doble', 'Detalle.')
+        Ticket.objects.filter(pk=self.ticket.pk).update(vence=timezone.now() - timedelta(days=10))
+        self.ticket.refresh_from_db()
+
+    def atrasados_avisados(self):
+        with mock.patch('soporte.correo._toca_avisar', return_value=True):  # sin depender del dia
+            return avisar_atrasados(timezone.localdate())
+
+    def test_responder_cumple_el_plazo(self):
+        self.assertTrue(self.ticket.atrasado)
+        self.assertEqual(self.atrasados_avisados(), 1)
+        agregar_mensaje(self.ticket, self.agente.user, 'Lo estamos revisando.', de_soporte=True)
+        primera = self.ticket.respondido
+        self.assertFalse(self.ticket.atrasado)
+        self.assertEqual(self.atrasados_avisados(), 0)
+        agregar_mensaje(self.ticket, self.agente.user, 'Listo.', de_soporte=True)
+        self.assertEqual(self.ticket.respondido, primera)  # cuenta la primera
+
+    def test_la_respuesta_del_usuario_no_lo_cumple(self):
+        agregar_mensaje(self.ticket, self.alumno.user, 'Sigo esperando.', de_soporte=False)
+        self.assertIsNone(self.ticket.respondido)
+        self.assertTrue(self.ticket.atrasado)

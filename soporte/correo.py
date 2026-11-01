@@ -63,7 +63,8 @@ def _toca_avisar(ticket, hoy):
 def avisar_atrasados(hoy):
     """Un resumen a cada agente con sus tickets atrasados que toca avisar hoy y otro
     a cada lider con todos ellos. Devuelve cuantos tickets se avisaron."""
-    atrasados = [ticket for ticket in Ticket.objects.filter(estado=Ticket.ABIERTO, vence__date__lt=hoy)
+    atrasados = [ticket for ticket in Ticket.objects.filter(estado=Ticket.ABIERTO, respondido__isnull=True,
+                                                           vence__date__lt=hoy)
                  .select_related('asignado__user').order_by('vence', 'id') if _toca_avisar(ticket, hoy)]
     por_agente = {}
     for ticket in atrasados:
