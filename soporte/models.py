@@ -60,7 +60,8 @@ class Ticket(models.Model):
                   (TECNICO, 'Problemas técnicos'), (OTRO, 'Otro')]
     DE_USUARIOS = (PAGOS, CLASES, CONDUCTA, TECNICO, OTRO)  # las que abre el propio usuario (D10)
     DIAS_HABILES = {APODERADOS: 5, TITULOS: 5, PAGOS: 2, CLASES: 2, CONDUCTA: 2, TECNICO: 5, OTRO: 5}  # D4, D16, D17
-    AVISO_CADA = 3  # dias habiles entre avisos de atraso (casos normales; conducta, cada dia: D17)
+    AVISO_CADA = 3  # dias habiles entre avisos de atraso (al equipo en casos normales, y al usuario siempre;
+    #                 conducta avisa al equipo cada dia: D17)
     ABIERTO = 'abierto'
     CERRADO = 'cerrado'
     ESTADOS = [(ABIERTO, 'Abierto'), (CERRADO, 'Cerrado')]

@@ -230,7 +230,7 @@ class PlazoCumplidoTests(TestCase):
 
 
 class ConductaTests(TestCase):
-    """D17 y N5: restringida, 2 dias, aviso diario y los lideres se enteran de inmediato."""
+    """D17 y N5: restringida, 2 dias, aviso diario al equipo y los lideres se enteran de inmediato."""
 
     def setUp(self):
         self.lider = crear_agente('10000003-5', lider=True)
@@ -272,6 +272,18 @@ class ConductaTests(TestCase):
         clases = Ticket(categoria=Ticket.CLASES, vence=vence)
         self.assertTrue(_toca_avisar(conducta, date(2026, 9, 9)))
         self.assertFalse(_toca_avisar(clases, date(2026, 9, 9)))
+
+    def test_al_equipo_cada_dia_y_al_usuario_cada_3(self):
+        """D17 revisada el 01-nov: la disculpa diaria seria insistente."""
+        crear_agente('10000001-9', Ticket.CONDUCTA)
+        ticket = self.reportar()
+        Ticket.objects.filter(pk=ticket.pk).update(vence=fin_del_dia(date(2026, 9, 7)))  # lunes
+        # 1, 2 y 4 dias habiles de atraso: martes, miercoles y viernes.
+        for dia, disculpa in ((date(2026, 9, 8), True), (date(2026, 9, 9), False), (date(2026, 9, 11), True)):
+            with self.subTest(dia=dia):
+                mail.outbox = []
+                self.assertEqual(avisar_atrasados(dia), 1)  # el equipo, todos los dias
+                self.assertEqual(any('va con atraso' in c.subject for c in mail.outbox), disculpa)
 
 
 class EstudianteDelApoderadoTests(TestCase):

@@ -65,10 +65,11 @@ def avisar_documentos_por_vencer(ticket, borra_el):
                 for agente in destinos])
 
 
-def _toca_avisar(ticket, hoy):
-    """El primer dia habil de atraso y despues cada ticket.aviso_cada dias habiles."""
+def _toca_avisar(ticket, hoy, cada=None):
+    """El primer dia habil de atraso y despues cada ``cada`` dias habiles (por defecto,
+    ticket.aviso_cada: el ritmo del aviso al equipo)."""
     atraso = dias_habiles_entre(timezone.localtime(ticket.vence).date(), hoy)
-    return (atraso - 1) % ticket.aviso_cada == 0
+    return (atraso - 1) % (cada or ticket.aviso_cada) == 0
 
 
 def avisar_atrasados(hoy):
@@ -92,7 +93,10 @@ def avisar_atrasados(hoy):
             enviar('Tickets atrasados del equipo', 'soporte/correo_atrasados.txt',
                    {**contexto, 'nombre': lider.nombre, 'tickets': atrasados, 'lider': True}, lider.user.email)
     for ticket in atrasados:
-        _disculpar_atraso(ticket)
+        # Al usuario, siempre cada AVISO_CADA: en Conducta el equipo se avisa a diario,
+        # pero una disculpa diaria seria insistente (D17, revisada el 01-nov).
+        if _toca_avisar(ticket, hoy, cada=Ticket.AVISO_CADA):
+            _disculpar_atraso(ticket)
     return len(atrasados)
 
 
