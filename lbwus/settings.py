@@ -85,6 +85,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # CSP (Report-Only) y Permissions-Policy; antes de la puerta y WhiteNoise para cubrir sus respuestas.
+    'lbwus.cabeceras.CabecerasSeguridadMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  
     'django.contrib.sessions.middleware.SessionMiddleware',
     # Puerta con clave para todo el sitio; necesita la sesion (lbwus/puerta.py).
@@ -179,6 +181,9 @@ SITIO_DOMINIOS_CORREO = [
     d.strip().lower().lstrip('@')
     for d in os.environ.get('SITIO_DOMINIOS_CORREO', '').split(',') if d.strip()
 ]
+
+# CSP (lbwus/cabeceras.py): Report-Only por omision; CSP_OBLIGATORIA=1 la hace bloquear.
+CSP_OBLIGATORIA = os.environ.get('CSP_OBLIGATORIA', 'False').lower() in ('1', 'true', 'si')
 
 # La pagina de error de Django oculta tambien MONGODB_URI y SITIO_CLAVE.
 DEFAULT_EXCEPTION_REPORTER_FILTER = 'lbwus.reporte_errores.FiltroReporteErrores'
