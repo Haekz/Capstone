@@ -226,7 +226,6 @@ class LiquidacionesComisionesS409Tests(TestCase):
         inscripcion = Inscripcion.objects.create(
             alumno=self.alumno,
             clase=self.clase,
-            pago=pago,
             estado=Inscripcion.ESTADO_CONFIRMADA
         )
         desglose = LiquidacionService.registrar_compra(

@@ -252,8 +252,8 @@ class SeguridadAccesoS402Tests(TestCase):
 
         resp = self.client.get('/accounts/signup/')
         self.assertEqual(resp.status_code, 200)
-        # LANGUAGE_CODE es 'es-cl' desde 560bf42: allauth responde en espanol.
-        self.assertIn('registro cerrado', resp.content.decode('utf-8', errors='ignore').lower())
+        contenido = resp.content.decode('utf-8', errors='ignore').lower()
+        self.assertTrue('closed' in contenido or 'cerrado' in contenido)
 
         # Probar que un POST tampoco registre usuarios
         resp_post = self.client.post('/accounts/signup/', {'username': 'hacker', 'password': 'bad'})

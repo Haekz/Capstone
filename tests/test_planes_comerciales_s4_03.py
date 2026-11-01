@@ -255,7 +255,6 @@ class PlanesComercialesS403Tests(TestCase):
         Inscripcion.objects.create(
             alumno=self.alumno,
             clase=self.clase,
-            pago=pago,
             estado=Inscripcion.ESTADO_CONFIRMADA
         )
 
