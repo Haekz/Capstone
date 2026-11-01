@@ -20,6 +20,7 @@ DURACION_CLASE_MIN = 60
 COMISION = Fraction(15, 100)  # la retiene LBWUS, IVA incluido
 IVA = Fraction(19, 100)
 REDONDEO_PAQUETE = 1000
+VALOR_INSCRIPCION = 15000  # inscripciones antiguas, sin paquete: valor fijo por clase
 
 
 @dataclass(frozen=True)
@@ -63,6 +64,11 @@ def iva_incluido(monto):
 def pago_profesor(monto):
     """Lo que le queda al profesor (85%) de un monto pagado."""
     return monto - comision(monto)
+
+
+def valor_clase(inscripcion):
+    """Lo que pago el alumno por esa clase: su parte del paquete, o el valor fijo si no tiene."""
+    return inscripcion.paquete.precio_por_clase if inscripcion.paquete_id else VALOR_INSCRIPCION
 
 
 @dataclass(frozen=True)

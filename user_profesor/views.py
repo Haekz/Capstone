@@ -12,16 +12,6 @@ from django.views.decorators.http import require_POST
 from . import cambio_cuenta, foto
 from alumnos import catalogos, liquidacion, paquetes
 
-# Tarifas por inscripcion real. Inscripciones sin paquete: valor fijo por inscripcion.
-# Con paquete valen lo que pago el alumno por esa clase y el profesor recibe 85%.
-VALOR_INSCRIPCION = 15000
-PAGO_PROFESOR = paquetes.pago_profesor(VALOR_INSCRIPCION)
-
-
-def _valor_clase(inscripcion):
-    """Lo que pago el alumno por esa clase."""
-    return inscripcion.paquete.precio_por_clase if inscripcion.paquete_id else VALOR_INSCRIPCION
-
 
 def calcular_saldos(profesor):
     """Devuelve los saldos de un profesor a partir de sus inscripciones.
@@ -35,7 +25,7 @@ def calcular_saldos(profesor):
     from alumnos.models import SolicitudRetiro
 
     inscripciones = Inscripcion.objects.filter(clase__profesor=profesor).completadas().select_related('paquete')
-    valores = [_valor_clase(i) for i in inscripciones]
+    valores = [paquetes.valor_clase(i) for i in inscripciones]
 
     total_ganado = sum(valores)
     corresponde_al_profesor = sum(paquetes.pago_profesor(v) for v in valores)
@@ -202,7 +192,7 @@ def panel_profesor(request):
     inscripciones_hoy = inscripciones.filter(
         clase_id__in=[c.id_clase for c in clases[:6]]
     ).select_related('paquete')
-    dinero_hoy_val = sum(paquetes.pago_profesor(_valor_clase(i)) for i in inscripciones_hoy)
+    dinero_hoy_val = sum(paquetes.pago_profesor(paquetes.valor_clase(i)) for i in inscripciones_hoy)
     dinero_hoy = formato_clp(dinero_hoy_val)
     # Contador de clases disponibles diarias (base 8 máximo diario)
     clases_disponibles = max(0, 8 - len(clases_hoy_lista))
