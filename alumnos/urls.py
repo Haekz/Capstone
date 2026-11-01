@@ -15,7 +15,6 @@ from .views import (
     alumno_pag1,
     custom_login,
     logout_alumno,
-    enviar_reporte,
     inscribir_clase,
     cancelar_inscripcion,
     reprogramar_inscripcion,
@@ -49,7 +48,6 @@ urlpatterns = [
     path('logout_alumno/', logout_alumno, name='logout_alumno'),
 
     # Funcionalidades del alumno
-    path('enviar_reporte/', enviar_reporte, name='enviar_reporte'),
     path('inscribir_clase/', inscribir_clase, name='inscribir_clase'),
     path('sesiones-disponibles/', listar_sesiones_disponibles, name='sesiones_disponibles'),
     path('reservar-sesion/', reservar_sesion, name='reservar_sesion'),

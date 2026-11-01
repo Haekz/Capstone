@@ -82,11 +82,6 @@ class PermisosTests(TestCase):
         self.assertEqual(self.client.get(reverse('mis_tickets')).status_code, 302)
         self.client.post(reverse('nuevo_ticket'), datos(categoria=Ticket.CLASES))
         self.assertFalse(Ticket.objects.exists())  # D18, revisada el 01-nov
-        # Tampoco por el canal viejo de reportes del portal.
-        respuesta = self.client.post(reverse('enviar_reporte'), {'descripcion': 'Algo pasó'},
-                                     content_type='application/json')
-        self.assertFalse(respuesta.json()['success'])
-        self.assertFalse(Reporte.objects.exists())
 
     def test_no_se_abren_verificaciones_a_mano(self):
         alumno = crear_alumno_adulto()
@@ -309,3 +304,19 @@ class EstudianteDelApoderadoTests(TestCase):
         self.assertNotContains(self.client.get(reverse('nuevo_ticket')), 'De qué estudiante')
         self.client.post(reverse('nuevo_ticket'), datos(estudiante=self.propio.pk))
         self.assertIsNone(Ticket.objects.get().estudiante)  # el campo no existe: se ignora
+
+
+class CanalViejoRetiradoTests(TestCase):
+    """6e: el formulario "Soporte / Reportes" del portal se retiro; ahora son tickets."""
+
+    def test_el_portal_lleva_a_los_tickets_y_conserva_el_historial(self):
+        alumno = crear_alumno_adulto()
+        Reporte.objects.create(remitente=alumno.user, descripcion='Reporte de antes')
+        entrar(self.client, alumno.user, alumno_id=alumno.id_alumno)
+        portal = self.client.get(reverse('alumno_pag1'))
+        self.assertContains(portal, reverse('nuevo_ticket'))
+        self.assertContains(portal, 'Reporte de antes')  # solo lectura
+        self.assertNotContains(portal, 'support-ticket-form')
+
+    def test_la_ruta_vieja_ya_no_existe(self):
+        self.assertEqual(self.client.post('/enviar_reporte/').status_code, 404)

@@ -71,7 +71,7 @@ VER_HALLAZGOS=1 python manage.py test tests.test_matriz_identidad -v 2 # muestra
 | **S-06** Registro de allauth abierto y reutilización de cuentas huérfanas | Alta | **Cerrado**: registro de allauth cerrado (S4-02) y, al completar una cuenta huérfana con Google, su clave previa se anula | ID-12, ID-13 | `alumnos/google_adapter.py` (`LbwusAccountAdapter`), `alumnos/google_forms.py` (`save`) |
 | **S-07** Cuentas desactivadas siguen operando por la sesión o por Google | Alta | **Cerrado en lo probado**: Google las rechaza (S4-02) y crear administradores exige la cuenta activa. Quedan las vistas sin decorador (abajo) | ID-10, ID-11 | `alumnos/google_adapter.py`, `user_profesor/views.py` (`_es_admin`) |
 
-**S-07, vistas sin decorador de rol (solo revisión de código, sin prueba propia; PENDIENTE).** Estas vistas de `alumnos/views.py` usan la sesión sin `@alumno_required`, y por lo tanto no revisan `is_active`: `enviar_reporte`, `inscribir_clase`, `listar_sesiones_disponibles`, `reservar_sesion`, `sala_virtual` e `iniciar_directo`. Se corrigen después de integrar las ramas de apoderados, que modifican `sala_virtual` y `reservar_sesion`, para no generar conflictos.
+**S-07, vistas sin decorador de rol (solo revisión de código, sin prueba propia; PENDIENTE).** Estas vistas de `alumnos/views.py` usan la sesión sin `@alumno_required`, y por lo tanto no revisan `is_active`: `inscribir_clase`, `listar_sesiones_disponibles`, `reservar_sesion`, `sala_virtual` e `iniciar_directo` (`enviar_reporte` se retiró en el paso 6e: los reportes ahora son tickets de soporte). Se corrigen después de integrar las ramas de apoderados, que modifican `sala_virtual` y `reservar_sesion`, para no generar conflictos.
 
 ## Evidencia
 

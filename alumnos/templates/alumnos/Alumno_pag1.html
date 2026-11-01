@@ -423,41 +423,22 @@
             <div class="dashboard-view" id="view-support">
                 <div class="results-section ap-section-narrow">
                     <h2 class="ap-mb-10"><i class="bi bi-envelope-paper-fill ap-text-primary"></i> Soporte y Reportes</h2>
-                    <p class="ap-section-intro">¿Tienes algún problema con la plataforma o una tutoría? Envía un reporte a nuestro equipo de soporte.</p>
+                    <p class="ap-section-intro">¿Tienes algún problema con la plataforma, un pago o una clase? Abre un ticket: nuestro equipo de soporte te responde con un plazo y por escrito.</p>
                     
                     <div class="support-grid">
-                        <!-- Submit Ticket Form -->
+                        <!-- Los reportes ahora son tickets de soporte (paso 6e) -->
                         <div class="support-form-card">
-                            <h3>Crear Nuevo Reporte</h3>
-                            <form id="support-ticket-form" onsubmit="submitSupportReport(event)">
-                                <div class="form-group">
-                                    <label for="support-category">Categoría del Reporte</label>
-                                    <select id="support-category" required>
-                                        <option value="" disabled selected>Selecciona una opción...</option>
-                                        <option value="Plataforma / Técnico">Problema Técnico / Plataforma</option>
-                                        <option value="Clase / Horario">Problema con una Clase / Horario</option>
-                                        <option value="Pago / Finanzas">Pagos / Suscripción</option>
-                                        <option value="Profesor / Tutor">Comportamiento de Profesor / Tutor</option>
-                                        <option value="Otro">Otro asunto</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="support-subject">Asunto</label>
-                                    <input type="text" id="support-subject" placeholder="Ej. No puedo unirme a la clase de Matemáticas" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="support-description">Descripción del problema</label>
-                                    <textarea id="support-description" rows="5" placeholder="Describe detalladamente lo sucedido para poder ayudarte..." required></textarea>
-                                </div>
-                                <button type="submit" class="btn-principal ap-btn-block">
-                                    <i class="bi bi-send-fill ap-mr-8"></i>Enviar Reporte
-                                </button>
-                            </form>
+                            <h3>Abrir un ticket</h3>
+                            <p>Pagos, clases y conducta: respondemos en 2 días hábiles. Lo demás, en 5 días hábiles.</p>
+                            <a class="btn-principal ap-btn-block" href="{% url 'nuevo_ticket' %}">
+                                <i class="bi bi-send-fill ap-mr-8" aria-hidden="true"></i>Abrir un ticket
+                            </a>
+                            <p class="ap-mb-10"><a href="{% url 'mis_tickets' %}">Ver mis tickets y sus respuestas</a></p>
                         </div>
                         
-                        <!-- Tickets List -->
+                        <!-- Historial del canal anterior: solo lectura -->
                         <div class="support-list-card">
-                            <h3>Mis Reportes Enviados</h3>
+                            <h3>Reportes anteriores</h3>
                             <div class="tickets-list-container" id="tickets-list-container">
                                 {% if mis_reportes %}
                                     {% for r in mis_reportes %}
@@ -479,7 +460,7 @@
                                 {% else %}
                                     <div class="empty-teachers-state ap-empty-tickets">
                                         <i class="bi bi-chat-left-text ap-empty-icon"></i>
-                                        <p>No has enviado ningún reporte de soporte todavía.</p>
+                                        <p>No tienes reportes anteriores.</p>
                                     </div>
                                 {% endif %}
                             </div>
@@ -1490,48 +1471,6 @@
             // Desactivado: Ahora los reportes se renderizan con Django desde el backend
         }
 
-        // Submit support ticket form handler
-        const submitSupportReport = (event) => {
-            event.preventDefault();
-            const category = document.getElementById('support-category').value;
-            const subject = document.getElementById('support-subject').value;
-            const description = document.getElementById('support-description').value;
-            
-            const payload = {
-                descripcion: `Categoría: ${category} | Asunto: ${subject}\n\nDetalle: ${description}`
-            };
-
-            fetch("{% url 'enviar_reporte' %}", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": "{{ csrf_token }}"
-                },
-                body: JSON.stringify(payload)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if(data.success) {
-                    Swal.fire({
-                        title: '¡Reporte Enviado!',
-                        text: 'Tu ticket ha sido registrado en el sistema. Los administradores lo resolverán a la brevedad.',
-                        icon: 'success',
-                        confirmButtonColor: 'var(--primary)'
-                    });
-                    document.getElementById('support-ticket-form').reset();
-                    // Opcional: recargar vista o inyectar un aviso temporal
-                } else {
-                    Swal.fire({
-                        title: 'Error',
-                        text: data.message || 'Hubo un error al enviar el reporte',
-                        icon: 'error',
-                        confirmButtonColor: 'var(--primary)'
-                    });
-                }
-            })
-            .catch(error => console.error("Error:", error));
-        };
-
         // Tab selection switching
         const tabButtons = document.querySelectorAll('.tab-btn');
         const tabContents = document.querySelectorAll('.tab-content');
@@ -1992,7 +1931,7 @@
                 'view-inbox': ['Buzón de Dudas', 'Conversa con tus profesores'],
                 'view-progress': ['Informe de Progreso', 'Tu avance por asignatura'],
                 'view-plans': ['Mis Paquetes', 'Tus clases disponibles y vigencia'],
-                'view-support': ['Soporte / Reportes', 'Envía un reporte y revisa su estado'],
+                'view-support': ['Soporte / Reportes', 'Abre un ticket y revisa sus respuestas'],
                 'view-profile': ['Mi Perfil', 'Tus datos y transacciones']
             };
             function actualizarTitulo() {
