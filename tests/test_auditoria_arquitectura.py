@@ -121,15 +121,15 @@ class AuditoriaSeguridadYArquitecturaTests(TestCase):
         resp = self.client.get(reverse("sala_virtual", args=[self.clase_aprobada.id_clase]))
         self.assertEqual(resp.status_code, 403)
 
-    def test_sala_virtual_permite_admin_por_admin_id(self):
-        """Un administrador con session['admin_id'] puede supervisar la sala virtual."""
+    def test_sala_virtual_rechaza_admin_por_admin_id(self):
+        """SCRUM-87: un administrador no entra a la sala virtual de una clase ajena."""
         self.client.force_login(self.u_admin)
         s = self.client.session
         s["admin_id"] = self.tutor.id_tutor
         s.save()
 
         resp = self.client.get(reverse("sala_virtual", args=[self.clase_aprobada.id_clase]))
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 403)
 
     def test_catalogo_alumno_oculta_clases_de_profesores_no_aprobados(self):
         """El portal del alumno solo expone clases de profesores con título aprobado."""

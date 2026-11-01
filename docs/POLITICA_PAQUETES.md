@@ -42,6 +42,7 @@ Las cifras salen de `alumnos/paquetes.py`, que es la única fuente de precios (p
 
 - **Reprogramar** (`reprogramar_inscripcion`): la reserva debe estar activa y no haber empezado. La nueva sesión debe ser del **mismo profesor**, futura, con cupo, no reservada ya por el alumno y dentro de la vigencia. No gasta otra clase. **Hoy no hay límite de veces ni plazo de aviso.**
 - **Cancelar** (`cancelar_inscripcion`): se puede mientras la clase no haya empezado. La clase **vuelve al paquete**, porque las usadas se cuentan, no se restan. Si el profesor cancela la sesión, la clase también vuelve al alumno. **Hoy no se exige aviso de 24 horas.**
+- Las reglas de saldo, reserva, duplicados y concurrencia, con sus pruebas, están en la sección 11.
 
 ## 5. Devoluciones y renovación automática (estado actual)
 
@@ -176,3 +177,28 @@ La aprobación del equipo **no reemplaza** las revisiones jurídica, contable, t
 ## 10. Cómo reproducir las cifras
 
 Las funciones de `alumnos/paquetes.py` (`cotizar`, `precio`, `comision`, `pago_profesor`, `iva_incluido`) devuelven los valores de las secciones 1, 2 y 7. Las pruebas están en `tests/test_paquetes.py`. La comisión de Transbank es `monto × tasa × 1,19`, sin mínimos.
+
+## 11. Control de saldos y reservas (S4-05 / SCRUM-85, verificado el 31-oct-2026)
+
+**Modelo que se usa.** La compra y la reserva usan solo `PaqueteClases`:
+- Compra: `comprar_paquete` → `iniciar_compra_paquete` crea el paquete `pendiente` con el monto del servidor → `confirmacion` → `PaqueteClases.confirmar_pago` lo activa (o lo rechaza) y fija la vigencia.
+- Reserva: `InscripcionService.inscribir_alumno_en_sesion` → `_paquete_con_clases`, que bloquea los paquetes del alumno con ese profesor (`select_for_update`).
+- `PlanAlumno` (`PlanesService.crear_plan_desde_pago` y `consumir_clase_de_plan`) **no se usa en el flujo de compra ni de reserva**: ninguna vista lo crea ni lo consume. Pero `calcular_saldos` sí suma los `PlanAlumno` con pago confirmado, y el admin de Django permite crearlos y editarlos: un registro histórico o creado a mano cambia el saldo del profesor. Si se retira o se conecta, lo decide el equipo; ver el reporte del sprint.
+- Si el alumno anula en Webpay (`TBK_TOKEN`), el paquete queda `pendiente`: no se puede usar, pero tampoco pasa a rechazado. Si Transbank reenvía el retorno, `confirmacion` vuelve a llamar a `commit()`; Transbank lo rechaza y no se activa nada dos veces.
+
+**Reglas** (todas en `alumnos/services.py` y `alumnos/models.py`):
+
+| Regla | Dónde | Prueba |
+|---|---|---|
+| Saldo = `clases − inscripciones.consumidas()`; las consumidas son las activas (confirmada o pendiente) de sesiones no canceladas | `PaqueteClases.clases_disponibles`, `InscripcionQuerySet.consumidas` | `test_cada_paquete_permite_exactamente_sus_clases`, `test_compra_aprobada_de_cada_plan_deja_su_saldo` |
+| Reservar gasta 1 clase; sin saldo, `SinClasesDisponiblesError` | `_paquete_con_clases` | `test_reservar_descuenta_exactamente_una_clase`, `test_sin_paquete_no_se_puede_reservar` |
+| Solo sirve un paquete `activa` del mismo profesor, con la clase dentro de su vigencia | `_paquete_con_clases` | `test_paquete_de_otro_profesor_pendiente_o_ajeno_no_sirve`, `test_paquete_rechazado_no_se_usa`, `test_paquete_vencido_o_sesion_fuera_de_la_vigencia` |
+| Se gasta primero el paquete que vence antes | `order_by('fecha_fin', 'pk')` | `test_se_gasta_el_paquete_que_vence_primero` |
+| Cancelar antes del inicio devuelve la clase y libera el cupo; después del inicio no se puede | `Inscripcion.puede_cancelar` | `test_cancelar_devuelve_la_clase_y_libera_el_cupo`, `test_no_se_cancela_una_clase_que_ya_empezo` |
+| Si el profesor cancela la sesión, la clase vuelve | `consumidas()` excluye sesiones canceladas | `test_si_el_profesor_cancela_la_sesion_la_clase_vuelve` |
+| La misma sesión no se reserva dos veces: lo frena el servicio y, si dos llegan juntas, la restricción única | `InscripcionDuplicadaError`, `UniqueConstraint` | `test_misma_sesion_dos_veces_se_rechaza_y_descuenta_una`, `test_03_forzado_unique_constraint_en_base_de_datos` |
+| Reprogramar mueve la reserva sin gastar otra clase | `reprogramar_inscripcion` | `test_mueve_la_reserva_sin_gastar_otra_clase`, `test_reprogramar_y_cancelar_deja_el_saldo_completo` |
+| Una orden de Webpay que no es de un paquete no activa nada | `PaqueteClases.confirmar_pago` | `test_orden_desconocida_no_activa_ningun_paquete` |
+| Dos reservas simultáneas por la última clase o el último cupo: gana una | `select_for_update` sobre sesión, inscripciones y paquetes | `TestConcurrenciaMultihiloInscripcion` (ver abajo) |
+
+**Concurrencia.** Las pruebas con hilos de `tests/test_concurrencia_inscripcion.py` corren siempre. En SQLite (local) solo se exige que no haya sobrecupo ni doble gasto, porque SQLite bloquea la base entera. El resultado exacto (gana una y la otra recibe `CupoAgotadoError` o `SinClasesDisponiblesError`) se exige solo en PostgreSQL. Para correrlas así: `EXIGIR_POSTGRES=1 DATABASE_URL=<PostgreSQL de pruebas> python manage.py test tests.test_concurrencia_inscripcion`. **Nunca con la base de producción**: Django crea y borra una base `test_…` en ese servidor.

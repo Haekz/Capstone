@@ -13,19 +13,28 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 from pathlib import Path
 import os
 
+from django.core.exceptions import ImproperlyConfigured
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-lbwus-secret-key-for-local-development")
-
-# Clave Fernet de los documentos de apoderados (apoderados/documentos.py). Sin ella se
-# deriva de SECRET_KEY. Generarla con: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
-DOCUMENTOS_CLAVE = os.environ.get("DOCUMENTOS_CLAVE", "")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # En Railway se define DEBUG=False. Sin la variable queda en True.
 DEBUG = os.environ.get('DEBUG', 'True').lower() in ('1', 'true', 'si')
+
+# SECURITY WARNING: keep the secret key used in production secret!
+# Con DEBUG=False es obligatoria: sin ella el sitio no arranca (SCRUM-93).
+# La clave insegura de abajo solo sirve en desarrollo.
+SECRET_KEY = os.environ.get('SECRET_KEY', '')
+if not SECRET_KEY:
+    if not DEBUG:
+        raise ImproperlyConfigured('Falta la variable SECRET_KEY: es obligatoria con DEBUG=False.')
+    SECRET_KEY = 'django-insecure-lbwus-secret-key-for-local-development'
+
+# Clave Fernet de los documentos de apoderados (apoderados/documentos.py). Obligatoria
+# con DEBUG=False: sin ella no se suben ni se ven documentos. Ver docs/CONFIGURACION_PRODUCCION.md.
+# Generarla con: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+DOCUMENTOS_CLAVE = os.environ.get("DOCUMENTOS_CLAVE", "")
 
 # '.up.railway.app' (con punto) acepta cualquier subdominio. Django no
 # acepta comodines tipo '*.dominio'.
@@ -146,7 +155,6 @@ if os.environ.get('DATABASE_URL'):
     }
 elif os.environ.get('EXIGIR_POSTGRES') == '1':
     # Pruebas contra la base productiva: sin DATABASE_URL se detiene en vez de caer en SQLite.
-    from django.core.exceptions import ImproperlyConfigured
     raise ImproperlyConfigured('EXIGIR_POSTGRES=1 requiere DATABASE_URL apuntando a PostgreSQL.')
 else:
     DATABASES = {
@@ -217,6 +225,8 @@ STATICFILES_DIRS = [
     BASE_DIR / 'lbwus' / 'static',
 ]
 STATIC_ROOT = BASE_DIR/'staticfiles'
+# En pruebas, lbwus/test_runner.py usa estaticos sin manifiesto (no hay collectstatic).
+TEST_RUNNER = 'lbwus.test_runner.RunnerLBWUS'
 STORAGES = {
     'default': {
         'BACKEND': 'django.core.files.storage.FileSystemStorage',
