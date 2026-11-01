@@ -10,6 +10,8 @@ from dataclasses import dataclass
 
 from django.shortcuts import redirect
 
+from .utils import es_menor
+
 
 @dataclass(frozen=True)
 class Rol:
@@ -40,6 +42,12 @@ APODERADO = Rol('apoderado', 'perfil_apoderado', 'id_apoderado', 'apoderado_id',
 ROLES = (ALUMNO, PROFESOR, ADMIN, SOPORTE, APODERADO)
 # Abren sus propios tickets de soporte (D10). El publico usa el formulario de contacto.
 ROLES_CON_TICKETS = (ALUMNO, PROFESOR, APODERADO)
+
+
+def abre_tickets(rol, user):
+    """D10 y D18: alumno, profesor y apoderado abren tickets; el alumno menor no:
+    los abre su apoderado por el."""
+    return rol in ROLES_CON_TICKETS and not (rol == ALUMNO and es_menor(user))
 
 
 def perfil_de(user, rol):

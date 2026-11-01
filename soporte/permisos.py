@@ -6,8 +6,7 @@ from django.db.models import F
 from django.shortcuts import get_object_or_404, redirect
 
 from alumnos.decorators import soporte_required
-from alumnos.roles import ALUMNO, ROLES_CON_TICKETS, SOPORTE, redirigir_a_portal, rol_en_sesion
-from alumnos.utils import es_menor
+from alumnos.roles import SOPORTE, abre_tickets, redirigir_a_portal, rol_en_sesion
 from apoderados.permisos import debe_renovar_clave
 
 from .models import AgenteSoporte, Ticket
@@ -46,13 +45,10 @@ def lider_required(vista):
 
 
 def categorias_que_reporta(request):
-    """Categorias en que el usuario en sesion puede abrir tickets (D10). El alumno menor,
-    solo clases y tecnicos: los de pagos los abre su apoderado, que es quien paga (D18)."""
-    rol = rol_en_sesion(request)
-    if rol not in ROLES_CON_TICKETS or not request.user.is_authenticated:
+    """Categorias en que el usuario en sesion puede abrir tickets (D10). El alumno
+    menor ninguna: los abre su apoderado (D18, revisada el 01-nov)."""
+    if not request.user.is_authenticated or not abre_tickets(rol_en_sesion(request), request.user):
         return ()
-    if rol == ALUMNO and es_menor(request.user):
-        return (Ticket.CLASES, Ticket.TECNICO)
     return Ticket.DE_USUARIOS
 
 

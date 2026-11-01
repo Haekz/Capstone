@@ -16,7 +16,7 @@ login y los decoradores nunca discrepan sobre el rol de un usuario.
 
 from django.urls import reverse
 
-from .roles import ROLES, ROLES_CON_TICKETS, perfil_de, rol_en_sesion
+from .roles import ROLES, abre_tickets, perfil_de, rol_en_sesion
 
 _ANONIMO = {'autenticado': False}
 
@@ -97,5 +97,5 @@ def estado_sesion(request):
         texto_panel=rol.texto_panel,
         url_panel=reverse(rol.ruta_portal),
         url_logout=reverse(rol.ruta_logout),
-        url_ayuda=reverse('mis_tickets') if rol in ROLES_CON_TICKETS else '',
+        url_ayuda=reverse('mis_tickets') if abre_tickets(rol, user) else '',
     )

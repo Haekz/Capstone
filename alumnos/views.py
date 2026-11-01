@@ -556,6 +556,12 @@ def enviar_reporte(request):
                     id_alumno=alumno_id
                 )
 
+                if es_menor(alumno.user):  # D18: los reportes los hace su apoderado
+                    return JsonResponse({
+                        "success": False,
+                        "message": "Cuéntaselo a tu apoderado: él puede pedir ayuda a soporte."
+                    })
+
                 Reporte.objects.create(
                     remitente=alumno.user,
                     descripcion=descripcion

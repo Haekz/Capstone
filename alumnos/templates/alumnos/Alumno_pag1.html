@@ -106,12 +106,14 @@
                         <span>Mis Paquetes</span>
                     </button>
                 </li>
+                {% if not es_menor %}{# D18: los reportes del menor los hace su apoderado #}
                 <li>
                     <button class="sidebar-nav-item sidebar-view-btn" data-view="view-support">
                         <i class="bi bi-envelope-paper-fill"></i>
                         <span>Soporte / Reportes</span>
                     </button>
                 </li>
+                {% endif %}
                 <li>
                     <button class="sidebar-nav-item sidebar-view-btn" data-view="view-profile">
                         <i class="bi bi-person-fill"></i>
@@ -174,6 +176,7 @@
                                 {% if es_menor %}
                                 <p class="aviso-menor" role="status"><strong>Cuenta de estudiante menor de edad.</strong>
                                     Puedes revisar el catálogo y entrar a las clases que reserve tu apoderado. Las reservas, cancelaciones y compras las hace tu apoderado desde su cuenta.
+                                    Si algo en una clase te hizo sentir incómodo o tienes un problema, cuéntaselo a tu apoderado: él puede pedir ayuda a nuestro equipo de soporte.
                                     {% if tiene_solicitud %}<a href="{% url 'adolescente_solicitud' %}">Ver mi solicitud de apoderado</a>{% endif %}</p>
                                 {% endif %}
                             </div>
@@ -416,6 +419,7 @@
             </div>
 
             <!-- ── VIEW 5: SUPPORT / REPORTS ── -->
+            {% if not es_menor %}
             <div class="dashboard-view" id="view-support">
                 <div class="results-section ap-section-narrow">
                     <h2 class="ap-mb-10"><i class="bi bi-envelope-paper-fill ap-text-primary"></i> Soporte y Reportes</h2>
@@ -483,6 +487,7 @@
                     </div>
                 </div>
         </div>
+            {% endif %}
         <!-- ── VIEW 7: CURSOS PREMIUM (PREMIUM) ── -->
         <!-- esta parte es de los cursos premium de los alumnos -->
         <div class="dashboard-view" id="view-courses">

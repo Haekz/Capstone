@@ -1,7 +1,7 @@
 """Pasos 6a y 6b: tickets que abren los usuarios (D10, D16, D18) y su conversacion.
 
 Datos ficticios. Alumno, profesor y apoderado abren tickets y ven solo los suyos; el
-alumno menor solo de clases y tecnicos. Llegan al agente habilitado con su plazo, y
+alumno menor no (los abre su apoderado). Llegan al agente habilitado con su plazo, y
 el detalle lo ve el agente que lo tiene o un lider. Responde y cierra solo el agente
 asignado; los correos avisan sin el texto.
 """
@@ -14,7 +14,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from alumnos.models import Alumno
+from alumnos.models import Alumno, Reporte
 from apoderados.models import Apoderado, Vinculo
 from soporte.correo import avisar_atrasados
 from soporte.models import Ticket
@@ -75,13 +75,17 @@ class AbrirTicketTests(TestCase):
 
 class PermisosTests(TestCase):
 
-    def test_el_menor_solo_abre_de_clases_y_tecnicos(self):
+    def test_el_menor_no_abre_tickets_los_abre_su_apoderado(self):
         menor = crear_menor_vinculado(crear_apoderado(RUT, Apoderado.VERIFICADO), estado=Vinculo.VERIFICADO).alumno
         entrar(self.client, menor.user, alumno_id=menor.id_alumno)
-        self.client.post(reverse('nuevo_ticket'), datos(categoria=Ticket.PAGOS))
-        self.assertFalse(Ticket.objects.exists())  # los de pagos los abre su apoderado (D18)
+        self.assertEqual(self.client.get(reverse('mis_tickets')).status_code, 302)
         self.client.post(reverse('nuevo_ticket'), datos(categoria=Ticket.CLASES))
-        self.assertEqual(Ticket.objects.get().categoria, Ticket.CLASES)
+        self.assertFalse(Ticket.objects.exists())  # D18, revisada el 01-nov
+        # Tampoco por el canal viejo de reportes del portal.
+        respuesta = self.client.post(reverse('enviar_reporte'), {'descripcion': 'Algo pasó'},
+                                     content_type='application/json')
+        self.assertFalse(respuesta.json()['success'])
+        self.assertFalse(Reporte.objects.exists())
 
     def test_no_se_abren_verificaciones_a_mano(self):
         alumno = crear_alumno_adulto()
