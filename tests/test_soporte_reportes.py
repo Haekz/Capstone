@@ -7,9 +7,11 @@ asignado; los correos avisan sin el texto.
 """
 
 from datetime import date, timedelta
+from io import StringIO
 from unittest import mock
 
 from django.core import mail
+from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -320,3 +322,35 @@ class CanalViejoRetiradoTests(TestCase):
 
     def test_la_ruta_vieja_ya_no_existe(self):
         self.assertEqual(self.client.post('/enviar_reporte/').status_code, 404)
+
+
+class PasarReportesATicketsTests(TestCase):
+    """6e: los reportes viejos pendientes entran al flujo de soporte como tickets."""
+
+    def pasar(self):
+        salida = StringIO()
+        call_command('pasar_reportes_a_tickets', stdout=salida)
+        return salida.getvalue()
+
+    def test_pasa_los_pendientes_una_sola_vez(self):
+        agente = crear_agente('10000001-9', Ticket.OTRO)
+        alumno = crear_alumno_adulto()
+        pendiente = Reporte.objects.create(remitente=alumno.user, descripcion='No carga el video')
+        Reporte.objects.create(remitente=alumno.user, descripcion='Ya resuelto', estado='resuelto')
+        self.assertIn('Reportes pasados a tickets: 1', self.pasar())
+        ticket = Ticket.objects.get()
+        self.assertEqual((ticket.autor, ticket.categoria, ticket.asignado, ticket.descripcion),
+                         (alumno.user, Ticket.OTRO, agente, 'No carga el video'))
+        self.assertEqual(ticket.titulo, f'Reporte anterior #{pendiente.pk}')
+        pendiente.refresh_from_db()
+        self.assertEqual(pendiente.estado, 'resuelto')
+        self.assertIn('Reportes pasados a tickets: 0', self.pasar())  # no duplica
+        self.assertEqual(Ticket.objects.count(), 1)
+
+    def test_los_de_menores_quedan_para_un_lider(self):
+        menor = crear_menor_vinculado(crear_apoderado(RUT, Apoderado.VERIFICADO)).alumno
+        reporte = Reporte.objects.create(remitente=menor.user, descripcion='Algo pasó')
+        self.assertIn(f'para que decida un lider: {reporte.pk}', self.pasar())
+        self.assertFalse(Ticket.objects.exists())
+        reporte.refresh_from_db()
+        self.assertEqual(reporte.estado, 'pendiente')
