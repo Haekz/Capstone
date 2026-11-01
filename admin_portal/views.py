@@ -56,6 +56,7 @@ def dashboard_admin(request):
         'ultimos_profesores': ultimos_profesores,
         'todas_solicitudes_retiro': todas_solicitudes_retiro,
         'finanzas': metricas.finanzas(),  # montos reales (paso 8); el template les da formato
+        'grafico_registros': metricas.grafico(metricas.registros_por_mes()),
     }
     return render(request, 'admin_portal/dashboard_admin.html', context)
 
