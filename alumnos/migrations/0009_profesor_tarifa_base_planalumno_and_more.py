@@ -10,6 +10,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('alumnos', '0008_sesiones_hora_chile'),
+        ('alumnos', '0007_pago_inscripcion_pago'),
     ]
 
     operations = [

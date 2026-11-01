@@ -31,7 +31,7 @@ def dashboard_admin(request):
 
     # Carga optimizada con select_related en listas en memoria para evitar N+1 y COUNTs redundantes
     alumnos = list(
-        Alumno.objects.select_related('user', 'user__genero', 'tutor', 'tutor__user').order_by('-id_alumno')
+        Alumno.objects.select_related('user', 'user__genero').order_by('-id_alumno')
     )
     profesores = list(
         Profesor.objects.select_related('user', 'user__genero', 'especialidad').order_by('-id_profesor')

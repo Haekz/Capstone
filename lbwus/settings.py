@@ -200,7 +200,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'es-cl'
 
 # Las horas se guardan en UTC (USE_TZ) y se muestran/ingresan en hora de Chile.
 TIME_ZONE = 'America/Santiago'
