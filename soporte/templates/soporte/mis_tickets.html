@@ -1,0 +1,45 @@
+{% extends 'alumnos/base.html' %}
+{% load static %}
+
+{% block title %}Mis tickets de soporte | LBWUS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'alumnos/css/perfil_profesor.css' %}">
+<link rel="stylesheet" href="{% static 'apoderados/apoderados.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="perfil-prof">
+    <a class="perfil-prof__volver" href="{{ usuario_sesion.url_panel }}">
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a {{ usuario_sesion.texto_panel|lower }}
+    </a>
+
+    <header class="perfil-prof__cabecera">
+        <div>
+            <h1>Ayuda y soporte</h1>
+            <p class="perfil-prof__vacio">¿Problemas con un pago, una clase o la plataforma? Abre un ticket y nuestro equipo te responde.</p>
+        </div>
+    </header>
+
+    <section class="perfil-prof__bloque" aria-labelledby="tickets-titulo">
+        <h2 id="tickets-titulo">Mis tickets</h2>
+        {% include 'apoderados/_mensajes.html' %}
+        <a class="perfil-prof__reservar" href="{% url 'nuevo_ticket' %}">
+            <i class="bi bi-plus-lg" aria-hidden="true"></i> Abrir un ticket
+        </a>
+        {% if tickets %}
+        <ul class="apod-vinculos">
+            {% for t in tickets %}
+            <li>
+                <strong>#{{ t.pk }} · {{ t.titulo }}</strong> · {{ t.get_categoria_display }}<br>
+                <span class="apod-estado">{{ t.get_estado_display }}</span>
+                <small>· abierto el {{ t.creado|date:"d-m-Y" }}{% if t.estado == 'abierto' %} · respuesta a más tardar el {{ t.vence|date:"d-m-Y H:i" }}{% endif %}</small>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="perfil-prof__vacio">Todavía no abres tickets.</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

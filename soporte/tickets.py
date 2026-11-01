@@ -32,15 +32,27 @@ def abrir_ticket(categoria, **revisado):
     with transaction.atomic():
         if Ticket.objects.filter(estado=Ticket.ABIERTO, **revisado).exists():
             return
-        agente = _agente_con_menos_carga(categoria)
-        ticket = Ticket.objects.create(categoria=categoria, asignado=agente,
-                                       vence=vencimiento(timezone.now(), Ticket.DIAS_HABILES[categoria]),
-                                       **revisado)
-        if agente is None:
-            transaction.on_commit(lambda: avisar_sin_asignar(ticket))
-        else:
-            Asignacion.objects.create(ticket=ticket, agente=agente)
-            transaction.on_commit(lambda: avisar_asignacion(ticket))
+        _crear(categoria, **revisado)
+
+
+def abrir_reporte(autor, categoria, titulo, descripcion):
+    """Ticket que abre un usuario (D10). Puede tener varios abiertos a la vez."""
+    with transaction.atomic():
+        return _crear(categoria, autor=autor, titulo=titulo, descripcion=descripcion)
+
+
+def _crear(categoria, **campos):
+    """Crea el ticket con su plazo y lo asigna al agente con menos carga."""
+    agente = _agente_con_menos_carga(categoria)
+    ticket = Ticket.objects.create(categoria=categoria, asignado=agente,
+                                   vence=vencimiento(timezone.now(), Ticket.DIAS_HABILES[categoria]),
+                                   **campos)
+    if agente is None:
+        transaction.on_commit(lambda: avisar_sin_asignar(ticket))
+    else:
+        Asignacion.objects.create(ticket=ticket, agente=agente)
+        transaction.on_commit(lambda: avisar_asignacion(ticket))
+    return ticket
 
 
 def cerrar_tickets(tickets):

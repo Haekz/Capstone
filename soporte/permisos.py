@@ -6,7 +6,9 @@ from django.db.models import F
 from django.shortcuts import get_object_or_404, redirect
 
 from alumnos.decorators import soporte_required
-from alumnos.roles import SOPORTE
+from alumnos.roles import ALUMNO, ROLES_CON_TICKETS, SOPORTE, redirigir_a_portal, rol_en_sesion
+from alumnos.utils import es_menor
+from apoderados.permisos import debe_renovar_clave
 
 from .models import AgenteSoporte, Ticket
 
@@ -41,3 +43,28 @@ def lider_required(vista):
         return vista(request, *args, **kwargs)
 
     return soporte_required(solo_lider)
+
+
+def categorias_que_reporta(request):
+    """Categorias en que el usuario en sesion puede abrir tickets (D10). El alumno menor,
+    solo clases y tecnicos: los de pagos los abre su apoderado, que es quien paga (D18)."""
+    rol = rol_en_sesion(request)
+    if rol not in ROLES_CON_TICKETS or not request.user.is_authenticated:
+        return ()
+    if rol == ALUMNO and es_menor(request.user):
+        return (Ticket.CLASES, Ticket.TECNICO)
+    return Ticket.DE_USUARIOS
+
+
+def reporta_required(vista):
+    """Alumno, profesor o apoderado con sesion. Otro rol vuelve a su portal; anonimo, al login."""
+    @wraps(vista)
+    def envoltura(request, *args, **kwargs):
+        if not categorias_que_reporta(request):
+            rol = rol_en_sesion(request)
+            return redirigir_a_portal(rol) if rol else redirect('login')
+        if debe_renovar_clave(request.user):  # misma regla que alumno_required
+            return redirect('nueva_clave_estudiante')
+        return vista(request, *args, **kwargs)
+
+    return envoltura

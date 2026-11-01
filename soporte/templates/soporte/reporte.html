@@ -1,0 +1,24 @@
+{% extends 'soporte/base_soporte.html' %}
+
+{% block page_title %}Ticket #{{ ticket.pk }}{% endblock %}
+{% block page_subtitle %}{{ ticket.get_categoria_display }} · {{ ticket.get_estado_display }}{% endblock %}
+{% block nav_panel %}active{% endblock %}
+
+{% block content %}
+<div class="panel">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-chat-left-text-fill" aria-hidden="true"></i> {{ ticket.titulo }}</span>
+    </div>
+    <dl style="padding:18px; display:grid; grid-template-columns:max-content 1fr; gap:8px 18px; margin:0;">
+        <dt>Abierto por</dt><dd>{{ ticket.autor.first_name }} · {{ ticket.autor.email|default:"sin correo" }}</dd>
+        <dt>Abierto el</dt><dd>{{ ticket.creado|date:"d-m-Y H:i" }}</dd>
+        <dt>Vence</dt><dd>{{ ticket.vence|date:"d-m-Y H:i" }}{% if ticket.atrasado %} <span class="badge">Atrasado</span>{% endif %}</dd>
+        <dt>Asignado a</dt><dd>{{ ticket.asignado.nombre|default:"Sin asignar" }}</dd>
+    </dl>
+    <div style="padding:0 18px 18px;">
+        <h2 style="font-size:1rem;">Lo que nos contó</h2>
+        <p>{{ ticket.descripcion|linebreaksbr }}</p>
+    </div>
+</div>
+<p style="margin-top:18px;"><a href="{% url 'panel_soporte' %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a mis tickets</a></p>
+{% endblock %}

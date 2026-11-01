@@ -96,20 +96,22 @@ class PlazoDelTicketTests(TestCase):
 
 
 class DespliegueTests(TransactionTestCase):
-    """Las migraciones de verdad: soporte vuelve a 0001 y avanza hasta el plazo."""
+    """Las migraciones de verdad: soporte vuelve a 0001 y avanza hasta la ultima."""
 
     def migrar(self, hasta):
         MigrationExecutor(connection).migrate([('soporte', hasta)])
 
     def test_lo_pendiente_al_desplegar_queda_como_ticket_sin_asignar_y_con_plazo(self):
-        self.addCleanup(self.migrar, '0003_plazo_de_los_tickets')  # aunque falle, el resto sigue al dia
+        # La ultima, no una fija: el modelo actual necesita todas las columnas.
+        (_, ultima), = MigrationExecutor(connection).loader.graph.leaf_nodes('soporte')
+        self.addCleanup(self.migrar, ultima)  # aunque falle, el resto sigue al dia
         self.migrar('0001_equipo_y_tickets')
         apoderado = crear_apoderado(RUT, Apoderado.REVISION_PENDIENTE)
         vinculo = crear_menor_vinculado(crear_apoderado('15151515-1', Apoderado.VERIFICADO), estado=Vinculo.PENDIENTE)
         sin_verificar = crear_apoderado('13131313-1', Apoderado.REVISION_PENDIENTE)
         crear_menor_vinculado(sin_verificar, rut='14141414-1', estado=Vinculo.PENDIENTE)  # aun no se revisa
 
-        self.migrar('0003_plazo_de_los_tickets')
+        self.migrar(ultima)
 
         abiertos = Ticket.objects.filter(estado=Ticket.ABIERTO, asignado__isnull=True)
         self.assertEqual(set(abiertos.values_list('apoderado', 'vinculo')),

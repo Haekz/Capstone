@@ -3,6 +3,8 @@
 - Cada verificacion con documentos (identidad o vinculo de un apoderado, titulo de
   un profesor) es un ticket. Se abre cuando queda lista para revisar y se cierra
   cuando alguien decide (o el vinculo se revoca).
+- Alumnos, profesores y apoderados abren sus propios tickets (D10): pagos, clases,
+  tecnicos u otros. Esos tienen autor, titulo y descripcion.
 - El ticket se asigna solo al agente habilitado en su categoria con menos tickets
   abiertos; el lider de soporte puede reasignarlo.
 - Solo el agente asignado ve los documentos y decide. El administrador no.
@@ -48,8 +50,15 @@ class AgenteSoporte(models.Model):
 class Ticket(models.Model):
     APODERADOS = 'apoderados'
     TITULOS = 'titulos'
-    CATEGORIAS = [(APODERADOS, 'Apoderados y menores'), (TITULOS, 'Títulos de profesores')]
-    DIAS_HABILES = {APODERADOS: 5, TITULOS: 5}
+    PAGOS = 'pagos'
+    CLASES = 'clases'
+    TECNICO = 'tecnico'
+    OTRO = 'otro'
+    CATEGORIAS = [(APODERADOS, 'Apoderados y menores'), (TITULOS, 'Títulos de profesores'),
+                  (PAGOS, 'Pagos y retiros'), (CLASES, 'Clases'), (TECNICO, 'Problemas técnicos'),
+                  (OTRO, 'Otro')]
+    DE_USUARIOS = (PAGOS, CLASES, TECNICO, OTRO)  # las que abre el propio usuario (D10)
+    DIAS_HABILES = {APODERADOS: 5, TITULOS: 5, PAGOS: 2, CLASES: 2, TECNICO: 5, OTRO: 5}  # D4 y D16
     AVISO_CADA = 3  # dias habiles entre avisos de atraso (casos normales)
     ABIERTO = 'abierto'
     CERRADO = 'cerrado'
@@ -60,13 +69,17 @@ class Ticket(models.Model):
     # SET_NULL: si se borra la cuenta del agente, el ticket queda sin asignar.
     asignado = models.ForeignKey(AgenteSoporte, on_delete=models.SET_NULL, null=True, blank=True,
                                  related_name='tickets')
-    # Lo que se revisa: exactamente uno de los tres.
+    # Lo que se revisa: exactamente uno de los tres, o un autor si lo abrio un usuario.
     apoderado = models.ForeignKey('apoderados.Apoderado', on_delete=models.CASCADE, null=True, blank=True,
                                   related_name='tickets')
     vinculo = models.ForeignKey('apoderados.Vinculo', on_delete=models.CASCADE, null=True, blank=True,
                                 related_name='tickets')
     profesor = models.ForeignKey('alumnos.Profesor', on_delete=models.CASCADE, null=True, blank=True,
                                  related_name='tickets')
+    autor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True,
+                              related_name='tickets_soporte')
+    titulo = models.CharField(max_length=120, blank=True)
+    descripcion = models.TextField(max_length=2000, blank=True)
     creado = models.DateTimeField(auto_now_add=True)
     vence = models.DateTimeField()
     cerrado = models.DateTimeField(null=True, blank=True)
@@ -78,7 +91,9 @@ class Ticket(models.Model):
                 name='ticket_de_un_solo_objeto',
                 condition=(Q(apoderado__isnull=False, vinculo__isnull=True, profesor__isnull=True)
                            | Q(apoderado__isnull=True, vinculo__isnull=False, profesor__isnull=True)
-                           | Q(apoderado__isnull=True, vinculo__isnull=True, profesor__isnull=False)),
+                           | Q(apoderado__isnull=True, vinculo__isnull=True, profesor__isnull=False)
+                           | Q(apoderado__isnull=True, vinculo__isnull=True, profesor__isnull=True,
+                               autor__isnull=False)),
             ),
             # Un solo ticket abierto por cosa revisada.
             models.UniqueConstraint(fields=['apoderado'], condition=Q(estado='abierto'),
@@ -94,6 +109,8 @@ class Ticket(models.Model):
 
     @property
     def asunto(self):
+        if self.autor_id:
+            return self.titulo
         if self.apoderado_id:
             return f'Identidad de {self.apoderado.nombre}'
         if self.vinculo_id:

@@ -38,6 +38,8 @@ APODERADO = Rol('apoderado', 'perfil_apoderado', 'id_apoderado', 'apoderado_id',
                 'portal_apoderado', 'logout_apoderado', 'Apoderado', 'Mi cuenta')
 
 ROLES = (ALUMNO, PROFESOR, ADMIN, SOPORTE, APODERADO)
+# Abren sus propios tickets de soporte (D10). El publico usa el formulario de contacto.
+ROLES_CON_TICKETS = (ALUMNO, PROFESOR, APODERADO)
 
 
 def perfil_de(user, rol):
