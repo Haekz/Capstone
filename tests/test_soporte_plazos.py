@@ -8,6 +8,7 @@ from datetime import date, datetime, time, timedelta
 from io import StringIO
 from unittest import mock
 
+from django.contrib.auth import get_user_model
 from django.core import mail
 from django.core.management import call_command
 from django.db import connection, transaction
@@ -188,9 +189,11 @@ class AvisoDeAtrasosTests(TestCase):
         self.agente = crear_agente('10000001-9', Ticket.APODERADOS)
         self.al_dia = crear_agente('10000002-7', Ticket.TITULOS)
         self.lider = crear_agente('10000003-5', lider=True)
-        abrir_ticket(Ticket.APODERADOS, apoderado=crear_apoderado(RUT, Apoderado.REVISION_PENDIENTE))
+        con_agente = crear_apoderado(RUT, Apoderado.REVISION_PENDIENTE)
+        abrir_ticket(Ticket.APODERADOS, apoderado=con_agente)
         self.atrasado = Ticket.objects.get()
         sin_agente = crear_apoderado('13131313-1', Apoderado.REVISION_PENDIENTE)
+        self.esperan = {con_agente.user.email, sin_agente.user.email}
         # El lunes 21/09 (18 y 19 feriados) el primero lleva 1 dia habil de atraso y el otro 4.
         Ticket.objects.filter(pk=self.atrasado.pk).update(vence=fin_del_dia(date(2026, 9, 17)))
         self.agente.habilitaciones.all().delete()  # el siguiente queda sin asignar
@@ -209,11 +212,27 @@ class AvisoDeAtrasosTests(TestCase):
 
         self.assertIn('Tickets atrasados avisados: 2', salida)
         correos = {c.to[0]: c.body for c in mail.outbox}
-        self.assertEqual(set(correos), {self.agente.user.email, self.lider.user.email})  # el agente al dia, nada
+        # El agente al dia, nada; quienes esperan reciben su disculpa (D11).
+        self.assertEqual(set(correos), {self.agente.user.email, self.lider.user.email} | self.esperan)
         self.assertIn(f'#{self.atrasado.pk}', correos[self.agente.user.email])
         self.assertEqual(correos[self.agente.user.email].count('Ticket #'), 1)
         self.assertEqual(correos[self.lider.user.email].count('Ticket #'), 2)
         self.assertIn('Sin asignar', correos[self.lider.user.email])
+        self.assertIn('cada 3 días hábiles', correos[self.lider.user.email])
+
+    def test_se_disculpa_con_quien_espera_sin_datos_del_caso(self):
+        self.avisar(date(2026, 9, 21))
+        disculpas = {c.to[0]: c for c in mail.outbox if 'va con atraso' in c.subject}
+        self.assertEqual(set(disculpas), self.esperan)
+        cuerpo = disculpas[f'{RUT}@demo.cl'].body
+        self.assertIn(f'#{self.atrasado.pk}', cuerpo)
+        self.assertNotIn('Vence', cuerpo)
+        self.assertNotIn(self.agente.nombre, cuerpo)
+
+    def test_sin_correo_no_hay_disculpa_y_el_equipo_igual_recibe(self):
+        get_user_model().objects.filter(email__in=self.esperan).update(email='')
+        self.assertIn('Tickets atrasados avisados: 2', self.avisar(date(2026, 9, 21)))
+        self.assertEqual({c.to[0] for c in mail.outbox}, {self.agente.user.email, self.lider.user.email})
 
     def test_entre_un_aviso_y_otro_no_envia_nada(self):
         self.assertIn('Tickets atrasados avisados: 0', self.avisar(date(2026, 9, 22)))

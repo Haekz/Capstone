@@ -120,6 +120,17 @@ class Ticket(models.Model):
         return f'Título de {self.profesor.nombre}'
 
     @property
+    def solicitante(self):
+        """Quien espera la respuesta: el autor, o el apoderado o profesor que se verifica."""
+        if self.autor_id:
+            return self.autor
+        if self.apoderado_id:
+            return self.apoderado.user
+        if self.vinculo_id:
+            return self.vinculo.apoderado.user
+        return self.profesor.user
+
+    @property
     def atrasado(self):
         """Misma regla que la consulta de soporte.correo.avisar_atrasados."""
         return self.estado == self.ABIERTO and self.respondido is None and timezone.now() > self.vence

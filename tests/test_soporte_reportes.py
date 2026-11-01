@@ -218,3 +218,9 @@ class PlazoCumplidoTests(TestCase):
         agregar_mensaje(self.ticket, self.alumno.user, 'Sigo esperando.', de_soporte=False)
         self.assertIsNone(self.ticket.respondido)
         self.assertTrue(self.ticket.atrasado)
+
+    def test_mientras_espera_se_disculpa_con_quien_lo_abrio(self):
+        self.atrasados_avisados()
+        disculpa, = [c for c in mail.outbox if 'va con atraso' in c.subject]
+        self.assertEqual(disculpa.to, [self.alumno.user.email])
+        self.assertNotIn('Cobro doble', disculpa.body)  # sin datos del caso

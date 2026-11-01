@@ -1,5 +1,5 @@
 """Correos de soporte: ticket asignado, ticket sin asignar, documentos por vencer,
-resumen de atrasados y respuestas en tickets de usuarios.
+resumen de atrasados (al equipo y a quien espera) y respuestas en tickets de usuarios.
 
 Sin datos personales de apoderados ni profesores: solo numero, categoria y plazo.
 Tampoco el texto de las respuestas. El detalle se ve en LBWUS. Devuelven False si
@@ -12,6 +12,9 @@ from alumnos.correo import enviar
 
 from .models import AgenteSoporte, Ticket
 from .plazos import dias_habiles_entre
+
+# Para Ticket.solicitante sin una consulta por ticket.
+SOLICITANTE = ('autor', 'apoderado__user', 'vinculo__apoderado__user', 'profesor__user')
 
 
 def _lideres():
@@ -61,20 +64,34 @@ def _toca_avisar(ticket, hoy):
 
 
 def avisar_atrasados(hoy):
-    """Un resumen a cada agente con sus tickets atrasados que toca avisar hoy y otro
-    a cada lider con todos ellos. Devuelve cuantos tickets se avisaron."""
+    """Un resumen a cada agente con sus tickets atrasados que toca avisar hoy, otro a
+    cada lider con todos ellos y una disculpa a quien espera cada uno (D11).
+    Devuelve cuantos tickets se avisaron."""
     atrasados = [ticket for ticket in Ticket.objects.filter(estado=Ticket.ABIERTO, respondido__isnull=True,
                                                            vence__date__lt=hoy)
-                 .select_related('asignado__user').order_by('vence', 'id') if _toca_avisar(ticket, hoy)]
+                 .select_related('asignado__user', *SOLICITANTE).order_by('vence', 'id')
+                 if _toca_avisar(ticket, hoy)]
     por_agente = {}
     for ticket in atrasados:
         if ticket.asignado is not None:
             por_agente.setdefault(ticket.asignado, []).append(ticket)
+    contexto = {'cada': Ticket.AVISO_CADA}
     for agente, tickets in por_agente.items():
         enviar('Tickets atrasados', 'soporte/correo_atrasados.txt',
-               {'nombre': agente.nombre, 'tickets': tickets, 'lider': False}, agente.user.email)
+               {**contexto, 'nombre': agente.nombre, 'tickets': tickets, 'lider': False}, agente.user.email)
     if atrasados:
         for lider in _lideres():
             enviar('Tickets atrasados del equipo', 'soporte/correo_atrasados.txt',
-                   {'nombre': lider.nombre, 'tickets': atrasados, 'lider': True}, lider.user.email)
+                   {**contexto, 'nombre': lider.nombre, 'tickets': atrasados, 'lider': True}, lider.user.email)
+    for ticket in atrasados:
+        _disculpar_atraso(ticket)
     return len(atrasados)
+
+
+def _disculpar_atraso(ticket):
+    """A quien espera: sin datos del caso, solo numero y categoria. Sin correo, nada."""
+    persona = ticket.solicitante
+    if not persona.email:
+        return False
+    return enviar(f'Tu solicitud #{ticket.pk} va con atraso', 'soporte/correo_atraso_usuario.txt',
+                  {'nombre': persona.first_name, 'ticket': ticket}, persona.email)

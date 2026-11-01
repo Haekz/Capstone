@@ -1,4 +1,5 @@
-"""Avisa los tickets de soporte vencidos: un resumen a cada agente y otro a los lideres.
+"""Avisa los tickets de soporte vencidos: un resumen a cada agente, otro a los lideres
+y una disculpa a quien espera la respuesta (D11).
 
 Pensado para un cron diario en Railway: python manage.py avisar_tickets_atrasados
 Cada ticket se avisa el primer dia habil de atraso y despues cada 3 dias habiles
