@@ -22,6 +22,7 @@ Todas las lee `lbwus/settings.py`, salvo donde se indica.
 | `DEFAULT_FROM_EMAIL` | Remitente | No (usa `EMAIL_HOST_USER`) | — |
 | `MONGODB_URI` | MongoDB Atlas (app `comunidad`) | Sí, si se usa la comunidad | MongoDB queda desactivado y el sitio funciona igual |
 | `MONGODB_DB`, `MONGODB_TIMEOUT_MS` | Base de MongoDB y tiempo de espera | No (por omisión `lbwus_dev`, 5000) | **En producción debe ser `lbwus_prod`** |
+| `CSP_OBLIGATORIA` | `1` hace obligatoria la Content-Security-Policy (sección 7) | No | Queda en Report-Only: el navegador avisa, pero no bloquea |
 | `SITIO_CLAVE` | Puerta "Sitio en mantenimiento" (`lbwus/puerta.py`) | No | Sin puerta |
 | `SITIO_DOMINIOS_CORREO` | Puerta por dominio de correo (tiene prioridad sobre `SITIO_CLAVE`) | No | Sin puerta por correo |
 | `TRANSBANK_PRODUCCION_HABILITADA`, `TRANSBANK_ENVIRONMENT`, `TRANSBANK_COMMERCE_CODE`, `TRANSBANK_API_KEY` | Webpay real | No: sin ellas se usa el ambiente de integración | Sin cobros reales (es lo esperado hoy) |
@@ -103,3 +104,29 @@ Con `DEBUG=False`, `CompressedManifestStaticFilesStorage` da error 500 si una pl
 ## 6. `check --deploy`
 
 Con `DEBUG=False` y valores de prueba para `SECRET_KEY` y `DOCUMENTOS_CLAVE`: **"System check identified no issues"**. Sin `DOCUMENTOS_CLAVE`: error `apoderados.E001` (detiene el `Procfile`). Sin `SECRET_KEY`: `ImproperlyConfigured`, ningún comando arranca. HSTS, cookies seguras y la redirección a HTTPS ya están en `settings.py` cuando `DEBUG=False`.
+
+## 7. Cabeceras de seguridad: CSP y Permissions-Policy
+
+`lbwus/cabeceras.py` (`CabecerasSeguridadMiddleware`, justo después de `SecurityMiddleware`) agrega a toda respuesta:
+- **`Content-Security-Policy-Report-Only`**: la política se evalúa, pero **no bloquea nada**. Cada violación aparece en la consola del navegador. Los orígenes permitidos, por directiva, están en `CSP` dentro de ese archivo.
+- **`Permissions-Policy`**: cámara, micrófono, captura de pantalla y pantalla completa solo para el sitio y `https://meet.jit.si` (el iframe de la sala virtual). Geolocalización, pagos, USB y los demás, para nadie.
+
+Mientras la CSP sea Report-Only, los navegadores **ignoran `frame-ancestors`**; contra el clickjacking protege `X-Frame-Options: DENY` (`XFrameOptionsMiddleware`). No lo quites.
+
+**Si agregas un CDN, un iframe, un `fetch` a otro dominio o un formulario que envía a otro sitio**, agrega el origen en `CSP`. `tests/test_cabeceras.py::InventarioOrigenesTests` falla si una plantilla carga un `<script src>`, una hoja de estilo o un `<iframe>` de un dominio que no está permitido. Los `fetch`, las imágenes y los videos no los revisa: búscalos en la consola.
+
+### Pasar de Report-Only a obligatoria
+
+1. **Revisar las violaciones con Report-Only activo.** En producción (o en local con `DEBUG=False`), abrir con la consola del navegador abierta (F12 → Consola), y con al menos un usuario de cada rol: inicio, login (también con Google), registro, planes, compra hasta la página de Webpay de integración, retorno de Webpay, portal del alumno, sala virtual con el directo iniciado (cámara, micrófono, compartir pantalla, pantalla completa), panel del profesor (videos), portal admin, portal del apoderado, simulador y 404. Buscar mensajes `[Report Only] Refused to …`.
+2. **Corregir cada aviso**: agregar el origen a `CSP` si es legítimo o quitar el recurso si no lo es. Repetir hasta que la consola quede limpia.
+3. **Activar**: en Railway → servicio web → Variables, `CSP_OBLIGATORIA=1` y desplegar. Ahora la cabecera es `Content-Security-Policy` y el navegador bloquea lo no permitido, incluido `frame-ancestors`.
+4. **Verificar** las mismas páginas del paso 1, ahora sin mensajes `Refused to …`.
+5. **Revertir** si algo se rompe: borrar `CSP_OBLIGATORIA` (o ponerla en `0`) y desplegar. No hace falta tocar el código.
+
+### Siguiente paso: quitar `'unsafe-inline'`
+
+Hoy `script-src` y `style-src` permiten `'unsafe-inline'`, porque las plantillas tienen 38 bloques `<script>` en línea, 81 manejadores `on…=` y 391 atributos `style=` (detalle por archivo en el reporte de cabeceras). Con `'unsafe-inline'`, la CSP **no frena un XSS que inyecte un script**: lo que protege es `escaparHtml()` y el autoescape de Django. Para quitarlo:
+1. Pasar los `onclick=`/`onload=`… a `addEventListener` en archivos `.js` de `static/`.
+2. Mover los `<script>` en línea a archivos `.js`, o darles un *nonce* por respuesta (el middleware tendría que generarlo y las plantillas usarlo).
+3. Quitar `'unsafe-inline'` de `script-src` primero (es el que protege del XSS) y, más adelante, de `style-src`.
+
