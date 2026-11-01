@@ -50,6 +50,23 @@ def _sesion_invalida_json(_request):
     return JsonResponse({"success": False, "message": "Sesión inválida."})
 
 
+def sesion_iniciada_required(vista):
+    """Solo exige una cuenta activa con sesion iniciada (anonimo -> login).
+
+    Para vistas que comparten varios roles y deciden el permiso por la
+    identidad del usuario, no por la clave de sesion (la sala virtual: entran
+    el profesor de la clase y sus alumnos; los demas reciben 403).
+    """
+    @wraps(vista)
+    def envoltura(request, *args, **kwargs):
+        user = getattr(request, 'user', None)
+        if user is None or not user.is_authenticated or not user.is_active:
+            return _al_login(request)
+        return vista(request, *args, **kwargs)
+
+    return envoltura
+
+
 admin_required = _rol_requerido(ADMIN, _al_login)
 apoderado_required = _rol_requerido(APODERADO, _al_login)
 

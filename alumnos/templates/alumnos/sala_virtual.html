@@ -243,7 +243,7 @@
                 <!-- Si ya esta en vivo, el Jitsi se inyectara aqui en el window.onload -->
             {% else %}
                 <!-- Pantalla de espera / Offline -->
-                {% if request.session.profesor_id == clase.profesor.id_profesor %}
+                {% if puede_iniciar %}
                     <i class="bi bi-camera-video-off" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 15px;"></i>
                     <h3 style="color: white; margin: 0;">Transmisin Inactiva</h3>
                     <p style="color: var(--text-muted);">Completa la informacin abajo y presiona "Iniciar Directo"</p>
@@ -280,7 +280,7 @@
                     <p style="margin:0; color: var(--text-muted); font-size: 0.85rem;">Profesor Experto &bull; {{ clase.profesor.especialidad.nombre }}</p>
                 </div>
                 
-                {% if request.session.profesor_id == clase.profesor.id_profesor and not clase.en_vivo %}
+                {% if puede_iniciar and not clase.en_vivo %}
                     <button class="btn-iniciar-directo" id="btn-iniciar-directo" onclick="iniciarDirecto()">
                         <i class="bi bi-play-fill"></i> Iniciar Directo
                     </button>
@@ -290,7 +290,7 @@
             <div style="margin-top: 20px; font-size: 0.95rem; line-height: 1.6; color: var(--text-muted);">
                 <h4 style="color: var(--text-main); margin-bottom: 8px;">Sobre esta transmisin</h4>
                 
-                {% if request.session.profesor_id == clase.profesor.id_profesor and not clase.en_vivo %}
+                {% if puede_iniciar and not clase.en_vivo %}
                     <!-- Modo edicin para el profesor antes de empezar -->
                     <form id="form-pre-stream" class="pre-stream-form">
                         {% csrf_token %}
@@ -328,7 +328,7 @@
 <script src="https://meet.jit.si/external_api.js"></script>
 <script>
     const isEnVivo = {{ clase.en_vivo|yesno:"true,false" }};
-    const isProfesor = {% if request.session.profesor_id == clase.profesor.id_profesor %}true{% else %}false{% endif %};
+    const isProfesor = {{ puede_iniciar|yesno:"true,false" }};
     const claseId = {{ clase.id_clase }};
 
     window.onload = function() {
@@ -368,7 +368,7 @@
 
         const domain = 'meet.jit.si';
         const options = {
-            roomName: 'lbwus-clase-privada-{{ clase.id_clase }}',
+            roomName: '{{ sala_jitsi }}',
             width: '100%',
             height: '100%',
             parentNode: container,

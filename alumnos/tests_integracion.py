@@ -21,7 +21,8 @@ class IntegracionFlujosTestCase(TestCase):
         )
         self.profesor = Profesor.objects.create(
             user=self.user_profesor,
-            especialidad=self.especialidad
+            especialidad=self.especialidad,
+            titulo_estado=Profesor.TITULO_APROBADO,  # SCRUM-87: sin titulo no inicia el directo
         )
 
         # Clase

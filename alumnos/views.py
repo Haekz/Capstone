@@ -4,15 +4,16 @@ import secrets
 
 from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse, Http404
+from django.http import HttpResponseForbidden, JsonResponse, Http404
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.urls import reverse
+from django.utils.crypto import salted_hmac
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.decorators.debug import sensitive_post_parameters
 from django.core.cache import cache
-from django.db.models import F, Q
+from django.db.models import F
 
 from .models import (
     Alumno,
@@ -28,7 +29,7 @@ from .models import (
 )
 from django.core.exceptions import ValidationError
 from .forms import AlumnoForm, FiltroClasesForm
-from .decorators import alumno_required, profesor_required_json
+from .decorators import alumno_required, profesor_required_json, sesion_iniciada_required
 from .exceptions import InscripcionError
 from .services import InscripcionService, PlanesService
 from .utils import formato_clp, es_menor
@@ -38,6 +39,7 @@ from django.db import transaction
 from apoderados.permisos import clase_pagada_por_apoderado, vinculo_contratable
 from .roles import (
     ALUMNO,
+    PROFESOR,
     abrir_sesion_rol,
     redirigir_a_portal,
     resolver_rol,
@@ -964,41 +966,49 @@ def confirmacion(request):
 
 
 
-@never_cache
-def sala_virtual(request, clase_id):
-    if not request.user.is_authenticated:
-        return redirect('custom_login_alumno')
+def es_profesor_habilitado_de(clase, user):
+    """El titular de la clase, con su titulo aprobado (SCRUM-87)."""
+    return clase.profesor.user_id == user.id and clase.profesor.puede_hacer_clases
 
+
+def nombre_sala_jitsi(clase):
+    """Nombre de la sala en meet.jit.si, imposible de adivinar sin SECRET_KEY.
+
+    meet.jit.si es publico: con un nombre predecible ('lbwus-clase-privada-5')
+    cualquiera entraba directo, sin pasar por ``sala_virtual``.
+    """
+    return 'lbwus-' + salted_hmac('lbwus.sala_virtual', str(clase.id_clase)).hexdigest()[:32]
+
+
+@never_cache
+@sesion_iniciada_required
+def sala_virtual(request, clase_id):
     clase = get_object_or_404(
         Clase.objects.select_related('asignatura', 'profesor', 'profesor__user', 'profesor__especialidad'),
         id_clase=clase_id
     )
 
-    # Validar autorización:
-    # 1. Profesor de la clase
-    es_profesor = (
-        hasattr(clase, 'profesor')
-        and (clase.profesor.user_id == request.user.id
-             or request.session.get('profesor_id') == getattr(clase.profesor, 'id_profesor', None))
-    )
-# 2. Alumno con una inscripcion que permita entrar (Inscripcion.puede_unirse).
+    # Se decide por la cuenta (request.user), no por las claves de sesion:
+    # 1. Profesor titular de la clase, con titulo aprobado.
+    es_profesor = es_profesor_habilitado_de(clase, request.user)
+    # 2. Alumno con una inscripcion que permita entrar (Inscripcion.puede_unirse).
     #    Menores: solo clases pagadas por su apoderado con vinculo vigente.
-    propias = Q(alumno__user=request.user)
-    if request.session.get('alumno_id'):
-        propias |= Q(alumno_id=request.session['alumno_id'])
     menor = es_menor(request.user)
-    es_alumno = any(
+    es_alumno = not es_profesor and any(
         insc.puede_unirse and (not menor or clase_pagada_por_apoderado(insc))
-        for insc in Inscripcion.objects.filter(propias, clase=clase).select_related('sesion', 'alumno')
+        for insc in Inscripcion.objects.filter(alumno__user=request.user, clase=clase).select_related('sesion', 'alumno')
     )
     # Nadie mas entra: ni administradores, ni staff, ni el campo ``rol``.
     if not (es_profesor or es_alumno):
-        from django.http import HttpResponseForbidden
         return HttpResponseForbidden("Acceso denegado: debes estar inscrito activamente en la clase o ser el profesor asignado.")
 
     context = {
         'clase': clase,
         'es_profesor': es_profesor,
+        # Iniciar el directo es un POST con @profesor_required_json: el boton
+        # solo aparece con el rol profesor activo (los demas esperan el directo).
+        'puede_iniciar': es_profesor and rol_en_sesion(request) is PROFESOR,
+        'sala_jitsi': nombre_sala_jitsi(clase),
     }
     return render(request, 'alumnos/sala_virtual.html', context)
 
@@ -1008,9 +1018,8 @@ def sala_virtual(request, clase_id):
 def iniciar_directo(request, clase_id):
     clase = get_object_or_404(Clase.objects.select_related('profesor'), id_clase=clase_id)
 
-    # Solo el profesor titular de la clase puede iniciar
-    profesor_id = request.session.get('profesor_id')
-    if not profesor_id or str(clase.profesor.id_profesor) != str(profesor_id):
+    # Solo el profesor titular de la clase, con titulo aprobado, puede iniciar
+    if not es_profesor_habilitado_de(clase, request.user):
         return JsonResponse({'success': False, 'message': 'No tienes permiso.'}, status=403)
 
     descripcion = request.POST.get('descripcion_vivo', '').strip()[:2000]
