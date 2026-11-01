@@ -550,3 +550,90 @@ class PortalYSaldoTests(Escenario):
         self.profe.save()
         paquete.refresh_from_db()
         self.assertEqual((paquete.monto, paquete.tarifa), (59000, 15000))
+
+
+class CriteriosSaldosScrum85Tests(Escenario):
+    """SCRUM-85 (S4-05): brechas de la matriz de saldos que no cubrian las clases de arriba.
+
+    Saldo = clases del paquete - inscripciones.consumidas(): no se resta ni se suma,
+    se cuenta. Por eso cancelar devuelve la clase y reprogramar no gasta otra.
+    """
+
+    def reservar(self, alumno, sesion):
+        return InscripcionService.inscribir_alumno_en_sesion(alumno, sesion.pk)
+
+    @patch('alumnos.views._tx')
+    def test_compra_aprobada_de_cada_plan_deja_su_saldo(self, mock_tx):
+        self.entrar(RUT_ANA)
+        mock_tx.return_value.create.return_value = {'url': 'https://webpay.test/', 'token': 'tok'}
+        for plan, monto, clases in (('flexible', 15000, 1), ('progreso', 59000, 4), ('intensivo', 116000, 8)):
+            with self.subTest(plan=plan):
+                self.client.post(reverse('comprar_paquete'), {'plan': plan, 'profesor': self.profe.id_profesor})
+                paquete = PaqueteClases.objects.get(plan=plan)
+                mock_tx.return_value.commit.return_value = {
+                    'response_code': 0, 'status': 'AUTHORIZED', 'amount': monto, 'buy_order': paquete.buy_order}
+                self.client.post(reverse('confirmacion'), {'token_ws': 'tok'})
+                paquete.refresh_from_db()
+                self.assertEqual((paquete.estado, paquete.clases_disponibles), (PaqueteClases.ESTADO_ACTIVA, clases))
+
+    @patch('alumnos.views._tx')
+    def test_orden_desconocida_no_activa_ningun_paquete(self, mock_tx):
+        """Reemplaza a test_03 de test_seguridad_webpay_honorarios (buy_order cruzada, flujo antiguo)."""
+        dar_paquete(self.ana, self.profe, estado=PaqueteClases.ESTADO_PENDIENTE)
+        mock_tx.return_value.commit.return_value = {
+            'response_code': 0, 'status': 'AUTHORIZED', 'amount': 59000, 'buy_order': 'PQ-ORDEN-AJENA'}
+        self.client.post(reverse('confirmacion'), {'token_ws': 'tok'})
+        self.assertEqual(PaqueteClases.objects.get().estado, PaqueteClases.ESTADO_PENDIENTE)
+        self.assertEqual(self.ana.paquetes.vigentes().count(), 0)
+
+    @patch('alumnos.views._tx')
+    def test_compra_anulada_deja_el_paquete_pendiente_y_sin_uso(self, mock_tx):
+        """TBK_TOKEN (el alumno anula en Webpay): no se activa ni se llama a commit()."""
+        self.entrar(RUT_ANA)
+        mock_tx.return_value.create.return_value = {'url': 'https://webpay.test/', 'token': 'tok'}
+        self.client.post(reverse('comprar_paquete'), {'plan': 'progreso', 'profesor': self.profe.id_profesor})
+        r = self.client.post(reverse('confirmacion'), {'TBK_TOKEN': 'tok'})
+        self.assertTrue(r.context['anulado'])
+        mock_tx.return_value.commit.assert_not_called()
+        self.assertEqual(PaqueteClases.objects.get().estado, PaqueteClases.ESTADO_PENDIENTE)
+        with self.assertRaises(SinClasesDisponiblesError):
+            self.reservar(self.ana, crear_sesion(self.clase, dias=1))
+
+    def test_paquete_rechazado_no_se_usa(self):
+        dar_paquete(self.ana, self.profe, estado=PaqueteClases.ESTADO_RECHAZADA)
+        with self.assertRaises(SinClasesDisponiblesError):
+            self.reservar(self.ana, crear_sesion(self.clase, dias=1))
+
+    def test_reservar_descuenta_exactamente_una_clase(self):
+        paquete = dar_paquete(self.ana, self.profe)
+        self.reservar(self.ana, crear_sesion(self.clase, dias=1))
+        self.assertEqual((paquete.clases_usadas, paquete.clases_disponibles), (1, 3))
+
+    def test_misma_sesion_dos_veces_se_rechaza_y_descuenta_una(self):
+        paquete = dar_paquete(self.ana, self.profe)
+        sesion = crear_sesion(self.clase, dias=1)
+        self.reservar(self.ana, sesion)
+        with self.assertRaises(InscripcionDuplicadaError):
+            self.reservar(self.ana, sesion)
+        self.assertEqual(paquete.clases_disponibles, 3)
+
+    def test_cancelar_devuelve_la_clase_y_libera_el_cupo(self):
+        paquete = dar_paquete(self.ana, self.profe, 'flexible')
+        dar_paquete(self.beto, self.profe, 'flexible')
+        sesion = crear_sesion(self.clase, dias=1, cupo=1)
+        insc = self.reservar(self.ana, sesion)
+        with self.assertRaises(CupoAgotadoError):
+            self.reservar(self.beto, sesion)
+        InscripcionService.cancelar_inscripcion(self.ana, insc.pk)
+        self.assertEqual(paquete.clases_disponibles, 1)
+        self.assertEqual(self.reservar(self.beto, sesion).estado, Inscripcion.ESTADO_CONFIRMADA)
+
+    def test_reprogramar_y_cancelar_deja_el_saldo_completo(self):
+        paquete = dar_paquete(self.ana, self.profe)
+        s1, s2, s3 = (crear_sesion(self.clase, dias=d) for d in (1, 2, 3))
+        insc = self.reservar(self.ana, s1)
+        InscripcionService.reprogramar_inscripcion(self.ana, insc.pk, s2.pk)
+        InscripcionService.reprogramar_inscripcion(self.ana, insc.pk, s3.pk)
+        self.assertEqual((paquete.clases_usadas, paquete.clases_disponibles), (1, 3))
+        InscripcionService.cancelar_inscripcion(self.ana, insc.pk)
+        self.assertEqual(paquete.clases_disponibles, 4)

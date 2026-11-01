@@ -1,18 +1,27 @@
-"""Pruebas de Seguridad de Pago Webpay Plus, Modo Simulación y Remuneración Docente.
+"""Pagos Webpay Plus: estrategia de credenciales, honorarios y modo simulacion.
 
-Cubre los criterios de aceptación:
-1. El monto se recalcula y valida en el servidor, no se confía en el navegador.
-2. Las confirmaciones de Webpay comprueban orden, monto y token y evitan aplicación doble (Idempotencia).
-3. La remuneración docente se basa únicamente en transacciones confirmadas.
-4. Pruebas de manipulación de montos (tampering), callbacks repetidos (replay attacks) y pagos rechazados/anulados.
-5. Modo de simulación de pago para usuarios de prueba / testers sin transacciones reales.
+SCRUM-85 (31-10-2026): las pruebas 01 a 07 eran del carrito antiguo (`iniciar_webpay`,
+"Plan Basico $89.990" y registro `Pago`), que ya no existe: la unica compra es
+`comprar_paquete` -> `PaqueteClases`. Se quitaron porque el flujo nuevo ya las cubre:
+
+| Antes | Criterio | Equivalente en el flujo de paquetes |
+|---|---|---|
+| 01, 02 | monto calculado en el servidor | test_paquetes.CompraTests: test_cobra_el_precio_del_servidor_para_cada_paquete, test_el_precio_enviado_por_el_cliente_se_ignora |
+| 03 | buy_order cruzada | test_paquetes.CriteriosSaldosScrum85Tests.test_orden_desconocida_no_activa_ningun_paquete |
+| 04 | monto autorizado distinto | test_paquetes.CompraTests.test_monto_autorizado_distinto_al_del_paquete_se_rechaza |
+| 05 | replay / idempotencia | Parcial: test_paquetes.CompraTests.test_pago_rechazado_no_da_clases_y_repetir_el_token_no_duplica y test_flujos_funcionales test_08 (no activa dos veces). `confirmacion` vuelve a llamar a commit() en cada retorno; la 05 exigia que no |
+| 06 | rechazo de la pasarela | test_paquetes.CompraTests.test_pago_rechazado_no_da_clases_y_repetir_el_token_no_duplica |
+| 07 | anulacion con TBK_TOKEN | Parcial: test_flujos_funcionales test_07 y test_paquetes.CriteriosSaldosScrum85Tests.test_compra_anulada_deja_el_paquete_pendiente_y_sin_uso. No hay estado 'anulada': el paquete queda pendiente (no se puede usar) |
+
+Siguen abiertas, sin tocar, porque no son solo pruebas desactualizadas (ver .ia/reportes/sprint4_tareas.md):
+- 08: honorarios por `Inscripcion.pago`, campo que esta en la migracion 0007 pero no en el modelo.
+- 09: modo simulacion para testers; `WEBPAY_SIMULACION_ACTIVADA` existe en settings pero el flujo de paquetes no lo usa.
 """
 
 import json
-from unittest.mock import MagicMock, patch
 
 from django.contrib.auth import get_user_model
-from django.test import Client, TestCase
+from django.test import Client, SimpleTestCase, TestCase
 from django.urls import reverse
 
 from alumnos.models import Alumno, Asignatura, Clase, Genero, Especialidad, Inscripcion, Pago, SolicitudRetiro
@@ -22,10 +31,11 @@ from alumnos.models import Profesor
 User = get_user_model()
 
 
-class SeguridadWebpayYHonorariosTests(TestCase):
+class HonorariosYSimulacionTests(TestCase):
+    """Pendientes de decision: ver el docstring del modulo."""
+
     def setUp(self):
         self.client = Client()
-        self.url_iniciar = reverse('iniciar_webpay')
         self.url_confirmacion = reverse('confirmacion')
         self.url_planes = reverse('planes')
 
@@ -71,201 +81,6 @@ class SeguridadWebpayYHonorariosTests(TestCase):
             }
         ]
         self.carrito_json = json.dumps(self.carrito_oficial)
-
-    # -------------------------------------------------------------------------
-    # 1. VALIDACIÓN Y RECÁLCULO SERVER-SIDE (ZERO TRUST AL NAVEGADOR)
-    # -------------------------------------------------------------------------
-    @patch('alumnos.views._tx')
-    def test_01_monto_se_recalcula_en_servidor_e_ignora_amount_post(self, mock_tx):
-        """Si el cliente envía amount='1' o '350', el backend lo ignora y procesa el precio oficial ($89.990)."""
-        instancia = MagicMock()
-        instancia.create.return_value = {
-            'url': 'https://webpay3gint.transbank.cl/test',
-            'token': 'tok_seguro_001'
-        }
-        mock_tx.return_value = instancia
-
-        resp = self.client.post(self.url_iniciar, {
-            'carrito': self.carrito_json,
-            'amount': '1'  # Intento de pagar $1
-        })
-        self.assertEqual(resp.status_code, 200)
-
-        # Transbank debe recibir el monto oficial recalculado server-side ($89.990)
-        args, _ = instancia.create.call_args
-        monto_enviado_a_transbank = args[2]
-        self.assertEqual(monto_enviado_a_transbank, 89990)
-
-        # En BD el registro de Pago se crea con $89.990
-        pago = Pago.objects.get(buy_order=args[0])
-        self.assertEqual(pago.monto, 89990)
-        self.assertEqual(pago.estado, Pago.ESTADO_INICIADA)
-
-    def test_02_rechazo_carrito_monto_menor_al_minimo(self):
-        """Carritos cuyo monto recalculado sea menor al mínimo de Transbank ($350) son rechazados."""
-        carrito_irrisorio = json.dumps([{
-            'id': 'custom_gratis',
-            'titulo': 'Plan Gratuito',
-            'precio': '100',
-            'periodo': 'mensual',
-            'cantidad': 1
-        }])
-        resp = self.client.post(self.url_iniciar, {
-            'carrito': carrito_irrisorio,
-            'amount': '100'
-        })
-        self.assertEqual(resp.status_code, 302)
-        self.assertRedirects(resp, self.url_planes)
-
-    # -------------------------------------------------------------------------
-    # 2. VALIDACIÓN CRUZADA EN CALLBACK (ORDEN, MONTO, TOKEN)
-    # -------------------------------------------------------------------------
-    @patch('alumnos.views._tx')
-    def test_03_confirmacion_valida_buy_order_cruzada(self, mock_tx):
-        """Si Transbank retorna un buy_order que no coincide con la orden registrada, se rechaza."""
-        pago = Pago.objects.create(
-            buy_order='LB1112223',
-            session_id='S1112223',
-            token_ws='tok_orden_cruzada',
-            monto=89990,
-            estado=Pago.ESTADO_INICIADA,
-            detalle_carrito=self.carrito_oficial
-        )
-
-        session = self.client.session
-        session['orden_pendiente'] = {
-            'buy_order': pago.buy_order,
-            'carrito': self.carrito_json,
-            'pago_id': pago.id_pago,
-            'amount': 89990
-        }
-        session.save()
-
-        instancia = MagicMock()
-        instancia.commit.return_value = {
-            'response_code': 0,
-            'status': 'AUTHORIZED',
-            'buy_order': 'LB_ORDEN_FALSA_999',  # Orden discrepante
-            'amount': 89990,
-            'authorization_code': '123456',
-            'card_detail': {'card_number': '6623'}
-        }
-        mock_tx.return_value = instancia
-
-        resp = self.client.post(self.url_confirmacion, {'token_ws': 'tok_orden_cruzada'})
-        self.assertEqual(resp.status_code, 200)
-        self.assertFalse(resp.context['aprobado'])
-
-        pago.refresh_from_db()
-        self.assertEqual(pago.estado, Pago.ESTADO_RECHAZADA)
-
-    @patch('alumnos.views._tx')
-    def test_04_confirmacion_valida_monto_cruzado(self, mock_tx):
-        """Si Transbank retorna un monto diferente al que solicitó el servidor, se rechaza."""
-        pago = Pago.objects.create(
-            buy_order='LB3334445',
-            session_id='S3334445',
-            token_ws='tok_monto_discrepante',
-            monto=89990,
-            estado=Pago.ESTADO_INICIADA,
-            detalle_carrito=self.carrito_oficial
-        )
-
-        instancia = MagicMock()
-        instancia.commit.return_value = {
-            'response_code': 0,
-            'status': 'AUTHORIZED',
-            'buy_order': pago.buy_order,
-            'amount': 1000,  # Monto cobrado discrepante
-            'authorization_code': '123456',
-            'card_detail': {'card_number': '6623'}
-        }
-        mock_tx.return_value = instancia
-
-        resp = self.client.post(self.url_confirmacion, {'token_ws': 'tok_monto_discrepante'})
-        self.assertEqual(resp.status_code, 200)
-        self.assertFalse(resp.context['aprobado'])
-
-        pago.refresh_from_db()
-        self.assertEqual(pago.estado, Pago.ESTADO_RECHAZADA)
-
-    # -------------------------------------------------------------------------
-    # 3. IDEMPOTENCIA Y PREVENCIÓN DE REPLAY ATTACKS / DOBLE APLICACIÓN
-    # -------------------------------------------------------------------------
-    @patch('alumnos.views._tx')
-    def test_05_confirmacion_idempotente_evita_doble_aplicacion_y_replay(self, mock_tx):
-        """Si un callback ya fue procesado y aprobado, reintentos con el mismo token devuelven el voucher sin re-ejecutar commit."""
-        pago = Pago.objects.create(
-            buy_order='LB5556667',
-            session_id='S5556667',
-            token_ws='tok_idempotencia_777',
-            monto=89990,
-            estado=Pago.ESTADO_PAGADA,  # Ya pagado
-            authorization_code='AUTH_OK_123',
-            ultimos_digitos_tarjeta='6623',
-            detalle_carrito=self.carrito_oficial
-        )
-
-        instancia = MagicMock()
-        mock_tx.return_value = instancia
-
-        # Re-envío del mismo token (ej. refrescar página o callback duplicado)
-        resp = self.client.post(self.url_confirmacion, {'token_ws': 'tok_idempotencia_777'})
-        self.assertEqual(resp.status_code, 200)
-        self.assertTrue(resp.context['aprobado'])
-        self.assertEqual(resp.context['orden'], 'LB5556667')
-        self.assertEqual(resp.context['codigo_autorizacion'], 'AUTH_OK_123')
-
-        # NO debe haberse llamado a commit() nuevamente en Transbank
-        instancia.commit.assert_not_called()
-
-    # -------------------------------------------------------------------------
-    # 4. PAGOS RECHAZADOS Y ANULADOS
-    # -------------------------------------------------------------------------
-    @patch('alumnos.views._tx')
-    def test_06_confirmacion_pago_rechazado_por_pasarela(self, mock_tx):
-        """Transacción rechazada por el banco queda registrada como 'rechazada' en la base de datos."""
-        pago = Pago.objects.create(
-            buy_order='LB8889990',
-            session_id='S8889990',
-            token_ws='tok_rechazo_banco',
-            monto=89990,
-            estado=Pago.ESTADO_INICIADA
-        )
-
-        instancia = MagicMock()
-        instancia.commit.return_value = {
-            'response_code': -1,
-            'status': 'FAILED',
-            'buy_order': pago.buy_order,
-            'amount': 89990
-        }
-        mock_tx.return_value = instancia
-
-        resp = self.client.post(self.url_confirmacion, {'token_ws': 'tok_rechazo_banco'})
-        self.assertEqual(resp.status_code, 200)
-        self.assertFalse(resp.context['aprobado'])
-
-        pago.refresh_from_db()
-        self.assertEqual(pago.estado, Pago.ESTADO_RECHAZADA)
-
-    def test_07_confirmacion_pago_anulado_con_tbk_token(self):
-        """Si el usuario cancela en la pasarela, se recibe TBK_TOKEN y la orden queda como 'anulada'."""
-        pago = Pago.objects.create(
-            buy_order='LB9990001',
-            session_id='S9990001',
-            token_ws='tok_anulacion_tbk',
-            monto=89990,
-            estado=Pago.ESTADO_INICIADA
-        )
-
-        resp = self.client.post(self.url_confirmacion, {'TBK_TOKEN': 'tok_anulacion_tbk'})
-        self.assertEqual(resp.status_code, 200)
-        self.assertFalse(resp.context['aprobado'])
-        self.assertTrue(resp.context['anulado'])
-
-        pago.refresh_from_db()
-        self.assertEqual(pago.estado, Pago.ESTADO_ANULADA)
 
     # -------------------------------------------------------------------------
     # 5. HONORARIOS DOCENTE BASADOS ÚNICAMENTE EN TRANSACCIONES CONFIRMADAS
@@ -323,7 +138,7 @@ class SeguridadWebpayYHonorariosTests(TestCase):
         """Un tester puede simular una transacción aprobada sin contactar a Transbank ni usar dinero real."""
         self.client.force_login(self.u_alumno)
 
-        resp = self.client.post(self.url_iniciar, {
+        resp = self.client.post(reverse('iniciar_webpay'), {
             'carrito': self.carrito_json,
             'simular': '1'  # Flag de simulación
         })
@@ -345,9 +160,10 @@ class SeguridadWebpayYHonorariosTests(TestCase):
         self.assertEqual(pago.alumno, self.alumno)
         self.assertTrue(pago.buy_order.startswith('LB-SIM-'))
 
-    # -------------------------------------------------------------------------
-    # 7. ESTRATEGIA DE CREDENCIALES Y SALVAGUARDA DE COBROS REALES (S-08 / 7.6)
-    # -------------------------------------------------------------------------
+
+class EstrategiaCredencialesTransbankTests(SimpleTestCase):
+    """Salvaguarda de cobros reales (S-08 / 7.6): vale igual para el flujo de paquetes."""
+
     def test_10_estrategia_credenciales_salvaguarda_modo_test_por_defecto(self):
         """Por defecto _tx() opera forzosamente en IntegrationType.TEST (Sandbox oficial Transbank), sin cobros reales."""
         from alumnos.views import _tx
