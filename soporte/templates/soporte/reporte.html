@@ -17,6 +17,7 @@
     </div>
     <dl style="padding:18px; display:grid; grid-template-columns:max-content 1fr; gap:8px 18px; margin:0;">
         <dt>Abierto por</dt><dd>{{ ticket.autor.first_name }} · {{ ticket.autor.email|default:"sin correo" }}</dd>
+        {% if ticket.estudiante %}<dt>Estudiante</dt><dd>{{ ticket.estudiante.user.first_name }} (su apoderado abrió el ticket)</dd>{% endif %}
         <dt>Abierto el</dt><dd>{{ ticket.creado|date:"d-m-Y H:i" }}</dd>
         <dt>Vence</dt><dd>{{ ticket.vence|date:"d-m-Y H:i" }}{% if ticket.atrasado %} <span class="badge">Atrasado</span>{% endif %}</dd>
         <dt>Asignado a</dt><dd>{{ ticket.asignado.nombre|default:"Sin asignar" }}</dd>

@@ -36,10 +36,11 @@ def abrir_ticket(categoria, **revisado):
         _crear(categoria, **revisado)
 
 
-def abrir_reporte(autor, categoria, titulo, descripcion):
-    """Ticket que abre un usuario (D10). Puede tener varios abiertos a la vez."""
+def abrir_reporte(autor, categoria, titulo, descripcion, estudiante=None):
+    """Ticket que abre un usuario (D10). Puede tener varios abiertos a la vez.
+    ``estudiante``: si lo abre un apoderado por uno de sus estudiantes."""
     with transaction.atomic():
-        return _crear(categoria, autor=autor, titulo=titulo, descripcion=descripcion)
+        return _crear(categoria, autor=autor, titulo=titulo, descripcion=descripcion, estudiante=estudiante)
 
 
 def _crear(categoria, **campos):

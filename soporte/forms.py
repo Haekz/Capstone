@@ -6,16 +6,23 @@ from .models import AgenteSoporte, Ticket
 
 
 class ReporteForm(AccesibleMixin, forms.Form):
-    """Ticket que abre un usuario. ``categorias``: las que puede abrir (permisos.categorias_que_reporta)."""
+    """Ticket que abre un usuario. ``categorias``: las que puede abrir (permisos.categorias_que_reporta).
+    ``estudiantes``: los del apoderado, para indicar de quien se trata (D18)."""
     categoria = forms.ChoiceField(label='¿Sobre qué es?')
     titulo = forms.CharField(label='Asunto', max_length=120)
     descripcion = forms.CharField(label='Cuéntanos qué pasó', max_length=2000, widget=forms.Textarea,
                                   help_text='No escribas contraseñas ni datos de tarjetas.')
 
-    def __init__(self, *args, categorias, **kwargs):
+    def __init__(self, *args, categorias, estudiantes=None, **kwargs):
         super().__init__(*args, **kwargs)
         nombres = dict(Ticket.CATEGORIAS)
         self.fields['categoria'].choices = [(c, nombres[c]) for c in categorias]
+        if estudiantes:
+            self.fields['estudiante'] = forms.ModelChoiceField(
+                queryset=estudiantes, required=False, label='¿De qué estudiante se trata?',
+                empty_label='De ninguno en particular',
+                error_messages={'invalid_choice': 'Elige uno de tus estudiantes.'})
+            self.fields['estudiante'].label_from_instance = lambda alumno: alumno.user.first_name
 
 
 class MensajeForm(AccesibleMixin, forms.Form):

@@ -16,7 +16,8 @@ from alumnos.decorators import soporte_required
 
 from .forms import MensajeForm, ReporteForm, RespuestaForm
 from .models import Ticket
-from .permisos import agente_en_sesion, categorias_que_reporta, reporta_required, tickets_del_agente
+from .permisos import (agente_en_sesion, categorias_que_reporta, estudiantes_que_reporta, reporta_required,
+                       tickets_del_agente)
 from .tickets import abrir_reporte, agregar_mensaje
 
 
@@ -48,7 +49,8 @@ def mis_tickets(request):
 @never_cache
 @reporta_required
 def nuevo_ticket(request):
-    form = ReporteForm(request.POST or None, categorias=categorias_que_reporta(request))
+    form = ReporteForm(request.POST or None, categorias=categorias_que_reporta(request),
+                       estudiantes=estudiantes_que_reporta(request))
     if request.method == 'POST' and form.is_valid():
         ticket = abrir_reporte(request.user, **form.cleaned_data)
         plazo = timezone.localtime(ticket.vence)

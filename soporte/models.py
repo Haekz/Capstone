@@ -85,6 +85,9 @@ class Ticket(models.Model):
     vence = models.DateTimeField()
     # Primera respuesta de soporte en un ticket de usuario: cumple el plazo (31-oct).
     respondido = models.DateTimeField(null=True, blank=True)
+    # El apoderado reporta por su estudiante (D18): de quien se trata, si lo indico.
+    estudiante = models.ForeignKey('alumnos.Alumno', on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name='+')
     cerrado = models.DateTimeField(null=True, blank=True)
 
     class Meta:

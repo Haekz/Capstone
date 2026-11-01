@@ -6,7 +6,9 @@ from django.db.models import F
 from django.shortcuts import get_object_or_404, redirect
 
 from alumnos.decorators import soporte_required
-from alumnos.roles import SOPORTE, abre_tickets, redirigir_a_portal, rol_en_sesion
+from alumnos.models import Alumno
+from alumnos.roles import APODERADO, SOPORTE, abre_tickets, redirigir_a_portal, rol_en_sesion
+from apoderados.models import Vinculo
 from apoderados.permisos import debe_renovar_clave
 
 from .models import AgenteSoporte, Ticket
@@ -50,6 +52,16 @@ def categorias_que_reporta(request):
     if not request.user.is_authenticated or not abre_tickets(rol_en_sesion(request), request.user):
         return ()
     return Ticket.DE_USUARIOS
+
+
+def estudiantes_que_reporta(request):
+    """Del apoderado en sesion, sus estudiantes con vinculo verificado: reporta por
+    ellos (D18). Para otro rol, ninguno."""
+    if rol_en_sesion(request) != APODERADO:
+        return Alumno.objects.none()
+    return (Alumno.objects.filter(vinculos_apoderado__apoderado__user=request.user,
+                                  vinculos_apoderado__estado=Vinculo.VERIFICADO)
+            .select_related('user').distinct())
 
 
 def reporta_required(vista):

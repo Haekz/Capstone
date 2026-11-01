@@ -274,3 +274,38 @@ class ConductaTests(TestCase):
         clases = Ticket(categoria=Ticket.CLASES, vence=vence)
         self.assertTrue(_toca_avisar(conducta, date(2026, 9, 9)))
         self.assertFalse(_toca_avisar(clases, date(2026, 9, 9)))
+
+
+class EstudianteDelApoderadoTests(TestCase):
+    """D18: el apoderado reporta por su estudiante y puede indicar de quien se trata."""
+
+    def setUp(self):
+        self.agente = crear_agente('10000001-9', *Ticket.DE_USUARIOS)
+        self.apoderado = crear_apoderado(RUT, Apoderado.VERIFICADO)
+        self.propio = crear_menor_vinculado(self.apoderado, rut='16161616-1').alumno
+        self.ajeno = crear_menor_vinculado(crear_apoderado('13131313-1', Apoderado.VERIFICADO),
+                                           rut='15151515-1').alumno
+        entrar(self.client, self.apoderado.user, apoderado_id=self.apoderado.id_apoderado)
+
+    def test_indica_a_su_estudiante_y_el_agente_lo_ve(self):
+        self.client.post(reverse('nuevo_ticket'), datos(categoria=Ticket.CONDUCTA, estudiante=self.propio.pk))
+        ticket = Ticket.objects.get()
+        self.assertEqual(ticket.estudiante, self.propio)
+        entrar_soporte(self.client, self.agente)
+        self.assertContains(self.client.get(reverse('soporte_reporte', args=[ticket.pk])),
+                            self.propio.user.first_name)
+
+    def test_no_puede_indicar_a_un_estudiante_ajeno(self):
+        self.client.post(reverse('nuevo_ticket'), datos(estudiante=self.ajeno.pk))
+        self.assertFalse(Ticket.objects.exists())
+
+    def test_puede_no_indicar_ninguno(self):
+        self.client.post(reverse('nuevo_ticket'), datos())
+        self.assertIsNone(Ticket.objects.get().estudiante)
+
+    def test_otro_rol_no_indica_estudiante(self):
+        alumno = crear_alumno_adulto()
+        entrar(self.client, alumno.user, alumno_id=alumno.id_alumno)
+        self.assertNotContains(self.client.get(reverse('nuevo_ticket')), 'De qué estudiante')
+        self.client.post(reverse('nuevo_ticket'), datos(estudiante=self.propio.pk))
+        self.assertIsNone(Ticket.objects.get().estudiante)  # el campo no existe: se ignora
