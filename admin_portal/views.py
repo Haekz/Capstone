@@ -59,6 +59,7 @@ def dashboard_admin(request):
         'finanzas': metricas.finanzas(),  # montos reales (paso 8); el template les da formato
         'grafico_registros': metricas.grafico(metricas.registros_por_mes()),
         'ingresos_hoy': ingresos.de_hoy(),  # personas distintas que iniciaron sesion hoy (H8)
+        'soporte': metricas.soporte(),  # cifras agregadas, sin contenido (P13)
     }
     return render(request, 'admin_portal/dashboard_admin.html', context)
 

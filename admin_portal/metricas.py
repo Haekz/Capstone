@@ -5,18 +5,20 @@ una obligacion, no un ingreso, y no pasa a ser ganancia al vencer el paquete.
 LBWUS gana su comision solo por las clases ya dictadas: es la misma cuenta que
 el saldo del profesor (user_profesor.views.calcular_saldos), vista desde LBWUS.
 
-Tambien arma el grafico de registros nuevos por mes (antes, puntos fijos de Feb a Jun)
-y la pagina de planes (antes, tres planes por nivel que no existen).
+Tambien arma el grafico de registros nuevos por mes (antes, puntos fijos de Feb a Jun),
+la pagina de planes (antes, tres planes por nivel que no existen) y las cifras de
+soporte (P13: cuantos tickets y en cuanto tiempo, nunca su contenido).
 """
 
 from collections import Counter
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.db.models import Sum
 from django.utils import timezone
 
 from alumnos import paquetes
 from alumnos.models import Alumno, Inscripcion, PaqueteClases, Profesor, SolicitudRetiro, Suscripcion
+from soporte.models import Ticket
 from user_profesor.views import calcular_saldos  # el mismo saldo que ve cada profesor
 
 MESES = ('Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic')
@@ -89,3 +91,34 @@ def planes():
     vigentes = Counter(PaqueteClases.objects.vigentes().values_list('plan', flat=True))
     return [(cotizacion, vigentes[cotizacion.plan.codigo])
             for cotizacion in paquetes.cotizar(paquetes.TARIFA_BASE)]
+
+
+def _promedio(duraciones, unidad):
+    """Promedio de timedeltas en `unidad` ('4,5', coma decimal chilena); None si no hay."""
+    if not duraciones:
+        return None
+    return f'{sum(duraciones, timedelta()) / len(duraciones) / unidad:.1f}'.replace('.', ',')
+
+
+def soporte(ahora=None):
+    """Cifras de soporte para el admin (P13). Lee solo categoria, estado y fechas: ni titulo ni mensajes."""
+    ahora = ahora or timezone.now()
+    tickets = list(Ticket.objects.values('categoria', 'estado', 'creado', 'vence', 'respondido', 'cerrado'))
+    for t in tickets:  # misma regla que Ticket.atrasado
+        t['atrasado'] = t['estado'] == Ticket.ABIERTO and t['respondido'] is None and ahora > t['vence']
+    por_categoria = []
+    for codigo, nombre in Ticket.CATEGORIAS:
+        suyos = [t for t in tickets if t['categoria'] == codigo]
+        por_categoria.append({'nombre': nombre,
+                              'abiertos': sum(t['estado'] == Ticket.ABIERTO for t in suyos),
+                              'atrasados': sum(t['atrasado'] for t in suyos),
+                              'cerrados': sum(t['estado'] == Ticket.CERRADO for t in suyos)})
+    return {
+        'por_categoria': por_categoria,
+        'abiertos': sum(c['abiertos'] for c in por_categoria),
+        'atrasados': sum(c['atrasados'] for c in por_categoria),
+        # Solo los tickets de usuarios se responden; las verificaciones se cierran al decidir.
+        'horas_respuesta': _promedio([t['respondido'] - t['creado'] for t in tickets if t['respondido']],
+                                     timedelta(hours=1)),
+        'dias_cierre': _promedio([t['cerrado'] - t['creado'] for t in tickets if t['cerrado']], timedelta(days=1)),
+    }
