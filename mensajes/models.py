@@ -22,6 +22,12 @@ class ConversacionQuerySet(models.QuerySet):
         cuenta de un participante (C1e)."""
         return self.filter(Exists(ReporteConversacion.objects.filter(conversacion=OuterRef('pk'))))
 
+    def visibles(self):
+        """Las que sus participantes pueden ver. Si alguien elimino su cuenta, lo que se conservo queda solo
+        para soporte, desde el ticket (decidido 02-nov)."""
+        return self.filter(cliente__suprimida__isnull=True, alumno__user__suprimida__isnull=True,
+                           profesor__user__suprimida__isnull=True)
+
     def bandeja(self, user, campo_visto):
         """Con `sin_leer` (hay mensajes del otro lado que `user` no ha visto), el texto del ultimo
         mensaje y la fecha de la ultima actividad, de la mas reciente a la mas antigua."""

@@ -25,7 +25,7 @@ from .models import Conversacion
 @never_cache
 @reporta_required
 def reportar_conversacion(request, pk):
-    conversacion = get_object_or_404(Conversacion.objects.select_related('alumno__user', 'profesor__user'), pk=pk)
+    conversacion = get_object_or_404(Conversacion.objects.visibles().select_related('alumno__user', 'profesor__user'), pk=pk)
     if not conversacion.es_participante(request.user):  # una ajena ni se confirma que existe
         raise Http404
     form = ReportarConversacionForm(request.POST or None)

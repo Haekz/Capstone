@@ -44,7 +44,7 @@ def buzon_apoderado(request):
 @apoderado_required
 def enviar_apoderado(request, pk):
     apoderado = _apoderado(request)
-    conversacion = get_object_or_404(Conversacion.objects.select_related('alumno__user', 'profesor__user'),
+    conversacion = get_object_or_404(Conversacion.objects.visibles().select_related('alumno__user', 'profesor__user'),
                                      pk=pk, cliente=apoderado.user)  # solo las suyas
     try:
         servicio.enviar(apoderado.user, conversacion, request.POST.get('texto'))

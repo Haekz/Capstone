@@ -25,7 +25,7 @@ def _al_panel(conversacion):
 @require_POST
 @profesor_required
 def enviar_profesor(request, pk):
-    conversacion = get_object_or_404(Conversacion.objects.select_related('profesor__user'),
+    conversacion = get_object_or_404(Conversacion.objects.visibles().select_related('profesor__user'),
                                      pk=pk, profesor=_profesor(request))  # solo las suyas
     try:
         servicio.enviar(conversacion.profesor.user, conversacion, request.POST.get('texto'))

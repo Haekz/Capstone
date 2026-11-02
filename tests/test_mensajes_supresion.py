@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from alumnos.models import Alumno, CustomUser
-from mensajes import retencion, servicio, supresion
+from mensajes import panel, retencion, servicio, supresion
 from mensajes.models import Conversacion, Mensaje, ReporteConversacion
 from mensajes.servicio import MensajeError
 from notificaciones.models import Notificacion
@@ -14,6 +14,9 @@ from soporte.models import Ticket
 from tests.test_apoderados import crear_agente, entrar_soporte
 from tests.test_paquetes import RUT_PROFE, Escenario, dar_paquete
 from tests.test_retiros import crear_admin, entrar_admin
+
+# Inconfundible: el panel del profesor trae un chat de demostracion con "Hola profesor".
+TEXTO = 'Consulta sobre la guia 7'
 
 
 class SuprimirCuentaTests(Escenario):
@@ -25,7 +28,7 @@ class SuprimirCuentaTests(Escenario):
         self.con_otro = servicio.abrir_conversacion(self.ana, self.otro)
         self.nombre = self.ana.user.first_name
         with self.captureOnCommitCallbacks(execute=True):
-            servicio.enviar(self.ana.user, self.con_profe, 'Hola profe')
+            servicio.enviar(self.ana.user, self.con_profe, TEXTO)
             servicio.enviar(self.profe.user, self.con_profe, 'Claro, dime')  # le avisa a Ana
             servicio.enviar(self.ana.user, self.con_otro, 'Hola')
 
@@ -46,7 +49,7 @@ class SuprimirCuentaTests(Escenario):
 
     # --- con una conversacion reportada ---
 
-    def test_con_una_reportada_la_cuenta_se_anonimiza_y_no_se_borra(self):
+    def test_con_una_reportada_la_cuenta_se_seudonimiza_y_no_se_borra(self):
         self.reportar()
         self.assertFalse(self.suprimir_a_ana())
         u = CustomUser.objects.get(pk=self.ana.user_id)
@@ -71,17 +74,17 @@ class SuprimirCuentaTests(Escenario):
         self.suprimir_a_ana()
         self.assertFalse(Notificacion.objects.filter(usuario_id=self.ana.user_id).exists())
 
-    def test_la_otra_persona_la_ve_sin_el_nombre_y_sin_poder_escribir(self):
+    def test_la_otra_persona_ya_no_la_ve_queda_solo_para_soporte(self):
         self.reportar()
         self.suprimir_a_ana()
         self.entrar(RUT_PROFE)
         r = self.client.get(reverse('panel_profesor'), {'c': self.con_profe.pk})
-        self.assertContains(r, 'Cuenta eliminada')
-        self.assertContains(r, 'solo para lectura')
-        self.assertContains(r, 'Hola profe')  # lo conservado se puede leer
-        self.assertNotContains(r, self.nombre)
-        self.assertNotContains(r, reverse('mensajes_profesor_enviar', args=[self.con_profe.pk]))
-        with self.assertRaisesMessage(MensajeError, 'solo para lectura'):
+        self.assertNotContains(r, TEXTO)
+        self.assertNotContains(r, 'Cuenta eliminada')
+        r = self.client.post(reverse('mensajes_profesor_enviar', args=[self.con_profe.pk]), {'texto': 'Hola'})
+        self.assertEqual(r.status_code, 404)
+        self.assertEqual(self.client.get(reverse('mensajes_reportar', args=[self.con_profe.pk])).status_code, 404)
+        with self.assertRaisesMessage(MensajeError, 'solo para lectura'):  # tambien fuera de las vistas
             servicio.enviar(self.profe.user, Conversacion.objects.get(), 'Hola')
 
     def test_soporte_la_sigue_leyendo(self):
@@ -89,7 +92,7 @@ class SuprimirCuentaTests(Escenario):
         self.suprimir_a_ana()
         entrar_soporte(self.client, self.agente)
         r = self.client.get(reverse('mensajes_soporte_leer', args=[reporte.ticket_id]))
-        self.assertContains(r, 'Hola profe')
+        self.assertContains(r, TEXTO)
         self.assertContains(r, 'Cuenta eliminada')
         self.assertNotContains(r, self.nombre)
 
@@ -108,6 +111,9 @@ class SuprimirCuentaTests(Escenario):
         ticket = Ticket.objects.get(reporte_conversacion__isnull=False)
         self.assertTrue(ticket.autor.suprimida)
         self.assertEqual(Conversacion.objects.filter(pk=self.con_profe.pk).count(), 1)
+        bandeja = [c.pk for c in panel.contexto_alumno(self.ana, None)['bandeja']]
+        self.assertNotIn(self.con_profe.pk, bandeja)  # la alumna tampoco la ve: solo soporte
+        self.assertIn(self.con_otro.pk, bandeja)
 
     # --- vista del administrador ---
 
@@ -124,7 +130,7 @@ class SuprimirCuentaTests(Escenario):
     def test_el_admin_no_destruye_las_conversaciones_reportadas(self):
         self.reportar()
         r = self.borrar_desde_el_admin()
-        self.assertContains(r, 'se anonimizó')
+        self.assertContains(r, 'se seudonimizó')
         self.assertTrue(Alumno.objects.filter(pk=self.ana.pk).exists())
         self.assertTrue(Conversacion.objects.filter(pk=self.con_profe.pk).exists())
         self.assertFalse(Conversacion.objects.filter(pk=self.con_otro.pk).exists())

@@ -30,7 +30,7 @@ def _al_panel(conversacion):
 @alumno_required
 def enviar_alumno(request, pk):
     alumno = _alumno(request)
-    conversacion = get_object_or_404(Conversacion.objects.select_related('profesor__user'),
+    conversacion = get_object_or_404(Conversacion.objects.visibles().select_related('profesor__user'),
                                      pk=pk, alumno=alumno, cliente=alumno.user)  # solo las suyas
     try:
         servicio.enviar(alumno.user, conversacion, request.POST.get('texto'))

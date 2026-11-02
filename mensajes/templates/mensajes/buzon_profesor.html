@@ -53,7 +53,7 @@
                 {% endfor %}
             </div>
             {% if buzon_activa.solo_lectura %}
-            <p class="profe-chat-input-box" role="status" style="margin: 0;">Esta conversación quedó solo para lectura: el vínculo del apoderado con el estudiante terminó o la otra persona eliminó su cuenta.</p>
+            <p class="profe-chat-input-box" role="status" style="margin: 0;">Esta conversación quedó solo para lectura: el vínculo del apoderado con el estudiante ya no está activo.</p>
             {% else %}
             <form class="profe-chat-input-box" method="post" action="{% url 'mensajes_profesor_enviar' buzon_activa.pk %}">
                 {% csrf_token %}

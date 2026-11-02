@@ -30,7 +30,7 @@ def _activa_y_mensajes(user, conversaciones, activa_id):
 
 def contexto_profesor(profesor, activa_id):
     """Sus conversaciones y, si pidio una (?c=), sus mensajes."""
-    conversaciones = list(Conversacion.objects.filter(profesor=profesor).select_related('alumno__user')
+    conversaciones = list(Conversacion.objects.visibles().filter(profesor=profesor).select_related('alumno__user')
                           .bandeja(profesor.user, 'visto_profesor'))
     activa, mensajes = _activa_y_mensajes(profesor.user, conversaciones, activa_id)
     return {'buzon': conversaciones, 'buzon_activa': activa, 'buzon_mensajes': mensajes}
@@ -44,7 +44,7 @@ def contexto_alumno(alumno, activa_id, error=None):
              'bandeja_error': error}
     if es_menor(alumno.user):
         return vacio
-    conversaciones = list(Conversacion.objects.filter(alumno=alumno, cliente=alumno.user)
+    conversaciones = list(Conversacion.objects.visibles().filter(alumno=alumno, cliente=alumno.user)
                           .select_related('profesor__user', 'profesor__especialidad')
                           .bandeja(alumno.user, 'visto_cliente'))
     activa, mensajes = _activa_y_mensajes(alumno.user, conversaciones, activa_id)
@@ -57,7 +57,7 @@ def contexto_alumno(alumno, activa_id, error=None):
 def contexto_apoderado(apoderado, activa_id):
     """Las conversaciones del apoderado (cada una, sobre un estudiante) y, por cada estudiante con vinculo
     vigente, los profesores a quienes aun no ha escrito. Las de un vinculo terminado siguen visibles."""
-    conversaciones = list(Conversacion.objects.filter(cliente=apoderado.user)
+    conversaciones = list(Conversacion.objects.visibles().filter(cliente=apoderado.user)
                           .select_related('alumno__user', 'profesor__user', 'profesor__especialidad')
                           .bandeja(apoderado.user, 'visto_cliente'))
     activa, mensajes = _activa_y_mensajes(apoderado.user, conversaciones, activa_id)

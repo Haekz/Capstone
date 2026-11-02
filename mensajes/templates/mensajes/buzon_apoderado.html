@@ -72,7 +72,7 @@
             {% endfor %}
         </ol>
         {% if bandeja_activa.solo_lectura %}
-        <p class="perfil-prof__vacio" role="status">Esta conversación quedó solo para lectura: ya no puedes escribir en ella (tu vínculo con {{ bandeja_activa.alumno.user.first_name }} terminó o la otra persona eliminó su cuenta).</p>
+        <p class="perfil-prof__vacio" role="status">Esta conversación quedó solo para lectura: tu vínculo con {{ bandeja_activa.alumno.user.first_name }} ya no está activo.</p>
         {% else %}
         <form method="post" action="{% url 'mensajes_apoderado_enviar' bandeja_activa.pk %}" class="apod-form">
             {% csrf_token %}
