@@ -522,6 +522,15 @@
                             <div class="stat-icon" style="margin-left:auto;"><i class="bi bi-wallet2" aria-hidden="true"></i></div>
                         </div>
                     </div>
+                    <div class="stat-card purple">
+                        <div class="stat-card-inner">
+                            <div class="stat-info">
+                                <div class="stat-value">{{ finanzas.comision_estimada|clp }}</div>
+                                <div class="stat-label">Comisión estimada (15% de lo cobrado, si se dicta todo)</div>
+                            </div>
+                            <div class="stat-icon" style="margin-left:auto;"><i class="bi bi-calculator" aria-hidden="true"></i></div>
+                        </div>
+                    </div>
                     <div class="stat-card green">
                         <div class="stat-card-inner">
                             <div class="stat-info">
@@ -538,6 +547,15 @@
                                 <div class="stat-label">Por dictar (aún no es ingreso)</div>
                             </div>
                             <div class="stat-icon" style="margin-left:auto;"><i class="bi bi-hourglass-split" aria-hidden="true"></i></div>
+                        </div>
+                    </div>
+                    <div class="stat-card blue">
+                        <div class="stat-card-inner">
+                            <div class="stat-info">
+                                <div class="stat-value">{{ finanzas.saldo_profesores|clp }}</div>
+                                <div class="stat-label">Saldo disponible de profesores (aún sin pedir)</div>
+                            </div>
+                            <div class="stat-icon" style="margin-left:auto;"><i class="bi bi-person-badge" aria-hidden="true"></i></div>
                         </div>
                     </div>
                     <div class="stat-card green">

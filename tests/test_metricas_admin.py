@@ -14,7 +14,7 @@ from django.utils import timezone
 
 from admin_portal.metricas import finanzas, grafico, planes, registros_por_mes
 from alumnos import paquetes
-from alumnos.models import Genero, Inscripcion, PaqueteClases, Tutor
+from alumnos.models import Genero, Inscripcion, PaqueteClases, SolicitudRetiro, Tutor
 from tests.test_especialidad import CLAVE
 from tests.test_filtros_clases import crear_sesion
 from tests.test_matriz_identidad import crear_usuario
@@ -71,9 +71,19 @@ class FinanzasTests(Escenario):
     def test_el_panel_muestra_las_cifras(self):
         respuesta = panel_admin(self)
         cifras = finanzas()
-        for clave in ('cobrado', 'ganancia', 'por_dictar'):
+        for clave in ('cobrado', 'comision_estimada', 'ganancia', 'por_dictar', 'saldo_profesores'):
             self.assertContains(respuesta, '$' + f'{cifras[clave]:,}'.replace(',', '.'))
         self.assertNotContains(respuesta, 'Ingresos Totales')
+
+    def test_comision_estimada_es_el_15_de_lo_cobrado(self):
+        self.assertEqual(finanzas()['comision_estimada'], paquetes.comision(116000))
+
+    def test_saldo_de_profesores_es_el_que_ve_cada_uno(self):
+        dictado = 2 * paquetes.pago_profesor(POR_CLASE_INTENSIVO)  # dos clases dictadas, sin retiros
+        self.assertEqual(finanzas()['saldo_profesores'], dictado)
+        SolicitudRetiro.objects.create(profesor=self.profe, monto=10000)  # en tramite: ya no esta disponible
+        self.assertEqual(finanzas()['saldo_profesores'], dictado - 10000)
+        self.assertEqual(finanzas()['saldo_profesores'], calcular_saldos(self.profe)['disponible'])
 
 
 class RegistrosPorMesTests(Escenario):

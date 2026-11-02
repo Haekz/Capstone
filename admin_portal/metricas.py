@@ -17,6 +17,7 @@ from django.utils import timezone
 
 from alumnos import paquetes
 from alumnos.models import Alumno, Inscripcion, PaqueteClases, Profesor, SolicitudRetiro, Suscripcion
+from user_profesor.views import calcular_saldos  # el mismo saldo que ve cada profesor
 
 MESES = ('Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic')
 MESES_GRAFICO = 5
@@ -29,16 +30,23 @@ def _suma(consulta):
 
 
 def finanzas():
-    """Montos en pesos para las tarjetas de Finanzas."""
+    """Montos en pesos para las tarjetas de Finanzas (P12)."""
     # Pagos aprobados por Webpay. Las suscripciones ya no se venden, pero su dinero entro.
-    cobrado_paquetes = _suma(PaqueteClases.objects.filter(estado=PaqueteClases.ESTADO_ACTIVA))
-    cobrado = cobrado_paquetes + _suma(Suscripcion.objects.filter(estado=Suscripcion.ESTADO_ACTIVA))
+    paquetes_pagados = list(PaqueteClases.objects.filter(estado=PaqueteClases.ESTADO_ACTIVA)
+                            .values_list('monto', flat=True))
+    pagados = paquetes_pagados + list(Suscripcion.objects.filter(estado=Suscripcion.ESTADO_ACTIVA)
+                                      .values_list('monto', flat=True))
+    cobrado_paquetes = sum(paquetes_pagados)
     dictadas = list(Inscripcion.objects.completadas().select_related('paquete'))
     dictado_de_paquetes = sum(paquetes.valor_clase(i) for i in dictadas if i.paquete_id)
     return {
-        'cobrado': cobrado,
+        'cobrado': sum(pagados),
+        # Si se dictara todo lo vendido; la ganancia real es solo la de lo ya dictado.
+        'comision_estimada': sum(paquetes.comision(monto) for monto in pagados),
         'ganancia': sum(paquetes.comision(paquetes.valor_clase(i)) for i in dictadas),
         'por_dictar': max(0, cobrado_paquetes - dictado_de_paquetes),
+        # Lo que los profesores ya pueden pedir (sin contar retiros en tramite).
+        'saldo_profesores': sum(calcular_saldos(p)['disponible'] for p in Profesor.objects.all()),
         'retiros_pagados': _suma(SolicitudRetiro.objects.filter(estado=SolicitudRetiro.PAGADO)),
         # Pendientes de pagar: los que esperan revision y los aprobados sin transferir.
         'retiros_pendientes': _suma(SolicitudRetiro.objects.filter(
