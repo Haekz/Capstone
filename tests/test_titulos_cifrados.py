@@ -6,10 +6,12 @@ el original se borra al aprobar o rechazar. Datos ficticios.
 
 import io
 import tempfile
+from io import StringIO
 
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from PIL import Image
@@ -17,6 +19,7 @@ from PIL import Image
 from alumnos.models import Profesor
 from apoderados.documentos import ERROR_PDF_PAGINAS, descifrar
 from soporte.models import Ticket
+from soporte.tickets import abrir_ticket
 from tests.test_apoderados import crear_agente, entrar_soporte, imagen
 from tests.test_apoderados_pdf import bytes_pdf
 from tests.test_soporte import crear_profesor
@@ -74,3 +77,66 @@ class TitulosCifradosTests(TestCase):
         self.assertFalse(self.profesor.titulo_archivo)
         with self.assertRaises(FileNotFoundError):
             open(ruta, 'rb')
+
+
+@override_settings(MEDIA_ROOT=tempfile.mkdtemp())
+class PasarTitulosABaseTests(TestCase):
+    """manage.py pasar_titulos_a_base (9b-2): los titulos que quedaron en disco."""
+
+    def setUp(self):
+        crear_agente('10000001-9', Ticket.TITULOS)
+        self.profesor = crear_profesor()
+
+    def antiguo(self, estado, con_archivo=True):
+        """Titulo como quedaba antes del paso 9b: en disco, sin cifrar."""
+        self.original = bytes_pdf()
+        self.profesor.titulo_archivo.save('profesor_1.pdf', ContentFile(self.original), save=False)
+        self.ruta = self.profesor.titulo_archivo.path
+        if not con_archivo:  # Railway borro el disco en un deploy
+            self.profesor.titulo_archivo.storage.delete(self.profesor.titulo_archivo.name)
+        self.profesor.titulo_estado = estado
+        self.profesor.save()
+        if estado == Profesor.TITULO_EN_REVISION:
+            abrir_ticket(Ticket.TITULOS, profesor=self.profesor)
+
+    def pasar(self):
+        salida = StringIO()
+        call_command('pasar_titulos_a_base', stdout=salida)
+        self.profesor.refresh_from_db()
+        return salida.getvalue()
+
+    def test_en_revision_se_cifra_y_sigue_en_revision(self):
+        self.antiguo(Profesor.TITULO_EN_REVISION)
+        self.assertIn('pasados a la base: 1', self.pasar())
+        self.assertEqual(descifrar(self.profesor.titulo_contenido), self.original)
+        self.assertEqual(self.profesor.titulo_formato, 'PDF')
+        self.assertEqual(self.profesor.titulo_estado, Profesor.TITULO_EN_REVISION)
+        self.assertEqual(self.profesor.tickets.get().estado, Ticket.ABIERTO)
+        self.assertFalse(self.profesor.titulo_archivo)
+        with self.assertRaises(FileNotFoundError):
+            open(self.ruta, 'rb')
+
+    def test_si_el_archivo_se_perdio_se_pide_de_nuevo(self):
+        self.antiguo(Profesor.TITULO_EN_REVISION, con_archivo=False)
+        self.assertIn('debe volver a subirlo): 1', self.pasar())
+        self.assertEqual(self.profesor.titulo_estado, Profesor.TITULO_RECHAZADO)
+        self.assertEqual(self.profesor.titulo_observacion, titulo.NO_SE_RECUPERO)
+        self.assertTrue(self.profesor.puede_subir_titulo)
+        self.assertEqual(self.profesor.tickets.get().estado, Ticket.CERRADO)
+        self.assertFalse(self.profesor.titulo_archivo)
+
+    def test_ya_decidido_solo_se_borra(self):
+        self.antiguo(Profesor.TITULO_APROBADO)
+        self.assertIn('borrados del disco: 1', self.pasar())
+        self.assertIsNone(self.profesor.titulo_contenido)
+        self.assertEqual(self.profesor.titulo_estado, Profesor.TITULO_APROBADO)
+        with self.assertRaises(FileNotFoundError):
+            open(self.ruta, 'rb')
+
+    def test_correrlo_otra_vez_no_hace_nada(self):
+        self.antiguo(Profesor.TITULO_EN_REVISION)
+        self.pasar()
+        contenido = bytes(self.profesor.titulo_contenido)
+        salida = self.pasar()
+        self.assertIn('pasados a la base: 0', salida)
+        self.assertEqual(bytes(self.profesor.titulo_contenido), contenido)

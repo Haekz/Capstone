@@ -18,6 +18,9 @@ from apoderados import documentos
 from soporte.models import Ticket
 from soporte.tickets import abrir_ticket, cerrar_tickets
 
+PASADO, A_RESUBIR, BORRADO = 'pasado', 'a_resubir', 'borrado'
+NO_SE_RECUPERO = 'No es un rechazo: no pudimos recuperar el archivo de tu título. Súbelo de nuevo, por favor.'
+
 
 def _borrar_archivo_antiguo(profesor):
     """Titulos de antes del paso 9b, en disco: no deben quedar."""
@@ -55,3 +58,28 @@ def resolver(profesor, aprobar, observacion=''):
     with transaction.atomic():
         profesor.save()
         cerrar_tickets(profesor.tickets)
+
+
+def pasar_a_base(profesor):
+    """Titulo antiguo en disco -> cifrado en la base (manage.py pasar_titulos_a_base). Devuelve que paso.
+
+    En revision: se cifra; si el archivo se perdio (Railway borra el disco) o no es valido, queda
+    rechazado con NO_SE_RECUPERO para que lo vuelva a subir. Ya decidido: el original no se guarda.
+    """
+    resultado = BORRADO
+    if profesor.titulo_estado == Profesor.TITULO_EN_REVISION:
+        try:
+            with profesor.titulo_archivo.open('rb') as archivo:
+                profesor.titulo_contenido, profesor.titulo_formato = documentos.preparar(archivo)
+            resultado = PASADO
+        except (OSError, ValidationError):
+            profesor.titulo_estado = Profesor.TITULO_RECHAZADO
+            profesor.titulo_observacion = NO_SE_RECUPERO
+            profesor.titulo_actualizado = timezone.now()
+            resultado = A_RESUBIR
+    _borrar_archivo_antiguo(profesor)  # si ya no estaba en el disco, Django no reclama
+    with transaction.atomic():
+        profesor.save()
+        if resultado == A_RESUBIR:
+            cerrar_tickets(profesor.tickets)
+    return resultado
