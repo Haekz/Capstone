@@ -17,6 +17,11 @@ LARGO_MAX = 1000
 
 class ConversacionQuerySet(models.QuerySet):
 
+    def reportadas(self):
+        """Las que alguien reporto: se conservan aunque su ticket se cierre (C1c) y tambien al eliminar la
+        cuenta de un participante (C1e)."""
+        return self.filter(Exists(ReporteConversacion.objects.filter(conversacion=OuterRef('pk'))))
+
     def bandeja(self, user, campo_visto):
         """Con `sin_leer` (hay mensajes del otro lado que `user` no ha visto), el texto del ultimo
         mensaje y la fecha de la ultima actividad, de la mas reciente a la mas antigua."""

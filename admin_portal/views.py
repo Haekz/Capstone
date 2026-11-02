@@ -8,6 +8,7 @@ from django.views.decorators.http import require_POST
 from alumnos import paquetes
 from alumnos.models import Alumno, Asignatura, Profesor, Tutor, Clase
 from alumnos.decorators import admin_required
+from mensajes import supresion
 
 from . import ingresos, metricas
 
@@ -155,14 +156,16 @@ def alumnos_del(request, pk):
     
     alumno = get_object_or_404(Alumno, id_alumno=pk)
     
-    # Se borra también la cuenta (CustomUser); el perfil de alumno cae en cascada.
-    if alumno.user:
-        alumno.user.delete() 
-    if Alumno.objects.filter(id_alumno=pk).exists():
+    # Se borra tambien la cuenta (CustomUser); el perfil de alumno cae en cascada. Si la cuenta tiene
+    # conversaciones reportadas no se borra: se anonimiza y se conservan (mensajes/supresion.py).
+    borrada = supresion.suprimir_cuenta(alumno.user)
+    if borrada and Alumno.objects.filter(id_alumno=pk).exists():
         alumno.delete()
 
     alumnos = Alumno.objects.all()
-    context = {'alumnos': alumnos, 'mensaje': "Bien, datos eliminados..."}
+    mensaje = ('Bien, datos eliminados...' if borrada else
+               'La cuenta se anonimizó: se conservan las conversaciones reportadas.')
+    context = {'alumnos': alumnos, 'mensaje': mensaje}
     return render(request, 'admin_portal/alumnos_list.html', context)
 
 

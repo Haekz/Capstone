@@ -71,8 +71,10 @@ def abrir_conversaciones_con_apoderados(alumno, profesor):
 
 
 def es_solo_lectura(conversacion):
-    """La de un apoderado cuyo vinculo ya no autoriza actuar por el estudiante (revocado, apoderado
-    rechazado o estudiante de 18 años). Las de un alumno adulto siempre se pueden usar."""
+    """Se lee pero ya no se escribe: alguien elimino su cuenta (C1e), o es la de un apoderado cuyo vinculo ya
+    no autoriza actuar por el estudiante (revocado, apoderado rechazado o estudiante de 18 años)."""
+    if any(u.suprimida for u in (conversacion.cliente, conversacion.alumno.user, conversacion.profesor.user)):
+        return True
     if not conversacion.es_de_apoderado:
         return False
     vinculo = Vinculo.objects.filter(apoderado__user_id=conversacion.cliente_id, alumno=conversacion.alumno).first()
@@ -133,7 +135,7 @@ def enviar(autor, conversacion, texto):
     if es_menor(autor) or not conversacion.es_participante(autor):
         raise MensajeError('No puedes escribir en esta conversación.')
     if es_solo_lectura(conversacion):
-        raise MensajeError('Esta conversación quedó solo para lectura: el vínculo con el estudiante ya no está activo.')
+        raise MensajeError('Esta conversación quedó solo para lectura.')
     _exigir_relacion(conversacion.alumno, conversacion.profesor)
     exigir_sin_contacto(texto)
     with transaction.atomic():

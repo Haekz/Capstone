@@ -19,7 +19,7 @@ from django.utils import timezone
 from alumnos.models import Inscripcion, PaqueteClases
 from soporte.models import Ticket
 
-from .models import Conversacion, Mensaje, ReporteConversacion
+from .models import Conversacion, Mensaje
 
 DIAS_SIN_ACTIVIDAD = 90
 
@@ -34,14 +34,14 @@ def candidatas():
     paquete_vigente = PaqueteClases.objects.vigentes().filter(alumno=OuterRef('alumno'), profesor=OuterRef('profesor'))
     ticket_abierto = Ticket.objects.filter(estado=Ticket.ABIERTO).filter(
         Q(autor=OuterRef('cliente')) | Q(autor=OuterRef('profesor__user_id')))
-    reportada = ReporteConversacion.objects.filter(conversacion=OuterRef('pk'))
+    reportada = Conversacion.objects.reportadas().values('pk')
     desde = timezone.now() - timedelta(days=DIAS_SIN_ACTIVIDAD)
     return (Conversacion.objects
             .annotate(actividad=Greatest(Coalesce(Subquery(ultimo_mensaje), F('creada')),
                                          Coalesce(Subquery(ultima_clase), F('creada')),
                                          output_field=DateTimeField()))
             .filter(actividad__lt=desde)
-            .exclude(Exists(paquete_vigente)).exclude(Exists(ticket_abierto)).exclude(Exists(reportada)))
+            .exclude(Exists(paquete_vigente)).exclude(Exists(ticket_abierto)).exclude(pk__in=reportada))
 
 
 def borrar_inactivas():

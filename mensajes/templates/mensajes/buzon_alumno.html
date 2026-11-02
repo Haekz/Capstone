@@ -72,11 +72,15 @@
         {% if bandeja_error %}
         <p role="alert" style="margin: 0; padding: 10px 16px; background: #fdecea; color: #8a1c1c; font-weight: 600;">{{ bandeja_error }}</p>
         {% endif %}
+        {% if bandeja_activa.solo_lectura %}
+        <p role="status" style="margin: 0; padding: 10px 16px;">Esta conversación quedó solo para lectura: la otra persona eliminó su cuenta.</p>
+        {% else %}
         <form class="chat-input-area" id="chat-send-form" method="post" action="{% url 'mensajes_alumno_enviar' bandeja_activa.pk %}">
             {% csrf_token %}
             <input type="text" id="chat-msg-input" name="texto" placeholder="Escribe tu consulta académica..." aria-label="Tu mensaje" required maxlength="1000" autocomplete="off">
             <button type="submit" class="btn-chat-send" aria-label="Enviar mensaje"><i class="bi bi-send-fill" aria-hidden="true"></i></button>
         </form>
+        {% endif %}
         {% else %}
         {% if bandeja_error %}
         <p role="alert" style="margin: 0; padding: 10px 16px; background: #fdecea; color: #8a1c1c; font-weight: 600;">{{ bandeja_error }}</p>
