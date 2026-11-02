@@ -21,6 +21,7 @@ from apoderados.models import Apoderado
 from resenas.models import ModeracionResena, ReporteResena, Resena
 from tests.test_apoderados import crear_apoderado
 from tests.test_apoderados_vinculos import crear_menor_vinculado
+from tests.test_campana import avisos_de
 from tests.test_especialidad import crear_profesor
 from tests.test_filtros_clases import crear_sesion
 from tests.test_paquetes import dar_paquete
@@ -281,6 +282,15 @@ class ModeracionTests(BaseResenas):
         self.assertEqual(self.resena_reportada.estado, Resena.ESTADO_VISIBLE)
         self.assertEqual(list(ModeracionResena.objects.order_by('fecha').values_list('accion', flat=True)),
                          ['ocultar', 'restaurar'])
+
+    def test_la_campana_del_admin_avisa_hasta_moderar(self):
+        ReporteResena.objects.create(resena=self.resena_reportada, remitente=self.ana.user, motivo='spam')
+        [aviso] = avisos_de(admin_id=self.admin.id_tutor)
+        self.assertEqual(aviso.titulo, '1 reseña reportada')  # dos reportes, una reseña
+        self.assertEqual(aviso.detalle, 'Por moderar. El reporte más antiguo llegó hoy.')
+        self.assertEqual(aviso.url, reverse('resenas_moderacion'))
+        self.moderar('mantener')
+        self.assertEqual(avisos_de(admin_id=self.admin.id_tutor), [])
 
 
 class ContenidoFicticioTests(BaseResenas):

@@ -2,7 +2,8 @@
 
 Un aviso es algo que espera una accion de esa persona, con su plazo. Desaparece
 solo cuando se resuelve, asi que no hay "leido" que guardar. Cada rol ve lo
-suyo: el admin, los retiros de los profesores (titulos y reportes son de soporte);
+suyo: el admin, los retiros de los profesores y las reseñas reportadas (titulos
+y reportes de usuarios son de soporte);
 el agente de soporte, sus tickets por vencer o atrasados; el lider, ademas, los
 tickets que nadie atiende y los atrasos del equipo.
 """
@@ -16,6 +17,7 @@ from django.utils import timezone
 from alumnos.models import SolicitudRetiro
 from alumnos.roles import ADMIN, SOPORTE, rol_en_sesion
 from alumnos.templatetags.dinero import clp
+from resenas.models import ReporteResena
 from soporte import plazos
 from soporte.models import AgenteSoporte, Ticket
 from soporte.permisos import tickets_del_agente
@@ -47,7 +49,7 @@ def _suman(retiros):
 
 
 def _de_admin(hoy):
-    """Retiros: por revisar, para pagar hoy o atrasados, y los que aun no se pueden pagar."""
+    """Retiros (por revisar, para pagar hoy o atrasados, en espera) y reseñas por moderar."""
     finanzas = reverse('dashboard_admin') + '#section-finanzas'
     avisos = []
 
@@ -92,6 +94,15 @@ def _de_admin(hoy):
         avisos.append(Aviso(f'Retiro de {retiro.profesor.nombre}: espera para transferir',
                             f'Su cuenta bancaria cambió: se puede pagar desde el {desde:%d/%m %H:%M}.',
                             finanzas))
+
+    reportes = ReporteResena.objects.filter(estado=ReporteResena.ESTADO_PENDIENTE)
+    primero = reportes.order_by('creado').first()
+    if primero:
+        resenas = reportes.values('resena').distinct().count()  # varios reportes de una misma reseña: una
+        avisos.append(Aviso(
+            '1 reseña reportada' if resenas == 1 else f'{resenas} reseñas reportadas',
+            f'Por moderar. El reporte más antiguo llegó {_hace(timezone.localdate(primero.creado), hoy)}.',
+            reverse('resenas_moderacion')))
     return avisos
 
 
