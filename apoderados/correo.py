@@ -12,9 +12,11 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
 from alumnos.correo import enviar as _enviar
+from alumnos.utils import edad, es_menor
 from soporte.correo import avisar_documentos_por_vencer
 from soporte.models import Ticket
 
+from .forms import EDAD_SOLICITUD_PROPIA
 from .models import Apoderado, Documento, Vinculo
 from .tokens import firmar_invitacion, token_correo, token_correo_adolescente
 
@@ -57,6 +59,39 @@ def _correos_de_apoderados(alumno):
             .values_list('apoderado__user__email', flat=True))
 
 
+def _correo_del_adolescente(alumno):
+    """El correo propio del estudiante si tiene de 14 a 17 anos; antes de los 14 no recibe avisos."""
+    user = alumno.user
+    if user.email and es_menor(user) and edad(user.fecha_nacimiento) >= EDAD_SOLICITUD_PROPIA:
+        return user.email
+    return None
+
+
+def avisar_revocacion(vinculo, era_verificado, canceladas):
+    """Avisos al revocarse un vinculo (decidido 02-nov).
+
+    Si lo revoco soporte, al apoderado revocado, con el motivo. Si el vinculo estaba verificado, a los demas
+    apoderados verificados y al adolescente de 14 a 17 con correo propio, sin el motivo ni quien lo pidio.
+    """
+    revocacion = vinculo.revocacion
+    envios = []
+    if revocacion.autor_id != vinculo.apoderado.user_id:
+        envios.append(_enviar(f'Tu vínculo con {vinculo.nombre_visible} fue revocado', 'apoderados/correo_revocado.txt', {
+            'nombre': vinculo.apoderado.nombre, 'estudiante': vinculo.nombre_visible,
+            'motivo': revocacion.motivo, 'canceladas': canceladas,
+        }, vinculo.apoderado.user.email))
+    if era_verificado:
+        estudiante = vinculo.alumno.user.first_name
+        contexto = {'estudiante': estudiante, 'canceladas': canceladas}
+        envios += [_enviar(f'Cambio en los apoderados de {estudiante}', 'apoderados/correo_revocacion.txt',
+                           contexto, correo) for correo in _correos_de_apoderados(vinculo.alumno)]
+        adolescente = _correo_del_adolescente(vinculo.alumno)
+        if adolescente:
+            envios.append(_enviar('Cambio en tus apoderados', 'apoderados/correo_revocacion.txt',
+                                  {**contexto, 'para_estudiante': True}, adolescente))
+    return all(envios)
+
+
 def avisar_apoderados(inscripcion, accion, autor):
     """Avisa a cada apoderado con vinculo verificado del estudiante.
 
@@ -71,15 +106,21 @@ def avisar_apoderados(inscripcion, accion, autor):
 
 
 def avisar_segundo_apoderado(vinculo):
-    """Otra persona pidio ser apoderado de un estudiante que ya tiene apoderados verificados: se les avisa.
+    """Otra persona pidio ser apoderado de un estudiante: se avisa a sus apoderados verificados y al
+    adolescente de 14 a 17 con correo propio.
 
-    Sin decir quien es ni su parentesco ni su contacto (lo verifica soporte), y sin dar a los apoderados
-    la posibilidad de vetarla: es un aviso, no un permiso.
+    Sin decir quien es ni su parentesco ni su contacto (lo verifica soporte), y sin dar la posibilidad
+    de vetarla: es un aviso, no un permiso.
     """
     estudiante = vinculo.alumno.user.first_name
-    return all([_enviar(f'Nueva solicitud de vínculo con {estudiante}', 'apoderados/correo_segundo_apoderado.txt',
-                        {'estudiante': estudiante}, correo)
-                for correo in _correos_de_apoderados(vinculo.alumno)])
+    envios = [_enviar(f'Nueva solicitud de vínculo con {estudiante}', 'apoderados/correo_segundo_apoderado.txt',
+                      {'estudiante': estudiante}, correo)
+              for correo in _correos_de_apoderados(vinculo.alumno)]
+    adolescente = _correo_del_adolescente(vinculo.alumno)
+    if adolescente:
+        envios.append(_enviar('Nueva solicitud para ser tu apoderado', 'apoderados/correo_segundo_apoderado.txt',
+                              {'estudiante': estudiante, 'para_estudiante': True}, adolescente))
+    return all(envios)
 
 
 def avisar_calificacion_baja(inscripcion):

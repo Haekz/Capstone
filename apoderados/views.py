@@ -27,7 +27,8 @@ from alumnos.utils import es_menor
 from alumnos.views import iniciar_compra_paquete  # unico inicio de Webpay para paquetes
 from soporte.permisos import agente_en_sesion, lider_required, ticket_asignado, tickets_del_agente
 
-from .correo import avisar_apoderados, enviar_confirmacion, enviar_confirmacion_adolescente, enviar_invitacion
+from .correo import (avisar_apoderados, avisar_revocacion, enviar_confirmacion, enviar_confirmacion_adolescente,
+                     enviar_invitacion)
 from .documentos import con_marca_de_agua, texto_de_revision
 from .forms import (VERSION_DECLARACION_VINCULO, AceptarInvitacionForm, CarnetForm, ClaveEstudianteForm,
                     DocumentoVinculoForm, InvitacionForm, NuevaClaveForm, RegistroAdolescenteForm,
@@ -323,7 +324,9 @@ def reprogramar_clase(request, id_vinculo, id_inscripcion):
 def _revocar(request, vinculo, estudiante, volver, motivo_obligatorio):
     form = RevocarVinculoForm(request.POST or None, motivo_obligatorio=motivo_obligatorio)
     if request.method == 'POST' and form.is_valid():
+        era_verificado = vinculo.estado == Vinculo.VERIFICADO
         canceladas = vinculo.revocar(request.user, form.cleaned_data['motivo'])
+        avisar_revocacion(vinculo, era_verificado, canceladas)
         messages.success(request, f'Revocamos el vínculo de {vinculo.apoderado.nombre} con {estudiante}. '
                                   f'Clases futuras canceladas: {canceladas}.')
         return redirect(volver)
