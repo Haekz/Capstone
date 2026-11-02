@@ -67,12 +67,8 @@ class BorradoPorInactividadTests(Escenario):
         self.envejecer(10)
         self.assertEqual(self.borrar(), 0)
 
-    def test_la_ultima_clase_cuenta_como_actividad(self):
+    def test_una_clase_ya_dictada_no_la_mantiene(self):  # decidido 02-nov: cuenta solo el ultimo mensaje
         self.clase_de_ana(-30)
-        self.assertEqual(self.borrar(), 0)
-
-    def test_una_clase_vieja_no_la_mantiene(self):
-        self.clase_de_ana(-100)
         self.assertEqual(self.borrar(), 1)
 
     def test_una_reserva_futura_la_mantiene(self):
@@ -83,9 +79,9 @@ class BorradoPorInactividadTests(Escenario):
         self.clase_de_ana(3, estado=Inscripcion.ESTADO_CANCELADA)
         self.assertEqual(self.borrar(), 1)
 
-    def test_la_clase_con_otro_profesor_no_cuenta(self):
+    def test_la_reserva_futura_con_otro_profesor_no_cuenta(self):
         Inscripcion.objects.create(alumno=self.ana, clase=self.clase_otro,
-                                   sesion=crear_sesion(self.clase_otro, dias=-5, cupo=1))
+                                   sesion=crear_sesion(self.clase_otro, dias=5, cupo=1))
         self.assertEqual(self.borrar(), 1)
 
     def test_un_paquete_vigente_la_mantiene(self):
