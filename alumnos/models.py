@@ -410,23 +410,38 @@ class InscripcionQuerySet(models.QuerySet):
     def consumidas(self):
         """Las que gastan una clase del paquete (y le pagan al profesor).
 
-        Si el profesor cancela la sesion, la clase vuelve al alumno.
+        Si el profesor cancela la sesion, la clase vuelve al alumno. Si el alumno
+        cancela con menos de 4 h, no vuelve (decidido 02-nov).
         """
-        return self.filter(estado__in=Inscripcion.ESTADOS_ACTIVOS).exclude(
+        return self.filter(estado__in=[*Inscripcion.ESTADOS_ACTIVOS, Inscripcion.ESTADO_CANCELADA_TARDE]).exclude(
             sesion__estado=SesionClase.ESTADO_CANCELADA
         )
+
+    def pagables(self):
+        """Las que se le pagan al profesor, ya pasada la hora: dictadas o canceladas con menos de 4 h.
+
+        No reemplaza a completadas(): quien cancelo tarde no asistio (no califica ni suma progreso).
+        """
+        return self.filter(
+            estado__in=[Inscripcion.ESTADO_CONFIRMADA, Inscripcion.ESTADO_CANCELADA_TARDE],
+            sesion__fecha_hora_fin__lte=timezone.now(),
+        ).exclude(sesion__estado=SesionClase.ESTADO_CANCELADA)
 
 
 class Inscripcion(models.Model):
     ESTADO_CONFIRMADA = 'confirmada'
     ESTADO_PENDIENTE = 'pendiente'
     ESTADO_CANCELADA = 'cancelada'
+    # Con menos de 4 h: la clase se pierde y el profesor cobra (decidido 02-nov). No ocupa cupo.
+    ESTADO_CANCELADA_TARDE = 'cancelada_tarde'
     ESTADOS_ACTIVOS = [ESTADO_CONFIRMADA, ESTADO_PENDIENTE]  # ocupan cupo y consumen una clase
+    ANTICIPACION_SIN_COSTO = timedelta(hours=4)  # para cancelar o reagendar sin perder la clase
 
     ESTADOS_CHOICES = [
         (ESTADO_CONFIRMADA, 'Confirmada'),
         (ESTADO_PENDIENTE, 'Pendiente'),
         (ESTADO_CANCELADA, 'Cancelada'),
+        (ESTADO_CANCELADA_TARDE, 'Cancelada con menos de 4 h'),
     ]
 
     id_inscripcion = models.AutoField(primary_key=True)
@@ -498,9 +513,22 @@ class Inscripcion(models.Model):
 
     @property
     def puede_cancelar(self):
-        """Activa y antes de que empiece la sesion: nadie toma la clase y despues recupera el credito."""
+        """Activa y antes de que empiece la sesion: nadie toma la clase y despues recupera el credito.
+
+        Con menos de 4 h tambien se puede, pero la clase se pierde (a_tiempo_para_cambiar).
+        """
         empezo = self.sesion_id is not None and self.sesion.fecha_hora_inicio <= timezone.now()
         return self.estado in self.ESTADOS_ACTIVOS and not empezo
+
+    @property
+    def a_tiempo_para_cambiar(self):
+        """Faltan 4 h o mas: cancelar o reagendar no cuesta la clase."""
+        return self.sesion_id is None or self.sesion.fecha_hora_inicio - timezone.now() >= self.ANTICIPACION_SIN_COSTO
+
+    @property
+    def puede_reprogramar(self):
+        """Reagendar es directo, pero solo con 4 h o mas de anticipacion."""
+        return self.sesion_id is not None and self.puede_cancelar and self.a_tiempo_para_cambiar
 
     def __str__(self):
         if self.sesion:

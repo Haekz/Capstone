@@ -44,7 +44,7 @@ def finanzas():
     pagados = paquetes_pagados + list(Suscripcion.objects.filter(estado=Suscripcion.ESTADO_ACTIVA)
                                       .values_list('monto', flat=True))
     cobrado_paquetes = sum(paquetes_pagados)
-    dictadas = list(Inscripcion.objects.completadas().select_related('paquete'))
+    dictadas = list(Inscripcion.objects.pagables().select_related('paquete'))  # + canceladas tarde: se pagan
     dictado_de_paquetes = sum(paquetes.valor_clase(i) for i in dictadas if i.paquete_id)
     return {
         'cobrado': sum(pagados),

@@ -193,7 +193,8 @@ class InscripcionService:
         """
         Cancela una inscripción de forma controlada dentro de una transacción,
         marcando su estado como 'cancelada' para liberar el cupo en consultas concurrentes.
-        Si salió de un paquete, la clase vuelve sola: las usadas se cuentan.
+        Si salió de un paquete, la clase vuelve sola: las usadas se cuentan. Con menos
+        de 4 h no vuelve y el profesor cobra (decidido 02-nov).
         """
         exigir_mayor_de_edad(alumno, vinculo)
         with transaction.atomic():
@@ -208,7 +209,8 @@ class InscripcionService:
             if not inscripcion.puede_cancelar:
                 raise InscripcionError("Esta clase ya comenzó o no está activa: no se puede cancelar.")
 
-            inscripcion.estado = Inscripcion.ESTADO_CANCELADA
+            inscripcion.estado = (Inscripcion.ESTADO_CANCELADA if inscripcion.a_tiempo_para_cambiar
+                                  else Inscripcion.ESTADO_CANCELADA_TARDE)
             inscripcion.save(update_fields=['estado'])
             return inscripcion
 
@@ -218,7 +220,7 @@ class InscripcionService:
         """
         Mueve una reserva a otra sesion del MISMO profesor sin gastar otra clase del paquete.
 
-        Reglas: la reserva debe estar activa y no haber empezado; la nueva sesion
+        Reglas: la reserva debe estar activa y faltar 4 h o mas (decidido 02-nov); la nueva sesion
         debe estar programada, ser futura, tener cupo, no estar ya reservada por el
         alumno y caer dentro de la vigencia del paquete (si la reserva sale de uno).
         """
@@ -234,6 +236,8 @@ class InscripcionService:
 
             if inscripcion.sesion_id is None or not inscripcion.puede_cancelar:
                 raise InscripcionError("Esta reserva ya comenzó, no está activa o no tiene una sesión que mover.")
+            if not inscripcion.a_tiempo_para_cambiar:
+                raise InscripcionError("Solo puedes reagendar con al menos 4 horas de anticipación.")
 
             try:
                 nueva = SesionClase.objects.select_for_update().select_related('clase__profesor').get(pk=nueva_sesion_id)

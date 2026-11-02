@@ -315,14 +315,14 @@
                                         </a>
                                         {% endif %}
                                         {# Menores: cancelar y reprogramar lo hace su apoderado (fase 1c). #}
-                                        {% if insc.puede_cancelar and insc.sesion_id and not es_menor %}
+                                        {% if insc.puede_reprogramar and not es_menor %}
                                         <button type="button" class="ap-btn-cancel" title="Reprogramar clase" aria-label="Reprogramar clase" style="border:none; cursor:pointer; background:transparent;"
                                                 onclick="abrirModalHorarios({{ insc.clase.id_clase }}, '{{ insc.clase.asignatura.nombre|escapejs }}', '{{ insc.clase.profesor.user.first_name|escapejs }}', {{ insc.id_inscripcion }})">
                                             <i class="bi bi-calendar2-week"></i>
                                         </button>
                                         {% endif %}
                                         {% if insc.puede_cancelar and not es_menor %}
-                                        <form method="POST" action="{% url 'cancelar_inscripcion' insc.id_inscripcion %}" onsubmit="return confirm('¿Seguro que deseas cancelar tu inscripción? La clase vuelve a tu paquete.')" style="display:inline;">
+                                        <form method="POST" action="{% url 'cancelar_inscripcion' insc.id_inscripcion %}" onsubmit="return confirm('{% if insc.a_tiempo_para_cambiar %}¿Seguro que deseas cancelar tu inscripción? La clase vuelve a tu paquete.{% else %}Faltan menos de 4 horas: si cancelas, pierdes esta clase de tu paquete. ¿Cancelar igual?{% endif %}')" style="display:inline;">
                                             {% csrf_token %}
                                             <button type="submit" class="ap-btn-cancel" title="Cancelar Inscripción" style="border:none; cursor:pointer; background:transparent;">
                                                 <i class="bi bi-trash"></i>
