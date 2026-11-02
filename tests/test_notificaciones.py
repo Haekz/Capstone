@@ -5,6 +5,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from notificaciones.models import LARGO_TEXTO, Notificacion, notificar
+from tests.test_paquetes import RUT_ANA, Escenario
 
 User = get_user_model()
 
@@ -60,3 +61,15 @@ class NotificacionesTests(TestCase):
 
     def test_sin_sesion_no_hay_campanita(self):
         self.assertNotContains(self.client.get(reverse('home')), 'notif-btn')
+
+
+class CampanitaDelAlumnoTests(Escenario):
+    """El panel del alumno tiene su propio encabezado: alli tambien va la campanita (paso A3a)."""
+
+    def test_el_panel_del_alumno_muestra_la_campanita_con_su_contador(self):
+        notificar(self.ana.user, 'Tu profesor cancelo la clase')
+        self.entrar(RUT_ANA)
+        r = self.client.get(reverse('alumno_pag1'))
+        self.assertContains(r, 'class="btn-theme-toggle notif-btn"')
+        self.assertContains(r, 'Notificaciones: 1 sin leer')
+        self.assertContains(r, 'notificaciones/campanita.css')

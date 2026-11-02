@@ -279,27 +279,7 @@ body.dark-mode .menu a.active {
     color: #1a1233;
 }
 
-/* Campanita de notificaciones (notificaciones/, paso B2a) */
-.notif-btn {
-    position: relative;
-    text-decoration: none;
-}
-
-.notif-contador {
-    position: absolute;
-    top: 2px;
-    right: 0;
-    min-width: 18px;
-    height: 18px;
-    padding: 0 4px;
-    border-radius: 9px;
-    background: #c62828; /* blanco sobre este rojo: 5.6:1 (WCAG AA) */
-    color: #ffffff;
-    font-size: 0.7rem;
-    font-weight: 700;
-    line-height: 18px;
-    text-align: center;
-}
+/* Campanita de notificaciones: notificaciones/static/notificaciones/campanita.css */
 
 .notif-lista {
     list-style: none;

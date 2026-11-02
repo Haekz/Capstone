@@ -17,6 +17,7 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{% static 'alumnos/css/alumn_1.css' %}?v=2.1">
     <link rel="stylesheet" href="{% static 'alumnos/css/avisos.css' %}">
+    <link rel="stylesheet" href="{% static 'notificaciones/campanita.css' %}">
     {% include 'alumnos/includes/sin_copia_atras.html' %}
 </head>
 <body id="portal-alumno">
@@ -153,6 +154,7 @@
             </div>
 
             <div class="topbar-right">
+                {% include 'notificaciones/_campanita.html' with clase_boton='btn-theme-toggle' %}
                 <!-- Modo día/noche -->
                 <button onclick="toggleTheme()" class="btn-theme-toggle" id="theme-toggler" aria-label="Cambiar modo día/noche">
                     <i class="bi bi-moon-stars-fill" id="theme-icon"></i>

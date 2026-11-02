@@ -1,0 +1,6 @@
+{# Campanita con contador (pasos B2a y A3a). Cada pagina pasa su estilo de boton: clase_boton y clase_icono. #}
+<a href="{% url 'mis_notificaciones' %}" class="{{ clase_boton }} notif-btn"
+    aria-label="Notificaciones{% if notificaciones_sin_leer %}: {{ notificaciones_sin_leer }} sin leer{% endif %}">
+    <i class="bi bi-bell-fill {{ clase_icono }}" aria-hidden="true"></i>
+    {% if notificaciones_sin_leer %}<span class="notif-contador" aria-hidden="true">{{ notificaciones_sin_leer }}</span>{% endif %}
+</a>

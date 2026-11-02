@@ -37,11 +37,7 @@
             </button>
 
             {% if usuario_sesion.autenticado %}
-                <a href="{% url 'mis_notificaciones' %}" class="theme-btn notif-btn"
-                    aria-label="Notificaciones{% if notificaciones_sin_leer %}: {{ notificaciones_sin_leer }} sin leer{% endif %}">
-                    <i class="bi bi-bell-fill theme-icon" aria-hidden="true"></i>
-                    {% if notificaciones_sin_leer %}<span class="notif-contador" aria-hidden="true">{{ notificaciones_sin_leer }}</span>{% endif %}
-                </a>
+                {% include 'notificaciones/_campanita.html' with clase_boton='theme-btn' clase_icono='theme-icon' %}
                 <div class="cuenta desktop-only" id="cuenta">
                     <button type="button" class="cuenta-avatar" id="cuenta-btn"
                         aria-haspopup="true" aria-expanded="false" aria-controls="cuenta-menu"
