@@ -35,5 +35,6 @@ def vincular_estudiante(request):
         boton='Pedir el vínculo', volver_url=reverse(APODERADO.ruta_portal),
         intro=('Si otra persona ya registró al estudiante, escribe su RUT y adjunta el documento que acredita tu '
                'vínculo. Hasta que nuestro equipo lo verifique no verás datos del estudiante ni podrás actuar por él. '
-               'Los apoderados que ya están vinculados recibirán un aviso, sin tus datos.'),
+               'Los apoderados que ya están vinculados, y el estudiante si tiene 14 años o más y correo propio, '
+               'recibirán un aviso, sin tus datos.'),
     )

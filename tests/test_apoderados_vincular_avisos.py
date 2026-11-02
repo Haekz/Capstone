@@ -1,5 +1,6 @@
 """Aviso al apoderado ya vinculado cuando otra persona pide vincularse (opcion A, 02-nov). Datos ficticios."""
 
+from django.contrib.auth import get_user_model
 from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
@@ -9,9 +10,11 @@ from soporte.models import Ticket
 from tests.test_apoderados import RUT, crear_agente, crear_apoderado, entrar, entrar_soporte
 from tests.test_apoderados_segundo_apoderado import RUT_SEGUNDO, vincular_segundo
 from tests.test_apoderados_vincular import RUT_ADULTO, datos_vinculo
-from tests.test_apoderados_vinculos import crear_menor_vinculado
+from tests.test_apoderados_vinculos import crear_menor_vinculado, hace_anios
 
+User = get_user_model()
 RUT_TERCERO = '77777777-7'
+CORREO_MENOR = 'menor.ficticio@demo.cl'
 
 
 class AvisoAlApoderadoVinculadoTests(TestCase):
@@ -54,6 +57,21 @@ class AvisoAlApoderadoVinculadoTests(TestCase):
     def test_quien_pide_no_recibe_el_aviso(self):
         self.client.post(self.url, datos_vinculo())
         self.assertNotIn(self.padre.user.email, [c.to[0] for c in mail.outbox])
+
+    def test_el_adolescente_con_correo_propio_tambien_recibe_un_aviso_sin_datos_de_quien_pidio(self):
+        User.objects.filter(pk=self.vinculo_madre.alumno.user_id).update(fecha_nacimiento=hace_anios(15),
+                                                                         email=CORREO_MENOR)
+        self.client.post(self.url, datos_vinculo())
+        [correo] = [c for c in mail.outbox if c.to == [CORREO_MENOR]]
+        self.assertIn('ser tu apoderado', correo.subject)
+        for privado in (self.padre.nombre, self.padre.user.rut, self.padre.user.email):
+            self.assertNotIn(privado, correo.subject + correo.body)
+
+    def test_un_menor_de_14_no_recibe_el_aviso_aunque_tenga_correo(self):
+        User.objects.filter(pk=self.vinculo_madre.alumno.user_id).update(fecha_nacimiento=hace_anios(12),
+                                                                         email=CORREO_MENOR)
+        self.client.post(self.url, datos_vinculo())
+        self.assertEqual([c.to for c in mail.outbox], [[self.madre.user.email]])
 
     def test_si_no_hay_apoderados_verificados_no_se_envia_nada(self):
         Vinculo.objects.filter(pk=self.vinculo_madre.pk).update(estado=Vinculo.PENDIENTE)
