@@ -1,0 +1,86 @@
+{# Buzon real del alumno adulto (paso C1b-2): mismas clases que la maqueta que reemplaza #}
+<div class="ap-mb-25">
+    <h2><i class="bi bi-chat-text-fill ap-text-primary"></i> Buzón de Dudas</h2>
+    <p class="ap-view-sub">Coordina tus clases con tus profesores. No compartas teléfonos, correos ni direcciones: todo se conversa aquí. Los mensajes se eliminan tras 90 días sin actividad.</p>
+</div>
+
+<div class="inbox-layout">
+    <!-- Panel Izquierdo: Lista de Chats -->
+    <div class="chat-sidebar">
+        <div class="chat-sidebar-header">
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <input type="text" id="chat-search-input" placeholder="Buscar profesor..." aria-label="Buscar profesor" oninput="filterChatContacts()">
+        </div>
+        <div class="chat-contacts-list" id="chat-contacts-list">
+            {% for c in bandeja %}
+            <a href="?c={{ c.pk }}" class="chat-contact-item{% if c == bandeja_activa %} active{% endif %}{% if c.sin_leer %} unread{% endif %}"
+               style="text-decoration: none; color: inherit;"{% if c == bandeja_activa %} aria-current="true"{% endif %}>
+                <div class="contact-avatar" aria-hidden="true">{{ c.nombre_para_cliente|slice:":1"|upper }}</div>
+                <div class="contact-info">
+                    <div class="contact-name-row">
+                        <span class="contact-name">{{ c.nombre_para_cliente }}{% if c.sin_leer %} <span class="visually-hidden">(mensajes sin leer)</span>{% endif %}</span>
+                        <span class="contact-time">{{ c.actividad|date:"d/m H:i" }}</span>
+                    </div>
+                    <div class="contact-meta">{{ c.profesor.especialidad.nombre|default:"" }}</div>
+                    <div class="contact-last-msg">{{ c.ultimo_texto|default:"Sin mensajes todavía"|truncatechars:60 }}</div>
+                </div>
+            </a>
+            {% endfor %}
+            {% for p in bandeja_nuevos %}
+            <form method="post" action="{% url 'mensajes_alumno_abrir' p.pk %}" class="chat-contact-item">
+                {% csrf_token %}
+                <div class="contact-avatar" aria-hidden="true">{{ p.user.first_name|slice:":1"|upper }}</div>
+                <div class="contact-info">
+                    <div class="contact-name-row"><span class="contact-name">{{ p.user.first_name }}</span></div>
+                    <div class="contact-meta">{{ p.especialidad.nombre|default:"" }}</div>
+                    <div class="contact-last-msg">Aún no han conversado</div>
+                </div>
+                <button type="submit" class="btn-principal" style="padding: 6px 12px; font-size: 0.8rem;" aria-label="Escribir a {{ p.user.first_name }}">Escribir</button>
+            </form>
+            {% endfor %}
+            {% if not bandeja and not bandeja_nuevos %}
+            <p style="padding: 15px;">Podrás escribir a un profesor cuando tengas una clase reservada o un paquete activo con él.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Panel Derecho: Conversación activa -->
+    <div class="chat-main">
+        {% if bandeja_activa %}
+        <div class="chat-header" id="chat-active-header">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div class="contact-avatar" style="width: 42px; height: 42px; font-size: 0.95rem;" aria-hidden="true">{{ bandeja_activa.nombre_para_cliente|slice:":1"|upper }}</div>
+                <div>
+                    <h4 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text);">{{ bandeja_activa.nombre_para_cliente }}</h4>
+                    <span style="font-size: 0.8rem;">{{ bandeja_activa.profesor.especialidad.nombre|default:"" }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="chat-messages-container" id="chat-messages-container" role="log" aria-live="polite" aria-label="Mensajes con {{ bandeja_activa.nombre_para_cliente }}">
+            {% for m in bandeja_mensajes %}
+            <div class="message-row {% if m.autor_id == alumno.user_id %}sent{% else %}received{% endif %}">
+                <div class="message-bubble">
+                    <p>{{ m.texto }}</p>
+                    <span class="msg-time">{{ m.creado|date:"d/m H:i" }}</span>
+                </div>
+            </div>
+            {% empty %}
+            <p style="padding: 20px;">Aún no hay mensajes. Escribe el primero.</p>
+            {% endfor %}
+        </div>
+        {% if bandeja_error %}
+        <p role="alert" style="margin: 0; padding: 10px 16px; background: #fdecea; color: #8a1c1c; font-weight: 600;">{{ bandeja_error }}</p>
+        {% endif %}
+        <form class="chat-input-area" id="chat-send-form" method="post" action="{% url 'mensajes_alumno_enviar' bandeja_activa.pk %}">
+            {% csrf_token %}
+            <input type="text" id="chat-msg-input" name="texto" placeholder="Escribe tu consulta académica..." aria-label="Tu mensaje" required maxlength="1000" autocomplete="off">
+            <button type="submit" class="btn-chat-send" aria-label="Enviar mensaje"><i class="bi bi-send-fill" aria-hidden="true"></i></button>
+        </form>
+        {% else %}
+        {% if bandeja_error %}
+        <p role="alert" style="margin: 0; padding: 10px 16px; background: #fdecea; color: #8a1c1c; font-weight: 600;">{{ bandeja_error }}</p>
+        {% endif %}
+        <p style="padding: 20px;">Elige una conversación de la lista.</p>
+        {% endif %}
+    </div>
+</div>

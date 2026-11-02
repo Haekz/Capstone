@@ -1834,6 +1834,11 @@ body.dark-mode .chat-sidebar-header input {
     border-left: 4px solid var(--primary);
 }
 
+/* Mensajes sin leer (paso C1b): igual que en el buzón del profesor */
+.chat-contact-item.unread .contact-name {
+    font-weight: 800;
+}
+
 .contact-avatar {
     width: 40px;
     height: 40px;

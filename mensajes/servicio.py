@@ -26,14 +26,18 @@ class MensajeError(ValidationError):
     pass
 
 
-def _tiene_relacion(alumno, profesor):
-    reserva = Inscripcion.objects.filter(alumno=alumno, clase__profesor=profesor,
-                                         estado__in=Inscripcion.ESTADOS_ACTIVOS).exists()
-    return reserva or PaqueteClases.objects.vigentes().filter(alumno=alumno, profesor=profesor).exists()
+def ids_profesores_con_relacion(alumno):
+    """Profesores con quienes el alumno tiene una reserva activa o un paquete vigente."""
+    con_reserva = Inscripcion.objects.filter(alumno=alumno, estado__in=Inscripcion.ESTADOS_ACTIVOS)
+    con_paquete = PaqueteClases.objects.vigentes().filter(alumno=alumno)
+    ids = set(con_reserva.values_list('clase__profesor_id', flat=True))
+    ids.update(con_paquete.values_list('profesor_id', flat=True))
+    ids.discard(None)  # paquete cuyo profesor ya no existe
+    return ids
 
 
 def _exigir_relacion(alumno, profesor):
-    if not _tiene_relacion(alumno, profesor):
+    if profesor.pk not in ids_profesores_con_relacion(alumno):
         raise MensajeError('Solo pueden escribirse quienes tienen una clase reservada o un paquete activo.')
 
 
@@ -55,7 +59,8 @@ def marcar_visto(user, conversacion):
 def _avisar(conversacion, autor):
     habla_el_cliente = autor.pk == conversacion.cliente_id
     destinatario = conversacion.profesor.user if habla_el_cliente else conversacion.cliente
-    enlace = f"{reverse('panel_profesor')}?c={conversacion.pk}" if habla_el_cliente else ''  # el del alumno: C1b-2
+    enlace = (f"{reverse('panel_profesor')}?c={conversacion.pk}" if habla_el_cliente
+              else f"{reverse('alumno_pag1')}?c={conversacion.pk}")  # C2: el del apoderado
     notificar(destinatario, f'{autor.first_name} te escribió un mensaje.', enlace)
     enviar_correo('Tienes un mensaje nuevo', PLANTILLA_CORREO, {'nombre': destinatario.first_name}, destinatario.email)
 
