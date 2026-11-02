@@ -6,13 +6,12 @@ Cubre:
    - Confirmación de pago aprobado por pasarela.
    - Rechazo de pago por pasarela (status FAILED / response_code != 0).
    - Anulación de pago por el usuario (TBK_TOKEN).
-   - Prevención de ataques de repetición (Replay Attack) mediante extracción de orden (session.pop).
+   - Prevención de ataques de repetición (Replay Attack): el pedido vive en la base, no en la sesión.
    - Acceso no autorizado sin tokens que redirige a planes.
 2. Flujo funcional de registro, autenticación y cierre de sesión de usuarios.
 3. Accesos y visualizaciones públicas sin fugas de datos.
 """
 
-import json
 from unittest.mock import MagicMock, patch
 
 from django.contrib.auth import get_user_model
@@ -38,28 +37,9 @@ class SeguridadPagoWebpayTests(TestCase):
         Alumno.objects.create(user=user, nivel_educacion='media')
         self.client.post(reverse('login'), {'username': '44444444-4', 'password': 'Clave12345!'})
 
-        # Carrito válido de prueba
-        self.carrito_valido = [
-            {
-                'id': 'plan_medio',
-                'titulo': 'Plan Medio',
-                'precio': '25000',
-                'periodo': 'mensual',
-                'cantidad': 1
-            }
-        ]
-        self.carrito_json = json.dumps(self.carrito_valido)
-
     @patch('alumnos.views._tx')
     def test_05_confirmacion_pago_aprobado_webpay(self, mock_tx):
         """Transacción aprobada por Webpay (response_code=0, status=AUTHORIZED) renderiza éxito."""
-        session = self.client.session
-        session['orden_pendiente'] = {
-            'buy_order': 'LB7778889',
-            'carrito': self.carrito_json
-        }
-        session.save()
-
         instancia_mock = MagicMock()
         instancia_mock.commit.return_value = {
             'response_code': 0,
@@ -83,13 +63,6 @@ class SeguridadPagoWebpayTests(TestCase):
     @patch('alumnos.views._tx')
     def test_06_confirmacion_pago_rechazado_por_transbank(self, mock_tx):
         """Transacción rechazada por el banco (response_code != 0) renderiza aprobado=False."""
-        session = self.client.session
-        session['orden_pendiente'] = {
-            'buy_order': 'LB7778889',
-            'carrito': self.carrito_json
-        }
-        session.save()
-
         instancia_mock = MagicMock()
         instancia_mock.commit.return_value = {
             'response_code': -1,
@@ -106,13 +79,6 @@ class SeguridadPagoWebpayTests(TestCase):
 
     def test_07_confirmacion_pago_anulado_por_usuario_con_tbk_token(self):
         """Si el usuario cancela en la pasarela, Webpay envía TBK_TOKEN y se marca anulado=True."""
-        session = self.client.session
-        session['orden_pendiente'] = {
-            'buy_order': 'LB7778889',
-            'carrito': self.carrito_json
-        }
-        session.save()
-
         resp = self.client.post(self.url_confirmacion, {'TBK_TOKEN': 'token_anulacion_555'})
         self.assertEqual(resp.status_code, 200)
         self.assertTemplateUsed(resp, 'alumnos/confirmacion.html')
