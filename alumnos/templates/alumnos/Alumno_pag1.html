@@ -180,6 +180,7 @@
                                     Puedes revisar el catálogo y entrar a las clases que reserve tu apoderado. Las reservas, cancelaciones y compras las hace tu apoderado desde su cuenta.
                                     Si algo en una clase te hizo sentir incómodo o tienes un problema, cuéntaselo a tu apoderado: él puede pedir ayuda a nuestro equipo de soporte.
                                     {% if tiene_solicitud %}<a href="{% url 'adolescente_solicitud' %}">Ver mi solicitud de apoderado</a>{% endif %}</p>
+                                {% include 'alumnos/includes/linea_ayuda_menor.html' %}
                                 {% endif %}
                             </div>
                             <button class="btn-principal ap-btn-setup" id="dashboard-setup-btn">Configurar Intereses</button>
