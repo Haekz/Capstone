@@ -5,6 +5,7 @@ Encapsula la lógica transaccional de reservas y matriculación con control estr
 import logging
 from django.db import transaction, IntegrityError
 from django.utils import timezone
+from . import avisos_profesor
 from .models import Alumno, Clase, SesionClase, Inscripcion, PaqueteClases
 from .utils import es_menor
 from .exceptions import (
@@ -134,6 +135,7 @@ class InscripcionService:
                     "El alumno ya está inscrito en esta sesión (forzado por base de datos)."
                 ) from exc
 
+            transaction.on_commit(lambda: avisos_profesor.reserva(inscripcion))
             return inscripcion
 
     @classmethod
@@ -212,6 +214,7 @@ class InscripcionService:
             inscripcion.estado = (Inscripcion.ESTADO_CANCELADA if inscripcion.a_tiempo_para_cambiar
                                   else Inscripcion.ESTADO_CANCELADA_TARDE)
             inscripcion.save(update_fields=['estado'])
+            transaction.on_commit(lambda: avisos_profesor.cancelacion(inscripcion))
             return inscripcion
 
     @classmethod
@@ -264,10 +267,12 @@ class InscripcionService:
             if ocupados >= nueva.cupo_maximo:
                 raise CupoAgotadoError("No quedan cupos disponibles para esta sesión.")
 
+            sesion_anterior = inscripcion.sesion
             inscripcion.sesion = nueva
             inscripcion.clase = nueva.clase
             try:
                 inscripcion.save(update_fields=['sesion', 'clase'])
             except IntegrityError as exc:
                 raise InscripcionDuplicadaError("Ya tienes una reserva en esa sesión.") from exc
+            transaction.on_commit(lambda: avisos_profesor.reagenda(inscripcion, sesion_anterior))
             return inscripcion
