@@ -75,3 +75,25 @@ class Mensaje(models.Model):
 
     def __str__(self):
         return self.texto[:40]
+
+
+class ReporteConversacion(models.Model):
+    """Un participante reporto la conversacion (paso C1c): abre un ticket de soporte, que es la unica
+    via para leerla. Mientras exista un reporte, la conversacion no se borra sola (C1d)."""
+    conversacion = models.ForeignKey(Conversacion, on_delete=models.CASCADE, related_name='reportes')
+    ticket = models.OneToOneField('soporte.Ticket', on_delete=models.CASCADE, related_name='reporte_conversacion')
+    reportado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='+')
+    creado = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'Conversacion {self.conversacion_id} reportada (ticket {self.ticket_id})'
+
+
+class AccesoConversacion(models.Model):
+    """Quien de soporte abrio una conversacion reportada, y cuando. Sin agente: su cuenta ya no existe."""
+    reporte = models.ForeignKey(ReporteConversacion, on_delete=models.CASCADE, related_name='accesos')
+    agente = models.ForeignKey('soporte.AgenteSoporte', on_delete=models.SET_NULL, null=True, related_name='+')
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-fecha', '-pk']

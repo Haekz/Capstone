@@ -54,6 +54,7 @@
                     <h4 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text);">{{ bandeja_activa.nombre_para_cliente }}</h4>
                     <span style="font-size: 0.8rem;">{{ bandeja_activa.profesor.especialidad.nombre|default:"" }}</span>
                 </div>
+                <a href="{% url 'mensajes_reportar' bandeja_activa.pk %}" style="margin-left: auto; font-size: 0.85rem;" aria-label="Reportar la conversación con {{ bandeja_activa.nombre_para_cliente }}">Reportar</a>
             </div>
         </div>
         <div class="chat-messages-container" id="chat-messages-container" role="log" aria-live="polite" aria-label="Mensajes con {{ bandeja_activa.nombre_para_cliente }}">

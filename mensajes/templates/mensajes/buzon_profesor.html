@@ -37,6 +37,7 @@
                 <div style="display: flex; align-items: center; gap: 12px;">
                     <div class="profe-chat-avatar" style="width: 40px; height: 40px; font-size: 0.9rem;" aria-hidden="true">{{ buzon_activa.nombre_para_profesor|slice:":1"|upper }}</div>
                     <h2 style="margin: 0; font-size: 1rem; font-weight: 700; color: var(--text);">{{ buzon_activa.nombre_para_profesor }}</h2>
+                    <a href="{% url 'mensajes_reportar' buzon_activa.pk %}" style="margin-left: auto; font-size: 0.85rem;" aria-label="Reportar la conversación con {{ buzon_activa.nombre_para_profesor }}">Reportar</a>
                 </div>
             </div>
             <div class="profe-chat-history" id="profe-chat-messages-container" role="log" aria-live="polite" aria-label="Mensajes con {{ buzon_activa.nombre_para_profesor }}">

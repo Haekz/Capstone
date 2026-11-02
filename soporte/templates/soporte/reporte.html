@@ -25,6 +25,9 @@
     <div style="padding:0 18px 18px;">
         <h2 style="font-size:1rem;">Lo que nos contó</h2>
         <p>{{ ticket.descripcion|linebreaksbr }}</p>
+        {% if ticket.reporte_conversacion %}
+        <p><a href="{% url 'mensajes_soporte_leer' ticket.pk %}"><i class="bi bi-chat-left-text" aria-hidden="true"></i> Leer la conversación reportada</a> <small>(queda registrado quién la abre)</small></p>
+        {% endif %}
         <h2 style="font-size:1rem;">Conversación</h2>
         {% include 'soporte/_conversacion.html' with soporte_ve=True %}
         {% if form %}

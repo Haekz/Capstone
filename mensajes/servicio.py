@@ -4,6 +4,8 @@
 - Un menor nunca escribe ni abre conversaciones: hablara su apoderado (C2).
 - Aviso al otro lado (campanita + correo sin el contenido) solo cuando cambia el turno:
   si alguien manda varios seguidos, no se llena de avisos.
+- Reportar (C1c): cualquiera de los dos abre un ticket de soporte; solo soporte puede leerla desde el
+  ticket y cada lectura queda registrada.
 """
 
 from django.core.exceptions import ValidationError
@@ -15,9 +17,11 @@ from alumnos.correo import enviar as enviar_correo
 from alumnos.models import Inscripcion, PaqueteClases
 from alumnos.utils import es_menor
 from notificaciones.models import notificar
+from soporte.models import Ticket
+from soporte.tickets import abrir_reporte
 
 from .filtro import exigir_sin_contacto
-from .models import LARGO_MAX, Conversacion, Mensaje
+from .models import LARGO_MAX, AccesoConversacion, Conversacion, Mensaje, ReporteConversacion
 
 PLANTILLA_CORREO = 'mensajes/correo_nuevo_mensaje.txt'
 
@@ -82,3 +86,24 @@ def enviar(autor, conversacion, texto):
         if anterior is None or anterior.autor_id != autor.pk:
             transaction.on_commit(lambda: _avisar(conversacion, autor))
     return mensaje
+
+
+def reportar(usuario, conversacion, descripcion):
+    """Un participante reporta la conversacion: abre un ticket de Conducta (aviso inmediato a los
+    lideres, plazo de 2 dias habiles). Quien reporta cuenta con sus propias palabras; el texto de la
+    conversacion no se copia al ticket. Uno abierto por persona: no se llena soporte con repetidos."""
+    if not conversacion.es_participante(usuario):
+        raise MensajeError('No puedes reportar esta conversación.')
+    with transaction.atomic():
+        ya = ReporteConversacion.objects.filter(conversacion=conversacion, reportado_por=usuario,
+                                                ticket__estado=Ticket.ABIERTO)
+        if ya.exists():
+            raise MensajeError('Ya reportaste esta conversación: soporte la está revisando.')
+        ticket = abrir_reporte(usuario, Ticket.CONDUCTA, f'Conversación #{conversacion.pk} reportada', descripcion)
+        return ReporteConversacion.objects.create(conversacion=conversacion, ticket=ticket, reportado_por=usuario)
+
+
+def leer_reportada(reporte, agente):
+    """Soporte abre la conversacion reportada: queda registrado quien y cuando. Devuelve sus mensajes."""
+    AccesoConversacion.objects.create(reporte=reporte, agente=agente)
+    return list(reporte.conversacion.mensajes.select_related('autor'))
