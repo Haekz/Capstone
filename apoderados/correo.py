@@ -70,6 +70,18 @@ def avisar_apoderados(inscripcion, accion, autor):
                 for correo in _correos_de_apoderados(inscripcion.alumno)])
 
 
+def avisar_segundo_apoderado(vinculo):
+    """Otra persona pidio ser apoderado de un estudiante que ya tiene apoderados verificados: se les avisa.
+
+    Sin decir quien es ni su parentesco ni su contacto (lo verifica soporte), y sin dar a los apoderados
+    la posibilidad de vetarla: es un aviso, no un permiso.
+    """
+    estudiante = vinculo.alumno.user.first_name
+    return all([_enviar(f'Nueva solicitud de vínculo con {estudiante}', 'apoderados/correo_segundo_apoderado.txt',
+                        {'estudiante': estudiante}, correo)
+                for correo in _correos_de_apoderados(vinculo.alumno)])
+
+
 def avisar_calificacion_baja(inscripcion):
     """D21: el estudiante menor califico mal una clase. Sin el comentario: que lo
     conversen, y si hubo un problema el apoderado abre un ticket."""

@@ -12,6 +12,7 @@ from django.views.decorators.cache import never_cache
 from alumnos.decorators import apoderado_required
 from alumnos.roles import APODERADO
 
+from .correo import avisar_segundo_apoderado
 from .forms import VincularEstudianteForm
 from .views import _apoderado_en_sesion, _formulario, redirigir_si_no_verificado
 
@@ -25,7 +26,7 @@ def vincular_estudiante(request):
         return sin_verificar
     form = VincularEstudianteForm(request.POST or None, request.FILES or None, apoderado=apoderado)
     if request.method == 'POST' and form.is_valid():
-        form.save()
+        avisar_segundo_apoderado(form.save())
         messages.success(request, 'Recibimos tu solicitud. Nuestro equipo de soporte revisará el documento que '
                                   'adjuntaste para verificar el vínculo.')
         return redirect(APODERADO.ruta_portal)
@@ -33,5 +34,6 @@ def vincular_estudiante(request):
         request, form, titulo='Vincularme a un estudiante ya registrado', subtitulo='Datos del estudiante',
         boton='Pedir el vínculo', volver_url=reverse(APODERADO.ruta_portal),
         intro=('Si otra persona ya registró al estudiante, escribe su RUT y adjunta el documento que acredita tu '
-               'vínculo. Hasta que nuestro equipo lo verifique no verás datos del estudiante ni podrás actuar por él.'),
+               'vínculo. Hasta que nuestro equipo lo verifique no verás datos del estudiante ni podrás actuar por él. '
+               'Los apoderados que ya están vinculados recibirán un aviso, sin tus datos.'),
     )

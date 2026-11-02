@@ -1,0 +1,11 @@
+Hola,
+
+Alguien pidió ser apoderado de {{ estudiante }} en LBWUS.
+
+Todavía no tiene ningún acceso: nuestro equipo de soporte revisará su identidad y el documento que acredita su vínculo con {{ estudiante }} antes de habilitarlo. Tu propio vínculo no cambia.
+
+No tienes que hacer nada. Si no esperabas esta solicitud, o tienes dudas sobre quién puede ser apoderado de {{ estudiante }}, escríbenos desde la página de contacto de LBWUS y lo revisamos.
+
+Por seguridad no podemos compartir los datos de quien hizo la solicitud.
+
+Equipo LBWUS

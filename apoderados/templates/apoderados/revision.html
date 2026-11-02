@@ -64,7 +64,8 @@
             <tbody>
                 {% for v in vinculos_pendientes %}
                 <tr>
-                    <td><strong>{{ v.alumno.user.first_name }}</strong><br><small>RUT {{ v.alumno.user.rut }} · Nacimiento: {{ v.alumno.user.fecha_nacimiento|date:"d-m-Y" }}</small></td>
+                    <td><strong>{{ v.alumno.user.first_name }}</strong><br><small>RUT {{ v.alumno.user.rut }} · Nacimiento: {{ v.alumno.user.fecha_nacimiento|date:"d-m-Y" }}</small>
+                        {% if v.por_rut %}<br><span class="badge">Pedido con el RUT</span> <small>El estudiante ya estaba registrado por otra persona: verifica con especial cuidado el parentesco.</small>{% endif %}</td>
                     <td>{{ v.apoderado.nombre }} ({{ v.get_parentesco_display }})<br><small>RUT {{ v.apoderado.user.rut }}</small></td>
                     <td><small>Declaración v{{ v.version_declaracion }} aceptada el {{ v.declaracion_aceptada|date:"d-m-Y H:i" }}</small>
                         {% for inv in v.invitaciones.all %}<br><small>El estudiante invitó a {{ inv.correo }}</small>{% endfor %}
