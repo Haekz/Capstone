@@ -63,6 +63,7 @@ def dashboard_admin(request):
         'todas_solicitudes_retiro': todas_solicitudes_retiro,
         'finanzas': metricas.finanzas(),  # montos reales (paso 8); el template les da formato
         'grafico_registros': metricas.grafico(metricas.registros(periodo)),
+        'grafico_personas': metricas.grafico(metricas.personas(periodo)),  # mismo periodo (H8 + H9)
         'periodo': periodo,
         'periodo_nombre': metricas.PERIODOS[periodo],
         'periodos': metricas.PERIODOS,

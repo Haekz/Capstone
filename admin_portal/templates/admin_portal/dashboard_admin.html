@@ -163,39 +163,23 @@
                             <div class="panel-body">
                                 <div class="chart-container">
                                     <!-- Alumnos y profesores registrados por período (admin_portal/metricas.py, H9) -->
-                                    <svg class="chart-svg" viewBox="0 0 600 220" role="img" aria-labelledby="grafico-registros-titulo">
-                                        <title id="grafico-registros-titulo">Alumnos y profesores registrados en los últimos 5 {{ periodo_nombre }}: {{ grafico_registros.resumen }}</title>
-                                        <!-- Líneas de cuadrícula horizontal -->
-                                        <line x1="50" y1="30" x2="550" y2="30" stroke="var(--border)" stroke-dasharray="4,4" />
-                                        <line x1="50" y1="80" x2="550" y2="80" stroke="var(--border)" stroke-dasharray="4,4" />
-                                        <line x1="50" y1="130" x2="550" y2="130" stroke="var(--border)" stroke-dasharray="4,4" />
-                                        <line x1="50" y1="180" x2="550" y2="180" stroke="var(--border)" />
+                                    {% include 'admin_portal/includes/grafico_lineas.html' with grafico=grafico_registros id='grafico-registros' descripcion='Alumnos y profesores registrados en los últimos 5 '|add:periodo_nombre %}
+                                </div>
+                            </div>
+                        </div>
 
-                                        <!-- Valores del eje Y -->
-                                        {% for marca in grafico_registros.marcas %}
-                                        <text x="25" y="{{ marca.y|add:4 }}" fill="var(--text-muted)" font-size="11">{{ marca.valor }}</text>
-                                        {% endfor %}
-
-                                        <!-- Área sombreada debajo de la línea -->
-                                        <path class="chart-area-path" d="{{ grafico_registros.area }}" fill="url(#chart-gradient)" opacity="0.15" />
-
-                                        <!-- Línea del gráfico continua -->
-                                        <path class="chart-line-path" d="{{ grafico_registros.linea }}" fill="none" stroke="var(--primary)" stroke-width="4" stroke-linecap="round" />
-
-                                        <!-- Puntos (al pasar el mouse muestran el mes y la cantidad) y meses del eje X -->
-                                        {% for punto in grafico_registros.puntos %}
-                                        <circle class="chart-point" cx="{{ punto.x }}" cy="{{ punto.y }}" r="6" fill="var(--primary)" stroke="var(--bg-card)" stroke-width="2"><title>{{ punto.etiqueta }}: {{ punto.cantidad }}</title></circle>
-                                        <text x="{{ punto.x }}" y="204" fill="var(--text-muted)" font-size="11" text-anchor="middle">{{ punto.etiqueta }}</text>
-                                        {% endfor %}
-
-                                        <!-- Definición del degradado -->
-                                        <defs>
-                                            <linearGradient id="chart-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                                                <stop offset="0%" stop-color="var(--primary)" />
-                                                <stop offset="100%" stop-color="transparent" />
-                                            </linearGradient>
-                                        </defs>
-                                    </svg>
+                        <!-- Personas que entran: el mismo período del gráfico de registros (H8 + H9) -->
+                        <div class="panel">
+                            <div class="panel-header">
+                                <span class="panel-title">
+                                    <i class="bi bi-people-fill" aria-hidden="true"></i>
+                                    Personas que entran por día (últimos 5 {{ periodo_nombre }})
+                                </span>
+                                {% if periodo != 'dia' %}<small style="color: var(--text-muted);">Promedio por día</small>{% endif %}
+                            </div>
+                            <div class="panel-body">
+                                <div class="chart-container">
+                                    {% include 'admin_portal/includes/grafico_lineas.html' with grafico=grafico_personas id='grafico-personas' descripcion='Personas por día que iniciaron sesión en los últimos 5 '|add:periodo_nombre %}
                                 </div>
                             </div>
                         </div>

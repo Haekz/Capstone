@@ -6,6 +6,7 @@ LBWUS gana su comision solo por las clases ya dictadas: es la misma cuenta que
 el saldo del profesor (user_profesor.views.calcular_saldos), vista desde LBWUS.
 
 Tambien arma el grafico de registros nuevos por mes (antes, puntos fijos de Feb a Jun),
+el de personas que entran por dia (promedio en meses y trimestres),
 la pagina de planes (antes, tres planes por nivel que no existen) y las cifras de
 soporte (P13: cuantos tickets y en cuanto tiempo, nunca su contenido).
 """
@@ -20,6 +21,8 @@ from alumnos import paquetes
 from alumnos.models import Alumno, Inscripcion, PaqueteClases, Profesor, SolicitudRetiro, Suscripcion
 from soporte.models import Ticket
 from user_profesor.views import calcular_saldos  # el mismo saldo que ve cada profesor
+
+from .models import IngresoDiario
 
 MESES = ('Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic')
 PUNTOS_GRAFICO = 5
@@ -99,6 +102,30 @@ def registros(periodo='mes', hoy=None, puntos=PUNTOS_GRAFICO):
         for fecha in modelo.objects.filter(user__date_joined__gte=desde).values_list('user__date_joined', flat=True):
             conteo[_periodo(timezone.localdate(fecha), periodo)] += 1  # dia de Chile, no de UTC
     return [(_etiqueta(numero, periodo), conteo[numero]) for numero in numeros]
+
+
+def personas(periodo='mes', hoy=None, puntos=PUNTOS_GRAFICO):
+    """[(etiqueta, personas)] que iniciaron sesion por periodo (H8 + H9, decidido 02-nov).
+
+    Por dia, las personas distintas de ese dia (todos los roles). Por mes o trimestre, el
+    promedio por dia: sumar los dias contaria varias veces a quien entra seguido. Solo cuentan
+    los dias desde el primer registro (antes no se contaba, no es que nadie entrara) y hasta hoy.
+    """
+    hoy = hoy or timezone.localdate()
+    actual = _periodo(hoy, periodo)
+    numeros = range(actual - puntos + 1, actual + 1)
+    primero = IngresoDiario.objects.order_by('fecha').values_list('fecha', flat=True).first()
+    por_periodo = Counter()
+    for fecha, cantidad in IngresoDiario.objects.filter(fecha__gte=_inicio(numeros[0], periodo), fecha__lte=hoy) \
+            .values_list('fecha', 'personas'):
+        por_periodo[_periodo(fecha, periodo)] += cantidad
+    serie = []
+    for numero in numeros:
+        desde = max(_inicio(numero, periodo), primero or hoy + timedelta(days=1))
+        hasta = min(_inicio(numero + 1, periodo) - timedelta(days=1), hoy)
+        dias = (hasta - desde).days + 1
+        serie.append((_etiqueta(numero, periodo), round(por_periodo[numero] / dias) if dias > 0 else 0))
+    return serie
 
 
 def grafico(serie):

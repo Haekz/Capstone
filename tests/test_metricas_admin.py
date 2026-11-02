@@ -12,7 +12,8 @@ from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from admin_portal.metricas import finanzas, grafico, planes, registros
+from admin_portal.metricas import finanzas, grafico, personas, planes, registros
+from admin_portal.models import IngresoDiario
 from alumnos import paquetes
 from alumnos.models import Genero, Inscripcion, PaqueteClases, SolicitudRetiro, Tutor
 from tests.test_especialidad import CLAVE
@@ -140,6 +141,50 @@ class RegistrosPorPeriodoTests(Escenario):
 
     def test_un_periodo_desconocido_vuelve_a_meses(self):
         self.assertContains(panel_admin(self, periodo='siglo'), 'registrados en los últimos 5 meses')
+
+
+class PersonasPorPeriodoTests(TestCase):
+    """Personas que entran (H8) con el corte de H9: por dia, o promedio por dia en meses y trimestres."""
+
+    HOY = date(2026, 3, 10)
+
+    def setUp(self):
+        # El registro empieza el 27-02: antes no se contaba (no es que nadie entrara).
+        for fecha, rol, cantidad in ((date(2026, 2, 27), 'alumno', 2), (date(2026, 2, 28), 'alumno', 4),
+                                     (date(2026, 3, 1), 'alumno', 10), (date(2026, 3, 9), 'alumno', 1),
+                                     (date(2026, 3, 10), 'alumno', 3), (date(2026, 3, 10), 'profesor', 2)):
+            IngresoDiario.objects.create(fecha=fecha, rol=rol, personas=cantidad)
+
+    def test_por_dia_suma_los_roles(self):
+        self.assertEqual(personas('dia', self.HOY),
+                         [('06/03', 0), ('07/03', 0), ('08/03', 0), ('09/03', 1), ('10/03', 5)])
+
+    def test_por_mes_es_el_promedio_diario_desde_que_se_cuenta(self):
+        # Feb: (2 + 4) / 2 dias contados = 3. Mar: (10 + 1 + 5) / 10 dias hasta hoy = 1,6 -> 2.
+        self.assertEqual(personas('mes', self.HOY), [('Nov', 0), ('Dic', 0), ('Ene', 0), ('Feb', 3), ('Mar', 2)])
+
+    def test_por_trimestre_es_el_promedio_diario(self):
+        # 22 personas en 12 dias (27-02 al 10-03) = 1,8 -> 2.
+        self.assertEqual(personas('trimestre', self.HOY),
+                         [('T1 25', 0), ('T2 25', 0), ('T3 25', 0), ('T4 25', 0), ('T1 26', 2)])
+
+    def test_sin_registros_todo_en_cero(self):
+        IngresoDiario.objects.all().delete()
+        for periodo in ('dia', 'mes', 'trimestre'):
+            with self.subTest(periodo):
+                self.assertEqual({cantidad for _, cantidad in personas(periodo, self.HOY)}, {0})
+
+
+class PersonasEnElPanelTests(Escenario):
+
+    def test_el_panel_muestra_el_grafico_con_el_mismo_periodo(self):
+        respuesta = panel_admin(self, periodo='trimestre')  # entrar suma al admin de hoy
+        resumen = grafico(personas('trimestre'))['resumen']
+        self.assertContains(respuesta, f'Personas por día que iniciaron sesión en los últimos 5 trimestres: {resumen}')
+        self.assertContains(respuesta, 'Promedio por día')
+
+    def test_por_dia_no_dice_promedio(self):
+        self.assertNotContains(panel_admin(self, periodo='dia'), 'Promedio por día')
 
 
 class GraficoTests(SimpleTestCase):
