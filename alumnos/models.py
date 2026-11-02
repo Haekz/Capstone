@@ -213,7 +213,14 @@ class SesionClaseQuerySet(models.QuerySet):
         return self.filter(estado='programada')
 
     def disponibles(self):
-        """Sesiones programadas a futuro que aún cuentan con cupos libres."""
+        """Sesiones programadas a futuro que aún cuentan con cupos libres.
+
+        Y con el profesor libre: si ya tiene otra clase reservada que se cruza, no
+        se ofrece (no puede estar en dos clases a la vez; decidido 02-nov, paso B1a).
+        """
+        profesor_ocupado = Inscripcion.objects.que_se_cruzan(
+            models.OuterRef('clase__profesor'), models.OuterRef('fecha_hora_inicio'), models.OuterRef('fecha_hora_fin'),
+        ).exclude(sesion=models.OuterRef('pk'))
         return (
             self.filter(
                 estado='programada',
@@ -226,6 +233,7 @@ class SesionClaseQuerySet(models.QuerySet):
                 )
             )
             .filter(cupos_ocupados_count__lt=models.F('cupo_maximo'))
+            .exclude(models.Exists(profesor_ocupado))
         )
 
     def por_profesor(self, profesor):
@@ -393,6 +401,11 @@ class SesionClase(models.Model):
 
 
 class InscripcionQuerySet(models.QuerySet):
+    def que_se_cruzan(self, profesor, inicio, fin):
+        """Reservas activas del profesor cuyo bloque se cruza con [inicio, fin). Acepta OuterRef."""
+        return self.filter(clase__profesor=profesor, estado__in=Inscripcion.ESTADOS_ACTIVOS,
+                           sesion__fecha_hora_inicio__lt=fin, sesion__fecha_hora_fin__gt=inicio)
+
     def proximas(self):
         """Activas cuya sesion aun no termina (o inscritas a la clase sin sesion puntual)."""
         return self.filter(

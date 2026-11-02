@@ -6,7 +6,7 @@ import logging
 from django.db import transaction, IntegrityError
 from django.utils import timezone
 from . import avisos_profesor
-from .models import Alumno, Clase, SesionClase, Inscripcion, PaqueteClases
+from .models import Alumno, Clase, Profesor, SesionClase, Inscripcion, PaqueteClases
 from .utils import es_menor
 from .exceptions import (
     InscripcionError,
@@ -50,6 +50,19 @@ def _paquete_con_clases(alumno, profesor, hasta):
     raise SinClasesDisponiblesError(
         f'No tienes clases disponibles con {profesor.nombre} para esa fecha. Compra un paquete en Planes.'
     )
+
+
+def _exigir_profesor_libre(sesion, otras_reservas):
+    """El profesor no puede estar en dos clases a la vez (decidido 02-nov, paso B1a).
+
+    Bloquea la fila del profesor: dos reservas simultaneas de asignaturas distintas a
+    la misma hora se atienden en fila y la segunda ve la primera. `otras_reservas`
+    excluye lo que no cuenta (la misma sesion grupal, o la reserva que se mueve).
+    """
+    Profesor.objects.select_for_update().get(pk=sesion.clase.profesor_id)
+    if otras_reservas.que_se_cruzan(sesion.clase.profesor_id, sesion.fecha_hora_inicio,
+                                    sesion.fecha_hora_fin).exists():
+        raise SesionNoDisponibleError('El profesor ya tiene una clase a esa hora. Elige otro horario.')
 
 
 class InscripcionService:
@@ -113,6 +126,8 @@ class InscripcionService:
 
             if total_ocupados >= sesion.cupo_maximo:
                 raise CupoAgotadoError("No quedan cupos disponibles para esta sesión.")
+
+            _exigir_profesor_libre(sesion, Inscripcion.objects.exclude(sesion=sesion))
 
             # 5. Cada reserva consume una clase de un paquete pagado
             paquete = _paquete_con_clases(alumno, sesion.clase.profesor, sesion.fecha_hora_inicio)
@@ -266,6 +281,7 @@ class InscripcionService:
             ocupados = nueva.inscripciones.select_for_update().filter(estado__in=Inscripcion.ESTADOS_ACTIVOS).count()
             if ocupados >= nueva.cupo_maximo:
                 raise CupoAgotadoError("No quedan cupos disponibles para esta sesión.")
+            _exigir_profesor_libre(nueva, Inscripcion.objects.exclude(sesion=nueva).exclude(pk=inscripcion.pk))
 
             sesion_anterior = inscripcion.sesion
             inscripcion.sesion = nueva
