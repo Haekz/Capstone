@@ -273,15 +273,8 @@ input:checked + .slider:before {
                         </div>
                         <div class="prof-form-group">
                             <label for="prof-telefono" class="prof-form-label">Teléfono de Contacto</label>
-                            <input type="tel" id="prof-telefono" name="telefono" class="prof-form-input" value="{{ profesor.user.telefono }}" required>
-                        <div style="margin-top: 10px; display: flex; align-items: center; gap: 12px;">
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="prof-tel-publico" name="telefono_publico" {% if profesor.telefono_publico %}checked{% endif %}>
-                                <span class="slider"></span>
-                            </label>
-                            <label for="prof-tel-publico" style="font-size: 0.85rem; color: var(--text-muted); cursor: pointer;">Hacer público para los alumnos</label>
-                        </div>
-
+                            <input type="tel" id="prof-telefono" name="telefono" class="prof-form-input" value="{{ profesor.user.telefono }}" aria-describedby="prof-telefono-ayuda" required>
+                            <small id="prof-telefono-ayuda">Solo lo ve LBWUS: los alumnos nunca ven tus datos de contacto.</small>
                         </div>
                     </div>
 

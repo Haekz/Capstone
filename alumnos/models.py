@@ -112,7 +112,6 @@ class Profesor(models.Model):
     id_profesor = models.AutoField(primary_key=True)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='perfil_profesor')
     especialidad = models.ForeignKey(Especialidad, on_delete=models.SET_NULL, null=True)
-    telefono_publico = models.BooleanField(default=False, help_text='¿Mostrar teléfono a los alumnos?')
 
     # Documento privado (paso 9b): cifrado en la base, como los de apoderados. Soporte lo ve como imagen
     # con marca de agua (admin_portal.ver_titulo) y se borra al aprobarlo o rechazarlo.
