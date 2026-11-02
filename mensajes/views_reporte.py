@@ -60,6 +60,6 @@ def leer_conversacion(request, id_ticket):
     mensajes = servicio.leer_reportada(reporte, agente)
     conversacion = reporte.conversacion
     return render(request, 'mensajes/soporte_conversacion.html', {
-        'ticket': ticket, 'reporte': reporte, 'conversacion': conversacion, 'mensajes': mensajes,
+        'agente': agente, 'ticket': ticket, 'reporte': reporte, 'conversacion': conversacion, 'mensajes': mensajes,
         'accesos': reporte.accesos.select_related('agente__user')[:20],
     })

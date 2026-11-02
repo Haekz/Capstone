@@ -33,6 +33,13 @@
     <i class="bi bi-mortarboard-fill"></i>
     Títulos de Profesores
 </a>
+
+{% if agente.es_lider %}
+<a id="nav-revision" class="nav-item {% block nav_revision %}{% endblock %}" href="{% url 'mensajes_revision' %}">
+    <i class="bi bi-chat-left-text-fill"></i>
+    Conversaciones reportadas
+</a>
+{% endif %}
 {% endblock %}
 
 {% block logout_url %}{% url 'logout_soporte' %}{% endblock %}

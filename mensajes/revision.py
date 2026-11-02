@@ -33,7 +33,8 @@ def _con_decision_vigente():
     return (Conversacion.objects.reportadas()
             .annotate(ultima=Subquery(_decisiones().values('decision')[:1]),
                       ultima_fecha=Subquery(_decisiones().values('decidida')[:1]),
-                      ultima_hasta=Subquery(_decisiones().values('proxima_revision')[:1]))
+                      ultima_hasta=Subquery(_decisiones().values('proxima_revision')[:1]),
+                      ultima_motivo=Subquery(_decisiones().values('motivo')[:1]))
             .annotate(posterior=Exists(posterior)))
 
 
@@ -48,16 +49,26 @@ def retenidas():
     return Conversacion.objects.reportadas().exclude(pk__in=liberadas().values('pk'))
 
 
+def conservadas(hoy):
+    """Reportadas que el lider conserva como retencion excepcional y cuya revision aun no llega."""
+    return (_con_decision_vigente()
+            .filter(ultima=DecisionRetencion.CONSERVAR, ultima_hasta__gt=hoy, posterior=False)
+            .order_by('ultima_hasta', 'pk'))
+
+
 def pendientes(hoy):
     """Reportadas con todos sus tickets cerrados y sin decision vigente: esperan al lider. Incluye las
-    conservadas cuya fecha de revision ya llego. `cerrado_el`: cuando se cerro su ultimo ticket."""
-    ticket_abierto = ReporteConversacion.objects.filter(conversacion=OuterRef('pk'), ticket__estado=Ticket.ABIERTO)
-    ultimo_cierre = (ReporteConversacion.objects.filter(conversacion=OuterRef('pk'))
-                     .order_by('-ticket__cerrado').values('ticket__cerrado')[:1])
+    conservadas cuya fecha de revision ya llego. `cerrado_el`: cuando se cerro su ultimo ticket;
+    `ultimo_ticket`: el de su reporte mas reciente (desde ahi se lee la conversacion)."""
+    reportes = ReporteConversacion.objects.filter(conversacion=OuterRef('pk'))
+    ticket_abierto = reportes.filter(ticket__estado=Ticket.ABIERTO)
+    ultimo_cierre = reportes.order_by('-ticket__cerrado').values('ticket__cerrado')[:1]
+    ultimo_ticket = reportes.order_by('-creado', '-pk').values('ticket_id')[:1]
     sin_decision_vigente = (Q(ultima__isnull=True) | Q(posterior=True)
                             | Q(ultima=DecisionRetencion.CONSERVAR, ultima_hasta__lte=hoy))
     return (_con_decision_vigente()
-            .annotate(con_ticket_abierto=Exists(ticket_abierto), cerrado_el=Subquery(ultimo_cierre))
+            .annotate(con_ticket_abierto=Exists(ticket_abierto), cerrado_el=Subquery(ultimo_cierre),
+                      ultimo_ticket=Subquery(ultimo_ticket))
             .filter(con_ticket_abierto=False).filter(sin_decision_vigente)
             .order_by('cerrado_el', 'pk'))
 

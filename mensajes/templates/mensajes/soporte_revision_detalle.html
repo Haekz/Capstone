@@ -1,0 +1,103 @@
+{% extends 'soporte/base_soporte.html' %}
+
+{% block page_title %}Conversación reportada · {{ conversacion.nombre_para_profesor }} y {{ conversacion.profesor.user.first_name }}{% endblock %}
+{% block page_subtitle %}{% if espera %}Espera tu decisión{% else %}Historial de decisiones{% endif %}{% endblock %}
+{% block nav_revision %}active{% endblock %}
+
+{% block content %}
+{% if messages %}
+<div class="panel" role="status" style="margin-bottom:20px; padding:14px 18px;">
+    {% for m in messages %}<div>{{ m }}</div>{% endfor %}
+</div>
+{% endif %}
+
+<div class="panel">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-flag-fill" aria-hidden="true"></i> Reportes</span>
+    </div>
+    <div style="padding:18px;">
+        <ul>
+            {% for r in reportes %}
+            <li>
+                Ticket #{{ r.ticket_id }} · {{ r.ticket.get_estado_display }} · reportada el {{ r.creado|date:"d-m-Y" }}
+                · <a href="{% url 'mensajes_soporte_leer' r.ticket_id %}">Leer la conversación</a> <small>(queda registrado quién la abre)</small>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+
+{% if espera %}
+<div class="panel" style="margin-top:20px;">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-unlock-fill" aria-hidden="true"></i> Liberar</span>
+    </div>
+    <div style="padding:18px;">
+        <p>No hay una necesidad que justifique seguir conservándola. Vuelve a la regla de borrado a los 90 días sin mensajes.</p>
+        <form method="post" onsubmit="return confirm('¿Liberar esta conversación? Se podrá borrar automáticamente.');">
+            {% csrf_token %}
+            <input type="hidden" name="accion" value="liberar">
+            <button type="submit" class="btn-primary"><i class="bi bi-unlock-fill" aria-hidden="true"></i> Liberar conversación</button>
+        </form>
+    </div>
+</div>
+
+<div class="panel" style="margin-top:20px;">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-lock-fill" aria-hidden="true"></i> Conservar como retención excepcional</span>
+    </div>
+    <div style="padding:18px;">
+        <p>Queda registrado con tu nombre y la fecha. Se vuelve a revisar a los 6 meses. No conserves "por si acaso": cada dato necesita una necesidad concreta.</p>
+        <form method="post" class="apod-form" novalidate style="display:grid; gap:10px;">
+            {% csrf_token %}
+            <input type="hidden" name="accion" value="conservar">
+            {% for campo in form %}
+            <div class="apod-form__campo" style="display:grid; gap:6px;">
+                <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+                {{ campo }}
+                {% if campo.help_text %}<small id="{{ campo.auto_id }}_helptext">{{ campo.help_text }}</small>{% endif %}
+            </div>
+            {% if campo.errors %}
+            <div id="{{ campo.auto_id }}-error" role="alert">
+                {% for error in campo.errors %}<p class="apod-form__error">{{ error }}</p>{% endfor %}
+            </div>
+            {% endif %}
+            {% endfor %}
+            <button type="submit" class="btn-primary"><i class="bi bi-lock-fill" aria-hidden="true"></i> Registrar retención</button>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<div class="panel" style="margin-top:20px;">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-clock-history" aria-hidden="true"></i> Historial de decisiones</span>
+    </div>
+    <div style="padding:18px;">
+        {% if decisiones %}
+        <table class="user-table">
+            <thead>
+                <tr><th scope="col">Fecha</th><th scope="col">Decisión</th><th scope="col">Decidió</th><th scope="col">Detalle</th></tr>
+            </thead>
+            <tbody>
+                {% for d in decisiones %}
+                <tr>
+                    <td>{{ d.decidida|date:"d-m-Y H:i" }}</td>
+                    <td>{{ d.get_decision_display }}</td>
+                    <td>{{ d.decidida_por.nombre|default:"Cuenta eliminada" }}</td>
+                    <td>
+                        {% if d.decision == 'conservar' %}
+                        <strong>{{ d.get_motivo_display }}.</strong> {{ d.alcance }} · Fundamento: {{ d.fundamento }} · Termina cuando: {{ d.termino }} · Próxima revisión: {{ d.proxima_revision|date:"d-m-Y" }}
+                        {% else %}—{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>Todavía no hay decisiones.</p>
+        {% endif %}
+    </div>
+</div>
+<p style="margin-top:18px;"><a href="{% url 'mensajes_revision' %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a conversaciones reportadas</a></p>
+{% endblock %}
