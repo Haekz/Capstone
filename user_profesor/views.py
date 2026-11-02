@@ -12,6 +12,7 @@ from django.views.decorators.http import require_POST
 from . import cambio_cuenta, foto
 from alumnos import catalogos, liquidacion, paquetes
 from agenda import panel as agenda_panel
+from mensajes import panel as mensajes_panel
 
 
 def calcular_saldos(profesor):
@@ -254,6 +255,7 @@ def panel_profesor(request):
         'generos': generos,
         'especialidades': Especialidad.objects.order_by('nombre'),
         **agenda_panel.contexto(profesor),  # seccion Mi Agenda (agenda/panel.py)
+        **mensajes_panel.contexto_profesor(profesor, request.GET.get('c')),  # Buzon (mensajes/panel.py)
     }
     return render(request, 'user_profesor/panel_profesor.html', context)
 

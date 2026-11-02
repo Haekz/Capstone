@@ -8,6 +8,8 @@
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.urls import reverse
+from django.utils import timezone
 
 from alumnos.correo import enviar as enviar_correo
 from alumnos.models import Inscripcion, PaqueteClases
@@ -44,10 +46,17 @@ def abrir_conversacion(alumno, profesor):
     return conversacion
 
 
+def marcar_visto(user, conversacion):
+    """`user` leyo la conversacion hasta ahora: lo anterior de la otra persona ya no esta sin leer."""
+    campo = 'visto_cliente' if user.pk == conversacion.cliente_id else 'visto_profesor'
+    Conversacion.objects.filter(pk=conversacion.pk).update(**{campo: timezone.now()})
+
+
 def _avisar(conversacion, autor):
     habla_el_cliente = autor.pk == conversacion.cliente_id
     destinatario = conversacion.profesor.user if habla_el_cliente else conversacion.cliente
-    notificar(destinatario, f'{autor.first_name} te escribió un mensaje.')
+    enlace = f"{reverse('panel_profesor')}?c={conversacion.pk}" if habla_el_cliente else ''  # el del alumno: C1b-2
+    notificar(destinatario, f'{autor.first_name} te escribió un mensaje.', enlace)
     enviar_correo('Tienes un mensaje nuevo', PLANTILLA_CORREO, {'nombre': destinatario.first_name}, destinatario.email)
 
 

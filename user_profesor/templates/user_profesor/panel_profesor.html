@@ -452,40 +452,7 @@ input:checked + .slider:before {
             </div>
         </section>
 
-        <!-- esta parte es del chat o buzon de consultas de alumnos -->
-        <section id="sec-buzon" class="prof-section">
-            <div class="prof-section-header">
-                <h1 class="prof-section-title">Buzón de Alumnos</h1>
-                <p class="prof-section-subtitle">Resuelve las dudas académicas y mantén contacto directo con tus estudiantes.</p>
-            </div>
-            
-            <div class="profe-chat-container">
-                <!-- Panel izquierdo: lista de chats -->
-                <div class="profe-chat-sidebar">
-                    <div class="profe-chat-search">
-                        <i class="bi bi-search"></i>
-                        <input type="text" id="profe-chat-search-input" placeholder="Buscar alumno..." oninput="filterAlumnChats()">
-                    </div>
-                    <div class="profe-chat-list" id="profe-chat-list-el">
-                        <!-- Se rellena con JS -->
-                    </div>
-                </div>
-                
-                <!-- Panel derecho: chat activo -->
-                <div class="profe-chat-main">
-                    <div class="profe-chat-header" id="profe-chat-active-header">
-                        <!-- Se rellena con JS -->
-                    </div>
-                    <div class="profe-chat-history" id="profe-chat-messages-container">
-                        <!-- Se rellena con JS -->
-                    </div>
-                    <form class="profe-chat-input-box" onsubmit="sendTeacherMessage(event)">
-                        <input type="text" id="profe-chat-input-el" placeholder="Escribe tu respuesta al alumno..." required autocomplete="off">
-                        <button type="submit" class="profe-chat-send-btn"><i class="bi bi-send-fill"></i></button>
-                    </form>
-                </div>
-            </div>
-        </section>
+        {% include 'mensajes/buzon_profesor.html' %}
 
         <!-- esta parte es de la videoteca y gestion de clases grabadas -->
         {% include 'user_profesor/videos.html' %}
@@ -503,54 +470,6 @@ input:checked + .slider:before {
 <!-- esta parte es de SweetAlert2, la librería de alertas animadas -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    // esta parte es de la simulacion de datos del chat docente
-    let studentChats = [
-        {
-            studentId: 10,
-            studentName: "Juan Pérez",
-            courseName: "Universidad Python",
-            initials: "JP",
-            unread: true,
-            messages: [
-                { sender: "student", text: "Hola Profesor, tengo una duda con la Clase 3 de variables.", time: "21:10" }
-            ]
-        },
-        {
-            studentId: 11,
-            studentName: "Sofía Rojas",
-            courseName: "Python Django Web",
-            initials: "SR",
-            unread: false,
-            messages: [
-                { sender: "teacher", text: "Hola Sofía. Sí, el ORM de Django maneja la sincronización automáticamente.", time: "Ayer" },
-                { sender: "student", text: "¡Buenísimo! Me quedó clarísimo, gracias.", time: "Ayer" }
-            ]
-        },
-        {
-            studentId: 12,
-            studentName: "Lucas Altamirano",
-            courseName: "Automatizaciones n8n + MCP",
-            initials: "LA",
-            unread: false,
-            messages: [
-                { sender: "student", text: "Profesor, ¿puedo conectar más de un servidor MCP local a n8n?", time: "Hace 2 días" },
-                { sender: "teacher", text: "Sí, Lucas. Solo debes configurar las variables de entorno de cada contenedor.", time: "Hace 2 días" }
-            ]
-        }
-    ];
-
-    let currentStudentChatId = 10;
-
-    // esta parte es de los videos grabados por el docente
-    let teacherVideos = [
-        { id: 1, title: "Clase 1: Introducción a la Universidad Python", duration: "12:15", course: "Universidad Python", courseId: "py-1", views: 420, date: "15 May 2026" },
-        { id: 2, title: "Clase 2: Configuración del Entorno en Windows", duration: "10:45", course: "Universidad Python", courseId: "py-1", views: 310, date: "16 May 2026" },
-        { id: 3, title: "Clase 3: Hola Mundo y Variables Básicas", duration: "08:30", course: "Universidad Python", courseId: "py-1", views: 250, date: "18 May 2026" },
-        { id: 4, title: "Clase 1: Bienvenidos a Python y Django", duration: "15:10", course: "Python Django Web", courseId: "py-2", views: 180, date: "20 May 2026" },
-        { id: 5, title: "Clase 1: Introducción a n8n y MCP", duration: "18:25", course: "Automatizaciones n8n + MCP", courseId: "tr-1", views: 158, date: "22 May 2026" },
-        { id: 6, title: "Clase 2: Conectando Nodos y Flujos Simples", duration: "22:15", course: "Automatizaciones n8n + MCP", courseId: "tr-1", views: 110, date: "24 May 2026" }
-    ];
-
     // esta parte es de la función que cambia qué sección se ve en el panel según el menú que elegiste
     function switchSection(sectionId) {
         document.querySelectorAll('.prof-menu-item').forEach(item => item.classList.remove('active'));
@@ -563,9 +482,7 @@ input:checked + .slider:before {
         localStorage.setItem('prof_active_tab', sectionId);
 
         // esta parte es de la inicializacion de sub-vistas
-        if (sectionId === 'buzon') {
-            renderTeacherInbox();
-        } else if (sectionId === 'grabaciones') {
+        if (sectionId === 'grabaciones') {
             renderTeacherVideos();
         }
     }
@@ -575,6 +492,10 @@ input:checked + .slider:before {
         const savedTab = localStorage.getItem('prof_active_tab');
         if (savedTab && document.getElementById('menu-' + savedTab)) {
             switchSection(savedTab);
+        }
+        // esta parte es para abrir el Buzón cuando llegas a una conversación (?c=), por ejemplo desde la campanita
+        if (new URLSearchParams(window.location.search).has('c')) {
+            switchSection('buzon');
         }
     });
 
@@ -687,92 +608,6 @@ input:checked + .slider:before {
             icon: data.success ? 'success' : 'warning'
         }).then(() => { if (data.success) window.location.reload(); }))
         .catch(() => Swal.fire('Error', 'Hubo un error de conexión al guardar.', 'error'));
-    }
-
-    // esta parte es del renderizado de la bandeja de mensajes docente
-    function renderTeacherInbox() {
-        const chatListEl = document.getElementById('profe-chat-list-el');
-        if (!chatListEl) return;
-        chatListEl.innerHTML = '';
-        
-        studentChats.forEach(chat => {
-            const lastMsg = chat.messages[chat.messages.length - 1];
-            const isActive = chat.studentId === currentStudentChatId;
-            
-            const item = document.createElement('div');
-            item.className = `profe-chat-item ${isActive ? 'active' : ''} ${chat.unread ? 'unread' : ''}`;
-            item.onclick = () => {
-                chat.unread = false;
-                currentStudentChatId = chat.studentId;
-                renderTeacherInbox();
-            };
-            
-            item.innerHTML = `
-                <div class="profe-chat-avatar">${chat.initials}</div>
-                <div class="profe-chat-info">
-                    <div class="profe-chat-title-row">
-                        <span class="profe-chat-student-name">${chat.studentName}</span>
-                        <span class="profe-chat-time">${lastMsg ? lastMsg.time : ''}</span>
-                    </div>
-                    <div class="profe-chat-course-label">${chat.courseName}</div>
-                    <div class="profe-chat-last-msg">${lastMsg ? lastMsg.text : ''}</div>
-                </div>
-            `;
-            chatListEl.appendChild(item);
-        });
-        
-        const activeChat = studentChats.find(c => c.studentId === currentStudentChatId);
-        const headerEl = document.getElementById('profe-chat-active-header');
-        const msgsEl = document.getElementById('profe-chat-messages-container');
-        
-        if (activeChat && headerEl && msgsEl) {
-            headerEl.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <div class="profe-chat-avatar" style="width: 40px; height: 40px; font-size: 0.9rem;">${activeChat.initials}</div>
-                    <div>
-                        <h4 style="margin: 0; font-size: 1rem; font-weight: 700; color: var(--text);">${activeChat.studentName}</h4>
-                        <span style="font-size: 0.75rem; color: var(--text-light);">${activeChat.courseName}</span>
-                    </div>
-                </div>
-            `;
-            
-            msgsEl.innerHTML = '';
-            activeChat.messages.forEach(msg => {
-                const bubble = document.createElement('div');
-                bubble.className = `profe-chat-bubble-row ${msg.sender === 'teacher' ? 'sent' : 'received'}`;
-                bubble.innerHTML = `
-                    <div class="profe-chat-bubble">
-                        <p>${msg.text}</p>
-                        <span class="profe-chat-msg-time">${msg.time}</span>
-                    </div>
-                `;
-                msgsEl.appendChild(bubble);
-            });
-            msgsEl.scrollTop = msgsEl.scrollHeight;
-        }
-    }
-
-    // esta parte es del envio de mensaje del docente
-    function sendTeacherMessage(event) {
-        event.preventDefault();
-        const inputEl = document.getElementById('profe-chat-input-el');
-        if (!inputEl) return;
-        const text = inputEl.value.trim();
-        if (!text) return;
-        
-        const activeChat = studentChats.find(c => c.studentId === currentStudentChatId);
-        if (!activeChat) return;
-        
-        const nowTime = new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
-        
-        activeChat.messages.push({
-            sender: "teacher",
-            text: text,
-            time: nowTime
-        });
-        
-        inputEl.value = '';
-        renderTeacherInbox();
     }
 
     // esta parte es para filtrar los chats de alumnos
@@ -1107,8 +942,6 @@ input:checked + .slider:before {
     // esta parte es de exponer todas nuestras funciones interactivas al ámbito global window para que funcionen con los eventos onclick
     window.switchSection = switchSection;
     window.submitRetiroForm = submitRetiroForm;
-    window.renderTeacherInbox = renderTeacherInbox;
-    window.sendTeacherMessage = sendTeacherMessage;
     window.filterAlumnChats = filterAlumnChats;
     window.renderTeacherVideos = renderTeacherVideos;
     window.openUploadModal = openUploadModal;

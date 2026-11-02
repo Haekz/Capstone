@@ -28,6 +28,7 @@ urlpatterns = [
     path('soporte/', include('soporte.urls')),
     path('notificaciones/', include('notificaciones.urls')),
     path('agenda/', include('agenda.urls')),
+    path('mensajes/', include('mensajes.urls')),
     path('accounts/login/', custom_login, name='login'),
 path(
     'accounts/password_reset/',

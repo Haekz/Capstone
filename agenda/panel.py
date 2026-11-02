@@ -9,6 +9,7 @@ from django.db.models import Prefetch
 from django.utils import timezone
 
 from alumnos.models import Inscripcion, SesionClase
+from alumnos.utils import es_menor
 
 from . import cancelacion
 from .bloques import SEMANAS
@@ -34,7 +35,8 @@ def agenda(profesor, ahora=None):
     for sesion in sesiones:  # ya vienen por fecha (Meta.ordering)
         fila = filas.setdefault(sesion.fecha_hora_inicio, {'inicio': sesion.inicio_local, 'reservas': []})
         fila['reservas'] += [{'id': i.pk, 'alumno': i.alumno.user.first_name, 'asignatura': sesion.clase.asignatura.nombre,
-                              'puede_cancelar': cancelacion.a_tiempo(sesion, ahora)}
+                              'puede_cancelar': cancelacion.a_tiempo(sesion, ahora),
+                              'puede_escribir': not es_menor(i.alumno.user)}  # al menor le escribe su apoderado (C2)
                              for i in sesion.activas]
     return list(filas.values())
 
