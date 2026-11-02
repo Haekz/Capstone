@@ -14,7 +14,6 @@ from django.db import transaction
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_POST
@@ -29,7 +28,7 @@ from alumnos.views import iniciar_compra_paquete  # unico inicio de Webpay para 
 from soporte.permisos import agente_en_sesion, lider_required, ticket_asignado, tickets_del_agente
 
 from .correo import avisar_apoderados, enviar_confirmacion, enviar_confirmacion_adolescente, enviar_invitacion
-from .documentos import con_marca_de_agua
+from .documentos import con_marca_de_agua, texto_de_revision
 from .forms import (VERSION_DECLARACION_VINCULO, AceptarInvitacionForm, CarnetForm, ClaveEstudianteForm,
                     DocumentoVinculoForm, InvitacionForm, NuevaClaveForm, RegistroAdolescenteForm,
                     RegistroApoderadoForm, RegistroEstudianteForm, RevisionIdentidadForm, RevisionVinculoForm,
@@ -530,10 +529,8 @@ def ver_documento(request, id_documento):
                                   pk=id_documento)
     if ticket_asignado(request, apoderado_id=documento.apoderado_id, vinculo_id=documento.vinculo_id) is None:
         raise Http404('Documento no encontrado.')
-    texto = f'LBWUS - solo revision - {request.user.first_name or request.user.username} - ' \
-            f'{timezone.localtime():%d-%m-%Y %H:%M}'
     try:
-        imagen = con_marca_de_agua(documento.contenido, texto)
+        imagen = con_marca_de_agua(documento.contenido, texto_de_revision(request.user))
     except InvalidToken:  # cambio la clave de cifrado: hay que pedir el documento de nuevo
         raise Http404('El documento ya no se puede leer.')
     AccesoDocumento.objects.create(administrador=request.user, apoderado=documento.titular,

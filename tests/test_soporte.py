@@ -22,11 +22,12 @@ from soporte.models import AgenteSoporte, Asignacion, Habilitacion, Ticket
 from soporte.tickets import abrir_ticket
 from tests.test_apoderados import CLAVE, RUT, adjuntar, crear_agente, crear_apoderado, entrar, entrar_soporte
 from tests.test_apoderados_documentos import crear_admin
+from tests.test_apoderados_pdf import bytes_pdf
 from tests.test_apoderados_vinculos import crear_menor_vinculado
 from user_profesor import titulo
 
 User = get_user_model()
-PDF = b'%PDF-1.4 titulo ficticio'
+PDF = bytes_pdf()  # PDF real: se valida al subirlo (paso 9b)
 
 
 def crear_profesor(rut='22222222-2'):

@@ -114,8 +114,11 @@ class Profesor(models.Model):
     especialidad = models.ForeignKey(Especialidad, on_delete=models.SET_NULL, null=True)
     telefono_publico = models.BooleanField(default=False, help_text='¿Mostrar teléfono a los alumnos?')
 
-    # Documento privado: se sirve solo al agente de soporte con el ticket (ver admin_portal.ver_titulo),
-    # nunca por MEDIA_URL publico.
+    # Documento privado (paso 9b): cifrado en la base, como los de apoderados. Soporte lo ve como imagen
+    # con marca de agua (admin_portal.ver_titulo) y se borra al aprobarlo o rechazarlo.
+    titulo_contenido = models.BinaryField(null=True, blank=True)
+    titulo_formato = models.CharField(max_length=4, blank=True)  # JPEG, PNG o PDF
+    # Antes del paso 9b: en disco y sin cifrar. manage.py pasar_titulos_a_base los mueve; luego se quita.
     titulo_archivo = models.FileField(upload_to='titulos/', blank=True)
     titulo_estado = models.CharField(max_length=12, choices=ESTADOS_TITULO, default=TITULO_PENDIENTE)
     titulo_observacion = models.CharField(max_length=200, blank=True)

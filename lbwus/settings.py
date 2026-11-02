@@ -217,12 +217,11 @@ STATICFILES_DIRS = [
 STATIC_ROOT = BASE_DIR/'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Archivos subidos (titulos de profesores). NO se publica MEDIA_URL en urls:
-# son documentos privados y solo los ve un admin por una vista protegida.
+# Archivos subidos (fotos de perfil; titulos antiguos hasta pasarlos a la base, paso 9b).
+# NO se publica MEDIA_URL en urls: se sirven por vistas protegidas.
 # En Railway el disco es efimero: montar un Volume en MEDIA_ROOT.
 MEDIA_ROOT = Path(os.environ.get('MEDIA_ROOT', BASE_DIR / 'media'))
 MEDIA_URL = '/media/'
-TITULO_MAX_MB = 5
 
 # Default primary key field type
 

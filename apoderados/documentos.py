@@ -15,6 +15,7 @@ import pypdfium2 as pdfium
 import pypdfium2.raw as pdfium_raw
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 from PIL import Image, ImageDraw, ImageFont, ImageOps, UnidentifiedImageError
 
 from alumnos.cifrado import cifrador
@@ -96,6 +97,11 @@ def _pdf_a_imagen(original):
         hoja.paste(pagina, (0, y))
         y += pagina.height + SEPARACION
     return hoja
+
+
+def texto_de_revision(usuario):
+    """Texto de la marca de agua: quien abre el documento y cuando (tambien para los titulos, paso 9b)."""
+    return f'LBWUS - solo revision - {usuario.first_name or usuario.username} - {timezone.localtime():%d-%m-%Y %H:%M}'
 
 
 def con_marca_de_agua(contenido, texto):

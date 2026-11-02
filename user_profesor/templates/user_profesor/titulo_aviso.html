@@ -19,7 +19,7 @@
         </p>
         <form id="form-titulo" action="{% url 'subir_titulo' %}" method="POST" enctype="multipart/form-data" class="titulo-form">
             {% csrf_token %}
-            <label for="titulo-archivo" class="titulo-label">Archivo del título (PDF, JPG o PNG, máx. 5 MB)</label>
+            <label for="titulo-archivo" class="titulo-label">Archivo del título (JPG, PNG o PDF de hasta 3 páginas, máx. 5 MB). Se guarda cifrado y se borra cuando soporte lo revisa.</label>
             <input type="file" id="titulo-archivo" name="titulo" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" required>
             <button type="submit" class="prof-form-btn">Enviar título</button>
         </form>

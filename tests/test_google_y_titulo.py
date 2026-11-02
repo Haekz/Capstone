@@ -28,9 +28,10 @@ from alumnos.models import (Alumno, Asignatura, Clase, Especialidad, Genero, Ins
                             Profesor, Tutor)
 from soporte.models import Ticket
 from tests.test_apoderados import crear_agente, entrar_soporte
+from tests.test_apoderados_pdf import bytes_pdf
 
 User = get_user_model()
-PDF = b'%PDF-1.4 titulo de prueba'
+PDF = bytes_pdf()  # PDF real: se valida al subirlo (paso 9b)
 
 
 def google_login(correo, uid='g-1', verificado=True, nombre='Gabi Google'):
@@ -237,17 +238,18 @@ class TituloProfesorTests(TestCase):
         self.assertTrue(self.subir()['success'])
         self.profesor.refresh_from_db()
         self.assertEqual(self.profesor.titulo_estado, Profesor.TITULO_EN_REVISION)
-        self.assertTrue(self.profesor.titulo_archivo.name.startswith('titulos/'))
+        self.assertEqual(self.profesor.titulo_formato, 'PDF')
+        self.assertFalse(bytes(self.profesor.titulo_contenido).startswith(b'%PDF'), 'el titulo se guardo sin cifrar')
+        self.assertFalse(self.profesor.titulo_archivo, 'el titulo se guardo en disco')
 
     def test_rechaza_formato_o_contenido_falso(self):
         self.entrar('22222222-2')
-        self.assertFalse(self.subir(nombre='virus.exe')['success'])
+        self.assertFalse(self.subir(contenido=b'MZ\x90\x00 ejecutable', nombre='virus.exe')['success'])
         self.assertFalse(self.subir(contenido=b'no soy pdf', nombre='falso.pdf')['success'])
 
-    @override_settings(TITULO_MAX_MB=0)
     def test_rechaza_archivo_muy_grande(self):
         self.entrar('22222222-2')
-        self.assertIn('MB', self.subir()['message'])
+        self.assertIn('5 MB', self.subir(contenido=b'0' * (5 * 1024 * 1024 + 1))['message'])
 
     def test_no_se_asigna_clase_ni_inscribe_sin_titulo_aprobado(self):
         self.entrar('33333333-3')

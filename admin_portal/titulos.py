@@ -1,15 +1,17 @@
 """Revision de titulos profesionales: es de soporte, solo el agente con el ticket
-ve el archivo y decide. El administrador no entra."""
+ve el titulo (como imagen con marca de agua) y decide. El administrador no entra."""
 
+from cryptography.fernet import InvalidToken
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from django.http import FileResponse, Http404
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
 from alumnos.decorators import soporte_required
 from alumnos.models import Profesor
+from apoderados import documentos
 from soporte.permisos import agente_en_sesion, ticket_asignado, tickets_del_agente
 from user_profesor import titulo
 
@@ -37,15 +39,17 @@ def titulos_adm(request):
 @never_cache
 @soporte_required
 def ver_titulo(request, pk):
-    """Sirve el archivo solo al agente con el ticket: el titulo es un documento privado."""
+    """Imagen del titulo con marca de agua, solo para el agente con el ticket. El original no sale del servidor."""
     profesor = _profesor_con_ticket(request, pk)
-    if not profesor.titulo_archivo:
+    if not profesor.titulo_contenido:
         raise Http404('Sin título')
     try:
-        archivo = profesor.titulo_archivo.open('rb')
-    except FileNotFoundError:
-        raise Http404('Archivo no encontrado')
-    return FileResponse(archivo, filename=profesor.titulo_archivo.name.rsplit('/', 1)[-1])
+        imagen = documentos.con_marca_de_agua(profesor.titulo_contenido, documentos.texto_de_revision(request.user))
+    except InvalidToken:  # cambio la clave de cifrado: hay que pedir el titulo de nuevo
+        raise Http404('El título ya no se puede leer.')
+    respuesta = HttpResponse(imagen, content_type='image/jpeg')
+    respuesta['Content-Disposition'] = 'inline'  # se ve en el navegador, sin descarga directa
+    return respuesta
 
 
 @require_POST
