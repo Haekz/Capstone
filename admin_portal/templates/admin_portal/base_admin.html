@@ -1,4 +1,4 @@
-{% load static %}
+{% load static campana %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -17,6 +17,7 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body class="light-mode">
+{% avisos_campana as avisos %}{# plazos de quien abre la pagina, segun su rol (admin_portal/avisos.py) #}
 <script>
     // Aplica el tema guardado antes de pintar (evita el destello claro en modo oscuro)
     try { if (localStorage.getItem('admin-theme') === 'dark') document.body.classList.remove('light-mode'); } catch (e) {}
@@ -138,10 +139,10 @@
                 <button class="theme-btn" onclick="openSearchModal()" title="Buscar (Ctrl + K)">
                     <i class="bi bi-search"></i>
                 </button>
-                <!-- Botón de notificaciones con punto indicador de pendientes -->
-                <button class="theme-btn" onclick="toggleNotifications()" title="Notificaciones" style="position:relative;">
-                    <i class="bi bi-bell-fill"></i>
-                    <span class="notification-badge-dot" id="notif-badge-dot"></span>
+                <!-- Campana: avisos de plazos de quien abre la página; el punto solo si hay alguno -->
+                <button class="theme-btn" onclick="toggleNotifications()" title="Notificaciones" aria-label="Notificaciones{% if avisos %} ({{ avisos|length }}){% endif %}" style="position:relative;">
+                    <i class="bi bi-bell-fill" aria-hidden="true"></i>
+                    {% if avisos %}<span class="notification-badge-dot" id="notif-badge-dot"></span>{% endif %}
                 </button>
                 {% endblock %}
                 <!-- Botón de alternar tema claro/oscuro -->
@@ -168,29 +169,21 @@
             <button type="button" class="close-drawer-btn" aria-label="Cerrar notificaciones" onclick="toggleNotifications()">&times;</button>
         </div>
         <div class="drawer-body">
-            <div class="notification-item unread" id="notif-1">
-                <div class="notification-icon purple">
-                    <i class="bi bi-person-plus-fill"></i>
+            {% for aviso in avisos %}
+            <div class="notification-item{% if aviso.urgente %} unread{% endif %}">
+                <div class="notification-icon {% if aviso.urgente %}amber{% else %}blue{% endif %}">
+                    <i class="bi {% if aviso.urgente %}bi-exclamation-triangle-fill{% else %}bi-clock-history{% endif %}" aria-hidden="true"></i>
                 </div>
                 <div class="notification-content">
-                    <p class="notification-title">Nuevo Alumno Registrado</p>
-                    <p class="notification-desc">El estudiante Jose se ha registrado en el Plan Básico.</p>
-                    <span class="notification-time">Hace 5 minutos</span>
+                    <p class="notification-title"><a href="{{ aviso.url }}">{{ aviso.titulo }}</a></p>
+                    <p class="notification-desc">{{ aviso.detalle }}</p>
                 </div>
             </div>
-            <div class="notification-item unread" id="notif-2">
-                <div class="notification-icon blue">
-                    <i class="bi bi-cash-stack"></i>
-                </div>
-                <div class="notification-content">
-                    <p class="notification-title">Solicitud de Retiro</p>
-                    <p class="notification-desc">El profesor Tánger ha solicitado un retiro de $45.000.</p>
-                    <span class="notification-time">Hace 2 horas</span>
-                </div>
+            {% empty %}
+            <div class="notification-item">
+                <p class="notification-desc">No hay avisos pendientes.</p>
             </div>
-        </div>
-        <div class="drawer-footer">
-            <button class="btn-clear-notifications" onclick="clearNotifications()">Marcar todas como leídas</button>
+            {% endfor %}
         </div>
     </div>
 
@@ -252,14 +245,6 @@
     function toggleNotifications() {
         const drawer = document.getElementById('notifications-drawer');
         drawer.classList.toggle('active');
-    }
-
-    function clearNotifications() {
-        document.querySelectorAll('.notification-item.unread').forEach(item => {
-            item.classList.remove('unread');
-        });
-        const badge = document.getElementById('notif-badge-dot');
-        if (badge) badge.style.display = 'none';
     }
 
     // Control del Modal de Búsqueda Global (Ctrl + K)

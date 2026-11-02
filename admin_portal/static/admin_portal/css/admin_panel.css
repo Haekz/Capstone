@@ -1164,29 +1164,15 @@ body.light-mode .sidebar-logout {
     display: block;
 }
 
-/* Pie de página con el botón para limpiar */
-.drawer-footer {
-    padding: 20px;
-    border-top: 1px solid var(--border);
-    background: var(--bg-sidebar);
+/* El título de cada aviso lleva a donde se resuelve */
+.notification-title a {
+    color: inherit;
+    text-decoration: none;
 }
 
-.btn-clear-notifications {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid var(--border);
-    background: var(--bg-card);
-    color: var(--text-primary);
-    border-radius: var(--radius-sm);
-    font-size: 0.82rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: var(--transition);
-}
-
-.btn-clear-notifications:hover {
-    background: var(--bg-hover);
-    border-color: var(--border-light);
+.notification-title a:hover,
+.notification-title a:focus-visible {
+    text-decoration: underline;
 }
 
 /* Puntito de alerta animado sobre la campana */
