@@ -72,7 +72,7 @@
         <ul class="apod-vinculos">
             {% for v in vinculos %}
             <li>
-                <strong>{{ v.alumno.user.first_name }}</strong> · RUT {{ v.alumno.user.rut }} · {{ v.get_parentesco_display }}<br>
+                <strong>{{ v.nombre_visible }}</strong> · RUT {{ v.alumno.user.rut }} · {{ v.get_parentesco_display }}<br>
                 <span class="apod-estado">Vínculo: {% if v.termino_por_edad %}Terminado{% else %}{{ v.get_estado_display }}{% endif %}</span>
                 {% if v.termino_por_edad %}
                 <br><small>{{ v.alumno.user.first_name }} cumplió 18 años: su cuenta ahora es solo suya y el vínculo terminó.</small>
@@ -102,6 +102,9 @@
         </a>
         <a class="perfil-prof__reservar" href="{% url 'apoderado_registrar_estudiante' %}">
             <i class="bi bi-person-plus-fill" aria-hidden="true"></i> Registrar estudiante
+        </a>
+        <a class="perfil-prof__reservar" href="{% url 'apoderado_vincular_estudiante' %}">
+            <i class="bi bi-person-lines-fill" aria-hidden="true"></i> Vincularme a un estudiante ya registrado
         </a>
         {% endif %}
     </section>

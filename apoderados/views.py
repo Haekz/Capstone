@@ -58,6 +58,14 @@ def _formulario(request, form, **textos):
     return render(request, 'apoderados/formulario.html', {'form': form, **textos})
 
 
+def redirigir_si_no_verificado(request, apoderado):
+    """Si su identidad aun no esta verificada: aviso y vuelta al portal. Si lo esta, None."""
+    if apoderado.estado != Apoderado.VERIFICADO:
+        messages.error(request, 'Podrás registrar estudiantes cuando tu identidad esté verificada.')
+        return redirect(APODERADO.ruta_portal)
+    return None
+
+
 def _segundos_para_reenviar(request):
     falta = ESPERA_REENVIO - (time.time() - request.session.get(CLAVE_ENVIO, 0))
     return max(0, int(falta))
@@ -145,9 +153,9 @@ def reenviar(request):
 @apoderado_required
 def registrar_estudiante(request):
     apoderado = _apoderado_en_sesion(request)
-    if apoderado.estado != Apoderado.VERIFICADO:
-        messages.error(request, 'Podrás registrar estudiantes cuando tu identidad esté verificada.')
-        return redirect(APODERADO.ruta_portal)
+    sin_verificar = redirigir_si_no_verificado(request, apoderado)
+    if sin_verificar:
+        return sin_verificar
     form = RegistroEstudianteForm(request.POST or None, request.FILES or None, apoderado=apoderado)
     if request.method == 'POST' and form.is_valid():
         vinculo = form.save()
@@ -225,7 +233,7 @@ def subir_documento_vinculo(request, id_vinculo):
             vinculo.abrir_ticket_si_revisable()
         messages.success(request, 'Recibimos el documento. Nuestro equipo de soporte lo revisará.')
         return redirect(APODERADO.ruta_portal)
-    return _formulario(request, form, titulo=f'Vínculo con {vinculo.alumno.user.first_name}',
+    return _formulario(request, form, titulo=f'Vínculo con {vinculo.nombre_visible}',
                        subtitulo='Vuelve a subir el documento', boton='Subir documento',
                        volver_url=reverse(APODERADO.ruta_portal),
                        intro='El documento anterior venció sin revisión y lo borramos por seguridad.')
@@ -312,9 +320,8 @@ def reprogramar_clase(request, id_vinculo, id_inscripcion):
 
 # --- Revocar el vinculo y contrasena propia al cumplir 18 ---
 
-def _revocar(request, vinculo, volver, motivo_obligatorio):
+def _revocar(request, vinculo, estudiante, volver, motivo_obligatorio):
     form = RevocarVinculoForm(request.POST or None, motivo_obligatorio=motivo_obligatorio)
-    estudiante = vinculo.alumno.user.first_name
     if request.method == 'POST' and form.is_valid():
         canceladas = vinculo.revocar(request.user, form.cleaned_data['motivo'])
         messages.success(request, f'Revocamos el vínculo de {vinculo.apoderado.nombre} con {estudiante}. '
@@ -334,7 +341,7 @@ def revocar_vinculo(request, id_vinculo):
     vinculo = get_object_or_404(Vinculo.objects.select_related('apoderado', 'alumno__user'), pk=id_vinculo,
                                 apoderado_id=request.session[APODERADO.clave_sesion],
                                 estado__in=Vinculo.REVOCABLES)
-    return _revocar(request, vinculo, APODERADO.ruta_portal, motivo_obligatorio=False)
+    return _revocar(request, vinculo, vinculo.nombre_visible, APODERADO.ruta_portal, motivo_obligatorio=False)
 
 
 @never_cache
@@ -342,7 +349,7 @@ def revocar_vinculo(request, id_vinculo):
 def revocar_vinculo_admin(request, id_vinculo):
     vinculo = get_object_or_404(Vinculo.objects.select_related('apoderado', 'alumno__user'), pk=id_vinculo,
                                 estado__in=Vinculo.REVOCABLES)
-    return _revocar(request, vinculo, 'apoderados_revision', motivo_obligatorio=True)
+    return _revocar(request, vinculo, vinculo.alumno.user.first_name, 'apoderados_revision', motivo_obligatorio=True)
 
 
 @sensitive_post_parameters('new_password1', 'new_password2')

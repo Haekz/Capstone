@@ -5,10 +5,11 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.password_validation import validate_password
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from alumnos.models import Alumno
-from alumnos.utils import (EDAD_ADULTA, EDAD_MINIMA_ESTUDIANTE, edad, error_fecha_nacimiento,
+from alumnos.utils import (EDAD_ADULTA, EDAD_MINIMA_ESTUDIANTE, edad, error_fecha_nacimiento, es_menor,
                            usuario_existe, validar_rut_chileno)
 
 from .documentos import preparar
@@ -62,6 +63,25 @@ def _crear_estudiante(datos):
     return Alumno.objects.create(user=user, nivel_educacion=datos['nivel_educacion'])
 
 
+def _campo_rut(label):
+    return forms.CharField(label=label, max_length=12, widget=forms.TextInput(attrs={'placeholder': '12.345.678-9'}))
+
+
+def _rut_valido(valor):
+    rut = valor.strip()
+    if not validar_rut_chileno(rut):
+        raise forms.ValidationError('El RUT ingresado no es válido.')
+    return rut
+
+
+def _variantes_rut(rut):
+    """Los RUT se guardan como los escribio cada persona: sin puntos (11111111-1), con ellos (11.111.111-1)
+    o sin guion. Para buscar una cuenta hay que probar las tres."""
+    limpio = rut.replace('.', '').replace('-', '').strip().upper()
+    cuerpo, digito = limpio[:-1], limpio[-1]
+    return {limpio, f'{cuerpo}-{digito}', f'{int(cuerpo):,}'.replace(',', '.') + f'-{digito}'}
+
+
 class AccesibleMixin:
     def full_clean(self):
         super().full_clean()
@@ -113,17 +133,13 @@ class DocumentoVinculoForm(AccesibleMixin, forms.Form):
 class _CuentaForm(AccesibleMixin, forms.Form):
     """Datos comunes para crear una cuenta: nombre, RUT y contrasena."""
     nombre = forms.CharField(label='Nombre completo', max_length=60)
-    rut = forms.CharField(label='RUT', max_length=12,
-                          widget=forms.TextInput(attrs={'placeholder': '12.345.678-9'}))
+    rut = _campo_rut('RUT')
     password = forms.CharField(label='Contraseña', widget=forms.PasswordInput, strip=False)
     confirmar_password = forms.CharField(label='Repite la contraseña', widget=forms.PasswordInput,
                                          strip=False)
 
     def clean_rut(self):
-        rut = self.cleaned_data['rut'].strip()
-        if not validar_rut_chileno(rut):
-            raise forms.ValidationError('El RUT ingresado no es válido.')
-        return rut
+        return _rut_valido(self.cleaned_data['rut'])
 
     def clean(self):
         datos = super().clean()
@@ -210,6 +226,52 @@ class RegistroEstudianteForm(_CuentaForm, _VinculoForm):
             vinculo = Vinculo.objects.create(
                 apoderado=self.apoderado, alumno=alumno, parentesco=datos['parentesco'],
                 version_declaracion=VERSION_DECLARACION_VINCULO, declaracion_aceptada=timezone.now(),
+            )
+            self.guardar_documento(vinculo)
+            vinculo.abrir_ticket_si_revisable()
+            return vinculo
+
+
+class VincularEstudianteForm(_VinculoForm):
+    """Un segundo apoderado pide vincularse a un menor que ya esta registrado, con su RUT; soporte verifica
+    el vinculo con el documento. Que el RUT exista, sea de un menor o tenga cuenta activa no se revela: todo
+    fallo de la busqueda responde lo mismo (SIN_COINCIDENCIA)."""
+    SIN_COINCIDENCIA = ('No pudimos iniciar la solicitud con ese RUT. Revisa que sea el del estudiante. '
+                        'Si el problema sigue, escríbenos desde la página de contacto.')
+    rut = _campo_rut('RUT del estudiante')
+
+    field_order = ['rut', 'parentesco', 'documento', 'acepta_declaracion']
+
+    def __init__(self, *args, apoderado, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.apoderado = apoderado
+        self.alumno = None
+
+    def clean_rut(self):
+        return _rut_valido(self.cleaned_data['rut'])
+
+    def _menor_con_rut(self, rut):
+        filtro = Q()
+        for variante in _variantes_rut(rut):
+            filtro |= Q(user__rut__iexact=variante)
+        alumno = Alumno.objects.select_related('user').filter(filtro, user__is_active=True).first()
+        return alumno if alumno and es_menor(alumno.user) else None
+
+    def clean(self):
+        datos = super().clean()
+        if datos.get('rut'):
+            self.alumno = self._menor_con_rut(datos['rut'])
+            if self.alumno is None:
+                raise forms.ValidationError(self.SIN_COINCIDENCIA)
+            if Vinculo.objects.filter(apoderado=self.apoderado, alumno=self.alumno).exists():
+                raise forms.ValidationError('Ya tienes un vínculo con este estudiante. Revísalo en tu portal.')
+        return datos
+
+    def save(self):
+        with transaction.atomic():
+            vinculo = Vinculo.objects.create(
+                apoderado=self.apoderado, alumno=self.alumno, parentesco=self.cleaned_data['parentesco'],
+                por_rut=True, version_declaracion=VERSION_DECLARACION_VINCULO, declaracion_aceptada=timezone.now(),
             )
             self.guardar_documento(vinculo)
             vinculo.abrir_ticket_si_revisable()

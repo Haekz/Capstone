@@ -172,6 +172,10 @@ class Vinculo(models.Model):
     estado = models.CharField(max_length=12, choices=ESTADOS, default=PENDIENTE)
     version_declaracion = models.CharField(max_length=10)
     declaracion_aceptada = models.DateTimeField()
+    por_rut = models.BooleanField(
+        'pedido con el RUT del estudiante', default=False,
+        help_text='Un segundo apoderado identifico al estudiante, que ya estaba registrado, solo con su RUT: '
+                  'no se le muestra su nombre hasta que soporte verifique el vinculo.')
     creado = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -181,6 +185,14 @@ class Vinculo(models.Model):
 
     def __str__(self):
         return f'{self.apoderado.nombre} - {self.alumno.user.first_name} ({self.get_estado_display()})'
+
+    @property
+    def nombre_visible(self):
+        """Como se nombra al estudiante ante su apoderado: quien lo pidio solo con el RUT no ve su nombre
+        hasta que soporte verifique el vinculo (si no, escribir un RUT bastaria para conocer el nombre)."""
+        if self.por_rut and self.estado != self.VERIFICADO:
+            return 'Estudiante'
+        return self.alumno.user.first_name
 
     @property
     def ultima_revision(self):
