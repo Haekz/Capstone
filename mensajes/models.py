@@ -39,6 +39,9 @@ class Conversacion(models.Model):
     # Hasta cuando leyo cada lado: lo posterior de la otra persona queda "sin leer".
     visto_cliente = models.DateTimeField(null=True, blank=True)
     visto_profesor = models.DateTimeField(null=True, blank=True)
+    # Cuando se le aviso por ultima vez a cada lado: base de la regla de re-aviso (servicio.REAVISO).
+    avisado_cliente = models.DateTimeField(null=True, blank=True)
+    avisado_profesor = models.DateTimeField(null=True, blank=True)
 
     objects = ConversacionQuerySet.as_manager()
 

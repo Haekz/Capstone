@@ -4,11 +4,14 @@
 - Un menor nunca escribe ni abre conversaciones: habla su apoderado (C2), con su propia conversacion por
   cada apoderado. Si el vinculo se revoca, el apoderado se rechaza o el estudiante cumple 18 (Vinculo.autoriza),
   la conversacion queda solo para lectura, para los dos lados.
-- Aviso al otro lado (campanita + correo sin el contenido) solo cuando cambia el turno:
-  si alguien manda varios seguidos, no se llena de avisos.
+- Aviso al otro lado (campanita + correo sin el contenido) cuando cambia el turno, o si pasaron mas de
+  REAVISO desde el ultimo aviso que se le envio a esa persona (no desde el ultimo mensaje): si alguien manda
+  varios seguidos no se llena de avisos, pero un recado urgente despues de horas de silencio no pasa inadvertido.
 - Reportar (C1c): cualquiera de los dos abre un ticket de soporte; solo soporte puede leerla desde el
   ticket y cada lectura queda registrada.
 """
+
+from datetime import timedelta
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -27,6 +30,7 @@ from .filtro import exigir_sin_contacto
 from .models import LARGO_MAX, AccesoConversacion, Conversacion, Mensaje, ReporteConversacion
 
 PLANTILLA_CORREO = 'mensajes/correo_nuevo_mensaje.txt'
+REAVISO = timedelta(hours=12)  # decision funcional, no legal: el mismo margen con que el profesor puede cancelar
 
 
 class MensajeError(ValidationError):
@@ -105,6 +109,18 @@ def _avisar(conversacion, autor):
     destinatario, texto, ruta = _aviso_a_quien_no_escribio(conversacion, autor)
     notificar(destinatario, texto, f'{ruta}?c={conversacion.pk}')
     enviar_correo('Tienes un mensaje nuevo', PLANTILLA_CORREO, {'nombre': destinatario.first_name}, destinatario.email)
+    campo = 'avisado_profesor' if autor.pk == conversacion.cliente_id else 'avisado_cliente'
+    Conversacion.objects.filter(pk=conversacion.pk).update(**{campo: timezone.now()})
+
+
+def _corresponde_avisar(conversacion, autor, anterior):
+    """Cambio de turno, o hace mas de REAVISO que no se le avisa a quien no escribio."""
+    if anterior is None or anterior.autor_id != autor.pk:
+        return True
+    campo = 'avisado_profesor' if autor.pk == conversacion.cliente_id else 'avisado_cliente'
+    # Se lee de la base, no del objeto recibido: este puede venir desactualizado.
+    ultimo = Conversacion.objects.filter(pk=conversacion.pk).values_list(campo, flat=True).first()
+    return ultimo is None or timezone.now() - ultimo > REAVISO
 
 
 def enviar(autor, conversacion, texto):
@@ -123,7 +139,7 @@ def enviar(autor, conversacion, texto):
     with transaction.atomic():
         anterior = conversacion.mensajes.last()
         mensaje = Mensaje.objects.create(conversacion=conversacion, autor=autor, texto=texto)
-        if anterior is None or anterior.autor_id != autor.pk:
+        if _corresponde_avisar(conversacion, autor, anterior):
             transaction.on_commit(lambda: _avisar(conversacion, autor))
     return mensaje
 
