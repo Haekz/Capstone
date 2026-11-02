@@ -3,11 +3,13 @@
 Un aviso es algo que espera una accion de esa persona, con su plazo. Desaparece
 solo cuando se resuelve, asi que no hay "leido" que guardar. Cada rol ve lo
 suyo: el admin, los retiros de los profesores (titulos y reportes son de soporte);
-el agente de soporte, sus tickets por vencer o atrasados.
+el agente de soporte, sus tickets por vencer o atrasados; el lider, ademas, los
+tickets que nadie atiende y los atrasos del equipo.
 """
 
 from dataclasses import dataclass
 
+from django.db.models import F
 from django.urls import reverse
 from django.utils import timezone
 
@@ -15,7 +17,7 @@ from alumnos.models import SolicitudRetiro
 from alumnos.roles import ADMIN, SOPORTE, rol_en_sesion
 from alumnos.templatetags.dinero import clp
 from soporte import plazos
-from soporte.models import Ticket
+from soporte.models import AgenteSoporte, Ticket
 from soporte.permisos import tickets_del_agente
 
 
@@ -29,6 +31,10 @@ class Aviso:
 
 def _retiros(cantidad):
     return f'{cantidad} retiro' if cantidad == 1 else f'{cantidad} retiros'
+
+
+def _tickets(cantidad):
+    return f'{cantidad} ticket' if cantidad == 1 else f'{cantidad} tickets'
 
 
 def _hace(dia, hoy):
@@ -112,11 +118,44 @@ def _de_agente(request, ahora):
     return avisos
 
 
+def _del_lider(agente_id, ahora):
+    """Lo que solo resuelve el lider: tickets que ningun agente ve y atrasos de otros agentes.
+
+    "Con agente" es la regla de tickets_del_agente: asignado y habilitado en la categoria.
+    Si al agente le quitan la categoria, sus tickets quedan sin nadie que los vea.
+    """
+    panel = reverse('panel_soporte')
+    abiertos = Ticket.objects.filter(estado=Ticket.ABIERTO)
+    con_agente = abiertos.filter(asignado__habilitaciones__categoria=F('categoria'))
+    avisos = []
+
+    sin_agente = list(abiertos.exclude(pk__in=con_agente.values('pk')))
+    if sin_agente:
+        avisos.append(Aviso(
+            f'{_tickets(len(sin_agente))} sin agente',
+            'Sin asignar, o su agente ya no está habilitado en la categoría: nadie los ve. Reasígnalos.',
+            panel, urgente=any(t.respondido is None and t.vence < ahora for t in sin_agente)))
+
+    atrasados = list(con_agente.filter(respondido__isnull=True, vence__lt=ahora)
+                     .exclude(asignado_id=agente_id).order_by('vence'))  # los propios ya salen arriba
+    if atrasados:
+        primero = atrasados[0]
+        avisos.append(Aviso(
+            f'{_tickets(len(atrasados))} {"atrasado" if len(atrasados) == 1 else "atrasados"} del equipo',
+            f'El más atrasado es el #{primero.pk}: venció el {timezone.localtime(primero.vence):%d/%m}.',
+            panel, urgente=True))
+    return avisos
+
+
 def para(request):
     """Avisos de quien tiene la sesion abierta; ninguno si su rol no tiene."""
     rol = rol_en_sesion(request)
     if rol == ADMIN:
         return _de_admin(timezone.localdate())
     if rol == SOPORTE:
-        return _de_agente(request, timezone.now())
+        ahora, agente_id = timezone.now(), request.session.get(SOPORTE.clave_sesion)
+        avisos = _de_agente(request, ahora)
+        if AgenteSoporte.objects.filter(pk=agente_id, es_lider=True).exists():
+            avisos += _del_lider(agente_id, ahora)
+        return avisos
     return []

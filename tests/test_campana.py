@@ -1,9 +1,10 @@
 """Paso 8c: la campana avisa plazos segun quien la abre (admin_portal/avisos.py).
 
 Antes mostraba siempre el punto rojo y dos avisos inventados ("Jose" en el Plan
-Basico y "Tanger" con $45.000). Ahora el admin ve sus retiros con plazo y el
-agente de soporte sus tickets por vencer o atrasados; los avisos desaparecen
-solos al resolverse.
+Basico y "Tanger" con $45.000). Ahora el admin ve sus retiros con plazo, el
+agente de soporte sus tickets por vencer o atrasados, y el lider ademas los
+tickets sin agente y los atrasos del equipo; los avisos desaparecen solos al
+resolverse.
 """
 
 from datetime import datetime, time, timedelta
@@ -168,3 +169,59 @@ class CampanaAgenteTests(TestCase):
         self.assertContains(respuesta, f'Ticket #{ticket.pk} atrasado')
         self.assertContains(respuesta, 'notif-badge-dot')
         self.assertNotContains(respuesta, 'onclick="openSearchModal()"')  # el buscador es del admin
+
+
+class CampanaLiderTests(TestCase):
+    """El lider ve, ademas de los suyos, los tickets que nadie atiende y los atrasos del equipo."""
+
+    def setUp(self):
+        self.lider = crear_agente('22222222-2', Ticket.CLASES, lider=True)
+        self.agente = crear_agente('20202020-2', Ticket.CLASES)
+        self.alumno = crear_alumno_adulto()
+
+    def ticket(self, categoria=Ticket.CLASES, **cambios):
+        ticket = abrir_reporte(self.alumno.user, categoria, 'Profesor no llegó', 'Esperé 30 minutos.')
+        Ticket.objects.filter(pk=ticket.pk).update(**cambios)
+        return ticket
+
+    def vencido(self):
+        return timezone.now() - timedelta(hours=1)
+
+    def titulos(self, agente):
+        return [aviso.titulo for aviso in avisos_de(soporte_id=agente.id_agente)]
+
+    def test_sin_pendientes_no_hay_avisos(self):
+        self.ticket(asignado=self.agente)  # plazo holgado y con agente
+        self.assertEqual(self.titulos(self.lider), [])
+
+    def test_ticket_sin_asignar(self):
+        self.ticket(Ticket.TECNICO)  # nadie habilitado en tecnico: queda sin asignar
+        [aviso] = avisos_de(soporte_id=self.lider.id_agente)
+        self.assertEqual(aviso.titulo, '1 ticket sin agente')
+        self.assertFalse(aviso.urgente)
+        self.assertEqual(aviso.url, reverse('panel_soporte'))
+
+    def test_agente_sin_la_categoria_deja_sus_tickets_sin_nadie(self):
+        self.ticket(asignado=self.agente, vence=self.vencido())
+        self.agente.habilitaciones.all().delete()
+        [aviso] = avisos_de(soporte_id=self.lider.id_agente)
+        self.assertEqual(aviso.titulo, '1 ticket sin agente')
+        self.assertTrue(aviso.urgente)  # ya venció
+
+    def test_atrasos_del_equipo(self):
+        ticket = self.ticket(asignado=self.agente, vence=self.vencido())
+        self.ticket(asignado=self.agente, vence=self.vencido(), respondido=timezone.now())  # cumplió
+        [aviso] = avisos_de(soporte_id=self.lider.id_agente)
+        self.assertEqual(aviso.titulo, '1 ticket atrasado del equipo')
+        self.assertIn(f'El más atrasado es el #{ticket.pk}', aviso.detalle)
+        self.assertTrue(aviso.urgente)
+
+    def test_sus_propios_atrasos_no_se_cuentan_dos_veces(self):
+        ticket = self.ticket(asignado=self.lider, vence=self.vencido())
+        self.assertEqual(self.titulos(self.lider), [f'Ticket #{ticket.pk} atrasado'])
+
+    def test_un_agente_no_ve_la_supervision(self):
+        self.ticket(Ticket.TECNICO)
+        otro = crear_agente('21212121-2', Ticket.CLASES)
+        self.ticket(asignado=otro, vence=self.vencido())
+        self.assertEqual(self.titulos(self.agente), [])
