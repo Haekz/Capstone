@@ -10,6 +10,7 @@ from django.utils import timezone
 
 from alumnos.models import Inscripcion, SesionClase
 
+from . import cancelacion
 from .bloques import SEMANAS
 from .models import HorarioSemanal
 
@@ -32,7 +33,8 @@ def agenda(profesor, ahora=None):
     filas = {}
     for sesion in sesiones:  # ya vienen por fecha (Meta.ordering)
         fila = filas.setdefault(sesion.fecha_hora_inicio, {'inicio': sesion.inicio_local, 'reservas': []})
-        fila['reservas'] += [{'alumno': i.alumno.user.first_name, 'asignatura': sesion.clase.asignatura.nombre}
+        fila['reservas'] += [{'id': i.pk, 'alumno': i.alumno.user.first_name, 'asignatura': sesion.clase.asignatura.nombre,
+                              'puede_cancelar': cancelacion.a_tiempo(sesion, ahora)}
                              for i in sesion.activas]
     return list(filas.values())
 

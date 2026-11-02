@@ -8,9 +8,10 @@ from django.shortcuts import get_object_or_404, redirect
 from django.views.decorators.http import require_POST
 
 from alumnos.decorators import profesor_required
+from alumnos.exceptions import InscripcionError
 from alumnos.models import Profesor
 
-from . import bloques
+from . import bloques, cancelacion
 from .models import HorarioSemanal
 
 
@@ -46,4 +47,16 @@ def quitar_franja(request, pk):
     franja = get_object_or_404(HorarioSemanal, pk=pk, profesor=_profesor(request))  # solo las propias
     bloques.quitar_franja(franja)
     messages.success(request, 'Franja quitada. Las clases ya reservadas se mantienen en tu agenda.')
+    return redirect('panel_profesor')
+
+
+@require_POST
+@profesor_required
+def cancelar_clase(request, pk):
+    try:
+        cancelacion.cancelar(_profesor(request), pk)
+    except InscripcionError as e:
+        messages.error(request, e.messages[0])
+    else:
+        messages.success(request, 'Clase cancelada. Esa hora quedó cerrada y avisamos al alumno para que reagende.')
     return redirect('panel_profesor')

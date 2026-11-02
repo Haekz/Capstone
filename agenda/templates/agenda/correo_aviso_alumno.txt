@@ -1,0 +1,8 @@
+Hola {{ nombre }},
+
+{{ texto }}
+Las horas son de Chile.
+
+Entra a LBWUS para elegir un nuevo horario.
+
+Equipo LBWUS

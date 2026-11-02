@@ -75,7 +75,17 @@
                         <td>{{ fila.inicio|time:"H:i" }}</td>
                         <td>
                             {% for r in fila.reservas %}
-                                <span class="prof-badge prof-badge-online">Reservado</span> {{ r.alumno }} · {{ r.asignatura }}{% if not forloop.last %}<br>{% endif %}
+                                <span class="prof-badge prof-badge-online">Reservado</span> {{ r.alumno }} · {{ r.asignatura }}
+                                {% if r.puede_cancelar %}
+                                <form method="post" action="{% url 'agenda_cancelar_clase' r.id %}" style="display:inline;"
+                                      onsubmit="return confirm('¿Cancelar esta clase? Esa hora se cierra y avisamos al alumno para que reagende.');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="prof-form-btn" aria-label="Cancelar la clase de {{ r.asignatura }} con {{ r.alumno }} del {{ fila.inicio|date:'d/m' }} a las {{ fila.inicio|time:'H:i' }}">Cancelar clase</button>
+                                </form>
+                                {% else %}
+                                <small>Faltan menos de 12 h: ya no se puede cancelar.</small>
+                                {% endif %}
+                                {% if not forloop.last %}<br>{% endif %}
                             {% empty %}
                                 Libre
                             {% endfor %}
