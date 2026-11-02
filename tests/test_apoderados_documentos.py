@@ -1,6 +1,6 @@
 """Documentos de apoderados (carnet y documento del vinculo).
 
-Datos ficticios. Cubre la subida (cifrado, sin metadatos, solo JPG o PNG de hasta
+Datos ficticios. Cubre la subida (cifrado, sin metadatos, solo JPG, PNG o PDF de hasta
 5 MB, documento segun parentesco), la revision (sin documento no se aprueba; al
 decidir se borra), el visor (solo el agente de soporte con el ticket, marca de agua y
 registro de cada apertura) y el borrado a los 30 dias.
@@ -56,8 +56,10 @@ class SubidaTests(TestCase):
         self.assertNotIn(MARCA.encode(), claro, 'se guardaron los metadatos de la foto')
         self.assertEqual(Image.open(io.BytesIO(claro)).format, 'JPEG')
 
-    def test_solo_acepta_imagenes_jpg_o_png_de_hasta_5_mb(self):
-        formato, pesado = 'Sube una foto o imagen en formato JPG o PNG.', 'El archivo no puede superar los 5 MB.'
+    def test_solo_acepta_jpg_png_o_pdf_de_hasta_5_mb(self):
+        # Los PDF validos se prueban en test_apoderados_pdf; uno falso sigue sin pasar.
+        formato = 'Sube una foto o imagen JPG o PNG, o un PDF de hasta 3 páginas.'
+        pesado = 'El archivo no puede superar los 5 MB.'
         casos = {
             'pdf': (SimpleUploadedFile('carnet.jpg', b'%PDF-1.4 documento falso'), formato),
             'gif': (imagen('carnet.gif', 'GIF'), formato),

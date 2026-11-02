@@ -31,8 +31,9 @@ DECLARACION_VINCULO = (
     'auténtico. Entiendo que, mientras LBWUS lo revisa, la cuenta del estudiante no podrá reservar, '
     'comprar ni entrar a clases.'
 )
-AVISO_DOCUMENTO = ('Foto o imagen JPG o PNG, de hasta 5 MB. Se guarda cifrada, solo la ve el equipo que '
-                   'revisa tu solicitud y se elimina apenas la aprueba o la rechaza, o a los 30 días.')
+AVISO_DOCUMENTO = ('Foto o imagen JPG o PNG, o PDF de hasta 3 páginas, de hasta 5 MB. Se guarda cifrado, solo '
+                   'lo ve el equipo que revisa tu solicitud y se elimina apenas la aprueba o la rechaza, o a los '
+                   '30 días.')
 VERSION_DECLARACION_ADOLESCENTE = '1'
 DECLARACION_ADOLESCENTE = (
     'Declaro que mis datos son verdaderos y que el correo que indico es de mi madre o de mi padre. '
@@ -74,8 +75,8 @@ class AccesibleMixin:
 
 
 class DocumentoField(forms.FileField):
-    """Imagen de un documento: limpia, devuelve (contenido cifrado, formato)."""
-    widget = forms.FileInput(attrs={'accept': 'image/jpeg,image/png'})
+    """Imagen o PDF de un documento: valida y devuelve (contenido cifrado, formato)."""
+    widget = forms.FileInput(attrs={'accept': 'image/jpeg,image/png,application/pdf'})
 
     def __init__(self, **kwargs):
         super().__init__(help_text=AVISO_DOCUMENTO, **kwargs)

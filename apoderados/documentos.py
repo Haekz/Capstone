@@ -1,14 +1,18 @@
 """Documentos por revisar: carnet del apoderado y documento del vinculo.
 
 Se guardan cifrados en la base de datos (PostgreSQL), nunca en disco: Railway borra
-el disco en cada deploy. Solo JPG o PNG: al subirlos se vuelven a codificar, asi se
+el disco en cada deploy. JPG o PNG: al subirlos se vuelven a codificar, asi se
 descartan archivos que no son imagenes y se borran sus metadatos (por ejemplo, la
-ubicacion GPS de una foto). Al verlos se les pone marca de agua con el nombre de
-quien los abre. Se borran al aprobar o rechazar la revision, o a los 30 dias.
+ubicacion GPS de una foto). PDF (N6): se guarda el original cifrado y nunca va al
+navegador; al verlo se convierte a imagen (pypdfium2) en el servidor. Al verlos se les
+pone marca de agua con el nombre de quien los abre. Se borran al aprobar o rechazar la
+revision, o a los 30 dias.
 """
 
 import io
 
+import pypdfium2 as pdfium
+import pypdfium2.raw as pdfium_raw
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from PIL import Image, ImageDraw, ImageFont, ImageOps, UnidentifiedImageError
@@ -18,7 +22,12 @@ from alumnos.cifrado import cifrador
 TAMANO_MAXIMO = 5 * 1024 * 1024
 LADO_MAXIMO = 2000  # pixeles: suficiente para leer un carnet o un certificado
 FORMATOS = ('JPEG', 'PNG')
-ERROR_FORMATO = 'Sube una foto o imagen en formato JPG o PNG.'
+MAX_PAGINAS = 3  # PDF: "pocas paginas" (N6); decidido 02-nov
+ANCHO_PAGINA = 1400  # pixeles de cada pagina de un PDF al convertirla a imagen
+SEPARACION = 16  # pixeles entre paginas
+ERROR_FORMATO = f'Sube una foto o imagen JPG o PNG, o un PDF de hasta {MAX_PAGINAS} páginas.'
+ERROR_PDF_CLAVE = 'El PDF tiene contraseña. Quítasela y vuelve a subirlo.'
+ERROR_PDF_PAGINAS = f'El PDF puede tener hasta {MAX_PAGINAS} páginas.'
 
 
 def _cifrador():
@@ -28,9 +37,18 @@ def _cifrador():
 
 
 def preparar(archivo):
-    """Valida la imagen subida y la devuelve re-codificada y cifrada: (contenido, formato)."""
+    """Valida el documento subido y lo devuelve cifrado: (contenido, formato).
+
+    Imagen: re-codificada, sin metadatos. PDF: el original tal cual (N6), si se puede convertir.
+    """
     if archivo.size > TAMANO_MAXIMO:
         raise ValidationError('El archivo no puede superar los 5 MB.')
+    if archivo.read(5) == b'%PDF-':
+        archivo.seek(0)
+        original = archivo.read()
+        _pdf_a_imagen(original)  # se abre, sin contrasena, de 1 a 3 paginas y se puede dibujar
+        return _cifrador().encrypt(original), 'PDF'
+    archivo.seek(0)
     try:
         imagen = Image.open(archivo)
         formato = imagen.format
@@ -53,9 +71,41 @@ def descifrar(contenido):
     return _cifrador().decrypt(bytes(contenido))  # PostgreSQL entrega un memoryview
 
 
+def _pdf_a_imagen(original):
+    """Las paginas del PDF, una bajo otra, en una sola imagen RGB. Lanza ValidationError."""
+    try:
+        pdf = pdfium.PdfDocument(original)
+    except pdfium.PdfiumError as error:
+        raise ValidationError(ERROR_PDF_CLAVE if error.err_code == pdfium_raw.FPDF_ERR_PASSWORD else ERROR_FORMATO)
+    try:
+        if not 1 <= len(pdf) <= MAX_PAGINAS:
+            raise ValidationError(ERROR_PDF_PAGINAS)
+        paginas = []
+        for numero in range(len(pdf)):
+            ancho, alto = pdf[numero].get_size()  # en puntos; la escala acota los pixeles en ambos lados
+            escala = min(ANCHO_PAGINA / ancho, LADO_MAXIMO / alto)
+            paginas.append(pdf[numero].render(scale=escala).to_pil().convert('RGB'))
+    except pdfium.PdfiumError:
+        raise ValidationError(ERROR_FORMATO)
+    finally:
+        pdf.close()
+    hoja = Image.new('RGB', (max(p.width for p in paginas),
+                             sum(p.height for p in paginas) + SEPARACION * (len(paginas) - 1)), 'gray')
+    y = 0
+    for pagina in paginas:
+        hoja.paste(pagina, (0, y))
+        y += pagina.height + SEPARACION
+    return hoja
+
+
 def con_marca_de_agua(contenido, texto):
-    """JPEG del documento con ``texto`` repetido encima: si se filtra, se sabe quien lo abrio."""
-    imagen = Image.open(io.BytesIO(descifrar(contenido))).convert('RGBA')
+    """JPEG del documento con ``texto`` repetido encima: si se filtra, se sabe quien lo abrio.
+
+    Un PDF se entrega como imagen: el original nunca sale del servidor.
+    """
+    claro = descifrar(contenido)
+    documento = _pdf_a_imagen(claro) if claro.startswith(b'%PDF-') else Image.open(io.BytesIO(claro))
+    imagen = documento.convert('RGBA')
     ancho, alto = imagen.size
     fuente = ImageFont.load_default(size=max(14, ancho // 28))
     capa = Image.new('RGBA', imagen.size, (0, 0, 0, 0))

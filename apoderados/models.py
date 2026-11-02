@@ -388,8 +388,8 @@ class Documento(models.Model):
     vinculo = models.ForeignKey(Vinculo, on_delete=models.CASCADE, null=True, blank=True,
                                 related_name='documentos')
     tipo = models.CharField(max_length=15, choices=TIPOS)
-    formato = models.CharField(max_length=4)  # JPEG o PNG
-    contenido = models.BinaryField()  # cifrado: nunca la imagen en claro
+    formato = models.CharField(max_length=4)  # JPEG, PNG o PDF (el original; se ve como imagen)
+    contenido = models.BinaryField()  # cifrado: nunca el documento en claro
     subido = models.DateTimeField(auto_now_add=True)
     avisado = models.BooleanField(default=False)  # ya se aviso al agente que se borra pronto
 
