@@ -139,11 +139,7 @@
                 <button class="theme-btn" onclick="openSearchModal()" title="Buscar (Ctrl + K)">
                     <i class="bi bi-search"></i>
                 </button>
-                <!-- Campana: avisos de plazos de quien abre la página; el punto solo si hay alguno -->
-                <button class="theme-btn" onclick="toggleNotifications()" title="Notificaciones" aria-label="Notificaciones{% if avisos %} ({{ avisos|length }}){% endif %}" style="position:relative;">
-                    <i class="bi bi-bell-fill" aria-hidden="true"></i>
-                    {% if avisos %}<span class="notification-badge-dot" id="notif-badge-dot"></span>{% endif %}
-                </button>
+                {% include 'admin_portal/includes/boton_campana.html' %}
                 {% endblock %}
                 <!-- Botón de alternar tema claro/oscuro -->
                 <button class="theme-btn" onclick="toggleTheme()" title="Cambiar tema">

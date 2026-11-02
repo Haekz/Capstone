@@ -2,7 +2,8 @@
 
 Un aviso es algo que espera una accion de esa persona, con su plazo. Desaparece
 solo cuando se resuelve, asi que no hay "leido" que guardar. Cada rol ve lo
-suyo: el admin, los retiros de los profesores (titulos y reportes son de soporte).
+suyo: el admin, los retiros de los profesores (titulos y reportes son de soporte);
+el agente de soporte, sus tickets por vencer o atrasados.
 """
 
 from dataclasses import dataclass
@@ -11,8 +12,11 @@ from django.urls import reverse
 from django.utils import timezone
 
 from alumnos.models import SolicitudRetiro
-from alumnos.roles import ADMIN, rol_en_sesion
+from alumnos.roles import ADMIN, SOPORTE, rol_en_sesion
 from alumnos.templatetags.dinero import clp
+from soporte import plazos
+from soporte.models import Ticket
+from soporte.permisos import tickets_del_agente
 
 
 @dataclass(frozen=True)
@@ -85,8 +89,34 @@ def _de_admin(hoy):
     return avisos
 
 
+def _de_agente(request, ahora):
+    """Sus tickets sin respuesta: atrasados, y los que vencen a mas tardar el proximo dia habil.
+
+    Misma regla de atraso que Ticket.atrasado: responder un ticket de usuario cumple el plazo.
+    """
+    hoy = timezone.localdate(ahora)
+    avisos = []
+    for ticket in (tickets_del_agente(request)
+                   .filter(respondido__isnull=True, vence__lte=plazos.vencimiento(ahora, 1))
+                   .order_by('vence')):
+        vence = timezone.localtime(ticket.vence)
+        # El de un usuario se abre en su conversacion; las verificaciones, desde el panel.
+        url = reverse('soporte_reporte', args=[ticket.pk]) if ticket.autor_id else reverse('panel_soporte')
+        if ticket.vence < ahora:
+            avisos.append(Aviso(f'Ticket #{ticket.pk} atrasado', f'{ticket.asunto}. Venció el {vence:%d/%m}.',
+                                url, urgente=True))
+        else:
+            cuando = 'hoy' if vence.date() == hoy else f'el {vence:%d/%m}'
+            avisos.append(Aviso(f'Ticket #{ticket.pk} vence {cuando}', f'{ticket.asunto}.',
+                                url, urgente=ticket.categoria == Ticket.CONDUCTA))
+    return avisos
+
+
 def para(request):
     """Avisos de quien tiene la sesion abierta; ninguno si su rol no tiene."""
-    if rol_en_sesion(request) == ADMIN:
+    rol = rol_en_sesion(request)
+    if rol == ADMIN:
         return _de_admin(timezone.localdate())
+    if rol == SOPORTE:
+        return _de_agente(request, timezone.now())
     return []
