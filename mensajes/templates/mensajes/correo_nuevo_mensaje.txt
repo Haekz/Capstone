@@ -1,0 +1,5 @@
+Hola {{ nombre }},
+
+Tienes un mensaje nuevo en LBWUS. Entra a la plataforma para leerlo.
+
+Equipo LBWUS
