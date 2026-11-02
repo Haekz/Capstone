@@ -73,6 +73,7 @@ INSTALLED_APPS = [
     'apoderados',
     'soporte',
     'notificaciones',
+    'agenda',
     'django_extensions',
 ]
 
