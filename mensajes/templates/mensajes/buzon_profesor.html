@@ -52,11 +52,15 @@
                 <p style="padding: 20px; color: var(--text-light);">Aún no hay mensajes. Escribe el primero.</p>
                 {% endfor %}
             </div>
+            {% if buzon_activa.solo_lectura %}
+            <p class="profe-chat-input-box" role="status" style="margin: 0;">Esta conversación quedó solo para lectura: el vínculo del apoderado con el estudiante ya no está activo.</p>
+            {% else %}
             <form class="profe-chat-input-box" method="post" action="{% url 'mensajes_profesor_enviar' buzon_activa.pk %}">
                 {% csrf_token %}
                 <input type="text" name="texto" placeholder="Escribe tu respuesta al alumno..." aria-label="Tu mensaje" required maxlength="1000" autocomplete="off">
                 <button type="submit" class="profe-chat-send-btn" aria-label="Enviar mensaje"><i class="bi bi-send-fill" aria-hidden="true"></i></button>
             </form>
+            {% endif %}
             {% else %}
             <p style="padding: 20px; color: var(--text-light);">Elige una conversación de la lista.</p>
             {% endif %}

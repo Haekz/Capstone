@@ -141,12 +141,13 @@ class EscribirDesdeLaAgendaTests(Escenario):
         self.assertEqual(self.abrir(otra).status_code, 404)
         self.assertFalse(Conversacion.objects.exists())
 
-    def test_con_un_menor_no_hay_boton_porque_le_escribe_su_apoderado(self):
+    def test_con_un_menor_el_boton_es_para_su_apoderado_y_abre_la_conversacion_con_el(self):
         vinculo = crear_menor_vinculado(crear_apoderado(RUT, Apoderado.VERIFICADO), rut=RUT_MENOR)
         dar_paquete(vinculo.alumno, self.profe)
         InscripcionService.inscribir_alumno_en_sesion(
             vinculo.alumno, crear_sesion(self.clase, dias=EN_13_HORAS + 1, cupo=1).pk, vinculo=vinculo)
         r = self.client.get(reverse('panel_profesor'))
-        self.assertContains(r, 'Escribir al alumno</button>', count=1)  # solo el de Ana
-        self.assertEqual(self.abrir(Inscripcion.objects.get(alumno=vinculo.alumno)).status_code, 302)
-        self.assertFalse(Conversacion.objects.filter(alumno=vinculo.alumno).exists())
+        self.assertContains(r, 'Escribir al alumno</button>', count=1)  # el de Ana
+        self.assertContains(r, 'Escribir al apoderado</button>', count=1)  # el del menor
+        self.abrir(Inscripcion.objects.get(alumno=vinculo.alumno))
+        self.assertEqual(Conversacion.objects.get(alumno=vinculo.alumno).cliente, vinculo.apoderado.user)

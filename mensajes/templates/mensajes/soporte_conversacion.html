@@ -7,14 +7,14 @@
 {% block content %}
 <div class="panel">
     <div class="panel-header">
-        <span class="panel-title"><i class="bi bi-chat-left-text-fill" aria-hidden="true"></i> {{ conversacion.alumno.user.first_name }} y {{ conversacion.profesor.user.first_name }} (profesor)</span>
+        <span class="panel-title"><i class="bi bi-chat-left-text-fill" aria-hidden="true"></i> {{ conversacion.nombre_para_profesor }} y {{ conversacion.profesor.user.first_name }} (profesor)</span>
     </div>
     <div style="padding:18px;">
         <p><small>Estás leyendo una conversación privada. Tu lectura queda registrada con tu nombre y la hora. Úsala solo para resolver este ticket.</small></p>
         <ol style="list-style:none; padding:0; margin:0; display:grid; gap:12px;">
             {% for m in mensajes %}
             <li style="padding:12px 14px; border:1px solid var(--border, #c8c8c8); border-radius:10px;">
-                <strong>{{ m.autor.first_name }} ({% if m.autor_id == conversacion.profesor.user_id %}profesor{% else %}alumno{% endif %})</strong>
+                <strong>{{ m.autor.first_name }} ({% if m.autor_id == conversacion.profesor.user_id %}profesor{% elif conversacion.es_de_apoderado %}apoderado{% else %}alumno{% endif %})</strong>
                 <small>· {{ m.creado|date:"d-m-Y H:i" }}</small>
                 <p style="margin:6px 0 0;">{{ m.texto }}</p>
             </li>

@@ -8,6 +8,7 @@ from django.views.decorators.http import require_POST
 
 from alumnos.decorators import profesor_required
 from alumnos.models import Inscripcion, Profesor
+from alumnos.utils import es_menor
 
 from . import servicio
 from .models import Conversacion
@@ -36,13 +37,22 @@ def enviar_profesor(request, pk):
 @require_POST
 @profesor_required
 def abrir_profesor(request, inscripcion_id):
-    """\"Escribir al alumno\" desde una reserva de Mi Agenda."""
+    """\"Escribir\" desde una reserva de Mi Agenda: al alumno adulto, o a los apoderados de un menor."""
     profesor = _profesor(request)
     inscripcion = get_object_or_404(Inscripcion.objects.select_related('alumno__user'),
                                     pk=inscripcion_id, clase__profesor=profesor)
+    alumno = inscripcion.alumno
     try:
-        conversacion = servicio.abrir_conversacion(inscripcion.alumno, profesor)
+        if es_menor(alumno.user):
+            conversaciones = servicio.abrir_conversaciones_con_apoderados(alumno, profesor)
+        else:
+            conversaciones = [servicio.abrir_conversacion(alumno, profesor)]
     except ValidationError as e:
         messages.error(request, e.messages[0])
         return redirect('panel_profesor')
-    return _al_panel(conversacion)
+    if not conversaciones:
+        messages.error(request, 'Este estudiante no tiene un apoderado con vínculo activo.')
+        return redirect('panel_profesor')
+    if len(conversaciones) > 1:
+        messages.info(request, 'Este estudiante tiene más de un apoderado: escríbele a cada uno desde tu Buzón.')
+    return _al_panel(conversaciones[0])

@@ -36,7 +36,7 @@ def agenda(profesor, ahora=None):
         fila = filas.setdefault(sesion.fecha_hora_inicio, {'inicio': sesion.inicio_local, 'reservas': []})
         fila['reservas'] += [{'id': i.pk, 'alumno': i.alumno.user.first_name, 'asignatura': sesion.clase.asignatura.nombre,
                               'puede_cancelar': cancelacion.a_tiempo(sesion, ahora),
-                              'puede_escribir': not es_menor(i.alumno.user)}  # al menor le escribe su apoderado (C2)
+                              'escribe_a': 'apoderado' if es_menor(i.alumno.user) else 'alumno'}  # al menor le escribe su apoderado
                              for i in sesion.activas]
     return list(filas.values())
 

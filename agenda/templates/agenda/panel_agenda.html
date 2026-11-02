@@ -76,12 +76,10 @@
                         <td>
                             {% for r in fila.reservas %}
                                 <span class="prof-badge prof-badge-online">Reservado</span> {{ r.alumno }} · {{ r.asignatura }}
-                                {% if r.puede_escribir %}
                                 <form method="post" action="{% url 'mensajes_profesor_abrir' r.id %}" style="display:inline;">
                                     {% csrf_token %}
-                                    <button type="submit" class="prof-form-btn" aria-label="Escribir a {{ r.alumno }} sobre la clase de {{ r.asignatura }} del {{ fila.inicio|date:'d/m' }}">Escribir al alumno</button>
+                                    <button type="submit" class="prof-form-btn" aria-label="Escribir al {{ r.escribe_a }} de {{ r.alumno }} sobre la clase de {{ r.asignatura }} del {{ fila.inicio|date:'d/m' }}">Escribir al {{ r.escribe_a }}</button>
                                 </form>
-                                {% endif %}
                                 {% if r.puede_cancelar %}
                                 <form method="post" action="{% url 'agenda_cancelar_clase' r.id %}" style="display:inline;"
                                       onsubmit="return confirm('¿Cancelar esta clase? Esa hora se cierra y avisamos al alumno para que reagende.');">

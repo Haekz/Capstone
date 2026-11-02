@@ -58,6 +58,14 @@ def abrir_conversacion_de_apoderado(vinculo, profesor):
     return conversacion
 
 
+def abrir_conversaciones_con_apoderados(alumno, profesor):
+    """El profesor escribe por un menor: una conversacion con cada apoderado con vinculo vigente (se crean
+    la primera vez). Vacio si el menor no tiene ninguno."""
+    vinculos = (Vinculo.objects.filter(alumno=alumno, estado=Vinculo.VERIFICADO)
+                .select_related('apoderado__user', 'alumno__user'))
+    return [abrir_conversacion_de_apoderado(v, profesor) for v in vinculos if v.autoriza(alumno)]
+
+
 def es_solo_lectura(conversacion):
     """La de un apoderado cuyo vinculo ya no autoriza actuar por el estudiante (revocado, apoderado
     rechazado o estudiante de 18 años). Las de un alumno adulto siempre se pueden usar."""

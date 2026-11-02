@@ -40,7 +40,8 @@ def reportar_conversacion(request, pk):
                                       f'Te responderemos a más tardar el {plazo:%d-%m-%Y} a las {plazo:%H:%M}.')
             return redirect('mis_tickets')
     es_profesor = conversacion.profesor.user_id == request.user.pk
-    volver = reverse('panel_profesor' if es_profesor else 'alumno_pag1')  # C2: el del apoderado
+    ruta = 'panel_profesor' if es_profesor else 'mensajes_apoderado' if conversacion.es_de_apoderado else 'alumno_pag1'
+    volver = reverse(ruta)
     return render(request, 'apoderados/formulario.html', {
         'form': form, 'titulo': 'Reportar esta conversación', 'subtitulo': 'Cuéntanos qué pasó', 'boton': 'Reportar',
         'volver_url': f'{volver}?c={conversacion.pk}',
