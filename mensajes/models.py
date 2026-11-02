@@ -50,10 +50,16 @@ class Conversacion(models.Model):
     def __str__(self):
         return f'{self.alumno.user.first_name} - {self.profesor.user.first_name}'
 
-    # Como se nombra a cada lado (solo nombre de pila). En C2, el apoderado de un menor.
+    # Como se nombra a cada lado (solo nombre de pila). Del menor habla su apoderado: el profesor ve
+    # "Apoderado de <menor>", sin el nombre ni ningun dato del apoderado.
+    @property
+    def es_de_apoderado(self):
+        return self.cliente_id != self.alumno.user_id
+
     @property
     def nombre_para_profesor(self):
-        return self.alumno.user.first_name
+        nombre = self.alumno.user.first_name
+        return f'Apoderado de {nombre}' if self.es_de_apoderado else nombre
 
     @property
     def nombre_para_cliente(self):

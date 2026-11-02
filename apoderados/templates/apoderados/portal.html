@@ -97,6 +97,9 @@
         {% endif %}
         <p class="perfil-prof__vacio">Para cada estudiante con vínculo verificado puedes contratar clases y reservarlas. El estudiante ve el catálogo y entra a las clases que reserves; no puede reservar, cancelar ni comprar por su cuenta.</p>
         {% if apoderado.estado == 'verificado' %}
+        <a class="perfil-prof__reservar" href="{% url 'mensajes_apoderado' %}">
+            <i class="bi bi-chat-dots-fill" aria-hidden="true"></i> Mensajes con los profesores
+        </a>
         <a class="perfil-prof__reservar" href="{% url 'apoderado_registrar_estudiante' %}">
             <i class="bi bi-person-plus-fill" aria-hidden="true"></i> Registrar estudiante
         </a>

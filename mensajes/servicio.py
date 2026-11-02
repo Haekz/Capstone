@@ -1,7 +1,9 @@
 """Quien puede escribir, el envio y los avisos (paso C1a, decidido 02-nov).
 
 - Solo con una reserva activa o un paquete vigente entre alumno y profesor (se revisa en cada envio).
-- Un menor nunca escribe ni abre conversaciones: hablara su apoderado (C2).
+- Un menor nunca escribe ni abre conversaciones: habla su apoderado (C2), con su propia conversacion por
+  cada apoderado. Si el vinculo se revoca, el apoderado se rechaza o el estudiante cumple 18 (Vinculo.autoriza),
+  la conversacion queda solo para lectura, para los dos lados.
 - Aviso al otro lado (campanita + correo sin el contenido) solo cuando cambia el turno:
   si alguien manda varios seguidos, no se llena de avisos.
 - Reportar (C1c): cualquiera de los dos abre un ticket de soporte; solo soporte puede leerla desde el
@@ -16,6 +18,7 @@ from django.utils import timezone
 from alumnos.correo import enviar as enviar_correo
 from alumnos.models import Inscripcion, PaqueteClases
 from alumnos.utils import es_menor
+from apoderados.models import Vinculo
 from notificaciones.models import notificar
 from soporte.models import Ticket
 from soporte.tickets import abrir_reporte
@@ -45,6 +48,25 @@ def _exigir_relacion(alumno, profesor):
         raise MensajeError('Solo pueden escribirse quienes tienen una clase reservada o un paquete activo.')
 
 
+def abrir_conversacion_de_apoderado(vinculo, profesor):
+    """La conversacion de este apoderado con el profesor, en representacion del menor."""
+    if not vinculo.autoriza(vinculo.alumno):
+        raise MensajeError('Este vínculo ya no está activo.')
+    _exigir_relacion(vinculo.alumno, profesor)
+    conversacion, _ = Conversacion.objects.get_or_create(alumno=vinculo.alumno, profesor=profesor,
+                                                         cliente=vinculo.apoderado.user)
+    return conversacion
+
+
+def es_solo_lectura(conversacion):
+    """La de un apoderado cuyo vinculo ya no autoriza actuar por el estudiante (revocado, apoderado
+    rechazado o estudiante de 18 años). Las de un alumno adulto siempre se pueden usar."""
+    if not conversacion.es_de_apoderado:
+        return False
+    vinculo = Vinculo.objects.filter(apoderado__user_id=conversacion.cliente_id, alumno=conversacion.alumno).first()
+    return vinculo is None or not vinculo.autoriza(conversacion.alumno)
+
+
 def abrir_conversacion(alumno, profesor):
     """La conversacion del alumno adulto con el profesor (se crea la primera vez)."""
     if es_menor(alumno.user):
@@ -60,12 +82,20 @@ def marcar_visto(user, conversacion):
     Conversacion.objects.filter(pk=conversacion.pk).update(**{campo: timezone.now()})
 
 
+def _aviso_a_quien_no_escribio(conversacion, autor):
+    """(destinatario, texto, enlace). Al profesor le llega "Apoderado de <menor>", nunca el nombre del
+    apoderado; al apoderado, de que estudiante se trata."""
+    if autor.pk == conversacion.cliente_id:
+        return (conversacion.profesor.user, f'{conversacion.nombre_para_profesor} te escribió un mensaje.',
+                reverse('panel_profesor'))
+    sobre = f' sobre {conversacion.alumno.user.first_name}' if conversacion.es_de_apoderado else ''
+    ruta = 'mensajes_apoderado' if conversacion.es_de_apoderado else 'alumno_pag1'
+    return conversacion.cliente, f'{autor.first_name} te escribió un mensaje{sobre}.', reverse(ruta)
+
+
 def _avisar(conversacion, autor):
-    habla_el_cliente = autor.pk == conversacion.cliente_id
-    destinatario = conversacion.profesor.user if habla_el_cliente else conversacion.cliente
-    enlace = (f"{reverse('panel_profesor')}?c={conversacion.pk}" if habla_el_cliente
-              else f"{reverse('alumno_pag1')}?c={conversacion.pk}")  # C2: el del apoderado
-    notificar(destinatario, f'{autor.first_name} te escribió un mensaje.', enlace)
+    destinatario, texto, ruta = _aviso_a_quien_no_escribio(conversacion, autor)
+    notificar(destinatario, texto, f'{ruta}?c={conversacion.pk}')
     enviar_correo('Tienes un mensaje nuevo', PLANTILLA_CORREO, {'nombre': destinatario.first_name}, destinatario.email)
 
 
@@ -78,6 +108,8 @@ def enviar(autor, conversacion, texto):
         raise MensajeError(f'El mensaje puede tener hasta {LARGO_MAX} caracteres.')
     if es_menor(autor) or not conversacion.es_participante(autor):
         raise MensajeError('No puedes escribir en esta conversación.')
+    if es_solo_lectura(conversacion):
+        raise MensajeError('Esta conversación quedó solo para lectura: el vínculo con el estudiante ya no está activo.')
     _exigir_relacion(conversacion.alumno, conversacion.profesor)
     exigir_sin_contacto(texto)
     with transaction.atomic():
@@ -99,7 +131,9 @@ def reportar(usuario, conversacion, descripcion):
                                                 ticket__estado=Ticket.ABIERTO)
         if ya.exists():
             raise MensajeError('Ya reportaste esta conversación: soporte la está revisando.')
-        ticket = abrir_reporte(usuario, Ticket.CONDUCTA, f'Conversación #{conversacion.pk} reportada', descripcion)
+        estudiante = conversacion.alumno if usuario.pk == conversacion.cliente_id and conversacion.es_de_apoderado else None
+        ticket = abrir_reporte(usuario, Ticket.CONDUCTA, f'Conversación #{conversacion.pk} reportada', descripcion,
+                               estudiante=estudiante)  # D18: el apoderado reporta por su estudiante
         return ReporteConversacion.objects.create(conversacion=conversacion, ticket=ticket, reportado_por=usuario)
 
 
