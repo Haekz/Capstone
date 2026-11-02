@@ -44,6 +44,11 @@ def dashboard_admin(request):
     todas_solicitudes_retiro = SolicitudRetiro.objects.select_related(
         'banco', 'profesor__user', 'profesor__cuenta_bancaria').order_by('-fecha_solicitud')
 
+    # Corte del grafico de registros (H9); cualquier otro valor vuelve a meses.
+    periodo = request.GET.get('periodo')
+    if periodo not in metricas.PERIODOS:
+        periodo = 'mes'
+
     context = {
         'admin': admin,
         'alumnos': alumnos,
@@ -57,7 +62,10 @@ def dashboard_admin(request):
         'ultimos_profesores': ultimos_profesores,
         'todas_solicitudes_retiro': todas_solicitudes_retiro,
         'finanzas': metricas.finanzas(),  # montos reales (paso 8); el template les da formato
-        'grafico_registros': metricas.grafico(metricas.registros_por_mes()),
+        'grafico_registros': metricas.grafico(metricas.registros(periodo)),
+        'periodo': periodo,
+        'periodo_nombre': metricas.PERIODOS[periodo],
+        'periodos': metricas.PERIODOS,
         'ingresos_hoy': ingresos.de_hoy(),  # personas distintas que iniciaron sesion hoy (H8)
         'soporte': metricas.soporte(),  # cifras agregadas, sin contenido (P13)
     }

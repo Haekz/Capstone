@@ -11,7 +11,7 @@ soporte (P13: cuantos tickets y en cuanto tiempo, nunca su contenido).
 """
 
 from collections import Counter
-from datetime import datetime, timedelta
+from datetime import date, datetime, time, timedelta
 
 from django.db.models import Sum
 from django.utils import timezone
@@ -22,7 +22,9 @@ from soporte.models import Ticket
 from user_profesor.views import calcular_saldos  # el mismo saldo que ve cada profesor
 
 MESES = ('Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic')
-MESES_GRAFICO = 5
+PUNTOS_GRAFICO = 5
+# Cortes del grafico de registros (H9): clave de la URL -> nombre en plural para el titulo.
+PERIODOS = {'dia': 'días', 'mes': 'meses', 'trimestre': 'trimestres'}
 # Geometria del SVG del panel (viewBox 600x220): X de 90 en pasos de 100; Y de 180 (cero) a 30 (tope).
 X0, PASO_X, Y0, ALTO = 90, 100, 180, 150
 
@@ -56,33 +58,61 @@ def finanzas():
     }
 
 
-def registros_por_mes(hoy=None, meses=MESES_GRAFICO):
-    """[(mes, cantidad)] de alumnos y profesores registrados; el ultimo es el mes de `hoy`."""
+def _periodo(fecha, periodo):
+    """Numero correlativo del dia, mes o trimestre de `fecha`: los consecutivos difieren en 1."""
+    if periodo == 'dia':
+        return fecha.toordinal()
+    if periodo == 'mes':
+        return fecha.year * 12 + fecha.month - 1
+    return fecha.year * 4 + (fecha.month - 1) // 3
+
+
+def _inicio(numero, periodo):
+    """Primer dia del periodo `numero` (inversa de _periodo)."""
+    if periodo == 'dia':
+        return date.fromordinal(numero)
+    if periodo == 'mes':
+        anio, mes = divmod(numero, 12)
+        return date(anio, mes + 1, 1)
+    anio, trimestre = divmod(numero, 4)
+    return date(anio, trimestre * 3 + 1, 1)
+
+
+def _etiqueta(numero, periodo):
+    """'03/02', 'Feb' o 'T1 26'."""
+    inicio = _inicio(numero, periodo)
+    if periodo == 'dia':
+        return inicio.strftime('%d/%m')
+    if periodo == 'mes':
+        return MESES[inicio.month - 1]
+    return f'T{numero % 4 + 1} {inicio:%y}'
+
+
+def registros(periodo='mes', hoy=None, puntos=PUNTOS_GRAFICO):
+    """[(etiqueta, cantidad)] de alumnos y profesores registrados por periodo; el ultimo es el de `hoy`."""
     hoy = hoy or timezone.localdate()
-    actual = hoy.year * 12 + hoy.month - 1
-    periodos = [divmod(i, 12) for i in range(actual - meses + 1, actual + 1)]  # (anio, mes desde 0)
-    anio, mes = periodos[0]
-    desde = timezone.make_aware(datetime(anio, mes + 1, 1))
+    actual = _periodo(hoy, periodo)
+    numeros = range(actual - puntos + 1, actual + 1)
+    desde = timezone.make_aware(datetime.combine(_inicio(numeros[0], periodo), time.min))
     conteo = Counter()
     for modelo in (Alumno, Profesor):
         for fecha in modelo.objects.filter(user__date_joined__gte=desde).values_list('user__date_joined', flat=True):
-            local = timezone.localtime(fecha)
-            conteo[local.year, local.month - 1] += 1
-    return [(MESES[mes], conteo[anio, mes]) for anio, mes in periodos]
+            conteo[_periodo(timezone.localdate(fecha), periodo)] += 1  # dia de Chile, no de UTC
+    return [(_etiqueta(numero, periodo), conteo[numero]) for numero in numeros]
 
 
 def grafico(serie):
-    """Coordenadas del SVG del panel para una serie de hasta MESES_GRAFICO puntos."""
+    """Coordenadas del SVG del panel para una serie de hasta PUNTOS_GRAFICO puntos."""
     tope = max(3, -(-max(c for _, c in serie) // 3) * 3)  # multiplo de 3: marcas enteras
-    puntos = [{'mes': mes, 'cantidad': cantidad, 'x': X0 + i * PASO_X,
-               'y': round(Y0 - cantidad * ALTO / tope, 1)} for i, (mes, cantidad) in enumerate(serie)]
+    puntos = [{'etiqueta': etiqueta, 'cantidad': cantidad, 'x': X0 + i * PASO_X,
+               'y': round(Y0 - cantidad * ALTO / tope, 1)} for i, (etiqueta, cantidad) in enumerate(serie)]
     linea = 'M ' + ' L '.join(f"{p['x']} {p['y']}" for p in puntos)
     return {
         'puntos': puntos,
         'marcas': [{'valor': tope * k // 3, 'y': Y0 - ALTO * k // 3} for k in (3, 2, 1, 0)],
         'linea': linea,
         'area': f"{linea} L {puntos[-1]['x']} {Y0} L {X0} {Y0} Z",
-        'resumen': ', '.join(f'{mes}: {cantidad}' for mes, cantidad in serie),
+        'resumen': ', '.join(f'{etiqueta}: {cantidad}' for etiqueta, cantidad in serie),
     }
 
 

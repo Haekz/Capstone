@@ -12,7 +12,7 @@ from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from admin_portal.metricas import finanzas, grafico, planes, registros_por_mes
+from admin_portal.metricas import finanzas, grafico, planes, registros
 from alumnos import paquetes
 from alumnos.models import Genero, Inscripcion, PaqueteClases, SolicitudRetiro, Tutor
 from tests.test_especialidad import CLAVE
@@ -25,11 +25,11 @@ POR_CLASE_INTENSIVO = 14500  # $116.000 / 8 clases, con la tarifa base
 RUT_ADMIN = '66666666-6'
 
 
-def panel_admin(test, ruta='dashboard_admin'):
-    """Entra como admin y devuelve esa pagina del panel."""
+def panel_admin(test, ruta='dashboard_admin', **parametros):
+    """Entra como admin y devuelve esa pagina del panel (con ?parametros si se dan)."""
     Tutor.objects.create(user=crear_usuario(RUT_ADMIN, Genero.objects.first()))
     test.entrar(RUT_ADMIN)
-    return test.client.get(reverse(ruta))
+    return test.client.get(reverse(ruta), parametros)
 
 
 class FinanzasTests(Escenario):
@@ -86,7 +86,7 @@ class FinanzasTests(Escenario):
         self.assertEqual(finanzas()['saldo_profesores'], calcular_saldos(self.profe)['disponible'])
 
 
-class RegistrosPorMesTests(Escenario):
+class RegistrosPorPeriodoTests(Escenario):
     """Escenario registra 2 alumnos (ana, beto) y 3 profesores; aqui se fija cuando."""
 
     HOY = date(2026, 2, 15)  # los ultimos 5 meses van de Oct a Feb: cruzan el cambio de anio
@@ -101,20 +101,45 @@ class RegistrosPorMesTests(Escenario):
         self.registrar(self.beto, 2025, 12, 20)
         self.registrar(self.sin_titulo, 2026, 1, 31, 23, 30)  # medianoche en hora local: sigue en enero
         self.registrar(self.otro, 2025, 9, 30)  # antes del rango
-        self.assertEqual(registros_por_mes(self.HOY),
+        self.assertEqual(registros('mes', self.HOY),
                          [('Oct', 0), ('Nov', 0), ('Dic', 1), ('Ene', 1), ('Feb', 2)])
+
+    def test_cuenta_por_dia(self):
+        self.registrar(self.ana, 2026, 2, 15, 10)
+        self.registrar(self.profe, 2026, 2, 14, 23, 30)  # hora de Chile: sigue siendo el 14
+        self.registrar(self.beto, 2026, 2, 11)
+        self.registrar(self.otro, 2026, 2, 10, 23, 59)  # antes del rango
+        self.assertEqual(registros('dia', self.HOY),
+                         [('11/02', 1), ('12/02', 0), ('13/02', 0), ('14/02', 1), ('15/02', 1)])
+
+    def test_cuenta_por_trimestre(self):
+        self.registrar(self.ana, 2026, 2, 3)
+        self.registrar(self.beto, 2025, 12, 20)
+        self.registrar(self.profe, 2025, 4, 1)
+        self.registrar(self.otro, 2024, 12, 31)  # antes del rango
+        self.assertEqual(registros('trimestre', self.HOY),
+                         [('T1 25', 0), ('T2 25', 1), ('T3 25', 0), ('T4 25', 1), ('T1 26', 1)])
 
     def test_el_admin_no_cuenta_como_registro(self):
         for perfil in (self.ana, self.beto, self.profe, self.otro, self.sin_titulo):
             self.registrar(perfil, 2025, 1, 1)
         Tutor.objects.create(user=crear_usuario(RUT_ADMIN, Genero.objects.first()))
-        self.assertEqual({cantidad for _, cantidad in registros_por_mes()}, {0})
+        self.assertEqual({cantidad for _, cantidad in registros()}, {0})
 
     def test_el_panel_muestra_el_grafico_real(self):
         respuesta = panel_admin(self)
-        resumen = grafico(registros_por_mes())['resumen']
-        self.assertContains(respuesta, f'Alumnos y profesores registrados por mes: {resumen}')
+        resumen = grafico(registros())['resumen']
+        self.assertContains(respuesta, f'Alumnos y profesores registrados en los últimos 5 meses: {resumen}')
         self.assertNotContains(respuesta, 'Crecimiento y Actividad')
+
+    def test_el_panel_cambia_de_periodo(self):
+        respuesta = panel_admin(self, periodo='trimestre')
+        resumen = grafico(registros('trimestre'))['resumen']
+        self.assertContains(respuesta, f'registrados en los últimos 5 trimestres: {resumen}')
+        self.assertContains(respuesta, 'href="?periodo=trimestre" aria-current="page"')
+
+    def test_un_periodo_desconocido_vuelve_a_meses(self):
+        self.assertContains(panel_admin(self, periodo='siglo'), 'registrados en los últimos 5 meses')
 
 
 class GraficoTests(SimpleTestCase):
