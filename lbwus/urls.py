@@ -26,6 +26,7 @@ urlpatterns = [
     path('resenas/', include('resenas.urls')),
     path('apoderados/', include('apoderados.urls')),
     path('soporte/', include('soporte.urls')),
+    path('notificaciones/', include('notificaciones.urls')),
     path('accounts/login/', custom_login, name='login'),
 path(
     'accounts/password_reset/',

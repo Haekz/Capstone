@@ -72,6 +72,7 @@ INSTALLED_APPS = [
     'resenas',
     'apoderados',
     'soporte',
+    'notificaciones',
     'django_extensions',
 ]
 
@@ -122,6 +123,8 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 # Expone 'usuario_sesion' al menu global (alumnos/base.html)
                 'alumnos.context_processors.estado_sesion',
+                # Contador de la campanita (notificaciones/context_processors.py)
+                'notificaciones.context_processors.sin_leer',
             ],
         },
     },

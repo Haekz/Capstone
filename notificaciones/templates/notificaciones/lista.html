@@ -1,0 +1,29 @@
+{% extends 'alumnos/base.html' %}
+{% load static %}
+
+{% block title %}Notificaciones | LBWUS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'alumnos/css/perfil_profesor.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="perfil-prof">
+    <section class="perfil-prof__bloque" aria-labelledby="notif-titulo">
+        <h1 id="notif-titulo">Notificaciones</h1>
+        {% if notificaciones %}
+        <ul class="notif-lista">
+            {% for n in notificaciones %}
+            <li>
+                {% if not n.leida %}<strong>Nueva:</strong> {% endif %}
+                {% if n.enlace %}<a href="{{ n.enlace }}">{{ n.texto }}</a>{% else %}{{ n.texto }}{% endif %}
+                <br><small><time datetime="{{ n.creada|date:'c' }}">{{ n.creada|date:"d/m/Y H:i" }}</time></small>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>No tienes notificaciones.</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}
