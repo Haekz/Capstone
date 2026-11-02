@@ -11,6 +11,7 @@ from django.http import FileResponse, Http404
 from django.views.decorators.http import require_POST
 from . import cambio_cuenta, foto
 from alumnos import catalogos, liquidacion, paquetes
+from agenda import panel as agenda_panel
 
 
 def calcular_saldos(profesor):
@@ -252,6 +253,7 @@ def panel_profesor(request):
         'frecuencias': liquidacion.FRECUENCIAS,
         'generos': generos,
         'especialidades': Especialidad.objects.order_by('nombre'),
+        **agenda_panel.contexto(profesor),  # seccion Mi Agenda (agenda/panel.py)
     }
     return render(request, 'user_profesor/panel_profesor.html', context)
 

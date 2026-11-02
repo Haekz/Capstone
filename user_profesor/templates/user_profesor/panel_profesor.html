@@ -82,6 +82,9 @@ input:checked + .slider:before {
             <li class="prof-menu-item" id="menu-clases" onclick="switchSection('clases')">
                 <i class="bi bi-file-earmark-text"></i> Clases Solicitadas
             </li>
+            <li class="prof-menu-item" id="menu-agenda" onclick="switchSection('agenda')">
+                <i class="bi bi-calendar-week"></i> Mi Agenda
+            </li>
             <li class="prof-menu-item" id="menu-buzon" onclick="switchSection('buzon')">
                 <i class="bi bi-chat-dots-fill"></i> Buzón de Alumnos
             </li>
@@ -208,6 +211,7 @@ input:checked + .slider:before {
 
         <!-- esta parte es de la sección de clases solicitadas, muestra todos los alumnos inscritos -->
         {% include 'user_profesor/clases_solicitadas.html' %}
+        {% include 'agenda/panel_agenda.html' %}
 
         <!-- esta parte es de la sección para que el profe edite su propio perfil -->
         <section id="sec-perfil" class="prof-section">
