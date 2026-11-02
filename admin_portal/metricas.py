@@ -5,7 +5,8 @@ una obligacion, no un ingreso, y no pasa a ser ganancia al vencer el paquete.
 LBWUS gana su comision solo por las clases ya dictadas: es la misma cuenta que
 el saldo del profesor (user_profesor.views.calcular_saldos), vista desde LBWUS.
 
-Tambien arma el grafico de registros nuevos por mes (antes, puntos fijos de Feb a Jun).
+Tambien arma el grafico de registros nuevos por mes (antes, puntos fijos de Feb a Jun)
+y la pagina de planes (antes, tres planes por nivel que no existen).
 """
 
 from collections import Counter
@@ -73,3 +74,10 @@ def grafico(serie):
         'area': f"{linea} L {puntos[-1]['x']} {Y0} L {X0} {Y0} Z",
         'resumen': ', '.join(f'{mes}: {cantidad}' for mes, cantidad in serie),
     }
+
+
+def planes():
+    """Cada paquete con la tarifa base (alumnos/paquetes.py) y cuantos hay vigentes de el."""
+    vigentes = Counter(PaqueteClases.objects.vigentes().values_list('plan', flat=True))
+    return [(cotizacion, vigentes[cotizacion.plan.codigo])
+            for cotizacion in paquetes.cotizar(paquetes.TARIFA_BASE)]

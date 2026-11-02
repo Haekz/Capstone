@@ -1,98 +1,68 @@
 {% extends 'admin_portal/base_admin.html' %}
-{% load static %}
+{% load dinero %}
 
 {% block title %}Planes — Admin LBWUS{% endblock %}
-{% block page_title %}Gestión de Planes{% endblock %}
-{% block page_subtitle %}Revisa y administra los planes educativos de la plataforma{% endblock %}
+{% block page_title %}Planes{% endblock %}
+{% block page_subtitle %}Los paquetes que se venden y cuántos hay vigentes{% endblock %}
 {% block nav_planes %}active{% endblock %}
 
 {% block content %}
-
-<!-- esta parte es de las tarjetas de los planes disponibles en la plataforma -->
+{# Datos de alumnos/paquetes.py, la misma fuente que la página de planes y Webpay #}
 <div class="stats-grid">
-
+    {% for cotizacion, vigentes in planes %}
     <div class="stat-card">
         <div class="stat-card-inner">
             <div class="stat-info">
-                <div class="stat-label">Plan Básico</div>
-                <div class="stat-value">Educación Básica</div>
-                <div class="stat-sub">Niños en etapa escolar primaria</div>
+                <div class="stat-label">{{ cotizacion.plan.nombre }}</div>
+                <div class="stat-value">{{ vigentes }} vigente{{ vigentes|pluralize }}</div>
+                <div class="stat-sub">{{ cotizacion.plan.clases }} clase{{ cotizacion.plan.clases|pluralize }} en {{ cotizacion.plan.vigencia_dias }} días</div>
             </div>
-            <div class="stat-icon" style="background:rgba(16,185,129,0.12); color:#10b981;">
-                <i class="bi bi-1-square-fill"></i>
-            </div>
-        </div>
-    </div>
-
-    <div class="stat-card">
-        <div class="stat-card-inner">
-            <div class="stat-info">
-                <div class="stat-label">Plan Medio</div>
-                <div class="stat-value">Educación Media</div>
-                <div class="stat-sub">Estudiantes de enseñanza secundaria</div>
-            </div>
-            <div class="stat-icon" style="background:rgba(245,158,11,0.12); color:#f59e0b;">
-                <i class="bi bi-2-square-fill"></i>
+            <div class="stat-icon" style="{% cycle 'background:rgba(16,185,129,0.12); color:#10b981;' 'background:rgba(245,158,11,0.12); color:#f59e0b;' 'background:rgba(168,85,247,0.12); color:#a855f7;' %}">
+                <i class="bi bi-{{ forloop.counter }}-square-fill" aria-hidden="true"></i>
             </div>
         </div>
     </div>
-
-    <div class="stat-card">
-        <div class="stat-card-inner">
-            <div class="stat-info">
-                <div class="stat-label">Plan Superior</div>
-                <div class="stat-value">Educación Superior</div>
-                <div class="stat-sub">Universitarios y profesionales</div>
-            </div>
-            <div class="stat-icon" style="background:rgba(168,85,247,0.12); color:#a855f7;">
-                <i class="bi bi-3-square-fill"></i>
-            </div>
-        </div>
-    </div>
-
+    {% endfor %}
 </div>
 
-<!-- esta parte es de la tabla de detalles por plan -->
 <div class="panel" style="margin-top:28px;">
     <div class="panel-header">
-        <span class="panel-title"><i class="bi bi-collection-fill"></i> Detalle de Planes</span>
+        <span class="panel-title"><i class="bi bi-collection-fill" aria-hidden="true"></i> Precios con la tarifa base</span>
     </div>
+    <p class="stat-sub" style="padding:0 20px;">
+        Con la tarifa base de {{ tarifa.base|clp }} por clase. Cada profesor fija la suya entre
+        {{ tarifa.min|clp }} y {{ tarifa.max|clp }}, en múltiplos de {{ tarifa.paso|clp }}, y sus paquetes
+        se calculan igual. Lo ya vendido no cambia si el profesor cambia su tarifa.
+    </p>
     <div style="overflow-x:auto;">
         <table class="user-table">
             <thead>
                 <tr>
-                    <th>Plan</th>
-                    <th>Nivel</th>
-                    <th>Descripción</th>
-                    <th>Precio</th>
-                    <th>Estado</th>
+                    <th scope="col">Plan</th>
+                    <th scope="col">Clases</th>
+                    <th scope="col">Vigencia</th>
+                    <th scope="col">Precio</th>
+                    <th scope="col">Por clase</th>
+                    <th scope="col">Descuento</th>
+                    <th scope="col">Comisión LBWUS</th>
+                    <th scope="col">Recibe el profesor</th>
                 </tr>
             </thead>
             <tbody>
+                {% for cotizacion, vigentes in planes %}
                 <tr>
-                    <td><strong>Básico</strong></td>
-                    <td><span class="badge badge-alumno">Básica</span></td>
-                    <td>Ideal para niños en etapa escolar primaria. Incluye tutorías básicas.</td>
-                    <td>$15.000 / mes</td>
-                    <td><span class="badge badge-activo">Activo</span></td>
+                    <th scope="row">{{ cotizacion.plan.nombre }}</th>
+                    <td>{{ cotizacion.plan.clases }}</td>
+                    <td>{{ cotizacion.plan.vigencia_dias }} días</td>
+                    <td>{{ cotizacion.precio|clp }}</td>
+                    <td>{{ cotizacion.precio_por_clase|clp }}</td>
+                    <td>{% if cotizacion.descuento_por_clase %}{{ cotizacion.descuento_pct }}%{% else %}—{% endif %}</td>
+                    <td>{{ cotizacion.comision|clp }}</td>
+                    <td>{{ cotizacion.pago_profesor|clp }}</td>
                 </tr>
-                <tr>
-                    <td><strong>Medio</strong></td>
-                    <td><span class="badge" style="background:rgba(245,158,11,0.12); color:#f59e0b;">Media</span></td>
-                    <td>Para enseñanza secundaria. Incluye simulacros de PSU/PAES.</td>
-                    <td>$25.000 / mes</td>
-                    <td><span class="badge badge-activo">Activo</span></td>
-                </tr>
-                <tr>
-                    <td><strong>Superior</strong></td>
-                    <td><span class="badge" style="background:rgba(168,85,247,0.12); color:#a855f7;">Superior</span></td>
-                    <td>Universitarios y profesionales. Tutorías especializadas a medida.</td>
-                    <td>$35.000 / mes</td>
-                    <td><span class="badge badge-activo">Activo</span></td>
-                </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
-
 {% endblock %}

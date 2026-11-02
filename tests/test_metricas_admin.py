@@ -12,7 +12,7 @@ from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from admin_portal.metricas import finanzas, grafico, registros_por_mes
+from admin_portal.metricas import finanzas, grafico, planes, registros_por_mes
 from alumnos import paquetes
 from alumnos.models import Genero, Inscripcion, PaqueteClases, Tutor
 from tests.test_especialidad import CLAVE
@@ -25,11 +25,11 @@ POR_CLASE_INTENSIVO = 14500  # $116.000 / 8 clases, con la tarifa base
 RUT_ADMIN = '66666666-6'
 
 
-def panel_admin(test):
-    """Entra como admin y devuelve el dashboard."""
+def panel_admin(test, ruta='dashboard_admin'):
+    """Entra como admin y devuelve esa pagina del panel."""
     Tutor.objects.create(user=crear_usuario(RUT_ADMIN, Genero.objects.first()))
     test.entrar(RUT_ADMIN)
-    return test.client.get(reverse('dashboard_admin'))
+    return test.client.get(reverse(ruta))
 
 
 class FinanzasTests(Escenario):
@@ -125,3 +125,22 @@ class GraficoTests(SimpleTestCase):
         g = grafico([('Ene', 0), ('Feb', 0)])
         self.assertEqual({p['y'] for p in g['puntos']}, {180.0})
         self.assertEqual([m['valor'] for m in g['marcas']], [3, 2, 1, 0])
+
+
+class PlanesTests(Escenario):
+    """La pagina de planes mostraba tres planes por nivel que no existen, a $15.000/$25.000/$35.000 al mes."""
+
+    def test_cuenta_solo_los_paquetes_vigentes(self):
+        dar_paquete(self.ana, self.profe, 'intensivo')
+        dar_paquete(self.beto, self.profe, 'intensivo')
+        dar_paquete(self.beto, self.profe, 'flexible', dias=-1)  # vencido
+        dar_paquete(self.ana, self.profe, 'progreso', estado=PaqueteClases.ESTADO_PENDIENTE)  # sin pagar
+        self.assertEqual([(c.plan.codigo, c.precio, vigentes) for c, vigentes in planes()],
+                         [('flexible', 15000, 0), ('progreso', 59000, 0), ('intensivo', 116000, 2)])
+
+    def test_la_pagina_muestra_los_paquetes_reales(self):
+        respuesta = panel_admin(self, 'planes_adm')
+        for real in ('Flexible', 'Progreso', 'Intensivo', '$59.000', '$116.000', '0 vigentes'):
+            self.assertContains(respuesta, real)
+        for falso in ('Plan Básico', 'Educación Media', '$25.000 / mes', '$35.000 / mes'):
+            self.assertNotContains(respuesta, falso)

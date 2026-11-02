@@ -5,6 +5,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
+from alumnos import paquetes
 from alumnos.models import Alumno, Asignatura, Profesor, Tutor, Clase
 from alumnos.decorators import admin_required
 
@@ -79,8 +80,11 @@ def reporte_alumnos(request):
 @never_cache
 @admin_required
 def planes_adm(request):
-    context = {}
-    return render(request, 'admin_portal/planes_adm.html', context)
+    return render(request, 'admin_portal/planes_adm.html', {
+        'planes': metricas.planes(),
+        'tarifa': {'base': paquetes.TARIFA_BASE, 'min': paquetes.TARIFA_MIN,
+                   'max': paquetes.TARIFA_MAX, 'paso': paquetes.TARIFA_PASO},
+    })
 
 @never_cache
 @admin_required
