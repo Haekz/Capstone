@@ -166,14 +166,15 @@ def registrar_estudiante(request):
 @never_cache
 @apoderado_required
 def clave_estudiante(request, id_vinculo):
-    # Solo vinculos propios, no rechazados y de cuentas que creo el apoderado
-    # (Vinculo.apoderado_define_clave): lo demas responde 404.
+    # Solo vinculos propios y no rechazados; ademas, solo quien creo la cuenta del estudiante
+    # (Vinculo.apoderado_define_clave). Lo demas responde 404.
     vinculo = get_object_or_404(
         Vinculo.objects.select_related('alumno__user'), pk=id_vinculo,
         apoderado_id=request.session[APODERADO.clave_sesion],
         estado__in=[Vinculo.PENDIENTE, Vinculo.VERIFICADO],
-        alumno__solicitud_apoderado__isnull=True,
     )
+    if not vinculo.apoderado_define_clave:
+        raise Http404
     estudiante = vinculo.alumno.user
     if not es_menor(estudiante):  # a los 18 la contrasena es solo suya
         raise Http404

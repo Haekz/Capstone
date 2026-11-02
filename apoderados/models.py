@@ -188,8 +188,12 @@ class Vinculo(models.Model):
 
     @property
     def apoderado_define_clave(self):
-        """Solo si el apoderado creo la cuenta: el adolescente que lo invito maneja la suya."""
-        return not SolicitudAdolescente.objects.filter(alumno_id=self.alumno_id).exists()
+        """Solo el apoderado que creo la cuenta, que es el de su primer vinculo: el adolescente que invito
+        a su apoderado maneja la suya, y un segundo apoderado, que pidio vincularse despues, no puede
+        cambiarle la contrasena al estudiante (aunque su vinculo se verifique)."""
+        vinculos = Vinculo.objects.filter(alumno_id=self.alumno_id).order_by('creado', 'pk')
+        primero = vinculos.values_list('pk', flat=True).first()
+        return primero == self.pk and not SolicitudAdolescente.objects.filter(alumno_id=self.alumno_id).exists()
 
     @property
     def documento_requerido(self):
