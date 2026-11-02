@@ -9,7 +9,7 @@ from alumnos import paquetes
 from alumnos.models import Alumno, Asignatura, Profesor, Tutor, Clase
 from alumnos.decorators import admin_required
 
-from . import metricas
+from . import ingresos, metricas
 
 # Solo redirige al panel: regis_tutor.html envía aquí tras registrarse.
 def menu(request):
@@ -58,6 +58,7 @@ def dashboard_admin(request):
         'todas_solicitudes_retiro': todas_solicitudes_retiro,
         'finanzas': metricas.finanzas(),  # montos reales (paso 8); el template les da formato
         'grafico_registros': metricas.grafico(metricas.registros_por_mes()),
+        'ingresos_hoy': ingresos.de_hoy(),  # personas distintas que iniciaron sesion hoy (H8)
     }
     return render(request, 'admin_portal/dashboard_admin.html', context)
 

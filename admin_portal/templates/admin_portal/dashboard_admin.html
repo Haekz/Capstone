@@ -60,6 +60,20 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Personas distintas que iniciaron sesión hoy (H8): solo el número, no quién -->
+                        <div class="stat-card amber">
+                            <div class="stat-icon">
+                                <i class="bi bi-door-open-fill" aria-hidden="true"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-value">{{ ingresos_hoy.total }}</div>
+                                <div class="stat-label">Personas que entraron hoy</div>
+                                <div class="stat-change">
+                                    {% for rol, personas in ingresos_hoy.por_rol %}{{ rol }}: {{ personas }}{% if not forloop.last %} · {% endif %}{% empty %}Nadie ha iniciado sesión hoy{% endfor %}
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Panel de Últimos Registros (Ancho Completo) -->
