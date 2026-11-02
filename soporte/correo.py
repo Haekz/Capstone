@@ -17,7 +17,7 @@ from .plazos import dias_habiles_entre
 SOLICITANTE = ('autor', 'apoderado__user', 'vinculo__apoderado__user', 'profesor__user')
 
 
-def _lideres():
+def lideres():
     return AgenteSoporte.objects.filter(es_lider=True, user__is_active=True).select_related('user')
 
 
@@ -30,7 +30,7 @@ def avisar_asignacion(ticket):
 def avisar_sin_asignar(ticket):
     return all([enviar(f'Ticket #{ticket.pk} sin asignar', 'soporte/correo_sin_asignar.txt',
                        {'nombre': lider.nombre, 'ticket': ticket}, lider.user.email)
-                for lider in _lideres()])
+                for lider in lideres()])
 
 
 def avisar_conducta(ticket):
@@ -38,7 +38,7 @@ def avisar_conducta(ticket):
     tenga agente o no. Sin el contenido."""
     return all([enviar(f'Reporte de conducta #{ticket.pk}', 'soporte/correo_conducta.txt',
                        {'nombre': lider.nombre, 'ticket': ticket}, lider.user.email)
-                for lider in _lideres()])
+                for lider in lideres()])
 
 
 def avisar_respuesta(ticket):
@@ -59,7 +59,7 @@ def avisar_contestacion(ticket):
 
 def avisar_documentos_por_vencer(ticket, borra_el):
     """Al agente del ticket; si no tiene, a los lideres."""
-    destinos = [ticket.asignado] if ticket.asignado else _lideres()
+    destinos = [ticket.asignado] if ticket.asignado else lideres()
     return all([enviar(f'Ticket #{ticket.pk}: documentos por vencer', 'soporte/correo_documentos_por_vencer.txt',
                        {'nombre': agente.nombre, 'ticket': ticket, 'borra_el': borra_el}, agente.user.email)
                 for agente in destinos])
@@ -89,7 +89,7 @@ def avisar_atrasados(hoy):
         enviar('Tickets atrasados', 'soporte/correo_atrasados.txt',
                {**contexto, 'nombre': agente.nombre, 'tickets': tickets, 'lider': False}, agente.user.email)
     if atrasados:
-        for lider in _lideres():
+        for lider in lideres():
             enviar('Tickets atrasados del equipo', 'soporte/correo_atrasados.txt',
                    {**contexto, 'nombre': lider.nombre, 'tickets': atrasados, 'lider': True}, lider.user.email)
     for ticket in atrasados:

@@ -17,6 +17,7 @@ from django.utils import timezone
 from alumnos.models import SolicitudRetiro
 from alumnos.roles import ADMIN, SOPORTE, rol_en_sesion
 from alumnos.templatetags.dinero import clp
+from mensajes import revision
 from resenas.models import ReporteResena
 from soporte import plazos
 from soporte.models import AgenteSoporte, Ticket
@@ -155,6 +156,16 @@ def _del_lider(agente_id, ahora):
             f'{_tickets(len(atrasados))} {"atrasado" if len(atrasados) == 1 else "atrasados"} del equipo',
             f'El más atrasado es el #{primero.pk}: venció el {timezone.localtime(primero.vence):%d/%m}.',
             panel, urgente=True))
+
+    hoy = timezone.localdate()
+    por_revisar = list(revision.pendientes(hoy))
+    if por_revisar:
+        avisos.append(Aviso(
+            f'{len(por_revisar)} {"conversación reportada" if len(por_revisar) == 1 else "conversaciones reportadas"} por revisar',
+            'Su ticket ya se cerró: decide si se libera o se conserva como retención excepcional. Mientras tanto se conserva.',
+            reverse('mensajes_revision'),
+            urgente=any(plazos.dias_habiles_entre(revision.pendiente_desde(c), hoy) >= Ticket.AVISO_CADA
+                        for c in por_revisar)))
     return avisos
 
 

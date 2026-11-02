@@ -1,0 +1,9 @@
+Hola {{ nombre }},
+
+{% if cantidad == 1 %}Hay 1 conversación reportada{% else %}Hay {{ cantidad }} conversaciones reportadas{% endif %} esperando tu decisión: su ticket ya se cerró y hay que decidir si se libera o se conserva como retención excepcional.
+
+Mientras tanto se siguen conservando. Te lo recordaremos cada {{ cada }} días hábiles.
+
+Revísalas en la sección "Conversaciones reportadas" del panel de soporte de LBWUS; por seguridad, el detalle solo se ve ahí.
+
+Equipo LBWUS
