@@ -18,8 +18,8 @@ LARGO_MAX = 1000
 class ConversacionQuerySet(models.QuerySet):
 
     def reportadas(self):
-        """Las que alguien reporto: se conservan aunque su ticket se cierre (C1c) y tambien al eliminar la
-        cuenta de un participante (C1e)."""
+        """Las que alguien reporto (C1c). No es lo mismo que retenidas: una que el lider libero sigue
+        estando reportada, pero ya se puede borrar (mensajes/revision.py)."""
         return self.filter(Exists(ReporteConversacion.objects.filter(conversacion=OuterRef('pk'))))
 
     def visibles(self):
@@ -99,7 +99,8 @@ class Mensaje(models.Model):
 
 class ReporteConversacion(models.Model):
     """Un participante reporto la conversacion (paso C1c): abre un ticket de soporte, que es la unica
-    via para leerla. Mientras exista un reporte, la conversacion no se borra sola (C1d)."""
+    via para leerla. Mientras exista un reporte, la conversacion no se borra sola, hasta que el lider
+    decida liberarla (DecisionRetencion, C1f)."""
     conversacion = models.ForeignKey(Conversacion, on_delete=models.CASCADE, related_name='reportes')
     ticket = models.OneToOneField('soporte.Ticket', on_delete=models.CASCADE, related_name='reporte_conversacion')
     reportado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='+')
@@ -117,3 +118,34 @@ class AccesoConversacion(models.Model):
 
     class Meta:
         ordering = ['-fecha', '-pk']
+
+
+class DecisionRetencion(models.Model):
+    """Lo que decide el lider de soporte sobre una conversacion reportada cuyo ticket ya se cerro (C1f,
+    decidido 02-nov tras la respuesta legal): conservarla como retencion excepcional, o liberarla para que
+    vuelva a la regla normal de borrado. Una fila por decision: la vigente es la ultima y las anteriores
+    quedan de historial (quien, cuando, por que)."""
+    CONSERVAR, LIBERAR = 'conservar', 'liberar'
+    DECISIONES = [(CONSERVAR, 'Conservar (retención excepcional)'), (LIBERAR, 'Liberar')]
+    RECLAMACION, AUTORIDAD, INVESTIGACION, OTRO = 'reclamacion', 'autoridad', 'investigacion', 'otro'
+    MOTIVOS = [(RECLAMACION, 'Reclamación o defensa de derechos'),
+               (AUTORIDAD, 'Requerimiento de una autoridad'),
+               (INVESTIGACION, 'Investigación en curso'),
+               (OTRO, 'Otro (explicar en el fundamento)')]
+
+    conversacion = models.ForeignKey(Conversacion, on_delete=models.CASCADE, related_name='decisiones')
+    decision = models.CharField(max_length=10, choices=DECISIONES)
+    decidida = models.DateTimeField(auto_now_add=True)
+    decidida_por = models.ForeignKey('soporte.AgenteSoporte', on_delete=models.SET_NULL, null=True, related_name='+')
+    # Solo al conservar: lo que exige registrar la retencion excepcional.
+    motivo = models.CharField(max_length=15, choices=MOTIVOS, blank=True)
+    alcance = models.TextField('datos y mensajes que se conservan', blank=True)
+    fundamento = models.TextField('fundamento', blank=True)
+    termino = models.TextField('condición de término', blank=True)
+    proxima_revision = models.DateField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-decidida', '-pk']
+
+    def __str__(self):
+        return f'Conversacion {self.conversacion_id}: {self.decision}'

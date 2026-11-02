@@ -5,8 +5,9 @@ Finalidad de los mensajes: coordinar las clases. Pasados 90 dias sin actividad d
 - Inactividad = dias desde el ultimo mensaje (sin mensajes, desde que se creo). Decidido 02-nov tras la
   respuesta legal: una clase ya dictada no extiende la conservacion; una clase futura reservada si impide borrar.
 - No se borra si hay un paquete vigente entre las partes, un ticket abierto de cualquiera de ellas
-  (puede demorar el borrado unos dias, hasta que soporte lo cierre), ni si alguien la reporto: una
-  conversacion reportada se conserva aunque su ticket ya este cerrado (C1c).
+  (puede demorar el borrado unos dias, hasta que soporte lo cierre), ni si esta retenida por un reporte
+  (mensajes/revision.py): con ticket abierto, esperando la decision del lider o conservada. Una que el lider
+  libera vuelve a esta regla (C1f).
 """
 
 from datetime import timedelta
@@ -20,6 +21,7 @@ from alumnos.models import Inscripcion, PaqueteClases
 from soporte.models import Ticket
 
 from .models import Conversacion, Mensaje
+from .revision import retenidas
 
 DIAS_SIN_ACTIVIDAD = 90
 
@@ -33,13 +35,13 @@ def candidatas():
     paquete_vigente = PaqueteClases.objects.vigentes().filter(alumno=OuterRef('alumno'), profesor=OuterRef('profesor'))
     ticket_abierto = Ticket.objects.filter(estado=Ticket.ABIERTO).filter(
         Q(autor=OuterRef('cliente')) | Q(autor=OuterRef('profesor__user_id')))
-    reportada = Conversacion.objects.reportadas().values('pk')
+    retenida = retenidas().values('pk')
     desde = timezone.now() - timedelta(days=DIAS_SIN_ACTIVIDAD)
     return (Conversacion.objects
             .annotate(actividad=Coalesce(Subquery(ultimo_mensaje), F('creada')))
             .filter(actividad__lt=desde)
             .exclude(Exists(clase_futura))
-            .exclude(Exists(paquete_vigente)).exclude(Exists(ticket_abierto)).exclude(pk__in=reportada))
+            .exclude(Exists(paquete_vigente)).exclude(Exists(ticket_abierto)).exclude(pk__in=retenida))
 
 
 def borrar_inactivas():

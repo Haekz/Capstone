@@ -3,7 +3,8 @@
 Antes, borrar el usuario arrastraba en cascada todas sus conversaciones: tambien las reportadas (la
 evidencia) y tambien para la otra persona. Ahora:
 
-- Sin conversaciones reportadas: se borra la cuenta completa, como siempre.
+- Sin conversaciones retenidas (mensajes/revision.py: reportadas, salvo las que el lider libero): se borra la
+  cuenta completa, como siempre.
 - Con alguna: se borran las demas conversaciones y sus avisos, y la cuenta se **seudonimiza en el mismo
   lugar** ("Cuenta eliminada": sin nombre, correo, RUT, telefono, direccion, nacimiento, genero ni foto, y
   sin poder entrar). Es seudonimizacion, no anonimizacion: los mensajes conservados pueden contener datos
@@ -24,6 +25,7 @@ from django.utils import timezone
 from notificaciones.models import Notificacion
 
 from .models import Conversacion
+from .revision import retenidas
 
 NOMBRE_SUPRIMIDA = 'Cuenta eliminada'
 
@@ -48,11 +50,11 @@ def suprimir_cuenta(user):
     """True si se borro por completo; False si quedo seudonimizada porque tiene conversaciones reportadas."""
     with transaction.atomic():
         propias = conversaciones_de(user)
-        reportadas = propias.reportadas()
-        if not reportadas.exists():
+        conservadas = propias.filter(pk__in=retenidas().values('pk'))
+        if not conservadas.exists():
             user.delete()
             return True
-        propias.exclude(pk__in=reportadas.values('pk')).delete()
+        propias.exclude(pk__in=conservadas.values('pk')).delete()
         Notificacion.objects.filter(usuario=user).delete()
         _seudonimizar(user)
         return False
