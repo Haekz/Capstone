@@ -73,6 +73,30 @@
         </table>
     </div>
 </div>
+
+<div class="panel" style="margin-top:28px;">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-eye"></i> Últimas aperturas de títulos</span>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="user-table">
+            <thead>
+                <tr><th>Fecha</th><th>Profesor</th><th>Abrió</th></tr>
+            </thead>
+            <tbody>
+                {% for acceso in accesos %}
+                <tr>
+                    <td>{{ acceso.fecha|date:"d-m-Y H:i" }}</td>
+                    <td>{{ acceso.profesor.nombre }}</td>
+                    <td>{{ acceso.agente.first_name|default:"Cuenta eliminada" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3">Todavía nadie ha abierto un título.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 {% endif %}
 
 {% endblock %}

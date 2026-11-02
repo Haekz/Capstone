@@ -15,6 +15,8 @@ from apoderados import documentos
 from soporte.permisos import agente_en_sesion, ticket_asignado, tickets_del_agente
 from user_profesor import titulo
 
+from .models import AccesoTitulo
+
 
 def _profesor_con_ticket(request, pk):
     profesor = get_object_or_404(Profesor, id_profesor=pk)
@@ -33,6 +35,7 @@ def titulos_adm(request):
         'en_revision': profesores.filter(titulo_estado=Profesor.TITULO_EN_REVISION,
                                          tickets__in=tickets_del_agente(request)),
         'otros': profesores.exclude(titulo_estado=Profesor.TITULO_EN_REVISION) if agente.es_lider else None,
+        'accesos': AccesoTitulo.objects.select_related('agente', 'profesor__user')[:50] if agente.es_lider else None,
     })
 
 
@@ -43,6 +46,7 @@ def ver_titulo(request, pk):
     profesor = _profesor_con_ticket(request, pk)
     if not profesor.titulo_contenido:
         raise Http404('Sin título')
+    AccesoTitulo.objects.create(agente=request.user, profesor=profesor)
     try:
         imagen = documentos.con_marca_de_agua(profesor.titulo_contenido, documentos.texto_de_revision(request.user))
     except InvalidToken:  # cambio la clave de cifrado: hay que pedir el titulo de nuevo

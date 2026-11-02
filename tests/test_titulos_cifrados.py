@@ -17,6 +17,7 @@ from django.urls import reverse
 from PIL import Image
 
 from alumnos.models import Profesor
+from admin_portal.models import AccesoTitulo
 from apoderados.documentos import ERROR_PDF_PAGINAS, descifrar
 from soporte.models import Ticket
 from soporte.tickets import abrir_ticket
@@ -77,6 +78,30 @@ class TitulosCifradosTests(TestCase):
         self.assertFalse(self.profesor.titulo_archivo)
         with self.assertRaises(FileNotFoundError):
             open(ruta, 'rb')
+
+    def test_cada_apertura_queda_registrada_y_el_registro_sobrevive_al_decidir(self):
+        self.subir()
+        entrar_soporte(self.client, self.agente)
+        self.client.get(self.url)
+        self.client.get(self.url)
+        titulo.resolver(self.profesor, True)
+        self.assertEqual(list(AccesoTitulo.objects.values_list('agente', 'profesor')),
+                         [(self.agente.user.pk, self.profesor.pk)] * 2)
+
+    def test_sin_titulo_no_se_registra_nada(self):
+        entrar_soporte(self.client, self.agente)
+        self.client.get(self.url)
+        self.assertFalse(AccesoTitulo.objects.exists())
+
+    def test_solo_el_lider_ve_las_aperturas(self):
+        self.subir()
+        entrar_soporte(self.client, self.agente)
+        self.client.get(self.url)
+        self.assertNotContains(self.client.get(reverse('titulos_adm')), 'Últimas aperturas')
+        entrar_soporte(self.client, crear_agente('10000003-5', Ticket.TITULOS, lider=True))
+        respuesta = self.client.get(reverse('titulos_adm'))
+        self.assertContains(respuesta, 'Últimas aperturas')
+        self.assertEqual(list(respuesta.context['accesos']), list(AccesoTitulo.objects.all()))
 
 
 @override_settings(MEDIA_ROOT=tempfile.mkdtemp())
