@@ -383,6 +383,7 @@ def alumno_pag1(request):
         'historial_clases': historial_clases,
         'progreso': alumno.resumen_progreso(),
         'progreso_ramos': progreso.por_ramo(alumno),
+        'grafico_semanal': progreso.horas_por_semana(alumno),
         # Lo que el profesor comenta de las clases: el adulto lo lee aqui; el del menor lo lee su apoderado.
         'observaciones': [] if es_menor(alumno.user) else observaciones_panel.del_alumno(alumno),
         'plan_activo': _plan_para_js(alumno),
