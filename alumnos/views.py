@@ -26,7 +26,7 @@ from .models import (
     Suscripcion,
 )
 from django.core.exceptions import ValidationError
-from . import paquetes, progreso
+from . import paquetes, progreso, sala
 from mensajes import panel as mensajes_panel
 from observaciones import panel as observaciones_panel
 from django.db import transaction
@@ -948,6 +948,7 @@ def sala_virtual(request, clase_id):
     context = {
         'clase': clase,
         'es_profesor': es_profesor,
+        'sala_nombre': sala.nombre_sala(clase.id_clase),  # no deducible del id de la clase
     }
     return render(request, 'alumnos/sala_virtual.html', context)
 
