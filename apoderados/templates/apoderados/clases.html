@@ -92,5 +92,10 @@
         <p class="perfil-prof__vacio">No hay sesiones disponibles con los profesores de sus paquetes vigentes.</p>
         {% endif %}
     </section>
+
+    <section class="perfil-prof__bloque" aria-labelledby="observaciones-titulo">
+        <h2 id="observaciones-titulo">Observaciones de los profesores</h2>
+        {% include 'observaciones/_lista.html' %}
+    </section>
 </div>
 {% endblock %}

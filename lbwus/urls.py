@@ -31,6 +31,7 @@ urlpatterns = [
     path('mensajes/', include('mensajes.urls')),
     path('privacidad/', include('supresiones.urls')),
     path('requerimientos/', include('requerimientos.urls')),
+    path('observaciones/', include('observaciones.urls')),
     path('accounts/login/', custom_login, name='login'),
 path(
     'accounts/password_reset/',

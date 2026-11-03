@@ -1,0 +1,17 @@
+{% for o in observaciones %}
+<article class="feedback-card-item">
+    <div class="feedback-card-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <div class="contact-avatar" aria-hidden="true" style="width: 36px; height: 36px; font-size: 0.85rem; background: rgba(168, 85, 247, 0.1); color: var(--primary);">{{ o.profesor|slice:":1"|upper }}</div>
+            <div>
+                <h4 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--text);">{{ o.profesor }}</h4>
+                <span style="font-size: 0.75rem; color: var(--text-light);">{{ o.asignatura }}</span>
+            </div>
+        </div>
+        <span style="font-size: 0.8rem; color: var(--text-light);">{{ o.fecha|date:"d/m/Y" }}</span>
+    </div>
+    <p style="margin: 0; font-size: 0.9rem; color: var(--text-light); line-height: 1.5; font-style: italic;">«{{ o.texto }}»</p>
+</article>
+{% empty %}
+<p>Aún no hay observaciones: tus profesores las dejan después de cada clase.</p>
+{% endfor %}

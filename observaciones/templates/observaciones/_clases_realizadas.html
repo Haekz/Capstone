@@ -1,0 +1,18 @@
+<div class="prof-card">
+    <h2 class="prof-card-title">Clases realizadas: tu observación</h2>
+    <p class="prof-section-subtitle">Cuéntale a quien tomó la clase cómo le fue y qué practicar. Sin teléfonos, correos ni redes
+        sociales (para eso está el Buzón). La observación de un menor la lee su apoderado. Máximo {{ observacion_maximo }} caracteres.</p>
+    {% for c in clases_realizadas %}
+    <form method="post" action="{% url 'observacion_guardar' c.id %}" class="prof-form-group">
+        {% csrf_token %}
+        <label for="obs-{{ c.id }}" class="prof-form-label">{{ c.asignatura }} con {{ c.alumno }} · {{ c.fecha|date:"d/m/Y H:i" }} · la lee {{ c.lee }}</label>
+        <textarea id="obs-{{ c.id }}" name="texto" rows="3" minlength="10" maxlength="{{ observacion_maximo }}" class="prof-form-input" required>{{ c.texto }}</textarea>
+        <button type="submit" class="prof-form-btn">{% if c.texto %}Actualizar{% else %}Guardar{% endif %} observación</button>
+    </form>
+    {% empty %}
+    <div class="prof-empty-card">
+        <i class="bi bi-chat-square-text" aria-hidden="true"></i>
+        <p>Cuando completes una clase, podrás dejar aquí tu observación.</p>
+    </div>
+    {% endfor %}
+</div>

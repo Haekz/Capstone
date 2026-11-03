@@ -99,10 +99,9 @@ class ProgresoAlumnoTests(TestCase):
     def test_secciones_sin_modelo_marcadas_como_ejemplo(self):
         self.client.post(reverse('login'), {'username': RUT_ANA, 'password': CLAVE})
         r = self.client.get(reverse('alumno_pag1'))
-        for aviso in ('el gráfico semanal aún no usa tus datos',
-                      'los comentarios de docentes aún no se registran'):
-            self.assertContains(r, f'Contenido de ejemplo: {aviso}')
-        self.assertNotContains(r, 'el avance por ramo aún no se registra')  # ese ya es real
+        self.assertContains(r, 'Contenido de ejemplo: el gráfico semanal aún no usa tus datos')
+        for ya_real in ('el avance por ramo aún no se registra', 'los comentarios de docentes aún no se registran'):
+            self.assertNotContains(r, ya_real)
 
     def test_avance_por_ramo_con_clases_y_horas_reales_del_mas_al_menos_estudiado(self):
         self.assertEqual(progreso.por_ramo(self.ana), [
@@ -125,7 +124,7 @@ class ProgresoAlumnoTests(TestCase):
         self.assertContains(r, 'width: 100%')
         self.assertContains(r, 'width: 25%')
         for inventado in ('Matemáticas (Álgebra y Cálculo)', 'Programación (Python y Web)', 'Mecánica y Ondas', 'myClasses',
-                          'subjectProgress'):
+                          'subjectProgress', 'myReports'):
             self.assertNotContains(r, inventado)
 
     def test_sin_clases_el_portal_lo_dice_en_vez_de_mostrar_ramos(self):

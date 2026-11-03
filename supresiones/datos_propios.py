@@ -10,7 +10,8 @@ cosas que dependen del rol:
     * profesor: clases con inscripciones, paquetes vendidos o retiros de dinero;
     * apoderado: compras pagadas o un vinculo que llego a estar verificado (quien tuvo autoridad sobre un menor).
 - ``limpiar``: los datos propios que se quitan siempre, se borre la cuenta o se seudonimice (la cascada no borra los
-  archivos del disco ni los correos que otras filas copiaron): foto, y por rol titulo, cuenta bancaria, carnet.
+  archivos del disco ni los correos que otras filas copiaron): foto, y por rol observaciones recibidas, titulo,
+  cuenta bancaria, carnet.
 
 Para todos los roles: las filas de allauth (correo y datos de Google) se borran; sin eso el correo seguiria guardado.
 """
@@ -23,6 +24,7 @@ from django.utils import timezone
 from agenda.models import HorarioSemanal
 from alumnos.models import CuentaBancaria, Inscripcion, PaqueteClases, Profesor, SesionClase
 from apoderados.models import Documento, Invitacion, SolicitudAdolescente, Vinculo
+from observaciones.models import Observacion
 
 
 def _perfil(user, nombre):
@@ -55,6 +57,11 @@ def tiene_historial(user):
     return False
 
 
+def _limpiar_alumno(alumno):
+    """Sin las observaciones que recibio: son un juicio sobre la persona y sin ella no sirven de nada."""
+    Observacion.objects.filter(inscripcion__alumno=alumno).delete()
+
+
 def _limpiar_profesor(profesor):
     """Sin titulo, cuenta bancaria ni horario, y fuera del catalogo: sin titulo aprobado no se hacen clases."""
     if profesor.titulo_archivo:
@@ -80,6 +87,9 @@ def limpiar(user):
         user.foto_perfil.delete(save=False)  # tambien el archivo, no solo la referencia
     EmailAddress.objects.filter(user=user).delete()
     SocialAccount.objects.filter(user=user).delete()
+    alumno = _perfil(user, 'perfil_alumno')
+    if alumno is not None:
+        _limpiar_alumno(alumno)
     profesor = _perfil(user, 'perfil_profesor')
     if profesor is not None:
         _limpiar_profesor(profesor)

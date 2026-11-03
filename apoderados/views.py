@@ -25,6 +25,7 @@ from alumnos.roles import ALUMNO, APODERADO, abrir_sesion_rol, redirigir_a_porta
 from alumnos.services import InscripcionService
 from alumnos.utils import es_menor
 from alumnos.views import iniciar_compra_paquete  # unico inicio de Webpay para paquetes
+from observaciones import panel as observaciones_panel
 from soporte.permisos import agente_en_sesion, lider_required, ticket_asignado, tickets_del_agente
 
 from .correo import (avisar_apoderados, avisar_revocacion, enviar_confirmacion, enviar_confirmacion_adolescente,
@@ -283,6 +284,7 @@ def clases_estudiante(request, id_vinculo):
                 .order_by('fecha_hora_inicio')[:30]) if con_clases else []
     return render(request, 'apoderados/clases.html', {
         'vinculo': vinculo, 'paquetes': paquetes, 'reservas': reservas, 'sesiones': sesiones,
+        'observaciones': observaciones_panel.del_alumno(alumno),  # el menor no las ve: las lee su apoderado
     })
 
 

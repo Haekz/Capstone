@@ -645,9 +645,12 @@
                     <!-- Retroalimentación de docentes -->
                     <div class="progress-feedback-section ap-mt-30">
                         <h3>Comentarios y Observaciones del Equipo Docente</h3>
-                        <p class="demo-notice"><i class="bi bi-info-circle"></i> Contenido de ejemplo: los comentarios de docentes aún no se registran en la plataforma.</p>
                         <div class="feedback-list-container" id="feedback-list-container">
-                            <!-- Se rellena con JS -->
+                            {% if es_menor %}
+                            <p>Las observaciones de tus profesores las recibe tu apoderado.</p>
+                            {% else %}
+                            {% include 'observaciones/_lista.html' %}
+                            {% endif %}
                         </div>
                     </div>
                     {% endif %}
@@ -915,30 +918,6 @@
             { title: "Célula Eucariota y Procariota: Estructura", specialty: "Biología", teacher: "Lucía Méndez", duration: "12 min" }
         ];
 
-        // Support Tickets pool (Mock)
-        const myReports = [
-            {
-                id: "TKT-4890",
-                category: "Pago / Finanzas",
-                subject: "Error al intentar registrar pago",
-                description: "La transacción de Webpay fue procesada pero mi cuenta sigue apareciendo sin plan activo.",
-                status: "Resuelto",
-                statusClass: "status-resolved",
-                date: "2026-05-18",
-                response: "Hola Alumno. Revisamos tu transacción de Webpay y hemos acreditado tu suscripción mensual. Tu cuenta ya está activa."
-            },
-            {
-                id: "TKT-5211",
-                category: "Plataforma / Técnico",
-                subject: "Falla de cámara en video clases",
-                description: "Durante la tutoría de ayer no pude encender mi cámara dentro de la plataforma.",
-                status: "Pendiente",
-                statusClass: "status-pending",
-                date: "2026-05-24",
-                response: null
-            }
-        ];
-
         // ── MULTI-VIEW ROUTING (Dashboard, Favorites, Profile, Classes, Support, Premium Views) ──
         // esta parte es del enrutamiento de las diferentes vistas de la app
         const viewBtns = document.querySelectorAll('.nav-view-btn, .sidebar-view-btn');
@@ -982,7 +961,7 @@
             };
 
             checkPremiumView('view-inbox', 'lock-inbox', 'inbox-unlocked-content');
-            checkPremiumView('view-progress', 'lock-progress', 'progress-unlocked-content', renderProgressView);
+            checkPremiumView('view-progress', 'lock-progress', 'progress-unlocked-content');
 
             if (targetViewId === 'view-favorites') {
                 renderFavorites();
@@ -1428,58 +1407,6 @@
                     item.style.display = 'none';
                 }
             });
-        }
-
-        // esta parte es del reporte del progreso del estudiante
-        
-        let teacherFeedback = [
-            {
-                teacherName: "Dr. Carlos Ruiz",
-                date: "24 May 2026",
-                initials: "CR",
-                subject: "Cálculo y Derivadas",
-                text: "El estudiante demuestra excelente comprensión de la teoría de límites. Se recomienda practicar más ejercicios de la regla de la cadena para ganar fluidez operacional."
-            },
-            {
-                teacherName: "Tutor Juan Pablo",
-                date: "18 May 2026",
-                initials: "JP",
-                subject: "Física Vectores",
-                text: "Buen desempeño en la descomposición de vectores bidimensionales. Quedó pendiente revisar el método analítico en tres dimensiones para la siguiente tutoría."
-            },
-            {
-                teacherName: "Ing. David Silva",
-                date: "12 May 2026",
-                initials: "DS",
-                subject: "Algoritmos en Python",
-                text: "Domina a la perfección las estructuras de control condicionales e iterativas. Su código está limpio y bien documentado. Próximo paso: Introducción a la Programación Orientada a Objetos."
-            }
-        ];
-
-        function renderProgressView() {
-            
-            const feedbackListEl = document.getElementById('feedback-list-container');
-            if (feedbackListEl) {
-                feedbackListEl.innerHTML = '';
-                teacherFeedback.forEach(f => {
-                    const card = document.createElement('div');
-                    card.className = 'feedback-card-item';
-                    card.innerHTML = `
-                        <div class="feedback-card-header">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <div class="contact-avatar" style="width: 36px; height: 36px; font-size: 0.85rem; background: rgba(168, 85, 247, 0.1); color: var(--primary);">${f.initials}</div>
-                                <div>
-                                    <h5 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--text);">${f.teacherName}</h5>
-                                    <span style="font-size: 0.75rem; color: var(--text-light);">${f.subject}</span>
-                                </div>
-                            </div>
-                            <span style="font-size: 0.8rem; color: var(--text-light);">${f.date}</span>
-                        </div>
-                        <p style="margin: 0; font-size: 0.9rem; color: var(--text-light); line-height: 1.5; font-style: italic;">"${f.text}"</p>
-                    `;
-                    feedbackListEl.appendChild(card);
-                });
-            }
         }
 
         // ── GESTIÓN DE MODAL DE HORARIOS Y RESERVAS DE SESIONES ──
