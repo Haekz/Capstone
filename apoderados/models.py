@@ -116,6 +116,18 @@ class Apoderado(models.Model):
         """Subio su carnet por ambos lados: sin eso no se puede aprobar."""
         return set(Documento.CARNET) <= set(self.documentos.values_list('tipo', flat=True))
 
+    @property
+    def puede_subir_carnet(self):
+        """En revision sin carnet (nunca lo subio o vencio) o rechazado: decidido 03-nov, puede intentarlo de nuevo."""
+        return self.estado in (self.REVISION_PENDIENTE, self.RECHAZADO) and not self.documentos_completos
+
+    def volver_a_revision(self):
+        """El rechazado que sube otro carnet vuelve a la cola de soporte (su correo ya estaba confirmado). El rechazo
+        queda en su historial de revisiones."""
+        if self.estado == self.RECHAZADO:
+            self.estado = self.REVISION_PENDIENTE
+            self.save(update_fields=['estado'])
+
     def confirmar_correo(self):
         """Marca el correo como propio. El token deja de servir (un solo uso)."""
         if self.estado != self.CORREO_PENDIENTE:
@@ -231,6 +243,17 @@ class Vinculo(models.Model):
     @property
     def documentos_completos(self):
         return self.documentos.filter(tipo=self.documento_requerido).exists()
+
+    @property
+    def puede_subir_documento(self):
+        """Pendiente sin documento (nunca lo subio o vencio) o rechazado: decidido 03-nov, puede intentarlo de nuevo."""
+        return self.estado in (self.PENDIENTE, self.RECHAZADO) and not self.documentos_completos
+
+    def volver_a_revision(self):
+        """El rechazado que sube otro documento vuelve a pendiente; el rechazo queda en su historial de revisiones."""
+        if self.estado == self.RECHAZADO:
+            self.estado = self.PENDIENTE
+            self.save(update_fields=['estado'])
 
     def autoriza(self, alumno):
         """Puede actuar por ``alumno``: vinculo verificado de ese estudiante, apoderado

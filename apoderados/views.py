@@ -49,6 +49,11 @@ SIN_CARNET = ('Aún no tenemos las fotos de tu carnet: o nunca las subiste, o ve
               'por seguridad.')
 SIN_DOCUMENTO = ('Aún no tenemos el documento del vínculo: o nunca lo subiste, o venció sin revisión y lo borramos '
                  'por seguridad.')
+# Quien fue rechazado puede intentarlo de nuevo (decidido 03-nov): soporte borra el documento al decidir.
+REINTENTO_CARNET = ('Soporte rechazó la verificación de tu identidad y borró las fotos. Si quieres intentarlo de nuevo, '
+                    'sube tu carnet por ambos lados y lo revisarán otra vez.')
+REINTENTO_DOCUMENTO = ('Soporte rechazó el vínculo y borró el documento. Si quieres intentarlo de nuevo, sube otro '
+                       'documento y lo revisarán otra vez.')
 
 
 def _apoderado_en_sesion(request):
@@ -141,6 +146,8 @@ def portal(request):
         'token_invitacion': token,
         'sin_carnet': SIN_CARNET,
         'sin_documento': SIN_DOCUMENTO,
+        'reintento_carnet': REINTENTO_CARNET,
+        'reintento_documento': REINTENTO_DOCUMENTO,
     })
 
 
@@ -213,39 +220,42 @@ def clave_estudiante(request, id_vinculo):
 @apoderado_required
 def subir_carnet(request):
     apoderado = _apoderado_en_sesion(request)
-    if apoderado.estado != Apoderado.REVISION_PENDIENTE or apoderado.documentos_completos:
+    if not apoderado.puede_subir_carnet:
         raise Http404
     form = CarnetForm(request.POST or None, request.FILES or None)
     if request.method == 'POST' and form.is_valid():
         with transaction.atomic():
             form.guardar_carnet(apoderado)
+            apoderado.volver_a_revision()  # si estaba rechazado, vuelve a la cola de soporte
             apoderado.abrir_ticket_si_revisable()
         messages.success(request, 'Recibimos tu carnet. Nuestro equipo de soporte lo revisará.')
         return redirect(APODERADO.ruta_portal)
     return _formulario(request, form, titulo='Sube tu carnet', subtitulo='Carnet por ambos lados',
                        boton='Subir carnet', volver_url=reverse(APODERADO.ruta_portal),
-                       intro=SIN_CARNET)
+                       intro=REINTENTO_CARNET if apoderado.estado == Apoderado.RECHAZADO else SIN_CARNET)
 
 
 @never_cache
 @apoderado_required
 def subir_documento_vinculo(request, id_vinculo):
     vinculo = get_object_or_404(Vinculo.objects.select_related('alumno__user', 'apoderado'), pk=id_vinculo,
-                                apoderado_id=request.session[APODERADO.clave_sesion], estado=Vinculo.PENDIENTE)
-    if vinculo.documentos_completos:
+                                apoderado_id=request.session[APODERADO.clave_sesion],
+                                estado__in=[Vinculo.PENDIENTE, Vinculo.RECHAZADO])
+    if not vinculo.puede_subir_documento:
         raise Http404
     form = DocumentoVinculoForm(request.POST or None, request.FILES or None)
     form.fields['documento'].label = dict(Documento.TIPOS)[vinculo.documento_requerido]
     if request.method == 'POST' and form.is_valid():
         with transaction.atomic():
             form.guardar_documento(vinculo)
+            vinculo.volver_a_revision()  # si estaba rechazado, vuelve a pendiente
             vinculo.abrir_ticket_si_revisable()
         messages.success(request, 'Recibimos el documento. Nuestro equipo de soporte lo revisará.')
         return redirect(APODERADO.ruta_portal)
     return _formulario(request, form, titulo=f'Vínculo con {vinculo.nombre_visible}',
                        subtitulo='Sube el documento', boton='Subir documento',
                        volver_url=reverse(APODERADO.ruta_portal),
-                       intro=SIN_DOCUMENTO)
+                       intro=REINTENTO_DOCUMENTO if vinculo.estado == Vinculo.RECHAZADO else SIN_DOCUMENTO)
 
 
 # --- El apoderado contrata y reserva por su estudiante ---

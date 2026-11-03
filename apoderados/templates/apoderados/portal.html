@@ -61,6 +61,12 @@
         {% else %}
         <p class="apod-estado"><i class="bi bi-x-octagon-fill" aria-hidden="true"></i> {{ apoderado.get_estado_display }}</p>
         {% if revision.observacion %}<p><strong>Motivo:</strong> {{ revision.observacion }}</p>{% endif %}
+        {% if apoderado.puede_subir_carnet %}
+        <p>{{ reintento_carnet }}</p>
+        <a class="perfil-prof__reservar" href="{% url 'apoderado_subir_carnet' %}">
+            <i class="bi bi-upload" aria-hidden="true"></i> Subir carnet de nuevo
+        </a>
+        {% endif %}
         <p>Si crees que es un error, escríbenos desde la página de contacto.</p>
         {% endif %}
     </section>
@@ -79,6 +85,7 @@
                 {% else %}
                 {% if v.estado == 'pendiente' %}{% if v.documentos_completos %}<br><small>Nuestro equipo de soporte revisará el documento que adjuntaste para verificar el vínculo.</small>{% else %}<br><small>{{ sin_documento }}</small> <a href="{% url 'apoderado_subir_documento_vinculo' v.pk %}">Subir el documento</a>{% endif %}{% endif %}
                 {% if v.estado == 'rechazado' and v.ultima_revision.observacion %}<br><small><strong>Motivo:</strong> {{ v.ultima_revision.observacion }}</small>{% endif %}
+                {% if v.estado == 'rechazado' and v.puede_subir_documento %}<br><small>{{ reintento_documento }}</small> <a href="{% url 'apoderado_subir_documento_vinculo' v.pk %}">Subir otro documento</a>{% endif %}
                 {% if v.puede_volver_a_pedir %}<br><a href="{% url 'apoderado_vincular_estudiante' %}">Volver a pedir el vínculo</a>{% elif v.estado == 'revocado' %}<br><small>Para volver a vincularte, escríbenos desde la página de contacto.</small>{% endif %}
                 {% if v.estado == 'pendiente' or v.estado == 'verificado' %}{% if v.apoderado_define_clave %}<br><a href="{% url 'apoderado_clave_estudiante' v.pk %}">Cambiar su contraseña</a>{% endif %}{% endif %}
                 {% if v.estado == 'verificado' and apoderado.estado == 'verificado' %}
