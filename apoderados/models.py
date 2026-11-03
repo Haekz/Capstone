@@ -199,10 +199,27 @@ class Vinculo(models.Model):
         return self.revisiones.first()
 
     @property
+    def revocacion(self):
+        """La ultima revocacion: un vinculo se puede volver a pedir y, despues, revocar otra vez."""
+        return self.revocaciones.order_by('-fecha', '-pk').first()
+
+    @property
+    def puede_volver_a_pedir(self):
+        """Decidido 02-nov: si se rechazo, o si el propio apoderado se desvinculo. Si lo revoco soporte, no:
+        tiene que escribir a soporte."""
+        if self.estado == self.RECHAZADO:
+            return True
+        revocacion = self.revocacion if self.estado == self.REVOCADO else None
+        return revocacion is not None and revocacion.autor_id == self.apoderado.user_id
+
+    @property
     def apoderado_define_clave(self):
         """Solo el apoderado que creo la cuenta, que es el de su primer vinculo: el adolescente que invito
         a su apoderado maneja la suya, y un segundo apoderado, que pidio vincularse despues, no puede
-        cambiarle la contrasena al estudiante (aunque su vinculo se verifique)."""
+        cambiarle la contrasena al estudiante (aunque su vinculo se verifique). Tampoco quien vuelve a
+        pedir el vinculo con el RUT (por_rut): si el primer vinculo se revoco, la clave la maneja soporte."""
+        if self.por_rut:
+            return False
         vinculos = Vinculo.objects.filter(alumno_id=self.alumno_id).order_by('creado', 'pk')
         primero = vinculos.values_list('pk', flat=True).first()
         return primero == self.pk and not SolicitudAdolescente.objects.filter(alumno_id=self.alumno_id).exists()
@@ -360,8 +377,9 @@ class CompraApoderado(models.Model):
 
 
 class Revocacion(models.Model):
-    """Evidencia de una revocacion: quien, cuando y por que."""
-    vinculo = models.OneToOneField(Vinculo, on_delete=models.CASCADE, related_name='revocacion')
+    """Evidencia de una revocacion: quien, cuando y por que. Un vinculo puede tener varias: si el propio
+    apoderado se desvinculo, puede volver a pedirlo y, despues, revocarse otra vez (decidido 02-nov)."""
+    vinculo = models.ForeignKey(Vinculo, on_delete=models.CASCADE, related_name='revocaciones')
     # SET_NULL: si se borra la cuenta del autor, la evidencia sigue registrada.
     autor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='+')
     motivo = models.CharField(max_length=300, blank=True)

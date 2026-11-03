@@ -79,6 +79,7 @@
                 {% else %}
                 {% if v.estado == 'pendiente' %}{% if v.documentos_completos %}<br><small>Nuestro equipo de soporte revisará el documento que adjuntaste para verificar el vínculo.</small>{% else %}<br><small>El documento venció sin revisión y lo borramos por seguridad.</small> <a href="{% url 'apoderado_subir_documento_vinculo' v.pk %}">Subirlo de nuevo</a>{% endif %}{% endif %}
                 {% if v.estado == 'rechazado' and v.ultima_revision.observacion %}<br><small><strong>Motivo:</strong> {{ v.ultima_revision.observacion }}</small>{% endif %}
+                {% if v.puede_volver_a_pedir %}<br><a href="{% url 'apoderado_vincular_estudiante' %}">Volver a pedir el vínculo</a>{% elif v.estado == 'revocado' %}<br><small>Para volver a vincularte, escríbenos desde la página de contacto.</small>{% endif %}
                 {% if v.estado == 'pendiente' or v.estado == 'verificado' %}{% if v.apoderado_define_clave %}<br><a href="{% url 'apoderado_clave_estudiante' v.pk %}">Cambiar su contraseña</a>{% endif %}{% endif %}
                 {% if v.estado == 'verificado' and apoderado.estado == 'verificado' %}
                 <br><a href="{% url 'apoderado_clases_estudiante' v.pk %}">Ver y reservar sus clases</a>

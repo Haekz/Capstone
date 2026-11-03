@@ -263,16 +263,22 @@ class VincularEstudianteForm(_VinculoForm):
             self.alumno = self._menor_con_rut(datos['rut'])
             if self.alumno is None:
                 raise forms.ValidationError(self.SIN_COINCIDENCIA)
-            if Vinculo.objects.filter(apoderado=self.apoderado, alumno=self.alumno).exists():
+            existente = Vinculo.objects.filter(apoderado=self.apoderado, alumno=self.alumno).first()
+            if existente and not existente.puede_volver_a_pedir:
+                if existente.estado == Vinculo.REVOCADO:  # lo revoco soporte
+                    raise forms.ValidationError('Para volver a vincularte con este estudiante, escríbenos desde '
+                                                'la página de contacto.')
                 raise forms.ValidationError('Ya tienes un vínculo con este estudiante. Revísalo en tu portal.')
         return datos
 
     def save(self):
+        """Si lo vuelve a pedir (rechazado o desvinculado por si mismo) se reutiliza su vinculo, que conserva
+        el historial de revisiones y revocaciones: vuelve a quedar pendiente, con documento y ticket nuevos."""
         with transaction.atomic():
-            vinculo = Vinculo.objects.create(
-                apoderado=self.apoderado, alumno=self.alumno, parentesco=self.cleaned_data['parentesco'],
-                por_rut=True, version_declaracion=VERSION_DECLARACION_VINCULO, declaracion_aceptada=timezone.now(),
-            )
+            vinculo, _ = Vinculo.objects.update_or_create(apoderado=self.apoderado, alumno=self.alumno, defaults={
+                'parentesco': self.cleaned_data['parentesco'], 'estado': Vinculo.PENDIENTE, 'por_rut': True,
+                'version_declaracion': VERSION_DECLARACION_VINCULO, 'declaracion_aceptada': timezone.now(),
+            })
             self.guardar_documento(vinculo)
             vinculo.abrir_ticket_si_revisable()
             return vinculo
@@ -363,15 +369,15 @@ class NuevaClaveForm(AccesibleMixin, SetPasswordForm):
 class RevocarVinculoForm(AccesibleMixin, forms.Form):
     motivo = forms.CharField(label='Motivo', max_length=300, required=False, widget=forms.Textarea(attrs={'rows': 3}))
     confirmar = forms.BooleanField(
-        label='Entiendo que se cancelarán las clases futuras que pagué con este vínculo '
-              'y que no podré volver a actuar por el estudiante.')
+        label='Entiendo que se cancelarán las clases futuras que pagué con este vínculo y que, para volver a '
+              'actuar por el estudiante, tendré que pedir el vínculo de nuevo y esperar su verificación.')
 
     def __init__(self, *args, motivo_obligatorio=False, **kwargs):
         super().__init__(*args, **kwargs)
         if motivo_obligatorio:  # el lider de soporte siempre deja el motivo (p. ej. resolucion judicial)
             self.fields['motivo'].required = True
             self.fields['confirmar'].label = ('Entiendo que se cancelarán las clases futuras pagadas con '
-                                              'este vínculo y que el apoderado no podrá volver a actuar.')
+                                              'este vínculo y que el apoderado no podrá volver a pedirlo por su cuenta.')
 
 
 class _RevisionForm(forms.ModelForm):
