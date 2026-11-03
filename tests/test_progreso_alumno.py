@@ -12,6 +12,7 @@ from django.template.defaultfilters import floatformat
 from django.test import TestCase
 from django.urls import reverse
 
+from alumnos import progreso
 from alumnos.models import Alumno, Asignatura, Clase, Genero, Inscripcion, SesionClase
 from tests.test_especialidad import CLAVE, NAC, crear_profesor
 from tests.test_filtros_clases import crear_sesion
@@ -98,7 +99,37 @@ class ProgresoAlumnoTests(TestCase):
     def test_secciones_sin_modelo_marcadas_como_ejemplo(self):
         self.client.post(reverse('login'), {'username': RUT_ANA, 'password': CLAVE})
         r = self.client.get(reverse('alumno_pag1'))
-        for aviso in ('el avance por ramo aún no se registra',
-                      'el gráfico semanal aún no usa tus datos',
+        for aviso in ('el gráfico semanal aún no usa tus datos',
                       'los comentarios de docentes aún no se registran'):
             self.assertContains(r, f'Contenido de ejemplo: {aviso}')
+        self.assertNotContains(r, 'el avance por ramo aún no se registra')  # ese ya es real
+
+    def test_avance_por_ramo_con_clases_y_horas_reales_del_mas_al_menos_estudiado(self):
+        self.assertEqual(progreso.por_ramo(self.ana), [
+            {'nombre': 'Álgebra', 'clases': 2, 'horas': 2.0, 'porcentaje': 100},
+            {'nombre': 'Física', 'clases': 1, 'horas': 0.5, 'porcentaje': 25},
+        ])
+
+    def test_avance_por_ramo_solo_cuenta_las_clases_de_esa_alumna(self):
+        bea = Alumno.objects.get(user__rut='22222222-2')
+        self.assertEqual(progreso.por_ramo(bea), [{'nombre': 'Álgebra', 'clases': 1, 'horas': 1.0, 'porcentaje': 100}])
+
+    def test_avance_por_ramo_sin_clases_completadas_esta_vacio(self):
+        self.assertEqual(progreso.por_ramo(crear_alumno('33333333-3', 'Caro', Genero.objects.get())), [])
+
+    def test_el_portal_muestra_el_avance_real_y_no_los_ramos_inventados(self):
+        self.client.post(reverse('login'), {'username': RUT_ANA, 'password': CLAVE})
+        r = self.client.get(reverse('alumno_pag1'))
+        self.assertContains(r, f'2 clases · {floatformat(2.0, "-1")} h')
+        self.assertContains(r, f'1 clase · {floatformat(0.5, "-1")} h')
+        self.assertContains(r, 'width: 100%')
+        self.assertContains(r, 'width: 25%')
+        for inventado in ('Matemáticas (Álgebra y Cálculo)', 'Programación (Python y Web)', 'Mecánica y Ondas', 'myClasses',
+                          'subjectProgress'):
+            self.assertNotContains(r, inventado)
+
+    def test_sin_clases_el_portal_lo_dice_en_vez_de_mostrar_ramos(self):
+        nueva = crear_alumno('33333333-3', 'Caro', Genero.objects.get())
+        dar_plan(nueva)
+        self.client.post(reverse('login'), {'username': '33333333-3', 'password': CLAVE})
+        self.assertContains(self.client.get(reverse('alumno_pag1')), 'Aún no completas clases')

@@ -26,7 +26,7 @@ from .models import (
     Suscripcion,
 )
 from django.core.exceptions import ValidationError
-from . import paquetes
+from . import paquetes, progreso
 from mensajes import panel as mensajes_panel
 from django.db import transaction
 from apoderados.permisos import clase_pagada_por_apoderado, vinculo_contratable
@@ -381,6 +381,7 @@ def alumno_pag1(request):
         'mis_inscripciones': mis_inscripciones,
         'historial_clases': historial_clases,
         'progreso': alumno.resumen_progreso(),
+        'progreso_ramos': progreso.por_ramo(alumno),
         'plan_activo': _plan_para_js(alumno),
         'mis_paquetes': mis_paquetes,
         'pagos': pagos,

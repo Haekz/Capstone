@@ -306,24 +306,18 @@
         </div>
     </div>
 
-    <!-- Barra lateral de Chat Privado -->
+    <!-- Mensajes: el chat de verdad es el de la videollamada (Jitsi); este panel solo dice donde escribir -->
     <div class="live-sidebar">
         <div class="chat-header">
-            <i class="bi bi-chat-dots-fill" style="color: var(--primary);"></i> Chat de la Sesin
+            <i class="bi bi-chat-dots-fill" style="color: var(--primary);" aria-hidden="true"></i> Mensajes de la clase
         </div>
-        <div class="chat-messages" id="chat-messages">
-            <div style="text-align: center; color: var(--text-muted); font-size: 0.8rem; margin-bottom: 20px;">
-                Bienvenido a la clase. Este chat es privado entre el profesor y t.
-            </div>
-        </div>
-        <div class="chat-input">
-            <input type="text" id="chat-input-text" placeholder="Escribe tu duda aqu...">
-            <button class="send-btn" onclick="sendMessage()">
-                <i class="bi bi-send-fill"></i>
-            </button>
+        <div class="chat-messages" id="chat-messages" style="padding: 16px;">
+            <p><strong>Durante la clase</strong>, escribe en el chat de la videollamada (el ícono de chat de la barra de la sala): lo ven quienes están en la sala.</p>
+            <p><strong>Antes o después</strong>, usa el Buzón de tu cuenta.</p>
         </div>
     </div>
 </div>
+
 
 <script src="https://meet.jit.si/external_api.js"></script>
 <script>
@@ -391,31 +385,5 @@
         const api = new JitsiMeetExternalAPI(domain, options);
     }
     
-    // Lgica del Chat MVP
-    function sendMessage() {
-        const input = document.getElementById('chat-input-text');
-        const text = input.value.trim();
-        if(!text) return;
-        
-        const msgContainer = document.getElementById('chat-messages');
-        const now = new Date();
-        const timeStr = now.getHours() + ':' + now.getMinutes().toString().padStart(2, '0');
-        
-        const msgHtml = '<div class="message">' +
-                '<div class="message-header">' +
-                    '<span class="sender">Tú</span>' +
-                    '<span class="time">' + timeStr + '</span>' +
-                '</div>' +
-                '<div class="text">' + text + '</div>' +
-            '</div>';
-        
-        msgContainer.innerHTML += msgHtml;
-        msgContainer.scrollTop = msgContainer.scrollHeight;
-        input.value = '';
-    }
-
-    document.getElementById('chat-input-text').addEventListener('keypress', function(e) {
-        if(e.key === 'Enter') sendMessage();
-    });
 </script>
 {% endblock %}

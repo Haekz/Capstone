@@ -584,9 +584,21 @@
                         <!-- Avance por ramo -->
                         <div class="progress-details-card">
                             <h3>Avance por Ramo</h3>
-                            <p class="demo-notice"><i class="bi bi-info-circle"></i> Contenido de ejemplo: el avance por ramo aún no se registra en la plataforma.</p>
+                            <p class="ap-view-sub">Clases completadas y horas en cada ramo. La barra compara cada ramo con el que más has estudiado.</p>
                             <div class="progress-subject-list" id="progress-subject-list">
-                                <!-- Se rellena con JS -->
+                                {% for ramo in progreso_ramos %}
+                                <div class="progress-subject-item">
+                                    <div class="subject-progress-header">
+                                        <span class="subject-progress-name">{{ ramo.nombre }}</span>
+                                        <span class="subject-progress-pct">{{ ramo.clases }} clase{{ ramo.clases|pluralize }} · {{ ramo.horas|floatformat:"-1" }} h</span>
+                                    </div>
+                                    <div class="progress-bar-container" aria-hidden="true">
+                                        <div class="progress-bar-fill" style="width: {{ ramo.porcentaje }}%; background-color: var(--primary);"></div>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <p>Aún no completas clases: cuando lo hagas, verás aquí tu avance por ramo.</p>
+                                {% endfor %}
                             </div>
                         </div>
                         
@@ -901,57 +913,6 @@
             { title: "Reacciones Químicas Orgánicas y Enlaces", specialty: "Química", teacher: "Lucía Méndez", duration: "25 min" },
             { title: "Historia Universal: El Imperio Romano", specialty: "Historia", teacher: "Sofía Vergara", duration: "20 min" },
             { title: "Célula Eucariota y Procariota: Estructura", specialty: "Biología", teacher: "Lucía Méndez", duration: "12 min" }
-        ];
-
-        // Classes data pool (Mock)
-        const myClasses = [
-            {
-                id: 1,
-                teacherName: "Dr. Carlos Ruiz",
-                specialty: "Matemáticas",
-                type: "Profesor",
-                datetime: "27 de Mayo, 2026 - 16:00",
-                duration: "60 min",
-                status: "upcoming",
-                videoUrl: "https://meet.google.com/mock-class-room-xyz"
-            },
-            {
-                id: 2,
-                teacherName: "Tutora Camila Gómez",
-                specialty: "Inglés",
-                type: "Tutor",
-                datetime: "29 de Mayo, 2026 - 11:30",
-                duration: "45 min",
-                status: "upcoming",
-                videoUrl: "https://meet.google.com/mock-class-room-abc"
-            },
-            {
-                id: 3,
-                teacherName: "Lic. María José Valenzuela",
-                specialty: "Lenguaje",
-                type: "Profesor",
-                datetime: "20 de Mayo, 2026 - 15:00",
-                duration: "60 min",
-                status: "completed"
-            },
-            {
-                id: 4,
-                teacherName: "Ing. David Silva",
-                specialty: "Programación",
-                type: "Profesor",
-                datetime: "15 de Mayo, 2026 - 18:30",
-                duration: "90 min",
-                status: "completed"
-            },
-            {
-                id: 5,
-                teacherName: "Tutor Juan Pablo",
-                specialty: "Matemáticas",
-                type: "Tutor",
-                datetime: "12 de Mayo, 2026 - 10:00",
-                duration: "60 min",
-                status: "completed"
-            }
         ];
 
         // Support Tickets pool (Mock)
@@ -1470,12 +1431,6 @@
         }
 
         // esta parte es del reporte del progreso del estudiante
-        let subjectProgress = [
-            { name: "Matemáticas (Álgebra y Cálculo)", progress: 85, color: "var(--primary)" },
-            { name: "Programación (Python y Web)", progress: 95, color: "#10b981" },
-            { name: "Física (Mecánica y Ondas)", progress: 60, color: "#3b82f6" },
-            { name: "Lenguaje y Comunicación", progress: 75, color: "var(--accent)" }
-        ];
         
         let teacherFeedback = [
             {
@@ -1502,24 +1457,6 @@
         ];
 
         function renderProgressView() {
-            const progressListEl = document.getElementById('progress-subject-list');
-            if (progressListEl) {
-                progressListEl.innerHTML = '';
-                subjectProgress.forEach(sub => {
-                    const item = document.createElement('div');
-                    item.className = 'progress-subject-item';
-                    item.innerHTML = `
-                        <div class="subject-progress-header">
-                            <span class="subject-progress-name">${sub.name}</span>
-                            <span class="subject-progress-pct">${sub.progress}%</span>
-                        </div>
-                        <div class="progress-bar-container">
-                            <div class="progress-bar-fill" style="width: ${sub.progress}%; background-color: ${sub.color};"></div>
-                        </div>
-                    `;
-                    progressListEl.appendChild(item);
-                });
-            }
             
             const feedbackListEl = document.getElementById('feedback-list-container');
             if (feedbackListEl) {
