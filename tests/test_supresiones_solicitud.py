@@ -20,6 +20,7 @@ from tests.test_apoderados import User, crear_agente, entrar
 from tests.test_apoderados_vinculos import hace_anios
 from tests.test_filtros_clases import crear_sesion
 from tests.test_paquetes import RUT_ANA, RUT_BETO, RUT_PROFE, Escenario, dar_paquete
+from tests.test_retiros import crear_admin
 
 ENLACE = re.compile(r'https?://[^/\s]+(/privacidad/eliminar-cuenta/confirmar/\S+/)')
 
@@ -84,11 +85,12 @@ class EvaluacionTests(Escenario):
         servicio.abrir_conversacion(self.beto, self.profe)
         self.assertIn('Conversaciones con profesores', nombres(evaluacion.evaluar(self.beto.user)))
 
-    def test_el_profesor_todavia_no_se_puede_eliminar_automaticamente(self):
-        ev = evaluacion.evaluar(self.profe.user)
+    def test_una_cuenta_de_administrador_no_se_elimina_desde_aqui(self):
+        admin, _ = crear_admin()
+        ev = evaluacion.evaluar(admin)
         self.assertFalse(ev.puede)
         self.assertEqual(ev.categorias, ())
-        self.assertIn('profesor', ev.bloqueos[0])
+        self.assertIn('no se elimina desde aquí', ev.bloqueos[0])
 
 
 class SolicitarTests(Escenario):
@@ -217,10 +219,12 @@ class SolicitarTests(Escenario):
         self.assertEqual(r.status_code, 302)
         self.assertNotIn('eliminar-cuenta', r.url)
 
-    def test_el_profesor_puede_pedirlo_y_se_le_avisa_que_aun_no_es_automatico(self):
+    def test_el_profesor_ve_que_se_elimina_y_que_se_conserva_y_puede_pedirlo(self):
         self.entrar(RUT_PROFE)
         r = self.client.get(reverse('eliminar_cuenta'))
-        self.assertContains(r, 'Todavía no se puede eliminar automáticamente')
+        self.assertContains(r, 'Título profesional')
+        self.assertContains(r, 'Cuenta bancaria y horario')
+        self.assertNotContains(r, 'no se elimina desde aquí')
         enlace = self.pedir_enlace()
         self.confirmar(enlace)
         self.assertEqual(SolicitudSupresion.objects.get().rol, 'profesor')

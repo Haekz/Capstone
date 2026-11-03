@@ -161,11 +161,11 @@ class EjecutarTests(ResolverBase):
         with self.assertRaises(solicitud.SolicitudError):
             solicitud.ejecutar(sol, self.agente)
 
-    def test_el_profesor_se_recibe_pero_aun_no_se_ejecuta(self):
+    def test_el_profesor_sin_pendientes_se_elimina_y_no_le_quita_nada_a_nadie(self):
         sol = self.pedir(self.profe)
-        r = self.ejecutar(sol, follow=True)
-        self.assertContains(r, 'Todavía no se puede eliminar automáticamente')
-        self.assertTrue(CustomUser.objects.get(pk=self.profe.user_id).is_active)
+        self.ejecutar(sol, follow=True)
+        self.assertFalse(CustomUser.objects.filter(pk=self.profe.user_id).exists())
+        self.assertTrue(CustomUser.objects.filter(pk=self.ana.user_id).exists())
 
 
 class RechazarTests(ResolverBase):

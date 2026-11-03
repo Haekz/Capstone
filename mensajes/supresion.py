@@ -14,17 +14,18 @@ registro del pago y al profesor le bajaban las ganancias hacia atras. Ahora:
   desde el ticket (Conversacion.objects.visibles(); decidido 02-nov). La fila se conserva porque las
   conversaciones reportadas, los paquetes y las clases dependen de ella.
 
-Limites: hoy solo se usa con alumnos, el unico borrado que existe. Profesores y apoderados guardan mas
-datos propios (documentos, cuenta bancaria): habria que anonimizarlos tambien antes de usarla con ellos.
-Cuanto tiempo se conserva el historial de pagos y clases queda por definir con asesoria legal.
+Alumnos, profesores y apoderados pasan por aqui. Lo que depende del rol (que historial se conserva y que datos
+propios se borran: titulo y cuenta bancaria del profesor, carnet del apoderado) esta en
+supresiones/datos_propios.py. Cuanto tiempo se conserva el historial de pagos y clases queda por definir con
+asesoria legal.
 """
 
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
-from alumnos.models import Inscripcion
 from notificaciones.models import Notificacion
+from supresiones import datos_propios
 
 from .models import Conversacion
 from .revision import retenidas
@@ -42,15 +43,12 @@ def conversaciones_conservadas(user):
 
 
 def tiene_historial(user):
-    """Paquetes, suscripciones o clases del alumno: se conservan (registro del pago y ganancias del profesor)."""
-    alumno = getattr(user, 'perfil_alumno', None)
-    return alumno is not None and (alumno.paquetes.exists() or alumno.suscripciones.exists()
-                                   or Inscripcion.objects.filter(alumno=alumno).exists())
+    """Registros que dependen de la cuenta y se conservan (pagos y clases del alumno; clases con inscripciones,
+    paquetes y retiros del profesor; compras y vinculos verificados del apoderado)."""
+    return datos_propios.tiene_historial(user)
 
 
 def _seudonimizar(user):
-    if user.foto_perfil:
-        user.foto_perfil.delete(save=False)  # tambien el archivo, no solo la referencia
     user.username = f'eliminada-{user.pk}'
     user.first_name, user.last_name, user.email = NOMBRE_SUPRIMIDA, '', ''
     user.rut, user.telefono, user.direccion = None, '', ''
@@ -66,7 +64,10 @@ def suprimir_cuenta(user):
     with transaction.atomic():
         propias = conversaciones_de(user)
         conservadas = conversaciones_conservadas(user)
-        if not conservadas.exists() and not tiene_historial(user):
+        borrar = not conservadas.exists() and not tiene_historial(user)
+        # Se borre o se seudonimice: la cascada no quita los archivos ni los correos copiados en filas de otros.
+        datos_propios.limpiar(user)
+        if borrar:
             user.delete()
             return True
         propias.exclude(pk__in=conservadas.values('pk')).delete()
