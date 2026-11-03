@@ -1,14 +1,20 @@
 """La sala de Jitsi no se puede adivinar probando numeros de clase."""
 
 from datetime import time
+from types import SimpleNamespace
 
 from django.test import SimpleTestCase, override_settings
 from django.template.loader import get_template
 from django.urls import reverse
 
 from alumnos.models import Asignatura, Clase
-from alumnos.sala import nombre_sala
+from alumnos.views import nombre_sala_jitsi
 from tests.test_paquetes import RUT_PROFE, Escenario
+
+
+def nombre_sala(id_clase):
+    """El nombre de la sala solo depende del id de la clase (alumnos.views.nombre_sala_jitsi)."""
+    return nombre_sala_jitsi(SimpleNamespace(id_clase=id_clase))
 
 
 class NombreDeSalaTests(SimpleTestCase):
@@ -21,7 +27,7 @@ class NombreDeSalaTests(SimpleTestCase):
         nombre = nombre_sala(7)
         self.assertTrue(nombre.startswith('lbwus-'))
         self.assertNotIn('clase-privada', nombre)
-        self.assertRegex(nombre, r'^lbwus-[0-9a-f]{24}$')
+        self.assertRegex(nombre, r'^lbwus-[0-9a-f]{32}$')
 
     def test_cambia_con_la_clave_secreta(self):
         con_la_clave_actual = nombre_sala(7)

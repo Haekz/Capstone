@@ -255,7 +255,8 @@ class DetalleTests(Base):
         r = self.client.get(reverse('requerimiento_detalle', args=[requerimiento.pk]))
         self.assertContains(r, 'No es competente.')
         self.assertNotContains(r, '/requerimientos/%d/' % requerimiento.pk + 'verificar')
-        self.assertNotContains(r, '<form method="post" action')
+        # Ningun formulario hacia sus acciones (el del logout del menu lateral si esta: es POST desde S19).
+        self.assertNotContains(r, 'action="/requerimientos/%d/' % requerimiento.pk)
 
     def test_accion_desconocida_es_404_y_se_exige_post(self):
         requerimiento = self.registrar()
