@@ -1,0 +1,77 @@
+{% extends 'soporte/base_soporte.html' %}
+
+{% block page_title %}Requerimiento #{{ r.pk }}{% endblock %}
+{% block page_subtitle %}{{ r.autoridad }} · {{ r.get_estado_display }}{% endblock %}
+{% block nav_requerimientos %}active{% endblock %}
+
+{% block content %}
+{% if messages %}
+<div class="panel" role="status" style="margin-bottom:20px; padding:14px 18px;">
+    {% for m in messages %}<div>{{ m }}</div>{% endfor %}
+</div>
+{% endif %}
+
+<div class="panel">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-bank2" aria-hidden="true"></i> {{ r.autoridad }} · {{ r.referencia }}</span>
+    </div>
+    <dl style="padding:18px; display:grid; grid-template-columns:max-content 1fr; gap:8px 18px; margin:0;">
+        <dt>Estado</dt><dd>{{ r.get_estado_display }}</dd>
+        <dt>Recibido el</dt><dd>{{ r.recibido|date:"d-m-Y" }}</dd>
+        <dt>Plazo</dt><dd>{% if r.vence %}{{ r.vence|date:"d-m-Y" }}{% if r.atrasado %} <span class="badge">Vencido</span>{% endif %}{% else %}Sin plazo{% endif %}</dd>
+        <dt>Qué datos pide</dt><dd>{{ r.alcance|linebreaksbr }}</dd>
+        <dt>Registrado por</dt><dd>{{ r.registrado_por.nombre|default:"(cuenta eliminada)" }} · {{ r.registrado|date:"d-m-Y H:i" }}</dd>
+        {% if r.verificado %}
+        <dt>Verificado</dt><dd>{{ r.verificado_por.nombre|default:"(cuenta eliminada)" }} · {{ r.verificado|date:"d-m-Y H:i" }}<br>{{ r.verificacion|linebreaksbr }}</dd>
+        {% endif %}
+        {% if r.resuelto %}
+        <dt>{% if r.estado == 'rechazado' %}Rechazado{% else %}Cerrado{% endif %}</dt><dd>{{ r.resuelto_por.nombre|default:"(cuenta eliminada)" }} · {{ r.resuelto|date:"d-m-Y H:i" }}<br>{{ r.resolucion|linebreaksbr }}</dd>
+        {% endif %}
+    </dl>
+</div>
+
+<div class="panel" style="margin-top:20px;">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> Entregas ({{ entregas|length }})</span>
+    </div>
+    <div style="padding:18px;">
+        {% if entregas %}
+        <table class="user-table">
+            <thead>
+                <tr><th scope="col">Fecha</th><th scope="col">Qué se entregó</th><th scope="col">Medio</th><th scope="col">A quién</th><th scope="col">Entregó</th></tr>
+            </thead>
+            <tbody>
+                {% for e in entregas %}
+                <tr>
+                    <td>{{ e.fecha|date:"d-m-Y H:i" }}</td>
+                    <td>{{ e.datos|linebreaksbr }}</td>
+                    <td>{{ e.medio }}</td>
+                    <td>{{ e.destinatario }}</td>
+                    <td>{{ e.entregada_por.nombre|default:"(cuenta eliminada)" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>No se ha entregado nada.</p>
+        {% endif %}
+    </div>
+</div>
+
+{% for nombre, accion, form in acciones %}
+<div class="panel" style="margin-top:20px;">
+    <div class="panel-header">
+        <span class="panel-title">{{ accion.titulo }}</span>
+    </div>
+    <div style="padding:18px;">
+        <form method="post" action="{% url 'requerimiento_accion' r.pk nombre %}" class="apod-form" novalidate style="display:grid; gap:10px;">
+            {% csrf_token %}
+            {% include 'requerimientos/_campos.html' %}
+            <button type="submit">{{ accion.boton }}</button>
+        </form>
+    </div>
+</div>
+{% endfor %}
+
+<p style="margin-top:18px;"><a href="{% url 'requerimientos' %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a requerimientos</a></p>
+{% endblock %}
