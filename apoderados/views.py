@@ -284,7 +284,7 @@ def clases_estudiante(request, id_vinculo):
                 .order_by('fecha_hora_inicio')[:30]) if con_clases else []
     return render(request, 'apoderados/clases.html', {
         'vinculo': vinculo, 'paquetes': paquetes, 'reservas': reservas, 'sesiones': sesiones,
-        'observaciones': observaciones_panel.del_alumno(alumno),  # el menor no las ve: las lee su apoderado
+        'observaciones': observaciones_panel.del_alumno(alumno),  # las mismas que lee el menor en su Mi Progreso
     })
 
 

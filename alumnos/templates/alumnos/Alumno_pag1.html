@@ -637,11 +637,7 @@
                     <div class="progress-feedback-section ap-mt-30">
                         <h3>Comentarios y Observaciones del Equipo Docente</h3>
                         <div class="feedback-list-container" id="feedback-list-container">
-                            {% if es_menor %}
-                            <p>Las observaciones de tus profesores las recibe tu apoderado.</p>
-                            {% else %}
                             {% include 'observaciones/_lista.html' %}
-                            {% endif %}
                         </div>
                     </div>
                     {% endif %}

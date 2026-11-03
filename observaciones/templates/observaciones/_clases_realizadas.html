@@ -1,7 +1,7 @@
 {% load observaciones_tags %}{% meses_de_conservacion as meses %}<div class="prof-card">
     <h2 class="prof-card-title">Clases realizadas: tu observación</h2>
     <p class="prof-section-subtitle">Cuéntale a quien tomó la clase cómo le fue y qué practicar. Sin teléfonos, correos ni redes
-        sociales (para eso está el Buzón). La observación de un menor la lee su apoderado. Máximo {{ observacion_maximo }} caracteres.
+        sociales (para eso está el Buzón). La observación de un menor la lee también su apoderado. Máximo {{ observacion_maximo }} caracteres.
         Se eliminan {{ meses }} mes{{ meses|pluralize:"es" }} después de la clase.</p>
     {% for c in clases_realizadas %}
     <form method="post" action="{% url 'observacion_guardar' c.id %}" class="prof-form-group">

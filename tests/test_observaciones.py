@@ -1,7 +1,7 @@
 """Observaciones del profesor sobre clases ya realizadas (el feedback docente de Mi Progreso). Datos ficticios.
 
 Reglas: solo el profesor de esa clase, solo si ya se hizo, una por clase y sin datos de contacto. Las lee el alumno
-adulto en su Mi Progreso; las del menor las lee su apoderado, no el menor. Se borran con la cuenta del alumno.
+en su Mi Progreso (tambien el menor) y, si es menor, su apoderado. Se borran con la cuenta del alumno y a los 12 meses.
 """
 
 from io import StringIO
@@ -105,10 +105,10 @@ class ProfesorDejaObservacionTests(Escenario):
         self.hecha.delete()
         self.assertContains(self.client.get(reverse('panel_profesor')), 'podrás dejar aquí tu observación')
 
-    def test_la_del_menor_dice_que_la_lee_su_apoderado(self):
+    def test_la_del_menor_dice_que_la_leen_el_y_su_apoderado(self):
         menor = crear_menor_vinculado(crear_apoderado(RUT, Apoderado.VERIFICADO), rut=RUT_MENOR).alumno
         inscribir(menor, self.clase, -3)
-        self.assertContains(self.client.get(reverse('panel_profesor')), 'la lee su apoderado')
+        self.assertContains(self.client.get(reverse('panel_profesor')), 'la lee el alumno y su apoderado')
 
 
 class QuienLeeTests(Escenario):
@@ -141,7 +141,7 @@ class QuienLeeTests(Escenario):
         self.assertContains(r, '&lt;script&gt;alert(1)&lt;/script&gt;')
         self.assertNotContains(r, '<script>alert(1)</script>')
 
-    def test_el_menor_no_la_ve_en_su_cuenta_pero_su_apoderado_si(self):
+    def test_el_menor_la_ve_en_su_cuenta_y_tambien_su_apoderado(self):
         apoderado = crear_apoderado(RUT, Apoderado.VERIFICADO)
         vinculo = crear_menor_vinculado(apoderado, rut=RUT_MENOR)
         menor = vinculo.alumno
@@ -150,12 +150,13 @@ class QuienLeeTests(Escenario):
 
         entrar(self.client, menor.user, alumno_id=menor.id_alumno)
         r = self.client.get(reverse('alumno_pag1'))
-        self.assertNotContains(r, 'Trabajó muy bien las fracciones.')
-        self.assertContains(r, 'Las observaciones de tus profesores las recibe tu apoderado')
+        self.assertContains(r, '«Trabajó muy bien las fracciones.»')
+        self.assertNotContains(r, TEXTO)  # la de Ana es de otra persona
+        self.assertNotContains(r, 'las recibe tu apoderado')
 
         entrar(self.client, apoderado.user, apoderado_id=apoderado.id_apoderado)
         r = self.client.get(reverse('apoderado_clases_estudiante', args=[vinculo.pk]))
-        self.assertContains(r, 'Trabajó muy bien las fracciones.')
+        self.assertContains(r, '«Trabajó muy bien las fracciones.»')
         self.assertNotContains(r, TEXTO)  # la de Ana es de otra persona
 
     def test_un_apoderado_sin_vinculo_con_el_menor_no_la_ve(self):

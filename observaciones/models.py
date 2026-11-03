@@ -1,7 +1,7 @@
 """Observaciones del profesor sobre una clase ya realizada (feedback docente de Mi Progreso).
 
-Una por clase, escrita por el profesor de esa clase. La ve el alumno adulto en su Mi Progreso; la del menor la ve su
-apoderado, no el menor: el profesor no tiene un canal propio hacia un menor sin supervision. Se borra con el alumno y,
+Una por clase, escrita por el profesor de esa clase. La ve el alumno en su Mi Progreso (el menor tambien) y, si es
+menor, tambien su apoderado en su portal. Se borra con el alumno y,
 pasados ``settings.OBSERVACIONES_MESES`` desde la clase, con el comando ``borrar_observaciones_vencidas``.
 """
 
