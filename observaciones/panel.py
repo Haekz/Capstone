@@ -7,14 +7,15 @@ Privacidad: del alumno solo el nombre de pila, igual que la agenda del profesor.
 from alumnos.models import Inscripcion
 from alumnos.utils import es_menor
 
-from .models import Observacion
+from .models import Observacion, fecha_limite
 
 LIMITE = 20  # clases realizadas que se listan al profesor: las mas recientes
 
 
 def contexto_profesor(profesor):
-    """Sus ultimas clases realizadas, cada una con la observacion que ya dejo (o vacia)."""
-    realizadas = (Inscripcion.objects.completadas().filter(clase__profesor=profesor)
+    """Sus ultimas clases realizadas (dentro del plazo de conservacion), cada una con su observacion o vacia."""
+    realizadas = (Inscripcion.objects.completadas().filter(clase__profesor=profesor,
+                                                           sesion__fecha_hora_inicio__gte=fecha_limite())
                   .select_related('alumno__user', 'clase__asignatura', 'sesion', 'observacion')
                   .order_by('-sesion__fecha_hora_inicio')[:LIMITE])
     return {

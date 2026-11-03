@@ -1,4 +1,4 @@
-{% for o in observaciones %}
+{% load observaciones_tags %}{% for o in observaciones %}
 <article class="feedback-card-item">
     <div class="feedback-card-header">
         <div style="display: flex; align-items: center; gap: 10px;">
@@ -15,3 +15,7 @@
 {% empty %}
 <p>Aún no hay observaciones: tus profesores las dejan después de cada clase.</p>
 {% endfor %}
+{% if observaciones %}
+{% meses_de_conservacion as meses %}
+<p style="font-size: 0.8rem; color: var(--text-light);">Se eliminan {{ meses }} mes{{ meses|pluralize:"es" }} después de la clase.</p>
+{% endif %}

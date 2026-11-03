@@ -28,6 +28,10 @@ DOCUMENTOS_CLAVE = os.environ.get("DOCUMENTOS_CLAVE", "")
 # guardarla junto con los respaldos, nunca en la base de datos.
 SUPRESIONES_CLAVE = os.environ.get("SUPRESIONES_CLAVE", "")
 
+# Meses que se guarda una observacion del profesor, contados desde la clase (observaciones/models.py). Pasado el plazo
+# las borra el comando diario borrar_observaciones_vencidas; el aviso de las pantallas lee este mismo numero.
+OBSERVACIONES_MESES = 12
+
 # SECURITY WARNING: don't run with debug turned on in production!
 # En Railway se define DEBUG=False. Sin la variable queda en True.
 DEBUG = os.environ.get('DEBUG', 'True').lower() in ('1', 'true', 'si')

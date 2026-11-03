@@ -4,7 +4,11 @@ Reglas: solo el profesor de esa clase, solo si ya se hizo, una por clase y sin d
 adulto en su Mi Progreso; las del menor las lee su apoderado, no el menor. Se borran con la cuenta del alumno.
 """
 
+from io import StringIO
+
 from django.contrib.messages import get_messages
+from django.core.management import call_command
+from django.test import override_settings
 from django.urls import reverse
 
 from alumnos.models import Inscripcion, SesionClase
@@ -169,3 +173,54 @@ class SupresionTests(Escenario):
         limpiar(self.ana.user)
         self.assertEqual(list(Observacion.objects.all()), [ajena])
         self.assertFalse(Observacion.objects.filter(pk=suya.pk).exists())
+
+
+class ConservacionTests(Escenario):
+    """Pasados OBSERVACIONES_MESES (12) desde la clase, la observacion ya no se escribe, no se ve y se borra."""
+
+    def setUp(self):
+        self.vieja = inscribir(self.ana, self.clase, -400)  # mas de 12 meses
+        self.reciente = inscribir(self.ana, self.clase, -300)  # menos de 12, mas de 6
+        for inscripcion in (self.vieja, self.reciente):
+            Observacion.objects.create(inscripcion=inscripcion, texto=TEXTO)
+
+    def borrar(self):
+        salida = StringIO()
+        call_command('borrar_observaciones_vencidas', stdout=salida)
+        return salida.getvalue()
+
+    def test_el_comando_borra_solo_las_vencidas(self):
+        self.assertIn('borradas por vencidas: 1', self.borrar())
+        self.assertEqual(list(Observacion.objects.values_list('inscripcion_id', flat=True)), [self.reciente.pk])
+        self.assertIn('borradas por vencidas: 0', self.borrar())  # idempotente
+
+    def test_el_plazo_sale_de_la_configuracion(self):
+        with override_settings(OBSERVACIONES_MESES=6):
+            self.assertIn('borradas por vencidas: 2', self.borrar())
+        self.assertFalse(Observacion.objects.exists())
+
+    def test_una_clase_vencida_ya_no_admite_observacion_ni_se_lista_al_profesor(self):
+        self.entrar(RUT_PROFE)
+        self.assertEqual(self.client.post(reverse('observacion_guardar', args=[self.vieja.pk]), {'texto': TEXTO}).status_code,
+                         404)
+        panel = self.client.get(reverse('panel_profesor'))
+        self.assertContains(panel, f'id="obs-{self.reciente.pk}"')
+        self.assertNotContains(panel, f'id="obs-{self.vieja.pk}"')
+
+    def test_el_alumno_no_ve_una_vencida_aunque_el_cron_no_haya_corrido(self):
+        Observacion.objects.filter(inscripcion=self.vieja).update(texto='Texto de la vencida, no debe verse.')
+        dar_plan(self.ana)
+        self.entrar(RUT_ANA)
+        r = self.client.get(reverse('alumno_pag1'))
+        self.assertNotContains(r, 'Texto de la vencida')
+        self.assertContains(r, TEXTO)
+
+    def test_el_aviso_dice_el_plazo_real(self):
+        dar_plan(self.ana)
+        self.entrar(RUT_ANA)
+        self.assertContains(self.client.get(reverse('alumno_pag1')), 'Se eliminan 12 meses después de la clase.')
+        Observacion.objects.create(inscripcion=inscribir(self.ana, self.clase, -5), texto=TEXTO)  # visible aun con 1 mes
+        with override_settings(OBSERVACIONES_MESES=1):
+            self.assertContains(self.client.get(reverse('alumno_pag1')), 'Se eliminan 1 mes después de la clase.')
+        self.entrar(RUT_PROFE)
+        self.assertContains(self.client.get(reverse('panel_profesor')), 'Se eliminan 12 meses después de la clase.')
