@@ -41,5 +41,11 @@
         <p class="perfil-prof__vacio">Todavía no abres tickets.</p>
         {% endif %}
     </section>
+
+    <section class="perfil-prof__bloque" aria-labelledby="privacidad-titulo">
+        <h2 id="privacidad-titulo">Privacidad y datos</h2>
+        <p>Si ya no quieres usar LBWUS, puedes pedir que eliminemos tu cuenta y tus datos personales.</p>
+        <a href="{% url 'eliminar_cuenta' %}"><i class="bi bi-person-x" aria-hidden="true"></i> Eliminar mi cuenta</a>
+    </section>
 </div>
 {% endblock %}

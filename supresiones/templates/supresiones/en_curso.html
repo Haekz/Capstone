@@ -1,0 +1,33 @@
+{% extends 'alumnos/base.html' %}
+{% load static %}
+
+{% block title %}Tu solicitud de eliminación | LBWUS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'alumnos/css/perfil_profesor.css' %}">
+<link rel="stylesheet" href="{% static 'apoderados/apoderados.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="perfil-prof">
+    <a class="perfil-prof__volver" href="{% url 'mis_tickets' %}">
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a ayuda y soporte
+    </a>
+
+    <header class="perfil-prof__cabecera">
+        <div>
+            <h1>Ya pediste eliminar tu cuenta</h1>
+            <p class="perfil-prof__vacio">Solicitud #{{ solicitud.pk }} · recibida el {{ solicitud.creada|date:"d-m-Y" }}</p>
+        </div>
+    </header>
+
+    <section class="perfil-prof__bloque" aria-labelledby="en-curso-titulo">
+        <h2 id="en-curso-titulo">Un integrante de soporte la está revisando</h2>
+        {% include 'apoderados/_mensajes.html' %}
+        <p>Te respondemos a más tardar el {{ solicitud.ticket.vence|date:"d-m-Y" }}. Mientras tanto tu cuenta sigue activa.</p>
+        <a class="perfil-prof__reservar" href="{% url 'mi_ticket' solicitud.ticket_id %}">
+            <i class="bi bi-chat-left-text" aria-hidden="true"></i> Ver el ticket #{{ solicitud.ticket_id }}
+        </a>
+    </section>
+</div>
+{% endblock %}

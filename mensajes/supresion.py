@@ -36,7 +36,12 @@ def conversaciones_de(user):
     return Conversacion.objects.filter(Q(cliente=user) | Q(alumno__user=user) | Q(profesor__user=user))
 
 
-def _tiene_historial_de_pagos(user):
+def conversaciones_conservadas(user):
+    """Las del usuario que no se pueden borrar: reportadas, salvo las que el lider libero."""
+    return conversaciones_de(user).filter(pk__in=retenidas().values('pk'))
+
+
+def tiene_historial(user):
     """Paquetes, suscripciones o clases del alumno: se conservan (registro del pago y ganancias del profesor)."""
     alumno = getattr(user, 'perfil_alumno', None)
     return alumno is not None and (alumno.paquetes.exists() or alumno.suscripciones.exists()
@@ -60,8 +65,8 @@ def suprimir_cuenta(user):
     historial de pagos y clases."""
     with transaction.atomic():
         propias = conversaciones_de(user)
-        conservadas = propias.filter(pk__in=retenidas().values('pk'))
-        if not conservadas.exists() and not _tiene_historial_de_pagos(user):
+        conservadas = conversaciones_conservadas(user)
+        if not conservadas.exists() and not tiene_historial(user):
             user.delete()
             return True
         propias.exclude(pk__in=conservadas.values('pk')).delete()

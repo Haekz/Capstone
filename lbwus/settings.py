@@ -75,6 +75,7 @@ INSTALLED_APPS = [
     'notificaciones',
     'agenda',
     'mensajes',
+    'supresiones',
     'django_extensions',
 ]
 

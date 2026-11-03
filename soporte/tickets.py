@@ -65,6 +65,12 @@ def cerrar_tickets(tickets):
     tickets.filter(estado=Ticket.ABIERTO).update(estado=Ticket.CERRADO, cerrado=timezone.now())
 
 
+def resolver(ticket):
+    """Cierra el ticket porque una accion de soporte lo resolvio (no un mensaje); cumple el plazo."""
+    Ticket.objects.filter(pk=ticket.pk, respondido__isnull=True).update(respondido=timezone.now())
+    cerrar_tickets(Ticket.objects.filter(pk=ticket.pk))
+
+
 def agregar_mensaje(ticket, autor, texto, de_soporte, cerrar=False):
     """Respuesta en un ticket de usuario abierto. Soporte puede cerrarlo con ella, y su
     primera respuesta cumple el plazo. Avisa a la otra parte, sin el texto: se lee en LBWUS."""
