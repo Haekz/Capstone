@@ -1,3 +1,4 @@
+import logging
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -12,6 +13,9 @@ from supresiones import registro
 
 from . import ingresos, metricas
 
+logger = logging.getLogger(__name__)
+
+
 # Solo redirige al panel: regis_tutor.html envía aquí tras registrarse.
 def menu(request):
     admin_id = request.session.get('admin_id')
@@ -20,14 +24,12 @@ def menu(request):
     return redirect('login')
 
 
-
 # Controlador principal del Dashboard de administración
 @never_cache
 @admin_required
 def dashboard_admin(request):
     admin_id = request.session.get('admin_id')
-
-    admin = get_object_or_404(Tutor, id_tutor=admin_id)
+    admin = get_object_or_404(Tutor.objects.select_related('user'), id_tutor=admin_id)
 
     # Consulta a la base de datos de los contadores del sistema. Los reportes de
     # usuarios los atiende soporte (paso 6e): el admin no ve su contenido.
@@ -36,9 +38,8 @@ def dashboard_admin(request):
     admins = Tutor.objects.all()
     clases = Clase.objects.all()
 
-    # Trae los 3 registros más recientes de alumnos y profesores para la vista previa
-    ultimos_alumnos = alumnos.order_by('-id_alumno')[:3]
-    ultimos_profesores = profesores.order_by('-id_profesor')[:3]
+    ultimos_alumnos = alumnos[:3]
+    ultimos_profesores = profesores[:3]
 
     from alumnos.models import SolicitudRetiro
 
@@ -78,16 +79,11 @@ def home_adm(request):
     context = {}
     return render(request, 'admin_portal/home_adm.html', context)
 
-def reporte_alumnos(request):
-    """Ruta antigua del listado de alumnos.
 
-    Apuntaba a 'alumnos/reporte_alumnos.html', un template que no existe:
-    la vista reventaba con TemplateDoesNotExist (HTTP 500) y ademas no
-    exigia sesion de administrador. El listado vive en crud(), que usa
-    'admin_portal/alumnos_list.html' y si valida el acceso; se redirige
-    ahi para no mantener dos vistas que hacen lo mismo.
-    """
+def reporte_alumnos(request):
+    """Ruta antigua del listado de alumnos; redirige a crud()."""
     return redirect('crud')
+
 
 @never_cache
 @admin_required
@@ -98,11 +94,13 @@ def planes_adm(request):
                    'max': paquetes.TARIFA_MAX, 'paso': paquetes.TARIFA_PASO},
     })
 
+
 @never_cache
 @admin_required
 def nosotros_adm(request):
     context = {}
     return render(request, 'admin_portal/nosotros_adm.html', context)
+
 
 @never_cache
 @admin_required
@@ -114,9 +112,10 @@ def contactos_adm(request):
 @never_cache
 @admin_required
 def crud(request):
-    alumnos = Alumno.objects.all()
+    alumnos = Alumno.objects.select_related('user', 'user__genero').all()
     context = {'alumnos': alumnos}
     return render(request, 'admin_portal/alumnos_list.html', context)
+
 
 @never_cache
 @admin_required
@@ -128,10 +127,13 @@ def alumnos_Add(request):
             try:
                 form.save()
                 return JsonResponse({"success": True, "message": "Alumno registrado exitosamente."})
-            except Exception as e:
-                return JsonResponse({"success": False, "message": f"Error al guardar: {str(e)}"})
+            except Exception:
+                logger.exception("Error interno al registrar alumno desde admin_portal")
+                return JsonResponse(
+                    {"success": False, "message": "Error interno al guardar los datos del alumno."},
+                    status=500,
+                )
         else:
-            # Obtener el primer error del formulario
             errores = dict(form.errors.items())
             mensaje_error = "\n".join([f"{k}: {v[0]}" for k, v in errores.items()])
             return JsonResponse({"success": False, "message": mensaje_error})
@@ -140,10 +142,11 @@ def alumnos_Add(request):
 
     return render(request, 'admin_portal/alumnos_add.html', {'form': form})
 
+
 @never_cache
 @admin_required
 def alumnos_findEdit(request, pk):
-    alumno = get_object_or_404(Alumno, id_alumno=pk)
+    alumno = get_object_or_404(Alumno.objects.select_related('user', 'user__genero'), id_alumno=pk)
     from .forms import AdminAlumnoForm
     form = AdminAlumnoForm(instance=alumno)
     context = {'alumno': alumno, 'form': form}
@@ -173,20 +176,20 @@ def alumnos_del(request, pk):
 
 @admin_required
 def alumnos_Update(request):
-        
     if request.method == 'POST':
         id_alumno = request.POST.get('id_alumno')
-        alumno = get_object_or_404(Alumno, id_alumno=id_alumno)
-        
+        alumno = get_object_or_404(Alumno.objects.select_related('user'), id_alumno=id_alumno)
+
         from .forms import AdminAlumnoForm
         form = AdminAlumnoForm(request.POST, instance=alumno)
-        
+
         if form.is_valid():
             try:
                 form.save()
                 return HttpResponse("OK, datos actualizados.")
-            except Exception as e:
-                return HttpResponse(f"Error al actualizar: {str(e)}", status=400)
+            except Exception:
+                logger.exception("Error interno al actualizar alumno id=%s", id_alumno)
+                return HttpResponse("Error interno al actualizar los datos del alumno.", status=400)
         else:
             errores = dict(form.errors.items())
             mensaje_error = "\n".join([f"{k}: {v[0]}" for k, v in errores.items()])
@@ -195,11 +198,12 @@ def alumnos_Update(request):
         return HttpResponse("Solicitud inválida.", status=400)
 
 
+@never_cache
+@require_POST
 def logout_admin(request):
     from django.contrib.auth import logout as auth_logout
     auth_logout(request)
-    if 'admin_id' in request.session:
-        del request.session['admin_id']
+    request.session.flush()
     return redirect('home')
 
 
@@ -214,7 +218,7 @@ def crear_clase(request):
         if not (nombre_curso and horario and id_profesor):
             return JsonResponse({'success': False, 'message': 'Todos los campos son requeridos.'})
 
-        profesor = get_object_or_404(Profesor, id_profesor=id_profesor)
+        profesor = get_object_or_404(Profesor.objects.select_related('user'), id_profesor=id_profesor)
         if not profesor.puede_hacer_clases:
             return JsonResponse({'success': False, 'message': f'{profesor.nombre} aún no tiene su título profesional aprobado.'})
         clase = Clase.objects.create(

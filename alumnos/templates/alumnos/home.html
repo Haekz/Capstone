@@ -28,9 +28,9 @@
 
     <div class="hero-overlay"></div>
     <div class="hero-carousel">
-        <img src="{% static 'alumnos/img/imge1.png' %}" alt="" class="hero-bg">
-        <img src="{% static 'alumnos/img/prueba1111.png' %}" alt="" class="hero-bg">
-        <img src="{% static 'alumnos/img/prueba1183.png' %}" alt="" class="hero-bg">
+        <img src="{% static 'alumnos/img/imge1.png' %}" alt="" class="hero-bg" fetchpriority="high" width="1600" height="900">
+        <img src="{% static 'alumnos/img/prueba1111.png' %}" alt="" class="hero-bg" fetchpriority="low" loading="lazy" decoding="async" width="1600" height="900">
+        <img src="{% static 'alumnos/img/prueba1183.png' %}" alt="" class="hero-bg" fetchpriority="low" loading="lazy" decoding="async" width="1600" height="900">
     </div>
 </section>
 
@@ -38,7 +38,7 @@
 <section class="about">
     <div class="contenedor grid-2">
         <div class="about-img">
-            <img src="{% static 'alumnos/img/about.jpg' %}" alt="Estudiantes trabajando juntos en una biblioteca">
+            <img src="{% static 'alumnos/img/about.jpg' %}" alt="Estudiantes trabajando juntos en una biblioteca" loading="lazy" decoding="async" width="600" height="450">
         </div>
         <div class="about-text">
             <h2>Learn Better With Us</h2>

@@ -8,6 +8,8 @@
     <title>{% block title %}LBWUS | Learn Better With Us{% endblock %}</title>
     <link rel="icon" href="{% static 'alumnos/img/Logo.png' %}">
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -30,6 +32,18 @@
     {% include 'alumnos/includes/footer.html' %}
 
     <script>
+        // ===== ESCAPE CONTEXTUAL SEGURO ANTI-XSS (S-23) =====
+        function escaparHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+        window.escaparHtml = escaparHtml;
+
         function toggleTheme() {
             const body = document.body;
             body.classList.toggle('dark-mode');
@@ -49,12 +63,12 @@
             updateThemeIcon(document.body.classList.contains('dark-mode'));
         });
 
-        // Efecto translúcido del navbar al hacer scroll
+        // Efecto translúcido del navbar al hacer scroll (listener pasivo para no bloquear el hilo principal)
         window.addEventListener('scroll', () => {
             const header = document.querySelector('.header');
             if (!header) return;
             header.classList.toggle('scrolled', window.scrollY > 40);
-        });
+        }, { passive: true });
 
         // Menu de cuenta (circulo con iniciales): abre/cierra, Escape y clic afuera
         (function () {
@@ -72,7 +86,7 @@
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape' && !menu.hidden) { abrir(false); btn.focus(); }
             });
-        })();
+                })();
     </script>
     {% block extra_js %}{% endblock %}
 </body>

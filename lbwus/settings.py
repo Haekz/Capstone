@@ -13,14 +13,27 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 from pathlib import Path
 import os
 
+from django.core.exceptions import ImproperlyConfigured
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-lbwus-secret-key-for-local-development")
+# SECURITY WARNING: don't run with debug turned on in production!
+# En Railway se define DEBUG=False. Sin la variable queda en True.
+DEBUG = os.environ.get('DEBUG', 'True').lower() in ('1', 'true', 'si')
 
-# Clave Fernet de los documentos de apoderados (apoderados/documentos.py). Sin ella se
-# deriva de SECRET_KEY. Generarla con: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+# SECURITY WARNING: keep the secret key used in production secret!
+# Con DEBUG=False es obligatoria: sin ella el sitio no arranca (SCRUM-93).
+# La clave insegura de abajo solo sirve en desarrollo.
+SECRET_KEY = os.environ.get('SECRET_KEY', '')
+if not SECRET_KEY:
+    if not DEBUG:
+        raise ImproperlyConfigured('Falta la variable SECRET_KEY: es obligatoria con DEBUG=False.')
+    SECRET_KEY = 'django-insecure-lbwus-secret-key-for-local-development'
+
+# Clave Fernet de los documentos de apoderados (apoderados/documentos.py). Obligatoria
+# con DEBUG=False: sin ella no se suben ni se ven documentos. Ver docs/CONFIGURACION_PRODUCCION.md.
+# Generarla con: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
 DOCUMENTOS_CLAVE = os.environ.get("DOCUMENTOS_CLAVE", "")
 
 # Clave de las huellas del registro de supresiones (supresiones/registro.py). Sin ella se deriva de SECRET_KEY. Si
@@ -31,10 +44,6 @@ SUPRESIONES_CLAVE = os.environ.get("SUPRESIONES_CLAVE", "")
 # Meses que se guarda una observacion del profesor, contados desde la clase (observaciones/models.py). Pasado el plazo
 # las borra el comando diario borrar_observaciones_vencidas; el aviso de las pantallas lee este mismo numero.
 OBSERVACIONES_MESES = 12
-
-# SECURITY WARNING: don't run with debug turned on in production!
-# En Railway se define DEBUG=False. Sin la variable queda en True.
-DEBUG = os.environ.get('DEBUG', 'True').lower() in ('1', 'true', 'si')
 
 # '.up.railway.app' (con punto) acepta cualquier subdominio. Django no
 # acepta comodines tipo '*.dominio'.
@@ -92,6 +101,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # CSP (Report-Only) y Permissions-Policy; antes de la puerta y WhiteNoise para cubrir sus respuestas.
+    'lbwus.cabeceras.CabecerasSeguridadMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  
     'django.contrib.sessions.middleware.SessionMiddleware',
     # Puerta con clave para todo el sitio; necesita la sesion (lbwus/puerta.py).
@@ -106,7 +117,10 @@ MIDDLEWARE = [
 
 SITE_ID = 1
 
-SOCIALACCOUNT_LOGIN_ON_GET = True
+# S-20 (OWASP Login CSRF): La autenticacion OAuth con proveedores sociales
+# NUNCA debe iniciarse por peticiones GET, pues permite ataques de inicio de
+# sesion involuntario / CSRF. Se exige solicitud POST con token CSRF valido.
+SOCIALACCOUNT_LOGIN_ON_GET = False
 
 # Google entra con su correo verificado, pero las cuentas de LBWUS no se
 # crean solas: el adaptador busca la cuenta por correo y, si no existe, manda
@@ -161,7 +175,6 @@ if os.environ.get('DATABASE_URL'):
     }
 elif os.environ.get('EXIGIR_POSTGRES') == '1':
     # Pruebas contra la base productiva: sin DATABASE_URL se detiene en vez de caer en SQLite.
-    from django.core.exceptions import ImproperlyConfigured
     raise ImproperlyConfigured('EXIGIR_POSTGRES=1 requiere DATABASE_URL apuntando a PostgreSQL.')
 else:
     DATABASES = {
@@ -186,6 +199,9 @@ SITIO_DOMINIOS_CORREO = [
     d.strip().lower().lstrip('@')
     for d in os.environ.get('SITIO_DOMINIOS_CORREO', '').split(',') if d.strip()
 ]
+
+# CSP (lbwus/cabeceras.py): Report-Only por omision; CSP_OBLIGATORIA=1 la hace bloquear.
+CSP_OBLIGATORIA = os.environ.get('CSP_OBLIGATORIA', 'False').lower() in ('1', 'true', 'si')
 
 # La pagina de error de Django oculta tambien MONGODB_URI y SITIO_CLAVE.
 DEFAULT_EXCEPTION_REPORTER_FILTER = 'lbwus.reporte_errores.FiltroReporteErrores'
@@ -215,7 +231,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'es-cl'
 
 # Las horas se guardan en UTC (USE_TZ) y se muestran/ingresan en hora de Chile.
 TIME_ZONE = 'America/Santiago'
@@ -232,7 +248,16 @@ STATICFILES_DIRS = [
     BASE_DIR / 'lbwus' / 'static',
 ]
 STATIC_ROOT = BASE_DIR/'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# En pruebas, lbwus/test_runner.py usa estaticos sin manifiesto (no hay collectstatic).
+TEST_RUNNER = 'lbwus.test_runner.RunnerLBWUS'
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+    },
+}
 
 # Archivos subidos (fotos de perfil; titulos antiguos hasta pasarlos a la base, paso 9b).
 # NO se publica MEDIA_URL en urls: se sirven por vistas protegidas.
@@ -297,6 +322,18 @@ CODIGO_GOOGLE_INTENTOS = 5
 # Modelo de usuario personalizado
 AUTH_USER_MODEL = 'alumnos.CustomUser'
 
+# ============================================================
+# WEBPAY PLUS & ESTRATEGIA DE CREDENCIALES (S-08 / 7.6)
+# ============================================================
+# Salvaguarda: NUNCA habilitar cobros reales sin autorización formal de Transbank.
+# Por defecto permanece estrictamente en modo TEST / Integración (Sandbox oficial Transbank).
+TRANSBANK_PRODUCCION_HABILITADA = os.environ.get('TRANSBANK_PRODUCCION_HABILITADA', 'False').lower() in ('true', '1')
+TRANSBANK_COMMERCE_CODE = os.environ.get('TRANSBANK_COMMERCE_CODE', '').strip()
+TRANSBANK_API_KEY = os.environ.get('TRANSBANK_API_KEY', '').strip()
+TRANSBANK_ENVIRONMENT = os.environ.get('TRANSBANK_ENVIRONMENT', 'TEST').upper()
+
+WEBPAY_SIMULACION_ACTIVADA = os.environ.get('WEBPAY_SIMULACION', 'True').lower() in ('true', '1', 'yes')
+USUARIOS_SIMULACION_WEBPAY = ['*']
 
 # ============================================================
 # CACHÉ PERSISTENTE Y COMPARTIDO

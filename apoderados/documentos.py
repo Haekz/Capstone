@@ -13,8 +13,9 @@ import io
 
 import pypdfium2 as pdfium
 import pypdfium2.raw as pdfium_raw
+from cryptography.fernet import MultiFernet
 from django.conf import settings
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.utils import timezone
 from PIL import Image, ImageDraw, ImageFont, ImageOps, UnidentifiedImageError
 
@@ -32,9 +33,19 @@ ERROR_PDF_PAGINAS = f'El PDF puede tener hasta {MAX_PAGINAS} páginas.'
 
 
 def _cifrador():
-    # Sin DOCUMENTOS_CLAVE se deriva de SECRET_KEY. Si la clave cambia, los documentos
-    # pendientes dejan de leerse y hay que pedirlos de nuevo (viven 30 dias como maximo).
-    return cifrador('documentos-apoderados', settings.DOCUMENTOS_CLAVE)
+    """Cifra con DOCUMENTOS_CLAVE; descifra con ella o con la clave derivada de SECRET_KEY.
+
+    La derivada solo sirve para leer lo subido antes de definir DOCUMENTOS_CLAVE
+    (viven 30 dias como maximo). Si se rota SECRET_KEY, lo cifrado con la derivada
+    ya no se lee y hay que pedirlo de nuevo. Por eso, con DEBUG=False,
+    DOCUMENTOS_CLAVE es obligatoria (SCRUM-93); en desarrollo basta la derivada.
+    """
+    derivada = cifrador('documentos-apoderados')
+    if settings.DOCUMENTOS_CLAVE:
+        return MultiFernet([cifrador('documentos-apoderados', settings.DOCUMENTOS_CLAVE), derivada])
+    if not settings.DEBUG:
+        raise ImproperlyConfigured('Falta la variable DOCUMENTOS_CLAVE: es obligatoria con DEBUG=False.')
+    return derivada
 
 
 def preparar(archivo):

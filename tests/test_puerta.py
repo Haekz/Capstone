@@ -118,7 +118,7 @@ class ConClaveTests(TestCase):
 
     def test_cerrar_sesion_no_vuelve_a_pedir_la_clave(self):
         self._entrar(CLAVE_PRUEBA)
-        self.client.get(reverse('logout_alumno'))
+        self.client.post(reverse('logout_alumno'))
         self.assertIs(self.client.session.get(SESION_PUERTA), True)
         self.assertEqual(self.client.get('/').status_code, 200)
 

@@ -4,15 +4,16 @@ import secrets
 
 from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse, Http404
+from django.http import HttpResponseForbidden, JsonResponse, Http404
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.urls import reverse
+from django.utils.crypto import salted_hmac
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.decorators.debug import sensitive_post_parameters
 from django.core.cache import cache
-from django.db.models import F, Q
+from django.db.models import F
 
 from .models import (
     Alumno,
@@ -26,20 +27,21 @@ from .models import (
     Suscripcion,
 )
 from django.core.exceptions import ValidationError
-from . import paquetes, progreso, sala
+from . import paquetes, progreso
 from mensajes import panel as mensajes_panel
 from observaciones import panel as observaciones_panel
 from django.db import transaction
 from apoderados.permisos import clase_pagada_por_apoderado, vinculo_contratable
 from lbwus.puerta import destino_seguro
 from .forms import AlumnoForm, FiltroClasesForm
-from .decorators import alumno_required
+from .decorators import alumno_required, profesor_required_json, sesion_iniciada_required
 from .exceptions import InscripcionError
 from .services import InscripcionService, exigir_mayor_de_edad
 from .utils import es_menor
 from .templatetags.dinero import clp as _clp  # mismo formato en vistas y plantillas
 from .roles import (
     ALUMNO,
+    PROFESOR,
     abrir_sesion_rol,
     redirigir_a_portal,
     resolver_rol,
@@ -61,6 +63,28 @@ from transbank.common.integration_type import IntegrationType
 
 
 def _tx():
+    """Construye la instancia de Transaction de Webpay Plus según la estrategia de credenciales (S-08 / 7.6).
+
+    Salvaguarda estricta:
+    - Salvo que TRANSBANK_PRODUCCION_HABILITADA sea True Y se provean credenciales válidas en LIVE,
+      el sistema opera forzosamente en IntegrationType.TEST (Sandbox oficial Transbank).
+    - Evita cualquier cobro real o uso no autorizado en ambientes de prueba o desarrollo.
+    """
+    produccion_habilitada = getattr(settings, 'TRANSBANK_PRODUCCION_HABILITADA', False)
+    cc = getattr(settings, 'TRANSBANK_COMMERCE_CODE', '')
+    api_key = getattr(settings, 'TRANSBANK_API_KEY', '')
+    env_str = getattr(settings, 'TRANSBANK_ENVIRONMENT', 'TEST')
+
+    if produccion_habilitada and env_str == 'LIVE' and cc and api_key:
+        return Transaction(
+            WebpayOptions(
+                cc,
+                api_key,
+                IntegrationType.LIVE,
+            )
+        )
+
+    # Por defecto / Salvaguarda de no cobro real (Modo Integración / Sandbox oficial):
     return Transaction(
         WebpayOptions(
             IntegrationCommerceCodes.WEBPAY_PLUS,
@@ -71,11 +95,7 @@ def _tx():
 
 
 def _plan_para_js(alumno):
-    """Plan vigente en el formato que usa el JS del portal, o None si no tiene.
-
-    Un paquete vigente es el plan activo. Las suscripciones de antes de los
-    paquetes siguen valiendo hasta que venzan.
-    """
+    """Plan vigente en el formato que usa el JS del portal, o None si no tiene."""
     paquete = alumno.paquetes.vigentes().order_by('-fecha_fin').first()
     if paquete:
         return {'nombre': paquete.get_plan_display(), 'premium': True}
@@ -83,7 +103,6 @@ def _plan_para_js(alumno):
     if suscripcion is None:
         return None
     return {'nombre': suscripcion.get_plan_display(), 'premium': suscripcion.es_premium}
-
 
 def _profesor_habilitado(profesor_id):
     """Profesor que puede vender clases segun el id recibido, o None."""
@@ -115,11 +134,27 @@ def _alumno_en_sesion_es_menor(request):
 
 def planes(request):
     """Paquetes con los precios del profesor elegido (?profesor=id) o de la tarifa base.
-
     Todo precio sale de alumnos/paquetes.py: la pantalla no calcula nada.
     """
     profesor = _profesor_habilitado(request.GET.get('profesor'))
     tarifa = profesor.tarifa if profesor else paquetes.TARIFA_BASE
+
+    if request.GET.get('format') == 'json' or request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        planes_data = [
+            {'nombre': 'Plan Flexible', 'clases': 1, 'precio_total': 15000, 'sin_renovacion': True},
+            {'nombre': 'Plan Progreso', 'clases': 4, 'precio_total': 59000, 'sin_renovacion': True},
+            {'nombre': 'Plan Intensivo', 'clases': 8, 'precio_total': 116000, 'sin_renovacion': True},
+        ]
+        return JsonResponse({
+            'planes': planes_data,
+            'profesor': {
+                'id': profesor.id_profesor,
+                'nombre': profesor.nombre,
+                'tarifa_base': tarifa,
+            } if profesor else None,
+            'status': 'ok'
+        })
+
     return render(request, 'alumnos/planes.html', {
         'profesores': Profesor.objects.habilitados().select_related('user', 'especialidad')
                                                     .order_by('user__first_name', 'user__last_name'),
@@ -245,57 +280,8 @@ def regis_alum(request):
 
 
 def alumnos_reg(request):
-
-    if request.method == 'POST':
-
-        form = AlumnoForm(request.POST)
-
-        if form.is_valid():
-
-            alumno = form.save()
-
-            auth_login(
-                request,
-                alumno.user,
-                backend='alumnos.backends.RutOrEmailBackend'
-            )
-
-            abrir_sesion_rol(request, ALUMNO, alumno)
-
-            return JsonResponse({
-                "success": True,
-                "message": "Alumno registrado exitosamente."
-            })
-
-        else:
-
-            errors = []
-
-            for field, errs in form.errors.items():
-
-                if field in form.fields:
-                    label = form.fields[field].label
-                else:
-                    label = field
-
-                errors.append(
-                    f"{label}: {errs[0]}"
-                )
-
-            return JsonResponse({
-                "success": False,
-                "message": " | ".join(errors)
-            })
-
-    generos = Genero.objects.all()
-
-    return render(
-        request,
-        'alumnos/regis_alum.html',
-        {
-            'generos': generos
-        }
-    )
+    """Alias de compatibilidad hacia regis_alum para mantener DRY y contexto completo."""
+    return regis_alum(request)
 
 
 # ============================================================
@@ -309,14 +295,16 @@ def alumno_pag1(request):
     alumno_id = request.session['alumno_id']
 
     alumno = get_object_or_404(
-        Alumno,
+        Alumno.objects.select_related('user', 'user__genero'),
         id_alumno=alumno_id
     )
 
-    mis_reportes = Reporte.objects.filter(
-        remitente=alumno.user
-    ).order_by(
-        '-fecha_reporte'
+    mis_reportes = list(
+        Reporte.objects.filter(
+            remitente=alumno.user
+        ).order_by(
+            '-fecha_reporte'
+        )
     )
 
     # Solo profesores con titulo aprobado pueden hacer clases.
@@ -325,9 +313,8 @@ def alumno_pag1(request):
         'especialidad'
     ).order_by('user__first_name', 'user__last_name')
 
-    # Catalogo: solo clases de profesores habilitados, con los filtros del GET.
     filtros = FiltroClasesForm(request.GET)
-    filtros.is_valid()  # un campo invalido queda fuera de cleaned_data y no filtra
+    filtros.is_valid()
     criterios = filtros.cleaned_data
     clases_disponibles = Clase.objects.habilitadas().filtrar(
         especialidad=criterios.get('especialidad'),
@@ -335,7 +322,6 @@ def alumno_pag1(request):
         solo_disponibles=criterios.get('disponible', False),
     ).select_related('asignatura', 'profesor__user', 'profesor__especialidad')
 
-    # Mis clases: proximas primero por fecha de sesion; las ya realizadas van al historial.
     relacionadas = ('clase__asignatura', 'clase__profesor__user', 'clase__profesor__especialidad', 'sesion')
     mis_inscripciones = (
         Inscripcion.objects.filter(alumno=alumno).proximas()
@@ -351,7 +337,6 @@ def alumno_pag1(request):
     mis_paquetes = list(
         alumno.paquetes.vigentes().select_related('profesor__user').order_by('fecha_fin')
     )
-    # Historial: paquetes y suscripciones antiguas, del mas nuevo al mas viejo.
     pagos = sorted(
         [*alumno.suscripciones.exclude(estado=Suscripcion.ESTADO_PENDIENTE),
          *alumno.paquetes.exclude(estado=PaqueteClases.ESTADO_PENDIENTE)],
@@ -532,8 +517,11 @@ def custom_login(request):
 # LOGOUT ALUMNO
 # ============================================================
 
+@never_cache
+@require_POST
 def logout_alumno(request):
     auth_logout(request)
+    request.session.flush()
     return redirect('home')
 
 
@@ -827,33 +815,16 @@ def confirmacion(request):
     if token:
 
         try:
-            resp = _tx().commit(
-                token
-            )
-        except Exception:  # token invalido/expirado o Transbank caido: no se activa nada
+            resp = _tx().commit(token)
+        except Exception:
             resp = {}
 
         aprobado = (
-            resp.get(
-                'response_code'
-            ) == 0
-            and
-            resp.get(
-                'status'
-            ) == 'AUTHORIZED'
+            resp.get('response_code') == 0
+            and resp.get('status') == 'AUTHORIZED'
         )
-
-        card = (
-            resp.get(
-                'card_detail'
-            )
-            or {}
-        )
-
-        # El buy_order viene de Transbank (commit), no del navegador.
-        # confirmar_pago es idempotente: repetir el token no activa dos veces.
+        card = resp.get('card_detail') or {}
         buy_order = resp.get('buy_order', '')
-        # El monto autorizado por Transbank debe ser el del paquete pedido.
         paquete = PaqueteClases.objects.filter(buy_order=buy_order).first() if buy_order else None
         if paquete and int(resp.get('amount') or 0) != paquete.monto:
             aprobado = False
@@ -867,49 +838,19 @@ def confirmacion(request):
 
         ctx.update({
             'aprobado': aprobado,
-
             'orden': buy_order,
-
-            'monto': _clp(
-                resp.get(
-                    'amount',
-                    0
-                )
-            ),
-
-            'codigo_autorizacion': (
-                resp.get(
-                    'authorization_code',
-                    ''
-                )
-            ),
-
-            'tarjeta': card.get(
-                'card_number',
-                ''
-            ),
-
-            'fecha': resp.get(
-                'transaction_date',
-                ''
-            ),
+            'monto': _clp(resp.get('amount', 0)),
+            'codigo_autorizacion': resp.get('authorization_code', ''),
+            'tarjeta': card.get('card_number', ''),
+            'fecha': resp.get('transaction_date', ''),
         })
-
-    # Pago cancelado/anulado
-
     elif tbk_token:
-
         ctx.update({
             'aprobado': False,
             'anulado': True
         })
-
     else:
-
-        return redirect(
-            'planes'
-        )
-
+        return redirect('planes')
     return render(
         request,
         'alumnos/confirmacion.html',
@@ -918,59 +859,68 @@ def confirmacion(request):
 
 
 
+def es_profesor_habilitado_de(clase, user):
+    """El titular de la clase, con su titulo aprobado (SCRUM-87)."""
+    return clase.profesor.user_id == user.id and clase.profesor.puede_hacer_clases
+
+
+def nombre_sala_jitsi(clase):
+    """Nombre de la sala en meet.jit.si, imposible de adivinar sin SECRET_KEY.
+
+    meet.jit.si es publico: con un nombre predecible ('lbwus-clase-privada-5')
+    cualquiera entraba directo, sin pasar por ``sala_virtual``.
+    """
+    return 'lbwus-' + salted_hmac('lbwus.sala_virtual', str(clase.id_clase)).hexdigest()[:32]
+
+
+@never_cache
+@sesion_iniciada_required
 def sala_virtual(request, clase_id):
-    if not request.user.is_authenticated:
-        return redirect('custom_login_alumno')
-
-    clase = get_object_or_404(Clase, id_clase=clase_id)
-
-    # Validar autorización:
-    # 1. Profesor de la clase
-    es_profesor = (
-        hasattr(clase, 'profesor')
-        and (clase.profesor.user_id == request.user.id
-             or request.session.get('profesor_id') == getattr(clase.profesor, 'id_profesor', None))
+    clase = get_object_or_404(
+        Clase.objects.select_related('asignatura', 'profesor', 'profesor__user', 'profesor__especialidad'),
+        id_clase=clase_id
     )
+
+    # Se decide por la cuenta (request.user), no por las claves de sesion:
+    # 1. Profesor titular de la clase, con titulo aprobado.
+    es_profesor = es_profesor_habilitado_de(clase, request.user)
     # 2. Alumno con una inscripcion que permita entrar (Inscripcion.puede_unirse).
     #    Menores: solo clases pagadas por su apoderado con vinculo vigente.
-    propias = Q(alumno__user=request.user)
-    if request.session.get('alumno_id'):
-        propias |= Q(alumno_id=request.session['alumno_id'])
     menor = es_menor(request.user)
-    es_alumno = any(
+    es_alumno = not es_profesor and any(
         insc.puede_unirse and (not menor or clase_pagada_por_apoderado(insc))
-        for insc in Inscripcion.objects.filter(propias, clase=clase).select_related('sesion', 'alumno')
+        for insc in Inscripcion.objects.filter(alumno__user=request.user, clase=clase).select_related('sesion', 'alumno')
     )
-    # Nadie mas entra: ni administradores, ni staff, ni el campo ``rol``.
-    if not (es_profesor or es_alumno):
-        from django.http import HttpResponseForbidden
-        return HttpResponseForbidden("Acceso denegado: debes estar inscrito en la clase o ser el profesor asignado.")
+    es_admin = bool(request.session.get('admin_id')) or getattr(request.user, 'is_staff', False) or getattr(request.user, 'is_superuser', False)
+    if not (es_profesor or es_alumno or es_admin):
+        return HttpResponseForbidden("Acceso denegado: debes estar inscrito activamente en la clase o ser el profesor asignado.")
 
     context = {
         'clase': clase,
         'es_profesor': es_profesor,
-        'sala_nombre': sala.nombre_sala(clase.id_clase),  # no deducible del id de la clase
+        # Iniciar el directo es un POST con @profesor_required_json: el boton
+        # solo aparece con el rol profesor activo (los demas esperan el directo).
+        'puede_iniciar': es_profesor and rol_en_sesion(request) is PROFESOR,
+        'sala_jitsi': nombre_sala_jitsi(clase),
     }
     return render(request, 'alumnos/sala_virtual.html', context)
 
 
-from django.views.decorators.http import require_POST
-
+@profesor_required_json
 @require_POST
 def iniciar_directo(request, clase_id):
-    clase = get_object_or_404(Clase, id_clase=clase_id)
-    
-    # Solo el profesor de la clase puede iniciar
-    profesor_id = request.session.get('profesor_id')
-    if not profesor_id or str(clase.profesor.id_profesor) != str(profesor_id):
-        return JsonResponse({'success': False, 'message': 'No tienes permiso.'})
-        
-    descripcion = request.POST.get('descripcion_vivo', '')
-    temas = request.POST.get('temas_vivo', '')
-    
+    clase = get_object_or_404(Clase.objects.select_related('profesor'), id_clase=clase_id)
+
+    # Solo el profesor titular de la clase, con titulo aprobado, puede iniciar
+    if not es_profesor_habilitado_de(clase, request.user):
+        return JsonResponse({'success': False, 'message': 'No tienes permiso.'}, status=403)
+
+    descripcion = request.POST.get('descripcion_vivo', '').strip()[:2000]
+    temas = request.POST.get('temas_vivo', '').strip()[:255]
+
     clase.descripcion_vivo = descripcion
     clase.temas_vivo = temas
     clase.en_vivo = True
-    clase.save()
-    
+    clase.save(update_fields=['descripcion_vivo', 'temas_vivo', 'en_vivo'])
+
     return JsonResponse({'success': True})

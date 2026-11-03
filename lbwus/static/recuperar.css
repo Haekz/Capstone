@@ -408,7 +408,14 @@ html.dark-mode .btn {
 }
 
 /* ---------- Google ---------- */
+.form-google {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
 .btn-google {
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;

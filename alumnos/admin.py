@@ -1,6 +1,22 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, Genero, Tutor, Alumno, Profesor, Clase, SesionClase, Inscripcion, PaqueteClases, Suscripcion
+from .models import (
+    CustomUser, Genero, Tutor, Alumno, Profesor, Clase, SesionClase,
+    Inscripcion, PlanAlumno, DesgloseOperacion, PaqueteClases, Suscripcion,
+)
+
+
+# Aseguramiento de acceso a /admin/ (S4-02):
+# Restringido estrictamente a personal administrativo con is_staff activo.
+def admin_site_has_permission(request):
+    return bool(
+        request.user
+        and request.user.is_authenticated
+        and request.user.is_active
+        and request.user.is_staff
+    )
+
+admin.site.has_permission = admin_site_has_permission
 
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
@@ -26,6 +42,24 @@ class InscripcionAdmin(admin.ModelAdmin):
 
 admin.site.register(Inscripcion, InscripcionAdmin)
 
+
+class PlanAlumnoAdmin(admin.ModelAdmin):
+    list_display = ['id_plan_alumno', 'alumno', 'tipo_plan', 'total_clases', 'clases_disponibles', 'clases_consumidas', 'monto_total', 'estado', 'created_at']
+    list_filter = ['tipo_plan', 'estado', 'created_at']
+    search_fields = ['alumno__user__first_name', 'alumno__user__last_name', 'alumno__user__email']
+
+
+admin.site.register(PlanAlumno, PlanAlumnoAdmin)
+
+
+class DesgloseOperacionAdmin(admin.ModelAdmin):
+    list_display = ['id_desglose', 'tipo_operacion', 'monto_bruto', 'comision_lbwus', 'monto_tutor', 'estado', 'alumno', 'profesor', 'fecha_operacion']
+    list_filter = ['tipo_operacion', 'estado', 'fecha_operacion']
+    search_fields = ['alumno__user__first_name', 'alumno__user__last_name', 'profesor__user__first_name', 'profesor__user__last_name']
+    readonly_fields = ['fecha_operacion']
+
+
+admin.site.register(DesgloseOperacion, DesgloseOperacionAdmin)
 
 # Soporte de pagos: buscar por buy_order de Webpay ("pagué y no tengo plan").
 class SuscripcionAdmin(admin.ModelAdmin):

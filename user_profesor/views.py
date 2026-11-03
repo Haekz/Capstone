@@ -1,11 +1,16 @@
+import datetime
+import logging
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
-from alumnos.models import Especialidad, Genero, Profesor, Clase, Inscripcion, Tutor, CuentaBancaria, TIPOS_CUENTA
+from alumnos.models import (
+    Especialidad, Genero, Profesor, Clase, Inscripcion, Tutor, CuentaBancaria, TIPOS_CUENTA, SolicitudRetiro, Banco,
+)
 from alumnos.decorators import profesor_required, profesor_required_json
 from alumnos.roles import ADMIN, PROFESOR, abrir_sesion_rol
+from alumnos.utils import formato_clp, validar_rut_chileno, usuario_existe
 from django.core.exceptions import ValidationError
 from django.http import FileResponse, Http404
 from django.views.decorators.http import require_POST
@@ -14,6 +19,9 @@ from alumnos import catalogos, liquidacion, paquetes
 from agenda import panel as agenda_panel
 from observaciones import panel as observaciones_panel
 from mensajes import panel as mensajes_panel
+
+logger = logging.getLogger(__name__)
+
 
 
 def calcular_saldos(profesor):
@@ -58,11 +66,6 @@ def buscar_especialidad(especialidad_id):
     return Especialidad.objects.filter(pk=especialidad_id).first()
 
 
-def formato_clp(monto):
-    """12345 -> '$12.345'."""
-    return f"${monto:,}".replace(",", ".")
-
-
 # --- Vistas de Registro y Acceso de Profesor ---
 
 def regis_prof(request):
@@ -79,7 +82,6 @@ def regis_prof(request):
             password = request.POST.get('password', '').strip()
             confirm_password = request.POST.get('confirm_password', '').strip()
 
-            # Validar que todos los campos obligatorios estén presentes
             if not all([nombre, rut, especialidad_id, direccion, fecha_nacimiento, correo_electronico, telefono, genero_id, password, confirm_password]):
                 return JsonResponse({"success": False, "message": "Todos los campos del registro son obligatorios."})
 
@@ -100,9 +102,6 @@ def regis_prof(request):
             except DjangoValidationError as e:
                 return JsonResponse({"success": False, "message": " | ".join(e.messages)})
 
-            from alumnos.utils import validar_rut_chileno, usuario_existe
-            from datetime import datetime, date
-
             if not validar_rut_chileno(rut):
                 return JsonResponse({"success": False, "message": "El RUT ingresado no es válido."})
 
@@ -111,8 +110,8 @@ def regis_prof(request):
                 return JsonResponse({"success": False, "message": error_msg})
 
             try:
-                fnac = datetime.strptime(fecha_nacimiento, '%Y-%m-%d').date()
-                today = date.today()
+                fnac = datetime.datetime.strptime(fecha_nacimiento, '%Y-%m-%d').date()
+                today = datetime.date.today()
                 if fnac >= today:
                     return JsonResponse({"success": False, "message": "La fecha de nacimiento no puede ser actual ni futura."})
                 age = today.year - fnac.year - ((today.month, today.day) < (fnac.month, fnac.day))
@@ -125,7 +124,6 @@ def regis_prof(request):
 
             from django.contrib.auth import get_user_model
             User = get_user_model()
-            # Crear usuario CustomUser centralizado
             user = User.objects.create_user(
                 username=rut,
                 rut=rut,
@@ -139,13 +137,11 @@ def regis_prof(request):
                 genero=genero
             )
 
-            # Crear el registro del Profesor vinculado al User
             profesor = Profesor.objects.create(
                 user=user,
                 especialidad=especialidad
             )
 
-            # Iniciar sesión automáticamente
             from django.contrib.auth import login as auth_login
             auth_login(request, user, backend='alumnos.backends.RutOrEmailBackend')
             abrir_sesion_rol(request, PROFESOR, profesor)
@@ -154,8 +150,9 @@ def regis_prof(request):
                 "success": True,
                 "message": "Profesor registrado exitosamente. Entrando al panel..."
             })
-        except Exception as e:
-            return JsonResponse({"success": False, "message": f"Error al registrar: {str(e)}"})
+        except Exception:
+            logger.exception("Error interno en regis_prof")
+            return JsonResponse({"success": False, "message": "Error interno al registrar el profesor. Intenta nuevamente."}, status=500)
 
     generos = Genero.objects.all()
     context = {
@@ -171,19 +168,42 @@ def panel_profesor(request):
     if not request.user.is_authenticated or (getattr(request.user, 'rol', None) != 'profesor' and not hasattr(request.user, 'perfil_profesor')):
         return redirect('custom_login_alumno')
 
-    profesor = getattr(request.user, 'perfil_profesor', None) or get_object_or_404(Profesor, user=request.user)
-    clases = Clase.objects.filter(profesor=profesor)
-    inscripciones = Inscripcion.objects.filter(
-        clase__profesor=profesor,
-        estado__in=['confirmada', 'pendiente']
+    profesor = (
+        Profesor.objects.select_related('user', 'user__genero', 'especialidad')
+        .filter(user=request.user)
+        .first()
+    )
+    if not profesor:
+        return redirect('custom_login_alumno')
+
+    # Carga optimizada en memoria para evitar consultas N+1 y bucles de queries
+    clases = list(
+        Clase.objects.filter(profesor=profesor).select_related('asignatura', 'profesor', 'profesor__user')
+    )
+    inscripciones = list(
+        Inscripcion.objects.filter(
+            clase__profesor=profesor,
+            estado__in=['confirmada', 'pendiente']
+        ).select_related('alumno', 'alumno__user', 'clase', 'clase__asignatura')
     )
 
+    inscripciones_por_clase = {}
+    conteo_por_mes = {}
+    for insc in inscripciones:
+        inscripciones_por_clase.setdefault(insc.clase_id, []).append(insc)
+        if insc.fecha_inscripcion:
+            mes_num = insc.fecha_inscripcion.month
+            conteo_por_mes[mes_num] = conteo_por_mes.get(mes_num, 0) + 1
+
     # 1. Clases del día (Máximo 6)
+    clases_top6 = clases[:6]
     clases_hoy_lista = []
-    for clase in clases[:6]:
-        # Buscar primer alumno inscrito
-        insc = inscripciones.filter(clase=clase).first()
-        alumno_nombre = insc.alumno.user.first_name if insc else "Sin asignar"
+    inscripciones_hoy = 0
+    for clase in clases_top6:
+        insc_lista = inscripciones_por_clase.get(clase.id_clase, [])
+        inscripciones_hoy += len(insc_lista)
+        primera_insc = insc_lista[0] if insc_lista else None
+        alumno_nombre = primera_insc.alumno.user.first_name if primera_insc else "Sin asignar"
         clases_hoy_lista.append({
             'nombre_curso': clase.asignatura.nombre,
             'horario': clase.horario,
@@ -198,21 +218,18 @@ def panel_profesor(request):
     ).select_related('paquete')
     dinero_hoy_val = sum(paquetes.pago_profesor(paquetes.valor_clase(i)) for i in inscripciones_hoy)
     dinero_hoy = formato_clp(dinero_hoy_val)
-    # Contador de clases disponibles diarias (base 8 máximo diario)
     clases_disponibles = max(0, 8 - len(clases_hoy_lista))
 
     # 3. Gráfico de solicitudes mensuales (Últimos 5 meses)
     meses_nombres = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
     current_month = timezone.localdate().month  # mes en Chile, no el del servidor
     rendimiento_meses = []
-
-    # Un mes sin inscripciones vale 0.
+# Un mes sin inscripciones vale 0.
     tope_grafico = 40
     for i in range(4, -1, -1):
         month_idx = (current_month - i - 1) % 12
         month_name = meses_nombres[month_idx]
-        real_count = inscripciones.filter(fecha_inscripcion__month=(month_idx + 1)).count()
-
+        real_count = conteo_por_mes.get(month_idx + 1, 0)
         rendimiento_meses.append({
             'mes': month_name,
             'cantidad': real_count,
@@ -220,17 +237,19 @@ def panel_profesor(request):
         })
 
     # 4. Saldo generado y gestión de retiros
-    from alumnos.models import SolicitudRetiro
-
-    saldos = calcular_saldos(profesor)
+    mis_retiros = list(
+        SolicitudRetiro.objects.filter(profesor=profesor)
+        .select_related('banco')
+        .order_by('-fecha_solicitud')
+    )
+    saldos = calcular_saldos(profesor, retiros_lista=mis_retiros)
     saldo_disponible = saldos['disponible']
 
     saldo_total_fmt = formato_clp(saldos['total_ganado'])
     saldo_disponible_fmt = formato_clp(saldo_disponible)
     saldo_pendiente_fmt = formato_clp(saldos['pendiente'])
 
-    mis_retiros = SolicitudRetiro.objects.filter(profesor=profesor).order_by('-fecha_solicitud')
-    generos = Genero.objects.all()
+    generos = list(Genero.objects.all())
 
     context = {
         'profesor': profesor,
@@ -302,8 +321,7 @@ def foto_profesor(request, id_profesor):
 def actualizar_perfil_prof(request):
     if request.method == 'POST':
         profesor_id = request.session['profesor_id']
-
-        profesor = get_object_or_404(Profesor, id_profesor=profesor_id)
+        profesor = get_object_or_404(Profesor.objects.select_related('user'), id_profesor=profesor_id)
 
         try:
             nombre = request.POST.get('nombre', '').strip()
@@ -323,8 +341,6 @@ def actualizar_perfil_prof(request):
 
             genero = get_object_or_404(Genero, id_genero=genero_id)
 
-            from alumnos.utils import validar_rut_chileno, usuario_existe
-
             if not validar_rut_chileno(rut):
                 return JsonResponse({"success": False, "message": "El RUT ingresado no es válido."})
 
@@ -335,12 +351,12 @@ def actualizar_perfil_prof(request):
             if error_msg:
                 return JsonResponse({"success": False, "message": error_msg})
 
-            # La foto se valida antes de guardar nada: si no sirve, el perfil queda igual.
+# La foto se valida antes de guardar nada: si no sirve, el perfil queda igual.
             archivo_foto = request.FILES.get('foto_perfil')
             try:
                 foto_jpeg = foto.procesar(archivo_foto) if archivo_foto else None
             except ValidationError as e:
-                return JsonResponse({"success": False, "message": e.messages[0]})
+                return JsonResponse({"success": False, "message": e.messages[0]}, status=400)
 
             # Tarifa por clase: opcional; solo afecta a los paquetes que se vendan despues.
             tarifa_txt = request.POST.get('tarifa', '').strip()
@@ -350,9 +366,11 @@ def actualizar_perfil_prof(request):
                 return JsonResponse({"success": False, "message": e.messages[0]})
 
             profesor.user.first_name = nombre
+            profesor.user.last_name = ''
             profesor.user.rut = rut
             profesor.user.username = rut
             profesor.especialidad = especialidad
+            profesor.telefono_publico = request.POST.get('telefono_publico') in ('on', 'true', '1')
             profesor.tarifa = tarifa
             profesor.user.direccion = direccion
             profesor.user.email = correo
@@ -364,14 +382,13 @@ def actualizar_perfil_prof(request):
             profesor.save()
 
             return JsonResponse({"success": True, "message": "Tu perfil ha sido actualizado con éxito."})
-        except Exception as e:
-            return JsonResponse({"success": False, "message": f"Error al guardar los cambios: {str(e)}"})
+        except Exception:
+            logger.exception("Error interno en actualizar_perfil_prof")
+            return JsonResponse({"success": False, "message": "Error interno al guardar los cambios del perfil."}, status=500)
 
     return JsonResponse({"success": False, "message": "Método no permitido."})
 
 
-# _json: el panel llama esta vista con fetch y espera {'success': ...};
-# un redirect le romperia el res.json().
 @profesor_required_json
 @require_POST
 def guardar_cuenta_bancaria(request):
@@ -437,7 +454,6 @@ def solicitar_retiro(request):
 
     if request.method == 'POST':
         from django.db import transaction
-        from alumnos.models import SolicitudRetiro, Banco
 
         try:
             monto_str = request.POST.get('monto', '').replace('.', '').replace('$', '').strip()
@@ -454,7 +470,6 @@ def solicitar_retiro(request):
                 profesor = Profesor.objects.select_for_update().get(id_profesor=profesor_id)
                 list(SolicitudRetiro.objects.select_for_update().filter(profesor=profesor))
 
-                # Validar saldo disponible con la misma regla que muestra el panel.
                 saldo_disponible = calcular_saldos(profesor)['disponible']
 
                 if saldo_disponible <= 0:
@@ -476,6 +491,7 @@ def solicitar_retiro(request):
         except ValueError:
             return JsonResponse({"success": False, "message": "Por favor ingresa un monto numérico válido."})
         except Exception:
+            logger.exception("Error interno en solicitar_retiro")
             return JsonResponse({"success": False, "message": "Ocurrió un error al procesar la solicitud de retiro. Intenta nuevamente."})
 
     return JsonResponse({"success": False, "message": "Método no permitido."})
@@ -531,9 +547,6 @@ def regis_tutor(request):
             except DjangoValidationError as e:
                 return JsonResponse({"success": False, "message": " | ".join(e.messages)})
 
-            from alumnos.utils import validar_rut_chileno, usuario_existe
-            from datetime import datetime, date
-
             if not validar_rut_chileno(rut):
                 return JsonResponse({"success": False, "message": "El RUT ingresado no es válido."})
 
@@ -542,8 +555,8 @@ def regis_tutor(request):
                 return JsonResponse({"success": False, "message": error_msg})
 
             try:
-                fnac = datetime.strptime(fecha_nacimiento, '%Y-%m-%d').date()
-                today = date.today()
+                fnac = datetime.datetime.strptime(fecha_nacimiento, '%Y-%m-%d').date()
+                today = datetime.date.today()
                 if fnac >= today:
                     return JsonResponse({"success": False, "message": "La fecha de nacimiento no puede ser actual ni futura."})
                 age = today.year - fnac.year - ((today.month, today.day) < (fnac.month, fnac.day))
@@ -568,16 +581,10 @@ def regis_tutor(request):
                 fecha_nacimiento=fecha_nacimiento,
                 genero=genero
             )
-            # Sin is_staff: el acceso al portal lo da el perfil Tutor, no el
-            # flag de Django. is_staff abre /admin/, que es otra cosa y debe
-            # concederse a mano desde la consola.
             user.save()
 
-            tutor = Tutor.objects.create(
-                user=user
-            )
+            tutor = Tutor.objects.create(user=user)
 
-            # Iniciar sesión de administrador
             from django.contrib.auth import login as auth_login
             auth_login(request, user, backend='alumnos.backends.RutOrEmailBackend')
             abrir_sesion_rol(request, ADMIN, tutor)
@@ -586,17 +593,21 @@ def regis_tutor(request):
                 "success": True,
                 "message": "Administrador registrado exitosamente. Ingresando al panel..."
             })
-        except Exception as e:
-            return JsonResponse({"success": False, "message": f"Error al registrar: {str(e)}"})
+        except Exception:
+            logger.exception("Error interno en regis_tutor")
+            return JsonResponse({"success": False, "message": "Error interno al registrar el administrador."}, status=500)
 
     generos = Genero.objects.all()
     context = {'generos': generos}
     return render(request, 'user_profesor/regis_tutor.html', context)
 
 
-
 from django.contrib.auth import logout as auth_logout
 
+
+@never_cache
+@require_POST
 def logout_prof(request):
     auth_logout(request)
+    request.session.flush()
     return redirect('home')
