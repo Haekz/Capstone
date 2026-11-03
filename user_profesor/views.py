@@ -184,7 +184,7 @@ def panel_profesor(request):
         Inscripcion.objects.filter(
             clase__profesor=profesor,
             estado__in=['confirmada', 'pendiente']
-        ).select_related('alumno', 'alumno__user', 'clase', 'clase__asignatura')
+        ).select_related('alumno', 'alumno__user', 'clase', 'clase__asignatura', 'paquete')
     )
 
     inscripciones_por_clase = {}
@@ -198,10 +198,8 @@ def panel_profesor(request):
     # 1. Clases del día (Máximo 6)
     clases_top6 = clases[:6]
     clases_hoy_lista = []
-    inscripciones_hoy = 0
     for clase in clases_top6:
         insc_lista = inscripciones_por_clase.get(clase.id_clase, [])
-        inscripciones_hoy += len(insc_lista)
         primera_insc = insc_lista[0] if insc_lista else None
         alumno_nombre = primera_insc.alumno.user.first_name if primera_insc else "Sin asignar"
         clases_hoy_lista.append({
@@ -212,10 +210,9 @@ def panel_profesor(request):
         })
 
     # 2. Métricas del Día
-    # Dinero generado hoy segun las inscripciones reales de esas clases.
-    inscripciones_hoy = inscripciones.filter(
-        clase_id__in=[c.id_clase for c in clases[:6]]
-    ).select_related('paquete')
+    # Dinero generado hoy segun las inscripciones reales de esas clases (ya cargadas en memoria).
+    ids_hoy = {c.id_clase for c in clases_top6}
+    inscripciones_hoy = [i for i in inscripciones if i.clase_id in ids_hoy]
     dinero_hoy_val = sum(paquetes.pago_profesor(paquetes.valor_clase(i)) for i in inscripciones_hoy)
     dinero_hoy = formato_clp(dinero_hoy_val)
     clases_disponibles = max(0, 8 - len(clases_hoy_lista))
@@ -224,7 +221,7 @@ def panel_profesor(request):
     meses_nombres = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
     current_month = timezone.localdate().month  # mes en Chile, no el del servidor
     rendimiento_meses = []
-# Un mes sin inscripciones vale 0.
+    # Un mes sin inscripciones vale 0.
     tope_grafico = 40
     for i in range(4, -1, -1):
         month_idx = (current_month - i - 1) % 12
@@ -242,7 +239,7 @@ def panel_profesor(request):
         .select_related('banco')
         .order_by('-fecha_solicitud')
     )
-    saldos = calcular_saldos(profesor, retiros_lista=mis_retiros)
+    saldos = calcular_saldos(profesor)
     saldo_disponible = saldos['disponible']
 
     saldo_total_fmt = formato_clp(saldos['total_ganado'])

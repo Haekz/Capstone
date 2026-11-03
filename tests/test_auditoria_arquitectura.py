@@ -14,7 +14,6 @@ from alumnos.models import (
     Asignatura,
     Banco,
     Clase,
-    DesgloseOperacion,
     Especialidad,
     Genero,
     Inscripcion,
@@ -50,7 +49,6 @@ class AuditoriaSeguridadYArquitecturaTests(TestCase):
         self.prof_aprobado = Profesor.objects.create(
             user=self.u_prof,
             especialidad=self.esp,
-            tarifa_base=15000,
             titulo_estado=Profesor.TITULO_APROBADO,
         )
 
@@ -66,7 +64,6 @@ class AuditoriaSeguridadYArquitecturaTests(TestCase):
         self.prof_pendiente = Profesor.objects.create(
             user=self.u_prof_pend,
             especialidad=self.esp,
-            tarifa_base=15000,
             titulo_estado=Profesor.TITULO_PENDIENTE,
         )
 
@@ -187,7 +184,6 @@ class AuditoriaSeguridadYArquitecturaTests(TestCase):
         self.prof_aprobado.refresh_from_db()
         self.prof_aprobado.user.refresh_from_db()
         self.assertEqual(self.prof_aprobado.nombre, "Roberto Gomez")
-        self.assertTrue(self.prof_aprobado.telefono_publico)
 
     def test_orm_sin_n_mas_1_en_dashboards(self):
         """Verifica que dashboard_admin, panel_profesor y alumno_pag1 mantengan consultas O(1) acotadas."""
@@ -198,17 +194,7 @@ class AuditoriaSeguridadYArquitecturaTests(TestCase):
                 modalidad="online",
                 horario=dt_time(14 + i, 0),
             )
-            ins = Inscripcion.objects.create(alumno=self.alumno, clase=c, estado="confirmada")
-            DesgloseOperacion.objects.create(
-                profesor=self.prof_aprobado,
-                alumno=self.alumno,
-                inscripcion=ins,
-                monto_bruto=15000,
-                comision_lbwus=2250,
-                iva_comision=359,
-                neto_comision=1891,
-                monto_tutor=12750,
-            )
+            Inscripcion.objects.create(alumno=self.alumno, clase=c, estado="confirmada")
             SolicitudRetiro.objects.create(
                 profesor=self.prof_aprobado,
                 monto=5000,
