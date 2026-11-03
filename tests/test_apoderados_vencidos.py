@@ -109,3 +109,50 @@ class DocumentoVinculoVencidoTests(TestCase):
             with self.subTest(vinculo=vinculo.estado):
                 url = reverse('apoderado_subir_documento_vinculo', args=[vinculo.pk])
                 self.assertEqual(self.client.get(url).status_code, 404)
+
+
+class RegistradoAntesDeLosDocumentosTests(TestCase):
+    """Fase 2a empezó a pedir carnet y documento del vínculo. Quien se registró antes quedó en revisión sin
+    documentos y sin ticket: nunca los subió, así que no se le puede decir que "vencieron"."""
+
+    def setUp(self):
+        crear_agente('10000001-9', Ticket.APODERADOS)
+
+    def entrar_como(self, apoderado):
+        entrar(self.client, apoderado.user, apoderado_id=apoderado.id_apoderado)
+
+    def test_el_apoderado_en_revision_sin_carnet_ve_el_aviso_y_lo_sube(self):
+        apoderado = crear_apoderado(RUT, Apoderado.REVISION_PENDIENTE)
+        self.assertFalse(Documento.objects.exists() or Ticket.objects.exists())
+        self.entrar_como(apoderado)
+
+        portal = self.client.get(reverse('portal_apoderado'))
+        self.assertContains(portal, 'o nunca las subiste, o vencieron sin revisión')
+        self.assertContains(portal, reverse('apoderado_subir_carnet'))
+        pantalla = self.client.get(reverse('apoderado_subir_carnet'))
+        self.assertContains(pantalla, 'Sube tu carnet')
+        self.assertContains(pantalla, 'o nunca las subiste')
+
+        respuesta = self.client.post(reverse('apoderado_subir_carnet'),
+                                     {'carnet_frente': imagen('f.jpg'), 'carnet_reverso': imagen('r.jpg')})
+        self.assertRedirects(respuesta, reverse('portal_apoderado'), fetch_redirect_response=False)
+        self.assertTrue(apoderado.documentos_completos)
+        self.assertTrue(abiertos(apoderado=apoderado).exists())  # recién ahí hay algo que revisar
+
+    def test_a_quien_ya_esta_verificado_no_se_le_pide_el_carnet(self):
+        apoderado = crear_apoderado(RUT, Apoderado.VERIFICADO)
+        self.entrar_como(apoderado)
+        self.assertNotContains(self.client.get(reverse('portal_apoderado')), reverse('apoderado_subir_carnet'))
+        self.assertEqual(self.client.get(reverse('apoderado_subir_carnet')).status_code, 404)
+
+    def test_el_vinculo_pendiente_sin_documento_se_puede_completar(self):
+        apoderado = crear_apoderado(RUT, Apoderado.VERIFICADO)
+        vinculo = crear_menor_vinculado(apoderado, estado=Vinculo.PENDIENTE)
+        self.entrar_como(apoderado)
+        url = reverse('apoderado_subir_documento_vinculo', args=[vinculo.pk])
+
+        self.assertContains(self.client.get(reverse('portal_apoderado')), 'o nunca lo subiste, o venció sin revisión')
+        self.assertContains(self.client.get(url), 'o nunca lo subiste')
+        self.client.post(url, {'documento': imagen()})
+        self.assertTrue(vinculo.documentos_completos)
+        self.assertTrue(abiertos(vinculo=vinculo).exists())

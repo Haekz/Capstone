@@ -43,6 +43,11 @@ ESPERA_REENVIO = 60  # segundos entre correos de confirmacion
 CLAVE_ENVIO = 'apoderado_correo_enviado'
 CLAVE_INVITACION = 'invitacion_pendiente'  # enlace guardado mientras el apoderado entra o se registra
 BACKEND = 'alumnos.backends.RutOrEmailBackend'
+# Sin documentos ya sea porque se registro antes de que se pidieran o porque vencieron: el texto dice ambas cosas.
+SIN_CARNET = ('Aún no tenemos las fotos de tu carnet: o nunca las subiste, o vencieron sin revisión y las borramos '
+              'por seguridad.')
+SIN_DOCUMENTO = ('Aún no tenemos el documento del vínculo: o nunca lo subiste, o venció sin revisión y lo borramos '
+                 'por seguridad.')
 
 
 def _apoderado_en_sesion(request):
@@ -133,6 +138,8 @@ def portal(request):
                     .prefetch_related('revisiones', 'compras__paquete__profesor__user'),
         'invitacion': invitacion_vigente(token) if token else None,
         'token_invitacion': token,
+        'sin_carnet': SIN_CARNET,
+        'sin_documento': SIN_DOCUMENTO,
     })
 
 
@@ -214,9 +221,9 @@ def subir_carnet(request):
             apoderado.abrir_ticket_si_revisable()
         messages.success(request, 'Recibimos tu carnet. Nuestro equipo de soporte lo revisará.')
         return redirect(APODERADO.ruta_portal)
-    return _formulario(request, form, titulo='Vuelve a subir tu carnet', subtitulo='Carnet por ambos lados',
+    return _formulario(request, form, titulo='Sube tu carnet', subtitulo='Carnet por ambos lados',
                        boton='Subir carnet', volver_url=reverse(APODERADO.ruta_portal),
-                       intro='Los documentos anteriores vencieron sin revisión y los borramos por seguridad.')
+                       intro=SIN_CARNET)
 
 
 @never_cache
@@ -235,9 +242,9 @@ def subir_documento_vinculo(request, id_vinculo):
         messages.success(request, 'Recibimos el documento. Nuestro equipo de soporte lo revisará.')
         return redirect(APODERADO.ruta_portal)
     return _formulario(request, form, titulo=f'Vínculo con {vinculo.nombre_visible}',
-                       subtitulo='Vuelve a subir el documento', boton='Subir documento',
+                       subtitulo='Sube el documento', boton='Subir documento',
                        volver_url=reverse(APODERADO.ruta_portal),
-                       intro='El documento anterior venció sin revisión y lo borramos por seguridad.')
+                       intro=SIN_DOCUMENTO)
 
 
 # --- El apoderado contrata y reserva por su estudiante ---
