@@ -157,15 +157,15 @@ def alumnos_del(request, pk):
     alumno = get_object_or_404(Alumno, id_alumno=pk)
     
     # Se borra tambien la cuenta (CustomUser); el perfil de alumno cae en cascada. Si la cuenta tiene
-    # conversaciones reportadas no se borra: se seudonimiza y lo reportado queda solo para soporte
-    # (mensajes/supresion.py).
+    # conversaciones reportadas o historial de pagos y clases no se borra: se seudonimiza (mensajes/supresion.py).
     borrada = supresion.suprimir_cuenta(alumno.user)
     if borrada and Alumno.objects.filter(id_alumno=pk).exists():
         alumno.delete()
 
     alumnos = Alumno.objects.all()
     mensaje = ('Bien, datos eliminados...' if borrada else
-               'La cuenta se seudonimizó: las conversaciones reportadas se conservan solo para soporte.')
+               'La cuenta se seudonimizó: se conservan, sin sus datos personales, sus pagos y clases y sus '
+               'conversaciones reportadas (estas, solo para soporte).')
     context = {'alumnos': alumnos, 'mensaje': mensaje}
     return render(request, 'admin_portal/alumnos_list.html', context)
 

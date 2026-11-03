@@ -1,27 +1,29 @@
-"""Eliminar una cuenta sin perder las conversaciones reportadas (paso C1e, decidido 03-nov).
+"""Eliminar una cuenta sin perder las conversaciones reportadas (paso C1e, decidido 03-nov) ni su historial
+de pagos y clases (S1, decidido 02-nov).
 
 Antes, borrar el usuario arrastraba en cascada todas sus conversaciones: tambien las reportadas (la
-evidencia) y tambien para la otra persona. Ahora:
+evidencia) y tambien para la otra persona. Y tambien sus paquetes pagados y sus clases: se perdia el
+registro del pago y al profesor le bajaban las ganancias hacia atras. Ahora:
 
-- Sin conversaciones retenidas (mensajes/revision.py: reportadas, salvo las que el lider libero): se borra la
-  cuenta completa, como siempre.
-- Con alguna: se borran las demas conversaciones y sus avisos, y la cuenta se **seudonimiza en el mismo
-  lugar** ("Cuenta eliminada": sin nombre, correo, RUT, telefono, direccion, nacimiento, genero ni foto, y
+- Sin conversaciones retenidas (mensajes/revision.py: reportadas, salvo las que el lider libero) ni historial
+  de pagos o clases: se borra la cuenta completa, como siempre.
+- Con alguno de los dos: se borran las demas conversaciones y sus avisos, y la cuenta se **seudonimiza en el
+  mismo lugar** ("Cuenta eliminada": sin nombre, correo, RUT, telefono, direccion, nacimiento, genero ni foto, y
   sin poder entrar). Es seudonimizacion, no anonimizacion: los mensajes conservados pueden contener datos
   de la persona. Por eso lo conservado **deja de verse para la otra persona** y queda solo para soporte,
-  desde el ticket (Conversacion.objects.visibles(); decidido 02-nov). La fila se conserva solo porque las
-  conversaciones reportadas dependen de ella.
+  desde el ticket (Conversacion.objects.visibles(); decidido 02-nov). La fila se conserva porque las
+  conversaciones reportadas, los paquetes y las clases dependen de ella.
 
 Limites: hoy solo se usa con alumnos, el unico borrado que existe. Profesores y apoderados guardan mas
 datos propios (documentos, cuenta bancaria): habria que anonimizarlos tambien antes de usarla con ellos.
-Los datos de clases y pagos de la cuenta no se tocan: tienen su propia conservacion, por definir con
-asesoria legal.
+Cuanto tiempo se conserva el historial de pagos y clases queda por definir con asesoria legal.
 """
 
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
+from alumnos.models import Inscripcion
 from notificaciones.models import Notificacion
 
 from .models import Conversacion
@@ -32,6 +34,13 @@ NOMBRE_SUPRIMIDA = 'Cuenta eliminada'
 
 def conversaciones_de(user):
     return Conversacion.objects.filter(Q(cliente=user) | Q(alumno__user=user) | Q(profesor__user=user))
+
+
+def _tiene_historial_de_pagos(user):
+    """Paquetes, suscripciones o clases del alumno: se conservan (registro del pago y ganancias del profesor)."""
+    alumno = getattr(user, 'perfil_alumno', None)
+    return alumno is not None and (alumno.paquetes.exists() or alumno.suscripciones.exists()
+                                   or Inscripcion.objects.filter(alumno=alumno).exists())
 
 
 def _seudonimizar(user):
@@ -47,11 +56,12 @@ def _seudonimizar(user):
 
 
 def suprimir_cuenta(user):
-    """True si se borro por completo; False si quedo seudonimizada porque tiene conversaciones reportadas."""
+    """True si se borro por completo; False si quedo seudonimizada porque tiene conversaciones reportadas o
+    historial de pagos y clases."""
     with transaction.atomic():
         propias = conversaciones_de(user)
         conservadas = propias.filter(pk__in=retenidas().values('pk'))
-        if not conservadas.exists():
+        if not conservadas.exists() and not _tiene_historial_de_pagos(user):
             user.delete()
             return True
         propias.exclude(pk__in=conservadas.values('pk')).delete()

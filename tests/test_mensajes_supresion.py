@@ -5,7 +5,7 @@ from datetime import timedelta
 from django.urls import reverse
 from django.utils import timezone
 
-from alumnos.models import Alumno, CustomUser
+from alumnos.models import Alumno, CustomUser, Inscripcion, PaqueteClases
 from mensajes import panel, retencion, servicio, supresion
 from mensajes.models import Conversacion, Mensaje, ReporteConversacion
 from mensajes.servicio import MensajeError
@@ -41,11 +41,35 @@ class SuprimirCuentaTests(Escenario):
 
     # --- sin reportes ---
 
-    def test_sin_conversaciones_reportadas_se_borra_todo_como_siempre(self):
-        self.assertTrue(self.suprimir_a_ana())
-        self.assertFalse(CustomUser.objects.filter(pk=self.ana.user_id).exists())
+    def test_sin_reportes_ni_pagos_se_borra_todo_como_siempre(self):
+        self.assertTrue(supresion.suprimir_cuenta(CustomUser.objects.get(pk=self.beto.user_id)))  # Beto: sin paquetes
+        self.assertFalse(CustomUser.objects.filter(pk=self.beto.user_id).exists())
+
+    def test_sin_reportes_pero_con_pagos_se_seudonimiza_y_se_borran_sus_chats(self):
+        self.assertFalse(self.suprimir_a_ana())  # Ana tiene dos paquetes pagados
+        self.assertIsNotNone(CustomUser.objects.get(pk=self.ana.user_id).suprimida)
         self.assertFalse(Conversacion.objects.exists())
         self.assertFalse(Mensaje.objects.exists())
+
+    # --- historial de pagos y clases (S1, decidido 02-nov) ---
+
+    def test_sus_paquetes_pagados_se_conservan_sin_sus_datos(self):
+        self.suprimir_a_ana()
+        self.assertEqual(PaqueteClases.objects.filter(alumno=self.ana).count(), 2)
+        self.assertEqual(PaqueteClases.objects.filter(alumno=self.ana).first().alumno.user.first_name,
+                         supresion.NOMBRE_SUPRIMIDA)
+
+    def test_una_clase_sin_paquete_tambien_es_historial(self):
+        Inscripcion.objects.create(alumno=self.beto, clase=self.clase)
+        self.assertFalse(supresion.suprimir_cuenta(CustomUser.objects.get(pk=self.beto.user_id)))
+        self.assertTrue(Inscripcion.objects.filter(alumno=self.beto).exists())
+
+    def test_el_profesor_no_pierde_lo_que_ya_cobro(self):
+        Inscripcion.objects.create(alumno=self.ana, clase=self.clase, paquete=PaqueteClases.objects.filter(
+            alumno=self.ana, profesor=self.profe).first())
+        antes = Inscripcion.objects.filter(clase__profesor=self.profe).count()
+        self.suprimir_a_ana()
+        self.assertEqual(Inscripcion.objects.filter(clase__profesor=self.profe).count(), antes)
 
     # --- con una conversacion reportada ---
 
@@ -122,10 +146,16 @@ class SuprimirCuentaTests(Escenario):
         entrar_admin(self.client, admin, tutor)
         return self.client.post(reverse('alumnos_del', args=[self.ana.id_alumno]))
 
-    def test_el_admin_elimina_un_alumno_sin_reportes_como_antes(self):
+    def test_el_admin_elimina_un_alumno_sin_reportes_ni_pagos_como_antes(self):
+        PaqueteClases.objects.filter(alumno=self.ana).delete()
         r = self.borrar_desde_el_admin()
         self.assertContains(r, 'datos eliminados')
         self.assertFalse(Alumno.objects.filter(pk=self.ana.pk).exists())
+
+    def test_el_admin_no_destruye_los_pagos(self):
+        r = self.borrar_desde_el_admin()
+        self.assertContains(r, 'se seudonimizó')
+        self.assertEqual(PaqueteClases.objects.filter(alumno=self.ana).count(), 2)
 
     def test_el_admin_no_destruye_las_conversaciones_reportadas(self):
         self.reportar()

@@ -157,7 +157,8 @@ class RevisionTests(Escenario):
     def test_al_borrar_una_cuenta_con_su_conversacion_liberada_se_borra_todo(self):
         self.cerrar_ticket()
         revision.liberar(self.lider, self.conversacion)
-        self.assertTrue(supresion.suprimir_cuenta(CustomUser.objects.get(pk=self.ana.user_id)))
+        # La cuenta se seudonimiza por sus pagos (S1); lo que se prueba aqui es que la conversacion no se retiene.
+        supresion.suprimir_cuenta(CustomUser.objects.get(pk=self.ana.user_id))
         self.assertFalse(Conversacion.objects.exists())
 
     def test_al_borrar_una_cuenta_con_su_conversacion_pendiente_se_conserva(self):
