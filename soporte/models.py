@@ -55,11 +55,15 @@ class Ticket(models.Model):
     CONDUCTA = 'conducta'
     TECNICO = 'tecnico'
     OTRO = 'otro'
+    # Solicitud de eliminar la cuenta (app supresiones). La abre el flujo de privacidad, no el formulario
+    # de tickets: por eso no esta en DE_USUARIOS.
+    PRIVACIDAD = 'privacidad'
     CATEGORIAS = [(APODERADOS, 'Apoderados y menores'), (TITULOS, 'Títulos de profesores'),
                   (PAGOS, 'Pagos y retiros'), (CLASES, 'Clases'), (CONDUCTA, 'Conducta en una clase'),
-                  (TECNICO, 'Problemas técnicos'), (OTRO, 'Otro')]
+                  (TECNICO, 'Problemas técnicos'), (OTRO, 'Otro'), (PRIVACIDAD, 'Privacidad y datos')]
     DE_USUARIOS = (PAGOS, CLASES, CONDUCTA, TECNICO, OTRO)  # las que abre el propio usuario (D10)
-    DIAS_HABILES = {APODERADOS: 5, TITULOS: 5, PAGOS: 2, CLASES: 2, CONDUCTA: 2, TECNICO: 5, OTRO: 5}  # D4, D16, D17
+    # D4, D16, D17. Privacidad: 10 dias habiles (~14 corridos), decision por defecto a validar con la abogada.
+    DIAS_HABILES = {APODERADOS: 5, TITULOS: 5, PAGOS: 2, CLASES: 2, CONDUCTA: 2, TECNICO: 5, OTRO: 5, PRIVACIDAD: 10}
     AVISO_CADA = 3  # dias habiles entre avisos de atraso (al equipo en casos normales, y al usuario siempre;
     #                 conducta avisa al equipo cada dia: D17)
     ABIERTO = 'abierto'
