@@ -1,0 +1,12 @@
+{# Aviso previo al chat (E5, respuesta legal 02-nov). Los plazos vienen de mensajes/templatetags/mensajes_tags.py. #}
+<details class="aviso-mensajes"{% if abierto %} open{% endif %} style="margin: 10px 0; padding: 10px 14px; border: 1px solid var(--border, #c8c8c8); border-radius: 10px;">
+    <summary style="cursor: pointer; font-weight: 700;">Cómo funcionan los mensajes y qué pasa con tus datos</summary>
+    <ul style="margin: 10px 0 0; padding-left: 20px; display: grid; gap: 6px;">
+        <li><strong>Para qué sirven:</strong> solo para coordinar las clases. No se usan para otra cosa.</li>
+        <li><strong>Filtro automático:</strong> un programa revisa cada mensaje antes de enviarlo y bloquea teléfonos, correos, redes sociales y direcciones, para que todo se converse dentro de LBWUS. No es infalible. Ninguna persona lee los mensajes por este filtro.</li>
+        <li><strong>Quién los puede leer:</strong> {% if rol == 'apoderado' %}tú y el profesor. El profesor ve «Apoderado de» y el nombre de pila de tu estudiante, no tu nombre{% else %}tú y {% if rol == 'profesor' %}el alumno o su apoderado{% else %}el profesor{% endif %}{% endif %}. El equipo de soporte de LBWUS solo puede leer una conversación si alguien la reporta, únicamente desde el ticket, y queda registrado quién la abrió y cuándo. El administrador no puede leerlas.</li>
+        <li><strong>Avisos:</strong> cuando llega un mensaje nuevo te avisamos con la campanita y un correo que no incluye el mensaje.</li>
+        <li><strong>Cuánto tiempo se guardan:</strong> se eliminan solas cuando pasan {{ dias }} días sin mensajes, salvo que haya clases por dictar, un paquete vigente entre ustedes o un ticket abierto. Si una conversación se reporta, se conserva mientras soporte la revisa; después un líder de soporte decide si se libera o, solo si hay un reclamo, el requerimiento de una autoridad o una investigación, se conserva más tiempo, con revisión cada {{ meses }} meses.</li>
+        <li><strong>Tus derechos:</strong> puedes pedir ver, corregir o eliminar tus datos escribiéndonos desde <a href="{% url 'mis_tickets' %}">Ayuda y soporte</a>, o pedir <a href="{% url 'eliminar_cuenta' %}">eliminar tu cuenta</a>.</li>
+    </ul>
+</details>

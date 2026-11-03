@@ -1,8 +1,10 @@
 <!-- esta parte es del chat o buzon de consultas de alumnos: conversaciones reales (paso C1b) -->
+{% load mensajes_tags %}
 <section id="sec-buzon" class="prof-section">
     <div class="prof-section-header">
         <h1 class="prof-section-title">Buzón de Alumnos</h1>
-        <p class="prof-section-subtitle">Coordina las clases con tus estudiantes. No compartas teléfonos, correos ni direcciones: todo se conversa aquí. Los mensajes se eliminan tras 90 días sin actividad.</p>
+        <p class="prof-section-subtitle">Coordina las clases con tus estudiantes. No compartas teléfonos, correos ni direcciones: todo se conversa aquí.</p>
+        {% aviso_mensajes 'profesor' buzon_activa %}
     </div>
 
     {% if buzon %}

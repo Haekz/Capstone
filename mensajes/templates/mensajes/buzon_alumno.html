@@ -1,7 +1,9 @@
 {# Buzon real del alumno adulto (paso C1b-2): mismas clases que la maqueta que reemplaza #}
+{% load mensajes_tags %}
 <div class="ap-mb-25">
     <h2><i class="bi bi-chat-text-fill ap-text-primary"></i> Buzón de Dudas</h2>
-    <p class="ap-view-sub">Coordina tus clases con tus profesores. No compartas teléfonos, correos ni direcciones: todo se conversa aquí. Los mensajes se eliminan tras 90 días sin actividad.</p>
+    <p class="ap-view-sub">Coordina tus clases con tus profesores. No compartas teléfonos, correos ni direcciones: todo se conversa aquí.</p>
+    {% aviso_mensajes 'alumno' bandeja_activa %}
 </div>
 
 <div class="inbox-layout">

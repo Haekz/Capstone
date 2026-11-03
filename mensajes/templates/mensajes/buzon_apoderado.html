@@ -1,5 +1,6 @@
 {% extends 'alumnos/base.html' %}
 {% load static %}
+{% load mensajes_tags %}
 
 {% block title %}Mensajes con los profesores | LBWUS{% endblock %}
 
@@ -14,10 +15,11 @@
     <header class="perfil-prof__cabecera">
         <div>
             <h1>Mensajes con los profesores</h1>
-            <p class="perfil-prof__vacio">Coordina las clases de tus estudiantes. No compartas teléfonos, correos ni direcciones: todo se conversa aquí. Los mensajes se eliminan tras 90 días sin actividad.</p>
+            <p class="perfil-prof__vacio">Coordina las clases de tus estudiantes. No compartas teléfonos, correos ni direcciones: todo se conversa aquí.</p>
         </div>
     </header>
 
+    {% aviso_mensajes 'apoderado' bandeja_activa %}
     {% include 'apoderados/_mensajes.html' %}
 
     <section class="perfil-prof__bloque" aria-labelledby="conversaciones-titulo">
