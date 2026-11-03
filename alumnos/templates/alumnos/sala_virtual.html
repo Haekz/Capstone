@@ -245,12 +245,12 @@
                 <!-- Pantalla de espera / Offline -->
                 {% if request.session.profesor_id == clase.profesor.id_profesor %}
                     <i class="bi bi-camera-video-off" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 15px;"></i>
-                    <h3 style="color: white; margin: 0;">Transmisin Inactiva</h3>
-                    <p style="color: var(--text-muted);">Completa la informacin abajo y presiona "Iniciar Directo"</p>
+                    <h3 style="color: white; margin: 0;">Transmisión Inactiva</h3>
+                    <p style="color: var(--text-muted);">Completa la información abajo y presiona "Iniciar Directo"</p>
                 {% else %}
                     <i class="bi bi-hourglass-split" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 15px;"></i>
                     <h3 style="color: white; margin: 0;">Esperando al profesor...</h3>
-                    <p style="color: var(--text-muted);">La clase an no comienza. Esta pgina se recargar cuando el profesor inicie el directo.</p>
+                    <p style="color: var(--text-muted);">La clase aún no comienza. Esta página se recargará cuando el profesor inicie el directo.</p>
                 {% endif %}
             {% endif %}
         </div>
@@ -288,19 +288,19 @@
             </div>
             
             <div style="margin-top: 20px; font-size: 0.95rem; line-height: 1.6; color: var(--text-muted);">
-                <h4 style="color: var(--text-main); margin-bottom: 8px;">Sobre esta transmisin</h4>
+                <h4 style="color: var(--text-main); margin-bottom: 8px;">Sobre esta transmisión</h4>
                 
                 {% if request.session.profesor_id == clase.profesor.id_profesor and not clase.en_vivo %}
-                    <!-- Modo edicin para el profesor antes de empezar -->
+                    <!-- Modo edición para el profesor antes de empezar -->
                     <form id="form-pre-stream" class="pre-stream-form">
                         {% csrf_token %}
-                        <input type="text" id="input-temas" name="temas_vivo" class="form-input" placeholder="Ej. Temas de Hoy: Resolucin de integrales dobles..." value="{{ clase.temas_vivo|default:'' }}">
-                        <textarea id="input-descripcion" name="descripcion_vivo" class="form-input" rows="3" placeholder="Escribe una breve descripcin de lo que se ver en la clase hoy...">{{ clase.descripcion_vivo|default:'' }}</textarea>
+                        <input type="text" id="input-temas" name="temas_vivo" class="form-input" placeholder="Ej. Temas de Hoy: Resolución de integrales dobles..." value="{{ clase.temas_vivo|default:'' }}">
+                        <textarea id="input-descripcion" name="descripcion_vivo" class="form-input" rows="3" placeholder="Escribe una breve descripción de lo que se verá en la clase hoy...">{{ clase.descripcion_vivo|default:'' }}</textarea>
                     </form>
                 {% else %}
-                    <!-- Vista estndar para alumnos o si ya empez el stream -->
+                    <!-- Vista estándar para alumnos o si ya empezó el stream -->
                     <p><strong>Temas de hoy:</strong> {{ clase.temas_vivo|default:"No especificado." }}</p>
-                    <p>{{ clase.descripcion_vivo|default:"Esta es una sesin privada 1 a 1. Como alumno, tienes la capacidad de encender tu cmara, micrfono y compartir pantalla en cualquier momento utilizando los controles del reproductor para resolver tus dudas directamente con el profesor." }}</p>
+                    <p>{{ clase.descripcion_vivo|default:"Esta es una sesión privada 1 a 1. Como alumno, tienes la capacidad de encender tu cámara, micrófono y compartir pantalla en cualquier momento utilizando los controles del reproductor para resolver tus dudas directamente con el profesor." }}</p>
                 {% endif %}
             </div>
         </div>
