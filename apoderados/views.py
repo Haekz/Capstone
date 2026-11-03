@@ -254,7 +254,7 @@ def _vinculo_o_404(request, id_vinculo):
 def comprar_paquete(request, id_vinculo):
     """Mismo Webpay que el alumno; el paquete queda a nombre del estudiante."""
     vinculo = _vinculo_o_404(request, id_vinculo)
-    return iniciar_compra_paquete(request, vinculo.alumno_id, al_crear=lambda paquete: (
+    return iniciar_compra_paquete(request, vinculo.alumno_id, vinculo=vinculo, al_crear=lambda paquete: (
         CompraApoderado.objects.create(paquete=paquete, apoderado=vinculo.apoderado, vinculo=vinculo)))
 
 

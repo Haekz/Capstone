@@ -34,7 +34,7 @@ from lbwus.puerta import destino_seguro
 from .forms import AlumnoForm, FiltroClasesForm
 from .decorators import alumno_required
 from .exceptions import InscripcionError
-from .services import InscripcionService
+from .services import InscripcionService, exigir_mayor_de_edad
 from .utils import es_menor
 from .templatetags.dinero import clp as _clp  # mismo formato en vistas y plantillas
 from .roles import (
@@ -105,6 +105,13 @@ def home(request):
     )
 
 
+def _alumno_en_sesion_es_menor(request):
+    """El alumno con sesion abierta es menor de edad: contrata su apoderado, no el."""
+    alumno_id = request.session.get('alumno_id')
+    alumno = Alumno.objects.select_related('user').filter(pk=alumno_id).first() if alumno_id else None
+    return alumno is not None and es_menor(alumno.user)
+
+
 def planes(request):
     """Paquetes con los precios del profesor elegido (?profesor=id) o de la tarifa base.
 
@@ -122,6 +129,8 @@ def planes(request):
         'duracion_clase': paquetes.DURACION_CLASE_MIN,
         'comision_pct': int(paquetes.COMISION * 100),
         'es_alumno': bool(request.session.get('alumno_id')),
+        # El menor ve que contrata su apoderado, en vez de botones que no harian nada.
+        'es_menor': _alumno_en_sesion_es_menor(request),
         # Apoderado contratando para su estudiante (?estudiante=id del vinculo verificado).
         'estudiante': vinculo_contratable(request, request.GET.get('estudiante')),
     })
@@ -749,18 +758,22 @@ def reprogramar_inscripcion(request, pk):
 @require_POST
 def comprar_paquete(request):
     """Inicia Webpay por un paquete. El monto lo calcula el servidor con la tarifa del profesor."""
-    # Menores: contrata su apoderado. Unico inicio de Webpay.
-    if es_menor(get_object_or_404(Alumno, id_alumno=request.session['alumno_id']).user):
-        return redirect('alumno_pag1')
-    return iniciar_compra_paquete(request, request.session['alumno_id'])
+    return iniciar_compra_paquete(request, request.session['alumno_id'])  # el menor no pasa: ahi se bloquea
 
 
-def iniciar_compra_paquete(request, alumno_id, al_crear=None):
+def iniciar_compra_paquete(request, alumno_id, al_crear=None, vinculo=None):
     """Unico inicio de Webpay para paquetes: lo usan el alumno y el apoderado.
 
     Plan y profesor vienen del POST; el monto lo calcula el servidor. ``al_crear``
     recibe el paquete dentro de la misma transaccion (la compra del apoderado).
+
+    Menores: solo contrata su apoderado, con el ``vinculo`` que lo autoriza. El bloqueo vive aqui y no en las
+    vistas, porque aqui se crea el paquete: cualquier vista nueva que llegue hasta este punto queda cubierta.
     """
+    try:
+        exigir_mayor_de_edad(get_object_or_404(Alumno, pk=alumno_id), vinculo)
+    except InscripcionError:
+        return redirect('alumno_pag1')
     plan = paquetes.POR_CODIGO.get(request.POST.get('plan', ''))
     profesor = _profesor_habilitado(request.POST.get('profesor'))
     if not (plan and profesor):

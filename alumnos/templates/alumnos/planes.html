@@ -70,6 +70,8 @@
                     <input type="hidden" name="plan" value="{{ c.plan.codigo }}">
                     <button type="submit" class="plan-btn-action">Contratar {{ c.plan.nombre }} para {{ estudiante.alumno.user.first_name }}</button>
                 </form>
+                {% elif profesor and es_menor %}
+                <p role="status">Tu apoderado contrata por ti desde su cuenta.</p>
                 {% elif profesor and es_alumno %}
                 <form method="post" action="{% url 'comprar_paquete' %}">
                     {% csrf_token %}
