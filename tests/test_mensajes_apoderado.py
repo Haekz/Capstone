@@ -93,7 +93,7 @@ class MensajesDelApoderadoTests(Escenario):
         self.abrir()
         self.conversar(self.apoderado.user, 'Hola profe')
         aviso = Notificacion.objects.get(usuario=self.profe.user)
-        self.assertEqual(aviso.texto, f'Apoderado de {self.nombre_menor} te escribió un mensaje.')
+        self.assertEqual(aviso.texto, f'Madre de {self.nombre_menor} te escribió un mensaje.')
         self.assertNotIn(self.apoderado.user.first_name, aviso.texto)
         self.assertEqual(aviso.enlace, f"{reverse('panel_profesor')}?c={self.conversacion.pk}")
 
@@ -131,7 +131,7 @@ class MensajesDelApoderadoTests(Escenario):
         self.conversar(self.apoderado.user, 'Hola profe')
         self.entrar(RUT_PROFE)
         r = self.client.get(reverse('panel_profesor'), {'c': self.conversacion.pk})
-        self.assertContains(r, f'Apoderado de {self.nombre_menor}')
+        self.assertContains(r, f'Madre de {self.nombre_menor}')
         for privado in (self.apoderado.user.first_name, self.apoderado.user.email, self.apoderado.user.rut):
             self.assertNotContains(r, privado)
 

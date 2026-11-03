@@ -97,8 +97,8 @@ def marcar_visto(user, conversacion):
 
 
 def _aviso_a_quien_no_escribio(conversacion, autor):
-    """(destinatario, texto, enlace). Al profesor le llega "Apoderado de <menor>", nunca el nombre del
-    apoderado; al apoderado, de que estudiante se trata."""
+    """(destinatario, texto, enlace). Al profesor le llega "Madre/Padre/Tutor legal de <menor>", nunca el nombre
+    del apoderado; al apoderado, de que estudiante se trata."""
     if autor.pk == conversacion.cliente_id:
         return (conversacion.profesor.user, f'{conversacion.nombre_para_profesor} te escribió un mensaje.',
                 reverse('panel_profesor'))

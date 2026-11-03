@@ -101,6 +101,7 @@ class AvisoDelApoderadoTests(Escenario):
         r = self.client.get(reverse('mensajes_apoderado'))
         self.assertContains(r, TITULO, count=1)
         self.assertContains(r, ABIERTO)
+        self.assertContains(r, 'si eres madre, padre o tutor legal')
         self.assertContains(r, 'no tu nombre')
 
     def test_dentro_de_una_conversacion_va_plegado(self):

@@ -73,7 +73,25 @@ class ProfesorYApoderadosTests(Escenario):
         self.otro_apoderado()
         self.abrir()
         r = self.client.get(reverse('panel_profesor'))
-        self.assertContains(r, f'Apoderado de {self.menor.user.first_name}', count=2)
+        self.assertContains(r, f'Madre de {self.menor.user.first_name}', count=1)
+        self.assertContains(r, f'Padre de {self.menor.user.first_name}', count=1)
+
+    def test_el_profesor_ve_si_escribe_la_madre_el_padre_o_el_tutor_y_nunca_el_nombre_del_apoderado(self):
+        nombre = self.menor.user.first_name
+        self.abrir()
+        for parentesco, rotulo in (('madre', 'Madre'), ('padre', 'Padre'), ('tutor', 'Tutor legal')):
+            with self.subTest(parentesco=parentesco):
+                Vinculo.objects.filter(pk=self.vinculo.pk).update(parentesco=parentesco)
+                r = self.client.get(reverse('panel_profesor'))
+                self.assertContains(r, f'{rotulo} de {nombre}')
+                self.assertNotContains(r, f'Apoderado de {nombre}')
+                self.assertNotContains(r, self.apoderado.user.rut)
+                self.assertNotContains(r, self.apoderado.nombre)
+
+    def test_sin_vinculo_que_lo_explique_el_profesor_ve_apoderado_y_no_un_parentesco_inventado(self):
+        self.abrir()
+        self.vinculo.delete()
+        self.assertContains(self.client.get(reverse('panel_profesor')), f'Apoderado de {self.menor.user.first_name}')
 
     def test_con_el_vinculo_vigente_el_profesor_ve_el_formulario(self):
         self.abrir()
@@ -112,6 +130,6 @@ class ProfesorYApoderadosTests(Escenario):
         reporte = servicio.reportar(self.profe.user, conversacion, 'Algo raro.')
         entrar_soporte(self.client, agente)
         r = self.client.get(reverse('mensajes_soporte_leer', args=[reporte.ticket_id]))
-        self.assertContains(r, f'Apoderado de {self.menor.user.first_name}')
+        self.assertContains(r, f'Madre de {self.menor.user.first_name}')
         self.assertContains(r, '(apoderado)')
         self.assertContains(r, 'Hola profe')

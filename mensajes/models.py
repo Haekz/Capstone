@@ -10,6 +10,9 @@ from django.db import models
 from django.db.models import Exists, F, OuterRef, Q, Subquery
 from django.db.models.functions import Coalesce
 
+# Como ve el profesor a quien escribe por un menor: lo que su vinculo verificado acredita (madre, padre o tutor).
+ROTULO_PARENTESCO = {'madre': 'Madre', 'padre': 'Padre', 'tutor': 'Tutor legal'}
+
 from alumnos.models import Alumno, Profesor
 
 LARGO_MAX = 1000
@@ -65,15 +68,26 @@ class Conversacion(models.Model):
         return f'{self.alumno.user.first_name} - {self.profesor.user.first_name}'
 
     # Como se nombra a cada lado (solo nombre de pila). Del menor habla su apoderado: el profesor ve
-    # "Apoderado de <menor>", sin el nombre ni ningun dato del apoderado.
+    # "Madre de <menor>", "Padre de <menor>" o "Tutor legal de <menor>", sin el nombre ni otro dato del apoderado.
     @property
     def es_de_apoderado(self):
         return self.cliente_id != self.alumno.user_id
 
     @property
+    def parentesco_del_cliente(self):
+        """El parentesco que declaro quien escribe por el menor (None si escribe el propio alumno).
+        Usa el prefetch de ``alumno__vinculos_apoderado__apoderado`` si la lista lo trae."""
+        for vinculo in self.alumno.vinculos_apoderado.all():
+            if vinculo.apoderado.user_id == self.cliente_id:
+                return vinculo.parentesco
+        return None
+
+    @property
     def nombre_para_profesor(self):
         nombre = self.alumno.user.first_name
-        return f'Apoderado de {nombre}' if self.es_de_apoderado else nombre
+        if not self.es_de_apoderado:
+            return nombre
+        return f'{ROTULO_PARENTESCO.get(self.parentesco_del_cliente, "Apoderado")} de {nombre}'
 
     @property
     def nombre_para_cliente(self):

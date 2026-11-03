@@ -31,6 +31,7 @@ def _activa_y_mensajes(user, conversaciones, activa_id):
 def contexto_profesor(profesor, activa_id):
     """Sus conversaciones y, si pidio una (?c=), sus mensajes."""
     conversaciones = list(Conversacion.objects.visibles().filter(profesor=profesor).select_related('alumno__user')
+                          .prefetch_related('alumno__vinculos_apoderado__apoderado')  # "Madre/Padre/Tutor legal de X"
                           .bandeja(profesor.user, 'visto_profesor'))
     activa, mensajes = _activa_y_mensajes(profesor.user, conversaciones, activa_id)
     return {'buzon': conversaciones, 'buzon_activa': activa, 'buzon_mensajes': mensajes}
