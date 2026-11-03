@@ -8,6 +8,25 @@ borrado de la cuenta, por eso no guarda ningun dato personal: ni nombre, ni corr
 from django.conf import settings
 from django.db import models
 from django.db.models import Q
+from django.utils import timezone
+
+
+class RegistroSupresion(models.Model):
+    """Una persona cuya cuenta se elimino (por su solicitud o por el admin), para volver a eliminarla si se restaura
+    un respaldo anterior (respuesta legal, E4). Solo guarda huellas (HMAC con clave secreta, supresiones/registro.py)
+    del RUT y del correo: ninguno de los dos datos, ni nada que los revele sin la clave. ``fecha`` es default y no
+    auto_now_add para poder importarla desde un archivo exportado."""
+    huella_rut = models.CharField(max_length=64, blank=True, db_index=True)
+    huella_correo = models.CharField(max_length=64, blank=True, db_index=True)
+    fecha = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        verbose_name = 'registro de supresion'
+        verbose_name_plural = 'registros de supresion'
+        ordering = ['fecha', 'pk']
+
+    def __str__(self):
+        return f'Supresion del {self.fecha:%d-%m-%Y}'
 
 
 class SolicitudSupresion(models.Model):

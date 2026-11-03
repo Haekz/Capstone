@@ -8,7 +8,7 @@ from django.views.decorators.http import require_POST
 from alumnos import paquetes
 from alumnos.models import Alumno, Asignatura, Profesor, Tutor, Clase
 from alumnos.decorators import admin_required
-from mensajes import supresion
+from supresiones import registro
 
 from . import ingresos, metricas
 
@@ -158,7 +158,8 @@ def alumnos_del(request, pk):
     
     # Se borra tambien la cuenta (CustomUser); el perfil de alumno cae en cascada. Si la cuenta tiene
     # conversaciones reportadas o historial de pagos y clases no se borra: se seudonimiza (mensajes/supresion.py).
-    borrada = supresion.suprimir_cuenta(alumno.user)
+    # Pasa por el registro de supresiones, igual que la solicitud del usuario.
+    borrada = registro.eliminar(alumno.user)
     if borrada and Alumno.objects.filter(id_alumno=pk).exists():
         alumno.delete()
 

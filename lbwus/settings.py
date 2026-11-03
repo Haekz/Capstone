@@ -23,6 +23,11 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-lbwus-secret-key-for-
 # deriva de SECRET_KEY. Generarla con: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
 DOCUMENTOS_CLAVE = os.environ.get("DOCUMENTOS_CLAVE", "")
 
+# Clave de las huellas del registro de supresiones (supresiones/registro.py). Sin ella se deriva de SECRET_KEY. Si
+# cambia, el registro y los archivos exportados dejan de reconocer a las personas eliminadas: definirla aparte y
+# guardarla junto con los respaldos, nunca en la base de datos.
+SUPRESIONES_CLAVE = os.environ.get("SUPRESIONES_CLAVE", "")
+
 # SECURITY WARNING: don't run with debug turned on in production!
 # En Railway se define DEBUG=False. Sin la variable queda en True.
 DEBUG = os.environ.get('DEBUG', 'True').lower() in ('1', 'true', 'si')

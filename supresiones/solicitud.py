@@ -1,8 +1,8 @@
 """Abrir, ejecutar y rechazar una solicitud de eliminar la cuenta (respuesta legal, E3 pasos 1, 4 y 5).
 
 - ``abrir``: constancia. Crea la solicitud y su ticket de Privacidad y manda el correo de recepcion.
-- ``ejecutar``: elimina y restringe con la misma regla de ``mensajes.supresion`` y avisa el resultado. Solo si la
-  evaluacion no tiene bloqueos.
+- ``ejecutar``: elimina y restringe con la misma regla de ``mensajes.supresion`` (via ``registro.eliminar``, que ademas
+  anota la huella de la persona) y avisa el resultado. Solo si la evaluacion no tiene bloqueos.
 - ``rechazar``: soporte explica por que no se puede (o aun no) y cierra el ticket; el usuario lo lee en LBWUS.
 
 Unico lugar que cambia el estado de una solicitud.
@@ -12,11 +12,10 @@ from django.db import IntegrityError, transaction
 from django.utils import timezone
 
 from alumnos.roles import resolver_rol
-from mensajes.supresion import suprimir_cuenta
 from soporte.models import Ticket
 from soporte.tickets import abrir_reporte, agregar_mensaje, resolver
 
-from . import correo
+from . import correo, registro
 from .evaluacion import evaluar
 from .models import SolicitudSupresion
 
@@ -79,7 +78,7 @@ def ejecutar(solicitud, agente):
             raise SolicitudError('Hoy no se puede eliminar: ' + ' '.join(evaluacion.bloqueos))
         nombre, destino = user.first_name, user.email  # despues de eliminar ya no existen
         resolver(ticket)
-        borrada = suprimir_cuenta(user)
+        borrada = registro.eliminar(user)
         SolicitudSupresion.objects.filter(pk=solicitud.pk).update(
             estado=SolicitudSupresion.EJECUTADA, resuelta=timezone.now(), resuelta_por=agente,
             resultado=SolicitudSupresion.BORRADA if borrada else SolicitudSupresion.SEUDONIMIZADA)
