@@ -4,6 +4,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.password_validation import validate_password
+from django.core.cache import cache
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
@@ -238,6 +239,11 @@ class VincularEstudianteForm(_VinculoForm):
     fallo de la busqueda responde lo mismo (SIN_COINCIDENCIA)."""
     SIN_COINCIDENCIA = ('No pudimos iniciar la solicitud con ese RUT. Revisa que sea el del estudiante. '
                         'Si el problema sigue, escríbenos desde la página de contacto.')
+    # Limites decididos el 02-nov: frenan que se prueben RUT al azar y que se llene de tickets a soporte.
+    LIMITE_SIN_RESULTADO = 5  # busquedas sin resultado en 24 h (cache compartida, como el login)
+    LIMITE_PENDIENTES = 3  # solicitudes con RUT esperando verificacion a la vez
+    DEMASIADOS_INTENTOS = ('Hiciste varios intentos sin resultado. Inténtalo de nuevo mañana o escríbenos desde '
+                           'la página de contacto.')
     rut = _campo_rut('RUT del estudiante')
 
     field_order = ['rut', 'parentesco', 'documento', 'acepta_declaracion']
@@ -257,11 +263,27 @@ class VincularEstudianteForm(_VinculoForm):
         alumno = Alumno.objects.select_related('user').filter(filtro, user__is_active=True).first()
         return alumno if alumno and es_menor(alumno.user) else None
 
+    def _clave_intentos(self):
+        return f'vincular_sin_resultado_{self.apoderado.pk}'
+
+    def _respetar_limites(self):
+        if cache.get(self._clave_intentos(), 0) >= self.LIMITE_SIN_RESULTADO:
+            raise forms.ValidationError(self.DEMASIADOS_INTENTOS)
+        if self.apoderado.vinculos.filter(estado=Vinculo.PENDIENTE, por_rut=True).count() >= self.LIMITE_PENDIENTES:
+            raise forms.ValidationError(f'Tienes {self.LIMITE_PENDIENTES} solicitudes esperando verificación. '
+                                        'Podrás pedir otra cuando revisemos alguna.')
+
+    def _contar_sin_resultado(self):
+        clave = self._clave_intentos()
+        cache.set(clave, cache.get(clave, 0) + 1, timeout=24 * 60 * 60)
+
     def clean(self):
         datos = super().clean()
+        self._respetar_limites()
         if datos.get('rut'):
             self.alumno = self._menor_con_rut(datos['rut'])
             if self.alumno is None:
+                self._contar_sin_resultado()
                 raise forms.ValidationError(self.SIN_COINCIDENCIA)
             existente = Vinculo.objects.filter(apoderado=self.apoderado, alumno=self.alumno).first()
             if existente and not existente.puede_volver_a_pedir:
