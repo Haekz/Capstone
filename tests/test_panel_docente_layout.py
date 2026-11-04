@@ -37,6 +37,13 @@ PLANTILLAS_PANEL = [
     'mensajes/templates/mensajes/buzon_profesor.html',
 ]
 
+# Mis Resenas: su plantilla y las dos hojas que comparte con el sitio publico (perfil del profesor, calificar).
+HOJAS_RESENAS = ['resenas/static/resenas/resenas.css', 'alumnos/static/alumnos/css/perfil_profesor.css']
+PLANTILLAS_RESENAS = [
+    'resenas/templates/resenas/profesor.html', 'resenas/templates/resenas/_bloque.html',
+    'resenas/templates/resenas/_estrellas.html', 'resenas/templates/resenas/_mensajes.html',
+]
+
 
 class PanelDocenteLayoutTests(TestCase):
 
@@ -79,6 +86,18 @@ class PanelDocenteLayoutTests(TestCase):
     def test_inicio_es_la_seccion_activa_de_entrada(self):
         self.assertRegex(self.html, r'<section id="sec-inicio" class="prof-section active"')
         self.assertRegex(self.html, r'id="menu-inicio" class="nav-item active"')
+
+    def test_mis_resenas_vive_en_el_portal_con_su_item_activo(self):
+        html = self.client.get(reverse('resenas_profesor')).content.decode()
+        self.assertIn('class="sidebar"', html)
+        self.assertEqual(html.count('<main'), 1)
+        self.assertRegex(html, r'id="nav-resenas" class="nav-item active"')
+        self.assertNotIn('Volver a mi panel', html)  # el menu ya lleva al panel
+
+    def test_las_variables_css_de_mis_resenas_existen_en_el_portal(self):
+        """Sus hojas son las del sitio publico (--line, --r-md, --surface...): el puente las traduce al portal."""
+        faltantes = sin_definir(HOJAS_RESENAS + PLANTILLAS_RESENAS, definidas_en=[CSS_ADMIN, CSS_PORTAL, *HOJAS_RESENAS])
+        self.assertEqual(faltantes, {})
 
     def test_los_enlaces_sueltos_usan_un_color_que_se_lee_en_oscuro(self):
         """Sin regla propia salen azul del navegador: sobre el fondo oscuro del portal apenas se leen."""

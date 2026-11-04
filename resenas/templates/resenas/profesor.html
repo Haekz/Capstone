@@ -1,19 +1,17 @@
-{% extends 'alumnos/base.html' %}
+{% extends 'user_profesor/base_docente.html' %}
 {% load static %}
 
 {% block title %}Mis reseñas | Panel Profesor | LBWUS{% endblock %}
+{% block nav_resenas %}active{% endblock %}
 
 {% block extra_css %}
+{{ block.super }}
 <link rel="stylesheet" href="{% static 'alumnos/css/perfil_profesor.css' %}">
 <link rel="stylesheet" href="{% static 'resenas/resenas.css' %}">
 {% endblock %}
 
 {% block content %}
 <div class="perfil-prof">
-    <a class="perfil-prof__volver" href="{% url 'panel_profesor' %}">
-        <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a mi panel
-    </a>
-
     <header class="perfil-prof__cabecera">
         <div>
             <h1>Mis reseñas</h1>
