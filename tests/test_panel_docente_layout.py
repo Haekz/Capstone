@@ -97,6 +97,14 @@ class PanelDocenteLayoutTests(TestCase):
         css = _leer(CSS_PORTAL)
         self.assertRegex(css, r'\.page-content a:not\(\[class\]\)\s*\{[^}]*color:\s*var\(--primary-light\)')
 
+    def test_el_titulo_de_tarjeta_no_reparte_el_icono_y_el_texto_a_los_extremos(self):
+        """Con space-between, 'icono + texto' mandaba el texto a la derecha. La etiqueta se empuja sola."""
+        css = _leer(RAIZ / 'user_profesor/static/panel.css')
+        titulo = re.search(r'\.prof-card-title\s*\{([^}]*)\}', css).group(1)
+        self.assertNotIn('space-between', titulo)
+        etiqueta = re.search(r'\.prof-card-title-badge\s*\{([^}]*)\}', css).group(1)
+        self.assertIn('margin-left: auto', etiqueta)
+
     def test_toda_variable_css_del_panel_existe_en_el_portal(self):
         """Una variable que no existe no da error: la propiedad queda sin valor (fondo transparente, color heredado).
 

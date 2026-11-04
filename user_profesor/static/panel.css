@@ -114,12 +114,14 @@
     color: var(--text);
     margin-bottom: 8px;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
+    gap: 10px;
 }
 
-/* esta parte es de la etiqueta pequeña de "Max. 6" dentro del título de la agenda */
+/* esta parte es de la etiqueta pequeña de "Max. 6" dentro del título de la agenda; se empuja sola a la derecha */
 .prof-card-title-badge {
+    margin-left: auto;
     font-size: 0.75rem;
     font-weight: 700;
     background-color: #f1f5f9;
