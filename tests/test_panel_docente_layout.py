@@ -100,9 +100,12 @@ class PanelDocenteLayoutTests(TestCase):
         self.assertEqual(faltantes, {})
 
     def test_los_enlaces_sueltos_usan_un_color_que_se_lee_en_oscuro(self):
-        """Sin regla propia salen azul del navegador: sobre el fondo oscuro del portal apenas se leen."""
+        """Sin regla propia salen azul del navegador: sobre el fondo oscuro del portal apenas se leen.
+
+        Va dentro de :where() (especificidad 0) para no pisar los enlaces que un componente ya estiliza.
+        """
         css = leer(CSS_PORTAL)
-        self.assertRegex(css, r'\.page-content a:not\(\[class\]\)\s*\{[^}]*color:\s*var\(--primary-light\)')
+        self.assertRegex(css, r':where\(\.page-content a:not\(\[class\]\)\)\s*\{[^}]*color:\s*var\(--primary-light\)')
 
     def test_el_titulo_de_tarjeta_no_reparte_el_icono_y_el_texto_a_los_extremos(self):
         """Con space-between, 'icono + texto' mandaba el texto a la derecha. La etiqueta se empuja sola."""
