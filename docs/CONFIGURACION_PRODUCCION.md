@@ -12,7 +12,7 @@ Todas las lee `lbwus/settings.py`, salvo donde se indica.
 | `SECRET_KEY` | Firma de sesiones, CSRF, tokens de recuperación y nombres de sala Jitsi | **Sí** | Con `DEBUG=False`, el sitio **no arranca** (`ImproperlyConfigured`). En desarrollo usa una clave insegura |
 | `DOCUMENTOS_CLAVE` | Clave Fernet de los documentos de apoderados (sección 3) | **Sí** | **El despliegue no arranca**: el `Procfile` corre `check --deploy`, que da el error `apoderados.E001` (o `E002` si la clave no es válida) |
 | `DEBUG` | Modo depuración | Sí, `False` | Queda en `True`: muestra la página de error de Django |
-| `DATABASE_URL` | PostgreSQL (la crea Railway al enlazar la base) | Sí | Usa SQLite local: en Railway se perdería en cada despliegue |
+| `DATABASE_URL` | PostgreSQL (la crea Railway al enlazar la base) | Sí | Sin ella (o con una URL que no sea PostgreSQL) el sitio no arranca |
 | `MEDIA_ROOT` | Carpeta de archivos subidos | Sí, `/data/media` (el volumen) | Usa `media/` dentro del contenedor, que se borra en cada despliegue |
 | `SECURE_SSL_REDIRECT` | Redirigir HTTP a HTTPS | No (por omisión `True` con `DEBUG=False`) | — |
 | `RAILWAY_ENVIRONMENT` | La define Railway. Activa enlaces `https` de allauth y confiar en `X-Forwarded-For` para el límite de intentos (`alumnos/views.py`) | La pone Railway | Enlaces `http` y límite por IP del proxy |
@@ -27,7 +27,7 @@ Todas las lee `lbwus/settings.py`, salvo donde se indica.
 | `SITIO_DOMINIOS_CORREO` | Puerta por dominio de correo (tiene prioridad sobre `SITIO_CLAVE`) | No | Sin puerta por correo |
 | `TRANSBANK_PRODUCCION_HABILITADA`, `TRANSBANK_ENVIRONMENT`, `TRANSBANK_COMMERCE_CODE`, `TRANSBANK_API_KEY` | Webpay real | No: sin ellas se usa el ambiente de integración | Sin cobros reales (es lo esperado hoy) |
 | `WEBPAY_SIMULACION` | Modo simulación | — | **La lee `settings.py`, pero ningún flujo la usa hoy** (ver el reporte del sprint) |
-| `EXIGIR_POSTGRES`, `MONGODB_INTEGRACION` | Solo pruebas | No | — |
+| `MONGODB_INTEGRACION` | Solo pruebas | No | — |
 
 El inicio de sesión con Google no usa variables: el `client_id` y el secreto están en la base (Django admin → Social applications).
 
