@@ -37,7 +37,7 @@ def dashboard_admin(request):
     alumnos = Alumno.objects.select_related('user')
     profesores = Profesor.objects.select_related('user', 'especialidad')
     admins = Tutor.objects.select_related('user')
-    clases = Clase.objects.all()
+    clases = Clase.objects.select_related('asignatura', 'profesor__user')
 
     ultimos_alumnos = alumnos[:3]
     ultimos_profesores = profesores[:3]
@@ -57,6 +57,7 @@ def dashboard_admin(request):
         'alumnos': alumnos,
         'profesores': profesores,
         'admins': admins,
+        'clases': clases,  # tabla "Clases" del panel (se habia perdido del contexto)
         'total_alumnos': alumnos.count(),
         'total_profesores': profesores.count(),
         'total_admins': admins.count(),

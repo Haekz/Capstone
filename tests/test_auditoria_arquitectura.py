@@ -237,8 +237,12 @@ class AuditoriaSeguridadYArquitecturaTests(TestCase):
             extra = Profesor.objects.create(user=u, especialidad=self.esp, titulo_estado=Profesor.TITULO_APROBADO)
             self._agregar_clases(extra, 2)
 
-        despues_adm, _ = self._contar_consultas(*admin)
+        despues_adm, r_adm = self._contar_consultas(*admin)
         despues_prof, r_prof = self._contar_consultas(*profe)
+
+        # La tabla de clases del admin se llena (antes la vista no le pasaba `clases`).
+        for clase in Clase.objects.all():
+            self.assertContains(r_adm, reverse("eliminar_clase", args=[clase.id_clase]))
 
         self.assertEqual(despues_adm, antes_adm, "dashboard_admin crece con los datos (N+1)")
         self.assertEqual(despues_prof, antes_prof, "panel_profesor crece con los datos (N+1)")
