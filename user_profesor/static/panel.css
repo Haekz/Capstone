@@ -6,127 +6,6 @@
     transition: var(--transition);
 }
 
-/* esta parte es de la barra lateral izquierda del panel con el menú de navegación */
-.prof-sidebar {
-    background-color: #faf5ff;
-    border-right: 1px solid #f3e8ff;
-    padding: 40px 24px;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    min-height: calc(100vh - var(--header-height));
-    transition: var(--transition);
-}
-
-body:not(.light-mode) .prof-sidebar {
-    background-color: #0b0712;
-    border-right-color: #1e1330;
-}
-
-/* esta parte es del encabezado del sidebar con el avatar y la especialidad del profe */
-.prof-sidebar-header {
-    text-align: center;
-    margin-bottom: 40px;
-}
-
-/* esta parte es del círculo de avatar con el ícono del profe */
-.prof-avatar {
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    background-color: rgba(168, 85, 247, 0.1);
-    color: var(--primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2.2rem;
-    margin: 0 auto 16px auto;
-    border: 2px solid rgba(168, 85, 247, 0.2);
-}
-
-.prof-sidebar-title {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--text);
-    margin-bottom: 6px;
-}
-
-/* esta parte es de la etiqueta morada con la especialidad del profe */
-.prof-sidebar-tag {
-    font-size: 0.8rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: var(--primary);
-    background-color: rgba(168, 85, 247, 0.08);
-    padding: 4px 12px;
-    border-radius: 20px;
-}
-
-/* esta parte es de la lista de opciones del menú lateral */
-.prof-sidebar-menu {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-/* esta parte es de cada opción individual del menú - cámbiala si quieres otro padding o bordes */
-.prof-menu-item {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 14px 20px;
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--text-light);
-    border-radius: 12px;
-    cursor: pointer;
-    transition: var(--transition);
-}
-
-.prof-menu-item:hover {
-    color: var(--primary);
-    background-color: rgba(168, 85, 247, 0.05);
-}
-
-/* esta parte es del estilo de la opción que está activa/seleccionada en el menú */
-.prof-menu-item.active {
-    color: #ffffff;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-    box-shadow: 0 4px 12px rgba(168, 85, 247, 0.2);
-}
-
-/* esta parte es del pie del sidebar con el botón de cerrar sesión */
-.prof-sidebar-footer {
-    margin-top: auto;
-    border-top: 1px solid #ebd5ff;
-    padding-top: 24px;
-}
-
-body:not(.light-mode) .prof-sidebar-footer {
-    border-top-color: #271b3a;
-}
-
-/* esta parte es del botón de cerrar sesión que aparece en rojo */
-.prof-logout-btn {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 14px 20px;
-    font-size: 1rem;
-    font-weight: 600;
-    color: #ef4444;
-    text-decoration: none;
-    border-radius: 12px;
-    transition: var(--transition);
-}
-
-.prof-logout-btn:hover {
-    background-color: rgba(239, 68, 68, 0.05);
-}
-
 /* esta parte es del área de contenido a la derecha del panel donde se muestran las secciones */
 .prof-content-area {
     padding: 40px;
@@ -591,21 +470,6 @@ body:not(.light-mode) .prof-form-select {
 
 /* esta parte es de las adaptaciones del panel para tablets y pantallas medianas */
 @media (max-width: 1024px) {
-    .prof-dashboard-layout {
-        grid-template-columns: 1fr;
-    }
-
-    .prof-sidebar {
-        border-right: none;
-        border-bottom: 1px solid #f3e8ff;
-        min-height: auto;
-        padding: 30px 24px;
-    }
-
-    body:not(.light-mode) .prof-sidebar {
-        border-bottom-color: #271b3a;
-    }
-
     .prof-dashboard-grid {
         grid-template-columns: 1fr;
     }
@@ -638,10 +502,6 @@ body:not(.light-mode) .prof-form-select {
     
     .prof-schedule-time {
         justify-content: center;
-    }
-
-    .prof-sidebar {
-        padding: 20px;
     }
 }
 
