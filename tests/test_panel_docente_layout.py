@@ -6,6 +6,7 @@ si un enlace pierde su seccion (o al reves), el clic falla en silencio. Esta pru
 
 import re
 from datetime import date
+from pathlib import Path
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -16,6 +17,7 @@ from alumnos.models import Especialidad, Genero, Profesor
 User = get_user_model()
 
 CLAVE = 'clave12345'
+CSS_PORTAL = Path(__file__).resolve().parent.parent / 'user_profesor/static/user_profesor/portal_docente.css'
 
 
 class PanelDocenteLayoutTests(TestCase):
@@ -59,3 +61,8 @@ class PanelDocenteLayoutTests(TestCase):
     def test_inicio_es_la_seccion_activa_de_entrada(self):
         self.assertRegex(self.html, r'<section id="sec-inicio" class="prof-section active"')
         self.assertRegex(self.html, r'id="menu-inicio" class="nav-item active"')
+
+    def test_los_enlaces_sueltos_usan_un_color_que_se_lee_en_oscuro(self):
+        """Sin regla propia salen azul del navegador: sobre el fondo oscuro del portal apenas se leen."""
+        css = CSS_PORTAL.read_text(encoding='utf-8')
+        self.assertRegex(css, r'\.page-content a:not\(\[class\]\)\s*\{[^}]*color:\s*var\(--primary-light\)')

@@ -11,3 +11,9 @@ body {
     --shadow: var(--shadow-md);
     --secondary: #1a1233;
 }
+
+/* Enlaces sueltos del contenido (los avisos del buzon): sin esto salen en el azul del navegador, que sobre el fondo
+   oscuro apenas se lee. --primary-light cambia con el tema: #7c3aed en claro y #c4b5fd en oscuro (ambos pasan AA). */
+.page-content a:not([class]) {
+    color: var(--primary-light);
+}
