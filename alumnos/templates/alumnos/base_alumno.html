@@ -241,6 +241,10 @@
                 btn.addEventListener('click', () => irAlPortal(btn.dataset.view)));
             const temas = document.getElementById('nav-open-interests');
             if (temas) temas.addEventListener('click', () => irAlPortal('temas'));
+            // La página dice a qué vista del menú pertenece (p. ej. Tickets -> view-support) para marcarla
+            const vistaMenu = '{% block vista_menu %}{% endblock %}';
+            document.querySelectorAll('.sidebar-view-btn').forEach(btn =>
+                btn.classList.toggle('active', btn.dataset.view === vistaMenu));
         }
     </script>
 </body>
