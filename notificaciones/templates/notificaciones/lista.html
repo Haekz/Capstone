@@ -2,6 +2,10 @@
 {% load static %}
 
 {% block title %}Notificaciones | LBWUS{% endblock %}
+{% block nav_dashboard %}{% endblock %}{# no es el dashboard: el menú del alumno no debe marcarlo #}
+{# En el portal del alumno el título lo da la barra (como en sus otras vistas); el resto de bases conserva el suyo #}
+{% block page_title %}{% if titulo_en_barra %}Notificaciones{% else %}{{ block.super }}{% endif %}{% endblock %}
+{% block page_subtitle %}{% if titulo_en_barra %}Tus avisos más recientes{% else %}{{ block.super }}{% endif %}{% endblock %}
 
 {% block extra_css %}
 {{ block.super }}
@@ -19,6 +23,7 @@
 
     {# div y no section: styles.css da padding vertical de marketing a todo <section> #}
     <div>
+        {% if not titulo_en_barra %}
         <header class="notif-pagina__cabecera">
             <span class="notif-pagina__icono" aria-hidden="true"><i class="bi bi-bell-fill"></i></span>
             <div>
@@ -26,6 +31,7 @@
                 <p>Tus avisos más recientes.</p>
             </div>
         </header>
+        {% endif %}
 
         {% if notificaciones %}
         <ul class="notif-lista">

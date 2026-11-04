@@ -4570,3 +4570,16 @@ body.dark-mode .stat-icon {
     cursor: pointer;
     font-family: inherit;
 }
+
+/* Notificaciones dentro del portal (notificaciones/lista.html sobre base_alumno). lista.css se escribio para el sitio
+   publico: usa --surface (aqui es --white, que ya cambia con el tema) y baja el contenido bajo un header fijo que el
+   portal no tiene (--header-height es la altura de SU barra, asi que no se puede poner en 0). */
+#portal-alumno {
+    --surface: var(--white);
+}
+
+#portal-alumno .notif-pagina {
+    max-width: 900px;
+    margin: 0;
+    padding: 0;
+}

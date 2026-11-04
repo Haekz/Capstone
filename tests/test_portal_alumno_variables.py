@@ -22,3 +22,13 @@ class VariablesCssDelPortalAlumnoTests(SimpleTestCase):
 
     def test_toda_variable_css_del_portal_alumno_esta_definida(self):
         self.assertEqual(sin_definir(PAGINA_ALUMNO, definidas_en=PAGINA_ALUMNO), {})
+
+    def test_notificaciones_dentro_del_portal_alumno_tiene_todas_sus_variables(self):
+        # lista.css se escribio para el sitio publico (--surface, header fijo): alumn_1.css hace el puente.
+        notificaciones = [
+            'notificaciones/static/notificaciones/lista.css',
+            'notificaciones/static/notificaciones/campanita.css',
+            'notificaciones/templates/notificaciones/lista.html',
+        ]
+        hojas = [a for a in notificaciones if a.endswith('.css')]
+        self.assertEqual(sin_definir(notificaciones, definidas_en=PAGINA_ALUMNO + hojas), {})
