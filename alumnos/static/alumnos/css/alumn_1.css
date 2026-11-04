@@ -4458,11 +4458,6 @@ body.dark-mode .stat-icon {
     color: var(--accent);
 }
 
-#portal-alumno .stat-icon--blue {
-    background: rgba(59, 130, 246, 0.1);
-    color: #3b82f6;
-}
-
 #portal-alumno .ap-chart-box {
     height: 220px;
     position: relative;
