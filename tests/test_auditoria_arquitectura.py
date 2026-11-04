@@ -185,44 +185,65 @@ class AuditoriaSeguridadYArquitecturaTests(TestCase):
         self.prof_aprobado.user.refresh_from_db()
         self.assertEqual(self.prof_aprobado.nombre, "Roberto Gomez")
 
-    def test_orm_sin_n_mas_1_en_dashboards(self):
-        """Verifica que dashboard_admin, panel_profesor y alumno_pag1 mantengan consultas O(1) acotadas."""
-        for i in range(4):
+    def _agregar_clases(self, profesor, cantidad, desde_hora=8):
+        """`cantidad` clases de `profesor`, cada una con inscripcion, retiro y reporte."""
+        for i in range(cantidad):
             c = Clase.objects.create(
                 asignatura=self.asig,
-                profesor=self.prof_aprobado,
+                profesor=profesor,
                 modalidad="online",
-                horario=dt_time(14 + i, 0),
+                horario=dt_time(desde_hora + i, 0),
             )
             Inscripcion.objects.create(alumno=self.alumno, clase=c, estado="confirmada")
             SolicitudRetiro.objects.create(
-                profesor=self.prof_aprobado,
+                profesor=profesor,
                 monto=5000,
                 banco=self.banco,
                 tipo_cuenta="corriente",
                 numero_cuenta="111",
             )
-            Reporte.objects.create(remitente=self.u_alum, descripcion=f"Reporte {i}")
+            Reporte.objects.create(remitente=self.u_alum, descripcion=f"Reporte {profesor.pk}-{i}")
 
-        # Admin dashboard
-        self.client.force_login(self.u_admin)
+    def _contar_consultas(self, usuario, sesion, nombre_url):
+        self.client.force_login(usuario)
         s = self.client.session
-        s["admin_id"] = self.tutor.id_tutor
+        s.update(sesion)
         s.save()
-        with CaptureQueriesContext(connection) as q_adm:
-            r_adm = self.client.get(reverse("dashboard_admin"))
-        self.assertEqual(r_adm.status_code, 200)
-        self.assertLessEqual(len(q_adm), 15)
+        with CaptureQueriesContext(connection) as consultas:
+            respuesta = self.client.get(reverse(nombre_url))
+        self.assertEqual(respuesta.status_code, 200)
+        return len(consultas), respuesta
 
-        # Profesor panel
-        self.client.force_login(self.u_prof)
-        s = self.client.session
-        s["profesor_id"] = self.prof_aprobado.id_profesor
-        s.save()
-        with CaptureQueriesContext(connection) as q_prof:
-            r_prof = self.client.get(reverse("panel_profesor"))
-        self.assertEqual(r_prof.status_code, 200)
-        self.assertLessEqual(len(q_prof), 12)
+    def test_orm_sin_n_mas_1_en_dashboards(self):
+        """dashboard_admin y panel_profesor hacen las mismas consultas con pocos o muchos datos (O(1)).
+
+        Comparar contra si mismo detecta cualquier N+1 sin depender de cuantos bloques tenga el panel.
+        El techo absoluto atrapa recargas grandes; se midio 33 (admin) y 17 (profesor).
+        """
+        admin = (self.u_admin, {"admin_id": self.tutor.id_tutor}, "dashboard_admin")
+        profe = (self.u_prof, {"profesor_id": self.prof_aprobado.id_profesor}, "panel_profesor")
+
+        self._agregar_clases(self.prof_aprobado, 1)
+        antes_adm, _ = self._contar_consultas(*admin)
+        antes_prof, _ = self._contar_consultas(*profe)
+
+        # Mas clases del mismo profesor y tres profesores nuevos con las suyas.
+        self._agregar_clases(self.prof_aprobado, 4, desde_hora=14)
+        for n in range(3):
+            u = User.objects.create_user(
+                username=f"3000000{n}-0", rut=f"3000000{n}-0", email=f"prof_extra{n}@lbwus.cl",
+                password="PasswordSegura123!", rol="profesor", first_name=f"Extra{n}", genero=self.genero,
+            )
+            extra = Profesor.objects.create(user=u, especialidad=self.esp, titulo_estado=Profesor.TITULO_APROBADO)
+            self._agregar_clases(extra, 2)
+
+        despues_adm, _ = self._contar_consultas(*admin)
+        despues_prof, r_prof = self._contar_consultas(*profe)
+
+        self.assertEqual(despues_adm, antes_adm, "dashboard_admin crece con los datos (N+1)")
+        self.assertEqual(despues_prof, antes_prof, "panel_profesor crece con los datos (N+1)")
+        self.assertLessEqual(despues_adm, 36)
+        self.assertLessEqual(despues_prof, 20)
         self.assertContains(r_prof, "Cálculo Vectorial")
 
     def test_formato_clp_y_alumnos_reg_dry(self):

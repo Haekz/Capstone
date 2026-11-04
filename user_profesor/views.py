@@ -15,6 +15,7 @@ from django.core.exceptions import ValidationError
 from django.http import FileResponse, Http404
 from django.views.decorators.http import require_POST
 from . import cambio_cuenta, foto
+from .saldos import calcular_saldos  # noqa: F401  (metricas, supresiones y pruebas lo importan desde aqui)
 from alumnos import catalogos, liquidacion, paquetes
 from agenda import panel as agenda_panel
 from observaciones import panel as observaciones_panel
@@ -23,40 +24,6 @@ from mensajes import panel as mensajes_panel
 logger = logging.getLogger(__name__)
 
 
-
-def calcular_saldos(profesor):
-    """Devuelve los saldos de un profesor a partir de sus inscripciones.
-
-    Sin inscripciones el resultado es 0: una cuenta nueva no tiene dinero.
-    Solo cuentan las clases ya dictadas: una reserva futura todavia se puede
-    cancelar, y lo no realizado no se liquida (docs/POLITICA_PAQUETES.md, punto 10).
-    Excepcion: si el alumno cancela con menos de 4 h, la clase se le paga igual (02-nov).
-    """
-    from django.db.models import Sum
-
-    from alumnos.models import SolicitudRetiro
-
-    inscripciones = Inscripcion.objects.filter(clase__profesor=profesor).pagables().select_related('paquete')
-    valores = [paquetes.valor_clase(i) for i in inscripciones]
-
-    total_ganado = sum(valores)
-    corresponde_al_profesor = sum(paquetes.pago_profesor(v) for v in valores)
-
-    retiros = SolicitudRetiro.objects.filter(profesor=profesor)
-    aprobados = retiros.filter(
-        estado__in=[SolicitudRetiro.APROBADO, SolicitudRetiro.PAGADO]
-    ).aggregate(Sum('monto'))['monto__sum'] or 0
-    pendientes = retiros.filter(estado=SolicitudRetiro.PENDIENTE).aggregate(Sum('monto'))['monto__sum'] or 0
-
-    disponible = max(0, corresponde_al_profesor - aprobados - pendientes)
-    # La comision de la plataforma mas lo que aun esta en tramite.
-    pendiente = (total_ganado - corresponde_al_profesor) + pendientes
-
-    return {
-        'total_ganado': total_ganado,
-        'disponible': disponible,
-        'pendiente': pendiente,
-    }
 
 
 def buscar_especialidad(especialidad_id):

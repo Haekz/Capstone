@@ -33,9 +33,10 @@ def dashboard_admin(request):
 
     # Consulta a la base de datos de los contadores del sistema. Los reportes de
     # usuarios los atiende soporte (paso 6e): el admin no ve su contenido.
-    alumnos = Alumno.objects.all()
-    profesores = Profesor.objects.all()
-    admins = Tutor.objects.all()
+    # select_related: la plantilla muestra nombre, correo y especialidad de cada fila (sin N+1).
+    alumnos = Alumno.objects.select_related('user')
+    profesores = Profesor.objects.select_related('user', 'especialidad')
+    admins = Tutor.objects.select_related('user')
     clases = Clase.objects.all()
 
     ultimos_alumnos = alumnos[:3]

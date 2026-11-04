@@ -3,7 +3,7 @@
 Siguen docs/POLITICA_PAQUETES.md: lo cobrado por clases que aun no se dictan es
 una obligacion, no un ingreso, y no pasa a ser ganancia al vencer el paquete.
 LBWUS gana su comision solo por las clases ya dictadas: es la misma cuenta que
-el saldo del profesor (user_profesor.views.calcular_saldos), vista desde LBWUS.
+el saldo del profesor (user_profesor.saldos), vista desde LBWUS.
 
 Tambien arma el grafico de registros nuevos por mes (antes, puntos fijos de Feb a Jun),
 el de personas que entran por dia (promedio en meses y trimestres),
@@ -20,7 +20,7 @@ from django.utils import timezone
 from alumnos import paquetes
 from alumnos.models import Alumno, Inscripcion, PaqueteClases, Profesor, SolicitudRetiro, Suscripcion
 from soporte.models import Ticket
-from user_profesor.views import calcular_saldos  # el mismo saldo que ve cada profesor
+from user_profesor.saldos import saldos_de  # el mismo saldo que ve cada profesor
 
 from .models import IngresoDiario
 
@@ -53,7 +53,7 @@ def finanzas():
         'ganancia': sum(paquetes.comision(paquetes.valor_clase(i)) for i in dictadas),
         'por_dictar': max(0, cobrado_paquetes - dictado_de_paquetes),
         # Lo que los profesores ya pueden pedir (sin contar retiros en tramite).
-        'saldo_profesores': sum(calcular_saldos(p)['disponible'] for p in Profesor.objects.all()),
+        'saldo_profesores': sum(s['disponible'] for s in saldos_de(Profesor.objects.all()).values()),
         'retiros_pagados': _suma(SolicitudRetiro.objects.filter(estado=SolicitudRetiro.PAGADO)),
         # Pendientes de pagar: los que esperan revision y los aprobados sin transferir.
         'retiros_pendientes': _suma(SolicitudRetiro.objects.filter(
