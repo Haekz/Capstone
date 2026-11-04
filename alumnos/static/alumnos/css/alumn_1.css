@@ -728,6 +728,24 @@ body.dark-mode .teacher-card {
     color: var(--primary);
 }
 
+/* Calificacion real de las resenas visibles; sin resenas dice "Nuevo" */
+.teacher-rating {
+    margin: 2px 0 0;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.teacher-rating .bi-star-fill {
+    color: #f59e0b;
+}
+
+.teacher-rating span,
+.teacher-rating--nuevo {
+    font-weight: 500;
+    color: var(--text-light);
+}
+
 .teacher-specialty {
     font-size: 0.85rem;
     color: var(--primary);

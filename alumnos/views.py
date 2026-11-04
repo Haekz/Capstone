@@ -30,7 +30,7 @@ from django.core.exceptions import ValidationError
 from . import paquetes, progreso
 from mensajes import panel as mensajes_panel
 from observaciones import panel as observaciones_panel
-from resenas.consultas import pendiente_de_calificar
+from resenas.consultas import calificaciones_por_profesor, formatear_promedio, pendiente_de_calificar
 from django.db import transaction
 from apoderados.permisos import clase_pagada_por_apoderado, vinculo_contratable
 from lbwus.puerta import destino_seguro
@@ -280,6 +280,13 @@ def alumnos_reg(request):
 # PORTAL DEL ALUMNO
 # ============================================================
 
+def _rating_para_tarjeta(calificacion):
+    """Lo que muestra la tarjeta del profesor: promedio con coma y total; None si aun no tiene resenas."""
+    if not calificacion:
+        return None
+    return {'promedio': formatear_promedio(calificacion['promedio']), 'total': calificacion['total']}
+
+
 @never_cache
 @alumno_required
 def alumno_pag1(request):
@@ -337,18 +344,21 @@ def alumno_pag1(request):
     for pago in pagos:
         pago.monto_clp = _clp(pago.monto)  # mismo formato que la confirmacion de Webpay
 
+    calificaciones = calificaciones_por_profesor()
+
     context = {
         'alumno': alumno,
         'mis_reportes': mis_reportes,
         'profesores_list': profesores_list,
-        # Solo datos reales. Distancia, calificacion y precio no se
-        # registran todavia en la plataforma, asi que no se inventan.
+        # Solo datos reales. Distancia y precio no se registran todavia en la plataforma, asi que no se
+        # inventan; la calificacion sale de las resenas visibles (None = profesor nuevo, sin resenas).
         'profesores_js': [
             {
                 'id': p.id_profesor,
                 'name': p.nombre,
                 'specialties': [p.especialidad.nombre] if p.especialidad else [],
                 'initial': p.nombre[:1].upper(),
+                'rating': _rating_para_tarjeta(calificaciones.get(p.id_profesor)),
             }
             for p in profesores_list
         ],

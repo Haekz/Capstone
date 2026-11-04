@@ -879,6 +879,15 @@
         const URL_PERFIL_PROFESOR = "{% url 'perfil_profesor' 0 %}";
         const enlacePerfil = (t) =>
             `<a class="teacher-profile-link" href="${URL_PERFIL_PROFESOR.replace(/0\/$/, `${Number(t.id)}/`)}">Ver perfil</a>`;
+        // Calificacion real (reseñas visibles). Sin reseñas: "Nuevo", sin estrellas inventadas. Los tutores de ejemplo no traen `rating`.
+        const calificacion = (t) => {
+            if (!('rating' in t)) return '';
+            if (!t.rating) return '<p class="teacher-rating teacher-rating--nuevo">Nuevo</p>';
+            const total = Number(t.rating.total);
+            const promedio = escaparHtml(t.rating.promedio);
+            return `<p class="teacher-rating" aria-label="Calificación ${promedio} de 5, basada en ${total} reseña${total === 1 ? '' : 's'}">` +
+                `<i class="bi bi-star-fill" aria-hidden="true"></i> ${promedio} <span>(${total})</span></p>`;
+        };
         // Minusculas y sin tildes, para que "matematicas" encuentre "Matemáticas".
         const normalizar = (texto) => String(texto).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
@@ -1176,6 +1185,7 @@
                     <div class="teacher-info">
                         <h4>${escaparHtml(t.name)}</h4>
                         <p class="teacher-specialty">${escaparHtml(t.specialties.join(', '))}</p>
+                        ${calificacion(t)}
                         ${enlacePerfil(t)}
                     </div>
                 `;
@@ -1221,7 +1231,8 @@
                             <div class="teacher-info">
                                 <h4>${escaparHtml(t.name)}</h4>
                                 <p class="teacher-specialty">${escaparHtml(t.specialties.join(', '))}</p>
-                                ${enlacePerfil(t)}
+                                ${calificacion(t)}
+                        ${enlacePerfil(t)}
                             </div>
                             <div class="teacher-distance-box">
                                 <button class="btn-contact-teacher" onclick="requestClassAccess(${t.id})">Ver Horarios</button>
@@ -1340,6 +1351,7 @@
                     <div class="teacher-info">
                         <h4>${escaparHtml(t.name)}</h4>
                         <p class="teacher-specialty">${escaparHtml(t.specialties.join(', '))}</p>
+                        ${calificacion(t)}
                         ${enlacePerfil(t)}
                     </div>
                     <div class="teacher-distance-box">
