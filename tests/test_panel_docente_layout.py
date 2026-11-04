@@ -44,6 +44,14 @@ PLANTILLAS_RESENAS = [
     'resenas/templates/resenas/_estrellas.html', 'resenas/templates/resenas/_mensajes.html',
 ]
 
+# Notificaciones: la pagina (compartida con alumno y apoderado) y la campanita que el portal docente lleva en su barra.
+HOJAS_NOTIFICACIONES = [
+    'notificaciones/static/notificaciones/lista.css', 'notificaciones/static/notificaciones/campanita.css',
+]
+PLANTILLAS_NOTIFICACIONES = [
+    'notificaciones/templates/notificaciones/lista.html', 'notificaciones/templates/notificaciones/_campanita.html',
+]
+
 
 class PanelDocenteLayoutTests(TestCase):
 
@@ -97,6 +105,13 @@ class PanelDocenteLayoutTests(TestCase):
     def test_las_variables_css_de_mis_resenas_existen_en_el_portal(self):
         """Sus hojas son las del sitio publico (--line, --r-md, --surface...): el puente las traduce al portal."""
         faltantes = sin_definir(HOJAS_RESENAS + PLANTILLAS_RESENAS, definidas_en=[CSS_ADMIN, CSS_PORTAL, *HOJAS_RESENAS])
+        self.assertEqual(faltantes, {})
+
+    def test_las_variables_css_de_notificaciones_existen_en_el_portal(self):
+        faltantes = sin_definir(
+            HOJAS_NOTIFICACIONES + PLANTILLAS_NOTIFICACIONES,
+            definidas_en=[CSS_ADMIN, CSS_PORTAL, *HOJAS_NOTIFICACIONES],
+        )
         self.assertEqual(faltantes, {})
 
     def test_los_enlaces_sueltos_usan_un_color_que_se_lee_en_oscuro(self):

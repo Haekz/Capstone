@@ -1,16 +1,17 @@
-{% extends 'alumnos/base.html' %}
+{% extends base %}
 {% load static %}
 
 {% block title %}Notificaciones | LBWUS{% endblock %}
 
 {% block extra_css %}
+{{ block.super }}
 <link rel="stylesheet" href="{% static 'notificaciones/lista.css' %}">
 {% endblock %}
 
 {% block content %}
 <div class="notif-pagina">
-    {# Cada rol vuelve a su portal: el context processor da su ruta y su nombre (Mi portal, Mi panel, Mi cuenta). #}
-    {% if usuario_sesion.url_panel %}
+    {# Cada rol vuelve a su portal: el context processor da su ruta y su nombre (Mi portal, Mi cuenta). El docente no: su menu ya lo lleva. #}
+    {% if usuario_sesion.url_panel and not en_portal %}
     <a class="notif-pagina__volver" href="{{ usuario_sesion.url_panel }}">
         <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a {{ usuario_sesion.texto_panel|lower }}
     </a>

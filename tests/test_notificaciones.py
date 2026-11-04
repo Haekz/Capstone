@@ -81,13 +81,15 @@ class CampanitaDelAlumnoTests(Escenario):
 
 
 class PaginaDeNotificacionesTests(BaseResenas):
-    """La pagina es la misma para todos los roles: cada uno vuelve a su portal y lo vacio se explica."""
+    """La pagina es la misma para todos los roles: el alumno y el apoderado vuelven a su portal y lo vacio se explica.
 
-    def test_cada_rol_vuelve_a_su_propio_portal(self):
+    El docente la ve dentro de su portal: su menu ya lo lleva al panel, asi que no lleva 'Volver'.
+    """
+
+    def test_el_alumno_y_el_apoderado_vuelven_a_su_propio_portal(self):
         apoderado = crear_apoderado('44444444-4', Apoderado.VERIFICADO)
         casos = (
             (self.ana, ALUMNO, 'alumno_pag1', 'Volver a mi portal'),
-            (self.profesor, PROFESOR, 'panel_profesor', 'Volver a mi panel'),
             (apoderado, APODERADO, 'portal_apoderado', 'Volver a mi cuenta'),
         )
         for perfil, rol, ruta, texto in casos:
@@ -96,6 +98,16 @@ class PaginaDeNotificacionesTests(BaseResenas):
                 r = self.client.get(reverse('mis_notificaciones'))
                 self.assertContains(r, f'class="notif-pagina__volver" href="{reverse(ruta)}"')
                 self.assertContains(r, texto)
+                self.assertNotContains(r, 'class="sidebar"')  # siguen en el diseno publico
+
+    def test_el_docente_la_ve_dentro_de_su_portal_sin_volver(self):
+        notificar(self.profesor.user, 'Te reservaron Algebra')
+        entrar(self.client, self.profesor, PROFESOR)
+        r = self.client.get(reverse('mis_notificaciones'))
+        self.assertContains(r, 'class="sidebar"')  # el menu del portal docente
+        self.assertContains(r, 'Te reservaron Algebra')
+        self.assertNotContains(r, 'notif-pagina__volver')
+        self.assertEqual(r.content.decode().count('<main'), 1)
 
     def test_sin_notificaciones_explica_que_apareceran_aqui(self):
         entrar(self.client, self.ana, ALUMNO)
