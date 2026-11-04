@@ -1,9 +1,11 @@
-{% extends 'alumnos/base.html' %}
+{% extends 'user_profesor/base_docente.html' %}
 {% load static %}
 
 {% block title %}LBWUS | Panel Profesor{% endblock %}
+{% block nav_inicio %}active{% endblock %}
 
 {% block extra_css %}
+{{ block.super }}
 <!-- esta parte es de los estilos del panel del profe, cámbialos en panel.css si quieres retocar algo visual -->
 <link rel="stylesheet" href="{% static 'panel.css' %}">
 <link rel="stylesheet" href="{% static 'clases_solicitadas.css' %}">
@@ -63,64 +65,8 @@ input:checked + .slider:before {
 {% endif %}
 
 <div class="prof-dashboard-layout">
-    
-    <!-- esta parte es del menú lateral del panel, aquí están los botones para navegar entre secciones -->
-    <aside class="prof-sidebar">
-        <div class="prof-sidebar-header">
-            <div class="prof-avatar">
-                <i class="bi bi-person-workspace"></i>
-            </div>
-            <h3 class="prof-sidebar-title">Docente</h3>
-            <span class="prof-sidebar-tag">{{ profesor.especialidad }}</span>
-        </div>
-        
-        <!-- esta parte es de la lista de opciones del menú lateral -->
-        <ul class="prof-sidebar-menu">
-            <li class="prof-menu-item active" id="menu-inicio" onclick="switchSection('inicio')">
-                <i class="bi bi-grid-1x2"></i> Inicio
-            </li>
-            <li class="prof-menu-item" id="menu-clases" onclick="switchSection('clases')">
-                <i class="bi bi-file-earmark-text"></i> Clases Solicitadas
-            </li>
-            <li class="prof-menu-item" id="menu-agenda" onclick="switchSection('agenda')">
-                <i class="bi bi-calendar-week"></i> Mi Agenda
-            </li>
-            <li class="prof-menu-item" id="menu-buzon" onclick="switchSection('buzon')">
-                <i class="bi bi-chat-dots-fill"></i> Buzón de Alumnos
-            </li>
-            <li class="prof-menu-item" id="menu-grabaciones" onclick="switchSection('grabaciones')">
-                <i class="bi bi-play-circle-fill"></i> Clases Grabadas
-            </li>
-            <li class="prof-menu-item" id="menu-streaming" onclick="switchSection('streaming')">
-                <i class="bi bi-camera-video-fill"></i> Sala de Streaming
-            </li>
-            <li class="prof-menu-item" id="menu-perfil" onclick="switchSection('perfil')">
-                <i class="bi bi-person-gear"></i> Personalizar Perfil
-            </li>
-            <li class="prof-menu-item" id="menu-saldo" onclick="switchSection('saldo')">
-                <i class="bi bi-cash-stack"></i> Saldo Generado
-            </li>
-            {# Página aparte: un enlace real, usable con teclado. #}
-            <li class="prof-menu-item">
-                <a href="{% url 'resenas_profesor' %}" style="color:inherit; text-decoration:none; display:flex; align-items:center; gap:inherit;">
-                    <i class="bi bi-star-half"></i> Mis Reseñas
-                </a>
-            </li>
-        </ul>
-        
-        <!-- esta parte es del botón de cerrar sesión abajo del menú lateral -->
-        <div class="prof-sidebar-footer">
-            <form method="post" action="{% url 'logout_prof' %}" class="form-prof-logout">
-                {% csrf_token %}
-                <button type="submit" class="prof-logout-btn btn-prof-logout">
-                    <i class="bi bi-box-arrow-left"></i> Cerrar Sesión
-                </button>
-            </form>
-        </div>
-    </aside>
-
     <!-- esta parte es del área donde aparece el contenido según la sección que elijas en el menú -->
-    <main class="prof-content-area">
+    <div class="prof-content-area">
         
         <!-- esta parte es de la sección de inicio, la pantalla principal cuando entras al panel -->
         <section id="sec-inicio" class="prof-section active">
@@ -539,17 +485,16 @@ input:checked + .slider:before {
 
 
 
-    </main>
+    </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<!-- esta parte es de SweetAlert2, la librería de alertas animadas -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+{# SweetAlert2 ya lo carga base_admin, justo antes de este bloque #}
 <script>
     // esta parte es de la función que cambia qué sección se ve en el panel según el menú que elegiste
     function switchSection(sectionId) {
-        document.querySelectorAll('.prof-menu-item').forEach(item => item.classList.remove('active'));
+        document.querySelectorAll('.nav-item[data-seccion]').forEach(item => item.classList.remove('active'));
         document.querySelectorAll('.prof-section').forEach(sec => sec.classList.remove('active'));
 
         document.getElementById('menu-' + sectionId).classList.add('active');
@@ -566,7 +511,17 @@ input:checked + .slider:before {
 
     // esta parte es para restaurar la última sección que el profe estaba viendo al recargar
     document.addEventListener('DOMContentLoaded', () => {
-        const savedTab = localStorage.getItem('prof_active_tab');
+        // los enlaces del menu son reales (#clases...): aqui cambian de seccion sin recargar la pagina
+        document.querySelectorAll('.nav-item[data-seccion]').forEach(enlace => {
+            enlace.addEventListener('click', (e) => {
+                e.preventDefault();
+                history.replaceState(null, '', '#' + enlace.dataset.seccion);
+                switchSection(enlace.dataset.seccion);
+            });
+        });
+        // un enlace con #seccion (por ejemplo desde Mis Reseñas) gana sobre la última sección recordada
+        const deEnlace = window.location.hash.slice(1);
+        const savedTab = document.getElementById('menu-' + deEnlace) ? deEnlace : localStorage.getItem('prof_active_tab');
         if (savedTab && document.getElementById('menu-' + savedTab)) {
             switchSection(savedTab);
         }

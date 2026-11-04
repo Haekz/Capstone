@@ -1,13 +1,9 @@
 /* esta parte es de los estilos del panel dashboard del profesor - LBWUS */
 
-/* esta parte es del layout principal que divide el panel en sidebar izquierdo y contenido derecho */
+/* esta parte es del contenedor del panel; el menu lateral ahora es el del portal (user_profesor/base_docente.html) */
 .prof-dashboard-layout {
-    min-height: calc(100vh - var(--header-height));
-    display: grid;
-    grid-template-columns: 280px 1fr;
     background-color: var(--bg);
     transition: var(--transition);
-    padding-top: var(--header-height);
 }
 
 /* esta parte es de la barra lateral izquierda del panel con el menú de navegación */
@@ -22,7 +18,7 @@
     transition: var(--transition);
 }
 
-body.dark-mode .prof-sidebar {
+body:not(.light-mode) .prof-sidebar {
     background-color: #0b0712;
     border-right-color: #1e1330;
 }
@@ -109,7 +105,7 @@ body.dark-mode .prof-sidebar {
     padding-top: 24px;
 }
 
-body.dark-mode .prof-sidebar-footer {
+body:not(.light-mode) .prof-sidebar-footer {
     border-top-color: #271b3a;
 }
 
@@ -253,7 +249,7 @@ body.dark-mode .prof-sidebar-footer {
     border-radius: 20px;
 }
 
-body.dark-mode .prof-card-title-badge {
+body:not(.light-mode) .prof-card-title-badge {
     background-color: #1e293b;
 }
 
@@ -282,7 +278,7 @@ body.dark-mode .prof-card-title-badge {
     transition: var(--transition);
 }
 
-body.dark-mode .prof-schedule-item {
+body:not(.light-mode) .prof-schedule-item {
     background-color: #111827;
 }
 
@@ -342,7 +338,7 @@ body.dark-mode .prof-schedule-item {
     display: block;
 }
 
-body.dark-mode .prof-empty-card i {
+body:not(.light-mode) .prof-empty-card i {
     color: #475569;
 }
 
@@ -361,7 +357,7 @@ body.dark-mode .prof-empty-card i {
     padding-bottom: 8px;
 }
 
-body.dark-mode .prof-chart {
+body:not(.light-mode) .prof-chart {
     border-bottom-color: #334155;
 }
 
@@ -385,7 +381,7 @@ body.dark-mode .prof-chart {
     position: relative;
 }
 
-body.dark-mode .prof-chart-bar-wrapper {
+body:not(.light-mode) .prof-chart-bar-wrapper {
     background-color: #1e293b;
 }
 
@@ -479,8 +475,8 @@ body.dark-mode .prof-chart-bar-wrapper {
     outline: none;
 }
 
-body.dark-mode .prof-form-input,
-body.dark-mode .prof-form-select {
+body:not(.light-mode) .prof-form-input,
+body:not(.light-mode) .prof-form-select {
     border-color: #334155;
     background-color: #0f172a;
 }
@@ -606,7 +602,7 @@ body.dark-mode .prof-form-select {
         padding: 30px 24px;
     }
 
-    body.dark-mode .prof-sidebar {
+    body:not(.light-mode) .prof-sidebar {
         border-bottom-color: #271b3a;
     }
 
@@ -665,7 +661,7 @@ body.dark-mode .prof-form-select {
     box-shadow: var(--shadow);
 }
 
-body.dark-mode .profe-chat-container {
+body:not(.light-mode) .profe-chat-container {
     background: #111827;
     border-color: rgba(255, 255, 255, 0.05);
 }
@@ -676,7 +672,7 @@ body.dark-mode .profe-chat-container {
     flex-direction: column;
 }
 
-body.dark-mode .profe-chat-sidebar {
+body:not(.light-mode) .profe-chat-sidebar {
     border-color: rgba(255, 255, 255, 0.05);
 }
 
@@ -689,7 +685,7 @@ body.dark-mode .profe-chat-sidebar {
     background: rgba(168, 85, 247, 0.01);
 }
 
-body.dark-mode .profe-chat-search {
+body:not(.light-mode) .profe-chat-search {
     border-color: rgba(255, 255, 255, 0.05);
     background: #1f2937;
 }
@@ -721,7 +717,7 @@ body.dark-mode .profe-chat-search {
     transition: all 0.2s ease;
 }
 
-body.dark-mode .profe-chat-item {
+body:not(.light-mode) .profe-chat-item {
     border-color: rgba(255, 255, 255, 0.02);
 }
 
@@ -734,7 +730,7 @@ body.dark-mode .profe-chat-item {
     border-left: 4px solid var(--primary);
 }
 
-body.dark-mode .profe-chat-item.active {
+body:not(.light-mode) .profe-chat-item.active {
     background: rgba(168, 85, 247, 0.12);
 }
 
@@ -760,7 +756,7 @@ body.dark-mode .profe-chat-item.active {
     flex-shrink: 0;
 }
 
-body.dark-mode .profe-chat-avatar {
+body:not(.light-mode) .profe-chat-avatar {
     background: rgba(168, 85, 247, 0.15);
 }
 
@@ -809,7 +805,7 @@ body.dark-mode .profe-chat-avatar {
     background: rgba(168, 85, 247, 0.01);
 }
 
-body.dark-mode .profe-chat-main {
+body:not(.light-mode) .profe-chat-main {
     background: #111827;
 }
 
@@ -819,7 +815,7 @@ body.dark-mode .profe-chat-main {
     background: var(--white);
 }
 
-body.dark-mode .profe-chat-header {
+body:not(.light-mode) .profe-chat-header {
     background: #111827;
     border-color: rgba(255, 255, 255, 0.05);
 }
@@ -865,7 +861,7 @@ body.dark-mode .profe-chat-header {
     border: 1px solid rgba(168, 85, 247, 0.08);
 }
 
-body.dark-mode .profe-chat-bubble-row.received .profe-chat-bubble {
+body:not(.light-mode) .profe-chat-bubble-row.received .profe-chat-bubble {
     background: #1f2937;
     border-color: rgba(255, 255, 255, 0.04);
 }
@@ -891,7 +887,7 @@ body.dark-mode .profe-chat-bubble-row.received .profe-chat-bubble {
     background: var(--white);
 }
 
-body.dark-mode .profe-chat-input-box {
+body:not(.light-mode) .profe-chat-input-box {
     background: #111827;
     border-color: rgba(255, 255, 255, 0.05);
 }
@@ -907,7 +903,7 @@ body.dark-mode .profe-chat-input-box {
     font-size: 0.88rem;
 }
 
-body.dark-mode .profe-chat-input-box input {
+body:not(.light-mode) .profe-chat-input-box input {
     background: #1f2937;
     border-color: rgba(255, 255, 255, 0.08);
 }
@@ -957,9 +953,9 @@ body.dark-mode .profe-chat-input-box input {
 .titulo-label { flex-basis: 100%; font-size: 0.85rem; font-weight: 600; }
 .titulo-form input[type=file] { font: inherit; font-size: 0.88rem; max-width: 100%; }
 .titulo-form .prof-form-btn { width: auto; margin: 0; }
-body.dark-mode .titulo-aviso { background: rgba(245, 158, 11, 0.10); border-color: rgba(245, 158, 11, 0.35); color: #fcd34d; }
-body.dark-mode .titulo-aviso--en_revision { background: rgba(139, 92, 246, 0.12); border-color: rgba(139, 92, 246, 0.4); color: #ddd6fe; }
-body.dark-mode .titulo-aviso--rechazado { background: rgba(239, 68, 68, 0.10); border-color: rgba(239, 68, 68, 0.35); color: #fca5a5; }
+body:not(.light-mode) .titulo-aviso { background: rgba(245, 158, 11, 0.10); border-color: rgba(245, 158, 11, 0.35); color: #fcd34d; }
+body:not(.light-mode) .titulo-aviso--en_revision { background: rgba(139, 92, 246, 0.12); border-color: rgba(139, 92, 246, 0.4); color: #ddd6fe; }
+body:not(.light-mode) .titulo-aviso--rechazado { background: rgba(239, 68, 68, 0.10); border-color: rgba(239, 68, 68, 0.35); color: #fca5a5; }
 
 
 

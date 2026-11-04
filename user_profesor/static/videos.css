@@ -21,7 +21,7 @@
     box-shadow: var(--shadow);
 }
 
-body.dark-mode .profe-stat-box {
+body:not(.light-mode) .profe-stat-box {
     background: #111827;
     border-color: rgba(255, 255, 255, 0.05);
 }
@@ -64,7 +64,7 @@ body.dark-mode .profe-stat-box {
     transition: all 0.25s ease;
 }
 
-body.dark-mode .profe-cursos-card {
+body:not(.light-mode) .profe-cursos-card {
     background: #1f2937;
     border-color: rgba(255, 255, 255, 0.04);
 }
@@ -203,7 +203,7 @@ body.dark-mode .profe-cursos-card {
 }
 
 /* esta parte es de adaptar los colores de la tarjeta del modal cuando se activa el modo oscuro */
-body.dark-mode .custom-modal-card {
+body:not(.light-mode) .custom-modal-card {
     background-color: #111827;
     border-color: rgba(255, 255, 255, 0.08);
 }
@@ -224,7 +224,7 @@ body.dark-mode .custom-modal-card {
 }
 
 /* esta parte es de adaptar el borde del encabezado en el modo oscuro */
-body.dark-mode .custom-modal-header {
+body:not(.light-mode) .custom-modal-header {
     border-color: rgba(255, 255, 255, 0.08);
 }
 

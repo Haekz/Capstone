@@ -1,0 +1,77 @@
+{% extends 'admin_portal/base_admin.html' %}
+{% load static %}
+{% comment %}Portal del docente: el mismo diseno del portal admin y de soporte; cambian la marca, la ficha, el menu, la campanita
+y la salida. Las secciones del panel viven en una sola pagina (#inicio, #clases...): los enlaces del menu apuntan a ellas
+para que tambien sirvan desde otras paginas del docente (Mis Resenas).{% endcomment %}
+
+{% block title %}Docente — LBWUS{% endblock %}
+{% block portal_url %}{% url 'panel_profesor' %}{% endblock %}
+{% block portal_nombre %}Docente{% endblock %}
+{% block page_title %}Panel docente{% endblock %}
+{% block page_subtitle %}LBWUS - Docentes{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'notificaciones/campanita.css' %}">
+<link rel="stylesheet" href="{% static 'user_profesor/portal_docente.css' %}">
+{% endblock %}
+
+{% block sidebar_usuario %}
+<div class="sidebar-user-avatar">
+    {{ usuario_sesion.nombre|slice:":1"|upper|default:"D" }}
+</div>
+<div class="sidebar-user-info">
+    <div class="sidebar-user-name">{{ usuario_sesion.nombre|default:"Docente" }}</div>
+    <div class="sidebar-user-role">Docente</div>
+</div>
+{% endblock %}
+
+{% block sidebar_nav %}
+<span class="nav-label">Principal</span>
+
+<a id="menu-inicio" class="nav-item {% block nav_inicio %}{% endblock %}" data-seccion="inicio" href="{% url 'panel_profesor' %}#inicio">
+    <i class="bi bi-grid-1x2"></i>
+    Inicio
+</a>
+<a id="menu-clases" class="nav-item" data-seccion="clases" href="{% url 'panel_profesor' %}#clases">
+    <i class="bi bi-file-earmark-text"></i>
+    Clases Solicitadas
+</a>
+<a id="menu-agenda" class="nav-item" data-seccion="agenda" href="{% url 'panel_profesor' %}#agenda">
+    <i class="bi bi-calendar-week"></i>
+    Mi Agenda
+</a>
+<a id="menu-buzon" class="nav-item" data-seccion="buzon" href="{% url 'panel_profesor' %}#buzon">
+    <i class="bi bi-chat-dots-fill"></i>
+    Buzón de Alumnos
+</a>
+
+<span class="nav-label">Contenido</span>
+
+<a id="menu-grabaciones" class="nav-item" data-seccion="grabaciones" href="{% url 'panel_profesor' %}#grabaciones">
+    <i class="bi bi-play-circle-fill"></i>
+    Clases Grabadas
+</a>
+<a id="menu-streaming" class="nav-item" data-seccion="streaming" href="{% url 'panel_profesor' %}#streaming">
+    <i class="bi bi-camera-video-fill"></i>
+    Sala de Streaming
+</a>
+
+<span class="nav-label">Mi cuenta</span>
+
+<a id="menu-perfil" class="nav-item" data-seccion="perfil" href="{% url 'panel_profesor' %}#perfil">
+    <i class="bi bi-person-gear"></i>
+    Personalizar Perfil
+</a>
+<a id="menu-saldo" class="nav-item" data-seccion="saldo" href="{% url 'panel_profesor' %}#saldo">
+    <i class="bi bi-cash-stack"></i>
+    Saldo Generado
+</a>
+<a id="nav-resenas" class="nav-item {% block nav_resenas %}{% endblock %}" href="{% url 'resenas_profesor' %}">
+    <i class="bi bi-star-half"></i>
+    Mis Reseñas
+</a>
+{% endblock %}
+
+{% block logout_url %}{% url 'logout_prof' %}{% endblock %}
+{# La busqueda global es del admin: el docente solo lleva su campanita #}
+{% block topbar_acciones %}{% include 'notificaciones/_campanita.html' with clase_boton='theme-btn' %}{% endblock %}

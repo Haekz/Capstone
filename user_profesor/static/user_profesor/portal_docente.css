@@ -1,0 +1,13 @@
+/* Portal del docente: puente entre los tokens del sitio publico y los del portal.
+
+   El panel del docente se escribio con las variables de styles.css (--text, --white, --bg...). El portal (admin_panel.css,
+   igual que alumno y soporte) usa otros nombres para los MISMOS valores. Se declaran en body y no en :root porque
+   --text-primary, --bg-card, etc. cambian con body.light-mode. */
+body {
+    --text: var(--text-primary);
+    --text-light: var(--text-secondary);
+    --bg: var(--bg-main);
+    --white: var(--bg-card); /* fondo de tarjeta: en modo oscuro es #171129, igual que en el sitio publico */
+    --shadow: var(--shadow-md);
+    --secondary: #1a1233;
+}
