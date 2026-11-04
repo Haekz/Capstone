@@ -9,8 +9,9 @@ from django.test import SimpleTestCase
 
 from .css_vars import sin_definir
 
-# Lo unico que carga Alumno_pag1.html: la propia plantilla (estilos en linea) y sus dos hojas.
+# Lo que carga el portal del alumno: el marco (base_alumno), la pagina (estilos en linea) y sus dos hojas.
 PAGINA_ALUMNO = [
+    'alumnos/templates/alumnos/base_alumno.html',
     'alumnos/templates/alumnos/Alumno_pag1.html',
     'alumnos/static/alumnos/css/alumn_1.css',
     'alumnos/static/alumnos/css/avisos.css',
