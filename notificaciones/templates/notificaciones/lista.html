@@ -4,26 +4,45 @@
 {% block title %}Notificaciones | LBWUS{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'alumnos/css/perfil_profesor.css' %}">
+<link rel="stylesheet" href="{% static 'notificaciones/lista.css' %}">
 {% endblock %}
 
 {% block content %}
-<div class="perfil-prof">
-    <section class="perfil-prof__bloque" aria-labelledby="notif-titulo">
-        <h1 id="notif-titulo">Notificaciones</h1>
+<div class="notif-pagina">
+    {# Cada rol vuelve a su portal: el context processor da su ruta y su nombre (Mi portal, Mi panel, Mi cuenta). #}
+    {% if usuario_sesion.url_panel %}
+    <a class="notif-pagina__volver" href="{{ usuario_sesion.url_panel }}">
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a {{ usuario_sesion.texto_panel|lower }}
+    </a>
+    {% endif %}
+
+    {# div y no section: styles.css da padding vertical de marketing a todo <section> #}
+    <div>
+        <header class="notif-pagina__cabecera">
+            <span class="notif-pagina__icono" aria-hidden="true"><i class="bi bi-bell-fill"></i></span>
+            <div>
+                <h1 id="notif-titulo">Notificaciones</h1>
+                <p>Tus avisos más recientes.</p>
+            </div>
+        </header>
+
         {% if notificaciones %}
         <ul class="notif-lista">
             {% for n in notificaciones %}
-            <li>
-                {% if not n.leida %}<strong>Nueva:</strong> {% endif %}
+            <li class="notif-item{% if not n.leida %} notif-item--nueva{% endif %}">
+                {% if not n.leida %}<span class="notif-item__etiqueta">Nueva</span>{% endif %}
                 {% if n.enlace %}<a href="{{ n.enlace }}">{{ n.texto }}</a>{% else %}{{ n.texto }}{% endif %}
-                <br><small><time datetime="{{ n.creada|date:'c' }}">{{ n.creada|date:"d/m/Y H:i" }}</time></small>
+                <time datetime="{{ n.creada|date:'c' }}">{{ n.creada|date:"d/m/Y H:i" }}</time>
             </li>
             {% endfor %}
         </ul>
         {% else %}
-        <p>No tienes notificaciones.</p>
+        <div class="notif-vacio">
+            <i class="bi bi-bell-slash" aria-hidden="true"></i>
+            <strong>No tienes notificaciones</strong>
+            Aquí aparecerán los avisos de tus clases, tus mensajes y tu cuenta.
+        </div>
         {% endif %}
-    </section>
+    </div>
 </div>
 {% endblock %}

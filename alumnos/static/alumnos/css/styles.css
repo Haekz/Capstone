@@ -287,17 +287,7 @@ body.dark-mode .menu a.active {
     color: #1a1233;
 }
 
-/* Campanita de notificaciones: notificaciones/static/notificaciones/campanita.css */
-
-.notif-lista {
-    list-style: none;
-    padding: 0;
-}
-
-.notif-lista li {
-    padding: 10px 0;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-}
+/* Campanita de notificaciones: notificaciones/static/notificaciones/campanita.css (la pagina: lista.css) */
 
 body.dark-mode .theme-icon {
     color: #f3f4f6;
