@@ -6,6 +6,10 @@ from alumnos.models import Inscripcion
 
 from .models import MOTIVOS, Resena
 
+# Bloque "Recomendados" del portal del alumno: minimo de reseñas visibles para entrar y cuantos se muestran.
+MIN_RESENAS_RECOMENDADO = 3
+TOP_RECOMENDADOS = 3
+
 RELACIONADAS = (
     'inscripcion__alumno__user',
     'inscripcion__clase__asignatura',
@@ -38,6 +42,18 @@ def calificaciones_por_profesor():
              .annotate(promedio=Avg('puntaje'), total=Count('pk')))
     return {fila['inscripcion__clase__profesor']: {'promedio': fila['promedio'], 'total': fila['total']}
             for fila in filas}
+
+
+def ids_recomendados(calificaciones, entre, minimo=MIN_RESENAS_RECOMENDADO, tope=TOP_RECOMENDADOS):
+    """Ids de los mejor calificados, de mejor a peor. ``calificaciones`` es lo que entrega
+    ``calificaciones_por_profesor``; ``entre`` son los profesores que pueden recomendarse (los habilitados).
+
+    Entran solo con ``minimo`` reseñas o más: un unico 5 no hace a nadie recomendado. Orden: promedio, luego mas
+    reseñas, luego id (para que el resultado no cambie entre cargas)."""
+    elegibles = [(id_profesor, c) for id_profesor, c in calificaciones.items()
+                 if id_profesor in entre and c['total'] >= minimo]
+    elegibles.sort(key=lambda par: (-par[1]['promedio'], -par[1]['total'], par[0]))
+    return [id_profesor for id_profesor, _ in elegibles[:tope]]
 
 
 def contexto_resenas(profesor, alumno_id=None, ruta_reporte=None):

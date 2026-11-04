@@ -746,6 +746,25 @@ body.dark-mode .teacher-card {
     color: var(--text-light);
 }
 
+/* Bloque "Recomendados": los mejor calificados, sobre la lista de profesores */
+.recomendados {
+    margin-bottom: 28px;
+}
+
+.recomendados-lista {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 15px;
+}
+
+/* Sin la columna extra de la lista (aqui no hay boton a la derecha) */
+.recomendados-lista .teacher-card {
+    grid-template-columns: 60px 1fr;
+}
+
 .teacher-specialty {
     font-size: 0.85rem;
     color: var(--primary);

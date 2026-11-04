@@ -30,7 +30,9 @@ from django.core.exceptions import ValidationError
 from . import paquetes, progreso
 from mensajes import panel as mensajes_panel
 from observaciones import panel as observaciones_panel
-from resenas.consultas import calificaciones_por_profesor, formatear_promedio, pendiente_de_calificar
+from resenas.consultas import (
+    calificaciones_por_profesor, formatear_promedio, ids_recomendados, pendiente_de_calificar,
+)
 from django.db import transaction
 from apoderados.permisos import clase_pagada_por_apoderado, vinculo_contratable
 from lbwus.puerta import destino_seguro
@@ -345,11 +347,17 @@ def alumno_pag1(request):
         pago.monto_clp = _clp(pago.monto)  # mismo formato que la confirmacion de Webpay
 
     calificaciones = calificaciones_por_profesor()
+    profesor_por_id = {p.id_profesor: p for p in profesores_list}
+    recomendados = [
+        {'profesor': profesor_por_id[id_profesor], 'rating': _rating_para_tarjeta(calificaciones[id_profesor])}
+        for id_profesor in ids_recomendados(calificaciones, entre=profesor_por_id)
+    ]
 
     context = {
         'alumno': alumno,
         'mis_reportes': mis_reportes,
         'profesores_list': profesores_list,
+        'recomendados': recomendados,
         # Solo datos reales. Distancia y precio no se registran todavia en la plataforma, asi que no se
         # inventan; la calificacion sale de las resenas visibles (None = profesor nuevo, sin resenas).
         'profesores_js': [
