@@ -4,11 +4,13 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.password_validation import validate_password
+from django.core.cache import cache
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from alumnos.models import Alumno
-from alumnos.utils import (EDAD_ADULTA, EDAD_MINIMA_ESTUDIANTE, edad, error_fecha_nacimiento,
+from alumnos.utils import (EDAD_ADULTA, EDAD_MINIMA_ESTUDIANTE, edad, error_fecha_nacimiento, es_menor,
                            usuario_existe, validar_rut_chileno)
 
 from .documentos import preparar
@@ -31,8 +33,9 @@ DECLARACION_VINCULO = (
     'auténtico. Entiendo que, mientras LBWUS lo revisa, la cuenta del estudiante no podrá reservar, '
     'comprar ni entrar a clases.'
 )
-AVISO_DOCUMENTO = ('Foto o imagen JPG o PNG, de hasta 5 MB. Se guarda cifrada, solo la ve el equipo que '
-                   'revisa tu solicitud y se elimina apenas la aprueba o la rechaza, o a los 30 días.')
+AVISO_DOCUMENTO = ('Foto o imagen JPG o PNG, o PDF de hasta 3 páginas, de hasta 5 MB. Se guarda cifrado, solo '
+                   'lo ve el equipo que revisa tu solicitud y se elimina apenas la aprueba o la rechaza, o a los '
+                   '30 días.')
 VERSION_DECLARACION_ADOLESCENTE = '1'
 DECLARACION_ADOLESCENTE = (
     'Declaro que mis datos son verdaderos y que el correo que indico es de mi madre o de mi padre. '
@@ -61,6 +64,25 @@ def _crear_estudiante(datos):
     return Alumno.objects.create(user=user, nivel_educacion=datos['nivel_educacion'])
 
 
+def _campo_rut(label):
+    return forms.CharField(label=label, max_length=12, widget=forms.TextInput(attrs={'placeholder': '12.345.678-9'}))
+
+
+def _rut_valido(valor):
+    rut = valor.strip()
+    if not validar_rut_chileno(rut):
+        raise forms.ValidationError('El RUT ingresado no es válido.')
+    return rut
+
+
+def _variantes_rut(rut):
+    """Los RUT se guardan como los escribio cada persona: sin puntos (11111111-1), con ellos (11.111.111-1)
+    o sin guion. Para buscar una cuenta hay que probar las tres."""
+    limpio = rut.replace('.', '').replace('-', '').strip().upper()
+    cuerpo, digito = limpio[:-1], limpio[-1]
+    return {limpio, f'{cuerpo}-{digito}', f'{int(cuerpo):,}'.replace(',', '.') + f'-{digito}'}
+
+
 class AccesibleMixin:
     def full_clean(self):
         super().full_clean()
@@ -74,8 +96,8 @@ class AccesibleMixin:
 
 
 class DocumentoField(forms.FileField):
-    """Imagen de un documento: limpia, devuelve (contenido cifrado, formato)."""
-    widget = forms.FileInput(attrs={'accept': 'image/jpeg,image/png'})
+    """Imagen o PDF de un documento: valida y devuelve (contenido cifrado, formato)."""
+    widget = forms.FileInput(attrs={'accept': 'image/jpeg,image/png,application/pdf'})
 
     def __init__(self, **kwargs):
         super().__init__(help_text=AVISO_DOCUMENTO, **kwargs)
@@ -90,20 +112,35 @@ def _guardar_documento(cifrado, tipo, **titular):
     Documento.objects.create(tipo=tipo, contenido=contenido, formato=formato, **titular)
 
 
+class CarnetForm(AccesibleMixin, forms.Form):
+    """Carnet por ambos lados: al registrarse o al volver a subirlo si vencio sin revisar."""
+    carnet_frente = DocumentoField(label='Foto de tu carnet (frente)')
+    carnet_reverso = DocumentoField(label='Foto de tu carnet (reverso)')
+
+    def guardar_carnet(self, apoderado):
+        for tipo in Documento.CARNET:  # los nombres de los campos son los tipos
+            _guardar_documento(self.cleaned_data[tipo], tipo, apoderado=apoderado)
+
+
+class DocumentoVinculoForm(AccesibleMixin, forms.Form):
+    """Documento que acredita el vinculo: al crearlo o al volver a subirlo si vencio."""
+    documento = DocumentoField(label='Certificado de nacimiento (madre o padre) o resolución del tribunal '
+                                     '(tutor legal o cuidado personal)')
+
+    def guardar_documento(self, vinculo):
+        _guardar_documento(self.cleaned_data['documento'], vinculo.documento_requerido, vinculo=vinculo)
+
+
 class _CuentaForm(AccesibleMixin, forms.Form):
     """Datos comunes para crear una cuenta: nombre, RUT y contrasena."""
     nombre = forms.CharField(label='Nombre completo', max_length=60)
-    rut = forms.CharField(label='RUT', max_length=12,
-                          widget=forms.TextInput(attrs={'placeholder': '12.345.678-9'}))
+    rut = _campo_rut('RUT')
     password = forms.CharField(label='Contraseña', widget=forms.PasswordInput, strip=False)
     confirmar_password = forms.CharField(label='Repite la contraseña', widget=forms.PasswordInput,
                                          strip=False)
 
     def clean_rut(self):
-        rut = self.cleaned_data['rut'].strip()
-        if not validar_rut_chileno(rut):
-            raise forms.ValidationError('El RUT ingresado no es válido.')
-        return rut
+        return _rut_valido(self.cleaned_data['rut'])
 
     def clean(self):
         datos = super().clean()
@@ -124,14 +161,12 @@ class _CuentaForm(AccesibleMixin, forms.Form):
         return datos
 
 
-class RegistroApoderadoForm(_CuentaForm):
+class RegistroApoderadoForm(_CuentaForm, CarnetForm):
     correo = forms.EmailField(label='Correo electrónico')
     telefono = forms.CharField(label='Teléfono (opcional)', max_length=20, required=False,
                                widget=forms.TextInput(attrs={'type': 'tel'}))
     fecha_nacimiento = forms.DateField(label='Fecha de nacimiento',
                                        widget=forms.DateInput(attrs={'type': 'date'}))
-    carnet_frente = DocumentoField(label='Foto de tu carnet (frente)')
-    carnet_reverso = DocumentoField(label='Foto de tu carnet (reverso)')
     acepta_declaracion = forms.BooleanField(label=DECLARACION)
 
     field_order = ['nombre', 'rut', 'correo', 'telefono', 'fecha_nacimiento',
@@ -154,21 +189,17 @@ class RegistroApoderadoForm(_CuentaForm):
             )
             apoderado = Apoderado.objects.create(user=user, version_declaracion=VERSION_DECLARACION,
                                                  declaracion_aceptada=timezone.now())
-            _guardar_documento(datos['carnet_frente'], Documento.CARNET_FRENTE, apoderado=apoderado)
-            _guardar_documento(datos['carnet_reverso'], Documento.CARNET_REVERSO, apoderado=apoderado)
+            self.guardar_carnet(apoderado)
             return apoderado
 
 
-class _VinculoForm(AccesibleMixin, forms.Form):
+class _VinculoForm(DocumentoVinculoForm):
     """Parentesco, documento que lo acredita y declaracion: comun al registro del estudiante
     y a la invitacion aceptada."""
     parentesco = forms.ChoiceField(label='Tu parentesco con el estudiante', choices=Vinculo.PARENTESCOS)
-    documento = DocumentoField(label='Certificado de nacimiento (madre o padre) o resolución del tribunal '
-                                     '(tutor legal o cuidado personal)')
     acepta_declaracion = forms.BooleanField(label=DECLARACION_VINCULO)
 
-    def guardar_documento(self, vinculo):
-        _guardar_documento(self.cleaned_data['documento'], vinculo.documento_requerido, vinculo=vinculo)
+    field_order = ['parentesco', 'documento', 'acepta_declaracion']
 
 
 class RegistroEstudianteForm(_CuentaForm, _VinculoForm):
@@ -198,6 +229,80 @@ class RegistroEstudianteForm(_CuentaForm, _VinculoForm):
                 version_declaracion=VERSION_DECLARACION_VINCULO, declaracion_aceptada=timezone.now(),
             )
             self.guardar_documento(vinculo)
+            vinculo.abrir_ticket_si_revisable()
+            return vinculo
+
+
+class VincularEstudianteForm(_VinculoForm):
+    """Un segundo apoderado pide vincularse a un menor que ya esta registrado, con su RUT; soporte verifica
+    el vinculo con el documento. Que el RUT exista, sea de un menor o tenga cuenta activa no se revela: todo
+    fallo de la busqueda responde lo mismo (SIN_COINCIDENCIA)."""
+    SIN_COINCIDENCIA = ('No pudimos iniciar la solicitud con ese RUT. Revisa que sea el del estudiante. '
+                        'Si el problema sigue, escríbenos desde la página de contacto.')
+    # Limites decididos el 02-nov: frenan que se prueben RUT al azar y que se llene de tickets a soporte.
+    LIMITE_SIN_RESULTADO = 5  # busquedas sin resultado en 24 h (cache compartida, como el login)
+    LIMITE_PENDIENTES = 3  # solicitudes con RUT esperando verificacion a la vez
+    DEMASIADOS_INTENTOS = ('Hiciste varios intentos sin resultado. Inténtalo de nuevo mañana o escríbenos desde '
+                           'la página de contacto.')
+    rut = _campo_rut('RUT del estudiante')
+
+    field_order = ['rut', 'parentesco', 'documento', 'acepta_declaracion']
+
+    def __init__(self, *args, apoderado, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.apoderado = apoderado
+        self.alumno = None
+
+    def clean_rut(self):
+        return _rut_valido(self.cleaned_data['rut'])
+
+    def _menor_con_rut(self, rut):
+        filtro = Q()
+        for variante in _variantes_rut(rut):
+            filtro |= Q(user__rut__iexact=variante)
+        alumno = Alumno.objects.select_related('user').filter(filtro, user__is_active=True).first()
+        return alumno if alumno and es_menor(alumno.user) else None
+
+    def _clave_intentos(self):
+        return f'vincular_sin_resultado_{self.apoderado.pk}'
+
+    def _respetar_limites(self):
+        if cache.get(self._clave_intentos(), 0) >= self.LIMITE_SIN_RESULTADO:
+            raise forms.ValidationError(self.DEMASIADOS_INTENTOS)
+        if self.apoderado.vinculos.filter(estado=Vinculo.PENDIENTE, por_rut=True).count() >= self.LIMITE_PENDIENTES:
+            raise forms.ValidationError(f'Tienes {self.LIMITE_PENDIENTES} solicitudes esperando verificación. '
+                                        'Podrás pedir otra cuando revisemos alguna.')
+
+    def _contar_sin_resultado(self):
+        clave = self._clave_intentos()
+        cache.set(clave, cache.get(clave, 0) + 1, timeout=24 * 60 * 60)
+
+    def clean(self):
+        datos = super().clean()
+        self._respetar_limites()
+        if datos.get('rut'):
+            self.alumno = self._menor_con_rut(datos['rut'])
+            if self.alumno is None:
+                self._contar_sin_resultado()
+                raise forms.ValidationError(self.SIN_COINCIDENCIA)
+            existente = Vinculo.objects.filter(apoderado=self.apoderado, alumno=self.alumno).first()
+            if existente and not existente.puede_volver_a_pedir:
+                if existente.estado == Vinculo.REVOCADO:  # lo revoco soporte
+                    raise forms.ValidationError('Para volver a vincularte con este estudiante, escríbenos desde '
+                                                'la página de contacto.')
+                raise forms.ValidationError('Ya tienes un vínculo con este estudiante. Revísalo en tu portal.')
+        return datos
+
+    def save(self):
+        """Si lo vuelve a pedir (rechazado o desvinculado por si mismo) se reutiliza su vinculo, que conserva
+        el historial de revisiones y revocaciones: vuelve a quedar pendiente, con documento y ticket nuevos."""
+        with transaction.atomic():
+            vinculo, _ = Vinculo.objects.update_or_create(apoderado=self.apoderado, alumno=self.alumno, defaults={
+                'parentesco': self.cleaned_data['parentesco'], 'estado': Vinculo.PENDIENTE, 'por_rut': True,
+                'version_declaracion': VERSION_DECLARACION_VINCULO, 'declaracion_aceptada': timezone.now(),
+            })
+            self.guardar_documento(vinculo)
+            vinculo.abrir_ticket_si_revisable()
             return vinculo
 
 
@@ -286,15 +391,15 @@ class NuevaClaveForm(AccesibleMixin, SetPasswordForm):
 class RevocarVinculoForm(AccesibleMixin, forms.Form):
     motivo = forms.CharField(label='Motivo', max_length=300, required=False, widget=forms.Textarea(attrs={'rows': 3}))
     confirmar = forms.BooleanField(
-        label='Entiendo que se cancelarán las clases futuras que pagué con este vínculo '
-              'y que no podré volver a actuar por el estudiante.')
+        label='Entiendo que se cancelarán las clases futuras que pagué con este vínculo y que, para volver a '
+              'actuar por el estudiante, tendré que pedir el vínculo de nuevo y esperar su verificación.')
 
     def __init__(self, *args, motivo_obligatorio=False, **kwargs):
         super().__init__(*args, **kwargs)
-        if motivo_obligatorio:  # el administrador siempre deja el motivo (p. ej. resolucion judicial)
+        if motivo_obligatorio:  # el lider de soporte siempre deja el motivo (p. ej. resolucion judicial)
             self.fields['motivo'].required = True
             self.fields['confirmar'].label = ('Entiendo que se cancelarán las clases futuras pagadas con '
-                                              'este vínculo y que el apoderado no podrá volver a actuar.')
+                                              'este vínculo y que el apoderado no podrá volver a pedirlo por su cuenta.')
 
 
 class _RevisionForm(forms.ModelForm):

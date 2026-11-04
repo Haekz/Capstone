@@ -1,15 +1,16 @@
 """Documentos de apoderados (carnet y documento del vinculo).
 
-Datos ficticios. Cubre la subida (cifrado, sin metadatos, solo JPG o PNG de hasta
+Datos ficticios. Cubre la subida (cifrado, sin metadatos, solo JPG, PNG o PDF de hasta
 5 MB, documento segun parentesco), la revision (sin documento no se aprueba; al
-decidir se borra), el visor (solo administradores, marca de agua y registro de
-cada apertura) y el borrado a los 30 dias.
+decidir se borra), el visor (solo el agente de soporte con el ticket, marca de agua y
+registro de cada apertura) y el borrado a los 30 dias.
 """
 
 import io
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
+from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.test import TestCase
@@ -20,7 +21,10 @@ from PIL import Image
 from alumnos.models import Tutor
 from apoderados.documentos import descifrar
 from apoderados.models import AccesoDocumento, Apoderado, Documento, Vinculo
-from tests.test_apoderados import CLAVE, RUT, adjuntar, crear_apoderado, datos_registro, entrar, imagen
+from soporte.models import Ticket
+from soporte.tickets import abrir_ticket
+from tests.test_apoderados import (CLAVE, RUT, adjuntar, crear_agente, crear_apoderado, datos_registro, entrar,
+                                   entrar_soporte, imagen)
 from tests.test_apoderados_adolescentes import CORREO_MAMA, crear_adolescente, url_invitacion
 from tests.test_apoderados_vinculos import RUT_HERMANA, crear_menor_vinculado, datos_estudiante
 
@@ -52,8 +56,10 @@ class SubidaTests(TestCase):
         self.assertNotIn(MARCA.encode(), claro, 'se guardaron los metadatos de la foto')
         self.assertEqual(Image.open(io.BytesIO(claro)).format, 'JPEG')
 
-    def test_solo_acepta_imagenes_jpg_o_png_de_hasta_5_mb(self):
-        formato, pesado = 'Sube una foto o imagen en formato JPG o PNG.', 'El archivo no puede superar los 5 MB.'
+    def test_solo_acepta_jpg_png_o_pdf_de_hasta_5_mb(self):
+        # Los PDF validos se prueban en test_apoderados_pdf; uno falso sigue sin pasar.
+        formato = 'Sube una foto o imagen JPG o PNG, o un PDF de hasta 3 páginas.'
+        pesado = 'El archivo no puede superar los 5 MB.'
         casos = {
             'pdf': (SimpleUploadedFile('carnet.jpg', b'%PDF-1.4 documento falso'), formato),
             'gif': (imagen('carnet.gif', 'GIF'), formato),
@@ -105,9 +111,9 @@ class SubidaTests(TestCase):
 class RevisionConDocumentosTests(TestCase):
 
     def setUp(self):
-        self.admin, tutor = crear_admin()
         self.apoderado = crear_apoderado(RUT, Apoderado.REVISION_PENDIENTE)
-        entrar(self.client, self.admin, admin_id=tutor.id_tutor)
+        entrar_soporte(self.client, crear_agente('10101010-1', Ticket.APODERADOS))
+        abrir_ticket(Ticket.APODERADOS, apoderado=self.apoderado)
 
     def aprobar_identidad(self):
         self.client.post(reverse('apoderado_revisar', args=[self.apoderado.pk]),
@@ -120,7 +126,9 @@ class RevisionConDocumentosTests(TestCase):
         self.assertEqual(self.apoderado.estado, Apoderado.REVISION_PENDIENTE)
 
         Apoderado.objects.filter(pk=self.apoderado.pk).update(estado=Apoderado.VERIFICADO)
+        self.apoderado.refresh_from_db()
         vinculo = crear_menor_vinculado(self.apoderado, estado=Vinculo.PENDIENTE)
+        vinculo.abrir_ticket_si_revisable()
         self.client.post(reverse('apoderado_revisar_vinculo', args=[vinculo.pk]),
                          {'decision': 'aprobar', 'certificado_coincide': 'on'})
         vinculo.refresh_from_db()
@@ -135,6 +143,7 @@ class RevisionConDocumentosTests(TestCase):
 
         vinculo = crear_menor_vinculado(self.apoderado, estado=Vinculo.PENDIENTE)
         adjuntar(Documento.CERTIFICADO, vinculo=vinculo)
+        vinculo.abrir_ticket_si_revisable()
         self.client.post(reverse('apoderado_revisar_vinculo', args=[vinculo.pk]),
                          {'decision': 'rechazar', 'observacion': 'El certificado no se lee.'})
         vinculo.refresh_from_db()
@@ -145,19 +154,20 @@ class RevisionConDocumentosTests(TestCase):
 class VisorDeDocumentosTests(TestCase):
 
     def setUp(self):
-        self.admin, self.tutor = crear_admin()
+        self.agente = crear_agente('10101010-1', Ticket.APODERADOS)
         self.apoderado = crear_apoderado(RUT, Apoderado.REVISION_PENDIENTE)
+        abrir_ticket(Ticket.APODERADOS, apoderado=self.apoderado)
         self.documento = adjuntar(Documento.CARNET_FRENTE, apoderado=self.apoderado)
         self.url = reverse('apoderado_documento', args=[self.documento.pk])
 
-    def test_solo_un_administrador_lo_ve(self):
+    def test_ni_anonimos_ni_apoderados_lo_ven(self):
         self.assertRedirects(self.client.get(self.url), reverse('login'), fetch_redirect_response=False)
         entrar(self.client, self.apoderado.user, apoderado_id=self.apoderado.id_apoderado)
         self.assertRedirects(self.client.get(self.url), reverse('portal_apoderado'), fetch_redirect_response=False)
         self.assertFalse(AccesoDocumento.objects.exists())
 
     def test_se_ve_con_marca_de_agua_sin_cache_y_queda_registrado(self):
-        entrar(self.client, self.admin, admin_id=self.tutor.id_tutor)
+        entrar_soporte(self.client, self.agente)
         respuesta = self.client.get(self.url)
 
         self.assertEqual((respuesta.status_code, respuesta['Content-Type']), (200, 'image/jpeg'))
@@ -165,10 +175,10 @@ class VisorDeDocumentosTests(TestCase):
         self.assertNotEqual(respuesta.content, descifrar(self.documento.contenido), 'se mostro sin marca de agua')
         acceso = AccesoDocumento.objects.get()
         self.assertEqual((acceso.administrador, acceso.apoderado, acceso.tipo),
-                         (self.admin, self.apoderado, Documento.CARNET_FRENTE))
+                         (self.agente.user, self.apoderado, Documento.CARNET_FRENTE))
 
     def test_la_bandeja_enlaza_los_documentos_y_el_registro_queda_al_borrarlos(self):
-        entrar(self.client, self.admin, admin_id=self.tutor.id_tutor)
+        entrar_soporte(self.client, self.agente)
         self.assertContains(self.client.get(reverse('apoderados_revision')), self.url)
         self.client.get(self.url)
         self.documento.delete()
@@ -186,3 +196,49 @@ class VencimientoTests(TestCase):
         call_command('borrar_documentos_vencidos', stdout=io.StringIO())
 
         self.assertEqual(list(Documento.objects.values_list('pk', flat=True)), [reciente.pk])
+
+    def con_documentos_de(self, dias):
+        """Apoderado con su carnet subido hace ``dias`` dias y ticket abierto."""
+        apoderado = crear_apoderado(RUT, Apoderado.REVISION_PENDIENTE)
+        for tipo in Documento.CARNET:
+            adjuntar(tipo, apoderado=apoderado)
+        abrir_ticket(Ticket.APODERADOS, apoderado=apoderado)
+        Documento.objects.update(subido=timezone.now() - timedelta(days=dias))
+        mail.outbox.clear()
+        return apoderado
+
+    def correr(self):
+        call_command('borrar_documentos_vencidos', stdout=io.StringIO())
+
+    def test_avisa_una_sola_vez_al_agente_5_dias_antes_y_sin_datos_personales(self):
+        agente = crear_agente('10000001-9', Ticket.APODERADOS)
+        apoderado = self.con_documentos_de(26)
+        self.correr()
+        self.correr()  # al dia siguiente no repite
+
+        correo, = mail.outbox
+        self.assertEqual(correo.to, [agente.user.email])
+        self.assertIn(f'Ticket #{Ticket.objects.get().pk}: documentos por vencer', correo.subject)
+        for dato in (apoderado.nombre, apoderado.user.rut, apoderado.user.email):
+            self.assertNotIn(dato, correo.body)
+
+    def test_antes_de_los_5_dias_no_avisa(self):
+        crear_agente('10000001-9', Ticket.APODERADOS)
+        self.con_documentos_de(24)
+        self.correr()
+        self.assertEqual(mail.outbox, [])
+
+    def test_sin_agente_avisa_a_los_lideres(self):
+        lider = crear_agente('10000003-5', lider=True)
+        self.con_documentos_de(26)
+        self.correr()
+        correo, = mail.outbox
+        self.assertEqual(correo.to, [lider.user.email])
+        self.assertIn('(sin asignar)', correo.body)
+
+    def test_lo_ya_vencido_se_borra_sin_aviso_atrasado(self):
+        crear_agente('10000001-9', Ticket.APODERADOS)
+        apoderado = self.con_documentos_de(31)
+        self.correr()
+        self.assertEqual([c.to for c in mail.outbox], [[apoderado.user.email]])  # al agente, nada
+        self.assertFalse(Documento.objects.exists())

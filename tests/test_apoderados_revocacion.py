@@ -12,9 +12,10 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from alumnos.models import Alumno, Asignatura, Clase, Inscripcion, Tutor
+from alumnos.models import Alumno, Asignatura, Clase, Inscripcion
 from apoderados.models import Apoderado, ClaveDelApoderado, CompraApoderado, Revocacion, Vinculo
-from tests.test_apoderados import CLAVE, RUT, crear_apoderado, entrar
+from soporte.models import Ticket
+from tests.test_apoderados import RUT, crear_agente, crear_apoderado, entrar, entrar_soporte
 from tests.test_apoderados_adolescentes import datos_adolescente
 from tests.test_apoderados_vinculos import RUT_NINO, crear_menor_vinculado, datos_estudiante, hace_anios
 from tests.test_especialidad import crear_profesor
@@ -80,15 +81,15 @@ class RevocacionTests(TestCase):
         self.assertEqual(Revocacion.objects.count(), 1)
         self.assertEqual(self.estado('padre'), Inscripcion.ESTADO_CONFIRMADA)
 
-    def test_el_administrador_revoca_solo_con_motivo(self):
-        admin = User.objects.create_user('10101010-1', password=CLAVE, rol='admin', first_name='Admin')
-        entrar(self.client, admin, admin_id=Tutor.objects.create(user=admin).id_tutor)
+    def test_el_lider_de_soporte_revoca_solo_con_motivo(self):
+        lider = crear_agente('10101010-1', Ticket.APODERADOS, lider=True)
+        entrar_soporte(self.client, lider)
         url = reverse('apoderados_revocar_vinculo', args=[self.vinculo.pk])
         self.client.post(url, {'confirmar': 'on'})
         self.assertFalse(Revocacion.objects.exists())
         self.client.post(url, {'confirmar': 'on', 'motivo': 'Resolución judicial ficticia'})
         self.assertEqual((self.vinculo.revocacion.autor, self.vinculo.revocacion.motivo),
-                         (admin, 'Resolución judicial ficticia'))
+                         (lider.user, 'Resolución judicial ficticia'))
         self.assertContains(self.client.get(reverse('apoderados_revision')), 'Resolución judicial ficticia')
 
 

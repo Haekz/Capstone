@@ -40,6 +40,7 @@ VER_HALLAZGOS=1 python manage.py test tests.test_matriz_identidad -v 2 # muestra
 | ID-09 | Cualquiera | Usuario desactivado con sesión abierta, en una vista con decorador de rol | Expulsado | Expulsado | OK | — | `test_seguridad_blindaje.test_08_usuario_con_is_active_false_es_expulsado_por_decorador` |
 | ID-10 | Admin | Admin desactivado con sesión abierta abre "crear administrador" (`/profesor/registro_tutor`) | Redirige al login | Redirige al login | **CERRADO (hallazgos)** | S-07 | `S07CuentasDesactivadasTests.test_admin_desactivado_con_sesion_no_entra_a_crear_administradores` |
 | ID-11 | Alumno | Cuenta desactivada entra con Google | Rechazada | Rechazada | **CERRADO (S4-02)** | S-07 | `S07GoogleTests.test_cuenta_desactivada_no_entra_con_google` |
+| ID-23 | Cualquiera | Login con `?next=` a una ruta interna, a otro dominio o a `//otro` (paso 6e) | Vuelve a la ruta interna; con otro dominio va a su portal (sin redirección abierta) | Igual | OK | — | `LoginTests.test_next_interno_vuelve_ahi_y_externo_va_al_portal`, `LoginTests.test_el_formulario_conserva_solo_un_next_interno` |
 
 ### Registro y cuentas
 
@@ -48,6 +49,7 @@ VER_HALLAZGOS=1 python manage.py test tests.test_matriz_identidad -v 2 # muestra
 | ID-12 | Anónimo | Registro propio de allauth (`/accounts/signup/`) | Cerrado | Cerrado | **CERRADO (S4-02)** | S-06 | `S06RegistroAbiertoTests.test_el_registro_propio_de_allauth_esta_cerrado` |
 | ID-13 | Anónimo | Cuenta sin perfil creada con el correo de otra persona, que luego la completa con Google | La clave previa deja de servir | La clave previa deja de servir | **CERRADO (hallazgos)** | S-06 | `S06CuentaHuerfanaTests.test_completar_con_google_anula_la_clave_previa` |
 | ID-14 | Anónimo | Google entrega un correo no verificado | Rechazado | Rechazado | OK | — | `test_google_y_titulo.test_correo_no_verificado_por_google_se_rechaza` |
+| ID-24 | Anónimo y admin | Registro de alumno, de profesor y "crear administrador" con clave igual al RUT (con o sin puntos) o al correo | Rechazado | Rechazado (antes pasaba: se validaba sin usuario) | **CERRADO (Seg-3)** | Seg-3 | `Seg3ClaveIgualAlRutTests` |
 
 ### Permisos y accesos por rol
 
@@ -71,7 +73,7 @@ VER_HALLAZGOS=1 python manage.py test tests.test_matriz_identidad -v 2 # muestra
 | **S-06** Registro de allauth abierto y reutilización de cuentas huérfanas | Alta | **Cerrado**: registro de allauth cerrado (S4-02) y, al completar una cuenta huérfana con Google, su clave previa se anula | ID-12, ID-13 | `alumnos/google_adapter.py` (`LbwusAccountAdapter`), `alumnos/google_forms.py` (`save`) |
 | **S-07** Cuentas desactivadas siguen operando por la sesión o por Google | Alta | **Cerrado en lo probado**: Google las rechaza (S4-02) y crear administradores exige la cuenta activa. Quedan las vistas sin decorador (abajo) | ID-10, ID-11 | `alumnos/google_adapter.py`, `user_profesor/views.py` (`_es_admin`) |
 
-**S-07, vistas sin decorador de rol (solo revisión de código, sin prueba propia; PENDIENTE).** Estas vistas de `alumnos/views.py` usan la sesión sin `@alumno_required`, y por lo tanto no revisan `is_active`: `enviar_reporte`, `inscribir_clase`, `listar_sesiones_disponibles`, `reservar_sesion`, `sala_virtual` e `iniciar_directo`. Se corrigen después de integrar las ramas de apoderados, que modifican `sala_virtual` y `reservar_sesion`, para no generar conflictos.
+**S-07, vistas sin decorador de rol (solo revisión de código, sin prueba propia; PENDIENTE).** Estas vistas de `alumnos/views.py` usan la sesión sin `@alumno_required`, y por lo tanto no revisan `is_active`: `inscribir_clase`, `listar_sesiones_disponibles`, `reservar_sesion`, `sala_virtual` e `iniciar_directo` (`enviar_reporte` se retiró en el paso 6e: los reportes ahora son tickets de soporte). Se corrigen después de integrar las ramas de apoderados, que modifican `sala_virtual` y `reservar_sesion`, para no generar conflictos.
 
 ## Evidencia
 

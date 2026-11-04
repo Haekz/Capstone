@@ -23,6 +23,13 @@ urlpatterns = [
     path('comunidad/', include('comunidad.urls')),
     path('resenas/', include('resenas.urls')),
     path('apoderados/', include('apoderados.urls')),
+    path('soporte/', include('soporte.urls')),
+    path('notificaciones/', include('notificaciones.urls')),
+    path('agenda/', include('agenda.urls')),
+    path('mensajes/', include('mensajes.urls')),
+    path('privacidad/', include('supresiones.urls')),
+    path('requerimientos/', include('requerimientos.urls')),
+    path('observaciones/', include('observaciones.urls')),
     path('accounts/login/', custom_login, name='login'),
     path(
         'accounts/password_reset/',

@@ -1,53 +1,51 @@
 """Titulo profesional del profesor: subirlo, validarlo y revisarlo.
 
-Regla: sin titulo APROBADO por un admin el profesor no puede hacer clases
+Regla: sin titulo APROBADO por soporte el profesor no puede hacer clases
 (no se le asignan, no aparece para los alumnos y no se puede inscribir
-nadie en sus clases).
+nadie en sus clases). Cada titulo en revision es un ticket de soporte.
+
+Paso 9b: se guarda cifrado en la base con el mismo tratamiento que los documentos
+de apoderados (JPG o PNG re-codificado, o PDF de hasta 3 paginas; maximo 5 MB),
+soporte lo ve como imagen con marca de agua y el original se borra al decidir.
 """
 
-from pathlib import Path
-
-from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.utils import timezone
 
 from alumnos.models import Profesor
+from apoderados import documentos
+from soporte.models import Ticket
+from soporte.tickets import abrir_ticket, cerrar_tickets
 
-EXTENSIONES = {'.pdf', '.jpg', '.jpeg', '.png'}
-# Primeros bytes de cada formato: la extension sola se falsifica facil.
-FIRMAS = (b'%PDF', b'\xff\xd8\xff', b'\x89PNG')
+PASADO, A_RESUBIR, BORRADO = 'pasado', 'a_resubir', 'borrado'
+NO_SE_RECUPERO = 'No es un rechazo: no pudimos recuperar el archivo de tu título. Súbelo de nuevo, por favor.'
 
 
-def validar_archivo(archivo):
-    if archivo is None:
-        raise ValidationError('Selecciona el archivo de tu título.')
-    if Path(archivo.name).suffix.lower() not in EXTENSIONES:
-        raise ValidationError('Formato no permitido. Sube un PDF, JPG o PNG.')
-    if archivo.size > settings.TITULO_MAX_MB * 1024 * 1024:
-        raise ValidationError(f'El archivo supera los {settings.TITULO_MAX_MB} MB.')
-    cabecera = archivo.read(8)
-    archivo.seek(0)
-    if not cabecera.startswith(FIRMAS):
-        raise ValidationError('El archivo no parece un PDF o imagen válido.')
+def _borrar_archivo_antiguo(profesor):
+    """Titulos de antes del paso 9b, en disco: no deben quedar."""
+    if profesor.titulo_archivo:
+        profesor.titulo_archivo.delete(save=False)
 
 
 def subir(profesor, archivo):
-    """Guarda el titulo y lo deja en revision. Lanza ValidationError."""
+    """Guarda el titulo cifrado y lo deja en revision. Lanza ValidationError."""
     if not profesor.puede_subir_titulo:
         raise ValidationError('Tu título ya está en revisión o aprobado.')
-    validar_archivo(archivo)
-    if profesor.titulo_archivo:
-        profesor.titulo_archivo.delete(save=False)
-    extension = Path(archivo.name).suffix.lower()
-    profesor.titulo_archivo.save(f'profesor_{profesor.id_profesor}{extension}', archivo, save=False)
+    if archivo is None:
+        raise ValidationError('Selecciona el archivo de tu título.')
+    profesor.titulo_contenido, profesor.titulo_formato = documentos.preparar(archivo)
+    _borrar_archivo_antiguo(profesor)
     profesor.titulo_estado = Profesor.TITULO_EN_REVISION
     profesor.titulo_observacion = ''
     profesor.titulo_actualizado = timezone.now()
-    profesor.save()
+    with transaction.atomic():
+        profesor.save()
+        abrir_ticket(Ticket.TITULOS, profesor=profesor)
 
 
 def resolver(profesor, aprobar, observacion=''):
-    """Decision del admin sobre un titulo en revision."""
+    """Decision del agente de soporte sobre un titulo en revision. El original se borra (decidido 02-nov)."""
     if profesor.titulo_estado != Profesor.TITULO_EN_REVISION:
         raise ValidationError('Ese título no está pendiente de revisión.')
     if not aprobar and not observacion.strip():
@@ -55,4 +53,33 @@ def resolver(profesor, aprobar, observacion=''):
     profesor.titulo_estado = Profesor.TITULO_APROBADO if aprobar else Profesor.TITULO_RECHAZADO
     profesor.titulo_observacion = '' if aprobar else observacion.strip()[:200]
     profesor.titulo_actualizado = timezone.now()
-    profesor.save()
+    profesor.titulo_contenido, profesor.titulo_formato = None, ''
+    _borrar_archivo_antiguo(profesor)
+    with transaction.atomic():
+        profesor.save()
+        cerrar_tickets(profesor.tickets)
+
+
+def pasar_a_base(profesor):
+    """Titulo antiguo en disco -> cifrado en la base (manage.py pasar_titulos_a_base). Devuelve que paso.
+
+    En revision: se cifra; si el archivo se perdio (Railway borra el disco) o no es valido, queda
+    rechazado con NO_SE_RECUPERO para que lo vuelva a subir. Ya decidido: el original no se guarda.
+    """
+    resultado = BORRADO
+    if profesor.titulo_estado == Profesor.TITULO_EN_REVISION:
+        try:
+            with profesor.titulo_archivo.open('rb') as archivo:
+                profesor.titulo_contenido, profesor.titulo_formato = documentos.preparar(archivo)
+            resultado = PASADO
+        except (OSError, ValidationError):
+            profesor.titulo_estado = Profesor.TITULO_RECHAZADO
+            profesor.titulo_observacion = NO_SE_RECUPERO
+            profesor.titulo_actualizado = timezone.now()
+            resultado = A_RESUBIR
+    _borrar_archivo_antiguo(profesor)  # si ya no estaba en el disco, Django no reclama
+    with transaction.atomic():
+        profesor.save()
+        if resultado == A_RESUBIR:
+            cerrar_tickets(profesor.tickets)
+    return resultado

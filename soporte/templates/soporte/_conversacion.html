@@ -1,0 +1,12 @@
+{# Conversacion de un ticket de usuario. soporte_ve: lo mira soporte (cambian las etiquetas). #}
+<ol style="list-style:none; padding:0; margin:0; display:grid; gap:12px;">
+    {% for m in mensajes %}
+    <li style="padding:12px 14px; border:1px solid var(--border, #c8c8c8); border-radius:10px;">
+        <strong>{% if m.de_soporte %}{% if soporte_ve %}{{ m.autor.first_name|default:"Soporte" }} (soporte){% else %}Equipo de soporte LBWUS{% endif %}{% elif soporte_ve %}{{ m.autor.first_name|default:"Usuario" }}{% else %}Tú{% endif %}</strong>
+        <small>· {{ m.fecha|date:"d-m-Y H:i" }}</small>
+        <p style="margin:6px 0 0;">{{ m.texto|linebreaksbr }}</p>
+    </li>
+    {% empty %}
+    <li>Todavía no hay respuestas.</li>
+    {% endfor %}
+</ol>

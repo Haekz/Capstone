@@ -1,0 +1,111 @@
+<!-- esta parte es de la seccion de agenda: el horario semanal del profesor y sus bloques (paso B1c) -->
+<section id="sec-agenda" class="prof-section">
+    <div class="prof-section-header">
+        <h1 class="prof-section-title">Mi Agenda</h1>
+        <p class="prof-section-subtitle">Define tu horario semanal: los alumnos reservan bloques de 60 minutos y tu agenda se llena sola.</p>
+    </div>
+
+    <div class="prof-card">
+        <h2 class="prof-card-title">Mi horario semanal</h2>
+        {% if not profesor.puede_hacer_clases %}
+            <p>Tus bloques se publican cuando LBWUS apruebe tu título.</p>
+        {% elif not clases %}
+            <p>Aún no tienes asignaturas asignadas: tus bloques se crean cuando LBWUS te asigne una.</p>
+        {% endif %}
+
+        {% if franjas %}
+        <div class="prof-table-wrapper">
+            <table class="prof-table">
+                <thead><tr><th>Día</th><th>Desde</th><th>Hasta</th><th><span class="visually-hidden">Acción</span></th></tr></thead>
+                <tbody>
+                    {% for f in franjas %}
+                    <tr>
+                        <td class="prof-table-bold">{{ f.get_dia_semana_display }}</td>
+                        <td>{{ f.hora_inicio|time:"H:i" }}</td>
+                        <td>{{ f.hora_fin|time:"H:i" }}</td>
+                        <td>
+                            <form method="post" action="{% url 'agenda_quitar_franja' f.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" class="prof-form-btn" aria-label="Quitar franja del {{ f.get_dia_semana_display }} de {{ f.hora_inicio|time:'H:i' }} a {{ f.hora_fin|time:'H:i' }}">Quitar</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        <form method="post" action="{% url 'agenda_agregar_franja' %}">
+            {% csrf_token %}
+            <div class="prof-form-row">
+                <div class="prof-form-group">
+                    <label for="agenda-dia" class="prof-form-label">Día</label>
+                    <select id="agenda-dia" name="dia_semana" class="prof-form-select" required>
+                        {% for valor, nombre in dias_semana %}<option value="{{ valor }}">{{ nombre }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="prof-form-group">
+                    <label for="agenda-desde" class="prof-form-label">Desde</label>
+                    <select id="agenda-desde" name="hora_inicio" class="prof-form-select" required>
+                        {% for h in horas_agenda %}<option value="{{ h|time:'H:i' }}">{{ h|time:"H:i" }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="prof-form-group">
+                    <label for="agenda-hasta" class="prof-form-label">Hasta</label>
+                    <select id="agenda-hasta" name="hora_fin" class="prof-form-select" required>
+                        {% for h in horas_agenda %}<option value="{{ h|time:'H:i' }}">{{ h|time:"H:i" }}</option>{% endfor %}
+                    </select>
+                </div>
+            </div>
+            <button type="submit" class="prof-form-btn"><i class="bi bi-plus-circle" aria-hidden="true"></i> Agregar franja</button>
+        </form>
+    </div>
+
+    <div class="prof-card">
+        <h2 class="prof-card-title">Próximas {{ semanas_agenda }} semanas</h2>
+        {% if agenda_filas %}
+        <div class="prof-table-wrapper">
+            <table class="prof-table">
+                <thead><tr><th>Fecha</th><th>Hora</th><th>Estado</th></tr></thead>
+                <tbody>
+                    {% for fila in agenda_filas %}
+                    <tr>
+                        <td>{{ fila.inicio|date:"l d/m" }}</td>
+                        <td>{{ fila.inicio|time:"H:i" }}</td>
+                        <td>
+                            {% for r in fila.reservas %}
+                                <span class="prof-badge prof-badge-online">Reservado</span> {{ r.alumno }} · {{ r.asignatura }}
+                                <form method="post" action="{% url 'mensajes_profesor_abrir' r.id %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="prof-form-btn" aria-label="Escribir al {{ r.escribe_a }} de {{ r.alumno }} sobre la clase de {{ r.asignatura }} del {{ fila.inicio|date:'d/m' }}">Escribir al {{ r.escribe_a }}</button>
+                                </form>
+                                {% if r.puede_cancelar %}
+                                <form method="post" action="{% url 'agenda_cancelar_clase' r.id %}" style="display:inline;"
+                                      onsubmit="return confirm('¿Cancelar esta clase? Esa hora se cierra y avisamos al alumno para que reagende.');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="prof-form-btn" aria-label="Cancelar la clase de {{ r.asignatura }} con {{ r.alumno }} del {{ fila.inicio|date:'d/m' }} a las {{ fila.inicio|time:'H:i' }}">Cancelar clase</button>
+                                </form>
+                                {% else %}
+                                <small>Faltan menos de 12 h: ya no se puede cancelar.</small>
+                                {% endif %}
+                                {% if not forloop.last %}<br>{% endif %}
+                            {% empty %}
+                                Libre
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            <div class="prof-empty-card">
+                <i class="bi bi-calendar-x" aria-hidden="true"></i>
+                <p>Aún no tienes bloques. Agrega una franja a tu horario semanal.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    {% include 'observaciones/_clases_realizadas.html' %}
+</section>

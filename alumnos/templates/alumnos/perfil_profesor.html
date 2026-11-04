@@ -34,10 +34,6 @@
         <dl class="perfil-prof__datos">
             <div><dt>Clases que ofrece</dt><dd>{{ clases|length }}</dd></div>
             <div><dt>Sesiones realizadas</dt><dd>{{ sesiones_realizadas }}</dd></div>
-            <div>
-                <dt>Teléfono</dt>
-                <dd>{% if telefono %}<a href="tel:{{ telefono }}">{{ telefono }}</a>{% else %}No publicado por el profesor{% endif %}</dd>
-            </div>
         </dl>
     </section>
 

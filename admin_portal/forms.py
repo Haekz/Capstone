@@ -1,7 +1,7 @@
 from django import forms
 from alumnos.models import Alumno, Genero
+from alumnos.utils import validar_clave_nueva
 from django.contrib.auth import get_user_model
-from django.contrib.auth.password_validation import validate_password
 
 User = get_user_model()
 
@@ -140,10 +140,9 @@ class AdminAlumnoForm(forms.ModelForm):
             if correo and password.strip().lower() == correo.strip().lower():
                 self.add_error('password', 'Por seguridad, la contrase\u00f1a no puede ser igual al correo electr\u00f3nico.')
 
-            # Validaci\u00f3n de robustez de contrase\u00f1a nativa de Django
-            dummy_user = User(username=rut or '', email=correo or '')
+            # Robustez de Django contra el RUT y el correo de la cuenta (mismo helper que los registros, Seg-3)
             try:
-                validate_password(password, user=dummy_user)
+                validar_clave_nueva(password, rut, correo)
             except forms.ValidationError as e:
                 self.add_error('password', e)
 

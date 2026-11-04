@@ -1,0 +1,23 @@
+{# Formulario de respuesta (usuario o agente), accesible como apoderados/formulario.html. #}
+<form method="post" class="apod-form" novalidate style="display:grid; gap:10px; margin-top:16px;">
+    {% csrf_token %}
+    {% for campo in form %}
+    {% if campo.field.widget.input_type == 'checkbox' %}
+    <div class="apod-form__declaracion">{{ campo }} <label for="{{ campo.id_for_label }}">{{ campo.label }}</label></div>
+    {% else %}
+    <div class="apod-form__campo" style="display:grid; gap:6px;">
+        <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+        {{ campo }}
+        {% if campo.help_text %}<small id="{{ campo.auto_id }}_helptext">{{ campo.help_text }}</small>{% endif %}
+    </div>
+    {% endif %}
+    {% if campo.errors %}
+    <div id="{{ campo.auto_id }}-error" role="alert">
+        {% for error in campo.errors %}<p class="apod-form__error">{{ error }}</p>{% endfor %}
+    </div>
+    {% endif %}
+    {% endfor %}
+    <button type="submit" class="{{ clase_boton|default:'perfil-prof__reservar' }}">
+        <i class="bi bi-send-fill" aria-hidden="true"></i> Enviar respuesta
+    </button>
+</form>

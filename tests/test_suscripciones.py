@@ -133,7 +133,8 @@ class PortalPlanTests(TestCase):
         return r
 
     def assertContenidoPremium(self, respuesta, visible):
-        for marca in ('id="chat-msg-input"', 'id="progress-stat-hours"'):
+        # El buscador del Buzon esta siempre que el Buzon se dibuja (el campo de mensaje solo con una conversacion abierta).
+        for marca in ('id="chat-search-input"', 'id="progress-stat-hours"'):
             (self.assertContains if visible else self.assertNotContains)(respuesta, marca)
 
     def test_sin_plan(self):

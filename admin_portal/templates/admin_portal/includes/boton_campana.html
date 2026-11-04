@@ -1,0 +1,5 @@
+<!-- Campana: avisos de plazos de quien abre la página (admin_portal/avisos.py); el punto solo si hay alguno -->
+<button class="theme-btn" onclick="toggleNotifications()" title="Notificaciones" aria-label="Notificaciones{% if avisos %} ({{ avisos|length }}){% endif %}" style="position:relative;">
+    <i class="bi bi-bell-fill" aria-hidden="true"></i>
+    {% if avisos %}<span class="notification-badge-dot" id="notif-badge-dot"></span>{% endif %}
+</button>

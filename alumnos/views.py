@@ -23,20 +23,22 @@ from .models import (
     Clase,
     SesionClase,
     Inscripcion,
-    Pago,
     PaqueteClases,
     Suscripcion,
 )
 from django.core.exceptions import ValidationError
+from . import paquetes, progreso
+from mensajes import panel as mensajes_panel
+from observaciones import panel as observaciones_panel
+from django.db import transaction
+from apoderados.permisos import clase_pagada_por_apoderado, vinculo_contratable
+from lbwus.puerta import destino_seguro
 from .forms import AlumnoForm, FiltroClasesForm
 from .decorators import alumno_required, profesor_required_json, sesion_iniciada_required
 from .exceptions import InscripcionError
-from .services import InscripcionService, PlanesService
-from .utils import formato_clp, es_menor
-from .templatetags.dinero import clp as _clp
-from . import paquetes
-from django.db import transaction
-from apoderados.permisos import clase_pagada_por_apoderado, vinculo_contratable
+from .services import InscripcionService, exigir_mayor_de_edad
+from .utils import es_menor
+from .templatetags.dinero import clp as _clp  # mismo formato en vistas y plantillas
 from .roles import (
     ALUMNO,
     PROFESOR,
@@ -92,38 +94,6 @@ def _tx():
     )
 
 
-PRECIOS_PLANES_OFICIALES = {
-    # Planes vigentes (S4-03): Tarifa base $15.000 / $59.000 / $116.000
-    'plan_flexible': 15000,
-    'plan_progreso': 59000,
-    'plan_intensivo': 116000,
-    'flexible': 15000,
-    'progreso': 59000,
-    'intensivo': 116000,
-    # Retrocompatibilidad con planes heredados (Sprint 3 / Tests)
-    '1': 89990,
-    '2': 139990,
-    '3': 189990,
-}
-
-def _precio_item(item):
-    item_id = str(item.get('id', ''))
-    if item_id in PRECIOS_PLANES_OFICIALES:
-        base = PRECIOS_PLANES_OFICIALES[item_id]
-    else:
-        base = int(
-            ''.join(
-                c for c in str(item.get('precio', '0'))
-                if c.isdigit()
-            ) or 0
-        )
-    factor = PERIODOS.get(item.get('periodo', 'mensual'), 1)
-    try:
-        cantidad = max(1, min(int(item.get('cantidad', 1)), 20))
-    except (ValueError, TypeError):
-        cantidad = 1
-    return round(base * factor) * cantidad
-
 def _plan_para_js(alumno):
     """Plan vigente en el formato que usa el JS del portal, o None si no tiene."""
     paquete = alumno.paquetes.vigentes().order_by('-fecha_fin').first()
@@ -153,6 +123,13 @@ def home(request):
         'alumnos/home.html',
         context
     )
+
+
+def _alumno_en_sesion_es_menor(request):
+    """El alumno con sesion abierta es menor de edad: contrata su apoderado, no el."""
+    alumno_id = request.session.get('alumno_id')
+    alumno = Alumno.objects.select_related('user').filter(pk=alumno_id).first() if alumno_id else None
+    return alumno is not None and es_menor(alumno.user)
 
 
 def planes(request):
@@ -188,6 +165,9 @@ def planes(request):
         'duracion_clase': paquetes.DURACION_CLASE_MIN,
         'comision_pct': int(paquetes.COMISION * 100),
         'es_alumno': bool(request.session.get('alumno_id')),
+        # El menor ve que contrata su apoderado, en vez de botones que no harian nada.
+        'es_menor': _alumno_en_sesion_es_menor(request),
+        # Apoderado contratando para su estudiante (?estudiante=id del vinculo verificado).
         'estudiante': vinculo_contratable(request, request.GET.get('estudiante')),
     })
 
@@ -387,11 +367,17 @@ def alumno_pag1(request):
         'mis_inscripciones': mis_inscripciones,
         'historial_clases': historial_clases,
         'progreso': alumno.resumen_progreso(),
+        'progreso_ramos': progreso.por_ramo(alumno),
+        'grafico_semanal': progreso.horas_por_semana(alumno),
+        # Lo que el profesor comenta de las clases: lo lee el alumno (menor o no) aqui, y el apoderado del menor en su portal.
+        'observaciones': observaciones_panel.del_alumno(alumno),
         'plan_activo': _plan_para_js(alumno),
         'mis_paquetes': mis_paquetes,
         'pagos': pagos,
         'es_menor': es_menor(alumno.user),
         'tiene_solicitud': hasattr(alumno, 'solicitud_apoderado'),  # adolescente de 14 a 17 (apoderados)
+        # Buzon de Dudas (mensajes/panel.py); el error de un envio rechazado se muestra una sola vez.
+        **mensajes_panel.contexto_alumno(alumno, request.GET.get('c'), request.session.pop('mensajes_error', None)),
     }
 
     return render(
@@ -432,6 +418,10 @@ def custom_login(request):
         return redirigir_a_portal(rol_activo)
 
     error = None
+    # A donde volver tras entrar (p. ej. el boton de un pago rechazado). Solo rutas
+    # internas: destino_seguro rechaza otros dominios; '/' significa "ninguno".
+    siguiente = destino_seguro(request.POST.get('next') or request.GET.get('next'))
+    siguiente = '' if siguiente == '/' else siguiente
 
     if request.method == 'POST':
 
@@ -500,7 +490,7 @@ def custom_login(request):
                 else:
                     auth_login(request, user)
                     abrir_sesion_rol(request, rol, perfil)
-                    return redirigir_a_portal(rol)
+                    return redirect(siguiente) if siguiente else redirigir_a_portal(rol)
 
             else:
                 cache.set(clave_cache_ip, intentos_ip + 1, 300)
@@ -517,7 +507,8 @@ def custom_login(request):
         request,
         'registration/login.html',
         {
-            'error': error
+            'error': error,
+            'siguiente': siguiente,
         }
     )
 
@@ -532,96 +523,6 @@ def logout_alumno(request):
     auth_logout(request)
     request.session.flush()
     return redirect('home')
-
-
-# ============================================================
-# REPORTES
-# ============================================================
-
-def enviar_reporte(request):
-
-    if request.method == 'POST':
-
-        try:
-
-            data = json.loads(
-                request.body
-            )
-
-            descripcion = str(data.get('descripcion', '')).strip()[:2000]
-
-            alumno_id = request.session.get(
-                'alumno_id'
-            )
-
-            profesor_id = request.session.get(
-                'profesor_id'
-            )
-
-            if not descripcion:
-
-                return JsonResponse({
-                    "success": False,
-                    "message": (
-                        "La descripción no "
-                        "puede estar vacía."
-                    )
-                })
-
-            # Reporte desde alumno
-
-            if alumno_id:
-
-                alumno = Alumno.objects.get(
-                    id_alumno=alumno_id
-                )
-
-                Reporte.objects.create(
-                    remitente=alumno.user,
-                    descripcion=descripcion
-                )
-
-                return JsonResponse({
-                    "success": True
-                })
-
-            # Reporte desde profesor
-
-            elif profesor_id:
-
-                profesor = Profesor.objects.get(
-                    id_profesor=profesor_id
-                )
-
-                Reporte.objects.create(
-                    remitente=profesor.user,
-                    descripcion=descripcion
-                )
-
-                return JsonResponse({
-                    "success": True
-                })
-
-            else:
-
-                return JsonResponse({
-                    "success": False,
-                    "message": (
-                        "No hay sesión activa."
-                    )
-                })
-
-        except Exception:
-
-            return JsonResponse({
-                "success": False,
-                "message": "Ocurrió un error inesperado al registrar el reporte."
-            })
-
-    return JsonResponse({
-        "success": False,
-        "message": "Método no permitido."
-    })
 
 
 # ============================================================
@@ -850,18 +751,22 @@ def reprogramar_inscripcion(request, pk):
 @require_POST
 def comprar_paquete(request):
     """Inicia Webpay por un paquete. El monto lo calcula el servidor con la tarifa del profesor."""
-    # Menores: contrata su apoderado. Unico inicio de Webpay.
-    if es_menor(get_object_or_404(Alumno, id_alumno=request.session['alumno_id']).user):
-        return redirect('alumno_pag1')
-    return iniciar_compra_paquete(request, request.session['alumno_id'])
+    return iniciar_compra_paquete(request, request.session['alumno_id'])  # el menor no pasa: ahi se bloquea
 
 
-def iniciar_compra_paquete(request, alumno_id, al_crear=None):
+def iniciar_compra_paquete(request, alumno_id, al_crear=None, vinculo=None):
     """Unico inicio de Webpay para paquetes: lo usan el alumno y el apoderado.
 
     Plan y profesor vienen del POST; el monto lo calcula el servidor. ``al_crear``
     recibe el paquete dentro de la misma transaccion (la compra del apoderado).
+
+    Menores: solo contrata su apoderado, con el ``vinculo`` que lo autoriza. El bloqueo vive aqui y no en las
+    vistas, porque aqui se crea el paquete: cualquier vista nueva que llegue hasta este punto queda cubierta.
     """
+    try:
+        exigir_mayor_de_edad(get_object_or_404(Alumno, pk=alumno_id), vinculo)
+    except InscripcionError:
+        return redirect('alumno_pag1')
     plan = paquetes.POR_CODIGO.get(request.POST.get('plan', ''))
     profesor = _profesor_habilitado(request.POST.get('profesor'))
     if not (plan and profesor):
@@ -931,18 +836,6 @@ def confirmacion(request):
             for p in PaqueteClases.objects.filter(buy_order=buy_order).select_related('profesor__user')
         ] if buy_order else []
 
-        pago = Pago.objects.filter(buy_order=buy_order).first() if buy_order else None
-        if pago:
-            if aprobado:
-                pago.estado = Pago.ESTADO_PAGADA
-                pago.authorization_code = resp.get('authorization_code', '')
-                pago.ultimos_digitos_tarjeta = card.get('card_number', '')
-                pago.fecha_transaccion = timezone.now()
-                pago.save()
-            else:
-                pago.estado = Pago.ESTADO_RECHAZADA
-                pago.save(update_fields=['estado', 'updated_at'])
-
         ctx.update({
             'aprobado': aprobado,
             'orden': buy_order,
@@ -998,9 +891,8 @@ def sala_virtual(request, clase_id):
         insc.puede_unirse and (not menor or clase_pagada_por_apoderado(insc))
         for insc in Inscripcion.objects.filter(alumno__user=request.user, clase=clase).select_related('sesion', 'alumno')
     )
-    es_admin = bool(request.session.get('admin_id')) or getattr(request.user, 'is_staff', False) or getattr(request.user, 'is_superuser', False)
-    if not (es_profesor or es_alumno or es_admin):
-        from django.http import HttpResponseForbidden
+    # Nadie mas entra: ni administradores, ni staff, ni el campo ``rol`` (SCRUM-87).
+    if not (es_profesor or es_alumno):
         return HttpResponseForbidden("Acceso denegado: debes estar inscrito activamente en la clase o ser el profesor asignado.")
 
     context = {

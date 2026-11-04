@@ -47,6 +47,7 @@ class Resena(models.Model):
     ESTADO_VISIBLE = 'visible'
     ESTADO_OCULTA = 'oculta'
     ESTADOS = [(ESTADO_VISIBLE, 'Visible'), (ESTADO_OCULTA, 'Oculta por moderación')]
+    PUNTAJE_BAJO = 2  # de un menor, avisa a su apoderado (D21)
 
     # Clase completada que habilitó la reseña: de ella salen el alumno y el profesor.
     inscripcion = models.ForeignKey(Inscripcion, on_delete=models.CASCADE, related_name='resenas')

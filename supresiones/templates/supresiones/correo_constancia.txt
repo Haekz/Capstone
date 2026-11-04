@@ -1,0 +1,13 @@
+Hola {{ nombre }},
+
+Recibimos tu solicitud para eliminar tu cuenta.
+
+  Solicitud: #{{ solicitud.pk }}
+  Recibida: {{ recibida|date:"d-m-Y" }} a las {{ recibida|date:"H:i" }}
+  Te respondemos a más tardar el {{ plazo|date:"d-m-Y" }}
+
+Un integrante de soporte la revisa. Mientras tanto tu cuenta sigue activa. Puedes seguir la solicitud en LBWUS, en "Ayuda y soporte" (ticket #{{ ticket.pk }}).
+
+Cuando termine la revisión te avisamos qué se eliminó y qué se conserva. Si hay algo que impide eliminarla hoy (por ejemplo, clases pagadas sin usar), te lo explicamos en el ticket.
+
+Equipo LBWUS

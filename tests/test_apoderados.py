@@ -1,7 +1,7 @@
 """Cuenta del apoderado y verificacion de su identidad.
 
 Datos ficticios. Cubre registro (validaciones), confirmacion de correo (un solo
-uso, vencimiento, manipulacion), revision del admin (evidencia obligatoria) y
+uso, vencimiento, manipulacion), revision de soporte (evidencia obligatoria) y
 restricciones: una cuenta verificada no abre nada de alumnos, profesores ni admin.
 """
 
@@ -21,12 +21,14 @@ from django.urls import reverse
 from django.utils import timezone
 from PIL import Image
 
-from alumnos.models import Asignatura, Clase, Genero, Tutor
+from alumnos.models import Asignatura, Clase, Genero
 from apoderados.documentos import preparar
 from apoderados.forms import VERSION_DECLARACION
 from apoderados.models import Apoderado, Documento, RevisionIdentidad
 from apoderados.tokens import token_correo
 from apoderados.views import CLAVE_ENVIO
+from soporte.models import AgenteSoporte, Habilitacion, Ticket
+from soporte.tickets import abrir_ticket
 from tests.test_especialidad import crear_profesor
 from tests.test_filtros_clases import crear_sesion
 from tests.test_progreso_alumno import crear_alumno
@@ -78,6 +80,19 @@ def entrar(client, user, **sesion):
     s.save()
 
 
+def crear_agente(rut, *categorias, lider=False):
+    """Cuenta de soporte que recibe tickets de ``categorias``."""
+    user = User.objects.create_user(rut, rut=rut, email=f'{rut}@soporte.cl', password=CLAVE,
+                                    rol='soporte', first_name=f'Agente {rut}')
+    agente = AgenteSoporte.objects.create(user=user, es_lider=lider)
+    Habilitacion.objects.bulk_create([Habilitacion(agente=agente, categoria=c) for c in categorias])
+    return agente
+
+
+def entrar_soporte(client, agente):
+    entrar(client, agente.user, soporte_id=agente.id_agente)
+
+
 class RegistroTests(TestCase):
 
     def test_registro_valido_crea_la_cuenta_pendiente_y_envia_el_enlace(self):
@@ -116,7 +131,7 @@ class RegistroTests(TestCase):
         self.assertEqual(len(mail.outbox), 0)
 
     def test_si_el_correo_falla_la_cuenta_queda_creada_y_se_avisa(self):
-        with mock.patch('apoderados.correo.send_mail', side_effect=OSError('sin servidor')):
+        with mock.patch('alumnos.correo.send_mail', side_effect=OSError('sin servidor')):
             respuesta = self.client.post(reverse('registro_apoderado'), datos_registro(), follow=True)
         self.assertTrue(Apoderado.objects.filter(user__rut=RUT).exists())
         self.assertContains(respuesta, 'No pudimos enviar el correo de confirmación')
@@ -200,14 +215,14 @@ class RevisionIdentidadTests(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.admin = User.objects.create_user('10101010-1', password=CLAVE, rol='admin', first_name='Admin')
-        cls.tutor = Tutor.objects.create(user=cls.admin)
+        cls.revisor = crear_agente('10101010-1', Ticket.APODERADOS, lider=True)
 
     def setUp(self):
         self.apoderado = crear_apoderado(RUT, Apoderado.REVISION_PENDIENTE)
         for tipo in Documento.CARNET:
             adjuntar(tipo, apoderado=self.apoderado)
-        entrar(self.client, self.admin, admin_id=self.tutor.id_tutor)
+        abrir_ticket(Ticket.APODERADOS, apoderado=self.apoderado)
+        entrar_soporte(self.client, self.revisor)
 
     def revisar(self, apoderado=None, **datos):
         return self.client.post(reverse('apoderado_revisar', args=[(apoderado or self.apoderado).pk]), datos)
@@ -218,7 +233,7 @@ class RevisionIdentidadTests(TestCase):
         self.assertEqual(self.apoderado.estado, Apoderado.VERIFICADO)
         revision = self.apoderado.revisiones.get()
         self.assertEqual((revision.administrador, revision.documento, revision.canal, revision.rut_coincide),
-                         (self.admin, 'cedula', 'documento', True))
+                         (self.revisor.user, 'cedula', 'documento', True))
 
     def test_aprobar_exige_rut_coincidente(self):
         self.revisar(decision='aprobar')

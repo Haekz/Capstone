@@ -1,0 +1,40 @@
+<!-- Soporte en cifras (P13): cuántos tickets y en cuánto tiempo, nunca su contenido (admin_portal/metricas.py) -->
+<div class="panel">
+    <div class="panel-header">
+        <span class="panel-title">
+            <i class="bi bi-headset" aria-hidden="true"></i>
+            Soporte en cifras
+        </span>
+    </div>
+    <div class="panel-body">
+        <p class="stat-sub">
+            {{ soporte.abiertos }} abierto{{ soporte.abiertos|pluralize }} ·
+            {{ soporte.atrasados }} atrasado{{ soporte.atrasados|pluralize }} ·
+            primera respuesta: {% if soporte.horas_respuesta %}{{ soporte.horas_respuesta }} h en promedio{% else %}sin datos{% endif %} ·
+            cierre: {% if soporte.dias_cierre %}{{ soporte.dias_cierre }} días en promedio{% else %}sin datos{% endif %}
+        </p>
+        <div style="overflow-x:auto;">
+            <table class="user-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Categoría</th>
+                        <th scope="col">Abiertos</th>
+                        <th scope="col">Atrasados</th>
+                        <th scope="col">Cerrados</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for categoria in soporte.por_categoria %}
+                    <tr>
+                        <th scope="row">{{ categoria.nombre }}</th>
+                        <td>{{ categoria.abiertos }}</td>
+                        <td>{{ categoria.atrasados }}</td>
+                        <td>{{ categoria.cerrados }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <p class="stat-sub">Los atiende el equipo de soporte. Por privacidad, aquí no se muestra su contenido.</p>
+    </div>
+</div>

@@ -1,0 +1,56 @@
+{% extends 'alumnos/base.html' %}
+{% load static %}
+
+{% block title %}Eliminar mi cuenta | LBWUS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'alumnos/css/perfil_profesor.css' %}">
+<link rel="stylesheet" href="{% static 'apoderados/apoderados.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="perfil-prof">
+    <a class="perfil-prof__volver" href="{% url 'mis_tickets' %}">
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a ayuda y soporte
+    </a>
+
+    <header class="perfil-prof__cabecera">
+        <div>
+            <h1>Eliminar mi cuenta</h1>
+            <p class="perfil-prof__vacio">Esto es lo que pasaría con tus datos si lo pides hoy. Un integrante de soporte revisa la solicitud y te responde en {{ plazo_dias }} días hábiles.</p>
+        </div>
+    </header>
+
+    <section class="perfil-prof__bloque" aria-labelledby="evaluacion-titulo">
+        <h2 id="evaluacion-titulo">Qué se elimina y qué se conserva</h2>
+        {% include 'apoderados/_mensajes.html' %}
+        {% include 'supresiones/_evaluacion.html' %}
+        {% if evaluacion.bloqueos %}
+        <p><small>Puedes enviar la solicitud igual: soporte te explica qué hacer o la deja esperando a que se resuelva.</small></p>
+        {% endif %}
+    </section>
+
+    <section class="perfil-prof__bloque" aria-labelledby="pedir-titulo">
+        <h2 id="pedir-titulo">Pedir la eliminación</h2>
+        <p>Para confirmar que eres tú, te enviamos un enlace a tu correo registrado. Mientras no lo confirmes, no pasa nada.</p>
+        {% for error in form.non_field_errors %}<p class="apod-form__error" role="alert">{{ error }}</p>{% endfor %}
+        <form method="post" class="apod-form" novalidate>
+            {% csrf_token %}
+            {% for campo in form %}
+            <div class="apod-form__declaracion">
+                {{ campo }}
+                <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+            </div>
+            {% if campo.errors %}
+            <div id="{{ campo.auto_id }}-error" role="alert">
+                {% for error in campo.errors %}<p class="apod-form__error">{{ error }}</p>{% endfor %}
+            </div>
+            {% endif %}
+            {% endfor %}
+            <button type="submit" class="perfil-prof__reservar">
+                <i class="bi bi-envelope" aria-hidden="true"></i> Enviarme el enlace de confirmación
+            </button>
+        </form>
+    </section>
+</div>
+{% endblock %}

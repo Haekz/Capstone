@@ -2,6 +2,7 @@
 
 Permisos con los decoradores de rol existentes. El portal del apoderado solo
 muestra su cuenta y sus vinculos: no abre nada de alumnos, profesores ni admin.
+Las revisiones son de soporte: solo el agente con el ticket ve documentos y decide.
 """
 
 import time
@@ -13,24 +14,27 @@ from django.db import transaction
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_POST
 
-from alumnos.decorators import admin_required, alumno_required, alumno_sesion_required, apoderado_required
+from alumnos.decorators import alumno_required, alumno_sesion_required, apoderado_required, soporte_required
 from alumnos.exceptions import InscripcionError
-from alumnos.models import Inscripcion, PaqueteClases, SesionClase, Tutor
+from alumnos.models import Inscripcion, PaqueteClases, SesionClase
 from alumnos.roles import ALUMNO, APODERADO, abrir_sesion_rol, redirigir_a_portal, rol_en_sesion
 from alumnos.services import InscripcionService
 from alumnos.utils import es_menor
 from alumnos.views import iniciar_compra_paquete  # unico inicio de Webpay para paquetes
+from observaciones import panel as observaciones_panel
+from soporte.permisos import agente_en_sesion, lider_required, ticket_asignado, tickets_del_agente
 
-from .correo import avisar_apoderados, enviar_confirmacion, enviar_confirmacion_adolescente, enviar_invitacion
-from .documentos import con_marca_de_agua
-from .forms import (VERSION_DECLARACION_VINCULO, AceptarInvitacionForm, ClaveEstudianteForm,
-                    InvitacionForm, NuevaClaveForm, RegistroAdolescenteForm, RegistroApoderadoForm,
-                    RegistroEstudianteForm, RevisionIdentidadForm, RevisionVinculoForm, RevocarVinculoForm)
+from .correo import (avisar_apoderados, avisar_revocacion, enviar_confirmacion, enviar_confirmacion_adolescente,
+                     enviar_invitacion)
+from .documentos import con_marca_de_agua, texto_de_revision
+from .forms import (VERSION_DECLARACION_VINCULO, AceptarInvitacionForm, CarnetForm, ClaveEstudianteForm,
+                    DocumentoVinculoForm, InvitacionForm, NuevaClaveForm, RegistroAdolescenteForm,
+                    RegistroApoderadoForm, RegistroEstudianteForm, RevisionIdentidadForm, RevisionVinculoForm,
+                    RevocarVinculoForm)
 from .models import (AccesoDocumento, Apoderado, CompraApoderado, Documento, RevisionIdentidad,
                      RevisionVinculo, Revocacion, SolicitudAdolescente, Vinculo)
 from .permisos import debe_renovar_clave, vinculo_contratable
@@ -40,6 +44,16 @@ ESPERA_REENVIO = 60  # segundos entre correos de confirmacion
 CLAVE_ENVIO = 'apoderado_correo_enviado'
 CLAVE_INVITACION = 'invitacion_pendiente'  # enlace guardado mientras el apoderado entra o se registra
 BACKEND = 'alumnos.backends.RutOrEmailBackend'
+# Sin documentos ya sea porque se registro antes de que se pidieran o porque vencieron: el texto dice ambas cosas.
+SIN_CARNET = ('Aún no tenemos las fotos de tu carnet: o nunca las subiste, o vencieron sin revisión y las borramos '
+              'por seguridad.')
+SIN_DOCUMENTO = ('Aún no tenemos el documento del vínculo: o nunca lo subiste, o venció sin revisión y lo borramos '
+                 'por seguridad.')
+# Quien fue rechazado puede intentarlo de nuevo (decidido 03-nov): soporte borra el documento al decidir.
+REINTENTO_CARNET = ('Soporte rechazó la verificación de tu identidad y borró las fotos. Si quieres intentarlo de nuevo, '
+                    'sube tu carnet por ambos lados y lo revisarán otra vez.')
+REINTENTO_DOCUMENTO = ('Soporte rechazó el vínculo y borró el documento. Si quieres intentarlo de nuevo, sube otro '
+                       'documento y lo revisarán otra vez.')
 
 
 def _apoderado_en_sesion(request):
@@ -54,6 +68,14 @@ def _solicitud_en_sesion(request):
 
 def _formulario(request, form, **textos):
     return render(request, 'apoderados/formulario.html', {'form': form, **textos})
+
+
+def redirigir_si_no_verificado(request, apoderado):
+    """Si su identidad aun no esta verificada: aviso y vuelta al portal. Si lo esta, None."""
+    if apoderado.estado != Apoderado.VERIFICADO:
+        messages.error(request, 'Podrás registrar estudiantes cuando tu identidad esté verificada.')
+        return redirect(APODERADO.ruta_portal)
+    return None
 
 
 def _segundos_para_reenviar(request):
@@ -93,7 +115,7 @@ def registro(request):
         request, form, titulo='Crea tu cuenta de apoderado', subtitulo='Tus datos', boton='Crear cuenta',
         volver_url=reverse('opcion_user'),
         intro=('Para madres, padres y tutores legales de estudiantes menores de edad. Antes de habilitar tu '
-               'cuenta confirmaremos tu correo y un administrador revisará tu identidad con una foto de tu '
+               'cuenta confirmaremos tu correo y nuestro equipo de soporte revisará tu identidad con una foto de tu '
                'carnet por ambos lados.'),
     )
 
@@ -105,7 +127,7 @@ def confirmar_correo(request, uidb64, token):
     if apoderado is None:
         return render(request, 'apoderados/enlace_invalido.html', status=400)
     apoderado.confirmar_correo()
-    messages.success(request, 'Correo confirmado. Ahora un administrador revisará tu identidad.')
+    messages.success(request, 'Correo confirmado. Ahora nuestro equipo de soporte revisará tu identidad.')
     return redirect(APODERADO.ruta_portal if request.session.get(APODERADO.clave_sesion) else 'login')
 
 
@@ -122,6 +144,10 @@ def portal(request):
                     .prefetch_related('revisiones', 'compras__paquete__profesor__user'),
         'invitacion': invitacion_vigente(token) if token else None,
         'token_invitacion': token,
+        'sin_carnet': SIN_CARNET,
+        'sin_documento': SIN_DOCUMENTO,
+        'reintento_carnet': REINTENTO_CARNET,
+        'reintento_documento': REINTENTO_DOCUMENTO,
     })
 
 
@@ -143,13 +169,13 @@ def reenviar(request):
 @apoderado_required
 def registrar_estudiante(request):
     apoderado = _apoderado_en_sesion(request)
-    if apoderado.estado != Apoderado.VERIFICADO:
-        messages.error(request, 'Podrás registrar estudiantes cuando tu identidad esté verificada.')
-        return redirect(APODERADO.ruta_portal)
+    sin_verificar = redirigir_si_no_verificado(request, apoderado)
+    if sin_verificar:
+        return sin_verificar
     form = RegistroEstudianteForm(request.POST or None, request.FILES or None, apoderado=apoderado)
     if request.method == 'POST' and form.is_valid():
         vinculo = form.save()
-        messages.success(request, f'Registramos a {vinculo.alumno.user.first_name}. Un administrador '
+        messages.success(request, f'Registramos a {vinculo.alumno.user.first_name}. Nuestro equipo de soporte '
                                   'revisará el documento que adjuntaste para verificar el vínculo.')
         return redirect(APODERADO.ruta_portal)
     return _formulario(
@@ -164,14 +190,15 @@ def registrar_estudiante(request):
 @never_cache
 @apoderado_required
 def clave_estudiante(request, id_vinculo):
-    # Solo vinculos propios, no rechazados y de cuentas que creo el apoderado
-    # (Vinculo.apoderado_define_clave): lo demas responde 404.
+    # Solo vinculos propios y no rechazados; ademas, solo quien creo la cuenta del estudiante
+    # (Vinculo.apoderado_define_clave). Lo demas responde 404.
     vinculo = get_object_or_404(
         Vinculo.objects.select_related('alumno__user'), pk=id_vinculo,
         apoderado_id=request.session[APODERADO.clave_sesion],
         estado__in=[Vinculo.PENDIENTE, Vinculo.VERIFICADO],
-        alumno__solicitud_apoderado__isnull=True,
     )
+    if not vinculo.apoderado_define_clave:
+        raise Http404
     estudiante = vinculo.alumno.user
     if not es_menor(estudiante):  # a los 18 la contrasena es solo suya
         raise Http404
@@ -185,6 +212,50 @@ def clave_estudiante(request, id_vinculo):
         boton='Guardar contraseña', volver_url=reverse(APODERADO.ruta_portal),
         intro=f'{estudiante.first_name} entra con su RUT ({estudiante.rut}) y esta contraseña.',
     )
+
+
+# --- Documentos que vencieron sin revisar: se vuelven a subir y se abre un ticket nuevo ---
+
+@never_cache
+@apoderado_required
+def subir_carnet(request):
+    apoderado = _apoderado_en_sesion(request)
+    if not apoderado.puede_subir_carnet:
+        raise Http404
+    form = CarnetForm(request.POST or None, request.FILES or None)
+    if request.method == 'POST' and form.is_valid():
+        with transaction.atomic():
+            form.guardar_carnet(apoderado)
+            apoderado.volver_a_revision()  # si estaba rechazado, vuelve a la cola de soporte
+            apoderado.abrir_ticket_si_revisable()
+        messages.success(request, 'Recibimos tu carnet. Nuestro equipo de soporte lo revisará.')
+        return redirect(APODERADO.ruta_portal)
+    return _formulario(request, form, titulo='Sube tu carnet', subtitulo='Carnet por ambos lados',
+                       boton='Subir carnet', volver_url=reverse(APODERADO.ruta_portal),
+                       intro=REINTENTO_CARNET if apoderado.estado == Apoderado.RECHAZADO else SIN_CARNET)
+
+
+@never_cache
+@apoderado_required
+def subir_documento_vinculo(request, id_vinculo):
+    vinculo = get_object_or_404(Vinculo.objects.select_related('alumno__user', 'apoderado'), pk=id_vinculo,
+                                apoderado_id=request.session[APODERADO.clave_sesion],
+                                estado__in=[Vinculo.PENDIENTE, Vinculo.RECHAZADO])
+    if not vinculo.puede_subir_documento:
+        raise Http404
+    form = DocumentoVinculoForm(request.POST or None, request.FILES or None)
+    form.fields['documento'].label = dict(Documento.TIPOS)[vinculo.documento_requerido]
+    if request.method == 'POST' and form.is_valid():
+        with transaction.atomic():
+            form.guardar_documento(vinculo)
+            vinculo.volver_a_revision()  # si estaba rechazado, vuelve a pendiente
+            vinculo.abrir_ticket_si_revisable()
+        messages.success(request, 'Recibimos el documento. Nuestro equipo de soporte lo revisará.')
+        return redirect(APODERADO.ruta_portal)
+    return _formulario(request, form, titulo=f'Vínculo con {vinculo.nombre_visible}',
+                       subtitulo='Sube el documento', boton='Subir documento',
+                       volver_url=reverse(APODERADO.ruta_portal),
+                       intro=REINTENTO_DOCUMENTO if vinculo.estado == Vinculo.RECHAZADO else SIN_DOCUMENTO)
 
 
 # --- El apoderado contrata y reserva por su estudiante ---
@@ -201,7 +272,7 @@ def _vinculo_o_404(request, id_vinculo):
 def comprar_paquete(request, id_vinculo):
     """Mismo Webpay que el alumno; el paquete queda a nombre del estudiante."""
     vinculo = _vinculo_o_404(request, id_vinculo)
-    return iniciar_compra_paquete(request, vinculo.alumno_id, al_crear=lambda paquete: (
+    return iniciar_compra_paquete(request, vinculo.alumno_id, vinculo=vinculo, al_crear=lambda paquete: (
         CompraApoderado.objects.create(paquete=paquete, apoderado=vinculo.apoderado, vinculo=vinculo)))
 
 
@@ -223,6 +294,7 @@ def clases_estudiante(request, id_vinculo):
                 .order_by('fecha_hora_inicio')[:30]) if con_clases else []
     return render(request, 'apoderados/clases.html', {
         'vinculo': vinculo, 'paquetes': paquetes, 'reservas': reservas, 'sesiones': sesiones,
+        'observaciones': observaciones_panel.del_alumno(alumno),  # las mismas que lee el menor en su Mi Progreso
     })
 
 
@@ -268,11 +340,12 @@ def reprogramar_clase(request, id_vinculo, id_inscripcion):
 
 # --- Revocar el vinculo y contrasena propia al cumplir 18 ---
 
-def _revocar(request, vinculo, volver, motivo_obligatorio):
+def _revocar(request, vinculo, estudiante, volver, motivo_obligatorio):
     form = RevocarVinculoForm(request.POST or None, motivo_obligatorio=motivo_obligatorio)
-    estudiante = vinculo.alumno.user.first_name
     if request.method == 'POST' and form.is_valid():
+        era_verificado = vinculo.estado == Vinculo.VERIFICADO
         canceladas = vinculo.revocar(request.user, form.cleaned_data['motivo'])
+        avisar_revocacion(vinculo, era_verificado, canceladas)
         messages.success(request, f'Revocamos el vínculo de {vinculo.apoderado.nombre} con {estudiante}. '
                                   f'Clases futuras canceladas: {canceladas}.')
         return redirect(volver)
@@ -290,15 +363,15 @@ def revocar_vinculo(request, id_vinculo):
     vinculo = get_object_or_404(Vinculo.objects.select_related('apoderado', 'alumno__user'), pk=id_vinculo,
                                 apoderado_id=request.session[APODERADO.clave_sesion],
                                 estado__in=Vinculo.REVOCABLES)
-    return _revocar(request, vinculo, APODERADO.ruta_portal, motivo_obligatorio=False)
+    return _revocar(request, vinculo, vinculo.nombre_visible, APODERADO.ruta_portal, motivo_obligatorio=False)
 
 
 @never_cache
-@admin_required
+@lider_required
 def revocar_vinculo_admin(request, id_vinculo):
     vinculo = get_object_or_404(Vinculo.objects.select_related('apoderado', 'alumno__user'), pk=id_vinculo,
                                 estado__in=Vinculo.REVOCABLES)
-    return _revocar(request, vinculo, 'apoderados_revision', motivo_obligatorio=True)
+    return _revocar(request, vinculo, vinculo.alumno.user.first_name, 'apoderados_revision', motivo_obligatorio=True)
 
 
 @sensitive_post_parameters('new_password1', 'new_password2')
@@ -430,14 +503,14 @@ def invitacion(request, token):
             vinculo = pendiente.aceptar(apoderado, form.cleaned_data['parentesco'], VERSION_DECLARACION_VINCULO)
             form.guardar_documento(vinculo)
         request.session.pop(CLAVE_INVITACION, None)
-        messages.success(request, f'Aceptaste la invitación de {estudiante.user.first_name}. Un administrador '
+        messages.success(request, f'Aceptaste la invitación de {estudiante.user.first_name}. Nuestro equipo de soporte '
                                   'revisará el documento que adjuntaste para verificar el vínculo.')
         return redirect(APODERADO.ruta_portal)
     return _formulario(
         request, form, titulo=f'Invitación de {estudiante.user.first_name}', subtitulo='Confirma el vínculo',
         boton='Aceptar invitación', volver_url=reverse(APODERADO.ruta_portal),
-        intro=('Si eres su madre o su padre, acepta la invitación y adjunta su certificado de nacimiento. Un '
-               'administrador revisará tu identidad y ese documento antes de verificar el vínculo.'),
+        intro=('Si eres su madre o su padre, acepta la invitación y adjunta su certificado de nacimiento. Nuestro '
+               'equipo de soporte revisará tu identidad y ese documento antes de verificar el vínculo.'),
     )
 
 
@@ -447,37 +520,47 @@ def logout_apoderado(request):
 
 
 @never_cache
-@admin_required
+@soporte_required
 def revision(request):
-    return render(request, 'apoderados/revision.html', {
-        'admin': get_object_or_404(Tutor, id_tutor=request.session['admin_id']),
-        'pendientes': (Apoderado.objects.filter(estado=Apoderado.REVISION_PENDIENTE)
+    """Lo que el agente tiene asignado. El lider ademas ve registros, vinculos y accesos."""
+    agente = agente_en_sesion(request)
+    mios = tickets_del_agente(request)
+    contexto = {
+        'agente': agente,
+        'pendientes': (Apoderado.objects.filter(estado=Apoderado.REVISION_PENDIENTE, tickets__in=mios)
                        .select_related('user').prefetch_related('documentos')),
-        'historial': RevisionIdentidad.objects.select_related('apoderado__user', 'administrador')[:50],
         # Solo los que se pueden revisar: el apoderado ya tiene su identidad verificada.
-        'vinculos_pendientes': (Vinculo.objects.filter(estado=Vinculo.PENDIENTE, apoderado__estado=Apoderado.VERIFICADO)
+        'vinculos_pendientes': (Vinculo.objects.filter(estado=Vinculo.PENDIENTE, apoderado__estado=Apoderado.VERIFICADO,
+                                                       tickets__in=mios)
                                 .select_related('apoderado__user', 'alumno__user')
                                 .prefetch_related('invitaciones', 'documentos')),
-        'historial_vinculos': (RevisionVinculo.objects
-                               .select_related('vinculo__apoderado__user', 'vinculo__alumno__user', 'administrador')[:50]),
-        'vinculos_vigentes': (Vinculo.objects.filter(estado=Vinculo.VERIFICADO)
-                              .select_related('apoderado__user', 'alumno__user')),
-        'revocaciones': Revocacion.objects.select_related('vinculo__apoderado__user', 'vinculo__alumno__user',
-                                                          'autor').order_by('-fecha')[:50],
-        'accesos': AccesoDocumento.objects.select_related('administrador', 'apoderado__user')[:50],
-    })
+    }
+    if agente.es_lider:
+        contexto.update({
+            'historial': RevisionIdentidad.objects.select_related('apoderado__user', 'administrador')[:50],
+            'historial_vinculos': (RevisionVinculo.objects
+                                   .select_related('vinculo__apoderado__user', 'vinculo__alumno__user',
+                                                   'administrador')[:50]),
+            'vinculos_vigentes': (Vinculo.objects.filter(estado=Vinculo.VERIFICADO)
+                                  .select_related('apoderado__user', 'alumno__user')),
+            'revocaciones': Revocacion.objects.select_related('vinculo__apoderado__user', 'vinculo__alumno__user',
+                                                              'autor').order_by('-fecha')[:50],
+            'accesos': AccesoDocumento.objects.select_related('administrador', 'apoderado__user')[:50],
+        })
+    return render(request, 'apoderados/revision.html', contexto)
 
 
 @never_cache
-@admin_required
+@soporte_required
 def ver_documento(request, id_documento):
-    """Documento por revisar, con marca de agua de quien lo abre. Cada apertura queda registrada."""
+    """Documento por revisar, con marca de agua de quien lo abre. Cada apertura queda registrada.
+    Solo para el agente con el ticket de ese apoderado o vinculo."""
     documento = get_object_or_404(Documento.objects.select_related('apoderado', 'vinculo__apoderado'),
                                   pk=id_documento)
-    texto = f'LBWUS - solo revision - {request.user.first_name or request.user.username} - ' \
-            f'{timezone.localtime():%d-%m-%Y %H:%M}'
+    if ticket_asignado(request, apoderado_id=documento.apoderado_id, vinculo_id=documento.vinculo_id) is None:
+        raise Http404('Documento no encontrado.')
     try:
-        imagen = con_marca_de_agua(documento.contenido, texto)
+        imagen = con_marca_de_agua(documento.contenido, texto_de_revision(request.user))
     except InvalidToken:  # cambio la clave de cifrado: hay que pedir el documento de nuevo
         raise Http404('El documento ya no se puede leer.')
     AccesoDocumento.objects.create(administrador=request.user, apoderado=documento.titular,
@@ -498,20 +581,24 @@ def _revisar(request, revisado, formulario, nombre):
 
 
 @require_POST
-@admin_required
+@soporte_required
 def revisar(request, id_apoderado):
-    # Solo se revisa quien confirmo su correo y aun no tiene decision.
+    # Solo se revisa quien confirmo su correo y aun no tiene decision, con ticket propio.
     apoderado = get_object_or_404(Apoderado.objects.select_related('user'),
                                   pk=id_apoderado, estado=Apoderado.REVISION_PENDIENTE)
+    if ticket_asignado(request, apoderado=apoderado) is None:
+        raise Http404('Apoderado no encontrado.')
     return _revisar(request, apoderado, RevisionIdentidadForm, apoderado.nombre)
 
 
 @require_POST
-@admin_required
+@soporte_required
 def revisar_vinculo(request, id_vinculo):
-    # Solo vinculos pendientes de apoderados con identidad verificada.
+    # Solo vinculos pendientes de apoderados con identidad verificada, con ticket propio.
     vinculo = get_object_or_404(Vinculo.objects.select_related('apoderado__user', 'alumno__user'),
                                 pk=id_vinculo, estado=Vinculo.PENDIENTE,
                                 apoderado__estado=Apoderado.VERIFICADO)
+    if ticket_asignado(request, vinculo=vinculo) is None:
+        raise Http404('Vínculo no encontrado.')
     return _revisar(request, vinculo, RevisionVinculoForm,
                     f'Vínculo {vinculo.apoderado.nombre} - {vinculo.alumno.user.first_name}')

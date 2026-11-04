@@ -1,149 +1,29 @@
 import datetime
 import logging
+from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
-from django.views.decorators.http import require_POST
-from django.db.models import Sum, Q
 from alumnos.models import (
-    Especialidad, Genero, Profesor, Clase, Inscripcion, Tutor,
-    SolicitudRetiro, Pago, PlanAlumno, DesgloseOperacion, Banco,
+    Especialidad, Genero, Profesor, Clase, Inscripcion, Tutor, CuentaBancaria, TIPOS_CUENTA, SolicitudRetiro, Banco,
 )
 from alumnos.decorators import profesor_required, profesor_required_json
 from alumnos.roles import ADMIN, PROFESOR, abrir_sesion_rol
-from alumnos.utils import formato_clp, validar_rut_chileno, usuario_existe, validar_imagen_perfil
+from alumnos.utils import formato_clp, validar_rut_chileno, usuario_existe
 from django.core.exceptions import ValidationError
 from django.http import FileResponse, Http404
-from . import foto
-from alumnos import paquetes
+from django.views.decorators.http import require_POST
+from . import cambio_cuenta, foto
+from .saldos import calcular_saldos  # noqa: F401  (metricas, supresiones y pruebas lo importan desde aqui)
+from alumnos import catalogos, liquidacion, paquetes
+from agenda import panel as agenda_panel
+from observaciones import panel as observaciones_panel
+from mensajes import panel as mensajes_panel
 
 logger = logging.getLogger(__name__)
 
-VALOR_INSCRIPCION = 15000
-COMISION_LBWUS = 2250
-PAGO_PROFESOR = 12750
 
-def _valor_clase(inscripcion):
-    """Lo que pago el alumno por esa clase."""
-    return inscripcion.paquete.precio_por_clase if getattr(inscripcion, 'paquete_id', None) else VALOR_INSCRIPCION
-
-
-def calcular_saldos(profesor, retiros_lista=None):
-    """Devuelve los saldos de un profesor a partir de sus inscripciones y planes vendidos (S4-03)."""
-    from alumnos.services import PlanesService
-
-    tarifa_base = PlanesService.obtener_tarifa_base_profesor(profesor)
-    calc_ref = PlanesService.calcular_precios_plan('flexible', tarifa_base=tarifa_base)
-    valor_unitario = calc_ref['precio_total']
-    pago_unitario = calc_ref['monto_tutor']
-
-    # 1. Inscripciones individuales o con Paquetes
-    inscripciones_qs = Inscripcion.objects.filter(clase__profesor=profesor)
-    if hasattr(inscripciones_qs, 'consumidas'):
-        inscripciones_consumidas = inscripciones_qs.consumidas().select_related('paquete')
-    else:
-        inscripciones_consumidas = inscripciones_qs.filter(estado=Inscripcion.ESTADO_CONFIRMADA).select_related('paquete')
-
-    valores = [_valor_clase(i) for i in inscripciones_consumidas]
-    total_ganado_inscripciones = sum(valores)
-    corresponde_tutor_inscripciones = sum(paquetes.pago_profesor(v) for v in valores)
-
-    # 2. Planes vendidos asociados directamente a este profesor (PlanAlumno S4-03)
-    planes = PlanAlumno.objects.filter(
-        profesor=profesor,
-        pago__estado=Pago.ESTADO_PAGADA,
-        estado__in=[PlanAlumno.ESTADO_ACTIVO, PlanAlumno.ESTADO_AGOTADO]
-    ).only('monto_total', 'monto_tutor', 'total_clases', 'clases_consumidas')
-
-    total_ganado_planes = 0
-    corresponde_tutor_planes_consumido = 0
-    tutor_planes_pendiente = 0
-
-    for plan in planes:
-        total_ganado_planes += plan.monto_total
-        if plan.total_clases > 0:
-            monto_por_clase_tutor = plan.monto_tutor / plan.total_clases
-            consumido = int(round(monto_por_clase_tutor * plan.clases_consumidas))
-            pendiente_clases = plan.monto_tutor - consumido
-            corresponde_tutor_planes_consumido += consumido
-            tutor_planes_pendiente += pendiente_clases
-        else:
-            corresponde_tutor_planes_consumido += plan.monto_tutor
-
-    total_ganado = total_ganado_inscripciones + total_ganado_planes
-    bruto_tutor_acumulado = corresponde_tutor_inscripciones + corresponde_tutor_planes_consumido
-
-    if retiros_lista is not None:
-        aprobados = sum(r.monto for r in retiros_lista if r.estado == 'aprobado')
-        retiros_pendientes = sum(r.monto for r in retiros_lista if r.estado == 'pendiente')
-    else:
-        agregados_retiros = SolicitudRetiro.objects.filter(profesor=profesor).aggregate(
-            aprobados=Sum('monto', filter=Q(estado='aprobado')),
-            pendientes=Sum('monto', filter=Q(estado='pendiente')),
-        )
-        aprobados = agregados_retiros['aprobados'] or 0
-        retiros_pendientes = agregados_retiros['pendientes'] or 0
-
-    disponible = max(0, bruto_tutor_acumulado - aprobados - retiros_pendientes)
-
-    # Fondos pendientes: comisión retenida + saldo de clases no ejecutadas aún + retiros en trámite
-    comision_plataforma = total_ganado - (bruto_tutor_acumulado + tutor_planes_pendiente)
-    pendiente = comision_plataforma + tutor_planes_pendiente + retiros_pendientes
-
-    return {
-        'total_ganado': total_ganado,
-        'disponible': disponible,
-        'pendiente': pendiente,
-    }
-
-    # 2. Planes vendidos asociados directamente a este profesor
-    planes = PlanAlumno.objects.filter(
-        profesor=profesor,
-        pago__estado=Pago.ESTADO_PAGADA,
-        estado__in=[PlanAlumno.ESTADO_ACTIVO, PlanAlumno.ESTADO_AGOTADO]
-    ).only('monto_total', 'monto_tutor', 'total_clases', 'clases_consumidas')
-
-    total_ganado_planes = 0
-    corresponde_tutor_planes_consumido = 0
-    tutor_planes_pendiente = 0
-
-    for plan in planes:
-        total_ganado_planes += plan.monto_total
-        if plan.total_clases > 0:
-            monto_por_clase_tutor = plan.monto_tutor / plan.total_clases
-            consumido = int(round(monto_por_clase_tutor * plan.clases_consumidas))
-            pendiente_clases = plan.monto_tutor - consumido
-            corresponde_tutor_planes_consumido += consumido
-            tutor_planes_pendiente += pendiente_clases
-        else:
-            corresponde_tutor_planes_consumido += plan.monto_tutor
-
-    total_ganado = total_ganado_inscripciones + total_ganado_planes
-    bruto_tutor_acumulado = corresponde_tutor_inscripciones + corresponde_tutor_planes_consumido
-
-    if retiros_lista is not None:
-        aprobados = sum(r.monto for r in retiros_lista if r.estado == 'aprobado')
-        retiros_pendientes = sum(r.monto for r in retiros_lista if r.estado == 'pendiente')
-    else:
-        agregados_retiros = SolicitudRetiro.objects.filter(profesor=profesor).aggregate(
-            aprobados=Sum('monto', filter=Q(estado='aprobado')),
-            pendientes=Sum('monto', filter=Q(estado='pendiente')),
-        )
-        aprobados = agregados_retiros['aprobados'] or 0
-        retiros_pendientes = agregados_retiros['pendientes'] or 0
-
-    disponible = max(0, bruto_tutor_acumulado - aprobados - retiros_pendientes)
-
-    # Fondos pendientes: comisión retenida + saldo de clases no ejecutadas aún + retiros en trámite
-    comision_plataforma = total_ganado - (bruto_tutor_acumulado + tutor_planes_pendiente)
-    pendiente = comision_plataforma + tutor_planes_pendiente + retiros_pendientes
-
-    return {
-        'total_ganado': total_ganado,
-        'disponible': disponible,
-        'pendiente': pendiente,
-    }
 
 
 def buscar_especialidad(especialidad_id):
@@ -182,10 +62,10 @@ def regis_prof(request):
             if len(password) < 6:
                 return JsonResponse({"success": False, "message": "La contraseña debe tener al menos 6 caracteres."})
 
-            from django.contrib.auth.password_validation import validate_password
+            from alumnos.utils import validar_clave_nueva
             from django.core.exceptions import ValidationError as DjangoValidationError
             try:
-                validate_password(password)
+                validar_clave_nueva(password, rut, correo_electronico)
             except DjangoValidationError as e:
                 return JsonResponse({"success": False, "message": " | ".join(e.messages)})
 
@@ -271,7 +151,7 @@ def panel_profesor(request):
         Inscripcion.objects.filter(
             clase__profesor=profesor,
             estado__in=['confirmada', 'pendiente']
-        ).select_related('alumno', 'alumno__user', 'clase', 'clase__asignatura')
+        ).select_related('alumno', 'alumno__user', 'clase', 'clase__asignatura', 'paquete')
     )
 
     inscripciones_por_clase = {}
@@ -285,10 +165,8 @@ def panel_profesor(request):
     # 1. Clases del día (Máximo 6)
     clases_top6 = clases[:6]
     clases_hoy_lista = []
-    inscripciones_hoy = 0
     for clase in clases_top6:
         insc_lista = inscripciones_por_clase.get(clase.id_clase, [])
-        inscripciones_hoy += len(insc_lista)
         primera_insc = insc_lista[0] if insc_lista else None
         alumno_nombre = primera_insc.alumno.user.first_name if primera_insc else "Sin asignar"
         clases_hoy_lista.append({
@@ -299,10 +177,10 @@ def panel_profesor(request):
         })
 
     # 2. Métricas del Día
-    # Dinero generado hoy segun las inscripciones reales de esas clases.
-    ids_hoy = {c.id_clase for c in clases[:6]}
+    # Dinero generado hoy segun las inscripciones reales de esas clases (ya cargadas en memoria).
+    ids_hoy = {c.id_clase for c in clases_top6}
     inscripciones_hoy = [i for i in inscripciones if i.clase_id in ids_hoy]
-    dinero_hoy_val = sum(paquetes.pago_profesor(_valor_clase(i)) for i in inscripciones_hoy)
+    dinero_hoy_val = sum(paquetes.pago_profesor(paquetes.valor_clase(i)) for i in inscripciones_hoy)
     dinero_hoy = formato_clp(dinero_hoy_val)
     clases_disponibles = max(0, 8 - len(clases_hoy_lista))
 
@@ -310,7 +188,7 @@ def panel_profesor(request):
     meses_nombres = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
     current_month = timezone.localdate().month  # mes en Chile, no el del servidor
     rendimiento_meses = []
-# Un mes sin inscripciones vale 0.
+    # Un mes sin inscripciones vale 0.
     tope_grafico = 40
     for i in range(4, -1, -1):
         month_idx = (current_month - i - 1) % 12
@@ -328,7 +206,7 @@ def panel_profesor(request):
         .select_related('banco')
         .order_by('-fecha_solicitud')
     )
-    saldos = calcular_saldos(profesor, retiros_lista=mis_retiros)
+    saldos = calcular_saldos(profesor)
     saldo_disponible = saldos['disponible']
 
     saldo_total_fmt = formato_clp(saldos['total_ganado'])
@@ -336,13 +214,6 @@ def panel_profesor(request):
     saldo_pendiente_fmt = formato_clp(saldos['pendiente'])
 
     generos = list(Genero.objects.all())
-
-    # S4-09: Desglose económico detallado de operaciones bajo comisión LBWUS 15%
-    desgloses_profesor = list(
-        DesgloseOperacion.objects.filter(profesor=profesor)
-        .select_related('alumno', 'alumno__user', 'inscripcion', 'inscripcion__clase', 'inscripcion__clase__asignatura', 'plan_alumno')
-        .order_by('-fecha_operacion')[:20]
-    )
 
     context = {
         'profesor': profesor,
@@ -357,9 +228,19 @@ def panel_profesor(request):
         'saldo_disponible_raw': saldo_disponible,
         'saldo_pendiente': saldo_pendiente_fmt,
         'mis_retiros': mis_retiros,
-        'desgloses_profesor': desgloses_profesor,
+        'cuenta_bancaria': CuentaBancaria.objects.filter(profesor=profesor).first(),
+        'bancos': catalogos.BANCOS,
+        'tipos_cuenta': TIPOS_CUENTA,
+        'minimo_retiro': formato_clp(liquidacion.MINIMO),
+        'minimo_retiro_raw': liquidacion.MINIMO,
+        'proximo_pago': liquidacion.proximo_pago(profesor, timezone.localdate()),
+        'frecuencia_vigente': liquidacion.frecuencia_vigente(profesor, timezone.localdate()),
+        'frecuencias': liquidacion.FRECUENCIAS,
         'generos': generos,
-        'especialidades': list(Especialidad.objects.order_by('nombre')),
+        'especialidades': Especialidad.objects.order_by('nombre'),
+        **agenda_panel.contexto(profesor),  # seccion Mi Agenda (agenda/panel.py)
+        **observaciones_panel.contexto_profesor(profesor),  # sus clases realizadas, en la misma seccion
+        **mensajes_panel.contexto_profesor(profesor, request.GET.get('c')),  # Buzon (mensajes/panel.py)
     }
     return render(request, 'user_profesor/panel_profesor.html', context)
 
@@ -377,7 +258,7 @@ def subir_titulo(request):
         return JsonResponse({"success": False, "message": e.messages[0]})
     return JsonResponse({
         "success": True,
-        "message": "Título recibido. Un administrador lo revisará y te habilitará para hacer clases.",
+        "message": "Título recibido. Nuestro equipo de soporte lo revisará y te habilitará para hacer clases.",
     })
 
 
@@ -473,6 +354,65 @@ def actualizar_perfil_prof(request):
 
 
 @profesor_required_json
+@require_POST
+def guardar_cuenta_bancaria(request):
+    """Registra la cuenta donde se le paga al profesor (titular: su propio RUT).
+
+    La primera se guarda al tiro; cambiarla exige la contrasena y el enlace del correo.
+    """
+    profesor_id = request.session.get('profesor_id')
+    actual = CuentaBancaria.objects.select_related('profesor__user').filter(profesor_id=profesor_id).first()
+    cuenta = CuentaBancaria(profesor_id=profesor_id)
+    cuenta.banco = request.POST.get('banco', '')
+    cuenta.tipo_cuenta = request.POST.get('tipo_cuenta', '')
+    try:
+        cuenta.asignar_numero(request.POST.get('numero_cuenta'))
+        cuenta.full_clean(exclude=['profesor'])  # valida banco y tipo contra las listas cerradas
+    except ValidationError as e:
+        return JsonResponse({"success": False, "message": e.messages[0]})
+    if actual is None:
+        cuenta.save()
+        return JsonResponse({"success": True, "message": f"Cuenta guardada: {cuenta.banco} {cuenta.enmascarado}."})
+    if not request.user.check_password(request.POST.get('password', '')):
+        return JsonResponse({"success": False, "message": "La contraseña no es correcta."})
+    if not cambio_cuenta.pedir(request, actual, cuenta):
+        return JsonResponse({"success": False, "message": "No pudimos enviar el correo de confirmación. Intenta más tarde."})
+    return JsonResponse({"success": True, "message": "Te enviamos un enlace a tu correo para confirmar el cambio. Vence en 24 horas."})
+
+
+@profesor_required
+def confirmar_cambio_cuenta(request, token):
+    try:
+        cuenta = cambio_cuenta.confirmar(request.session.get('profesor_id'), token)
+    except ValidationError as e:
+        messages.error(request, e.messages[0])
+    else:
+        desde = timezone.localtime(cuenta.pagable_desde).strftime('%d/%m/%Y %H:%M')
+        messages.success(request, f'Cuenta cambiada a {cuenta.banco} {cuenta.enmascarado}. '
+                                  f'Por seguridad, los pagos a esta cuenta se habilitan el {desde}.')
+    return redirect('panel_profesor')
+
+
+# _json: el panel llama esta vista con fetch y espera {'success': ...};
+# un redirect le romperia el res.json().
+@profesor_required_json
+@require_POST
+def guardar_frecuencia_pago(request):
+    """Semanal o mensual; el cambio rige desde el ciclo siguiente (F4)."""
+    profesor = Profesor.objects.get(id_profesor=request.session.get('profesor_id'))
+    try:
+        desde = liquidacion.cambiar_frecuencia(profesor, request.POST.get('frecuencia', ''), timezone.localdate())
+    except ValidationError as e:
+        return JsonResponse({"success": False, "message": e.messages[0]})
+    if desde is None:
+        return JsonResponse({"success": True, "message": f"Sigues con pago {profesor.get_frecuencia_pago_display().lower()}."})
+    return JsonResponse({"success": True, "message": f"Desde el {desde:%d/%m/%Y} tu pago será "
+                                                    f"{profesor.get_frecuencia_nueva_display().lower()}. El ciclo en curso no cambia."})
+
+
+# _json: el panel llama esta vista con fetch y espera {'success': ...};
+# un redirect le romperia el res.json().
+@profesor_required_json
 def solicitar_retiro(request):
     profesor_id = request.session.get('profesor_id')
 
@@ -482,12 +422,13 @@ def solicitar_retiro(request):
         try:
             monto_str = request.POST.get('monto', '').replace('.', '').replace('$', '').strip()
             monto = int(monto_str)
-            banco = request.POST.get('banco', 'Banco Estado').strip()[:50]
-            tipo_cuenta = request.POST.get('tipo_cuenta', 'Cuenta Rut / Vista').strip()[:50]
-            numero_cuenta = request.POST.get('numero_cuenta', '').strip()[:30]
 
-            if monto <= 0:
-                return JsonResponse({"success": False, "message": "El monto a retirar debe ser mayor a cero."})
+            if monto < liquidacion.MINIMO:
+                return JsonResponse({"success": False, "message": f"El mínimo para retirar es {formato_clp(liquidacion.MINIMO)}. Tu saldo se acumula hasta alcanzarlo."})
+
+            cuenta = CuentaBancaria.objects.filter(profesor_id=profesor_id).first()
+            if cuenta is None:
+                return JsonResponse({"success": False, "message": "Registra tu cuenta bancaria antes de solicitar un retiro."})
 
             with transaction.atomic():
                 profesor = Profesor.objects.select_for_update().get(id_profesor=profesor_id)
@@ -501,15 +442,16 @@ def solicitar_retiro(request):
                 if monto > saldo_disponible:
                     return JsonResponse({"success": False, "message": f"El monto ingresado excede tu saldo disponible ({formato_clp(saldo_disponible)})."})
 
-                banco_obj, _ = Banco.objects.get_or_create(nombre=banco if banco else 'Banco Estado')
-                SolicitudRetiro.objects.create(
+                # Copia enmascarada: el numero completo solo vive cifrado en la cuenta.
+                retiro = SolicitudRetiro.objects.create(
                     profesor=profesor,
                     monto=monto,
-                    banco=banco_obj,
-                    tipo_cuenta=tipo_cuenta if tipo_cuenta else 'Cuenta Rut / Vista',
-                    numero_cuenta=numero_cuenta
+                    banco=Banco.objects.get_or_create(nombre=cuenta.banco)[0],
+                    tipo_cuenta=cuenta.tipo_cuenta,
+                    numero_cuenta=cuenta.enmascarado,
+                    pagar_el=liquidacion.proximo_pago(profesor, timezone.localdate()),
                 )
-            return JsonResponse({"success": True, "message": f"Solicitud de retiro por {formato_clp(monto)} registrada con éxito. Se procesará en 24 a 48 horas hábiles."})
+            return JsonResponse({"success": True, "message": f"Solicitud de retiro por {formato_clp(monto)} registrada. Se paga el {retiro.pagar_el:%d/%m/%Y}."})
         except ValueError:
             return JsonResponse({"success": False, "message": "Por favor ingresa un monto numérico válido."})
         except Exception:
@@ -562,10 +504,10 @@ def regis_tutor(request):
             if len(password) < 6:
                 return JsonResponse({"success": False, "message": "La contraseña debe tener al menos 6 caracteres."})
 
-            from django.contrib.auth.password_validation import validate_password
+            from alumnos.utils import validar_clave_nueva
             from django.core.exceptions import ValidationError as DjangoValidationError
             try:
-                validate_password(password)
+                validar_clave_nueva(password, rut, correo_electronico)
             except DjangoValidationError as e:
                 return JsonResponse({"success": False, "message": " | ".join(e.messages)})
 

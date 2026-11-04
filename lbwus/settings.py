@@ -36,6 +36,15 @@ if not SECRET_KEY:
 # Generarla con: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
 DOCUMENTOS_CLAVE = os.environ.get("DOCUMENTOS_CLAVE", "")
 
+# Clave de las huellas del registro de supresiones (supresiones/registro.py). Sin ella se deriva de SECRET_KEY. Si
+# cambia, el registro y los archivos exportados dejan de reconocer a las personas eliminadas: definirla aparte y
+# guardarla junto con los respaldos, nunca en la base de datos.
+SUPRESIONES_CLAVE = os.environ.get("SUPRESIONES_CLAVE", "")
+
+# Meses que se guarda una observacion del profesor, contados desde la clase (observaciones/models.py). Pasado el plazo
+# las borra el comando diario borrar_observaciones_vencidas; el aviso de las pantallas lee este mismo numero.
+OBSERVACIONES_MESES = 12
+
 # '.up.railway.app' (con punto) acepta cualquier subdominio. Django no
 # acepta comodines tipo '*.dominio'.
 ALLOWED_HOSTS = ['lbwus.xyz', '.up.railway.app', 'localhost', '127.0.0.1']
@@ -80,6 +89,13 @@ INSTALLED_APPS = [
     'comunidad',
     'resenas',
     'apoderados',
+    'soporte',
+    'notificaciones',
+    'agenda',
+    'mensajes',
+    'supresiones',
+    'requerimientos',
+    'observaciones',
     'django_extensions',
 ]
 
@@ -135,6 +151,8 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 # Expone 'usuario_sesion' al menu global (alumnos/base.html)
                 'alumnos.context_processors.estado_sesion',
+                # Contador de la campanita (notificaciones/context_processors.py)
+                'notificaciones.context_processors.sin_leer',
             ],
         },
     },
@@ -241,12 +259,11 @@ STORAGES = {
     },
 }
 
-# Archivos subidos (titulos de profesores). NO se publica MEDIA_URL en urls:
-# son documentos privados y solo los ve un admin por una vista protegida.
+# Archivos subidos (fotos de perfil; titulos antiguos hasta pasarlos a la base, paso 9b).
+# NO se publica MEDIA_URL en urls: se sirven por vistas protegidas.
 # En Railway el disco es efimero: montar un Volume en MEDIA_ROOT.
 MEDIA_ROOT = Path(os.environ.get('MEDIA_ROOT', BASE_DIR / 'media'))
 MEDIA_URL = '/media/'
-TITULO_MAX_MB = 5
 
 # Default primary key field type
 

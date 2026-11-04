@@ -245,12 +245,12 @@
                 <!-- Pantalla de espera / Offline -->
                 {% if puede_iniciar %}
                     <i class="bi bi-camera-video-off" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 15px;"></i>
-                    <h3 style="color: white; margin: 0;">Transmisin Inactiva</h3>
-                    <p style="color: var(--text-muted);">Completa la informacin abajo y presiona "Iniciar Directo"</p>
+                    <h3 style="color: white; margin: 0;">Transmisión Inactiva</h3>
+                    <p style="color: var(--text-muted);">Completa la información abajo y presiona "Iniciar Directo"</p>
                 {% else %}
                     <i class="bi bi-hourglass-split" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 15px;"></i>
                     <h3 style="color: white; margin: 0;">Esperando al profesor...</h3>
-                    <p style="color: var(--text-muted);">La clase an no comienza. Esta pgina se recargar cuando el profesor inicie el directo.</p>
+                    <p style="color: var(--text-muted);">La clase aún no comienza. Esta página se recargará cuando el profesor inicie el directo.</p>
                 {% endif %}
             {% endif %}
         </div>
@@ -288,42 +288,36 @@
             </div>
             
             <div style="margin-top: 20px; font-size: 0.95rem; line-height: 1.6; color: var(--text-muted);">
-                <h4 style="color: var(--text-main); margin-bottom: 8px;">Sobre esta transmisin</h4>
+                <h4 style="color: var(--text-main); margin-bottom: 8px;">Sobre esta transmisión</h4>
                 
                 {% if puede_iniciar and not clase.en_vivo %}
-                    <!-- Modo edicin para el profesor antes de empezar -->
+                    <!-- Modo edición para el profesor antes de empezar -->
                     <form id="form-pre-stream" class="pre-stream-form">
                         {% csrf_token %}
-                        <input type="text" id="input-temas" name="temas_vivo" class="form-input" placeholder="Ej. Temas de Hoy: Resolucin de integrales dobles..." value="{{ clase.temas_vivo|default:'' }}">
-                        <textarea id="input-descripcion" name="descripcion_vivo" class="form-input" rows="3" placeholder="Escribe una breve descripcin de lo que se ver en la clase hoy...">{{ clase.descripcion_vivo|default:'' }}</textarea>
+                        <input type="text" id="input-temas" name="temas_vivo" class="form-input" placeholder="Ej. Temas de Hoy: Resolución de integrales dobles..." value="{{ clase.temas_vivo|default:'' }}">
+                        <textarea id="input-descripcion" name="descripcion_vivo" class="form-input" rows="3" placeholder="Escribe una breve descripción de lo que se verá en la clase hoy...">{{ clase.descripcion_vivo|default:'' }}</textarea>
                     </form>
                 {% else %}
-                    <!-- Vista estndar para alumnos o si ya empez el stream -->
+                    <!-- Vista estándar para alumnos o si ya empezó el stream -->
                     <p><strong>Temas de hoy:</strong> {{ clase.temas_vivo|default:"No especificado." }}</p>
-                    <p>{{ clase.descripcion_vivo|default:"Esta es una sesin privada 1 a 1. Como alumno, tienes la capacidad de encender tu cmara, micrfono y compartir pantalla en cualquier momento utilizando los controles del reproductor para resolver tus dudas directamente con el profesor." }}</p>
+                    <p>{{ clase.descripcion_vivo|default:"Esta es una sesión privada 1 a 1. Como alumno, tienes la capacidad de encender tu cámara, micrófono y compartir pantalla en cualquier momento utilizando los controles del reproductor para resolver tus dudas directamente con el profesor." }}</p>
                 {% endif %}
             </div>
         </div>
     </div>
 
-    <!-- Barra lateral de Chat Privado -->
+    <!-- Mensajes: el chat de verdad es el de la videollamada (Jitsi); este panel solo dice donde escribir -->
     <div class="live-sidebar">
         <div class="chat-header">
-            <i class="bi bi-chat-dots-fill" style="color: var(--primary);"></i> Chat de la Sesin
+            <i class="bi bi-chat-dots-fill" style="color: var(--primary);" aria-hidden="true"></i> Mensajes de la clase
         </div>
-        <div class="chat-messages" id="chat-messages">
-            <div style="text-align: center; color: var(--text-muted); font-size: 0.8rem; margin-bottom: 20px;">
-                Bienvenido a la clase. Este chat es privado entre el profesor y t.
-            </div>
-        </div>
-        <div class="chat-input">
-            <input type="text" id="chat-input-text" placeholder="Escribe tu duda aqu...">
-            <button class="send-btn" onclick="sendMessage()">
-                <i class="bi bi-send-fill"></i>
-            </button>
+        <div class="chat-messages" id="chat-messages" style="padding: 16px;">
+            <p><strong>Durante la clase</strong>, escribe en el chat de la videollamada (el ícono de chat de la barra de la sala): lo ven quienes están en la sala.</p>
+            <p><strong>Antes o después</strong>, usa el Buzón de tu cuenta.</p>
         </div>
     </div>
 </div>
+
 
 <script src="https://meet.jit.si/external_api.js"></script>
 <script>
@@ -391,46 +385,5 @@
         const api = new JitsiMeetExternalAPI(domain, options);
     }
     
-    // Lógica del Chat MVP (DOM seguro con textContent para prevenir XSS)
-    function sendMessage() {
-        const input = document.getElementById('chat-input-text');
-        const text = input.value.trim();
-        if(!text) return;
-        
-        const msgContainer = document.getElementById('chat-messages');
-        const now = new Date();
-        const timeStr = now.getHours() + ':' + now.getMinutes().toString().padStart(2, '0');
-        
-        const msgEl = document.createElement('div');
-        msgEl.className = 'message';
-
-        const headerEl = document.createElement('div');
-        headerEl.className = 'message-header';
-
-        const senderEl = document.createElement('span');
-        senderEl.className = 'sender';
-        senderEl.textContent = 'Tú';
-
-        const timeEl = document.createElement('span');
-        timeEl.className = 'time';
-        timeEl.textContent = timeStr;
-
-        const textEl = document.createElement('div');
-        textEl.className = 'text';
-        textEl.textContent = text;
-
-        headerEl.appendChild(senderEl);
-        headerEl.appendChild(timeEl);
-        msgEl.appendChild(headerEl);
-        msgEl.appendChild(textEl);
-
-        msgContainer.appendChild(msgEl);
-        msgContainer.scrollTop = msgContainer.scrollHeight;
-        input.value = '';
-    }
-
-    document.getElementById('chat-input-text').addEventListener('keypress', function(e) {
-        if(e.key === 'Enter') sendMessage();
-    });
 </script>
 {% endblock %}

@@ -1,0 +1,90 @@
+{% extends 'alumnos/base.html' %}
+{% load static %}
+{% load mensajes_tags %}
+
+{% block title %}Mensajes con los profesores | LBWUS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'alumnos/css/perfil_profesor.css' %}">
+<link rel="stylesheet" href="{% static 'apoderados/apoderados.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="perfil-prof">
+    <a class="perfil-prof__volver" href="{% url 'portal_apoderado' %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Mi cuenta</a>
+    <header class="perfil-prof__cabecera">
+        <div>
+            <h1>Mensajes con los profesores</h1>
+            <p class="perfil-prof__vacio">Coordina las clases de tus estudiantes. No compartas teléfonos, correos ni direcciones: todo se conversa aquí.</p>
+        </div>
+    </header>
+
+    {% aviso_mensajes 'apoderado' bandeja_activa %}
+    {% include 'apoderados/_mensajes.html' %}
+
+    <section class="perfil-prof__bloque" aria-labelledby="conversaciones-titulo">
+        <h2 id="conversaciones-titulo">Tus conversaciones</h2>
+        {% if bandeja %}
+        <ul class="apod-vinculos">
+            {% for c in bandeja %}
+            <li>
+                <a href="?c={{ c.pk }}"{% if c == bandeja_activa %} aria-current="true"{% endif %}>
+                    <strong>{{ c.nombre_para_cliente }}</strong> · sobre {{ c.alumno.user.first_name }}
+                    {% if c.sin_leer %}<span class="apod-estado">Mensajes sin leer</span>{% endif %}
+                </a>
+                <br><small>{{ c.actividad|date:"d/m H:i" }} · {{ c.ultimo_texto|default:"Sin mensajes todavía"|truncatechars:60 }}</small>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="perfil-prof__vacio">Todavía no tienes conversaciones.</p>
+        {% endif %}
+    </section>
+
+    {% if bandeja_nuevos %}
+    <section class="perfil-prof__bloque" aria-labelledby="nuevas-titulo">
+        <h2 id="nuevas-titulo">Escribir a un profesor</h2>
+        <p class="perfil-prof__vacio">Profesores con quienes tus estudiantes tienen una clase reservada o un paquete activo.</p>
+        <ul class="apod-vinculos">
+            {% for n in bandeja_nuevos %}
+            <li>
+                <form method="post" action="{% url 'mensajes_apoderado_abrir' n.vinculo.pk n.profesor.pk %}" class="apod-form">
+                    {% csrf_token %}
+                    <strong>{{ n.profesor.user.first_name }}</strong> · sobre {{ n.vinculo.alumno.user.first_name }}
+                    <button type="submit" class="perfil-prof__reservar" aria-label="Escribir a {{ n.profesor.user.first_name }} sobre {{ n.vinculo.alumno.user.first_name }}">Escribir</button>
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+
+    {% if bandeja_activa %}
+    <section class="perfil-prof__bloque" aria-labelledby="chat-titulo">
+        <h2 id="chat-titulo">{{ bandeja_activa.nombre_para_cliente }} · sobre {{ bandeja_activa.alumno.user.first_name }}</h2>
+        <ol role="log" aria-live="polite" aria-label="Mensajes con {{ bandeja_activa.nombre_para_cliente }}" style="list-style:none; padding:0; margin:0; display:grid; gap:12px;">
+            {% for m in bandeja_mensajes %}
+            <li style="padding:12px 14px; border:1px solid var(--border, #c8c8c8); border-radius:10px;">
+                <strong>{% if m.autor_id == apoderado.user_id %}Tú{% else %}{{ bandeja_activa.nombre_para_cliente }}{% endif %}</strong>
+                <small>· {{ m.creado|date:"d-m-Y H:i" }}</small>
+                <p style="margin:6px 0 0;">{{ m.texto }}</p>
+            </li>
+            {% empty %}
+            <li>Aún no hay mensajes. Escribe el primero.</li>
+            {% endfor %}
+        </ol>
+        {% if bandeja_activa.solo_lectura %}
+        <p class="perfil-prof__vacio" role="status">Esta conversación quedó solo para lectura: tu vínculo con {{ bandeja_activa.alumno.user.first_name }} ya no está activo.</p>
+        {% else %}
+        <form method="post" action="{% url 'mensajes_apoderado_enviar' bandeja_activa.pk %}" class="apod-form">
+            {% csrf_token %}
+            <label for="texto-mensaje">Tu mensaje</label>
+            <input type="text" id="texto-mensaje" name="texto" required maxlength="1000" autocomplete="off">
+            <button type="submit" class="perfil-prof__reservar"><i class="bi bi-send-fill" aria-hidden="true"></i> Enviar</button>
+        </form>
+        {% endif %}
+        <p><a href="{% url 'mensajes_reportar' bandeja_activa.pk %}" aria-label="Reportar la conversación con {{ bandeja_activa.nombre_para_cliente }}">Reportar esta conversación</a></p>
+    </section>
+    {% endif %}
+</div>
+{% endblock %}

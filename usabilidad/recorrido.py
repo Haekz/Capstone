@@ -31,7 +31,7 @@ AUDITORIA_JS = r"""
     (el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\s+/)[0] : '');
   const docW = document.documentElement.clientWidth;
   const anchos = [...document.querySelectorAll('body *')].filter(visible)
-    .filter(el => el.getBoundingClientRect().right > docW + 2 && !el.closest('[class*="carrito"],[class*="modal"]'))
+    .filter(el => el.getBoundingClientRect().right > docW + 2 && !el.closest('[class*="modal"]'))
     .slice(0, 5).map(desc);
   const sinEtiqueta = [...document.querySelectorAll('input,select,textarea')].filter(visible)
     .filter(el => !['hidden','submit','button','checkbox'].includes(el.type))
@@ -130,7 +130,7 @@ def pasos():
         ('12', 'Mensajes: login con clave incorrecta', None, login_error),
         ('13', 'Mensajes: login enviado vacío', None, login_vacio),
         ('14', 'Recuperar contraseña', None, recuperar),
-        ('15', 'Pago: carrito vacío', None, ir('/alumnos/pago')),
+        # 15 (pago con carrito) se retiró con el carrito; los números no se corren para cuadrar con los resultados guardados.
         ('16', 'Mi espacio (alumno)', 'alumno', ir('/alumnos/alumno_home')),
         ('17', 'Búsqueda de profesionales (alumno)', 'alumno', buscar_profes),
         ('18', 'Búsqueda sin resultados (alumno)', 'alumno', buscar_sin_resultado),

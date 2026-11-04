@@ -1,4 +1,4 @@
-{% load static %}
+{% load static campana %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -17,6 +17,7 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body class="light-mode">
+{% avisos_campana as avisos %}{# plazos de quien abre la pagina, segun su rol (admin_portal/avisos.py) #}
 <script>
     // Aplica el tema guardado antes de pintar (evita el destello claro en modo oscuro)
     try { if (localStorage.getItem('admin-theme') === 'dark') document.body.classList.remove('light-mode'); } catch (e) {}
@@ -26,16 +27,17 @@
     <!-- Menú lateral izquierdo de navegación común -->
     <aside class="sidebar" id="sidebar">
 
-        <a class="sidebar-brand" href="{% url 'dashboard_admin' %}">
+        <a class="sidebar-brand" href="{% block portal_url %}{% url 'dashboard_admin' %}{% endblock %}">
             <img src="{% static 'alumnos/img/Logo.png' %}" alt="Logo LBWUS">
             <div class="sidebar-brand-text">
                 <span class="sidebar-brand-name">LBWUS</span>
-                <span class="sidebar-brand-role">Admin Portal</span>
+                <span class="sidebar-brand-role">{% block portal_nombre %}Admin Portal{% endblock %}</span>
             </div>
         </a>
 
         <!-- Mini ficha del perfil del administrador que tiene la sesión activa -->
         <div class="sidebar-user">
+            {% block sidebar_usuario %}
             <div class="sidebar-user-avatar">
                 {{ admin.user.first_name|slice:":1"|upper|default:"A" }}
             </div>
@@ -43,10 +45,12 @@
                 <div class="sidebar-user-name">{{ admin.user.first_name|default:"Administrador" }}</div>
                 <div class="sidebar-user-role">Administrador</div>
             </div>
+            {% endblock %}
         </div>
 
         <!-- Enlaces principales del menú para navegar entre secciones -->
         <nav class="sidebar-nav">
+            {% block sidebar_nav %}
             <span class="nav-label">Principal</span>
 
             <a id="nav-resumen" class="nav-item {% block nav_resumen %}{% endblock %}" href="{% url 'dashboard_admin' %}">
@@ -60,27 +64,9 @@
                 Gestión de Alumnos
             </a>
 
-            <a id="nav-reportes" class="nav-item {% block nav_reportes %}{% endblock %}" href="{% url 'dashboard_admin' %}#reportes">
-                <i class="bi bi-flag-fill"></i>
-                Reportes
-                {% if reportes_pendientes > 0 %}
-                <span class="nav-badge">{{ reportes_pendientes }}</span>
-                {% endif %}
-            </a>
-
-            <a id="nav-titulos" class="nav-item {% block nav_titulos %}{% endblock %}" href="{% url 'titulos_adm' %}">
-                <i class="bi bi-mortarboard-fill"></i>
-                Títulos de Profesores
-            </a>
-
             <a id="nav-resenas" class="nav-item {% block nav_resenas %}{% endblock %}" href="{% url 'resenas_moderacion' %}">
                 <i class="bi bi-star-half"></i>
                 Reseñas
-            </a>
-
-            <a id="nav-apoderados" class="nav-item {% block nav_apoderados %}{% endblock %}" href="{% url 'apoderados_revision' %}">
-                <i class="bi bi-person-vcard-fill"></i>
-                Apoderados
             </a>
 
             <span class="nav-label">Contenido</span>
@@ -116,6 +102,7 @@
                 <i class="bi bi-gear-fill"></i>
                 Ajustes
             </a>
+            {% endblock %}
         </nav>
 
         <!-- Volver al sitio publico (sin cerrar sesion) y cerrar sesion -->
@@ -124,7 +111,7 @@
                 <i class="bi bi-house-door"></i>
                 Volver al inicio
             </a>
-            <form method="post" action="{% url 'logout_admin' %}" class="form-sidebar-logout">
+            <form method="post" action="{% block logout_url %}{% url 'logout_admin' %}{% endblock %}" class="form-sidebar-logout">
                 {% csrf_token %}
                 <button type="submit" class="sidebar-logout btn-sidebar-logout">
                     <i class="bi bi-box-arrow-left"></i>
@@ -150,15 +137,13 @@
                 </div>
             </div>
             <div class="topbar-right">
+                {% block topbar_acciones %}
                 <!-- Botón de búsqueda flotante (Ctrl + K) -->
                 <button class="theme-btn" onclick="openSearchModal()" title="Buscar (Ctrl + K)">
                     <i class="bi bi-search"></i>
                 </button>
-                <!-- Botón de notificaciones con punto indicador de pendientes -->
-                <button class="theme-btn" onclick="toggleNotifications()" title="Notificaciones" style="position:relative;">
-                    <i class="bi bi-bell-fill"></i>
-                    <span class="notification-badge-dot" id="notif-badge-dot"></span>
-                </button>
+                {% include 'admin_portal/includes/boton_campana.html' %}
+                {% endblock %}
                 <!-- Botón de alternar tema claro/oscuro -->
                 <button class="theme-btn" onclick="toggleTheme()" title="Cambiar tema">
                     <i class="bi bi-sun-fill" id="theme-icon"></i>
@@ -183,39 +168,21 @@
             <button type="button" class="close-drawer-btn" aria-label="Cerrar notificaciones" onclick="toggleNotifications()">&times;</button>
         </div>
         <div class="drawer-body">
-            <div class="notification-item unread" id="notif-1">
-                <div class="notification-icon purple">
-                    <i class="bi bi-person-plus-fill"></i>
+            {% for aviso in avisos %}
+            <div class="notification-item{% if aviso.urgente %} unread{% endif %}">
+                <div class="notification-icon {% if aviso.urgente %}amber{% else %}blue{% endif %}">
+                    <i class="bi {% if aviso.urgente %}bi-exclamation-triangle-fill{% else %}bi-clock-history{% endif %}" aria-hidden="true"></i>
                 </div>
                 <div class="notification-content">
-                    <p class="notification-title">Nuevo Alumno Registrado</p>
-                    <p class="notification-desc">El estudiante Jose se ha registrado en el Plan Básico.</p>
-                    <span class="notification-time">Hace 5 minutos</span>
+                    <p class="notification-title"><a href="{{ aviso.url }}">{{ aviso.titulo }}</a></p>
+                    <p class="notification-desc">{{ aviso.detalle }}</p>
                 </div>
             </div>
-            <div class="notification-item unread" id="notif-2">
-                <div class="notification-icon blue">
-                    <i class="bi bi-cash-stack"></i>
-                </div>
-                <div class="notification-content">
-                    <p class="notification-title">Solicitud de Retiro</p>
-                    <p class="notification-desc">El profesor Tánger ha solicitado un retiro de $45.000.</p>
-                    <span class="notification-time">Hace 2 horas</span>
-                </div>
+            {% empty %}
+            <div class="notification-item">
+                <p class="notification-desc">No hay avisos pendientes.</p>
             </div>
-            <div class="notification-item" id="notif-3">
-                <div class="notification-icon amber">
-                    <i class="bi bi-exclamation-circle-fill"></i>
-                </div>
-                <div class="notification-content">
-                    <p class="notification-title">Reporte Recibido</p>
-                    <p class="notification-desc">Se reportó un problema de conexión en la clase de Matemáticas.</p>
-                    <span class="notification-time">Ayer</span>
-                </div>
-            </div>
-        </div>
-        <div class="drawer-footer">
-            <button class="btn-clear-notifications" onclick="clearNotifications()">Marcar todas como leídas</button>
+            {% endfor %}
         </div>
     </div>
 
@@ -224,7 +191,7 @@
         <div class="search-modal" onclick="event.stopPropagation()">
             <div class="search-modal-header">
                 <i class="bi bi-search"></i>
-                <input type="text" class="search-modal-input" id="search-modal-input" placeholder="Buscar alumnos, profesores, reportes..." oninput="handleGlobalSearch()">
+                <input type="text" class="search-modal-input" id="search-modal-input" placeholder="Buscar alumnos, profesores, clases..." oninput="handleGlobalSearch()">
                 <span class="search-esc-badge">ESC</span>
             </div>
             <div class="search-modal-results" id="search-modal-results">
@@ -232,11 +199,6 @@
                 <div class="search-result-item" onclick="navigateFromSearch('usuarios')">
                     <i class="bi bi-people"></i>
                     <span>Gestión de Usuarios</span>
-                    <span class="search-result-type">Sección</span>
-                </div>
-                <div class="search-result-item" onclick="navigateFromSearch('reportes')">
-                    <i class="bi bi-flag"></i>
-                    <span>Reportes Pendientes</span>
                     <span class="search-result-type">Sección</span>
                 </div>
                 <div class="search-result-item" onclick="navigateFromSearch('clases')">
@@ -282,14 +244,6 @@
     function toggleNotifications() {
         const drawer = document.getElementById('notifications-drawer');
         drawer.classList.toggle('active');
-    }
-
-    function clearNotifications() {
-        document.querySelectorAll('.notification-item.unread').forEach(item => {
-            item.classList.remove('unread');
-        });
-        const badge = document.getElementById('notif-badge-dot');
-        if (badge) badge.style.display = 'none';
     }
 
     // Control del Modal de Búsqueda Global (Ctrl + K)
@@ -338,11 +292,6 @@
                 <div class="search-result-item" onclick="navigateFromSearch('usuarios')">
                     <i class="bi bi-people"></i>
                     <span>Gestión de Usuarios</span>
-                    <span class="search-result-type">Sección</span>
-                </div>
-                <div class="search-result-item" onclick="navigateFromSearch('reportes')">
-                    <i class="bi bi-flag"></i>
-                    <span>Reportes Pendientes</span>
                     <span class="search-result-type">Sección</span>
                 </div>
                 <div class="search-result-item" onclick="navigateFromSearch('clases')">

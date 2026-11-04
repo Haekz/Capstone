@@ -76,9 +76,9 @@ class AccesoPortalAdminTests(TestCase):
 
 
 class CsrfEndpointsAlumnoTests(TestCase):
-    """enviar_reporte e inscribir_clase ya no usan @csrf_exempt: el portal
-    del alumno manda el token en el encabezado X-CSRFToken."""
-    VISTAS = ('enviar_reporte', 'inscribir_clase')
+    """inscribir_clase ya no usa @csrf_exempt: el portal del alumno manda el token en
+    el encabezado X-CSRFToken. (enviar_reporte se retiro en el paso 6e: ahora son tickets.)"""
+    VISTAS = ('inscribir_clase',)
 
     def setUp(self):
         self.client = Client(enforce_csrf_checks=True)

@@ -1,0 +1,34 @@
+{% extends 'soporte/base_soporte.html' %}
+
+{% block page_title %}Conversación reportada · Ticket #{{ ticket.pk }}{% endblock %}
+{% block page_subtitle %}Reportada por {{ reporte.reportado_por.first_name }} el {{ reporte.creado|date:"d-m-Y H:i" }}{% endblock %}
+{% block nav_panel %}active{% endblock %}
+
+{% block content %}
+<div class="panel">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-chat-left-text-fill" aria-hidden="true"></i> {{ conversacion.nombre_para_profesor }} y {{ conversacion.profesor.user.first_name }} (profesor)</span>
+    </div>
+    <div style="padding:18px;">
+        <p><small>Estás leyendo una conversación privada. Tu lectura queda registrada con tu nombre y la hora. Úsala solo para resolver este ticket.</small></p>
+        <ol style="list-style:none; padding:0; margin:0; display:grid; gap:12px;">
+            {% for m in mensajes %}
+            <li style="padding:12px 14px; border:1px solid var(--border, #c8c8c8); border-radius:10px;">
+                <strong>{{ m.autor.first_name }} ({% if m.autor_id == conversacion.profesor.user_id %}profesor{% elif conversacion.es_de_apoderado %}apoderado{% else %}alumno{% endif %})</strong>
+                <small>· {{ m.creado|date:"d-m-Y H:i" }}</small>
+                <p style="margin:6px 0 0;">{{ m.texto }}</p>
+            </li>
+            {% empty %}
+            <li>Todavía no hay mensajes.</li>
+            {% endfor %}
+        </ol>
+        <h2 style="font-size:1rem; margin-top:24px;">Quién la ha abierto</h2>
+        <ul>
+            {% for a in accesos %}
+            <li>{{ a.agente.nombre|default:"Cuenta eliminada" }} · {{ a.fecha|date:"d-m-Y H:i" }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+<p style="margin-top:18px;"><a href="{% url 'soporte_reporte' ticket.pk %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver al ticket #{{ ticket.pk }}</a></p>
+{% endblock %}

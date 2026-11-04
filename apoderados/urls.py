@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views
+from . import views, views_vinculo
 
 urlpatterns = [
     path('registro/', views.registro, name='registro_apoderado'),
@@ -8,7 +8,11 @@ urlpatterns = [
     path('mi-cuenta/', views.portal, name='portal_apoderado'),
     path('mi-cuenta/reenviar/', views.reenviar, name='apoderado_reenviar_correo'),
     path('mi-cuenta/estudiantes/nuevo/', views.registrar_estudiante, name='apoderado_registrar_estudiante'),
+    path('mi-cuenta/estudiantes/vincular/', views_vinculo.vincular_estudiante, name='apoderado_vincular_estudiante'),
     path('mi-cuenta/estudiantes/<int:id_vinculo>/clave/', views.clave_estudiante, name='apoderado_clave_estudiante'),
+    path('mi-cuenta/carnet/', views.subir_carnet, name='apoderado_subir_carnet'),
+    path('mi-cuenta/estudiantes/<int:id_vinculo>/documento/', views.subir_documento_vinculo,
+         name='apoderado_subir_documento_vinculo'),
     path('mi-cuenta/estudiantes/<int:id_vinculo>/revocar/', views.revocar_vinculo, name='apoderado_revocar_vinculo'),
     path('estudiante/nueva-clave/', views.nueva_clave_estudiante, name='nueva_clave_estudiante'),
     path('mi-cuenta/estudiantes/<int:id_vinculo>/comprar/', views.comprar_paquete, name='apoderado_comprar_paquete'),

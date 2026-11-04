@@ -1,0 +1,10 @@
+Hola {{ nombre }},
+
+Los documentos de este ticket se borran pronto si nadie los revisa:
+
+- Ticket #{{ ticket.pk }}: {{ ticket.get_categoria_display }}{% if not ticket.asignado %} (sin asignar){% endif %}
+- Se borran: {{ borra_el|date:"d-m-Y H:i" }} (hora de Chile)
+
+Revísalo en el panel de soporte de LBWUS. Por seguridad, los datos y documentos solo se ven ahí.
+
+Equipo LBWUS

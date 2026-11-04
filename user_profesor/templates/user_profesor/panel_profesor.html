@@ -56,6 +56,12 @@ input:checked + .slider:before {
 }
 </style>
 
+{% if messages %}
+<div class="prof-card" role="status" style="margin: 20px; padding: 14px 18px;">
+    {% for m in messages %}<div>{{ m }}</div>{% endfor %}
+</div>
+{% endif %}
+
 <div class="prof-dashboard-layout">
     
     <!-- esta parte es del menú lateral del panel, aquí están los botones para navegar entre secciones -->
@@ -75,6 +81,9 @@ input:checked + .slider:before {
             </li>
             <li class="prof-menu-item" id="menu-clases" onclick="switchSection('clases')">
                 <i class="bi bi-file-earmark-text"></i> Clases Solicitadas
+            </li>
+            <li class="prof-menu-item" id="menu-agenda" onclick="switchSection('agenda')">
+                <i class="bi bi-calendar-week"></i> Mi Agenda
             </li>
             <li class="prof-menu-item" id="menu-buzon" onclick="switchSection('buzon')">
                 <i class="bi bi-chat-dots-fill"></i> Buzón de Alumnos
@@ -205,6 +214,7 @@ input:checked + .slider:before {
 
         <!-- esta parte es de la sección de clases solicitadas, muestra todos los alumnos inscritos -->
         {% include 'user_profesor/clases_solicitadas.html' %}
+        {% include 'agenda/panel_agenda.html' %}
 
         <!-- esta parte es de la sección para que el profe edite su propio perfil -->
         <section id="sec-perfil" class="prof-section">
@@ -270,15 +280,8 @@ input:checked + .slider:before {
                         </div>
                         <div class="prof-form-group">
                             <label for="prof-telefono" class="prof-form-label">Teléfono de Contacto</label>
-                            <input type="tel" id="prof-telefono" name="telefono" class="prof-form-input" value="{{ profesor.user.telefono }}" required>
-                        <div style="margin-top: 10px; display: flex; align-items: center; gap: 12px;">
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="prof-tel-publico" name="telefono_publico" {% if profesor.telefono_publico %}checked{% endif %}>
-                                <span class="slider"></span>
-                            </label>
-                            <label for="prof-tel-publico" style="font-size: 0.85rem; color: var(--text-muted); cursor: pointer;">Hacer público para los alumnos</label>
-                        </div>
-
+                            <input type="tel" id="prof-telefono" name="telefono" class="prof-form-input" value="{{ profesor.user.telefono }}" aria-describedby="prof-telefono-ayuda" required>
+                            <small id="prof-telefono-ayuda">Solo lo ve LBWUS: los alumnos nunca ven tus datos de contacto.</small>
                         </div>
                     </div>
 
@@ -329,39 +332,65 @@ input:checked + .slider:before {
             <!-- esta parte es del formulario para solicitar la transferencia de los fondos disponibles -->
             <div class="prof-card" style="margin-top: 30px;">
                 <h2 class="prof-card-title"><i class="bi bi-bank"></i> Solicitar Transferencia de Fondos</h2>
-                <p class="prof-card-subtitle">Solicita el depósito de tu saldo disponible. Las transferencias tardan de 24 a 48 horas hábiles en procesarse.</p>
+                <p class="prof-card-subtitle">Pago {{ frecuencia_vigente }}: corte {% if frecuencia_vigente == 'mensual' %}el último viernes del mes{% else %}los viernes{% endif %}; lo que pidas hasta el corte se paga el lunes siguiente (o el siguiente día hábil). Próximo pago: {{ proximo_pago|date:"d/m/Y" }}. Mínimo por retiro: {{ minimo_retiro }}.</p>
                 
-                {% if saldo_disponible_raw > 0 %}
+                <form id="formCuentaBancaria" action="{% url 'guardar_cuenta_bancaria' %}" onsubmit="submitFormJson(event)" style="margin-top: 20px;">
+                    <h3 style="font-size: 1rem; margin-bottom: 6px;">Tu cuenta bancaria</h3>
+                    <p style="font-size: 0.85rem; margin: 0 0 12px;">Solo cuentas a tu nombre: el titular es tu RUT ({{ profesor.user.rut }}).{% if cuenta_bancaria %} Actual: <strong>{{ cuenta_bancaria.banco }} {{ cuenta_bancaria.enmascarado }}</strong> ({{ cuenta_bancaria.get_tipo_cuenta_display }}).{% if cuenta_bancaria.bloqueada %} Por seguridad, los pagos a esta cuenta se habilitan el {{ cuenta_bancaria.pagable_desde|date:"d/m/Y H:i" }}.{% endif %}{% endif %}</p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; align-items: end;">
+                        <div>
+                            <label for="cuenta_banco" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px;">Banco</label>
+                            <select id="cuenta_banco" name="banco" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.15);">
+                                {% for banco in bancos %}<option value="{{ banco }}"{% if banco == cuenta_bancaria.banco %} selected{% endif %}>{{ banco }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label for="cuenta_tipo" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px;">Tipo de cuenta</label>
+                            <select id="cuenta_tipo" name="tipo_cuenta" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.15);">
+                                {% for valor, nombre in tipos_cuenta %}<option value="{{ valor }}"{% if valor == cuenta_bancaria.tipo_cuenta %} selected{% endif %}>{{ nombre }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label for="cuenta_numero" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px;">Número de cuenta</label>
+                            <input id="cuenta_numero" type="text" name="numero_cuenta" inputmode="numeric" autocomplete="off" required placeholder="Ej. 12345678" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.15);">
+                        </div>
+                        {% if cuenta_bancaria %}
+                        <div>
+                            <label for="cuenta_password" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px;">Tu contraseña</label>
+                            <input id="cuenta_password" type="password" name="password" autocomplete="current-password" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.15);">
+                        </div>
+                        {% endif %}
+                        <button type="submit" class="prof-form-btn" style="padding: 10px 24px;">
+                            <i class="bi bi-shield-lock"></i> {% if cuenta_bancaria %}Cambiar cuenta{% else %}Guardar cuenta{% endif %}
+                        </button>
+                    </div>
+                </form>
+
+                <form id="formFrecuenciaPago" action="{% url 'guardar_frecuencia_pago' %}" onsubmit="submitFormJson(event)" style="margin-top: 20px;">
+                    <h3 style="font-size: 1rem; margin-bottom: 6px;">Frecuencia de pago</h3>
+                    <p style="font-size: 0.85rem; margin: 0 0 12px;">Un cambio rige desde el ciclo siguiente.{% if profesor.frecuencia_nueva and profesor.frecuencia_nueva != frecuencia_vigente %} <strong>Desde el {{ profesor.frecuencia_nueva_desde|date:"d/m/Y" }} tu pago será {{ profesor.get_frecuencia_nueva_display|lower }}.</strong>{% endif %}</p>
+                    <div style="display: flex; gap: 15px; align-items: end; flex-wrap: wrap;">
+                        <div>
+                            <label for="frecuencia_pago" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px;">Cobrar</label>
+                            <select id="frecuencia_pago" name="frecuencia" style="padding: 10px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.15);">
+                                {% for valor, nombre in frecuencias %}<option value="{{ valor }}"{% if valor == profesor.frecuencia_nueva|default:frecuencia_vigente %} selected{% endif %}>{{ nombre }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="prof-form-btn" style="padding: 10px 24px;"><i class="bi bi-calendar-check"></i> Guardar frecuencia</button>
+                    </div>
+                </form>
+
+                {% if not cuenta_bancaria %}
+                <div style="padding: 20px; background: rgba(245, 158, 11, 0.08); border-radius: 8px; border-left: 4px solid #f59e0b; margin-top: 15px;">
+                    <p style="margin: 0; color: #92400e; font-size: 0.92rem;"><i class="bi bi-info-circle-fill"></i> Registra tu cuenta bancaria para poder solicitar retiros.</p>
+                </div>
+                {% elif saldo_disponible_raw >= minimo_retiro_raw %}
                 <form id="formSolicitarRetiro" onsubmit="submitRetiroForm(event)" style="margin-top: 20px;">
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px;">
                         <div>
-                            <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px;">Monto a Retirar ($)</label>
-                            <input type="number" name="monto" id="retiro_monto" value="{{ saldo_disponible_raw }}" max="{{ saldo_disponible_raw }}" min="1000" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.15);">
-                            <small style="color: var(--primary); font-size: 0.78rem;">Máximo disponible: ${{ saldo_disponible_raw }}</small>
-                        </div>
-                        <div>
-                            <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px;">Banco de Destino</label>
-                            <select name="banco" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.15);">
-                                <option value="Banco Estado">Banco Estado (Cuenta Rut)</option>
-                                <option value="Banco de Chile">Banco de Chile / Edwards</option>
-                                <option value="Banco Santander">Banco Santander</option>
-                                <option value="BCI">BCI</option>
-                                <option value="Scotiabank">Scotiabank</option>
-                                <option value="Banco Falabella">Banco Falabella</option>
-                                <option value="Tenpo / Mach / Prepago">Tenpo / Mach / Prepago</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px;">Tipo de Cuenta</label>
-                            <select name="tipo_cuenta" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.15);">
-                                <option value="Cuenta Rut / Vista">Cuenta Rut / Vista</option>
-                                <option value="Cuenta Corriente">Cuenta Corriente</option>
-                                <option value="Cuenta de Ahorro">Cuenta de Ahorro</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px;">Número de Cuenta</label>
-                            <input type="text" name="numero_cuenta" placeholder="Ej. 12345678" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.15);">
+                            <label for="retiro_monto" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px;">Monto a Retirar ($)</label>
+                            <input type="number" name="monto" id="retiro_monto" value="{{ saldo_disponible_raw }}" max="{{ saldo_disponible_raw }}" min="{{ minimo_retiro_raw }}" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.15);">
+                            <small style="color: var(--primary); font-size: 0.78rem;">Máximo disponible: ${{ saldo_disponible_raw }} · Se transfiere a {{ cuenta_bancaria.banco }} {{ cuenta_bancaria.enmascarado }}</small>
                         </div>
                     </div>
                     <div style="display: flex; justify-content: flex-end;">
@@ -372,7 +401,7 @@ input:checked + .slider:before {
                 </form>
                 {% else %}
                 <div style="padding: 20px; background: rgba(245, 158, 11, 0.08); border-radius: 8px; border-left: 4px solid #f59e0b; margin-top: 15px;">
-                    <p style="margin: 0; color: #92400e; font-size: 0.92rem;"><i class="bi bi-info-circle-fill"></i> No cuentas con saldo disponible suficiente para solicitar un retiro en este momento. Las clases impartidas acreditarán tu saldo automáticamente.</p>
+                    <p style="margin: 0; color: #92400e; font-size: 0.92rem;"><i class="bi bi-info-circle-fill"></i> Tu saldo disponible ({{ saldo_disponible }}) se acumula hasta llegar al mínimo de {{ minimo_retiro }}. Las clases dictadas se suman automáticamente.</p>
                 </div>
                 {% endif %}
             </div>
@@ -402,9 +431,13 @@ input:checked + .slider:before {
                                     {% if ret.estado == 'pendiente' %}
                                     <span style="background: rgba(245, 158, 11, 0.15); color: #b45309; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.8rem;"><i class="bi bi-clock"></i> Pendiente</span>
                                     {% elif ret.estado == 'aprobado' %}
-                                    <span style="background: rgba(16, 185, 129, 0.15); color: #047857; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.8rem;"><i class="bi bi-check-circle-fill"></i> Aprobado / Transferido</span>
+                                    <span style="background: rgba(16, 185, 129, 0.15); color: #047857; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.8rem;"><i class="bi bi-check-circle-fill"></i> Aprobado, pago en proceso</span>
+                                    {% elif ret.estado == 'pagado' %}
+                                    <span style="background: rgba(16, 185, 129, 0.15); color: #047857; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.8rem;"><i class="bi bi-cash-coin"></i> Pagado</span>
+                                    <br><small>{{ ret.fecha_pago|date:"d/m/Y" }} · Op. {{ ret.numero_operacion }}</small>
                                     {% else %}
                                     <span style="background: rgba(239, 68, 68, 0.15); color: #b91c1c; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.8rem;"><i class="bi bi-x-circle-fill"></i> Rechazado</span>
+                                    {% if ret.motivo_rechazo %}<br><small><strong>Motivo:</strong> {{ ret.motivo_rechazo }}</small>{% endif %}
                                     {% endif %}
                                 </td>
                             </tr>
@@ -496,40 +529,7 @@ input:checked + .slider:before {
             </div>
         </section>
 
-        <!-- esta parte es del chat o buzon de consultas de alumnos -->
-        <section id="sec-buzon" class="prof-section">
-            <div class="prof-section-header">
-                <h1 class="prof-section-title">Buzón de Alumnos</h1>
-                <p class="prof-section-subtitle">Resuelve las dudas académicas y mantén contacto directo con tus estudiantes.</p>
-            </div>
-            
-            <div class="profe-chat-container">
-                <!-- Panel izquierdo: lista de chats -->
-                <div class="profe-chat-sidebar">
-                    <div class="profe-chat-search">
-                        <i class="bi bi-search"></i>
-                        <input type="text" id="profe-chat-search-input" placeholder="Buscar alumno..." oninput="filterAlumnChats()">
-                    </div>
-                    <div class="profe-chat-list" id="profe-chat-list-el">
-                        <!-- Se rellena con JS -->
-                    </div>
-                </div>
-                
-                <!-- Panel derecho: chat activo -->
-                <div class="profe-chat-main">
-                    <div class="profe-chat-header" id="profe-chat-active-header">
-                        <!-- Se rellena con JS -->
-                    </div>
-                    <div class="profe-chat-history" id="profe-chat-messages-container">
-                        <!-- Se rellena con JS -->
-                    </div>
-                    <form class="profe-chat-input-box" onsubmit="sendTeacherMessage(event)">
-                        <input type="text" id="profe-chat-input-el" placeholder="Escribe tu respuesta al alumno..." required autocomplete="off">
-                        <button type="submit" class="profe-chat-send-btn"><i class="bi bi-send-fill"></i></button>
-                    </form>
-                </div>
-            </div>
-        </section>
+        {% include 'mensajes/buzon_profesor.html' %}
 
         <!-- esta parte es de la videoteca y gestion de clases grabadas -->
         {% include 'user_profesor/videos.html' %}
@@ -547,54 +547,6 @@ input:checked + .slider:before {
 <!-- esta parte es de SweetAlert2, la librería de alertas animadas -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    // esta parte es de la simulacion de datos del chat docente
-    let studentChats = [
-        {
-            studentId: 10,
-            studentName: "Juan Pérez",
-            courseName: "Universidad Python",
-            initials: "JP",
-            unread: true,
-            messages: [
-                { sender: "student", text: "Hola Profesor, tengo una duda con la Clase 3 de variables.", time: "21:10" }
-            ]
-        },
-        {
-            studentId: 11,
-            studentName: "Sofía Rojas",
-            courseName: "Python Django Web",
-            initials: "SR",
-            unread: false,
-            messages: [
-                { sender: "teacher", text: "Hola Sofía. Sí, el ORM de Django maneja la sincronización automáticamente.", time: "Ayer" },
-                { sender: "student", text: "¡Buenísimo! Me quedó clarísimo, gracias.", time: "Ayer" }
-            ]
-        },
-        {
-            studentId: 12,
-            studentName: "Lucas Altamirano",
-            courseName: "Automatizaciones n8n + MCP",
-            initials: "LA",
-            unread: false,
-            messages: [
-                { sender: "student", text: "Profesor, ¿puedo conectar más de un servidor MCP local a n8n?", time: "Hace 2 días" },
-                { sender: "teacher", text: "Sí, Lucas. Solo debes configurar las variables de entorno de cada contenedor.", time: "Hace 2 días" }
-            ]
-        }
-    ];
-
-    let currentStudentChatId = 10;
-
-    // esta parte es de los videos grabados por el docente
-    let teacherVideos = [
-        { id: 1, title: "Clase 1: Introducción a la Universidad Python", duration: "12:15", course: "Universidad Python", courseId: "py-1", views: 420, date: "15 May 2026" },
-        { id: 2, title: "Clase 2: Configuración del Entorno en Windows", duration: "10:45", course: "Universidad Python", courseId: "py-1", views: 310, date: "16 May 2026" },
-        { id: 3, title: "Clase 3: Hola Mundo y Variables Básicas", duration: "08:30", course: "Universidad Python", courseId: "py-1", views: 250, date: "18 May 2026" },
-        { id: 4, title: "Clase 1: Bienvenidos a Python y Django", duration: "15:10", course: "Python Django Web", courseId: "py-2", views: 180, date: "20 May 2026" },
-        { id: 5, title: "Clase 1: Introducción a n8n y MCP", duration: "18:25", course: "Automatizaciones n8n + MCP", courseId: "tr-1", views: 158, date: "22 May 2026" },
-        { id: 6, title: "Clase 2: Conectando Nodos y Flujos Simples", duration: "22:15", course: "Automatizaciones n8n + MCP", courseId: "tr-1", views: 110, date: "24 May 2026" }
-    ];
-
     // esta parte es de la función que cambia qué sección se ve en el panel según el menú que elegiste
     function switchSection(sectionId) {
         document.querySelectorAll('.prof-menu-item').forEach(item => item.classList.remove('active'));
@@ -607,9 +559,7 @@ input:checked + .slider:before {
         localStorage.setItem('prof_active_tab', sectionId);
 
         // esta parte es de la inicializacion de sub-vistas
-        if (sectionId === 'buzon') {
-            renderTeacherInbox();
-        } else if (sectionId === 'grabaciones') {
+        if (sectionId === 'grabaciones') {
             renderTeacherVideos();
         }
     }
@@ -619,6 +569,10 @@ input:checked + .slider:before {
         const savedTab = localStorage.getItem('prof_active_tab');
         if (savedTab && document.getElementById('menu-' + savedTab)) {
             switchSection(savedTab);
+        }
+        // esta parte es para abrir el Buzón cuando llegas a una conversación (?c=), por ejemplo desde la campanita
+        if (new URLSearchParams(window.location.search).has('c')) {
+            switchSection('buzon');
         }
     });
 
@@ -717,100 +671,20 @@ input:checked + .slider:before {
         });
     }
 
-    // esta parte es del renderizado de la bandeja de mensajes docente
-    function renderTeacherInbox() {
-        const chatListEl = document.getElementById('profe-chat-list-el');
-        if (!chatListEl) return;
-        chatListEl.innerHTML = '';
-        
-        studentChats.forEach(chat => {
-            const lastMsg = chat.messages[chat.messages.length - 1];
-            const isActive = chat.studentId === currentStudentChatId;
-            
-            const item = document.createElement('div');
-            item.className = `profe-chat-item ${isActive ? 'active' : ''} ${chat.unread ? 'unread' : ''}`;
-            item.onclick = () => {
-                chat.unread = false;
-                currentStudentChatId = chat.studentId;
-                renderTeacherInbox();
-            };
-            
-            const escHtml = (str) => String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-            const safeInitials = escHtml(chat.initials);
-            const safeStudentName = escHtml(chat.studentName);
-            const safeCourseName = escHtml(chat.courseName);
-            const safeLastTime = escHtml(lastMsg ? lastMsg.time : '');
-            const safeLastText = escHtml(lastMsg ? lastMsg.text : '');
-            item.innerHTML = `
-                <div class="profe-chat-avatar">${safeInitials}</div>
-                <div class="profe-chat-info">
-                    <div class="profe-chat-title-row">
-                        <span class="profe-chat-student-name">${safeStudentName}</span>
-                        <span class="profe-chat-time">${safeLastTime}</span>
-                    </div>
-                    <div class="profe-chat-course-label">${safeCourseName}</div>
-                    <div class="profe-chat-last-msg">${safeLastText}</div>
-                </div>
-            `;
-            chatListEl.appendChild(item);
-        });
-        
-        const activeChat = studentChats.find(c => c.studentId === currentStudentChatId);
-        const headerEl = document.getElementById('profe-chat-active-header');
-        const msgsEl = document.getElementById('profe-chat-messages-container');
-        
-        if (activeChat && headerEl && msgsEl) {
-            const safeActiveInitials = escHtml(activeChat.initials);
-            const safeActiveStudent = escHtml(activeChat.studentName);
-            const safeActiveCourse = escHtml(activeChat.courseName);
-            headerEl.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <div class="profe-chat-avatar" style="width: 40px; height: 40px; font-size: 0.9rem;">${safeActiveInitials}</div>
-                    <div>
-                        <h4 style="margin: 0; font-size: 1rem; font-weight: 700; color: var(--text);">${safeActiveStudent}</h4>
-                        <span style="font-size: 0.75rem; color: var(--text-light);">${safeActiveCourse}</span>
-                    </div>
-                </div>
-            `;
-            
-            msgsEl.innerHTML = '';
-            const escHtml = (str) => String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-            activeChat.messages.forEach(msg => {
-                const bubble = document.createElement('div');
-                bubble.className = `profe-chat-bubble-row ${msg.sender === 'teacher' ? 'sent' : 'received'}`;
-                bubble.innerHTML = `
-                    <div class="profe-chat-bubble">
-                        <p>${escHtml(msg.text)}</p>
-                        <span class="profe-chat-msg-time">${escHtml(msg.time)}</span>
-                    </div>
-                `;
-                msgsEl.appendChild(bubble);
-            });
-            msgsEl.scrollTop = msgsEl.scrollHeight;
-        }
-    }
-
-    // esta parte es del envio de mensaje del docente
-    function sendTeacherMessage(event) {
+    function submitFormJson(event) {
         event.preventDefault();
-        const inputEl = document.getElementById('profe-chat-input-el');
-        if (!inputEl) return;
-        const text = inputEl.value.trim();
-        if (!text) return;
-        
-        const activeChat = studentChats.find(c => c.studentId === currentStudentChatId);
-        if (!activeChat) return;
-        
-        const nowTime = new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
-        
-        activeChat.messages.push({
-            sender: "teacher",
-            text: text,
-            time: nowTime
-        });
-        
-        inputEl.value = '';
-        renderTeacherInbox();
+        fetch(event.target.action, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+            body: new FormData(event.target)
+        })
+        .then(res => res.json())
+        .then(data => Swal.fire({
+            title: data.success ? 'Listo' : 'Atención',
+            text: data.message,
+            icon: data.success ? 'success' : 'warning'
+        }).then(() => { if (data.success) window.location.reload(); }))
+        .catch(() => Swal.fire('Error', 'Hubo un error de conexión al guardar.', 'error'));
     }
 
     // esta parte es para filtrar los chats de alumnos
@@ -948,219 +822,14 @@ input:checked + .slider:before {
         });
     }
 
-    // esta parte es de la simulacion del streaming en vivo
-    let isStreaming = false;
-    let webcamMediaStream = null;
-    let mockChatInterval = null;
-
-    function toggleStreamingSession() {
-        const btnStream = document.getElementById('btn-toggle-stream');
-        const liveBadge = document.getElementById('profe-live-badge');
-        const cameraPlaceholder = document.getElementById('profe-camera-placeholder');
-        const videoEl = document.getElementById('profe-webcam-stream');
-        const sysMsg = document.getElementById('profe-studio-sys-msg');
-        
-        const btnMic = document.getElementById('btn-toggle-mic');
-        const btnVideo = document.getElementById('btn-toggle-video');
-        const btnShare = document.getElementById('btn-toggle-share');
-
-        if (!isStreaming) {
-            // esta parte es de iniciar la transmisión y conectar la señal en vivo del profesor
-            Swal.fire({
-                title: 'Iniciando Transmisión',
-                text: 'Estableciendo conexión y solicitando acceso a dispositivos multimedia...',
-                icon: 'info',
-                allowOutsideClick: false,
-                showConfirmButton: false,
-                timer: 1500,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            }).then(() => {
-                isStreaming = true;
-                btnStream.innerHTML = '<i class="bi bi-stop-fill" style="margin-right: 6px;"></i> Finalizar Directo';
-                btnStream.style.background = '#ef4444';
-                liveBadge.style.display = 'flex';
-                cameraPlaceholder.style.display = 'none';
-                
-                // esta parte es de habilitar los botones de los controles del dispositivo (micrófono, cámara, compartir pantalla)
-                btnMic.removeAttribute('disabled');
-                btnVideo.removeAttribute('disabled');
-                btnShare.removeAttribute('disabled');
-                
-                if (sysMsg) sysMsg.style.display = 'none';
-
-                // esta parte es de pedir permisos al navegador para capturar el video y audio de la cámara web del profesor
-                navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-                    .then(stream => {
-                        webcamMediaStream = stream;
-                        videoEl.srcObject = stream;
-                    })
-                    .catch(err => {
-                        console.warn("No se pudo acceder a la camara web:", err);
-                        // esta parte es para reproducir un video de respaldo animado en bucle si no se concede acceso a la cámara física
-                        videoEl.poster = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerBlazes.jpg";
-                        videoEl.src = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4";
-                        videoEl.loop = true;
-                        videoEl.srcObject = null;
-                        videoEl.play();
-                    });
-                
-                // esta parte es de arrancar el chat simulado de los alumnos saludando en vivo
-                startMockStudentLiveChat();
-                
-                Swal.fire({
-                    title: '¡Al Aire!',
-                    text: 'La transmisión ha comenzado con éxito. Tus alumnos ya se están uniendo.',
-                    icon: 'success',
-                    confirmButtonColor: '#10b981'
-                });
-            });
-        } else {
-            // esta parte es de finalizar y detener la transmisión en vivo del profesor
-            isStreaming = false;
-            btnStream.innerHTML = '<i class="bi bi-play-fill" style="margin-right: 6px;"></i> Iniciar Transmisión';
-            btnStream.style.background = '#10b981';
-            liveBadge.style.display = 'none';
-            cameraPlaceholder.style.display = 'flex';
-            
-            // esta parte es de bloquear e inhabilitar los controles de los dispositivos multimedia
-            btnMic.setAttribute('disabled', 'true');
-            btnVideo.setAttribute('disabled', 'true');
-            btnShare.setAttribute('disabled', 'true');
-            
-            // esta parte es de apagar la cámara web liberando los canales de audio y video
-            if (webcamMediaStream) {
-                webcamMediaStream.getTracks().forEach(track => track.stop());
-                webcamMediaStream = null;
-            }
-            videoEl.srcObject = null;
-            videoEl.src = '';
-            videoEl.pause();
-            
-            // esta parte es de detener el intervalo del chat simulado de los alumnos en vivo
-            clearInterval(mockChatInterval);
-            const chatContainer = document.getElementById('profe-studio-chat-container');
-            if (chatContainer) {
-                chatContainer.innerHTML = '<div class="profe-studio-sys-msg" id="profe-studio-sys-msg">Conexión inactiva. Inicia la transmisión para habilitar el chat de alumnos.</div>';
-            }
-            
-            Swal.fire({
-                title: 'Transmisión Finalizada',
-                text: 'La señal ha sido desconectada y se ha guardado el informe de asistencia.',
-                icon: 'info',
-                confirmButtonColor: '#a855f7'
-            });
-        }
-    }
-
-    // esta parte es de los botones de alternar dispositivos
-    let isStudioMicActive = true;
-    let isStudioVideoActive = true;
-    let isStudioShareActive = false;
-
-    function toggleStudioMic() {
-        isStudioMicActive = !isStudioMicActive;
-        const icon = document.getElementById('icon-studio-mic');
-        const btn = document.getElementById('btn-toggle-mic');
-        if (isStudioMicActive) {
-            icon.className = 'bi bi-mic-fill';
-            btn.style.background = '';
-        } else {
-            icon.className = 'bi bi-mic-mute-fill';
-            btn.style.background = '#ef4444';
-        }
-        if (webcamMediaStream) {
-            webcamMediaStream.getAudioTracks().forEach(track => track.enabled = isStudioMicActive);
-        }
-    }
-
-    function toggleStudioVideo() {
-        isStudioVideoActive = !isStudioVideoActive;
-        const icon = document.getElementById('icon-studio-video');
-        const btn = document.getElementById('btn-toggle-video');
-        const placeholder = document.getElementById('profe-camera-placeholder');
-        if (isStudioVideoActive) {
-            icon.className = 'bi bi-camera-video-fill';
-            btn.style.background = '';
-            if (isStreaming && !webcamMediaStream) {
-                document.getElementById('profe-webcam-stream').play();
-            }
-        } else {
-            icon.className = 'bi bi-camera-video-off-fill';
-            btn.style.background = '#ef4444';
-            if (isStreaming && !webcamMediaStream) {
-                document.getElementById('profe-webcam-stream').pause();
-            }
-        }
-        if (webcamMediaStream) {
-            webcamMediaStream.getVideoTracks().forEach(track => track.enabled = isStudioVideoActive);
-        }
-    }
-
-    function toggleStudioShare() {
-        isStudioShareActive = !isStudioShareActive;
-        const icon = document.getElementById('icon-studio-share');
-        const btn = document.getElementById('btn-toggle-share');
-        if (isStudioShareActive) {
-            icon.className = 'bi bi-display-fill';
-            btn.style.background = '#3b82f6';
-            Swal.fire({
-                title: 'Compartiendo Pantalla',
-                text: 'La ventana seleccionada está siendo transmitida a la sala.',
-                icon: 'info',
-                timer: 1500,
-                showConfirmButton: false
-            });
-        } else {
-            icon.className = 'bi bi-display';
-            btn.style.background = '';
-        }
-    }
-
-    // esta parte es de la simulacion del chat de los alumnos en vivo
-    function startMockStudentLiveChat() {
-        const chatContainer = document.getElementById('profe-studio-chat-container');
-        if (!chatContainer) return;
-        
-        const mockMessages = [
-            { name: "Juan Pérez", text: "¡Hola profesor! Qué bueno que comenzó el directo." },
-            { name: "Sofía Rojas", text: "Buenas noches, se escucha y se ve súper bien." },
-            { name: "Lucas Altamirano", text: "Buenas. ¿Vamos a ver el despliegue hoy?" },
-            { name: "Sofía Rojas", text: "Tengo una duda con los servicios REST." },
-            { name: "Juan Pérez", text: "Profesor, ¿dejará la clase grabada al terminar?" },
-            { name: "Lucas Altamirano", text: "Excelente clase, muchas gracias." }
-        ];
-        
-        let index = 0;
-        mockChatInterval = setInterval(() => {
-            if (index < mockMessages.length) {
-                const msg = mockMessages[index];
-                const msgEl = document.createElement('div');
-                msgEl.className = 'profe-studio-chat-msg';
-                const escFn = window.escaparHtml || ((str) => String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;'));
-                msgEl.innerHTML = `<strong>${escFn(msg.name)}:</strong> <span>${escFn(msg.text)}</span>`;
-                chatContainer.appendChild(msgEl);
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-                index++;
-            }
-        }, 4000);
-    }
-
     // esta parte es de exponer todas nuestras funciones interactivas al ámbito global window para que funcionen con los eventos onclick
     window.switchSection = switchSection;
     window.submitRetiroForm = submitRetiroForm;
-    window.renderTeacherInbox = renderTeacherInbox;
-    window.sendTeacherMessage = sendTeacherMessage;
     window.filterAlumnChats = filterAlumnChats;
     window.renderTeacherVideos = renderTeacherVideos;
     window.openUploadModal = openUploadModal;
     window.closeUploadModal = closeUploadModal;
     window.submitUploadedVideo = submitUploadedVideo;
     window.deleteTeacherVideo = deleteTeacherVideo;
-    window.toggleStreamingSession = toggleStreamingSession;
-    window.toggleStudioMic = toggleStudioMic;
-    window.toggleStudioVideo = toggleStudioVideo;
-    window.toggleStudioShare = toggleStudioShare;
 </script>
 {% endblock %}

@@ -5,13 +5,14 @@ termino y no se cancelo. Lo que aun no tiene modelo (calificaciones, avance
 por ramo, grafico semanal y comentarios) se identifica como tal.
 """
 
-from datetime import time, timedelta
+from datetime import date, time, timedelta
 
 from django.contrib.auth import get_user_model
 from django.template.defaultfilters import floatformat
 from django.test import TestCase
 from django.urls import reverse
 
+from alumnos import progreso
 from alumnos.models import Alumno, Asignatura, Clase, Genero, Inscripcion, SesionClase
 from tests.test_especialidad import CLAVE, NAC, crear_profesor
 from tests.test_filtros_clases import crear_sesion
@@ -95,10 +96,81 @@ class ProgresoAlumnoTests(TestCase):
                      'id="progress-stat-subjects">4<', 'id="progress-stat-rating">4.9<'):
             self.assertNotContains(r, fijo)
 
-    def test_secciones_sin_modelo_marcadas_como_ejemplo(self):
+    def test_mi_progreso_ya_no_tiene_secciones_de_ejemplo(self):
         self.client.post(reverse('login'), {'username': RUT_ANA, 'password': CLAVE})
         r = self.client.get(reverse('alumno_pag1'))
-        for aviso in ('el avance por ramo aún no se registra',
-                      'el gráfico semanal aún no usa tus datos',
-                      'los comentarios de docentes aún no se registran'):
-            self.assertContains(r, f'Contenido de ejemplo: {aviso}')
+        for ejemplo in ('el avance por ramo aún no se registra', 'el gráfico semanal aún no usa tus datos',
+                        'los comentarios de docentes aún no se registran', 'Sem 1', 'M 40 170 Q 110 120'):
+            self.assertNotContains(r, ejemplo)
+
+    def test_grafico_semanal_suma_las_horas_reales_de_las_ultimas_cinco_semanas(self):
+        algebra = Clase.objects.get(asignatura__nombre='Álgebra')
+        # Fuera de la ventana de 5 semanas: no cuenta.
+        Inscripcion.objects.create(alumno=self.ana, clase=algebra, sesion=crear_sesion(algebra, dias=-40),
+                                   estado=Inscripcion.ESTADO_CONFIRMADA)
+        semanas = progreso.horas_por_semana(self.ana)
+        self.assertEqual(len(semanas), 5)
+        self.assertEqual(sum(s['horas'] for s in semanas), 2.5)  # 2 de Álgebra + 1 de Física de media hora
+        self.assertEqual([s['desde'].weekday() for s in semanas], [0] * 5)  # cada semana parte un lunes
+        self.assertEqual([s['desde'] for s in semanas], sorted(s['desde'] for s in semanas))
+        self.assertEqual(max(s['y'] for s in semanas if s['horas'] == 0), progreso.Y_BASE)
+        self.assertEqual(min(s['y'] for s in semanas), progreso.Y_TOPE)  # la mejor semana llega arriba
+        self.assertEqual((semanas[0]['x'], semanas[-1]['x']), (progreso.X_INICIO, progreso.X_FIN))
+
+    def test_grafico_semanal_pone_cada_clase_en_su_semana(self):
+        algebra = Clase.objects.get(asignatura__nombre='Álgebra')
+        caro = crear_alumno('33333333-3', 'Caro', Genero.objects.get())
+        for dias in (-7, -14, -40):  # semana anterior, la previa y una fuera de la ventana
+            Inscripcion.objects.create(alumno=caro, clase=algebra, sesion=crear_sesion(algebra, dias=dias),
+                                       estado=Inscripcion.ESTADO_CONFIRMADA)
+        semanas = progreso.horas_por_semana(caro)
+        self.assertEqual([s['horas'] for s in semanas], [0, 0, 1.0, 1.0, 0])
+        self.assertEqual([s['y'] for s in semanas], [progreso.Y_BASE, progreso.Y_BASE, progreso.Y_TOPE, progreso.Y_TOPE,
+                                                    progreso.Y_BASE])
+
+    def test_grafico_semanal_usa_el_lunes_de_hoy_como_ultima_semana(self):
+        hoy = date(2026, 11, 4)  # miércoles; esa semana parte el lunes 2
+        semanas = progreso.horas_por_semana(self.bea, hoy=hoy)
+        self.assertEqual([s['desde'] for s in semanas], [date(2026, 10, 5), date(2026, 10, 12), date(2026, 10, 19),
+                                                         date(2026, 10, 26), date(2026, 11, 2)])
+
+    def test_grafico_semanal_sin_clases_queda_plano(self):
+        semanas = progreso.horas_por_semana(crear_alumno('33333333-3', 'Caro', Genero.objects.get()))
+        self.assertEqual([s['horas'] for s in semanas], [0] * 5)
+        self.assertEqual({s['y'] for s in semanas}, {progreso.Y_BASE})
+
+    def test_el_portal_dibuja_el_grafico_con_texto_alternativo(self):
+        self.client.post(reverse('login'), {'username': RUT_ANA, 'password': CLAVE})
+        r = self.client.get(reverse('alumno_pag1'))
+        self.assertContains(r, 'role="img" aria-label="Horas de estudio por semana: semana del ')
+        self.assertContains(r, '<polyline')
+
+    def test_avance_por_ramo_con_clases_y_horas_reales_del_mas_al_menos_estudiado(self):
+        self.assertEqual(progreso.por_ramo(self.ana), [
+            {'nombre': 'Álgebra', 'clases': 2, 'horas': 2.0, 'porcentaje': 100},
+            {'nombre': 'Física', 'clases': 1, 'horas': 0.5, 'porcentaje': 25},
+        ])
+
+    def test_avance_por_ramo_solo_cuenta_las_clases_de_esa_alumna(self):
+        bea = Alumno.objects.get(user__rut='22222222-2')
+        self.assertEqual(progreso.por_ramo(bea), [{'nombre': 'Álgebra', 'clases': 1, 'horas': 1.0, 'porcentaje': 100}])
+
+    def test_avance_por_ramo_sin_clases_completadas_esta_vacio(self):
+        self.assertEqual(progreso.por_ramo(crear_alumno('33333333-3', 'Caro', Genero.objects.get())), [])
+
+    def test_el_portal_muestra_el_avance_real_y_no_los_ramos_inventados(self):
+        self.client.post(reverse('login'), {'username': RUT_ANA, 'password': CLAVE})
+        r = self.client.get(reverse('alumno_pag1'))
+        self.assertContains(r, f'2 clases · {floatformat(2.0, "-1")} h')
+        self.assertContains(r, f'1 clase · {floatformat(0.5, "-1")} h')
+        self.assertContains(r, 'width: 100%')
+        self.assertContains(r, 'width: 25%')
+        for inventado in ('Matemáticas (Álgebra y Cálculo)', 'Programación (Python y Web)', 'Mecánica y Ondas', 'myClasses',
+                          'subjectProgress', 'myReports'):
+            self.assertNotContains(r, inventado)
+
+    def test_sin_clases_el_portal_lo_dice_en_vez_de_mostrar_ramos(self):
+        nueva = crear_alumno('33333333-3', 'Caro', Genero.objects.get())
+        dar_plan(nueva)
+        self.client.post(reverse('login'), {'username': '33333333-3', 'password': CLAVE})
+        self.assertContains(self.client.get(reverse('alumno_pag1')), 'Aún no completas clases')

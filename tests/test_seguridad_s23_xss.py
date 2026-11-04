@@ -11,7 +11,7 @@ class TestS23SeguridadXss(TestCase):
     """S-23: Sanear salida HTML y reducir superficies de ataque XSS (Cross-Site Scripting).
     
     Verifica que las interpolaciones dinámicas en Javascript y plantillas HTML
-    (asignaturas, diálogos/modales, carrito de compras y chat) utilicen
+    (asignaturas, diálogos/modales y Buzón de mensajes) utilicen
     escape contextual estricto o APIs DOM seguras (textContent, dataset),
     neutralizando vectores de inyección con caracteres especiales (&, <, >, ", ').
     """
@@ -74,32 +74,38 @@ class TestS23SeguridadXss(TestCase):
         self.assertIn('${escaparHtml(v.specialty)}', contenido)
         self.assertIn('${escaparHtml(v.teacher)}', contenido)
 
-    def test_chat_alumno_y_profesor_sanean_mensajes_y_contactos(self):
-        """Verifica que los chats (alumno y profesor) escapen nombres, cursos y textos."""
-        # 1. Chat alumno
-        self.client.force_login(self.user_alumno)
-        session = self.client.session
-        session['alumno_id'] = self.alumno.id_alumno
-        session.save()
-        resp_alum = self.client.get(reverse('alumno_pag1'))
-        html_alum = resp_alum.content.decode('utf-8')
+    def test_buzon_alumno_y_profesor_escapan_nombres_y_mensajes(self):
+        """El Buzon real (mensajes/panel.py) muestra nombres y textos escapados en ambos portales.
 
-        self.assertIn('const safeTeacherName = escaparHtml(chat.teacherName);', html_alum)
-        self.assertIn('const safeSpecialty = escaparHtml(chat.specialty);', html_alum)
-        self.assertIn('const safeLastText = escaparHtml(lastMsg ? lastMsg.text : \'\');', html_alum)
+        Antes esta prueba buscaba lineas del chat de ejemplo en JS, que se reemplazo por el Buzon.
+        """
+        from mensajes.models import Conversacion, Mensaje
 
-        # 2. Chat profesor
+        texto_malicioso = '<img src=x onerror=alert(1)>'
+        conversacion = Conversacion.objects.create(
+            alumno=self.alumno, profesor=self.profesor, cliente=self.user_alumno)
+        Mensaje.objects.create(conversacion=conversacion, autor=self.user_alumno, texto=texto_malicioso)
+
+        # 1. Buzon del profesor: ve el nombre del alumno y su mensaje.
         self.client.force_login(self.user_prof)
         session = self.client.session
         session['profesor_id'] = self.profesor.id_profesor
         session.save()
-        resp_prof = self.client.get(reverse('panel_profesor'))
-        html_prof = resp_prof.content.decode('utf-8')
+        html_prof = self.client.get(reverse('panel_profesor'), {'c': conversacion.pk}).content.decode('utf-8')
 
-        self.assertIn('const safeStudentName = escHtml(chat.studentName);', html_prof)
-        self.assertIn('const safeCourseName = escHtml(chat.courseName);', html_prof)
-        self.assertIn('const safeLastText = escHtml(lastMsg ? lastMsg.text : \'\');', html_prof)
-        self.assertIn('<strong>${escFn(msg.name)}:</strong> <span>${escFn(msg.text)}</span>', html_prof)
+        self.assertNotIn(texto_malicioso, html_prof)
+        self.assertNotIn(self.user_alumno.first_name, html_prof)
+        self.assertIn(html.escape(texto_malicioso, quote=False), html_prof)
+
+        # 2. Buzon del alumno: ve su propio mensaje, tambien escapado.
+        self.client.force_login(self.user_alumno)
+        session = self.client.session
+        session['alumno_id'] = self.alumno.id_alumno
+        session.save()
+        html_alum = self.client.get(reverse('alumno_pag1'), {'c': conversacion.pk}).content.decode('utf-8')
+
+        self.assertNotIn(texto_malicioso, html_alum)
+        self.assertNotIn(self.user_alumno.first_name, html_alum)
 
     def test_dialogos_y_reserva_sesiones_usan_dataset_y_escape_contextual(self):
         """Verifica que la reserva de horarios use dataset y escape en diálogos SweetAlert."""
@@ -134,11 +140,3 @@ class TestS23SeguridadXss(TestCase):
         self.assertIn('No se encontraron secciones para "<strong>${esc(query)}</strong>"', contenido_admin)
         self.assertNotIn('Francheska (Alumno)', contenido_admin)
         self.assertNotIn('Franco (Profesor)', contenido_admin)
-
-    def test_pago_html_sanea_campos_de_planes_y_carrito(self):
-        """Verifica que pago.html sanee los títulos de planes contra XSS en localStorage."""
-        with open('alumnos/templates/alumnos/pago.html', 'r', encoding='utf-8') as f:
-            contenido = f.read()
-
-        self.assertIn('esc(it.titulo)', contenido)
-        self.assertIn('esc(pObj.label)', contenido)

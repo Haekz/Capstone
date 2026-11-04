@@ -1,31 +1,24 @@
-"""Correos del modulo: confirmaciones, invitacion al apoderado y avisos de clases.
+"""Correos del modulo: confirmaciones, invitacion al apoderado, avisos de clases,
+calificaciones bajas del estudiante y documentos por vencer y vencidos.
 
 Cada funcion devuelve False si el correo no salio (se puede reenviar).
 """
 
-import logging
-
 from django.conf import settings
-from django.core.mail import send_mail
-from django.template.loader import render_to_string
+from django.db.models import Q
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
-from .models import Apoderado, Vinculo
+from alumnos.correo import enviar as _enviar
+from alumnos.utils import edad, es_menor
+from soporte.correo import avisar_documentos_por_vencer
+from soporte.models import Ticket
+
+from .forms import EDAD_SOLICITUD_PROPIA
+from .models import Apoderado, Documento, Vinculo
 from .tokens import firmar_invitacion, token_correo, token_correo_adolescente
-
-logger = logging.getLogger(__name__)
-
-
-def _enviar(asunto, plantilla, contexto, destinatario):
-    try:
-        send_mail(f'{asunto} - LBWUS', render_to_string(plantilla, contexto),
-                  settings.DEFAULT_FROM_EMAIL, [destinatario])
-    except Exception:  # SMTP caido, timeout, credenciales: se puede reenviar
-        logger.exception('No se pudo enviar el correo "%s"', asunto)
-        return False
-    return True
 
 
 def _enlace_confirmacion(request, ruta, user, generador):
@@ -59,17 +52,104 @@ def enviar_invitacion(request, invitacion):
     }, invitacion.correo)
 
 
+def _correos_de_apoderados(alumno):
+    """De cada apoderado con vinculo verificado del estudiante."""
+    return (Vinculo.objects.filter(alumno=alumno, estado=Vinculo.VERIFICADO,
+                                   apoderado__estado=Apoderado.VERIFICADO)
+            .values_list('apoderado__user__email', flat=True))
+
+
+def _correo_del_adolescente(alumno):
+    """El correo propio del estudiante si tiene de 14 a 17 anos; antes de los 14 no recibe avisos."""
+    user = alumno.user
+    if user.email and es_menor(user) and edad(user.fecha_nacimiento) >= EDAD_SOLICITUD_PROPIA:
+        return user.email
+    return None
+
+
+def avisar_revocacion(vinculo, era_verificado, canceladas):
+    """Avisos al revocarse un vinculo (decidido 02-nov).
+
+    Si lo revoco soporte, al apoderado revocado, con el motivo. Si el vinculo estaba verificado, a los demas
+    apoderados verificados y al adolescente de 14 a 17 con correo propio, sin el motivo ni quien lo pidio.
+    """
+    revocacion = vinculo.revocacion
+    envios = []
+    if revocacion.autor_id != vinculo.apoderado.user_id:
+        envios.append(_enviar(f'Tu vínculo con {vinculo.nombre_visible} fue revocado', 'apoderados/correo_revocado.txt', {
+            'nombre': vinculo.apoderado.nombre, 'estudiante': vinculo.nombre_visible,
+            'motivo': revocacion.motivo, 'canceladas': canceladas,
+        }, vinculo.apoderado.user.email))
+    if era_verificado:
+        estudiante = vinculo.alumno.user.first_name
+        contexto = {'estudiante': estudiante, 'canceladas': canceladas}
+        envios += [_enviar(f'Cambio en los apoderados de {estudiante}', 'apoderados/correo_revocacion.txt',
+                           contexto, correo) for correo in _correos_de_apoderados(vinculo.alumno)]
+        adolescente = _correo_del_adolescente(vinculo.alumno)
+        if adolescente:
+            envios.append(_enviar('Cambio en tus apoderados', 'apoderados/correo_revocacion.txt',
+                                  {**contexto, 'para_estudiante': True}, adolescente))
+    return all(envios)
+
+
 def avisar_apoderados(inscripcion, accion, autor):
     """Avisa a cada apoderado con vinculo verificado del estudiante.
 
     Un correo por persona: ningun apoderado ve la direccion del otro. Un fallo
     de SMTP no deshace la reserva, que ya quedo guardada.
     """
-    destinatarios = (Vinculo.objects.filter(alumno=inscripcion.alumno, estado=Vinculo.VERIFICADO,
-                                            apoderado__estado=Apoderado.VERIFICADO)
-                     .values_list('apoderado__user__email', flat=True))
     estudiante = inscripcion.alumno.user.first_name
     contexto = {'accion': accion, 'autor': autor, 'estudiante': estudiante,
                 'clase': inscripcion.clase, 'sesion': inscripcion.sesion}
     return all([_enviar(f'Clases de {estudiante}', 'apoderados/correo_aviso_clase.txt', contexto, correo)
-                for correo in destinatarios])
+                for correo in _correos_de_apoderados(inscripcion.alumno)])
+
+
+def avisar_segundo_apoderado(vinculo):
+    """Otra persona pidio ser apoderado de un estudiante: se avisa a sus apoderados verificados y al
+    adolescente de 14 a 17 con correo propio.
+
+    Sin decir quien es ni su parentesco ni su contacto (lo verifica soporte), y sin dar la posibilidad
+    de vetarla: es un aviso, no un permiso.
+    """
+    estudiante = vinculo.alumno.user.first_name
+    envios = [_enviar(f'Nueva solicitud de vínculo con {estudiante}', 'apoderados/correo_segundo_apoderado.txt',
+                      {'estudiante': estudiante}, correo)
+              for correo in _correos_de_apoderados(vinculo.alumno)]
+    adolescente = _correo_del_adolescente(vinculo.alumno)
+    if adolescente:
+        envios.append(_enviar('Nueva solicitud para ser tu apoderado', 'apoderados/correo_segundo_apoderado.txt',
+                              {'estudiante': estudiante, 'para_estudiante': True}, adolescente))
+    return all(envios)
+
+
+def avisar_calificacion_baja(inscripcion):
+    """D21: el estudiante menor califico mal una clase. Sin el comentario: que lo
+    conversen, y si hubo un problema el apoderado abre un ticket."""
+    estudiante = inscripcion.alumno.user.first_name
+    contexto = {'estudiante': estudiante, 'clase': inscripcion.clase}
+    return all([_enviar(f'{estudiante} calificó mal una clase', 'apoderados/correo_calificacion_baja.txt',
+                        contexto, correo)
+                for correo in _correos_de_apoderados(inscripcion.alumno)])
+
+
+def avisar_vencimientos():
+    """Avisa una sola vez al agente de cada ticket abierto que sus documentos se borran
+    dentro de Documento.AVISO_ANTES. Devuelve cuantos tickets se avisaron."""
+    ahora = timezone.now()
+    por_vencer = Documento.objects.filter(avisado=False, subido__gte=ahora - Documento.VIGENCIA,
+                                          subido__lt=ahora - (Documento.VIGENCIA - Documento.AVISO_ANTES))
+    tickets = (Ticket.objects.filter(estado=Ticket.ABIERTO)
+               .filter(Q(apoderado__documentos__in=por_vencer) | Q(vinculo__documentos__in=por_vencer))
+               .distinct().select_related('asignado__user', 'apoderado', 'vinculo'))
+    for ticket in tickets:
+        revisado = ticket.apoderado or ticket.vinculo
+        avisar_documentos_por_vencer(ticket, revisado.documentos.earliest('subido').subido + Documento.VIGENCIA)
+        revisado.documentos.update(avisado=True)
+    return len(tickets)
+
+
+def avisar_documentos_vencidos(apoderado):
+    """Se borraron sin revisar: que los vuelva a subir desde su portal."""
+    return _enviar('Vuelve a subir tus documentos', 'apoderados/correo_documentos_vencidos.txt',
+                   {'nombre': apoderado.nombre}, apoderado.user.email)

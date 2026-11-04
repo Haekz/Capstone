@@ -10,15 +10,17 @@ from datetime import date, time as hora
 from unittest import mock
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import RequestFactory, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from alumnos.models import Alumno, Asignatura, Clase, Genero, Inscripcion, PaqueteClases, Tutor
+from alumnos.models import Alumno, Asignatura, Clase, Genero, Inscripcion, PaqueteClases
 from alumnos.services import MENSAJE_MENOR
+from alumnos.views import iniciar_compra_paquete
 from apoderados.forms import VERSION_DECLARACION_VINCULO
 from apoderados.models import Apoderado, Documento, RevisionVinculo, Vinculo
-from tests.test_apoderados import CLAVE, RUT, adjuntar, crear_apoderado, entrar, imagen
+from soporte.models import Ticket
+from tests.test_apoderados import CLAVE, RUT, adjuntar, crear_agente, crear_apoderado, entrar, entrar_soporte, imagen
 from tests.test_especialidad import crear_profesor
 from tests.test_filtros_clases import crear_sesion
 from tests.test_paquetes import dar_paquete
@@ -118,14 +120,14 @@ class RevisionVinculoTests(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.admin = User.objects.create_user('10101010-1', password=CLAVE, rol='admin', first_name='Admin')
-        cls.tutor = Tutor.objects.create(user=cls.admin)
+        cls.revisor = crear_agente('10101010-1', Ticket.APODERADOS)
 
     def setUp(self):
         self.apoderado = crear_apoderado(RUT, Apoderado.VERIFICADO)
         self.vinculo = crear_menor_vinculado(self.apoderado, estado=Vinculo.PENDIENTE)
         adjuntar(Documento.CERTIFICADO, vinculo=self.vinculo)
-        entrar(self.client, self.admin, admin_id=self.tutor.id_tutor)
+        self.vinculo.abrir_ticket_si_revisable()
+        entrar_soporte(self.client, self.revisor)
 
     def revisar(self, vinculo=None, **datos):
         return self.client.post(reverse('apoderado_revisar_vinculo', args=[(vinculo or self.vinculo).pk]), datos)
@@ -140,7 +142,7 @@ class RevisionVinculoTests(TestCase):
         self.assertEqual(self.vinculo.estado, Vinculo.VERIFICADO)
         revision = RevisionVinculo.objects.get()
         self.assertEqual((revision.administrador, revision.canal, revision.certificado_coincide),
-                         (self.admin, 'documento', True))
+                         (self.revisor.user, 'documento', True))
 
     def test_rechazar_exige_motivo_y_el_apoderado_lo_ve(self):
         self.revisar(decision='rechazar')
@@ -225,6 +227,60 @@ class BloqueosDelMenorTests(TestCase):
         tx.assert_not_called()
         self.assertEqual(PaqueteClases.objects.filter(alumno=self.menor).count(), 1)
 
+    @mock.patch('alumnos.views._tx')
+    def test_el_menor_no_compra_a_los_14_ni_a_los_17(self, tx):
+        """Los dos bordes del adolescente que tiene cuenta propia."""
+        for anios in (14, 17):
+            with self.subTest(edad=anios):
+                User.objects.filter(pk=self.menor.user_id).update(fecha_nacimiento=hace_anios(anios))
+                self.entrar_como(self.menor)
+                respuesta = self.client.post(reverse('comprar_paquete'), self.compra())
+                self.assertRedirects(respuesta, reverse('alumno_pag1'), fetch_redirect_response=False)
+        tx.assert_not_called()
+        self.assertEqual(PaqueteClases.objects.filter(alumno=self.menor).count(), 1)
+
+    @mock.patch('alumnos.views._tx')
+    def test_a_los_18_si_compra(self, tx):
+        tx.return_value.create.return_value = {'url': 'https://webpay.test', 'token': 'tok'}
+        User.objects.filter(pk=self.menor.user_id).update(fecha_nacimiento=hace_anios(18))
+        self.entrar_como(self.menor)
+        self.assertEqual(self.client.post(reverse('comprar_paquete'), self.compra()).status_code, 200)
+        self.assertEqual(PaqueteClases.objects.filter(alumno=self.menor).count(), 2)
+
+    def compra(self):
+        return {'plan': 'progreso', 'profesor': self.profesor.id_profesor}
+
+    @mock.patch('alumnos.views._tx')
+    def test_el_inicio_de_webpay_se_bloquea_aunque_no_pase_por_la_vista_del_alumno(self, tx):
+        """El bloqueo esta donde se crea el paquete: una vista futura que llegue hasta aqui tambien queda cubierta."""
+        peticion = RequestFactory().post('/cualquier-vista-nueva/', self.compra())
+        respuesta = iniciar_compra_paquete(peticion, self.menor.pk)
+        self.assertEqual((respuesta.status_code, respuesta.url), (302, reverse('alumno_pag1')))
+        tx.assert_not_called()
+        self.assertEqual(PaqueteClases.objects.filter(alumno=self.menor).count(), 1)
+
+    @mock.patch('alumnos.views._tx')
+    def test_el_menor_solo_pasa_con_el_vinculo_que_lo_autoriza_a_el(self, tx):
+        tx.return_value.create.return_value = {'url': 'https://webpay.test', 'token': 'tok'}
+        peticion = RequestFactory().post('/x/', self.compra())
+        propio = Vinculo.objects.get(alumno=self.menor)
+        ajeno = crear_menor_vinculado(propio.apoderado, rut=RUT_HERMANA)  # vinculo verificado, pero de otro estudiante
+        self.assertEqual(iniciar_compra_paquete(peticion, self.menor.pk, vinculo=ajeno).status_code, 302)
+        self.assertEqual(PaqueteClases.objects.filter(alumno=self.menor).count(), 1)
+        self.assertEqual(iniciar_compra_paquete(peticion, self.menor.pk, vinculo=propio).status_code, 200)
+        self.assertEqual(PaqueteClases.objects.filter(alumno=self.menor).count(), 2)
+
+    def test_el_menor_ve_en_planes_que_contrata_su_apoderado_y_no_ve_botones_de_compra(self):
+        url = f'{reverse("planes")}?profesor={self.profesor.id_profesor}'
+        self.entrar_como(self.menor)
+        respuesta = self.client.get(url)
+        self.assertContains(respuesta, 'Tu apoderado contrata por ti', count=3)
+        self.assertNotContains(respuesta, reverse('comprar_paquete'))
+        self.entrar_como(self.adulta)
+        respuesta = self.client.get(url)
+        self.assertContains(respuesta, reverse('comprar_paquete'), count=3)
+        self.assertNotContains(respuesta, 'Tu apoderado contrata por ti')
+
     def test_el_menor_no_entra_a_la_sala_aunque_tenga_inscripcion(self):
         Inscripcion.objects.create(alumno=self.menor, clase=self.clase, sesion=self.sesion,
                                    estado=Inscripcion.ESTADO_CONFIRMADA)
@@ -239,6 +295,18 @@ class BloqueosDelMenorTests(TestCase):
 
         self.entrar_como(self.adulta)
         self.assertContains(self.client.get(reverse('alumno_pag1')), 'data-view="view-inbox"')
+
+    def test_el_portal_del_menor_muestra_las_lineas_de_ayuda_y_el_adulto_no(self):
+        """D22: 147 (Fono Niños) y 149 (Fono Familia), validados en ChileAtiende el 02-nov."""
+        self.entrar_como(self.menor)
+        respuesta = self.client.get(reverse('alumno_pag1'))
+        self.assertContains(respuesta, '<a href="tel:147">', count=1)
+        self.assertContains(respuesta, '<a href="tel:149">', count=1)
+        self.assertContains(respuesta, 'Fono Niños')
+        self.assertContains(respuesta, 'Fono Familia')
+
+        self.entrar_como(self.adulta)
+        self.assertNotContains(self.client.get(reverse('alumno_pag1')), 'tel:147')
 
 
 class ClaveEstudianteTests(TestCase):

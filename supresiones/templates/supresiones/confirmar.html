@@ -1,0 +1,48 @@
+{% extends 'alumnos/base.html' %}
+{% load static %}
+
+{% block title %}Confirmar la eliminación | LBWUS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'alumnos/css/perfil_profesor.css' %}">
+<link rel="stylesheet" href="{% static 'apoderados/apoderados.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="perfil-prof">
+    <a class="perfil-prof__volver" href="{% url 'eliminar_cuenta' %}">
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver
+    </a>
+
+    <header class="perfil-prof__cabecera">
+        <div>
+            <h1>Confirmar que quieres eliminar tu cuenta</h1>
+            <p class="perfil-prof__vacio">Ya comprobamos que el enlace llegó a tu correo. Al confirmar, abrimos la solicitud y soporte la revisa.</p>
+        </div>
+    </header>
+
+    <section class="perfil-prof__bloque" aria-labelledby="evaluacion-titulo">
+        <h2 id="evaluacion-titulo">Qué se elimina y qué se conserva</h2>
+        {% include 'apoderados/_mensajes.html' %}
+        {% include 'supresiones/_evaluacion.html' %}
+        {% for error in form.non_field_errors %}<p class="apod-form__error" role="alert">{{ error }}</p>{% endfor %}
+        <form method="post" class="apod-form" novalidate>
+            {% csrf_token %}
+            {% for campo in form %}
+            <div class="apod-form__declaracion">
+                {{ campo }}
+                <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+            </div>
+            {% if campo.errors %}
+            <div id="{{ campo.auto_id }}-error" role="alert">
+                {% for error in campo.errors %}<p class="apod-form__error">{{ error }}</p>{% endfor %}
+            </div>
+            {% endif %}
+            {% endfor %}
+            <button type="submit" class="perfil-prof__reservar">
+                <i class="bi bi-check-lg" aria-hidden="true"></i> Confirmar la solicitud
+            </button>
+        </form>
+    </section>
+</div>
+{% endblock %}

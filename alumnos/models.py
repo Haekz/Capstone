@@ -7,7 +7,8 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.utils import timezone
 
-from . import paquetes
+from . import catalogos, liquidacion, paquetes
+from .cifrado import cifrador
 
 
 class Genero(models.Model):
@@ -23,6 +24,7 @@ class CustomUser(AbstractUser):
         ('profesor', 'Profesor'),
         ('admin', 'Administrador'),
         ('apoderado', 'Apoderado'),
+        ('soporte', 'Soporte'),
     )
     rol = models.CharField(max_length=15, choices=ROLES, default='alumno')
     rut = models.CharField(max_length=12, unique=True, null=True, blank=True)
@@ -31,6 +33,9 @@ class CustomUser(AbstractUser):
     fecha_nacimiento = models.DateField(null=True, blank=True)
     genero = models.ForeignKey(Genero, on_delete=models.SET_NULL, null=True, blank=True)
     foto_perfil = models.ImageField(upload_to='perfiles/', null=True, blank=True)
+    # Cuenta suprimida (mensajes/supresion.py): la fila se conserva, sin datos personales, solo porque tiene
+    # conversaciones reportadas retenidas. Nunca vuelve a entrar.
+    suprimida = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.username} ({self.get_rol_display()})"
@@ -110,18 +115,12 @@ class Profesor(models.Model):
     id_profesor = models.AutoField(primary_key=True)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='perfil_profesor')
     especialidad = models.ForeignKey(Especialidad, on_delete=models.SET_NULL, null=True)
-    telefono_publico = models.BooleanField(default=False, help_text='¿Mostrar teléfono a los alumnos?')
-    tarifa_base = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        default=Decimal('15000.00'),
-        validators=[MinValueValidator(Decimal('0.00'))],
-        help_text='Tarifa base por clase individual definida por el docente',
-        verbose_name='Tarifa base por clase'
-    )
 
-    # Documento privado: se sirve solo a admins (ver admin_portal.ver_titulo),
-    # nunca por MEDIA_URL publico.
+    # Documento privado (paso 9b): cifrado en la base, como los de apoderados. Soporte lo ve como imagen
+    # con marca de agua (admin_portal.ver_titulo) y se borra al aprobarlo o rechazarlo.
+    titulo_contenido = models.BinaryField(null=True, blank=True)
+    titulo_formato = models.CharField(max_length=4, blank=True)  # JPEG, PNG o PDF
+    # Antes del paso 9b: en disco y sin cifrar. manage.py pasar_titulos_a_base los mueve; luego se quita.
     titulo_archivo = models.FileField(upload_to='titulos/', blank=True)
     titulo_estado = models.CharField(max_length=12, choices=ESTADOS_TITULO, default=TITULO_PENDIENTE)
     titulo_observacion = models.CharField(max_length=200, blank=True)
@@ -132,6 +131,10 @@ class Profesor(models.Model):
         validators=[MinValueValidator(paquetes.TARIFA_MIN), MaxValueValidator(paquetes.TARIFA_MAX)],
         help_text='Valor de una clase de 60 minutos, en pesos.',
     )
+    # Ciclo de pago (alumnos/liquidacion.py). Un cambio rige desde frecuencia_nueva_desde.
+    frecuencia_pago = models.CharField(max_length=10, choices=liquidacion.FRECUENCIAS, default=liquidacion.SEMANAL)
+    frecuencia_nueva = models.CharField(max_length=10, choices=liquidacion.FRECUENCIAS, blank=True, default='')
+    frecuencia_nueva_desde = models.DateField(null=True, blank=True)
 
     objects = ProfesorQuerySet.as_manager()
 
@@ -213,7 +216,14 @@ class SesionClaseQuerySet(models.QuerySet):
         return self.filter(estado='programada')
 
     def disponibles(self):
-        """Sesiones programadas a futuro que aún cuentan con cupos libres."""
+        """Sesiones programadas a futuro que aún cuentan con cupos libres.
+
+        Y con el profesor libre: si ya tiene otra clase reservada que se cruza, no
+        se ofrece (no puede estar en dos clases a la vez; decidido 02-nov, paso B1a).
+        """
+        profesor_ocupado = Inscripcion.objects.que_se_cruzan(
+            models.OuterRef('clase__profesor'), models.OuterRef('fecha_hora_inicio'), models.OuterRef('fecha_hora_fin'),
+        ).exclude(sesion=models.OuterRef('pk'))
         return (
             self.filter(
                 estado='programada',
@@ -226,6 +236,7 @@ class SesionClaseQuerySet(models.QuerySet):
                 )
             )
             .filter(cupos_ocupados_count__lt=models.F('cupo_maximo'))
+            .exclude(models.Exists(profesor_ocupado))
         )
 
     def por_profesor(self, profesor):
@@ -393,6 +404,11 @@ class SesionClase(models.Model):
 
 
 class InscripcionQuerySet(models.QuerySet):
+    def que_se_cruzan(self, profesor, inicio, fin):
+        """Reservas activas del profesor cuyo bloque se cruza con [inicio, fin). Acepta OuterRef."""
+        return self.filter(clase__profesor=profesor, estado__in=Inscripcion.ESTADOS_ACTIVOS,
+                           sesion__fecha_hora_inicio__lt=fin, sesion__fecha_hora_fin__gt=inicio)
+
     def proximas(self):
         """Activas cuya sesion aun no termina (o inscritas a la clase sin sesion puntual)."""
         return self.filter(
@@ -410,161 +426,38 @@ class InscripcionQuerySet(models.QuerySet):
     def consumidas(self):
         """Las que gastan una clase del paquete (y le pagan al profesor).
 
-        Si el profesor cancela la sesion, la clase vuelve al alumno.
+        Si el profesor cancela la sesion, la clase vuelve al alumno. Si el alumno
+        cancela con menos de 4 h, no vuelve (decidido 02-nov).
         """
-        return self.filter(estado__in=Inscripcion.ESTADOS_ACTIVOS).exclude(
+        return self.filter(estado__in=[*Inscripcion.ESTADOS_ACTIVOS, Inscripcion.ESTADO_CANCELADA_TARDE]).exclude(
             sesion__estado=SesionClase.ESTADO_CANCELADA
         )
 
+    def pagables(self):
+        """Las que se le pagan al profesor, ya pasada la hora: dictadas o canceladas con menos de 4 h.
 
-class Pago(models.Model):
-    """Registro de transacciones de pago con Webpay Plus o Simulación."""
-    ESTADO_INICIADA = 'iniciada'
-    ESTADO_PAGADA = 'pagada'
-    ESTADO_RECHAZADA = 'rechazada'
-    ESTADO_ANULADA = 'anulada'
-
-    ESTADOS_CHOICES = (
-        (ESTADO_INICIADA, 'Iniciada'),
-        (ESTADO_PAGADA, 'Pagada'),
-        (ESTADO_RECHAZADA, 'Rechazada'),
-        (ESTADO_ANULADA, 'Anulada'),
-    )
-
-    id_pago = models.AutoField(primary_key=True)
-    buy_order = models.CharField(max_length=40, unique=True, db_index=True)
-    session_id = models.CharField(max_length=50, blank=True)
-    token_ws = models.CharField(max_length=100, unique=True, null=True, blank=True, db_index=True)
-    monto = models.PositiveIntegerField()
-    estado = models.CharField(max_length=20, choices=ESTADOS_CHOICES, default=ESTADO_INICIADA, db_index=True)
-    es_simulacion = models.BooleanField(default=False)
-
-    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='pagos')
-    alumno = models.ForeignKey(Alumno, on_delete=models.SET_NULL, null=True, blank=True, related_name='pagos')
-    detalle_carrito = models.JSONField(default=list, blank=True)
-
-    authorization_code = models.CharField(max_length=40, blank=True)
-    ultimos_digitos_tarjeta = models.CharField(max_length=10, blank=True)
-    fecha_transaccion = models.DateTimeField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        verbose_name = 'Pago'
-        verbose_name_plural = 'Pagos'
-        ordering = ['-created_at']
-
-    def __str__(self):
-        tipo = " (Simulación)" if self.es_simulacion else ""
-        return f"Pago {self.buy_order} - ${self.monto} ({self.get_estado_display()}){tipo}"
-
-
-class PlanAlumno(models.Model):
-    """Representa un paquete de clases adquirido por un alumno bajo reglas comerciales (S4-03).
-    
-    Planes oficiales:
-    - Flexible: 1 clase ($15.000 ref, $12.750 tutor, 15% comisión LBWUS).
-    - Progreso: 4 clases ($59.000 ref, $50.150 tutor, 15% comisión LBWUS).
-    - Intensivo: 8 clases ($116.000 ref, $98.600 tutor, 15% comisión LBWUS).
-
-    No es suscripción obligatoria ni cuenta con renovación automática (pago único por paquete).
-    """
-    PLAN_FLEXIBLE = 'flexible'
-    PLAN_PROGRESO = 'progreso'
-    PLAN_INTENSIVO = 'intensivo'
-    PLAN_PERSONALIZADO = 'personalizado'
-
-    PLANES_CHOICES = [
-        (PLAN_FLEXIBLE, 'Plan Flexible (1 clase)'),
-        (PLAN_PROGRESO, 'Plan Progreso (4 clases)'),
-        (PLAN_INTENSIVO, 'Plan Intensivo (8 clases)'),
-        (PLAN_PERSONALIZADO, 'Plan Personalizado'),
-    ]
-
-    ESTADO_PENDIENTE = 'pendiente'
-    ESTADO_ACTIVO = 'activo'
-    ESTADO_AGOTADO = 'agotado'
-    ESTADO_CANCELADO = 'cancelado'
-
-    ESTADOS_CHOICES = [
-        (ESTADO_PENDIENTE, 'Pendiente de pago'),
-        (ESTADO_ACTIVO, 'Activo'),
-        (ESTADO_AGOTADO, 'Agotado'),
-        (ESTADO_CANCELADO, 'Cancelado / Reembolsado'),
-    ]
-
-    id_plan_alumno = models.AutoField(primary_key=True)
-    alumno = models.ForeignKey(Alumno, on_delete=models.CASCADE, related_name='planes_adquiridos')
-    profesor = models.ForeignKey(Profesor, on_delete=models.SET_NULL, null=True, blank=True, related_name='planes_vendidos')
-    tipo_plan = models.CharField(max_length=20, choices=PLANES_CHOICES, db_index=True)
-
-    total_clases = models.PositiveSmallIntegerField(default=1)
-    clases_disponibles = models.PositiveSmallIntegerField(default=1)
-    clases_consumidas = models.PositiveSmallIntegerField(default=0)
-
-    monto_total = models.PositiveIntegerField(help_text="Precio final pagado por el alumno (CLP)")
-    comision_lbwus = models.PositiveIntegerField(help_text="Comisión de la plataforma LBWUS (15% IVA incluido)")
-    monto_tutor = models.PositiveIntegerField(help_text="Importe bruto correspondiente al tutor (85%)")
-
-    pago = models.ForeignKey(Pago, on_delete=models.SET_NULL, null=True, blank=True, related_name='planes_asociados')
-    estado = models.CharField(max_length=20, choices=ESTADOS_CHOICES, default=ESTADO_PENDIENTE, db_index=True)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        verbose_name = 'Plan de Alumno'
-        verbose_name_plural = 'Planes de Alumnos'
-        ordering = ['-created_at']
-        constraints = [
-            models.CheckConstraint(
-                check=models.Q(clases_disponibles__gte=0),
-                name='plan_alumno_clases_disponibles_no_negativo'
-            ),
-            models.CheckConstraint(
-                check=models.Q(clases_consumidas__gte=0),
-                name='plan_alumno_clases_consumidas_no_negativo'
-            ),
-        ]
-
-    def __str__(self):
-        return f"{self.get_tipo_plan_display()} - {self.alumno} ({self.clases_disponibles}/{self.total_clases} disp.)"
-
-    @property
-    def tiene_saldo(self):
-        return self.estado == self.ESTADO_ACTIVO and self.clases_disponibles > 0
-
-    def consumir_clase(self):
-        """Descuenta de manera segura 1 clase del saldo disponible."""
-        if not self.tiene_saldo:
-            raise ValidationError("El plan no tiene clases disponibles o no está activo.")
-        self.clases_disponibles -= 1
-        self.clases_consumidas += 1
-        if self.clases_disponibles == 0:
-            self.estado = self.ESTADO_AGOTADO
-        self.save(update_fields=['clases_disponibles', 'clases_consumidas', 'estado', 'updated_at'])
-
-    def reembolsar_clase(self):
-        """Devuelve 1 clase al saldo disponible en caso de cancelación válida."""
-        if self.clases_consumidas <= 0:
-            raise ValidationError("No hay clases consumidas para restituir.")
-        self.clases_consumidas -= 1
-        self.clases_disponibles += 1
-        if self.estado == self.ESTADO_AGOTADO:
-            self.estado = self.ESTADO_ACTIVO
-        self.save(update_fields=['clases_disponibles', 'clases_consumidas', 'estado', 'updated_at'])
+        No reemplaza a completadas(): quien cancelo tarde no asistio (no califica ni suma progreso).
+        """
+        return self.filter(
+            estado__in=[Inscripcion.ESTADO_CONFIRMADA, Inscripcion.ESTADO_CANCELADA_TARDE],
+            sesion__fecha_hora_fin__lte=timezone.now(),
+        ).exclude(sesion__estado=SesionClase.ESTADO_CANCELADA)
 
 
 class Inscripcion(models.Model):
     ESTADO_CONFIRMADA = 'confirmada'
     ESTADO_PENDIENTE = 'pendiente'
     ESTADO_CANCELADA = 'cancelada'
+    # Con menos de 4 h: la clase se pierde y el profesor cobra (decidido 02-nov). No ocupa cupo.
+    ESTADO_CANCELADA_TARDE = 'cancelada_tarde'
     ESTADOS_ACTIVOS = [ESTADO_CONFIRMADA, ESTADO_PENDIENTE]  # ocupan cupo y consumen una clase
+    ANTICIPACION_SIN_COSTO = timedelta(hours=4)  # para cancelar o reagendar sin perder la clase
 
     ESTADOS_CHOICES = [
         (ESTADO_CONFIRMADA, 'Confirmada'),
         (ESTADO_PENDIENTE, 'Pendiente'),
         (ESTADO_CANCELADA, 'Cancelada'),
+        (ESTADO_CANCELADA_TARDE, 'Cancelada con menos de 4 h'),
     ]
 
     id_inscripcion = models.AutoField(primary_key=True)
@@ -578,14 +471,6 @@ class Inscripcion(models.Model):
         blank=True,
         related_name='inscripciones',
         verbose_name='Sesión puntual'
-    )
-    plan_origen = models.ForeignKey(
-        PlanAlumno,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='inscripciones',
-        verbose_name='Plan de origen'
     )
     estado = models.CharField(
         max_length=20,
@@ -644,9 +529,22 @@ class Inscripcion(models.Model):
 
     @property
     def puede_cancelar(self):
-        """Activa y antes de que empiece la sesion: nadie toma la clase y despues recupera el credito."""
+        """Activa y antes de que empiece la sesion: nadie toma la clase y despues recupera el credito.
+
+        Con menos de 4 h tambien se puede, pero la clase se pierde (a_tiempo_para_cambiar).
+        """
         empezo = self.sesion_id is not None and self.sesion.fecha_hora_inicio <= timezone.now()
         return self.estado in self.ESTADOS_ACTIVOS and not empezo
+
+    @property
+    def a_tiempo_para_cambiar(self):
+        """Faltan 4 h o mas: cancelar o reagendar no cuesta la clase."""
+        return self.sesion_id is None or self.sesion.fecha_hora_inicio - timezone.now() >= self.ANTICIPACION_SIN_COSTO
+
+    @property
+    def puede_reprogramar(self):
+        """Reagendar es directo, pero solo con 4 h o mas de anticipacion."""
+        return self.sesion_id is not None and self.puede_cancelar and self.a_tiempo_para_cambiar
 
     def __str__(self):
         if self.sesion:
@@ -796,113 +694,114 @@ class Reporte(models.Model):
         return f"Reporte de {self.remitente.first_name}"
 
 
+TIPOS_CUENTA = [('rut_vista', 'Cuenta Rut / Vista'), ('corriente', 'Cuenta Corriente'), ('ahorro', 'Cuenta de Ahorro')]
+
+
+class CuentaBancaria(models.Model):
+    """Cuenta donde se le paga al profesor: una sola y a su nombre.
+
+    El titular es siempre el RUT del profesor; al transferir con ese RUT, el banco
+    rechaza una cuenta ajena. El numero va cifrado y se muestra enmascarado.
+    Tras un cambio confirmado no se le paga durante ESPERA_CAMBIO (P3).
+    """
+    ESPERA_CAMBIO = timedelta(hours=48)
+
+    profesor = models.OneToOneField(Profesor, on_delete=models.CASCADE, related_name='cuenta_bancaria')
+    banco = models.CharField(max_length=40, choices=[(b, b) for b in catalogos.BANCOS])
+    tipo_cuenta = models.CharField(max_length=10, choices=TIPOS_CUENTA)
+    numero_cifrado = models.BinaryField()
+    ultimos_digitos = models.CharField(max_length=4)
+    actualizada = models.DateTimeField(auto_now=True)
+    cambiada_en = models.DateTimeField(null=True, blank=True)  # None: es la primera cuenta
+
+    @property
+    def pagable_desde(self):
+        return self.cambiada_en + self.ESPERA_CAMBIO if self.cambiada_en else None
+
+    @property
+    def bloqueada(self):
+        return self.cambiada_en is not None and timezone.now() < self.pagable_desde
+
+    @staticmethod
+    def _cifrador():
+        return cifrador('cuentas-bancarias')
+
+    def asignar_numero(self, valor):
+        numero = (valor or '').replace(' ', '').replace('-', '')
+        if not numero.isdigit() or not 5 <= len(numero) <= 20:
+            raise ValidationError('El número de cuenta debe tener entre 5 y 20 dígitos.')
+        self.numero_cifrado = self._cifrador().encrypt(numero.encode())
+        self.ultimos_digitos = numero[-4:]
+
+    @property
+    def numero(self):
+        return self._cifrador().decrypt(bytes(self.numero_cifrado)).decode()  # PostgreSQL entrega un memoryview
+
+    @property
+    def enmascarado(self):
+        return f'•••• {self.ultimos_digitos}'
+
+
 class SolicitudRetiro(models.Model):
+    """Retiro de saldo de un profesor. Los estados solo avanzan:
+    pendiente -> aprobado -> pagado, o pendiente -> rechazado.
+
+    Aprobar no es pagar: la plata se mueve en el banco y despues se registra
+    aqui el numero de operacion. Cada paso guarda quien lo hizo.
+    """
+    PENDIENTE, APROBADO, PAGADO, RECHAZADO = 'pendiente', 'aprobado', 'pagado', 'rechazado'
+
     id_solicitud = models.AutoField(primary_key=True)
     profesor = models.ForeignKey(Profesor, on_delete=models.CASCADE, related_name='retiros')
     monto = models.IntegerField()
     fecha_solicitud = models.DateTimeField(auto_now_add=True)
-    estado = models.CharField(max_length=15, choices=[('pendiente', 'Pendiente'), ('aprobado', 'Aprobado'), ('rechazado', 'Rechazado')], default='pendiente')
+    estado = models.CharField(max_length=15, choices=[(PENDIENTE, 'Pendiente'), (APROBADO, 'Aprobado'), (PAGADO, 'Pagado'), (RECHAZADO, 'Rechazado')], default=PENDIENTE)
     banco = models.ForeignKey(Banco, on_delete=models.SET_NULL, null=True)
-    tipo_cuenta = models.CharField(max_length=40, choices=[('rut_vista', 'Cuenta Rut / Vista'), ('corriente', 'Cuenta Corriente'), ('ahorro', 'Cuenta de Ahorro')], default='rut_vista')
+    tipo_cuenta = models.CharField(max_length=40, choices=TIPOS_CUENTA, default='rut_vista')
     numero_cuenta = models.CharField(max_length=40, blank=True, default='')
     fecha_resolucion = models.DateTimeField(null=True, blank=True)
+    # SET_NULL: si se borra la cuenta del admin, el retiro se conserva.
+    resuelto_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                     related_name='+')
+    motivo_rechazo = models.TextField(blank=True, default='')
+    pagado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name='+')
+    numero_operacion = models.CharField(max_length=40, blank=True, default='')
+    fecha_pago = models.DateTimeField(null=True, blank=True)
+    pagar_el = models.DateField(null=True, blank=True)  # lunes siguiente al corte (alumnos/liquidacion.py)
 
     def __str__(self):
         return f"Retiro #{self.id_solicitud} - {self.profesor.user.first_name} (${self.monto})"
 
+    def _exigir(self, estado):
+        if self.estado != estado:
+            raise ValidationError(f'No se puede: el retiro #{self.id_solicitud} está {self.get_estado_display().lower()}.')
+
+    def aprobar(self, usuario):
+        self._exigir(self.PENDIENTE)
+        self.estado, self.resuelto_por, self.fecha_resolucion = self.APROBADO, usuario, timezone.now()
+        self.save()
+
+    def rechazar(self, usuario, motivo):
+        self._exigir(self.PENDIENTE)
+        motivo = motivo.strip()
+        if not motivo:
+            raise ValidationError('Escribe el motivo del rechazo: el profesor lo verá.')
+        self.estado, self.resuelto_por, self.fecha_resolucion = self.RECHAZADO, usuario, timezone.now()
+        self.motivo_rechazo = motivo
+        self.save()
+
+    def marcar_pagado(self, usuario, numero_operacion):
+        self._exigir(self.APROBADO)
+        cuenta = CuentaBancaria.objects.filter(profesor_id=self.profesor_id).first()
+        if cuenta is not None and cuenta.bloqueada:
+            desde = timezone.localtime(cuenta.pagable_desde).strftime('%d/%m/%Y %H:%M')
+            raise ValidationError(f'La cuenta del profesor cambió hace menos de 48 h: se puede pagar desde el {desde}.')
+        numero = numero_operacion.strip()
+        if not numero:
+            raise ValidationError('Escribe el número de operación de la transferencia.')
+        self.estado, self.pagado_por, self.fecha_pago = self.PAGADO, usuario, timezone.now()
+        self.numero_operacion = numero[:40]
+        self.save()
 
 
-
-class DesgloseOperacion(models.Model):
-    """Registro contable y de auditoría financiera de operaciones comerciales (S4-09).
-
-    Aplica la regla de comisión LBWUS del 15% IVA incluido sobre el precio final.
-    Verifica importes de referencia:
-    - CLP 15.000 -> Comisión bruta CLP 2.250 | Tutor CLP 12.750
-    - CLP 59.000 -> Comisión bruta CLP 8.850 | Tutor CLP 50.150
-    - CLP 116.000 -> Comisión bruta CLP 17.400 | Tutor CLP 98.600
-    """
-    TIPO_COMPRA_PLAN = 'compra_plan'
-    TIPO_CLASE_INDIVIDUAL = 'clase_individual'
-    TIPO_CONSUMO_CLASE = 'consumo_clase'
-    TIPO_REEMBOLSO = 'reembolso'
-
-    TIPOS_OPERACION = [
-        (TIPO_COMPRA_PLAN, 'Compra de Plan'),
-        (TIPO_CLASE_INDIVIDUAL, 'Pago de Clase Individual'),
-        (TIPO_CONSUMO_CLASE, 'Devengo por Clase Ejecutada'),
-        (TIPO_REEMBOLSO, 'Reembolso / Anulación'),
-    ]
-
-    ESTADO_PENDIENTE = 'pendiente'      # Fondos en custodia / no liberados (clase no dictada)
-    ESTADO_DISPONIBLE = 'disponible'    # Fondos liberados para retiro por el docente
-    ESTADO_LIQUIDADO = 'liquidado'      # Fondos transferidos/retirados por el docente
-    ESTADO_REEMBOLSADO = 'reembolsado'  # Fondos reintegrados al alumno
-
-    ESTADOS_LIQUIDACION = [
-        (ESTADO_PENDIENTE, 'Pendiente / En Custodia'),
-        (ESTADO_DISPONIBLE, 'Disponible para Retiro'),
-        (ESTADO_LIQUIDADO, 'Liquidado / Pagado'),
-        (ESTADO_REEMBOLSADO, 'Reembolsado'),
-    ]
-
-    id_desglose = models.AutoField(primary_key=True)
-    pago = models.ForeignKey(
-        Pago,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='desgloses_financieros',
-        verbose_name='Pago de origen'
-    )
-    alumno = models.ForeignKey(
-        Alumno,
-        on_delete=models.CASCADE,
-        related_name='desgloses_operaciones',
-        verbose_name='Alumno comprador'
-    )
-    profesor = models.ForeignKey(
-        Profesor,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='liquidaciones_operaciones',
-        verbose_name='Profesor asignado'
-    )
-    plan_alumno = models.ForeignKey(
-        PlanAlumno,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='desgloses_financieros',
-        verbose_name='Plan de origen'
-    )
-    inscripcion = models.ForeignKey(
-        Inscripcion,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='desgloses_financieros',
-        verbose_name='Clase o Sesión'
-    )
-
-    tipo_operacion = models.CharField(max_length=25, choices=TIPOS_OPERACION, default=TIPO_COMPRA_PLAN, db_index=True)
-    estado = models.CharField(max_length=20, choices=ESTADOS_LIQUIDACION, default=ESTADO_PENDIENTE, db_index=True)
-
-    monto_bruto = models.PositiveIntegerField(help_text="Precio final total de la operación (CLP)")
-    comision_lbwus = models.PositiveIntegerField(help_text="Comisión bruta de la plataforma LBWUS (15% IVA incluido)")
-    iva_comision = models.PositiveIntegerField(default=0, help_text="Componente de IVA débito fiscal (19%) sobre la comisión")
-    neto_comision = models.PositiveIntegerField(default=0, help_text="Comisión neta de LBWUS (sin IVA)")
-    monto_tutor = models.PositiveIntegerField(help_text="Importe bruto que le corresponde al tutor (85%)")
-
-    fecha_operacion = models.DateTimeField(auto_now_add=True)
-    fecha_liberacion = models.DateTimeField(null=True, blank=True)
-    notas_auditoria = models.CharField(max_length=255, blank=True, default='')
-
-    class Meta:
-        verbose_name = 'Desglose de Operación'
-        verbose_name_plural = 'Desgloses de Operaciones'
-        ordering = ['-fecha_operacion']
-
-    def __str__(self):
-        return f"Desglose #{self.id_desglose} - {self.get_tipo_operacion_display()} (${self.monto_bruto} CLP)"

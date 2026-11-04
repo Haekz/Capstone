@@ -1,0 +1,9 @@
+Hola,
+
+{% if para_estudiante %}Uno de tus apoderados dejó de estar vinculado a tu cuenta de LBWUS.{% else %}Uno de los apoderados de {{ estudiante }} dejó de estar vinculado en LBWUS. Tu propio vínculo no cambia.{% endif %}
+{% if canceladas %}
+Se cancelaron {{ canceladas }} clase{{ canceladas|pluralize }} futura{{ canceladas|pluralize }} que esa persona había pagado; vuelven al paquete.
+{% endif %}
+Si tienes dudas, escríbenos desde la página de contacto de LBWUS.
+
+Equipo LBWUS

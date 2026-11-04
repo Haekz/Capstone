@@ -14,11 +14,12 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from alumnos.models import Alumno, Genero, Tutor
+from alumnos.models import Alumno, Genero
 from apoderados.forms import VERSION_DECLARACION_ADOLESCENTE, VERSION_DECLARACION_VINCULO
 from apoderados.models import Apoderado, Invitacion, SolicitudAdolescente, Vinculo
 from apoderados.tokens import firmar_invitacion
-from tests.test_apoderados import CLAVE, RUT, crear_apoderado, datos_registro, entrar, imagen
+from soporte.models import Ticket
+from tests.test_apoderados import CLAVE, RUT, crear_agente, crear_apoderado, datos_registro, entrar, entrar_soporte, imagen
 from tests.test_progreso_alumno import crear_alumno
 
 User = get_user_model()
@@ -96,11 +97,12 @@ class FlujoCompletoTests(TestCase):
         self.assertEqual(invitacion.vinculo, vinculo)
         self.assertEqual(self.client.get(link).status_code, 400)
 
-        # 5. El admin solo lo ve cuando la identidad de la madre esta verificada.
-        admin = User.objects.create_user('10101010-1', password=CLAVE, rol='admin', first_name='Admin')
-        entrar(self.client, admin, admin_id=Tutor.objects.create(user=admin).id_tutor)
+        # 5. Soporte solo lo ve cuando la identidad de la madre esta verificada
+        #    (al verificarla, Apoderado.aplicar_revision abre el ticket del vinculo).
+        entrar_soporte(self.client, crear_agente('10101010-1', Ticket.APODERADOS))
         self.assertContains(self.client.get(reverse('apoderados_revision')), 'Vínculos por verificar (0)')
         Apoderado.objects.update(estado=Apoderado.VERIFICADO)
+        Vinculo.objects.get().abrir_ticket_si_revisable()
         respuesta = self.client.get(reverse('apoderados_revision'))
         self.assertContains(respuesta, 'Vínculos por verificar (1)')
         self.assertContains(respuesta, f'El estudiante invitó a {CORREO_MAMA}')

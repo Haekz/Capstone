@@ -1,0 +1,7 @@
+Hola {{ nombre }},
+
+Tu solicitud #{{ ticket.pk }} ({{ ticket.get_categoria_display }}) está tardando más de lo que te prometimos. Disculpa la demora.
+
+Seguimos trabajando en ella y te avisaremos apenas tengamos una respuesta. Puedes ver su estado en tu cuenta de LBWUS.
+
+Equipo LBWUS

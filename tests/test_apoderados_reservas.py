@@ -117,7 +117,7 @@ class ReservasDelApoderadoTests(TestCase):
         self.assertEqual(ajena.estado, Inscripcion.ESTADO_CONFIRMADA)
 
     def test_si_falla_el_correo_la_reserva_queda(self):
-        with mock.patch('apoderados.correo.send_mail', side_effect=OSError('sin servidor')):
+        with mock.patch('alumnos.correo.send_mail', side_effect=OSError('sin servidor')):
             self.reservar()
         self.assertEqual(self.reserva().estado, Inscripcion.ESTADO_CONFIRMADA)
 
