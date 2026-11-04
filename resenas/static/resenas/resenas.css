@@ -5,6 +5,7 @@
 }
 
 .resena-resumen .bi-star-fill,
+.resena-lista .resena-estrellas, /* gana a '.perfil-prof__lista span' (0,1,1) del perfil, que las dejaba grises */
 .resena-estrellas {
     color: #d97706; /* contraste >= 3:1 en fondo claro y oscuro */
 }
