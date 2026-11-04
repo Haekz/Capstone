@@ -52,6 +52,12 @@ class CompraDelApoderadoTests(TestCase):
         self.assertContains(respuesta, reverse('apoderado_comprar_paquete', args=[self.vinculo.pk]))
         self.assertContains(respuesta, f'Contratando para {self.vinculo.alumno.user.first_name}')
 
+    def test_el_apoderado_conserva_el_selector_de_profesor(self, tx):
+        """Es su unico camino para elegir profesor: no tiene buscador propio."""
+        respuesta = self.client.get(reverse('planes'), {'estudiante': self.vinculo.pk})
+        self.assertContains(respuesta, 'id="pl-profesor"')
+        self.assertContains(respuesta, 'Elige un profesor para comprar', count=3)
+
     def test_el_paquete_queda_a_nombre_del_estudiante_y_se_activa_con_webpay(self, tx):
         self.assertEqual(self.comprar(tx).status_code, 200)
         self.assertEqual(tx.return_value.create.call_args[0][2], PRECIO_PROGRESO)

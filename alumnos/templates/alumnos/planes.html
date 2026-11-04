@@ -24,8 +24,10 @@
 
 <div class="planes-container">
 
+    {# Solo el apoderado elige profesor aqui: es su unico camino. El alumno busca profesores en su portal. #}
+    {% if estudiante %}
     <form class="pl-selector" method="get" action="{% url 'planes' %}">
-        {% if estudiante %}<input type="hidden" name="estudiante" value="{{ estudiante.pk }}">{% endif %}
+        <input type="hidden" name="estudiante" value="{{ estudiante.pk }}">
         <label for="pl-profesor">Profesor</label>
         <div class="pl-selector-fila">
             <select id="pl-profesor" name="profesor">
@@ -40,6 +42,7 @@
         <p class="pl-selector-nota">Todavía no hay profesores habilitados para vender clases.</p>
         {% endif %}
     </form>
+    {% endif %}
 
     <div class="planes-header">
         {% if estudiante %}<p role="status"><strong>Contratando para {{ estudiante.alumno.user.first_name }}.</strong> El paquete quedará a su nombre y lo pagas tú con Webpay.</p>{% endif %}
@@ -47,8 +50,7 @@
         <h2>Precios con {{ profesor.nombre }}</h2>
         <p>Tarifa de {{ tarifa|clp }} por clase.{% if es_alumno %} <a href="{% url 'perfil_profesor' profesor.id_profesor %}">Ver perfil del profesor</a>{% endif %}</p>
         {% else %}
-        <h2>Precios de referencia</h2>
-        <p>Para una tarifa de {{ tarifa|clp }} por clase. Cada profesor define su tarifa: elígelo arriba para ver sus precios y comprar.</p>
+        <p>Precios de referencia, con una tarifa de {{ tarifa|clp }} por clase. Cada profesor define la suya.</p>
         {% endif %}
     </div>
 
@@ -81,8 +83,14 @@
                 </form>
                 {% elif profesor %}
                 <a href="{% url 'login' %}" class="plan-btn-action">Inicia sesión como alumno para comprar</a>
-                {% else %}
+                {% elif estudiante %}
                 <a href="#pl-profesor" class="plan-btn-action">Elige un profesor para comprar</a>
+                {% elif es_menor %}
+                <p role="status">Tu apoderado contrata por ti desde su cuenta.</p>
+                {% elif es_alumno %}
+                <a href="{% url 'alumno_pag1' %}#dashboard-search-input" class="plan-btn-action">Buscar un profesor</a>
+                {% else %}
+                <a href="{% url 'login' %}?next={% url 'alumno_pag1' %}" class="plan-btn-action">Inicia sesión para buscar un profesor</a>
                 {% endif %}
 
                 <div class="plan-divider"></div>
