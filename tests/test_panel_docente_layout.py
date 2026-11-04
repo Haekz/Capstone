@@ -17,7 +17,37 @@ from alumnos.models import Especialidad, Genero, Profesor
 User = get_user_model()
 
 CLAVE = 'clave12345'
-CSS_PORTAL = Path(__file__).resolve().parent.parent / 'user_profesor/static/user_profesor/portal_docente.css'
+RAIZ = Path(__file__).resolve().parent.parent
+CSS_PORTAL = RAIZ / 'user_profesor/static/user_profesor/portal_docente.css'
+CSS_ADMIN = RAIZ / 'admin_portal/static/admin_portal/css/admin_panel.css'
+
+# Todo lo que dibuja el panel del docente: la base, el panel, sus parciales y sus hojas.
+HOJAS_PANEL = [
+    'user_profesor/static/panel.css', 'user_profesor/static/clases_solicitadas.css',
+    'user_profesor/static/videos.css', 'user_profesor/static/clases_en_vivo.css',
+]
+PLANTILLAS_PANEL = [
+    'user_profesor/templates/user_profesor/base_docente.html',
+    'user_profesor/templates/user_profesor/panel_profesor.html',
+    'user_profesor/templates/user_profesor/clases_solicitadas.html',
+    'user_profesor/templates/user_profesor/clases_en_vivo.html',
+    'user_profesor/templates/user_profesor/videos.html',
+    'user_profesor/templates/user_profesor/titulo_aviso.html',
+    'agenda/templates/agenda/panel_agenda.html',
+    'mensajes/templates/mensajes/buzon_profesor.html',
+]
+
+
+def _leer(ruta):
+    return Path(ruta).read_text(encoding='utf-8')
+
+
+def _definidas(texto):
+    return set(re.findall(r'(--[\w-]+)\s*:', texto))
+
+
+def _usadas(texto):
+    return set(re.findall(r'var\((--[\w-]+)', texto))
 
 
 class PanelDocenteLayoutTests(TestCase):
@@ -64,5 +94,21 @@ class PanelDocenteLayoutTests(TestCase):
 
     def test_los_enlaces_sueltos_usan_un_color_que_se_lee_en_oscuro(self):
         """Sin regla propia salen azul del navegador: sobre el fondo oscuro del portal apenas se leen."""
-        css = CSS_PORTAL.read_text(encoding='utf-8')
+        css = _leer(CSS_PORTAL)
         self.assertRegex(css, r'\.page-content a:not\(\[class\]\)\s*\{[^}]*color:\s*var\(--primary-light\)')
+
+    def test_toda_variable_css_del_panel_existe_en_el_portal(self):
+        """Una variable que no existe no da error: la propiedad queda sin valor (fondo transparente, color heredado).
+
+        Pasaba con las del sitio publico (--text, --white...) y con --bg-panel / --border-color / --bg-dark, que solo
+        existen dentro de sala_virtual.html. Cada var(--x) debe estar definida en el portal, en el puente
+        o en las propias hojas del panel.
+        """
+        disponibles = _definidas(_leer(CSS_ADMIN)) | _definidas(_leer(CSS_PORTAL))
+        for hoja in HOJAS_PANEL:
+            disponibles |= _definidas(_leer(RAIZ / hoja))
+
+        for archivo in HOJAS_PANEL + PLANTILLAS_PANEL:
+            with self.subTest(archivo=archivo):
+                texto = _leer(RAIZ / archivo)
+                self.assertEqual(sorted(_usadas(texto) - disponibles - _definidas(texto)), [])

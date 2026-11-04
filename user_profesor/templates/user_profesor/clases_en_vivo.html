@@ -5,17 +5,17 @@
         <p class="prof-section-subtitle">Selecciona una de tus clases para iniciar la sala virtual (1-a-1) con tus alumnos.</p>
     </div>
 
-    <div style="background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; margin-top: 20px;">
+    <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-top: 20px;">
         <h3 style="color: var(--text); margin-bottom: 20px;">Tus Clases Activas</h3>
         
         {% if clases %}
             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
             {% for c in clases %}
-                <div style="background: var(--bg-dark); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between;">
+                <div style="background: var(--bg-main); border: 1px solid var(--border); border-radius: 8px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between;">
                     <div>
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
-                            <h4 style="margin: 0; color: var(--primary); font-size: 1.1rem;">{{ c.asignatura.nombre }}</h4>
-                            <span style="background: rgba(168, 85, 247, 0.1); color: var(--primary); padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;">{{ c.modalidad }}</span>
+                            <h4 style="margin: 0; color: var(--primary-light); font-size: 1.1rem;">{{ c.asignatura.nombre }}</h4>
+                            <span style="background: rgba(168, 85, 247, 0.1); color: var(--primary-light); padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;">{{ c.modalidad }}</span>
                         </div>
                         <p style="margin: 0 0 15px 0; color: var(--text-light); font-size: 0.9rem;"><i class="bi bi-clock"></i> {{ c.horario|time:"H:i" }} hrs</p>
                     </div>
