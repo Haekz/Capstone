@@ -1,5 +1,5 @@
 {% extends 'alumnos/base.html' %}
-{% load static %}
+{% load static ayuda_tags %}
 
 {% block title %}Calificar a {{ profesor.nombre }} | LBWUS{% endblock %}
 
@@ -27,6 +27,7 @@
     <section class="perfil-prof__bloque" aria-labelledby="resena-titulo">
         <h2 id="resena-titulo">{% if resena %}Tu reseña{% else %}Nueva reseña{% endif %}</h2>
         {% include 'resenas/_mensajes.html' %}
+        {% if nota_baja %}{% lineas_de_ayuda user %}{% endif %}
         {% if inscripcion.paquete_id %}
         <p class="perfil-prof__vacio">Esta reseña cubre todo tu paquete. Podrás actualizarla cada vez que completes una nueva clase del paquete.</p>
         {% endif %}

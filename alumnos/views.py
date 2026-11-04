@@ -30,6 +30,7 @@ from django.core.exceptions import ValidationError
 from . import paquetes, progreso
 from mensajes import panel as mensajes_panel
 from observaciones import panel as observaciones_panel
+from resenas.consultas import pendiente_de_calificar
 from django.db import transaction
 from apoderados.permisos import clase_pagada_por_apoderado, vinculo_contratable
 from lbwus.puerta import destino_seguro
@@ -367,6 +368,7 @@ def alumno_pag1(request):
         'pagos': pagos,
         'es_menor': es_menor(alumno.user),
         'tiene_solicitud': hasattr(alumno, 'solicitud_apoderado'),  # adolescente de 14 a 17 (apoderados)
+        'por_calificar': pendiente_de_calificar(alumno),  # cuadro de estrellas al entrar
         # Buzon de Dudas (mensajes/panel.py); el error de un envio rechazado se muestra una sola vez.
         **mensajes_panel.contexto_alumno(alumno, request.GET.get('c'), request.session.pop('mensajes_error', None)),
     }

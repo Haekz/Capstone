@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
+from alumnos.ayuda import lineas_para
 from alumnos.correo import enviar as _enviar
 from alumnos.utils import edad, es_menor
 from soporte.correo import avisar_documentos_por_vencer
@@ -127,7 +128,7 @@ def avisar_calificacion_baja(inscripcion):
     """D21: el estudiante menor califico mal una clase. Sin el comentario: que lo
     conversen, y si hubo un problema el apoderado abre un ticket."""
     estudiante = inscripcion.alumno.user.first_name
-    contexto = {'estudiante': estudiante, 'clase': inscripcion.clase}
+    contexto = {'estudiante': estudiante, 'clase': inscripcion.clase, 'lineas': lineas_para(inscripcion.alumno.user)}
     return all([_enviar(f'{estudiante} calificó mal una clase', 'apoderados/correo_calificacion_baja.txt',
                         contexto, correo)
                 for correo in _correos_de_apoderados(inscripcion.alumno)])

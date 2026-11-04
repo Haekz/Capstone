@@ -1,4 +1,4 @@
-{% load static mensajes_tags %}
+{% load static mensajes_tags ayuda_tags %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -183,7 +183,7 @@
                                     Puedes revisar el catálogo y entrar a las clases que reserve tu apoderado. Las reservas, cancelaciones y compras las hace tu apoderado desde su cuenta.
                                     Si algo en una clase te hizo sentir incómodo o tienes un problema, cuéntaselo a tu apoderado: él puede pedir ayuda a nuestro equipo de soporte.
                                     {% if tiene_solicitud %}<a href="{% url 'adolescente_solicitud' %}">Ver mi solicitud de apoderado</a>{% endif %}</p>
-                                {% include 'alumnos/includes/linea_ayuda_menor.html' %}
+                                {% lineas_de_ayuda user %}
                                 {% aviso_mensajes_menor %}
                                 {% endif %}
                             </div>
@@ -1643,5 +1643,33 @@ const safeIdSesion = Number(s.id_sesion) || 0;
             }, { passive: true });
         })();
     </script>
+{% if por_calificar %}
+<dialog id="dialogo-calificar" class="dialogo-calificar" aria-labelledby="dialogo-calificar-titulo">
+    <form method="post" action="{% url 'resena_calificar' por_calificar.id_inscripcion %}">
+        {% csrf_token %}
+        <h2 id="dialogo-calificar-titulo">¿Cómo estuvo tu clase?</h2>
+        <p>{{ por_calificar.clase.asignatura.nombre }} con {{ por_calificar.clase.profesor.user.first_name }}</p>
+        <fieldset>
+            <legend>Tu calificación</legend>
+            {% for n in "12345"|make_list %}
+            <label><input type="radio" name="puntaje" value="{{ n }}" required> {{ n }} <i class="bi bi-star-fill" aria-hidden="true"></i></label>
+            {% endfor %}
+        </fieldset>
+        <div class="dialogo-calificar__acciones">
+            <button type="submit" class="btn-principal">Enviar</button>
+            <button type="submit" formmethod="dialog" formnovalidate class="dialogo-calificar__luego">Ahora no</button>
+        </div>
+    </form>
+</dialog>
+<script>
+    // Se abre solo al entrar; "Ahora no" (o Esc) lo deja cerrado hasta la proxima sesion del navegador.
+    (function () {
+        const dialogo = document.getElementById('dialogo-calificar');
+        if (!dialogo || sessionStorage.getItem('calificar-ahora-no')) return;
+        dialogo.addEventListener('close', () => sessionStorage.setItem('calificar-ahora-no', '1'));
+        dialogo.showModal();
+    })();
+</script>
+{% endif %}
 </body>
 </html>

@@ -61,6 +61,7 @@ def calificar(request, id_inscripcion):
         'profesor': inscripcion.clase.profesor,
         'resena': resena,
         'editable': editable,
+        'nota_baja': resena is not None and resena.puntaje <= Resena.PUNTAJE_BAJO,  # muestra las lineas de ayuda
         'form': form,
     })
 
