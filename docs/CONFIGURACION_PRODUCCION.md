@@ -117,7 +117,7 @@ Mientras la CSP sea Report-Only, los navegadores **ignoran `frame-ancestors`**; 
 
 ### Pasar de Report-Only a obligatoria
 
-1. **Revisar las violaciones con Report-Only activo.** En producción (o en local con `DEBUG=False`), abrir con la consola del navegador abierta (F12 → Consola), y con al menos un usuario de cada rol: inicio, login (también con Google), registro, planes, compra hasta la página de Webpay de integración, retorno de Webpay, portal del alumno, sala virtual con el directo iniciado (cámara, micrófono, compartir pantalla, pantalla completa), panel del profesor (videos), portal admin, portal del apoderado, simulador y 404. Buscar mensajes `[Report Only] Refused to …`.
+1. **Revisar las violaciones con Report-Only activo.** En producción (o en local con `DEBUG=False`), abrir con la consola del navegador abierta (F12 → Consola), y con al menos un usuario de cada rol: inicio, login (también con Google), registro, planes, compra hasta la página de Webpay de integración, retorno de Webpay, portal del alumno, sala virtual con el directo iniciado (cámara, micrófono, compartir pantalla, pantalla completa), panel del profesor (videos), portal admin, portal del apoderado y 404. Buscar mensajes `[Report Only] Refused to …`.
 2. **Corregir cada aviso**: agregar el origen a `CSP` si es legítimo o quitar el recurso si no lo es. Repetir hasta que la consola quede limpia.
 3. **Activar**: en Railway → servicio web → Variables, `CSP_OBLIGATORIA=1` y desplegar. Ahora la cabecera es `Content-Security-Policy` y el navegador bloquea lo no permitido, incluido `frame-ancestors`.
 4. **Verificar** las mismas páginas del paso 1, ahora sin mensajes `Refused to …`.

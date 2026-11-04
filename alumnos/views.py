@@ -199,15 +199,6 @@ def contactos(request):
     )
 
 
-def simulador(request):
-    context = {}
-    return render(
-        request,
-        'alumnos/simulador.html',
-        context
-    )
-
-
 def opcion_user(request):
     context = {}
     return render(

@@ -48,7 +48,7 @@ filosofía de trabajo.
 3. ESTRUCTURA DE APLICACIONES (APPS)
 --------------------------------------------------------------------------
 * alumnos:
-  Páginas públicas (Home, Nosotros, Planes, Servicios, Contactos, Simulador, Selección de tipo de usuario) e inicio de sesión y registro de alumnos.
+  Páginas públicas (Home, Nosotros, Planes, Servicios, Contactos, Selección de tipo de usuario) e inicio de sesión y registro de alumnos.
 * admin_portal:
   Panel de administración central (`dashboard_admin`), CRUD de alumnos (`crud`, `alumnos_Add`, `alumnos_del`, `alumnos_findEdit`, `alumnos_Update`), gestión de contenidos de páginas administrativas y resolución de reportes (`resolver_reporte`). Protegido por sesión de administrador (`admin_id`).
 * user_profesor:

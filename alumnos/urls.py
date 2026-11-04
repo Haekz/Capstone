@@ -8,7 +8,6 @@ from .views import (
     nosotros,
     planes,
     servicios,
-    simulador,
     opcion_user,
     regis_alum,
     alumnos_reg,
@@ -37,7 +36,6 @@ urlpatterns = [
     path('nosotros', nosotros, name='nosotros'),
     path('planes', planes, name='planes'),
     path('servicios', servicios, name='servicios'),
-    path('simulador', simulador, name='simulador'),
     path('select', opcion_user, name='opcion_user'),
 
     # Alumno

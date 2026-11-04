@@ -1,7 +1,7 @@
 'El layout comun debe salir una sola vez y en todas las paginas publicas.\n\nNavbar y footer viven en alumnos/templates/alumnos/includes/. Estos tests\ndetectan tanto una copia pegada a mano como un include roto.\n'
 from django.test import TestCase
 from django.urls import reverse
-PAGINAS_PUBLICAS = ('home', 'nosotros', 'servicios', 'planes', 'contactos', 'simulador', 'opcion_user')
+PAGINAS_PUBLICAS = ('home', 'nosotros', 'servicios', 'planes', 'contactos', 'opcion_user')
 
 class LayoutCompartidoTests(TestCase):
     """Marcas que solo puede poner base.html a traves de sus includes."""
@@ -37,26 +37,9 @@ class LayoutCompartidoTests(TestCase):
                 self.assertNotIn('id="cart-button"', html)
                 self.assertNotIn('agregarAlCarrito', html)
 
-class SimuladorHeredaTests(TestCase):
-    """El simulador conserva sus funciones propias al heredar del base."""
 
-    def setUp(self):
-        self.html = self.client.get(reverse('simulador')).content.decode()
+class SimuladorRetiradoTests(TestCase):
+    """Tenia profesores inventados y un conversor sin uso; la busqueda real esta en el portal del alumno."""
 
-    def test_conserva_sus_dos_herramientas(self):
-        self.assertIn('id="comunaInput"', self.html)
-        self.assertIn('id="conversion-result"', self.html)
-
-    def test_sigue_cargando_bootstrap(self):
-        """Sus form-select y btn dependen de Bootstrap."""
-        self.assertIn('bootstrap@5.3.3', self.html)
-
-    def test_no_arrastra_el_css_que_pisaba_el_layout(self):
-        """estilo.css define reglas globales (`*` y `body`) que romperian
-        la tipografia y el modo oscuro del navbar y el footer compartidos.
-        """
-        self.assertNotRegex(self.html, 'css/estilo(?:\\.[0-9a-f]+)?\\.css')
-        self.assertRegex(self.html, 'css/simulador(?:\\.[0-9a-f]+)?\\.css')
-
-    def test_su_css_queda_acotado_a_la_pagina(self):
-        self.assertIn('class="simulador-page"', self.html)
+    def test_la_pagina_ya_no_existe(self):
+        self.assertEqual(self.client.get('/alumnos/simulador').status_code, 404)
