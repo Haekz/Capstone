@@ -23,7 +23,7 @@ CSP = {
                  'https://fonts.gstatic.com'),
     'img-src': ("'self'", 'data:', 'https://commondatastorage.googleapis.com'),
     'media-src': ("'self'", 'https://commondatastorage.googleapis.com'),
-    'connect-src': ("'self'", 'https://mindicador.cl', JITSI, 'wss://meet.jit.si'),
+    'connect-src': ("'self'", JITSI, 'wss://meet.jit.si'),
     'frame-src': (JITSI, 'https://www.google.com'),  # sala virtual y mapa de home.html
     # Webpay recibe un POST (redirect_webpay.html); Google responde con un redirect tras el POST de allauth.
     'form-action': ("'self'", *TRANSBANK, 'https://accounts.google.com'),

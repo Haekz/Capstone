@@ -91,9 +91,10 @@ class ProgresoAlumnoTests(TestCase):
         self.assertContains(r, f'id="progress-stat-hours">{floatformat(2.5, "-1")} hrs<')
         self.assertContains(r, 'id="progress-stat-classes">3<')
         self.assertContains(r, 'id="progress-stat-subjects">2<')
-        self.assertContains(r, 'id="progress-stat-rating">Sin datos<')
+        self.assertNotContains(r, 'progress-stat-rating')  # no hay fuente de datos: se retiro el cuadro, no se inventa
+        self.assertNotContains(r, 'Promedio Feedback')
         for fijo in ('36.5 hrs', 'id="progress-stat-classes">24<',
-                     'id="progress-stat-subjects">4<', 'id="progress-stat-rating">4.9<'):
+                     'id="progress-stat-subjects">4<'):
             self.assertNotContains(r, fijo)
 
     def test_mi_progreso_ya_no_tiene_secciones_de_ejemplo(self):

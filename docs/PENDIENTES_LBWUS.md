@@ -171,7 +171,7 @@ H. **Revision juridica** del aviso de documentos y de las declaraciones v2 (apod
   consiga el enlace puede entrar; Jitsi con JWT (servidor propio o 8x8) seria el siguiente paso. Ademas, todos los
   alumnos de una misma clase comparten esa sala. (b) Tildes de `sala_virtual.html` recuperadas, con prueba.
   (c) El grafico "Horas de estudio semanales" ahora usa las clases completadas de las ultimas 5 semanas
-  (`alumnos/progreso.horas_por_semana`). (d) `myReports` se borro. (e) "Juan Perez" en `simulador.html` es una demo
+  (`alumnos/progreso.horas_por_semana`). (d) `myReports` se borro. (e) "Juan Perez" en el simulador (retirado el 03-nov, con su conversor de moneda) era una demo
   publica, otra cosa.
 - **Al desplegar:** correr `python manage.py migrate` (nueva: `observaciones 0001`) y **programar el cron diario
   `python manage.py borrar_observaciones_vencidas`** junto al de documentos.
