@@ -27,14 +27,41 @@ from tests.test_menores_prerrequisitos import User
 from alumnos.models import Tutor
 
 SETTINGS = Path(settings.BASE_DIR) / 'lbwus' / 'settings.py'
-VARIABLES_DE_ENTORNO = ('SECRET_KEY', 'DEBUG', 'DATABASE_URL', 'EXIGIR_POSTGRES')
+VARIABLES_DE_ENTORNO = ('SECRET_KEY', 'DEBUG', 'DATABASE_URL')
+URL_POSTGRES = 'postgresql://usuario:clave@localhost:5432/lbwus'
 
 
 def cargar_settings(**entorno):
-    """Ejecuta lbwus/settings.py en limpio con esas variables (sin tocar los settings activos)."""
+    """Ejecuta lbwus/settings.py en limpio con esas variables (sin tocar los settings activos).
+
+    Trae una DATABASE_URL de PostgreSQL por defecto; ``DATABASE_URL=None`` la quita.
+    """
     limpio = {k: v for k, v in os.environ.items() if k not in VARIABLES_DE_ENTORNO}
-    with mock.patch.dict(os.environ, {**limpio, **entorno}, clear=True):
+    pedido = {'DATABASE_URL': URL_POSTGRES, **entorno}
+    with mock.patch.dict(os.environ, {**limpio, **{k: v for k, v in pedido.items() if v is not None}}, clear=True):
         return runpy.run_path(str(SETTINGS))
+
+
+class BaseDeDatosTests(SimpleTestCase):
+    """La base es siempre PostgreSQL: ya no hay SQLite de reserva."""
+
+    def test_sin_database_url_no_arranca(self):
+        with self.assertRaisesMessage(ImproperlyConfigured, 'DATABASE_URL'):
+            cargar_settings(DATABASE_URL=None)
+
+    def test_una_url_que_no_es_postgresql_no_arranca(self):
+        for url in ('sqlite:///db.sqlite3', 'mysql://u:c@localhost/lbwus', ''):
+            with self.subTest(url=url):
+                with self.assertRaisesMessage(ImproperlyConfigured, 'PostgreSQL'):
+                    cargar_settings(DATABASE_URL=url)
+
+    def test_con_url_de_postgresql_la_usa(self):
+        for url in (URL_POSTGRES, URL_POSTGRES.replace('postgresql://', 'postgres://')):
+            with self.subTest(url=url):
+                base = cargar_settings(DATABASE_URL=url)['DATABASES']['default']
+                self.assertEqual(base['ENGINE'], 'django.db.backends.postgresql')
+                self.assertEqual((base['HOST'], base['PORT'], base['NAME']), ('localhost', 5432, 'lbwus'))
+                self.assertEqual(base['CONN_MAX_AGE'], 600)
 
 
 class SecretKeyTests(SimpleTestCase):

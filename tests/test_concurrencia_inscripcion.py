@@ -39,11 +39,6 @@ from alumnos.exceptions import (
 
 User = get_user_model()
 
-# Produccion usa PostgreSQL: ahi select_for_update bloquea filas de verdad y el
-# resultado de una carrera debe ser exacto. SQLite bloquea la base entera y algunos
-# hilos fallan con 'database is locked', asi que en SQLite solo se exige no sobrepasar.
-ES_POSTGRES = connection.vendor == 'postgresql'
-
 
 def en_paralelo(tarea, argumentos):
     """Corre tarea(argumento) en un hilo por argumento, todos largando a la vez.
@@ -167,7 +162,7 @@ class TestBlindajeTransaccionalInscripcion(TestCase):
     def test_03_forzado_unique_constraint_en_base_de_datos(self):
         """
         Si se intenta eludir el servicio e insertar directamente vía ORM/SQL,
-        el UniqueConstraint en PostgreSQL/SQLite dispara IntegrityError.
+        el UniqueConstraint en PostgreSQL dispara IntegrityError.
         """
         Inscripcion.objects.create(
             alumno=self.alumnos[0],
@@ -310,10 +305,10 @@ class TestConcurrenciaMultihiloInscripcion(TransactionTestCase):
         )
         self.assertEqual(len(exitos), total_en_bd)
         self.assertEqual(len(exitos) + len(rechazos) + len(otros), 6)
-        if ES_POSTGRES:
-            self.assertEqual(otros, [])
-            self.assertEqual(len(exitos), 2)
-            self.assertEqual([type(exc) for exc in rechazos], [CupoAgotadoError] * 4)
+        # PostgreSQL: select_for_update bloquea filas de verdad y el resultado de la carrera es exacto.
+        self.assertEqual(otros, [])
+        self.assertEqual(len(exitos), 2)
+        self.assertEqual([type(exc) for exc in rechazos], [CupoAgotadoError] * 4)
 
     def test_ultima_clase_del_paquete_no_se_gasta_dos_veces(self):
         """Dos reservas simultaneas del mismo alumno, en sesiones distintas, por su ultima clase.
@@ -346,10 +341,9 @@ class TestConcurrenciaMultihiloInscripcion(TransactionTestCase):
 
         self.assertLessEqual(len(exitos), 1, 'Se gasto dos veces la misma clase del paquete')
         self.assertEqual(Inscripcion.objects.filter(alumno=alumno).count(), len(exitos))
-        if ES_POSTGRES:
-            self.assertEqual(otros, [])
-            self.assertEqual(len(exitos), 1)
-            self.assertEqual([type(exc) for exc in rechazos], [SinClasesDisponiblesError])
+        self.assertEqual(otros, [])
+        self.assertEqual(len(exitos), 1)
+        self.assertEqual([type(exc) for exc in rechazos], [SinClasesDisponiblesError])
 
 
 class TestFiltrosSesionClase(TestCase):

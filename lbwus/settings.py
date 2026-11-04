@@ -163,26 +163,20 @@ WSGI_APPLICATION = 'lbwus.wsgi.application'
 
 
 # Database
+# Siempre PostgreSQL, la misma de Railway: reservas, bloqueos y concurrencia solo se validan de verdad ahi.
+# Sin DATABASE_URL no arranca (antes caia en un SQLite local sin avisar). Ver README.md.
 
 import dj_database_url
 
-if os.environ.get('DATABASE_URL'):
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=os.environ.get('DATABASE_URL'),
-            conn_max_age=600
-        )
-    }
-elif os.environ.get('EXIGIR_POSTGRES') == '1':
-    # Pruebas contra la base productiva: sin DATABASE_URL se detiene en vez de caer en SQLite.
-    raise ImproperlyConfigured('EXIGIR_POSTGRES=1 requiere DATABASE_URL apuntando a PostgreSQL.')
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+DATABASE_URL = os.environ.get('DATABASE_URL', '')
+if not DATABASE_URL.startswith(('postgres://', 'postgresql://')):
+    raise ImproperlyConfigured(
+        'Falta DATABASE_URL con una URL de PostgreSQL (postgresql://usuario:clave@host:5432/base). '
+        'SQLite ya no se usa en este proyecto.'
+    )
+DATABASES = {
+    'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600)
+}
 
 # MongoDB Atlas (app comunidad). Sin MONGODB_URI, MongoDB queda desactivado
 # y el sitio funciona igual. Nunca escribir la URI en el codigo.

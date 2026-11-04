@@ -166,7 +166,7 @@ class SesionClaseValidacionesModelTests(TestCase):
 class SesionClaseCheckConstraintsDbTests(TestCase):
     """
     Pruebas que omiten la validación clean() para asegurar que la base de datos
-    (PostgreSQL/SQLite) aplica sus CheckConstraints nativos.
+    (PostgreSQL) aplica sus CheckConstraints nativos.
     """
 
     def setUp(self):

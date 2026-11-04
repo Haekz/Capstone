@@ -13,7 +13,7 @@ filosofía de trabajo.
 * Tipo: Plataforma web universitaria de auto-aprendizaje colaborativo para alumnos,
   profesores y tutores.
 * Framework: Django (Python).
-* Base de datos: SQLite para desarrollo local (db.sqlite3) y PostgreSQL en producción.
+* Base de datos: PostgreSQL (local y producción; se configura con DATABASE_URL).
 
 --------------------------------------------------------------------------
 2. FILOSOFÍA DE DESARROLLO (LIMITACIONES Y REGLAS DE DISEÑO)
@@ -75,7 +75,7 @@ filosofía de trabajo.
 --------------------------------------------------------------------------
 5. DESPLIEGUE Y ENTORNO
 --------------------------------------------------------------------------
-* Entorno Local: Utiliza SQLite (`db.sqlite3`) para el desarrollo local rápido.
+* Entorno Local: Usa PostgreSQL, igual que producción, indicado en `DATABASE_URL` (sin esa variable el proyecto no arranca).
 * Entorno de Producción: Desplegado en Railway (`capstone-production-eddd.up.railway.app`). Configurado para usar PostgreSQL dinámicamente mediante la variable `DATABASE_URL` y WhiteNoise para servir archivos estáticos de forma eficiente.
 ==========================================================================
 

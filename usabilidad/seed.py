@@ -1,6 +1,6 @@
 """Datos de demo para las pruebas de usabilidad (10.2).
 
-Se ejecuta contra una base SQLite aparte (usab.sqlite3) via
+Se ejecuta contra una base PostgreSQL aparte (USAB_DATABASE_URL) via
 DJANGO_SETTINGS_MODULE=usabilidad.settings_usab, asi la base real no se toca.
 Uso: python manage.py shell -c "exec(open('usabilidad/seed.py', encoding='utf-8').read())"
 (no usar 'shell < seed.py' en Windows: la consola cp1252 rompe las tildes)
