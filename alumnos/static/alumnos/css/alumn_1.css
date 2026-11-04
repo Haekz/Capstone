@@ -4403,7 +4403,7 @@ body.dark-mode .stat-icon {
 }
 
 #portal-alumno .ap-ticket {
-    border: 1px solid var(--border);
+    border: 1px solid var(--line);
     border-radius: 12px;
     padding: 15px;
     margin-bottom: 15px;
