@@ -31,3 +31,17 @@ class BaseAlumnoTests(Escenario):
         self.assertEqual(self.html.count('<aside class="sidebar-menu"'), 1)
         self.assertEqual(self.html.count('id="portal-navbar"'), 1)
         self.assertEqual(self.html.count('<main'), 1)
+
+    def test_el_portal_abre_la_vista_que_pide_el_hash(self):
+        # El menu de otras paginas del portal (Notificaciones) llega con #view-...; solo valen las vistas con boton.
+        self.assertEqual(self.html.count('window.location.hash.slice(1)'), 1)
+        self.assertIn("b.dataset.view === vista", self.html)
+
+    def test_fuera_del_portal_el_menu_lleva_al_portal_con_su_vista(self):
+        # Rama del marco para paginas sin vistas: sin ella los botones del menu no harian nada.
+        self.assertIn('const irAlPortal', self.html)
+        self.assertIn(f'window.location.href = "{reverse("alumno_pag1")}#" + vista', self.html)
+        self.assertIn('window.switchView = irAlPortal', self.html)  # la ficha del alumno la llama con onclick
+
+    def test_el_boton_dashboard_del_menu_viene_activo_en_el_portal(self):
+        self.assertIn('sidebar-view-btn active" data-view="view-dashboard"', self.html)

@@ -1437,6 +1437,14 @@ const safeIdSesion = Number(s.id_sesion) || 0;
             if (new URLSearchParams(window.location.search).has('c')) switchView('view-inbox');
         });
         {% endif %}
+        // Llegar con #view-... (el menú de otras páginas del portal, como Notificaciones) abre esa vista. Solo valen las que
+        // tienen botón en el menú: al menor no se le ofrecen el Buzón ni el Soporte, y un #hash escrito a mano no los abre.
+        document.addEventListener('DOMContentLoaded', () => {
+            const vista = window.location.hash.slice(1);
+            const hayBoton = Array.from(document.querySelectorAll('.sidebar-view-btn')).some(b => b.dataset.view === vista);
+            if (hayBoton) switchView(vista);
+            else if (vista === 'temas') document.getElementById('nav-open-interests').click();
+        });
         })();
     </script>
 {% if por_calificar %}

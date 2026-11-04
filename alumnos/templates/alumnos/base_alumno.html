@@ -55,7 +55,7 @@
             <ul class="sidebar-nav">
                 <li class="sb-label">Principal</li>
                 <li>
-                    <button class="sidebar-nav-item sidebar-view-btn active" data-view="view-dashboard">
+                    <button class="sidebar-nav-item sidebar-view-btn {% block nav_dashboard %}active{% endblock %}" data-view="view-dashboard">
                         <i class="bi bi-grid-1x2-fill"></i>
                         <span>Dashboard</span>
                     </button>
@@ -232,6 +232,16 @@
             const nav = document.getElementById('portal-navbar');
             if (nav) nav.classList.toggle('scrolled', window.scrollY > 20);
         }, { passive: true });
+
+        // ── FUERA DEL PORTAL (p. ej. Notificaciones): no existen las vistas, así que el menú lleva al portal y abre la vista (#hash) ──
+        if (!document.querySelector('.dashboard-view')) {
+            const irAlPortal = (vista) => { window.location.href = "{% url 'alumno_pag1' %}#" + vista; };
+            window.switchView = irAlPortal;  // la ficha del alumno (arriba del menú) la llama con onclick
+            document.querySelectorAll('.sidebar-view-btn').forEach(btn =>
+                btn.addEventListener('click', () => irAlPortal(btn.dataset.view)));
+            const temas = document.getElementById('nav-open-interests');
+            if (temas) temas.addEventListener('click', () => irAlPortal('temas'));
+        }
     </script>
 </body>
 </html>
