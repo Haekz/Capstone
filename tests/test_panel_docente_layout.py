@@ -6,7 +6,6 @@ si un enlace pierde su seccion (o al reves), el clic falla en silencio. Esta pru
 
 import re
 from datetime import date
-from pathlib import Path
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -14,12 +13,13 @@ from django.urls import reverse
 
 from alumnos.models import Especialidad, Genero, Profesor
 
+from .css_vars import leer, sin_definir
+
 User = get_user_model()
 
 CLAVE = 'clave12345'
-RAIZ = Path(__file__).resolve().parent.parent
-CSS_PORTAL = RAIZ / 'user_profesor/static/user_profesor/portal_docente.css'
-CSS_ADMIN = RAIZ / 'admin_portal/static/admin_portal/css/admin_panel.css'
+CSS_PORTAL = 'user_profesor/static/user_profesor/portal_docente.css'
+CSS_ADMIN = 'admin_portal/static/admin_portal/css/admin_panel.css'
 
 # Todo lo que dibuja el panel del docente: la base, el panel, sus parciales y sus hojas.
 HOJAS_PANEL = [
@@ -36,18 +36,6 @@ PLANTILLAS_PANEL = [
     'agenda/templates/agenda/panel_agenda.html',
     'mensajes/templates/mensajes/buzon_profesor.html',
 ]
-
-
-def _leer(ruta):
-    return Path(ruta).read_text(encoding='utf-8')
-
-
-def _definidas(texto):
-    return set(re.findall(r'(--[\w-]+)\s*:', texto))
-
-
-def _usadas(texto):
-    return set(re.findall(r'var\((--[\w-]+)', texto))
 
 
 class PanelDocenteLayoutTests(TestCase):
@@ -94,12 +82,12 @@ class PanelDocenteLayoutTests(TestCase):
 
     def test_los_enlaces_sueltos_usan_un_color_que_se_lee_en_oscuro(self):
         """Sin regla propia salen azul del navegador: sobre el fondo oscuro del portal apenas se leen."""
-        css = _leer(CSS_PORTAL)
+        css = leer(CSS_PORTAL)
         self.assertRegex(css, r'\.page-content a:not\(\[class\]\)\s*\{[^}]*color:\s*var\(--primary-light\)')
 
     def test_el_titulo_de_tarjeta_no_reparte_el_icono_y_el_texto_a_los_extremos(self):
         """Con space-between, 'icono + texto' mandaba el texto a la derecha. La etiqueta se empuja sola."""
-        css = _leer(RAIZ / 'user_profesor/static/panel.css')
+        css = leer('user_profesor/static/panel.css')
         titulo = re.search(r'\.prof-card-title\s*\{([^}]*)\}', css).group(1)
         self.assertNotIn('space-between', titulo)
         etiqueta = re.search(r'\.prof-card-title-badge\s*\{([^}]*)\}', css).group(1)
@@ -112,11 +100,5 @@ class PanelDocenteLayoutTests(TestCase):
         existen dentro de sala_virtual.html. Cada var(--x) debe estar definida en el portal, en el puente
         o en las propias hojas del panel.
         """
-        disponibles = _definidas(_leer(CSS_ADMIN)) | _definidas(_leer(CSS_PORTAL))
-        for hoja in HOJAS_PANEL:
-            disponibles |= _definidas(_leer(RAIZ / hoja))
-
-        for archivo in HOJAS_PANEL + PLANTILLAS_PANEL:
-            with self.subTest(archivo=archivo):
-                texto = _leer(RAIZ / archivo)
-                self.assertEqual(sorted(_usadas(texto) - disponibles - _definidas(texto)), [])
+        faltantes = sin_definir(HOJAS_PANEL + PLANTILLAS_PANEL, definidas_en=[CSS_ADMIN, CSS_PORTAL, *HOJAS_PANEL])
+        self.assertEqual(faltantes, {})
