@@ -35,3 +35,15 @@ body {
     margin: 0;
     padding: 40px;
 }
+
+/* apoderados.css solo pinta los input de sus formularios; select y textarea los cubria styles.css en el sitio publico.
+   Misma regla que .apod-form__campo input (gemela en alumn_1.css, #portal-alumno): los tres controles iguales y con tema. */
+.page-content .apod-form__campo :is(select, textarea) {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-sm);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+}

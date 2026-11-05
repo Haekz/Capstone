@@ -12,7 +12,7 @@ para que tambien sirvan desde otras paginas del docente (Mis Resenas).{% endcomm
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'notificaciones/campanita.css' %}">
-<link rel="stylesheet" href="{% static 'user_profesor/portal_docente.css' %}">
+<link rel="stylesheet" href="{% static 'user_profesor/portal_docente.css' %}?v=2">
 {% endblock %}
 
 {% block sidebar_usuario %}
@@ -70,6 +70,12 @@ para que tambien sirvan desde otras paginas del docente (Mis Resenas).{% endcomm
     <i class="bi bi-star-half"></i>
     Mis Reseñas
 </a>
+{% if usuario_sesion.url_ayuda %}
+<a id="nav-ayuda" class="nav-item{% if seccion_menu == 'ayuda' %} active{% endif %}" href="{{ usuario_sesion.url_ayuda }}">
+    <i class="bi bi-life-preserver"></i>
+    Ayuda y soporte
+</a>
+{% endif %}
 {% endblock %}
 
 {% block logout_url %}{% url 'logout_prof' %}{% endblock %}
