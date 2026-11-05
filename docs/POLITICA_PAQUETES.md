@@ -186,7 +186,7 @@ Las funciones de `alumnos/paquetes.py` (`cotizar`, `precio`, `comision`, `pago_p
 - `PlanAlumno` (`PlanesService.crear_plan_desde_pago` y `consumir_clase_de_plan`) **no se usa en el flujo de compra ni de reserva**: ninguna vista lo crea ni lo consume. Pero `calcular_saldos` sí suma los `PlanAlumno` con pago confirmado, y el admin de Django permite crearlos y editarlos: un registro histórico o creado a mano cambia el saldo del profesor. Si se retira o se conecta, lo decide el equipo; ver el reporte del sprint.
 - Si el alumno anula en Webpay (`TBK_TOKEN`), el paquete queda `pendiente`: no se puede usar, pero tampoco pasa a rechazado. Si Transbank reenvía el retorno, `confirmacion` vuelve a llamar a `commit()`; Transbank lo rechaza y no se activa nada dos veces.
 
-**Reglas** (todas en `alumnos/services.py` y `alumnos/models.py`):
+**Reglas** (todas en `alumnos/services.py` y en `alumnos/models/`, archivos `clases.py` y `pagos.py`):
 
 | Regla | Dónde | Prueba |
 |---|---|---|
