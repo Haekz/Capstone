@@ -499,8 +499,9 @@ Ojo: `docs/POLITICA_PAQUETES.md` (punto 10) dice liquidación semanal. Hay que a
   datos de contacto, quien puede leerlos (las partes; soporte solo si se reporta, desde el ticket y con registro; el
   administrador no), que los avisos por correo no traen el mensaje, cuanto se conservan y la retencion excepcional, y como
   ejercer los derechos. Va **desplegado antes de abrir una conversacion** y plegado dentro de ella. Los plazos salen de
-  `retencion.DIAS_SIN_ACTIVIDAD` y `revision.MESES_REVISION`: no hay cifras escritas en el HTML. El estudiante menor, que
-  no escribe, ve una version en lenguaje simple en su portal. **No es un consentimiento**: es informacion, sin casilla
+  `retencion.DIAS_SIN_ACTIVIDAD` y `revision.MESES_REVISION`: no hay cifras escritas en el HTML. El estudiante menor no
+  ve ningun aviso de mensajes (04-nov): no escribe y el chat lo maneja su apoderado, que si recibe el aviso completo.
+  **No es un consentimiento**: es informacion, sin casilla
   ni boton de aceptar. **A validar con la abogada:** el canal de derechos hoy apunta a *Ayuda y soporte* y a *Eliminar mi
   cuenta*; falta el canal formal (correo o formulario con un responsable) y, cuando exista, cambiar el texto.
 - **Registro de requerimientos de autoridad (E6, 03-nov; app `requerimientos`):** cuando un tribunal, la fiscalia u otra

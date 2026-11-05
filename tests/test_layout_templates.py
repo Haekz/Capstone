@@ -1,7 +1,10 @@
 'El layout comun debe salir una sola vez y en todas las paginas publicas.\n\nNavbar y footer viven en alumnos/templates/alumnos/includes/. Estos tests\ndetectan tanto una copia pegada a mano como un include roto.\n'
+from pathlib import Path
+
 from django.test import TestCase
 from django.urls import reverse
 PAGINAS_PUBLICAS = ('home', 'nosotros', 'servicios', 'planes', 'contactos', 'opcion_user')
+CSS_BASE = Path(__file__).resolve().parent.parent / 'alumnos' / 'static' / 'alumnos' / 'css' / 'styles.css'
 
 class LayoutCompartidoTests(TestCase):
     """Marcas que solo puede poner base.html a traves de sus includes."""
@@ -36,6 +39,22 @@ class LayoutCompartidoTests(TestCase):
                 html = self.client.get(reverse(nombre)).content.decode()
                 self.assertNotIn('id="cart-button"', html)
                 self.assertNotIn('agregarAlCarrito', html)
+
+
+class PieAlFondoTests(TestCase):
+    """Con poco contenido (Notificaciones vacia, un error) el pie no puede quedar flotando a mitad de pantalla."""
+
+    def test_el_cuerpo_ocupa_la_pantalla_y_el_contenido_empuja_al_pie(self):
+        css = CSS_BASE.read_text(encoding='utf-8')
+        cuerpo = css[css.index('\nbody {'):].split('}')[0]
+        for regla in ('display: flex', 'flex-direction: column', 'min-height: 100vh'):
+            self.assertIn(regla, cuerpo)
+        self.assertIn('\nmain {\n    flex: 1 0 auto;', css)
+
+    def test_el_contenido_va_en_un_main_entre_el_menu_y_el_pie(self):
+        html = self.client.get(reverse('nosotros')).content.decode()
+        self.assertLess(html.index('<nav class="nav-box"'), html.index('<main>'))
+        self.assertLess(html.index('</main>'), html.index('<footer class="footer"'))
 
 
 class SimuladorRetiradoTests(TestCase):

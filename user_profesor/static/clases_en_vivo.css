@@ -89,7 +89,7 @@
     box-shadow: var(--shadow);
 }
 
-body.dark-mode .profe-studio-controls {
+body:not(.light-mode) .profe-studio-controls {
     background: #111827;
     border-color: rgba(255, 255, 255, 0.05);
 }
@@ -109,7 +109,7 @@ body.dark-mode .profe-studio-controls {
     transition: all 0.2s;
 }
 
-body.dark-mode .profe-studio-btn {
+body:not(.light-mode) .profe-studio-btn {
     border-color: rgba(255, 255, 255, 0.05);
     background: #1f2937;
     color: #ffffff;
@@ -137,7 +137,7 @@ body.dark-mode .profe-studio-btn {
     overflow: hidden;
 }
 
-body.dark-mode .profe-studio-sidebar {
+body:not(.light-mode) .profe-studio-sidebar {
     background: #111827;
     border-color: rgba(255, 255, 255, 0.05);
 }
@@ -150,7 +150,7 @@ body.dark-mode .profe-studio-sidebar {
     color: var(--text);
 }
 
-body.dark-mode .profe-studio-chat-header {
+body:not(.light-mode) .profe-studio-chat-header {
     border-color: rgba(255, 255, 255, 0.05);
 }
 
@@ -181,7 +181,7 @@ body.dark-mode .profe-studio-chat-header {
     line-height: 1.4;
 }
 
-body.dark-mode .profe-studio-chat-msg {
+body:not(.light-mode) .profe-studio-chat-msg {
     background: rgba(255, 255, 255, 0.02);
     border-color: rgba(255, 255, 255, 0.02);
 }

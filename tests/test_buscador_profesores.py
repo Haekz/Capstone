@@ -72,11 +72,12 @@ class BuscadorProfesoresTests(TestCase):
             'name': 'Carla Rojas',
             'specialties': ['Matemáticas'],
             'initial': 'C',
+            'rating': None,  # la calificacion sale de resenas reales (tests/test_calificacion_profesores.py)
         }])
-        # Ni en los datos ni en las tarjetas que arma el JS.
+        # Ni en los datos ni en las tarjetas que arma el JS: distancia y precio no existen, y la
+        # calificacion nunca se inventa (sin resenas el valor es None y la tarjeta dice "Nuevo").
         self.assertNotContains(r, '5.0 ⭐')
-        for metrica in ('"distance"', '"rating"', '"price"',
-                        '${t.distance}', '${t.rating}', 'a.distance - b.distance'):
+        for metrica in ('"distance"', '"price"', '${t.distance}', 'a.distance - b.distance'):
             self.assertNotContains(r, metrica)
 
     def test_profesores_ordenados_por_nombre(self):

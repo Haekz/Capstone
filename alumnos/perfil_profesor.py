@@ -17,6 +17,7 @@ from resenas.consultas import contexto_resenas
 
 from .decorators import alumno_required
 from .models import Clase, Profesor, SesionClase
+from .portales import contexto_de_marco
 
 MAX_PROXIMAS_SESIONES = 5
 
@@ -30,6 +31,7 @@ def perfil_profesor(request, id_profesor):
     )
     sesiones = SesionClase.objects.filter(clase__profesor=profesor)
     return render(request, 'alumnos/perfil_profesor.html', {
+        **contexto_de_marco(request),  # sin seccion: el perfil no es un item del menu
         'profesor': profesor,
         'clases': (
             Clase.objects.filter(profesor=profesor)

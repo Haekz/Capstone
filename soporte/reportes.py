@@ -15,6 +15,7 @@ from django.views.decorators.cache import never_cache
 
 from alumnos.decorators import soporte_required
 from alumnos.models import PaqueteClases
+from alumnos.portales import contexto_de_marco
 
 from .forms import MensajeForm, ReporteForm, RespuestaForm
 from .models import Ticket
@@ -45,7 +46,8 @@ def _contexto(ticket, form, **extra):
 @reporta_required
 def mis_tickets(request):
     tickets = Ticket.objects.filter(autor=request.user).order_by('-creado', '-id')
-    return render(request, 'soporte/mis_tickets.html', {'tickets': tickets})
+    return render(request, 'soporte/mis_tickets.html',
+                  {'tickets': tickets, **contexto_de_marco(request, seccion='ayuda')})
 
 
 @never_cache
@@ -64,6 +66,7 @@ def nuevo_ticket(request):
         'form': form, 'titulo': 'Abrir un ticket', 'subtitulo': 'Cuéntanos qué pasó', 'boton': 'Enviar',
         'volver_url': reverse('mis_tickets'),
         'intro': 'Pagos, clases y conducta: respondemos en 2 días hábiles. Lo demás, en 5 días hábiles.',
+        **contexto_de_marco(request, seccion='ayuda'),
     })
 
 
@@ -88,7 +91,8 @@ def mi_ticket(request, id_ticket):
     form = MensajeForm(request.POST or None) if ticket.estado == Ticket.ABIERTO else None
     if _publicar(request, ticket, form, de_soporte=False):
         return redirect('mi_ticket', ticket.pk)
-    return render(request, 'soporte/mi_ticket.html', _contexto(ticket, form))
+    return render(request, 'soporte/mi_ticket.html',
+                  _contexto(ticket, form, **contexto_de_marco(request, seccion='ayuda')))
 
 
 @never_cache

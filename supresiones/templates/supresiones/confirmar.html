@@ -1,9 +1,12 @@
-{% extends 'alumnos/base.html' %}
+{% extends base|default:'alumnos/base.html' %}
 {% load static %}
 
 {% block title %}Confirmar la eliminación | LBWUS{% endblock %}
+{% block page_title %}{% if titulo_en_barra %}Eliminar mi cuenta{% else %}{{ block.super }}{% endif %}{% endblock %}
+{% block page_subtitle %}{% if titulo_en_barra %}Ayuda y soporte{% else %}{{ block.super }}{% endif %}{% endblock %}
 
 {% block extra_css %}
+{{ block.super }}
 <link rel="stylesheet" href="{% static 'alumnos/css/perfil_profesor.css' %}">
 <link rel="stylesheet" href="{% static 'apoderados/apoderados.css' %}">
 {% endblock %}
@@ -16,7 +19,8 @@
 
     <header class="perfil-prof__cabecera">
         <div>
-            <h1>Confirmar que quieres eliminar tu cuenta</h1>
+            {# En el portal del alumno el h1 es el de la barra: la pregunta queda como h2, bien visible #}
+            {% if titulo_en_barra %}<h2>Confirmar que quieres eliminar tu cuenta</h2>{% else %}<h1>Confirmar que quieres eliminar tu cuenta</h1>{% endif %}
             <p class="perfil-prof__vacio">Ya comprobamos que el enlace llegó a tu correo. Al confirmar, abrimos la solicitud y soporte la revisa.</p>
         </div>
     </header>

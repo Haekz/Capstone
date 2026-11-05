@@ -30,6 +30,9 @@ from django.core.exceptions import ValidationError
 from . import paquetes, progreso
 from mensajes import panel as mensajes_panel
 from observaciones import panel as observaciones_panel
+from resenas.consultas import (
+    calificaciones_por_profesor, formatear_promedio, ids_recomendados, pendiente_de_calificar,
+)
 from django.db import transaction
 from apoderados.permisos import clase_pagada_por_apoderado, vinculo_contratable
 from lbwus.puerta import destino_seguro
@@ -38,6 +41,7 @@ from .decorators import alumno_required, profesor_required_json, sesion_iniciada
 from .exceptions import InscripcionError
 from .services import InscripcionService, exigir_mayor_de_edad
 from .utils import es_menor
+from .portales import contexto_de_marco
 from .templatetags.dinero import clp as _clp  # mismo formato en vistas y plantillas
 from .roles import (
     ALUMNO,
@@ -156,6 +160,8 @@ def planes(request):
         })
 
     return render(request, 'alumnos/planes.html', {
+        # Primero el marco: las claves propias de Planes (es_menor...) mandan sobre las suyas
+        **contexto_de_marco(request, seccion='paquetes'),
         'profesores': Profesor.objects.habilitados().select_related('user', 'especialidad')
                                                     .order_by('user__first_name', 'user__last_name'),
         'profesor': profesor,
@@ -279,6 +285,13 @@ def alumnos_reg(request):
 # PORTAL DEL ALUMNO
 # ============================================================
 
+def _rating_para_tarjeta(calificacion):
+    """Lo que muestra la tarjeta del profesor: promedio con coma y total; None si aun no tiene resenas."""
+    if not calificacion:
+        return None
+    return {'promedio': formatear_promedio(calificacion['promedio']), 'total': calificacion['total']}
+
+
 @never_cache
 @alumno_required
 def alumno_pag1(request):
@@ -336,18 +349,27 @@ def alumno_pag1(request):
     for pago in pagos:
         pago.monto_clp = _clp(pago.monto)  # mismo formato que la confirmacion de Webpay
 
+    calificaciones = calificaciones_por_profesor()
+    profesor_por_id = {p.id_profesor: p for p in profesores_list}
+    recomendados = [
+        {'profesor': profesor_por_id[id_profesor], 'rating': _rating_para_tarjeta(calificaciones[id_profesor])}
+        for id_profesor in ids_recomendados(calificaciones, entre=profesor_por_id)
+    ]
+
     context = {
         'alumno': alumno,
         'mis_reportes': mis_reportes,
         'profesores_list': profesores_list,
-        # Solo datos reales. Distancia, calificacion y precio no se
-        # registran todavia en la plataforma, asi que no se inventan.
+        'recomendados': recomendados,
+        # Solo datos reales. Distancia y precio no se registran todavia en la plataforma, asi que no se
+        # inventan; la calificacion sale de las resenas visibles (None = profesor nuevo, sin resenas).
         'profesores_js': [
             {
                 'id': p.id_profesor,
                 'name': p.nombre,
                 'specialties': [p.especialidad.nombre] if p.especialidad else [],
                 'initial': p.nombre[:1].upper(),
+                'rating': _rating_para_tarjeta(calificaciones.get(p.id_profesor)),
             }
             for p in profesores_list
         ],
@@ -367,6 +389,7 @@ def alumno_pag1(request):
         'pagos': pagos,
         'es_menor': es_menor(alumno.user),
         'tiene_solicitud': hasattr(alumno, 'solicitud_apoderado'),  # adolescente de 14 a 17 (apoderados)
+        'por_calificar': pendiente_de_calificar(alumno),  # cuadro de estrellas al entrar
         # Buzon de Dudas (mensajes/panel.py); el error de un envio rechazado se muestra una sola vez.
         **mensajes_panel.contexto_alumno(alumno, request.GET.get('c'), request.session.pop('mensajes_error', None)),
     }

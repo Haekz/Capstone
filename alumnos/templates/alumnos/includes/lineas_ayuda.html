@@ -1,0 +1,10 @@
+{# Telefonos de ayuda segun quien es la persona (alumnos/ayuda.py). Usado por el portal del menor y por la pagina de calificar. #}
+<div class="linea-ayuda-menor" role="note" aria-labelledby="linea-ayuda-titulo">
+    <p id="linea-ayuda-titulo"><strong>¿Necesitas ayuda ahora?</strong></p>
+    <ul>
+        {% for linea in lineas %}
+        <li><a href="tel:{{ linea.numero }}"><strong>{{ linea.numero }}</strong></a> · {{ linea.nombre }}: {{ linea.cuando }} {{ linea.detalle }}</li>
+        {% endfor %}
+    </ul>
+    <p>Las líneas de orientación no reemplazan a un servicio de emergencia: ante un peligro inmediato, llama al 133.</p>
+</div>

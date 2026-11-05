@@ -281,6 +281,12 @@ class BloqueosDelMenorTests(TestCase):
         self.assertContains(respuesta, reverse('comprar_paquete'), count=3)
         self.assertNotContains(respuesta, 'Tu apoderado contrata por ti')
 
+    def test_el_menor_sin_profesor_elegido_ve_que_contrata_su_apoderado(self):
+        self.entrar_como(self.menor)
+        respuesta = self.client.get(reverse('planes'))
+        self.assertContains(respuesta, 'Tu apoderado contrata por ti', count=3)
+        self.assertNotContains(respuesta, 'Buscar un profesor')
+
     def test_el_menor_no_entra_a_la_sala_aunque_tenga_inscripcion(self):
         Inscripcion.objects.create(alumno=self.menor, clase=self.clase, sesion=self.sesion,
                                    estado=Inscripcion.ESTADO_CONFIRMADA)

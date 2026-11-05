@@ -1,18 +1,23 @@
-{% extends 'alumnos/base.html' %}
+{% extends base|default:'alumnos/base.html' %}
 {% load static %}
 
 {% block title %}{{ profesor.nombre }} | Perfil profesional | LBWUS{% endblock %}
+{% block page_title %}{% if titulo_en_barra %}Perfil del profesor{% else %}{{ block.super }}{% endif %}{% endblock %}
+{% block page_subtitle %}{% if titulo_en_barra %}Datos profesionales y reseñas{% else %}{{ block.super }}{% endif %}{% endblock %}
 
 {% block extra_css %}
+{{ block.super }}
 <link rel="stylesheet" href="{% static 'alumnos/css/perfil_profesor.css' %}">
 <link rel="stylesheet" href="{% static 'resenas/resenas.css' %}">
 {% endblock %}
 
 {% block content %}
 <div class="perfil-prof">
+    {% if not en_portal %}
     <a class="perfil-prof__volver" href="{% url 'alumno_pag1' %}">
         <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a mi portal
     </a>
+    {% endif %}
 
     <header class="perfil-prof__cabecera">
         {% if profesor.user.foto_perfil %}
@@ -21,7 +26,8 @@
         <div class="perfil-prof__avatar" aria-hidden="true">{{ profesor.nombre|slice:":1"|upper }}</div>
         {% endif %}
         <div>
-            <h1>{{ profesor.nombre }}</h1>
+            {# La barra del portal es el h1; el nombre del profesor baja a h2 con el tamano del h1 #}
+            {% if titulo_en_barra %}<h2>{{ profesor.nombre }}</h2>{% else %}<h1>{{ profesor.nombre }}</h1>{% endif %}
             <p class="perfil-prof__especialidad">{{ profesor.especialidad.nombre|default:"Especialidad no informada" }}</p>
             <p class="perfil-prof__verificado">
                 <i class="bi bi-patch-check-fill" aria-hidden="true"></i> Título profesional verificado por LBWUS

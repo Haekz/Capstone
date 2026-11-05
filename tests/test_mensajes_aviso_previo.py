@@ -1,5 +1,5 @@
 """Aviso previo al chat (E5, respuesta legal 02-nov): finalidad, filtro, quien lee, conservacion y derechos, en las
-tres bandejas, y una version simple para el estudiante menor. Datos ficticios."""
+tres bandejas. El estudiante menor no ve ningun aviso de mensajes: el chat lo maneja su apoderado. Datos ficticios."""
 
 from unittest import mock
 
@@ -118,10 +118,9 @@ class AvisoDelMenorTests(Escenario):
         apoderado = crear_apoderado(RUT, Apoderado.VERIFICADO)
         self.menor = crear_menor_vinculado(apoderado, rut='77777777-7').alumno
 
-    def test_el_menor_ve_la_version_simple_y_no_la_de_adultos(self):
+    def test_el_menor_no_ve_ningun_aviso_de_mensajes(self):
         entrar(self.client, self.menor.user, alumno_id=self.menor.id_alumno)
         r = self.client.get(reverse('alumno_pag1'))
-        self.assertContains(r, MENOR, count=1)
-        self.assertContains(r, 'Tú no escribes mensajes aquí')
-        self.assertContains(r, f'Si pasan {retencion.DIAS_SIN_ACTIVIDAD} días sin mensajes, se borran solos')
+        self.assertNotContains(r, MENOR)
+        self.assertNotContains(r, 'Tú no escribes mensajes aquí')
         self.assertNotContains(r, TITULO)

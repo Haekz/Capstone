@@ -1,22 +1,28 @@
-{% extends 'alumnos/base.html' %}
-{% load static %}
+{% extends base|default:'alumnos/base.html' %}
+{% load static ayuda_tags %}
 
 {% block title %}Calificar a {{ profesor.nombre }} | LBWUS{% endblock %}
+{% block page_title %}{% if titulo_en_barra %}Calificar clase{% else %}{{ block.super }}{% endif %}{% endblock %}
+{% block page_subtitle %}{% if titulo_en_barra %}{{ inscripcion.clase.asignatura.nombre }}{% else %}{{ block.super }}{% endif %}{% endblock %}
 
 {% block extra_css %}
+{{ block.super }}
 <link rel="stylesheet" href="{% static 'alumnos/css/perfil_profesor.css' %}">
 <link rel="stylesheet" href="{% static 'resenas/resenas.css' %}">
 {% endblock %}
 
 {% block content %}
 <div class="perfil-prof">
+    {% if not en_portal %}
     <a class="perfil-prof__volver" href="{% url 'alumno_pag1' %}">
         <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a mi portal
     </a>
+    {% endif %}
 
     <header class="perfil-prof__cabecera">
         <div>
-            <h1>Calificar a {{ profesor.nombre }}</h1>
+            {# La barra del portal es el h1; la pregunta de la pagina baja a h2 con el tamano del h1 #}
+            {% if titulo_en_barra %}<h2>Calificar a {{ profesor.nombre }}</h2>{% else %}<h1>Calificar a {{ profesor.nombre }}</h1>{% endif %}
             <p class="perfil-prof__verificado">
                 <i class="bi bi-patch-check-fill" aria-hidden="true"></i>
                 Clase verificada · {{ inscripcion.clase.asignatura.nombre }} · {{ inscripcion.sesion.fecha_hora_inicio|date:"d/m/Y" }}
@@ -27,6 +33,7 @@
     <section class="perfil-prof__bloque" aria-labelledby="resena-titulo">
         <h2 id="resena-titulo">{% if resena %}Tu reseña{% else %}Nueva reseña{% endif %}</h2>
         {% include 'resenas/_mensajes.html' %}
+        {% if nota_baja %}{% lineas_de_ayuda user %}{% endif %}
         {% if inscripcion.paquete_id %}
         <p class="perfil-prof__vacio">Esta reseña cubre todo tu paquete. Podrás actualizarla cada vez que completes una nueva clase del paquete.</p>
         {% endif %}

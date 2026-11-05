@@ -1,18 +1,22 @@
-{% extends 'alumnos/base.html' %}
+{% extends base|default:'alumnos/base.html' %}
 {% load static dinero %}
 
 {% block title %}LBWUS | Planes{% endblock %}
+{% block page_title %}{% if titulo_en_barra %}Planes y precios{% else %}{{ block.super }}{% endif %}{% endblock %}
+{% block page_subtitle %}{% if titulo_en_barra %}Elige cuántas clases quieres{% else %}{{ block.super }}{% endif %}{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'alumnos/css/planes.css' %}">
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'alumnos/css/planes.css' %}?v=3">
 {% endblock %}
 
 {% block content %}
 {# Todos los precios vienen del servidor (alumnos/paquetes.py): esta pagina no calcula nada. #}
-<section class="sv-intro pl-intro">
-    <div class="contenedor">
-        <span class="sv-eyebrow">Planes</span>
-        <h1>Elige cuántas clases quieres</h1>
+{# Fuera de un portal, el hero del sitio publico (styles.css); dentro, una cabecera compacta (planes.css) #}
+<section class="{% if en_portal %}pl-intro--portal{% else %}sv-intro{% endif %} pl-intro">
+    <div{% if not en_portal %} class="contenedor"{% endif %}>
+        {% if not en_portal %}<span class="sv-eyebrow">Planes</span>{% endif %}
+        {% if not titulo_en_barra %}<h1>Elige cuántas clases quieres</h1>{% endif %}
         <p>Compras un paquete de clases con el profesor que elijas. Mientras más clases, menor el precio de cada una.</p>
         <div class="pl-intro-notes">
             <span><i class="bi bi-clock" aria-hidden="true"></i> Clases de {{ duracion_clase }} minutos</span>
@@ -24,8 +28,10 @@
 
 <div class="planes-container">
 
+    {# Solo el apoderado elige profesor aqui: es su unico camino. El alumno busca profesores en su portal. #}
+    {% if estudiante %}
     <form class="pl-selector" method="get" action="{% url 'planes' %}">
-        {% if estudiante %}<input type="hidden" name="estudiante" value="{{ estudiante.pk }}">{% endif %}
+        <input type="hidden" name="estudiante" value="{{ estudiante.pk }}">
         <label for="pl-profesor">Profesor</label>
         <div class="pl-selector-fila">
             <select id="pl-profesor" name="profesor">
@@ -40,6 +46,7 @@
         <p class="pl-selector-nota">Todavía no hay profesores habilitados para vender clases.</p>
         {% endif %}
     </form>
+    {% endif %}
 
     <div class="planes-header">
         {% if estudiante %}<p role="status"><strong>Contratando para {{ estudiante.alumno.user.first_name }}.</strong> El paquete quedará a su nombre y lo pagas tú con Webpay.</p>{% endif %}
@@ -47,8 +54,7 @@
         <h2>Precios con {{ profesor.nombre }}</h2>
         <p>Tarifa de {{ tarifa|clp }} por clase.{% if es_alumno %} <a href="{% url 'perfil_profesor' profesor.id_profesor %}">Ver perfil del profesor</a>{% endif %}</p>
         {% else %}
-        <h2>Precios de referencia</h2>
-        <p>Para una tarifa de {{ tarifa|clp }} por clase. Cada profesor define su tarifa: elígelo arriba para ver sus precios y comprar.</p>
+        <p>Precios de referencia, con una tarifa de {{ tarifa|clp }} por clase. Cada profesor define la suya.</p>
         {% endif %}
     </div>
 
@@ -81,8 +87,14 @@
                 </form>
                 {% elif profesor %}
                 <a href="{% url 'login' %}" class="plan-btn-action">Inicia sesión como alumno para comprar</a>
-                {% else %}
+                {% elif estudiante %}
                 <a href="#pl-profesor" class="plan-btn-action">Elige un profesor para comprar</a>
+                {% elif es_menor %}
+                <p role="status">Tu apoderado contrata por ti desde su cuenta.</p>
+                {% elif es_alumno %}
+                <a href="{% url 'alumno_pag1' %}#dashboard-search-input" class="plan-btn-action">Buscar un profesor</a>
+                {% else %}
+                <a href="{% url 'login' %}?next={% url 'alumno_pag1' %}" class="plan-btn-action">Inicia sesión para buscar un profesor</a>
                 {% endif %}
 
                 <div class="plan-divider"></div>
@@ -146,9 +158,8 @@
         <button class="modal-info-close" id="close-modal-btn">Entendido</button>
     </div>
 </section>
-{% endblock %}
 
-{% block extra_js %}
+{# Va dentro de content y no en extra_js: ese bloque solo existe en la base publica, y en los portales el modal no se podia cerrar #}
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         // Cierre del modal de bienvenida

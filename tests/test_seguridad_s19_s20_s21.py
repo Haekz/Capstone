@@ -152,7 +152,7 @@ class TestS19LogoutMetodoSeguro(TestCase):
         session.save()
         resp_prof = self.client.get(reverse('panel_profesor'))
         html_prof = resp_prof.content.decode('utf-8')
-        self.assertIn('form-prof-logout', html_prof)
+        self.assertIn('form-sidebar-logout', html_prof)  # el portal docente usa el menu de base_admin, como el admin
         self.assertIn('csrfmiddlewaretoken', html_prof)
         self.assertIn(reverse('logout_prof'), html_prof)
 

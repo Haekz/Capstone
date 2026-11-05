@@ -1,9 +1,13 @@
-{% extends 'alumnos/base.html' %}
+{% extends base|default:'alumnos/base.html' %}
 {% load static %}
 
 {% block title %}Ticket #{{ ticket.pk }} | LBWUS{% endblock %}
+{# En el portal del alumno la barra dice la sección; el título del ticket queda en la página #}
+{% block page_title %}{% if titulo_en_barra %}Ayuda y soporte{% else %}{{ block.super }}{% endif %}{% endblock %}
+{% block page_subtitle %}{% if titulo_en_barra %}Ticket #{{ ticket.pk }}{% else %}{{ block.super }}{% endif %}{% endblock %}
 
 {% block extra_css %}
+{{ block.super }}
 <link rel="stylesheet" href="{% static 'alumnos/css/perfil_profesor.css' %}">
 <link rel="stylesheet" href="{% static 'apoderados/apoderados.css' %}">
 {% endblock %}
@@ -16,7 +20,8 @@
 
     <header class="perfil-prof__cabecera">
         <div>
-            <h1>#{{ ticket.pk }} · {{ ticket.titulo }}</h1>
+            {# En el portal del alumno el h1 es el de la barra (fija, 72px: no cabe un titulo de 120 caracteres) #}
+            {% if titulo_en_barra %}<h2>#{{ ticket.pk }} · {{ ticket.titulo }}</h2>{% else %}<h1>#{{ ticket.pk }} · {{ ticket.titulo }}</h1>{% endif %}
             <p class="perfil-prof__vacio">{{ ticket.get_categoria_display }} · {{ ticket.get_estado_display }} · abierto el {{ ticket.creado|date:"d-m-Y H:i" }}{% if ticket.estudiante %} · sobre {{ ticket.estudiante.user.first_name }}{% endif %}</p>
         </div>
     </header>

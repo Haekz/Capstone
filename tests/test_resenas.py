@@ -11,7 +11,7 @@ from datetime import time, timedelta
 from django.contrib.auth import get_user_model
 from django.core import mail
 from django.db import IntegrityError, transaction
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
@@ -19,6 +19,7 @@ from alumnos.models import Asignatura, Clase, Genero, Inscripcion, Tutor
 from alumnos.roles import ADMIN, ALUMNO, PROFESOR
 from apoderados.models import Apoderado
 from resenas.models import ModeracionResena, ReporteResena, Resena
+from tests.css_vars import leer
 from tests.test_apoderados import crear_apoderado
 from tests.test_apoderados_vinculos import crear_menor_vinculado
 from tests.test_campana import avisos_de
@@ -340,3 +341,13 @@ class CalificacionBajaDeMenorTests(BaseResenas):
         entrar(self.client, self.ana, ALUMNO)
         self.calificar(self.insc_suelta, puntaje=1)
         self.assertEqual(mail.outbox, [])
+
+
+class EstrellasDeLaListaTests(SimpleTestCase):
+    """Las estrellas de cada resena van doradas, no del gris del texto secundario."""
+
+    def test_la_regla_de_las_estrellas_le_gana_a_la_de_la_lista(self):
+        # perfil_profesor.css pinta '.perfil-prof__lista span' (0,1,1) con --text-light; la sola clase
+        # '.resena-estrellas' (0,1,0) perdia y las 5 estrellas de cada resena salian grises.
+        css = leer('resenas/static/resenas/resenas.css')
+        self.assertRegex(css, r'\.resena-lista \.resena-estrellas[^{]*\{[^}]*color:\s*#d97706')

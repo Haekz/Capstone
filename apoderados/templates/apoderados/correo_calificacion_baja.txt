@@ -2,6 +2,11 @@ Hola,
 
 {{ estudiante }} calificó con nota baja su clase de {{ clase.asignatura.nombre }} con {{ clase.profesor.nombre }} en LBWUS.
 
-Te sugerimos conversarlo con {{ estudiante }}. Si hubo un problema en la clase, puedes abrir un ticket desde tu cuenta de apoderado, en "Ayuda y soporte".
+Te sugerimos conversarlo con {{ estudiante }}. Si fue algo urgente o hubo un problema en la clase, abre un ticket cuanto antes desde tu cuenta de apoderado, en "Ayuda y soporte".
+
+Si {{ estudiante }} está en peligro o necesita ayuda ahora, estas líneas pueden orientarte:
+{% for linea in lineas %}- {{ linea.numero }} · {{ linea.nombre }}: {{ linea.cuando }} {{ linea.detalle }}
+{% endfor %}
+Las líneas de orientación no reemplazan a un servicio de emergencia: ante un peligro inmediato, llama al 133.
 
 Equipo LBWUS

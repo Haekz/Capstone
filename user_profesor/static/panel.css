@@ -1,134 +1,9 @@
 /* esta parte es de los estilos del panel dashboard del profesor - LBWUS */
 
-/* esta parte es del layout principal que divide el panel en sidebar izquierdo y contenido derecho */
+/* esta parte es del contenedor del panel; el menu lateral ahora es el del portal (user_profesor/base_docente.html) */
 .prof-dashboard-layout {
-    min-height: calc(100vh - var(--header-height));
-    display: grid;
-    grid-template-columns: 280px 1fr;
     background-color: var(--bg);
     transition: var(--transition);
-    padding-top: var(--header-height);
-}
-
-/* esta parte es de la barra lateral izquierda del panel con el menú de navegación */
-.prof-sidebar {
-    background-color: #faf5ff;
-    border-right: 1px solid #f3e8ff;
-    padding: 40px 24px;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    min-height: calc(100vh - var(--header-height));
-    transition: var(--transition);
-}
-
-body.dark-mode .prof-sidebar {
-    background-color: #0b0712;
-    border-right-color: #1e1330;
-}
-
-/* esta parte es del encabezado del sidebar con el avatar y la especialidad del profe */
-.prof-sidebar-header {
-    text-align: center;
-    margin-bottom: 40px;
-}
-
-/* esta parte es del círculo de avatar con el ícono del profe */
-.prof-avatar {
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    background-color: rgba(168, 85, 247, 0.1);
-    color: var(--primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2.2rem;
-    margin: 0 auto 16px auto;
-    border: 2px solid rgba(168, 85, 247, 0.2);
-}
-
-.prof-sidebar-title {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--text);
-    margin-bottom: 6px;
-}
-
-/* esta parte es de la etiqueta morada con la especialidad del profe */
-.prof-sidebar-tag {
-    font-size: 0.8rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: var(--primary);
-    background-color: rgba(168, 85, 247, 0.08);
-    padding: 4px 12px;
-    border-radius: 20px;
-}
-
-/* esta parte es de la lista de opciones del menú lateral */
-.prof-sidebar-menu {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-/* esta parte es de cada opción individual del menú - cámbiala si quieres otro padding o bordes */
-.prof-menu-item {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 14px 20px;
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--text-light);
-    border-radius: 12px;
-    cursor: pointer;
-    transition: var(--transition);
-}
-
-.prof-menu-item:hover {
-    color: var(--primary);
-    background-color: rgba(168, 85, 247, 0.05);
-}
-
-/* esta parte es del estilo de la opción que está activa/seleccionada en el menú */
-.prof-menu-item.active {
-    color: #ffffff;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-    box-shadow: 0 4px 12px rgba(168, 85, 247, 0.2);
-}
-
-/* esta parte es del pie del sidebar con el botón de cerrar sesión */
-.prof-sidebar-footer {
-    margin-top: auto;
-    border-top: 1px solid #ebd5ff;
-    padding-top: 24px;
-}
-
-body.dark-mode .prof-sidebar-footer {
-    border-top-color: #271b3a;
-}
-
-/* esta parte es del botón de cerrar sesión que aparece en rojo */
-.prof-logout-btn {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 14px 20px;
-    font-size: 1rem;
-    font-weight: 600;
-    color: #ef4444;
-    text-decoration: none;
-    border-radius: 12px;
-    transition: var(--transition);
-}
-
-.prof-logout-btn:hover {
-    background-color: rgba(239, 68, 68, 0.05);
 }
 
 /* esta parte es del área de contenido a la derecha del panel donde se muestran las secciones */
@@ -239,12 +114,14 @@ body.dark-mode .prof-sidebar-footer {
     color: var(--text);
     margin-bottom: 8px;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
+    gap: 10px;
 }
 
-/* esta parte es de la etiqueta pequeña de "Max. 6" dentro del título de la agenda */
+/* esta parte es de la etiqueta pequeña de "Max. 6" dentro del título de la agenda; se empuja sola a la derecha */
 .prof-card-title-badge {
+    margin-left: auto;
     font-size: 0.75rem;
     font-weight: 700;
     background-color: #f1f5f9;
@@ -253,7 +130,7 @@ body.dark-mode .prof-sidebar-footer {
     border-radius: 20px;
 }
 
-body.dark-mode .prof-card-title-badge {
+body:not(.light-mode) .prof-card-title-badge {
     background-color: #1e293b;
 }
 
@@ -282,7 +159,7 @@ body.dark-mode .prof-card-title-badge {
     transition: var(--transition);
 }
 
-body.dark-mode .prof-schedule-item {
+body:not(.light-mode) .prof-schedule-item {
     background-color: #111827;
 }
 
@@ -342,7 +219,7 @@ body.dark-mode .prof-schedule-item {
     display: block;
 }
 
-body.dark-mode .prof-empty-card i {
+body:not(.light-mode) .prof-empty-card i {
     color: #475569;
 }
 
@@ -361,7 +238,7 @@ body.dark-mode .prof-empty-card i {
     padding-bottom: 8px;
 }
 
-body.dark-mode .prof-chart {
+body:not(.light-mode) .prof-chart {
     border-bottom-color: #334155;
 }
 
@@ -385,7 +262,7 @@ body.dark-mode .prof-chart {
     position: relative;
 }
 
-body.dark-mode .prof-chart-bar-wrapper {
+body:not(.light-mode) .prof-chart-bar-wrapper {
     background-color: #1e293b;
 }
 
@@ -479,8 +356,8 @@ body.dark-mode .prof-chart-bar-wrapper {
     outline: none;
 }
 
-body.dark-mode .prof-form-input,
-body.dark-mode .prof-form-select {
+body:not(.light-mode) .prof-form-input,
+body:not(.light-mode) .prof-form-select {
     border-color: #334155;
     background-color: #0f172a;
 }
@@ -595,21 +472,6 @@ body.dark-mode .prof-form-select {
 
 /* esta parte es de las adaptaciones del panel para tablets y pantallas medianas */
 @media (max-width: 1024px) {
-    .prof-dashboard-layout {
-        grid-template-columns: 1fr;
-    }
-
-    .prof-sidebar {
-        border-right: none;
-        border-bottom: 1px solid #f3e8ff;
-        min-height: auto;
-        padding: 30px 24px;
-    }
-
-    body.dark-mode .prof-sidebar {
-        border-bottom-color: #271b3a;
-    }
-
     .prof-dashboard-grid {
         grid-template-columns: 1fr;
     }
@@ -643,10 +505,6 @@ body.dark-mode .prof-form-select {
     .prof-schedule-time {
         justify-content: center;
     }
-
-    .prof-sidebar {
-        padding: 20px;
-    }
 }
 
 /* =============================================
@@ -665,7 +523,7 @@ body.dark-mode .prof-form-select {
     box-shadow: var(--shadow);
 }
 
-body.dark-mode .profe-chat-container {
+body:not(.light-mode) .profe-chat-container {
     background: #111827;
     border-color: rgba(255, 255, 255, 0.05);
 }
@@ -676,7 +534,7 @@ body.dark-mode .profe-chat-container {
     flex-direction: column;
 }
 
-body.dark-mode .profe-chat-sidebar {
+body:not(.light-mode) .profe-chat-sidebar {
     border-color: rgba(255, 255, 255, 0.05);
 }
 
@@ -689,7 +547,7 @@ body.dark-mode .profe-chat-sidebar {
     background: rgba(168, 85, 247, 0.01);
 }
 
-body.dark-mode .profe-chat-search {
+body:not(.light-mode) .profe-chat-search {
     border-color: rgba(255, 255, 255, 0.05);
     background: #1f2937;
 }
@@ -721,7 +579,7 @@ body.dark-mode .profe-chat-search {
     transition: all 0.2s ease;
 }
 
-body.dark-mode .profe-chat-item {
+body:not(.light-mode) .profe-chat-item {
     border-color: rgba(255, 255, 255, 0.02);
 }
 
@@ -734,7 +592,7 @@ body.dark-mode .profe-chat-item {
     border-left: 4px solid var(--primary);
 }
 
-body.dark-mode .profe-chat-item.active {
+body:not(.light-mode) .profe-chat-item.active {
     background: rgba(168, 85, 247, 0.12);
 }
 
@@ -760,7 +618,7 @@ body.dark-mode .profe-chat-item.active {
     flex-shrink: 0;
 }
 
-body.dark-mode .profe-chat-avatar {
+body:not(.light-mode) .profe-chat-avatar {
     background: rgba(168, 85, 247, 0.15);
 }
 
@@ -809,7 +667,7 @@ body.dark-mode .profe-chat-avatar {
     background: rgba(168, 85, 247, 0.01);
 }
 
-body.dark-mode .profe-chat-main {
+body:not(.light-mode) .profe-chat-main {
     background: #111827;
 }
 
@@ -819,7 +677,7 @@ body.dark-mode .profe-chat-main {
     background: var(--white);
 }
 
-body.dark-mode .profe-chat-header {
+body:not(.light-mode) .profe-chat-header {
     background: #111827;
     border-color: rgba(255, 255, 255, 0.05);
 }
@@ -865,7 +723,7 @@ body.dark-mode .profe-chat-header {
     border: 1px solid rgba(168, 85, 247, 0.08);
 }
 
-body.dark-mode .profe-chat-bubble-row.received .profe-chat-bubble {
+body:not(.light-mode) .profe-chat-bubble-row.received .profe-chat-bubble {
     background: #1f2937;
     border-color: rgba(255, 255, 255, 0.04);
 }
@@ -891,7 +749,7 @@ body.dark-mode .profe-chat-bubble-row.received .profe-chat-bubble {
     background: var(--white);
 }
 
-body.dark-mode .profe-chat-input-box {
+body:not(.light-mode) .profe-chat-input-box {
     background: #111827;
     border-color: rgba(255, 255, 255, 0.05);
 }
@@ -907,7 +765,7 @@ body.dark-mode .profe-chat-input-box {
     font-size: 0.88rem;
 }
 
-body.dark-mode .profe-chat-input-box input {
+body:not(.light-mode) .profe-chat-input-box input {
     background: #1f2937;
     border-color: rgba(255, 255, 255, 0.08);
 }
@@ -957,9 +815,9 @@ body.dark-mode .profe-chat-input-box input {
 .titulo-label { flex-basis: 100%; font-size: 0.85rem; font-weight: 600; }
 .titulo-form input[type=file] { font: inherit; font-size: 0.88rem; max-width: 100%; }
 .titulo-form .prof-form-btn { width: auto; margin: 0; }
-body.dark-mode .titulo-aviso { background: rgba(245, 158, 11, 0.10); border-color: rgba(245, 158, 11, 0.35); color: #fcd34d; }
-body.dark-mode .titulo-aviso--en_revision { background: rgba(139, 92, 246, 0.12); border-color: rgba(139, 92, 246, 0.4); color: #ddd6fe; }
-body.dark-mode .titulo-aviso--rechazado { background: rgba(239, 68, 68, 0.10); border-color: rgba(239, 68, 68, 0.35); color: #fca5a5; }
+body:not(.light-mode) .titulo-aviso { background: rgba(245, 158, 11, 0.10); border-color: rgba(245, 158, 11, 0.35); color: #fcd34d; }
+body:not(.light-mode) .titulo-aviso--en_revision { background: rgba(139, 92, 246, 0.12); border-color: rgba(139, 92, 246, 0.4); color: #ddd6fe; }
+body:not(.light-mode) .titulo-aviso--rechazado { background: rgba(239, 68, 68, 0.10); border-color: rgba(239, 68, 68, 0.35); color: #fca5a5; }
 
 
 

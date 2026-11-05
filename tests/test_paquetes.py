@@ -140,6 +140,21 @@ class PaginaPlanesTests(Escenario):
         self.assertContains(r, 'Inicia sesión como alumno para comprar')
         self.assertNotContains(r, reverse('comprar_paquete'))
 
+    def test_sin_profesor_elegido_no_hay_selector_ni_boton_que_no_haga_nada(self):
+        r = self.client.get(reverse('planes'))
+        self.assertNotContains(r, 'id="pl-profesor"')
+        self.assertNotContains(r, 'Elige un profesor para comprar')
+
+    def test_anonimo_sin_profesor_va_al_login_y_de_ahi_al_buscador(self):
+        r = self.client.get(reverse('planes'))
+        self.assertContains(r, f'{reverse("login")}?next={reverse("alumno_pag1")}', count=3)
+
+    def test_alumno_sin_profesor_va_al_buscador_de_su_portal(self):
+        self.entrar(RUT_ANA)
+        r = self.client.get(reverse('planes'))
+        self.assertContains(r, f'{reverse("alumno_pag1")}#dashboard-search-input', count=3)
+        self.assertContains(r, 'Buscar un profesor', count=3)
+
     def test_alumno_ve_un_formulario_de_compra_por_paquete(self):
         self.entrar(RUT_ANA)
         r = self.client.get(reverse('planes'), {'profesor': self.profe.id_profesor})

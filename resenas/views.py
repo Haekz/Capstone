@@ -15,6 +15,7 @@ from django.views.decorators.http import require_POST
 
 from alumnos.decorators import admin_required, alumno_required, profesor_required
 from alumnos.models import Inscripcion, Profesor, Tutor
+from alumnos.portales import contexto_de_marco
 from alumnos.utils import es_menor
 from apoderados.correo import avisar_calificacion_baja
 
@@ -57,10 +58,12 @@ def calificar(request, id_inscripcion):
             return redirect('resena_calificar', id_inscripcion)
 
     return render(request, 'resenas/calificar.html', {
+        **contexto_de_marco(request, seccion='clases'),  # se llega desde Mis Clases
         'inscripcion': inscripcion,
         'profesor': inscripcion.clase.profesor,
         'resena': resena,
         'editable': editable,
+        'nota_baja': resena is not None and resena.puntaje <= Resena.PUNTAJE_BAJO,  # muestra las lineas de ayuda
         'form': form,
     })
 

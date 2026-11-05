@@ -1,171 +1,7 @@
-{% load static mensajes_tags %}
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LBWUS | Portal del Alumno</title>
-    <link rel="icon" href="{% static 'alumnos/img/Logo.png' %}">
+{% extends 'alumnos/base_alumno.html' %}
+{% load static ayuda_tags %}
 
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-
-    <!-- Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="{% static 'alumnos/css/alumn_1.css' %}?v=2.1">
-    <link rel="stylesheet" href="{% static 'alumnos/css/avisos.css' %}">
-    <link rel="stylesheet" href="{% static 'notificaciones/campanita.css' %}">
-    {% include 'alumnos/includes/sin_copia_atras.html' %}
-</head>
-<body id="portal-alumno">
-    {% include 'alumnos/includes/tema_inicial.html' %}
-
-
-    <!-- Overlay oscuro para el sidebar en móvil -->
-    <div class="sidebar-overlay" id="sidebar-overlay"></div>
-
-    <!-- Main Dashboard Layout -->
-    <div class="dashboard-layout">
-        <!-- Left Sidebar Menu -->
-        <aside class="sidebar-menu" id="sidebar-menu">
-            <!-- Marca (mismo estilo que el portal admin) -->
-            <!-- El logo vuelve al propio portal, no al sitio publico: salir al
-                 home de marketing con la sesion activa parecia un cierre de sesion. -->
-            <a href="{% url 'alumno_pag1' %}" class="sb-brand">
-                <img src="{% static 'alumnos/img/Logo.png' %}" alt="LBWUS Logo">
-                <span class="sb-brand-text">
-                    <span class="sb-brand-name">LBWUS</span>
-                    <span class="sb-brand-role">Portal alumno</span>
-                </span>
-            </a>
-
-            <!-- Ficha del alumno conectado (lleva a Mi Perfil) -->
-            <button class="sb-user" onclick="switchView('view-profile')" title="Ver mi perfil">
-                <span class="sb-user-avatar">{{ alumno.user.first_name|slice:":1"|upper }}</span>
-                <span class="sb-user-info">
-                    <span class="sb-user-name">{{ alumno.user.first_name }}</span>
-                    <span class="sb-user-role">Alumno</span>
-                </span>
-            </button>
-
-            <ul class="sidebar-nav">
-                <li class="sb-label">Principal</li>
-                <li>
-                    <button class="sidebar-nav-item sidebar-view-btn active" data-view="view-dashboard">
-                        <i class="bi bi-grid-1x2-fill"></i>
-                        <span>Dashboard</span>
-                    </button>
-                </li>
-                <li>
-                    <button class="sidebar-nav-item sidebar-view-btn" data-view="view-my-classes">
-                        <i class="bi bi-journal-bookmark-fill"></i>
-                        <span>Mis Clases</span>
-                    </button>
-                </li>
-                <li>
-                    <button class="sidebar-nav-item sidebar-view-btn" data-view="view-favorites">
-                        <i class="bi bi-heart-fill"></i>
-                        <span>Profesores Favoritos</span>
-                    </button>
-                </li>
-                <li>
-                    <button class="sidebar-nav-item" id="nav-open-interests">
-                        <i class="bi bi-star-fill"></i>
-                        <span>Temas de Interés</span>
-                    </button>
-                </li>
-
-                <li class="sb-label">Premium</li>
-                <li>
-                    <button class="sidebar-nav-item sidebar-view-btn" data-view="view-courses">
-                        <i class="bi bi-play-circle-fill"></i>
-                        <span>Cursos Premium</span>
-                    </button>
-                </li>
-                <li>
-                    {% if not es_menor %}{# Menores: sin mensajeria privada (decisiones de menores) #}
-                    <button class="sidebar-nav-item sidebar-view-btn" data-view="view-inbox">
-                        <i class="bi bi-chat-text-fill"></i>
-                        <span>Buzón de Dudas</span>
-                    </button>
-                    {% endif %}
-                </li>
-                <li>
-                    <button class="sidebar-nav-item sidebar-view-btn" data-view="view-progress">
-                        <i class="bi bi-bar-chart-line-fill"></i>
-                        <span>Informe de Progreso</span>
-                    </button>
-                </li>
-
-                <li class="sb-label">Mi cuenta</li>
-                <li>
-                    <button class="sidebar-nav-item sidebar-view-btn" data-view="view-plans">
-                        <i class="bi bi-credit-card-fill"></i>
-                        <span>Mis Paquetes</span>
-                    </button>
-                </li>
-                {% if not es_menor %}{# D18: los reportes del menor los hace su apoderado #}
-                <li>
-                    <button class="sidebar-nav-item sidebar-view-btn" data-view="view-support">
-                        <i class="bi bi-envelope-paper-fill"></i>
-                        <span>Soporte / Reportes</span>
-                    </button>
-                </li>
-                {% endif %}
-                <li>
-                    <button class="sidebar-nav-item sidebar-view-btn" data-view="view-profile">
-                        <i class="bi bi-person-fill"></i>
-                        <span>Mi Perfil</span>
-                    </button>
-                </li>
-            </ul>
-
-            <!-- Volver al sitio publico (sin cerrar sesion) y cerrar sesion -->
-            <div class="sb-footer">
-                <a href="{% url 'home' %}" class="sb-home">
-                    <i class="bi bi-house-door"></i>
-                    Volver al inicio
-                </a>
-                <form method="post" action="{% url 'logout_alumno' %}" class="form-sb-logout">
-                    {% csrf_token %}
-                    <button type="submit" class="sb-logout btn-sb-logout">
-                        <i class="bi bi-box-arrow-left"></i>
-                        <span>Cerrar sesión</span>
-                    </button>
-                </form>
-            </div>
-        </aside>
-
-        <!-- Right Scrollable Views Container -->
-        <div class="portal-main">
-        <!-- Barra superior (mismo estilo que el portal admin) -->
-        <header class="portal-topbar" id="portal-navbar">
-            <div class="topbar-left">
-                <!-- Hamburguesa (solo móvil): abre el menú lateral -->
-                <button class="hamburger-btn" id="hamburger-btn" aria-label="Abrir menú">
-                    <span class="hamburger-line"></span>
-                    <span class="hamburger-line"></span>
-                    <span class="hamburger-line"></span>
-                </button>
-                <div>
-                    <h1 id="portal-title">Dashboard</h1>
-                    <p id="portal-subtitle">Tu panel de aprendizaje</p>
-                </div>
-            </div>
-
-            <div class="topbar-right">
-                {% include 'notificaciones/_campanita.html' with clase_boton='btn-theme-toggle' %}
-                <!-- Modo día/noche -->
-                <button onclick="toggleTheme()" class="btn-theme-toggle" id="theme-toggler" aria-label="Cambiar modo día/noche">
-                    <i class="bi bi-moon-stars-fill" id="theme-icon"></i>
-                </button>
-            </div>
-        </header>
-
-        <main class="main-content">
+{% block content %}
             
             <!-- ── VIEW 1: DASHBOARD (CLASES) ── -->
             <div class="dashboard-view active" id="view-dashboard">
@@ -183,8 +19,7 @@
                                     Puedes revisar el catálogo y entrar a las clases que reserve tu apoderado. Las reservas, cancelaciones y compras las hace tu apoderado desde su cuenta.
                                     Si algo en una clase te hizo sentir incómodo o tienes un problema, cuéntaselo a tu apoderado: él puede pedir ayuda a nuestro equipo de soporte.
                                     {% if tiene_solicitud %}<a href="{% url 'adolescente_solicitud' %}">Ver mi solicitud de apoderado</a>{% endif %}</p>
-                                {% include 'alumnos/includes/linea_ayuda_menor.html' %}
-                                {% aviso_mensajes_menor %}
+                                {% lineas_de_ayuda user %}
                                 {% endif %}
                             </div>
                             <button class="btn-principal ap-btn-setup" id="dashboard-setup-btn">Configurar Intereses</button>
@@ -218,6 +53,8 @@
                         <!-- Content tabs section -->
                         <div class="results-section">
                             <h2>Tu Contenido Seleccionado</h2>
+
+                            {% include 'alumnos/includes/recomendados.html' %}
 
                             <!-- Barra de Búsqueda -->
                             <div class="dashboard-search-container ap-mb-20">
@@ -644,9 +481,9 @@
         <!-- Ventana Modal para Elegir y Reservar Horarios Disponibles de SesionClase -->
         <div class="custom-modal-overlay" id="modal-horarios-sesiones">
             <div class="custom-modal-card ap-modal-md" style="max-width: 650px; width: 95%;">
-                <div class="custom-modal-header" style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid var(--border-color); padding-bottom:14px; margin-bottom:16px;">
+                <div class="custom-modal-header" style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid var(--line); padding-bottom:14px; margin-bottom:16px;">
                     <div>
-                        <h3 style="margin:0; font-size:1.25rem; font-weight:700; color:var(--text-dark); display:flex; align-items:center; gap:8px;">
+                        <h3 style="margin:0; font-size:1.25rem; font-weight:700; color:var(--text); display:flex; align-items:center; gap:8px;">
                             <i class="bi bi-calendar-check" style="color:var(--primary);"></i>
                             <span id="modal-horarios-titulo">Horarios Disponibles</span>
                         </h3>
@@ -666,7 +503,7 @@
                         <div style="width:60px; height:60px; border-radius:50%; background:rgba(99, 102, 241, 0.1); color:var(--primary); display:flex; align-items:center; justify-content:center; margin:0 auto 14px; font-size:1.8rem;">
                             <i class="bi bi-calendar-x"></i>
                         </div>
-                        <h4 style="margin:0 0 6px; font-weight:600; color:var(--text-dark);">No hay horarios programados</h4>
+                        <h4 style="margin:0 0 6px; font-weight:600; color:var(--text);">No hay horarios programados</h4>
                         <p style="margin:0; font-size:0.9rem; color:var(--text-light);">El profesor aún no ha publicado nuevas sesiones con cupos libres para esta clase. Por favor vuelve a consultar pronto.</p>
                     </div>
 
@@ -782,9 +619,9 @@
                 </div>
             </div>
 
-        </main>
-        </div>
-    </div>
+{% endblock %}
+
+{% block cuerpo_extra %}
 
     <!-- Modal / Pestaña Emergente: Temas de Interés -->
     <div class="modal-overlay" id="interests-modal">
@@ -848,26 +685,6 @@
                 }
             }
         };
-        // ── LIGHT/DARK MODE TOGGLING ──
-        const toggleTheme = () => {
-            const body = document.body;
-            body.classList.toggle('dark-mode');
-            
-            const themeIcon = document.getElementById('theme-icon');
-            if (body.classList.contains('dark-mode')) {
-                themeIcon.className = 'bi bi-sun-fill';
-                localStorage.setItem('theme', 'dark');
-            } else {
-                themeIcon.className = 'bi bi-moon-stars-fill';
-                localStorage.setItem('theme', 'light');
-            }
-        };
-
-        // El tema ya se aplico al inicio del body (tema_inicial.html); aqui solo el icono.
-        if (document.body.classList.contains('dark-mode')) {
-            document.getElementById('theme-icon').className = 'bi bi-sun-fill';
-        }
-
         // ── DATA POOLS ──
         // Teachers: vienen de la vista como JSON (ver profesores_js en views.py).
         // json_script entrega el texto tal cual lo escribio el profesor, asi que
@@ -880,6 +697,15 @@
         const URL_PERFIL_PROFESOR = "{% url 'perfil_profesor' 0 %}";
         const enlacePerfil = (t) =>
             `<a class="teacher-profile-link" href="${URL_PERFIL_PROFESOR.replace(/0\/$/, `${Number(t.id)}/`)}">Ver perfil</a>`;
+        // Calificacion real (reseñas visibles). Sin reseñas: "Nuevo", sin estrellas inventadas. Los tutores de ejemplo no traen `rating`.
+        const calificacion = (t) => {
+            if (!('rating' in t)) return '';
+            if (!t.rating) return '<p class="teacher-rating teacher-rating--nuevo">Nuevo</p>';
+            const total = Number(t.rating.total);
+            const promedio = escaparHtml(t.rating.promedio);
+            return `<p class="teacher-rating" aria-label="Calificación ${promedio} de 5, basada en ${total} reseña${total === 1 ? '' : 's'}">` +
+                `<i class="bi bi-star-fill" aria-hidden="true"></i> ${promedio} <span>(${total})</span></p>`;
+        };
         // Minusculas y sin tildes, para que "matematicas" encuentre "Matemáticas".
         const normalizar = (texto) => String(texto).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
@@ -963,32 +789,6 @@
                 if (window.innerWidth <= 900) closeSidebar();
             });
         });
-
-        // ── HAMBURGER MENU ──
-        const hamburgerBtn = document.getElementById('hamburger-btn');
-        const sidebarMenu = document.querySelector('.sidebar-menu');
-        const sidebarOverlay = document.getElementById('sidebar-overlay');
-
-        const openSidebar = () => {
-            sidebarMenu.classList.add('active');
-            hamburgerBtn.classList.add('open');
-            sidebarOverlay.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        };
-
-        const closeSidebar = () => {
-            sidebarMenu.classList.remove('active');
-            hamburgerBtn.classList.remove('open');
-            sidebarOverlay.classList.remove('active');
-            document.body.style.overflow = '';
-        };
-
-        const toggleSidebar = () => {
-            sidebarMenu.classList.contains('active') ? closeSidebar() : openSidebar();
-        };
-
-        if (hamburgerBtn) hamburgerBtn.addEventListener('click', toggleSidebar);
-        if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeSidebar);
 
         // ── INTERACTIVE MODAL CONTROLLER ──
         const modalOverlay = document.getElementById('interests-modal');
@@ -1177,6 +977,7 @@
                     <div class="teacher-info">
                         <h4>${escaparHtml(t.name)}</h4>
                         <p class="teacher-specialty">${escaparHtml(t.specialties.join(', '))}</p>
+                        ${calificacion(t)}
                         ${enlacePerfil(t)}
                     </div>
                 `;
@@ -1222,7 +1023,8 @@
                             <div class="teacher-info">
                                 <h4>${escaparHtml(t.name)}</h4>
                                 <p class="teacher-specialty">${escaparHtml(t.specialties.join(', '))}</p>
-                                ${enlacePerfil(t)}
+                                ${calificacion(t)}
+                        ${enlacePerfil(t)}
                             </div>
                             <div class="teacher-distance-box">
                                 <button class="btn-contact-teacher" onclick="requestClassAccess(${t.id})">Ver Horarios</button>
@@ -1341,6 +1143,7 @@
                     <div class="teacher-info">
                         <h4>${escaparHtml(t.name)}</h4>
                         <p class="teacher-specialty">${escaparHtml(t.specialties.join(', '))}</p>
+                        ${calificacion(t)}
                         ${enlacePerfil(t)}
                     </div>
                     <div class="teacher-distance-box">
@@ -1437,7 +1240,7 @@ const safeIdSesion = Number(s.id_sesion) || 0;
                                 : `<button class="btn-principal btn-reservar-sesion" data-id="${safeIdSesion}" data-asig="${safeAsignatura}" data-fechahora="${safeFecha} ${safeHora}" style="padding: 8px 16px; font-size: 0.85rem;"><i class="bi bi-bookmark-plus-fill ap-mr-4"></i>Reservar este horario</button>`;
 
                             return `
-                                <div class="sesion-item-card" style="border: 1px solid var(--border-color); background: var(--bg-card); border-radius: 12px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+                                <div class="sesion-item-card" style="border: 1px solid var(--line); background: var(--white); border-radius: 12px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
                                     <div style="display: flex; flex-direction: column; gap: 4px;">
                                         <div style="display: flex; align-items: center; gap: 10px;">
                                             <span style="font-weight: 700; font-size: 1.05rem; color: var(--text);">
@@ -1586,7 +1389,6 @@ const safeIdSesion = Number(s.id_sesion) || 0;
         // Exponer funciones globalmente para manejadores onclick inline en HTML
         window.confirmarReprogramacion = confirmarReprogramacion;
         window.switchView = switchView;
-        window.toggleTheme = toggleTheme;
         window.toggleFavorite = toggleFavorite;
         window.requestClassAccess = requestClassAccess;
         window.filterChatContacts = filterChatContacts;
@@ -1635,13 +1437,42 @@ const safeIdSesion = Number(s.id_sesion) || 0;
             if (new URLSearchParams(window.location.search).has('c')) switchView('view-inbox');
         });
         {% endif %}
-
-            // Efecto translúcido del navbar al hacer scroll (listener pasivo para optimizar INP/scroll)
-            window.addEventListener('scroll', () => {
-                const nav = document.getElementById('portal-navbar');
-                if (nav) nav.classList.toggle('scrolled', window.scrollY > 20);
-            }, { passive: true });
+        // Llegar con #view-... (el menú de otras páginas del portal, como Notificaciones) abre esa vista. Solo valen las que
+        // tienen botón en el menú: al menor no se le ofrecen el Buzón ni el Soporte, y un #hash escrito a mano no los abre.
+        document.addEventListener('DOMContentLoaded', () => {
+            const vista = window.location.hash.slice(1);
+            const hayBoton = Array.from(document.querySelectorAll('.sidebar-view-btn')).some(b => b.dataset.view === vista);
+            if (hayBoton) switchView(vista);
+            else if (vista === 'temas') document.getElementById('nav-open-interests').click();
+        });
         })();
     </script>
-</body>
-</html>
+{% if por_calificar %}
+<dialog id="dialogo-calificar" class="dialogo-calificar" aria-labelledby="dialogo-calificar-titulo">
+    <form method="post" action="{% url 'resena_calificar' por_calificar.id_inscripcion %}">
+        {% csrf_token %}
+        <h2 id="dialogo-calificar-titulo">¿Cómo estuvo tu clase?</h2>
+        <p>{{ por_calificar.clase.asignatura.nombre }} con {{ por_calificar.clase.profesor.user.first_name }}</p>
+        <fieldset>
+            <legend>Tu calificación</legend>
+            {% for n in "12345"|make_list %}
+            <label><input type="radio" name="puntaje" value="{{ n }}" required> {{ n }} <i class="bi bi-star-fill" aria-hidden="true"></i></label>
+            {% endfor %}
+        </fieldset>
+        <div class="dialogo-calificar__acciones">
+            <button type="submit" class="btn-principal">Enviar</button>
+            <button type="submit" formmethod="dialog" formnovalidate class="dialogo-calificar__luego">Ahora no</button>
+        </div>
+    </form>
+</dialog>
+<script>
+    // Se abre solo al entrar; "Ahora no" (o Esc) lo deja cerrado hasta la proxima sesion del navegador.
+    (function () {
+        const dialogo = document.getElementById('dialogo-calificar');
+        if (!dialogo || sessionStorage.getItem('calificar-ahora-no')) return;
+        dialogo.addEventListener('close', () => sessionStorage.setItem('calificar-ahora-no', '1'));
+        dialogo.showModal();
+    })();
+</script>
+{% endif %}
+{% endblock %}

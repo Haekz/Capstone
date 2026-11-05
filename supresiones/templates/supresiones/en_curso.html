@@ -1,9 +1,12 @@
-{% extends 'alumnos/base.html' %}
+{% extends base|default:'alumnos/base.html' %}
 {% load static %}
 
 {% block title %}Tu solicitud de eliminación | LBWUS{% endblock %}
+{% block page_title %}{% if titulo_en_barra %}Eliminar mi cuenta{% else %}{{ block.super }}{% endif %}{% endblock %}
+{% block page_subtitle %}{% if titulo_en_barra %}Ayuda y soporte{% else %}{{ block.super }}{% endif %}{% endblock %}
 
 {% block extra_css %}
+{{ block.super }}
 <link rel="stylesheet" href="{% static 'alumnos/css/perfil_profesor.css' %}">
 <link rel="stylesheet" href="{% static 'apoderados/apoderados.css' %}">
 {% endblock %}
@@ -16,7 +19,7 @@
 
     <header class="perfil-prof__cabecera">
         <div>
-            <h1>Ya pediste eliminar tu cuenta</h1>
+            {% if titulo_en_barra %}<h2>Ya pediste eliminar tu cuenta</h2>{% else %}<h1>Ya pediste eliminar tu cuenta</h1>{% endif %}
             <p class="perfil-prof__vacio">Solicitud #{{ solicitud.pk }} · recibida el {{ solicitud.creada|date:"d-m-Y" }}</p>
         </div>
     </header>

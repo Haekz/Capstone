@@ -1,22 +1,28 @@
-{% extends 'alumnos/base.html' %}
+{% extends base|default:'alumnos/base.html' %}
 {% load static %}
 
 {% block title %}Mis tickets de soporte | LBWUS{% endblock %}
+{# En el portal del alumno el título lo da la barra (como en sus vistas); las demás bases conservan el suyo #}
+{% block page_title %}{% if titulo_en_barra %}Ayuda y soporte{% else %}{{ block.super }}{% endif %}{% endblock %}
+{% block page_subtitle %}{% if titulo_en_barra %}Tus tickets y sus respuestas{% else %}{{ block.super }}{% endif %}{% endblock %}
 
 {% block extra_css %}
+{{ block.super }}
 <link rel="stylesheet" href="{% static 'alumnos/css/perfil_profesor.css' %}">
 <link rel="stylesheet" href="{% static 'apoderados/apoderados.css' %}">
 {% endblock %}
 
 {% block content %}
 <div class="perfil-prof">
+    {% if not en_portal %}
     <a class="perfil-prof__volver" href="{{ usuario_sesion.url_panel }}">
         <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a {{ usuario_sesion.texto_panel|lower }}
     </a>
+    {% endif %}
 
     <header class="perfil-prof__cabecera">
         <div>
-            <h1>Ayuda y soporte</h1>
+            {% if not titulo_en_barra %}<h1>Ayuda y soporte</h1>{% endif %}
             <p class="perfil-prof__vacio">¿Problemas con un pago, una clase o la plataforma? Abre un ticket y nuestro equipo te responde.</p>
         </div>
     </header>

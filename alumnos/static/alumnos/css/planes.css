@@ -27,8 +27,31 @@ body.dark-mode .pl-intro-notes i {
     color: #c4b5fd;
 }
 
+/* Dentro de un portal (alumno o docente): sin el hero del sitio publico, que vive en styles.css y se calcula bajo su
+   header fijo. Cabecera compacta alineada con el resto del contenido. */
+.pl-intro--portal {
+    width: 100%; /* el contenido del portal docente es flex en columna: con margin auto el bloque se encoge a su texto */
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 24px 0;
+}
+
+.pl-intro--portal h1 {
+    font-size: 1.8rem;
+    margin-bottom: 8px;
+}
+
+.pl-intro--portal p {
+    color: var(--text-light);
+}
+
+.pl-intro--portal + .planes-container {
+    padding-top: 32px;
+}
+
 /* ---------- Contenedor ---------- */
 .planes-container {
+    width: 100%; /* mismo motivo que .pl-intro--portal; en el sitio publico ya ocupaba todo, asi que no cambia nada */
     max-width: 1200px;
     margin: 0 auto;
     padding: 64px 24px var(--section-y);
