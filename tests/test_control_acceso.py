@@ -8,6 +8,7 @@ User = get_user_model()
 from django.test import Client, TestCase
 from django.urls import reverse
 from alumnos.models import Alumno, Genero, SolicitudRetiro, Tutor
+from tests.test_apoderados import entrar
 
 class AccesoPortalAdminTests(TestCase):
     """Las pantallas internas exigen sesion de admin; la de salida no."""
@@ -97,6 +98,52 @@ class CsrfEndpointsAlumnoTests(TestCase):
                 respuesta = self.client.post(reverse(nombre), '{}', content_type='application/json',
                                              HTTP_X_CSRFTOKEN=token)
                 self.assertNotEqual(respuesta.status_code, 403)
+
+
+class EndpointsJsonDelAlumnoTests(TestCase):
+    """inscribir_clase, sesiones_disponibles y reservar_sesion exigen sesion de alumno con la cuenta
+    activa (S-07). Antes bastaba con 'alumno_id' en la sesion: un alumno desactivado por el admin
+    seguia reservando hasta que la sesion expiraba."""
+    VISTAS = (('inscribir_clase', 'post'), ('sesiones_disponibles', 'get'), ('reservar_sesion', 'post'))
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user('40404040-4', password='x')
+        cls.alumno = Alumno.objects.create(user=cls.user, nivel_educacion='media')
+
+    def _pedir(self, nombre, metodo):
+        return getattr(self.client, metodo)(reverse(nombre))
+
+    def _rechazado_en_json(self, respuesta):
+        """401 con JSON: el portal lee data.message; una redireccion romperia su fetch."""
+        self.assertEqual(respuesta.status_code, 401)
+        self.assertFalse(respuesta.json()['success'])
+
+    def test_alumno_activo_si_entra(self):
+        entrar(self.client, self.user, alumno_id=self.alumno.id_alumno)
+        respuesta = self.client.get(reverse('sesiones_disponibles'))
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertTrue(respuesta.json()['success'])
+
+    def test_anonimo_recibe_401_en_json(self):
+        for nombre, metodo in self.VISTAS:
+            with self.subTest(vista=nombre):
+                self._rechazado_en_json(self._pedir(nombre, metodo))
+
+    def test_cuenta_desactivada_con_sesion_abierta_no_entra(self):
+        User.objects.filter(pk=self.user.pk).update(is_active=False)
+        for nombre, metodo in self.VISTAS:
+            with self.subTest(vista=nombre):
+                entrar(self.client, self.user, alumno_id=self.alumno.id_alumno)
+                self._rechazado_en_json(self._pedir(nombre, metodo))
+                self.assertNotIn('alumno_id', self.client.session)  # y se le cierra la sesion
+
+    def test_otro_rol_recibe_json_y_no_una_redireccion(self):
+        admin = User.objects.create_user('50505050-5', password='x')
+        entrar(self.client, admin, admin_id=Tutor.objects.create(user=admin).id_tutor)
+        for nombre, metodo in self.VISTAS:
+            with self.subTest(vista=nombre):
+                self._rechazado_en_json(self._pedir(nombre, metodo))
 
 
 class SolicitarRetiroTests(TestCase):

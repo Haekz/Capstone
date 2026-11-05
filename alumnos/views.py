@@ -38,7 +38,7 @@ from apoderados.permisos import clase_pagada_por_apoderado, vinculo_contratable
 from lbwus.puerta import destino_seguro
 from .forms import AlumnoForm, FiltroClasesForm
 from admin_portal.forms import MensajeContactoForm
-from .decorators import alumno_required, profesor_required_json, sesion_iniciada_required
+from .decorators import alumno_required, alumno_required_json, profesor_required_json, sesion_iniciada_required
 from .exceptions import InscripcionError
 from .services import InscripcionService, exigir_mayor_de_edad
 from .utils import es_menor
@@ -565,21 +565,10 @@ def logout_alumno(request):
 # INSCRIPCIÓN DE CLASES
 # ============================================================
 
+@alumno_required_json
 def inscribir_clase(request):
 
-    alumno_id = request.session.get(
-        'alumno_id'
-    )
-
-    if not alumno_id:
-
-        return JsonResponse({
-            'success': False,
-            'message': (
-                'Debes iniciar sesión como '
-                'alumno para inscribirte.'
-            )
-        })
+    alumno_id = request.session['alumno_id']
 
     if request.method == 'POST':
 
@@ -648,6 +637,7 @@ def inscribir_clase(request):
     })
 
 
+@alumno_required_json
 def listar_sesiones_disponibles(request):
     """Retorna las sesiones programadas a futuro con cupos libres en formato JSON."""
     clase_id = request.GET.get('clase_id')
@@ -660,17 +650,14 @@ def listar_sesiones_disponibles(request):
         .order_by('fecha_hora_inicio')
     )
 
-    alumno_id = request.session.get('alumno_id') if hasattr(request, 'session') else None
-    inscritas_sesion_ids = set()
-    if alumno_id:
-        inscritas_sesion_ids = set(
-            Inscripcion.objects.filter(
-                alumno_id=alumno_id,
-                sesion__isnull=False,
-                estado__in=['confirmada', 'pendiente']
-            )
-            .values_list('sesion_id', flat=True)
+    inscritas_sesion_ids = set(
+        Inscripcion.objects.filter(
+            alumno_id=request.session['alumno_id'],
+            sesion__isnull=False,
+            estado__in=['confirmada', 'pendiente']
         )
+        .values_list('sesion_id', flat=True)
+    )
 
     data = [
         {
@@ -696,14 +683,10 @@ def listar_sesiones_disponibles(request):
     return JsonResponse({'success': True, 'sesiones': data})
 
 
+@alumno_required_json
 def reservar_sesion(request):
     """Endpoint para que un alumno autenticado reserve un cupo en una SesionClase puntual."""
-    alumno_id = request.session.get('alumno_id')
-    if not alumno_id:
-        return JsonResponse({
-            'success': False,
-            'message': 'Debes iniciar sesión como alumno para reservar una sesión.'
-        }, status=401)
+    alumno_id = request.session['alumno_id']
 
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Método no permitido.'}, status=405)

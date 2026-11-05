@@ -29,6 +29,7 @@ from alumnos.models import (
     Inscripcion, PaqueteClases, Profesor, SesionClase
 )
 from alumnos.services import InscripcionService
+from tests.test_apoderados import entrar
 from tests.test_paquetes import dar_paquete
 from alumnos.exceptions import (
     InscripcionError,
@@ -463,6 +464,7 @@ class TestFiltrosSesionClase(TestCase):
 
     def test_04_api_listar_sesiones_con_filtro_clase_id(self):
         """El endpoint /alumnos/api/sesiones/?clase_id=X retorna solo sesiones disponibles de esa clase."""
+        entrar(self.client, self.alumno.user, alumno_id=self.alumno.pk)
         resp = self.client.get(reverse('sesiones_disponibles'), {'clase_id': self.clase1.pk})
         self.assertEqual(resp.status_code, 200)
         data = resp.json()
@@ -478,9 +480,7 @@ class TestFiltrosSesionClase(TestCase):
             alumno=self.alumno, clase=self.clase1, sesion=self.s1, estado=Inscripcion.ESTADO_CONFIRMADA
         )
 
-        session = self.client.session
-        session['alumno_id'] = self.alumno.pk
-        session.save()
+        entrar(self.client, self.alumno.user, alumno_id=self.alumno.pk)
 
         resp = self.client.get(reverse('sesiones_disponibles'))
         self.assertEqual(resp.status_code, 200)
@@ -553,27 +553,21 @@ class TestSeguridadReservasYControlAcceso(TestCase):
 
     def test_02_reserva_metodo_get_no_permitido_405(self):
         """Peticiones GET al endpoint de reserva reciben HTTP 405 Method Not Allowed."""
-        session = self.client.session
-        session['alumno_id'] = self.alumno1.pk
-        session.save()
+        entrar(self.client, self.u_alum1, alumno_id=self.alumno1.pk)
 
         resp = self.client.get(reverse('reservar_sesion'))
         self.assertEqual(resp.status_code, 405)
 
     def test_03_reserva_sin_id_retorna_400(self):
         """Petición POST sin id_sesion retorna HTTP 400 Bad Request."""
-        session = self.client.session
-        session['alumno_id'] = self.alumno1.pk
-        session.save()
+        entrar(self.client, self.u_alum1, alumno_id=self.alumno1.pk)
 
         resp = self.client.post(reverse('reservar_sesion'), data={})
         self.assertEqual(resp.status_code, 400)
 
     def test_04_reserva_sesion_inexistente_retorna_404(self):
         """Petición con id_sesion que no existe en BD retorna HTTP 404."""
-        session = self.client.session
-        session['alumno_id'] = self.alumno1.pk
-        session.save()
+        entrar(self.client, self.u_alum1, alumno_id=self.alumno1.pk)
 
         resp = self.client.post(reverse('reservar_sesion'), data={'id_sesion': 99999})
         self.assertEqual(resp.status_code, 404)
@@ -587,9 +581,7 @@ class TestSeguridadReservasYControlAcceso(TestCase):
             cupo_maximo=5, precio=Decimal('10000.00'), estado=SesionClase.ESTADO_PROGRAMADA
         )
 
-        session = self.client.session
-        session['alumno_id'] = self.alumno1.pk
-        session.save()
+        entrar(self.client, self.u_alum1, alumno_id=self.alumno1.pk)
 
         resp = self.client.post(
             reverse('reservar_sesion'),
