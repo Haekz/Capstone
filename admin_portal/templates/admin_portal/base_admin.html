@@ -214,17 +214,18 @@
 
 <!-- Script para controlar el cambio de interfaz (claro/oscuro) -->
 <script>
+    // El icono muestra a que modo se pasa al hacer clic (como en el portal del alumno y el sitio publico): luna en claro, sol en oscuro.
+    function sincronizarIconoDeTema() {
+        const isLight = document.body.classList.contains('light-mode');
+        document.getElementById('theme-icon').className = isLight ? 'bi bi-moon-stars-fill' : 'bi bi-sun-fill';
+    }
     function toggleTheme() {
         document.body.classList.toggle('light-mode');
-        const isLight = document.body.classList.contains('light-mode');
-        document.getElementById('theme-icon').className = isLight ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
-        localStorage.setItem('admin-theme', isLight ? 'light' : 'dark');
+        sincronizarIconoDeTema();
+        localStorage.setItem('admin-theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
     }
     // El tema ya se aplico al inicio del body; aqui solo se sincroniza el icono.
-    window.addEventListener('DOMContentLoaded', () => {
-        const isLight = document.body.classList.contains('light-mode');
-        document.getElementById('theme-icon').className = isLight ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
-    });
+    window.addEventListener('DOMContentLoaded', sincronizarIconoDeTema);
 
     // Menú lateral en móvil (abrir / cerrar)
     function toggleSidebar(force) {
