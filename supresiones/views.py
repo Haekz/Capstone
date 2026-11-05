@@ -10,6 +10,7 @@ from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
 
+from alumnos.portales import contexto_de_marco
 from soporte.models import Ticket
 from soporte.permisos import reporta_required
 
@@ -28,7 +29,8 @@ def _datos(request):
 def eliminar_cuenta(request):
     abierta = solicitud.abierta_de(request.user)
     if abierta:
-        return render(request, 'supresiones/en_curso.html', {'solicitud': abierta})
+        return render(request, 'supresiones/en_curso.html',
+                      {'solicitud': abierta, **contexto_de_marco(request, seccion='ayuda')})
     form = EntiendoForm(_datos(request))
     if request.method == 'POST' and form.is_valid():
         if identidad.pedir(request, request.user):
@@ -42,7 +44,7 @@ def eliminar_cuenta(request):
         return redirect('eliminar_cuenta')
     return render(request, 'supresiones/eliminar_cuenta.html',
                   {'form': form, 'evaluacion': evaluar(request.user),
-                   'plazo_dias': Ticket.DIAS_HABILES[Ticket.PRIVACIDAD]})
+                   'plazo_dias': Ticket.DIAS_HABILES[Ticket.PRIVACIDAD], **contexto_de_marco(request, seccion='ayuda')})
 
 
 @never_cache
@@ -61,4 +63,5 @@ def confirmar(request, token):
         messages.success(request, (f'Recibimos tu solicitud #{abierta.pk}. Te respondemos a más tardar el '
                                    f'{plazo:%d-%m-%Y}.') if creada else 'Ya tenías una solicitud abierta.')
         return redirect('mi_ticket', abierta.ticket_id)
-    return render(request, 'supresiones/confirmar.html', {'form': form, 'evaluacion': evaluar(request.user)})
+    return render(request, 'supresiones/confirmar.html', {'form': form, 'evaluacion': evaluar(request.user),
+                                                          **contexto_de_marco(request, seccion='ayuda')})

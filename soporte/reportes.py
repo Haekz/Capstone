@@ -46,7 +46,8 @@ def _contexto(ticket, form, **extra):
 @reporta_required
 def mis_tickets(request):
     tickets = Ticket.objects.filter(autor=request.user).order_by('-creado', '-id')
-    return render(request, 'soporte/mis_tickets.html', {'tickets': tickets, **contexto_de_marco(request, seccion='ayuda')})
+    return render(request, 'soporte/mis_tickets.html',
+                  {'tickets': tickets, **contexto_de_marco(request, seccion='ayuda')})
 
 
 @never_cache
@@ -90,7 +91,8 @@ def mi_ticket(request, id_ticket):
     form = MensajeForm(request.POST or None) if ticket.estado == Ticket.ABIERTO else None
     if _publicar(request, ticket, form, de_soporte=False):
         return redirect('mi_ticket', ticket.pk)
-    return render(request, 'soporte/mi_ticket.html', _contexto(ticket, form, **contexto_de_marco(request, seccion='ayuda')))
+    return render(request, 'soporte/mi_ticket.html',
+                  _contexto(ticket, form, **contexto_de_marco(request, seccion='ayuda')))
 
 
 @never_cache
