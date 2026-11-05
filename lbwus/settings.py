@@ -156,6 +156,15 @@ TEMPLATES = [
             ],
         },
     },
+    # Correos de texto plano (alumnos/correo.py): sin autoescape, que solo sirve en HTML y en un .txt
+    # convertia "O'Higgins" en "O&#x27;Higgins". Mismas carpetas; las paginas usan el motor de arriba.
+    {
+        'NAME': 'correo',
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [BASE_DIR / "templates",],
+        'APP_DIRS': True,
+        'OPTIONS': {'autoescape': False},
+    },
 ]
 LOGIN_REDIRECT_URL="menu"
 LOGOUT_REDIRECT_URL="home_adm"

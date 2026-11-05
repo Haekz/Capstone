@@ -146,6 +146,10 @@ H. **Revision juridica** del aviso de documentos y de las declaraciones v2 (apod
    pruebas apuntan a `alumnos.webpay._tx`) y sala virtual en `alumnos/sala_virtual.py`.
 10. **Revision visual en navegador** de todas las fases de apoderados (registro, revision admin, vinculos,
     invitacion de adolescentes, compra, reservas, revocacion, transicion a los 18).
+11. **Correos con entidades HTML: HECHO** (05-nov, `fran-dividir-archivos`). `render_to_string` escapa aunque la
+    plantilla sea .txt: "O'Higgins" llegaba como "O&#x27;Higgins" en los 28 correos. Ahora `alumnos.correo.enviar`
+    usa el motor de plantillas `correo` (settings.TEMPLATES, `autoescape: False`); las paginas siguen escapando.
+    Prueba: `tests/test_correo.py`. Al crear un correo nuevo, mandarlo por `enviar` (no por `send_mail` directo).
 
 ## Tanda 6 a 9 (03-nov, `fran-agenda`)
 - **6. El adolescente de 14 a 17 no contrata ni paga solo: HECHO.** Revisados todos los caminos: las 4 operaciones
