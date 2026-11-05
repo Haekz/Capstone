@@ -1,12 +1,14 @@
 """Correos de soporte: ticket asignado, ticket sin asignar, documentos por vencer,
-resumen de atrasados (al equipo y a quien espera) y respuestas en tickets de usuarios.
+resumen de atrasados (al equipo y a quien espera), respuestas en tickets de usuarios y
+casos escalados (a los administradores y su indicacion de vuelta a soporte).
 
 Sin datos personales de apoderados ni profesores: solo numero, categoria y plazo.
-Tampoco el texto de las respuestas. El detalle se ve en LBWUS. Excepcion: al visitante de
-Contactanos le llega la respuesta, porque no tiene cuenta donde leerla. Devuelven False si
-algun correo no salio.
+Tampoco el texto de las respuestas, los motivos ni las indicaciones. El detalle se ve en
+LBWUS. Excepcion: al visitante de Contactanos le llega la respuesta, porque no tiene cuenta
+donde leerla. Devuelven False si algun correo no salio.
 """
 
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 
 from alumnos.correo import enviar
@@ -22,10 +24,12 @@ def lideres():
     return AgenteSoporte.objects.filter(es_lider=True, user__is_active=True).select_related('user')
 
 
-def avisar_asignacion(ticket):
+def avisar_asignacion(ticket, escalado=False):
+    """``escalado``: un agente se lo paso al lider por ser grave."""
     agente = ticket.asignado
-    return enviar(f'Ticket #{ticket.pk} asignado', 'soporte/correo_asignacion.txt',
-                  {'nombre': agente.nombre, 'ticket': ticket}, agente.user.email)
+    asunto = f'Ticket #{ticket.pk} escalado a ti' if escalado else f'Ticket #{ticket.pk} asignado'
+    return enviar(asunto, 'soporte/correo_asignacion.txt',
+                  {'nombre': agente.nombre, 'ticket': ticket, 'escalado': escalado}, agente.user.email)
 
 
 def avisar_sin_asignar(ticket):
@@ -67,6 +71,25 @@ def avisar_contestacion(ticket):
     agente = ticket.asignado
     return enviar(f'Ticket #{ticket.pk}: el usuario contestó', 'soporte/correo_contestacion.txt',
                   {'nombre': agente.nombre, 'ticket': ticket}, agente.user.email)
+
+
+def avisar_escalamiento_admin(escalamiento):
+    """A cada administrador activo: un lider le escalo un caso."""
+    administradores = (get_user_model().objects.filter(perfil_tutor__isnull=False, is_active=True)
+                       .exclude(email=''))
+    ticket = escalamiento.ticket
+    return all([enviar(f'Caso escalado: ticket #{ticket.pk}', 'soporte/correo_escalamiento_admin.txt',
+                       {'nombre': admin.first_name, 'ticket': ticket}, admin.email)
+                for admin in administradores])
+
+
+def avisar_indicacion(escalamiento):
+    """Al lider que escalo y al agente del ticket (si es otro): el administrador respondio."""
+    ticket = escalamiento.ticket
+    personas = {escalamiento.autor, ticket.asignado.user if ticket.asignado else None} - {None}
+    return all([enviar(f'Ticket #{ticket.pk}: indicación del administrador', 'soporte/correo_indicacion.txt',
+                       {'nombre': persona.first_name, 'ticket': ticket}, persona.email)
+                for persona in personas if persona.email])
 
 
 def avisar_documentos_por_vencer(ticket, borra_el):

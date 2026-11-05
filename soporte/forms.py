@@ -68,3 +68,17 @@ class ReasignarForm(forms.Form):
         queryset=AgenteSoporte.objects.all(),
         error_messages={'required': 'Elige un agente.', 'invalid_choice': 'Ese agente no existe.'},
     )
+
+
+class EscalarForm(AccesibleMixin, forms.Form):
+    """Motivo obligatorio para escalar un caso grave (al lider o a un administrador)."""
+    motivo = forms.CharField(label='¿Por qué lo escalas?', max_length=1000, widget=forms.Textarea(attrs={'rows': 4}),
+                             help_text='Por ejemplo: amenaza legal, posible delito, datos de un menor expuestos.',
+                             error_messages={'required': 'Escribe por qué lo escalas.'})
+
+
+class IndicacionForm(AccesibleMixin, forms.Form):
+    """Lo que el administrador decide en un caso escalado; soporte lo ejecuta."""
+    indicacion = forms.CharField(label='Tu indicación para soporte', max_length=1000,
+                                 widget=forms.Textarea(attrs={'rows': 3}),
+                                 error_messages={'required': 'Escribe tu indicación para soporte.'})

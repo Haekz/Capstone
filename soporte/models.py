@@ -13,6 +13,8 @@
 - Cada asignacion queda registrada: quien tuvo el ticket, desde cuando y quien lo asigno.
 - Plazo en dias habiles por categoria (soporte/plazos.py). Reasignar no lo reinicia:
   el plazo es para quien espera la respuesta.
+- Un caso grave (legal, etc.) se escala con un motivo obligatorio: el agente al lider, que
+  lo toma; el lider a un administrador, que decide y soporte ejecuta (D5, revisada 05-nov).
 """
 
 from django.conf import settings
@@ -212,3 +214,34 @@ class Mensaje(models.Model):
 
     class Meta:
         ordering = ['fecha', 'id']
+
+
+class Escalamiento(models.Model):
+    """Un caso grave que sube un nivel, con su motivo. Al lider: el ticket pasa a ser suyo.
+    Al administrador: el ticket sigue en soporte; el admin ve solo el asunto y los motivos (no
+    documentos ni conversaciones), y deja una indicacion que soporte ejecuta."""
+    AL_LIDER = 'lider'
+    AL_ADMIN = 'admin'
+    DESTINOS = [(AL_LIDER, 'Al líder de soporte'), (AL_ADMIN, 'A un administrador')]
+
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='escalamientos')
+    destino = models.CharField(max_length=5, choices=DESTINOS)
+    autor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='+')
+    motivo = models.TextField(max_length=1000)
+    fecha = models.DateTimeField(auto_now_add=True)
+    indicacion = models.TextField(max_length=1000, blank=True)
+    indicado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                     related_name='+')
+    indicado = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['fecha', 'id']
+        constraints = [
+            # Hasta que el admin responda, no se le vuelve a escalar el mismo ticket.
+            models.UniqueConstraint(fields=['ticket'], condition=Q(destino='admin', indicado__isnull=True),
+                                    name='un_escalamiento_al_admin_pendiente'),
+        ]
+
+    @property
+    def pendiente(self):
+        return self.destino == self.AL_ADMIN and self.indicado is None

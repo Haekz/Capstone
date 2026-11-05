@@ -2,15 +2,14 @@
 
 Un aviso es algo que espera una accion de esa persona, con su plazo. Desaparece
 solo cuando se resuelve, asi que no hay "leido" que guardar. Cada rol ve lo
-suyo: el admin, los retiros de los profesores y las reseñas reportadas (titulos
-y reportes de usuarios son de soporte);
+suyo: el admin, los retiros de los profesores, las reseñas reportadas y los casos
+que soporte le escala (titulos y reportes de usuarios son de soporte);
 el agente de soporte, sus tickets por vencer o atrasados; el lider, ademas, los
 tickets que nadie atiende y los atrasos del equipo.
 """
 
 from dataclasses import dataclass
 
-from django.db.models import F
 from django.urls import reverse
 from django.utils import timezone
 
@@ -20,8 +19,8 @@ from alumnos.templatetags.dinero import clp
 from mensajes import revision
 from resenas.models import ReporteResena
 from soporte import plazos
-from soporte.models import AgenteSoporte, Ticket
-from soporte.permisos import tickets_del_agente
+from soporte.models import AgenteSoporte, Escalamiento, Ticket
+from soporte.permisos import con_agente, tickets_del_agente
 
 
 @dataclass(frozen=True)
@@ -50,7 +49,8 @@ def _suman(retiros):
 
 
 def _de_admin(hoy):
-    """Retiros (por revisar, para pagar hoy o atrasados, en espera) y reseñas por moderar."""
+    """Retiros (por revisar, para pagar hoy o atrasados, en espera), reseñas por moderar y
+    casos escalados por soporte."""
     finanzas = reverse('dashboard_admin') + '#section-finanzas'
     avisos = []
 
@@ -104,6 +104,15 @@ def _de_admin(hoy):
             '1 reseña reportada' if resenas == 1 else f'{resenas} reseñas reportadas',
             f'Por moderar. El reporte más antiguo llegó {_hace(timezone.localdate(primero.creado), hoy)}.',
             reverse('resenas_moderacion')))
+
+    escalados = Escalamiento.objects.filter(destino=Escalamiento.AL_ADMIN, indicado__isnull=True)
+    primero = escalados.order_by('fecha').first()
+    if primero:  # casos graves por definicion: siempre urgentes
+        cantidad = escalados.count()
+        avisos.append(Aviso(
+            '1 caso escalado por soporte' if cantidad == 1 else f'{cantidad} casos escalados por soporte',
+            f'Esperan tu indicación. El más antiguo llegó {_hace(timezone.localdate(primero.fecha), hoy)}.',
+            reverse('casos_escalados'), urgente=True))
     return avisos
 
 
@@ -133,22 +142,22 @@ def _de_agente(request, ahora):
 def _del_lider(agente_id, ahora):
     """Lo que solo resuelve el lider: tickets que ningun agente ve y atrasos de otros agentes.
 
-    "Con agente" es la regla de tickets_del_agente: asignado y habilitado en la categoria.
+    "Con agente" es la regla de tickets_del_agente (soporte.permisos.con_agente).
     Si al agente le quitan la categoria, sus tickets quedan sin nadie que los vea.
     """
     panel = reverse('panel_soporte')
     abiertos = Ticket.objects.filter(estado=Ticket.ABIERTO)
-    con_agente = abiertos.filter(asignado__habilitaciones__categoria=F('categoria'))
+    atendidos = con_agente(abiertos)
     avisos = []
 
-    sin_agente = list(abiertos.exclude(pk__in=con_agente.values('pk')))
+    sin_agente = list(abiertos.exclude(pk__in=atendidos.values('pk')))
     if sin_agente:
         avisos.append(Aviso(
             f'{_tickets(len(sin_agente))} sin agente',
             'Sin asignar, o su agente ya no está habilitado en la categoría: nadie los ve. Reasígnalos.',
             panel, urgente=any(t.respondido is None and t.vence < ahora for t in sin_agente)))
 
-    atrasados = list(con_agente.filter(respondido__isnull=True, vence__lt=ahora)
+    atrasados = list(atendidos.filter(respondido__isnull=True, vence__lt=ahora)
                      .exclude(asignado_id=agente_id).order_by('vence'))  # los propios ya salen arriba
     if atrasados:
         primero = atrasados[0]

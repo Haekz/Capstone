@@ -36,7 +36,7 @@ Suite completa verde en las tres ramas. Ojo: el `main` local estaba 4 commits at
 | D2 | El **admin deja de ver documentos** (carnet, certificados, títulos). |
 | D3 | Asignación **mixta**: automática al agente con menos carga y el líder reasigna. |
 | D4 | Plazos: **verificaciones (apoderados, títulos) 5 días hábiles**; **pagos y clases 2 días hábiles**. |
-| D5 | **Todos los reportes van a soporte.** El admin no atiende casos. |
+| D5 | **Todos los reportes van a soporte.** El admin no atiende casos. *Revisada el 05-nov:* un caso grave (legal, posible delito, riesgo para un menor) se **escala con motivo obligatorio**: el agente al lider (el ticket pasa a ser del lider con menos carga, aunque no atienda esa categoria) y el lider a un administrador. El admin **decide y soporte ejecuta**: en "Casos escalados" ve asunto, categoria, plazo y motivos (no documentos ni conversaciones) y deja una indicacion obligatoria; el ticket sigue en soporte. El plazo no cambia. Ver `soporte/escalamientos.py` y `admin_portal/escalados.py` |
 | D6 | El **admin ve métricas**: ingresos por día, ganancias, resumen de retiros, registros. |
 | D7 | **Soporte es la primera capa en pagos**: revisa qué falló y si el usuario se equivocó. No mueve dinero. |
 | D8 | **Los retiros de profesores los valida y aprueba siempre el admin.** |

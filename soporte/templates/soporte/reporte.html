@@ -42,5 +42,5 @@
         {% endif %}
     </div>
 </div>
-<p style="margin-top:18px;"><a href="{% url 'panel_soporte' %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a mis tickets</a></p>
+<p style="margin-top:18px;">{% if ticket.estado == 'abierto' %}<a href="{% url 'soporte_escalar' ticket.pk %}"><i class="bi bi-arrow-up-circle" aria-hidden="true"></i> Escalar este caso / ver historial</a> · {% endif %}<a href="{% url 'panel_soporte' %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a mis tickets</a></p>
 {% endblock %}

@@ -1,6 +1,6 @@
 Hola {{ nombre }},
 
-Tienes un ticket nuevo en LBWUS:
+{% if escalado %}Un agente te escaló un caso grave en LBWUS. Ahora es tuyo; el motivo está en el panel:{% else %}Tienes un ticket nuevo en LBWUS:{% endif %}
 
 - Ticket #{{ ticket.pk }}: {{ ticket.get_categoria_display }}
 - Vence: {{ ticket.vence|date:"d-m-Y H:i" }} (hora de Chile)
