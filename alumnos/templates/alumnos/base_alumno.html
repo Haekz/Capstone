@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="{% static 'alumnos/css/alumn_1.css' %}?v=2.3">
+    <link rel="stylesheet" href="{% static 'alumnos/css/alumn_1.css' %}?v=2.5">
     <link rel="stylesheet" href="{% static 'alumnos/css/avisos.css' %}">
     <link rel="stylesheet" href="{% static 'notificaciones/campanita.css' %}">
     {% block extra_css %}{% endblock %}
@@ -242,7 +242,7 @@
             const temas = document.getElementById('nav-open-interests');
             if (temas) temas.addEventListener('click', () => irAlPortal('temas'));
             // La vista dice a qué sección del menú pertenece la página (seccion_menu) para marcar su botón
-            const vistaMenu = {ayuda: 'view-support'}['{{ seccion_menu|default:""|escapejs }}'];
+            const vistaMenu = {ayuda: 'view-support', paquetes: 'view-plans'}['{{ seccion_menu|default:""|escapejs }}'];
             document.querySelectorAll('.sidebar-view-btn').forEach(btn =>
                 btn.classList.toggle('active', btn.dataset.view === vistaMenu));
         }

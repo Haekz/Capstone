@@ -4578,6 +4578,9 @@ body.dark-mode .stat-icon {
 #portal-alumno {
     --surface: var(--white);
     --border: var(--line);
+    --secondary: #1a1233;                      /* los de styles.css que usa planes.css */
+    --accent-dark: #d98a0c;
+    --section-y: 64px;                         /* el sitio publico usa hasta 112px bajo el contenido */
     --enlace: var(--primary);                  /* ~8.4:1 sobre blanco */
 }
 
@@ -4587,7 +4590,7 @@ body.dark-mode .stat-icon {
 
 /* El color de los enlaces lo daba styles.css (que el portal no carga): sin esto quedan en azul de navegador, ilegible de
    noche. :where() da especificidad 0: un enlace con clase propia manda sobre esta regla. */
-:where(#portal-alumno .perfil-prof a:not([class])) {
+:where(#portal-alumno :is(.perfil-prof, .planes-header) a:not([class])) {
     color: var(--enlace);
 }
 

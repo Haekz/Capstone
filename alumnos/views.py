@@ -41,6 +41,7 @@ from .decorators import alumno_required, profesor_required_json, sesion_iniciada
 from .exceptions import InscripcionError
 from .services import InscripcionService, exigir_mayor_de_edad
 from .utils import es_menor
+from .portales import contexto_de_marco
 from .templatetags.dinero import clp as _clp  # mismo formato en vistas y plantillas
 from .roles import (
     ALUMNO,
@@ -159,6 +160,8 @@ def planes(request):
         })
 
     return render(request, 'alumnos/planes.html', {
+        # Primero el marco: las claves propias de Planes (es_menor...) mandan sobre las suyas
+        **contexto_de_marco(request, seccion='paquetes'),
         'profesores': Profesor.objects.habilitados().select_related('user', 'especialidad')
                                                     .order_by('user__first_name', 'user__last_name'),
         'profesor': profesor,

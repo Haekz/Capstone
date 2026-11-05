@@ -52,7 +52,8 @@ class EliminarCuentaEnElPortalTests(BaseResenas):
                 r = self.client.get(url)
                 self.assertTemplateUsed(r, 'alumnos/base_alumno.html')
                 self.assertContains(r, '<h1 id="portal-title">Eliminar mi cuenta</h1>')
-                self.assertContains(r, "{ayuda: 'view-support'}['ayuda']")
+                self.assertContains(r, "ayuda: 'view-support'")
+                self.assertContains(r, "}['ayuda']")
                 self.assertEqual(r.content.decode().count('<h1'), 1)
 
     def test_el_docente_las_ve_en_su_portal_con_ayuda_marcada(self):

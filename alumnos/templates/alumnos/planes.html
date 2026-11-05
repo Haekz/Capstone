@@ -1,18 +1,22 @@
-{% extends 'alumnos/base.html' %}
+{% extends base|default:'alumnos/base.html' %}
 {% load static dinero %}
 
 {% block title %}LBWUS | Planes{% endblock %}
+{% block page_title %}{% if titulo_en_barra %}Planes y precios{% else %}{{ block.super }}{% endif %}{% endblock %}
+{% block page_subtitle %}{% if titulo_en_barra %}Elige cuántas clases quieres{% else %}{{ block.super }}{% endif %}{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'alumnos/css/planes.css' %}">
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'alumnos/css/planes.css' %}?v=3">
 {% endblock %}
 
 {% block content %}
 {# Todos los precios vienen del servidor (alumnos/paquetes.py): esta pagina no calcula nada. #}
-<section class="sv-intro pl-intro">
-    <div class="contenedor">
-        <span class="sv-eyebrow">Planes</span>
-        <h1>Elige cuántas clases quieres</h1>
+{# Fuera de un portal, el hero del sitio publico (styles.css); dentro, una cabecera compacta (planes.css) #}
+<section class="{% if en_portal %}pl-intro--portal{% else %}sv-intro{% endif %} pl-intro">
+    <div{% if not en_portal %} class="contenedor"{% endif %}>
+        {% if not en_portal %}<span class="sv-eyebrow">Planes</span>{% endif %}
+        {% if not titulo_en_barra %}<h1>Elige cuántas clases quieres</h1>{% endif %}
         <p>Compras un paquete de clases con el profesor que elijas. Mientras más clases, menor el precio de cada una.</p>
         <div class="pl-intro-notes">
             <span><i class="bi bi-clock" aria-hidden="true"></i> Clases de {{ duracion_clase }} minutos</span>
@@ -154,9 +158,8 @@
         <button class="modal-info-close" id="close-modal-btn">Entendido</button>
     </div>
 </section>
-{% endblock %}
 
-{% block extra_js %}
+{# Va dentro de content y no en extra_js: ese bloque solo existe en la base publica, y en los portales el modal no se podia cerrar #}
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         // Cierre del modal de bienvenida

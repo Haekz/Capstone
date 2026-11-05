@@ -55,7 +55,8 @@ class TicketsEnElPortalTests(BaseResenas):
                 r = self.client.get(self.url(nombre, self.ana.user))
                 self.assertTemplateUsed(r, 'alumnos/base_alumno.html')
                 self.assertContains(r, '<aside class="sidebar-menu"')
-                self.assertContains(r, "{ayuda: 'view-support'}['ayuda']")  # el JS marca Soporte / Reportes
+                self.assertContains(r, "ayuda: 'view-support'")  # el JS sabe a que boton corresponde la seccion...
+                self.assertContains(r, "}['ayuda']")  # ...y la vista pidio esa seccion
                 self.assertEqual(r.content.decode().count('<h1'), 1)  # el de la barra; no se repite en la pagina
 
     def test_el_alumno_lee_la_seccion_en_la_barra(self):
