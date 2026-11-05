@@ -29,7 +29,7 @@
                     <td>{{ t.asunto }}</td>
                     <td>{{ t.creado|date:"d-m-Y H:i" }}</td>
                     <td>{{ t.vence|date:"d-m-Y H:i" }}{% if t.atrasado %} <span class="badge">Atrasado</span>{% endif %}</td>
-                    <td><a href="{% if t.autor_id %}{% url 'soporte_reporte' t.pk %}{% elif t.categoria == 'titulos' %}{% url 'titulos_adm' %}{% else %}{% url 'apoderados_revision' %}{% endif %}">Revisar</a></td>
+                    <td><a href="{% if t.es_conversacion %}{% url 'soporte_reporte' t.pk %}{% elif t.categoria == 'titulos' %}{% url 'titulos_adm' %}{% else %}{% url 'apoderados_revision' %}{% endif %}">Revisar</a></td>
                 </tr>
                 {% empty %}
                 <tr><td colspan="6">No tienes tickets abiertos.</td></tr>
@@ -54,7 +54,7 @@
                 <tr>
                     <td>#{{ t.pk }}</td>
                     <td><span class="badge">{{ t.get_categoria_display }}</span></td>
-                    <td>{% if t.autor_id %}<a href="{% url 'soporte_reporte' t.pk %}">{{ t.asunto }}</a>{% else %}{{ t.asunto }}{% endif %}</td>
+                    <td>{% if t.es_conversacion %}<a href="{% url 'soporte_reporte' t.pk %}">{{ t.asunto }}</a>{% else %}{{ t.asunto }}{% endif %}</td>
                     <td>{{ t.creado|date:"d-m-Y H:i" }}</td>
                     <td>{{ t.vence|date:"d-m-Y H:i" }}{% if t.atrasado %} <span class="badge">Atrasado</span>{% endif %}</td>
                     <td>{% if t.asignado %}{{ t.asignado.nombre }}{% else %}<span class="badge">Sin asignar</span>{% endif %}</td>

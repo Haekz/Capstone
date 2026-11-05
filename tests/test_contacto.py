@@ -1,19 +1,17 @@
-"""Formulario de contacto: el mensaje se guarda de verdad y el administrador lo ve.
+"""Formulario de contacto: el mensaje se guarda de verdad y abre un ticket de soporte.
 
-Antes la pagina mostraba "Mensaje Enviado" sin mandar nada. Datos ficticios.
+Antes la pagina mostraba "Mensaje Enviado" sin mandar nada. Lo que hace soporte con el
+ticket: test_contacto_soporte. Datos ficticios.
 """
 
-from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.test import TestCase
 from django.urls import reverse
 
 from admin_portal.models import MensajeContacto
-from alumnos.models import Tutor
 from alumnos.views import LIMITE_CONTACTO
-from tests.test_apoderados import CLAVE, entrar
+from soporte.models import Ticket
 
-User = get_user_model()
 URL = reverse('contactos')
 
 
@@ -31,12 +29,13 @@ class EnvioTests(TestCase):
         for campo in ('name="nombre"', 'name="correo"', 'name="mensaje"', 'csrfmiddlewaretoken'):
             self.assertContains(respuesta, campo)
 
-    def test_el_mensaje_se_guarda(self):
+    def test_el_mensaje_se_guarda_y_abre_su_ticket(self):
         respuesta = self.client.post(URL, datos())
         self.assertEqual(respuesta.json(), {'success': True})
         mensaje = MensajeContacto.objects.get()
         self.assertEqual((mensaje.nombre, mensaje.correo, mensaje.mensaje),
                          ('Ana Ficticia', 'ana@example.com', '¿Tienen clases de física?'))
+        self.assertEqual(mensaje.ticket.categoria, Ticket.CONTACTO)
 
     def test_datos_invalidos_no_se_guardan_y_se_explica_por_que_en_espanol(self):
         casos = (({'correo': 'no-es-correo'}, 'Por favor, ingresa un correo válido.'),
@@ -48,6 +47,7 @@ class EnvioTests(TestCase):
                 self.assertEqual(respuesta.status_code, 400)
                 self.assertEqual(respuesta.json(), {'success': False, 'message': explicacion})
         self.assertFalse(MensajeContacto.objects.exists())
+        self.assertFalse(Ticket.objects.exists())
 
     def test_tope_de_mensajes_por_ip(self):
         for _ in range(LIMITE_CONTACTO):
@@ -57,21 +57,3 @@ class EnvioTests(TestCase):
         self.assertEqual(MensajeContacto.objects.count(), LIMITE_CONTACTO)
         otra_ip = self.client.post(URL, datos(), REMOTE_ADDR='10.0.0.2')
         self.assertEqual(otra_ip.status_code, 200)
-
-
-class BandejaDelAdministradorTests(TestCase):
-
-    def test_el_administrador_ve_los_mensajes_escapados(self):
-        MensajeContacto.objects.create(nombre='<script>alert(1)</script>', correo='x@example.com', mensaje='Hola')
-        admin = User.objects.create_user('10101010-1', password=CLAVE, rol='admin', first_name='Admin')
-        entrar(self.client, admin, admin_id=Tutor.objects.create(user=admin).id_tutor)
-
-        respuesta = self.client.get(reverse('contactos_adm'))
-
-        self.assertContains(respuesta, '&lt;script&gt;alert(1)&lt;/script&gt;')
-        self.assertNotContains(respuesta, '<script>alert(1)</script>')
-        self.assertNotContains(respuesta, 'No hay mensajes de contacto aún')
-
-    def test_un_anonimo_no_ve_los_mensajes(self):  # los demas roles: test_control_acceso
-        MensajeContacto.objects.create(nombre='Ana Ficticia', correo='ana@example.com', mensaje='Hola')
-        self.assertNotContains(self.client.get(reverse('contactos_adm')), 'ana@example.com', status_code=302)

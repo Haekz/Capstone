@@ -118,8 +118,8 @@ def _de_agente(request, ahora):
                    .filter(respondido__isnull=True, vence__lte=plazos.vencimiento(ahora, 1))
                    .order_by('vence')):
         vence = timezone.localtime(ticket.vence)
-        # El de un usuario se abre en su conversacion; las verificaciones, desde el panel.
-        url = reverse('soporte_reporte', args=[ticket.pk]) if ticket.autor_id else reverse('panel_soporte')
+        # El de un usuario o visitante se abre en su conversacion; las verificaciones, desde el panel.
+        url = reverse('soporte_reporte', args=[ticket.pk]) if ticket.es_conversacion else reverse('panel_soporte')
         if ticket.vence < ahora:
             avisos.append(Aviso(f'Ticket #{ticket.pk} atrasado', f'{ticket.asunto}. Venció el {vence:%d/%m}.',
                                 url, urgente=True))

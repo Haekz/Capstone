@@ -16,8 +16,6 @@ from . import ingresos, metricas
 logger = logging.getLogger(__name__)
 
 
-from .models import MensajeContacto
-
 # Solo redirige al panel: regis_tutor.html envía aquí tras registrarse.
 def menu(request):
     admin_id = request.session.get('admin_id')
@@ -104,13 +102,6 @@ def planes_adm(request):
 def nosotros_adm(request):
     context = {}
     return render(request, 'admin_portal/nosotros_adm.html', context)
-
-
-@never_cache
-@admin_required
-def contactos_adm(request):
-    context = {'mensajes': MensajeContacto.objects.all()[:100]}  # los 100 mas recientes
-    return render(request, 'admin_portal/contactos_adm.html', context)
 
 # --- Vistas CRUD ---
 @never_cache

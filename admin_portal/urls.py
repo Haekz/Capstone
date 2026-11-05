@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import (
-    menu, reporte_alumnos, home_adm, planes_adm, nosotros_adm, contactos_adm,
+    menu, reporte_alumnos, home_adm, planes_adm, nosotros_adm,
     crud, alumnos_Add, alumnos_del, alumnos_findEdit, alumnos_Update,
     dashboard_admin, logout_admin, crear_clase, eliminar_clase,
     aprobar_retiro, rechazar_retiro, marcar_pagado_retiro
@@ -15,7 +15,6 @@ urlpatterns = [
     path('home_adm', home_adm, name='home_adm'),
     path('planes_adm', planes_adm, name='planes_adm'),
     path('nosotros_adm', nosotros_adm, name='nosotros_adm'),
-    path('contactos_adm', contactos_adm, name='contactos_adm'),
     path('crear_clase/', crear_clase, name='crear_clase'),
     path('eliminar_clase/<int:pk>/', eliminar_clase, name='eliminar_clase'),
     path('aprobar_retiro/<int:pk>/', aprobar_retiro, name='aprobar_retiro'),

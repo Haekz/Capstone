@@ -31,13 +31,13 @@ Por mergear en GitHub: `fran-soporte-2b1` -> `fran-soporte-2b2` -> `fran-contact
 | 6e-limpieza | CSS de reportes sin uso en admin_panel.css y textos de home_adm | Hecho (d9abd67) |
 | D17-disculpa | Conducta: aviso al equipo diario, disculpa al usuario cada 3 dias habiles | Hecho (0d1a25f). 610 pruebas OK |
 | 6e-3b | Boton "Reportar problema con este pago" tras rechazo de Webpay, con la orden precargada (4.7) | Hecho (872f400). 607 pruebas OK |
-| 6e-3a | Bandeja de contacto pasa del admin a soporte (H14) | **BLOQUEADO**: `MensajeContacto` vive en `fran-contacto` (97526a9), que esta rama no contiene. Hacerlo despues de que `fran-contacto` llegue a `main` |
+| 6e-3a | Bandeja de contacto pasa del admin a soporte (H14) | Hecho (05-nov, `fran-contacto-soporte`): cada mensaje de Contactanos es un ticket de la categoria Contacto (5 dias habiles); el agente responde y al visitante le llega la respuesta por correo (sin citar su mensaje: el correo no esta verificado), o lo cierra sin responder si es spam. El admin ya no tiene la pagina Contactos. Migracion soporte 0010. **Al desplegar: habilitar al menos un agente en la categoria Contacto** |
 | login-next | El login no respeta `?next=`: quien llega sin sesion al boton de pago pierde la orden precargada | Hecho (04a5e66), con `destino_seguro`. 609 pruebas OK. Matriz ID-23 |
-| 7 | 3b: resto de reportes a soporte, conducta solo lideres | Hecho con 6d y 6e (tecnico/otro son tickets, conducta restringida, admin sin reportes). Solo falta H14 |
+| 7 | 3b: resto de reportes a soporte, conducta solo lideres | Hecho con 6d, 6e y H14 (tecnico/otro y contacto son tickets, conducta restringida, admin sin reportes) |
 | 8 | Metricas del admin (ganancias reales, ingresos, registros) | Completo segun DECISIONES (P12, P13, H7, H8, H9). En `fran-metricas-admin-2`: 8d H8 personas que entran por dia, solo el numero por rol, sin guardar quien (4484963, migracion admin_portal 0001); 8e P12 comision estimada y saldo disponible de profesores (8ec534b); 8f P13 soporte en cifras sin contenido (c7dfb23); 8g H9 registros por dia/mes/trimestre (f13d492). Queda opcional: historial de personas por dia (hoy solo la tarjeta de hoy). Hecho antes en `fran-metricas-admin`: 8a finanzas reales (cobrado, ganancia LBWUS = 15% de clases dictadas, por dictar; segun POLITICA_PAQUETES), 8b grafico de registros reales por mes, 8c-1 campana del admin con plazos de retiros (fuera avisos falsos), 8c-2 campana del agente de soporte (sus tickets atrasados / por vencer), 8c-3 lider (tickets sin agente, incluidos los de agentes sin la categoria, y atrasos del equipo). En `fran-pendientes-chicos`: resenas reportadas en la campana del admin (45476ef) y `planes_adm.html` con los paquetes reales (769cd7f) |
 | 9 | PDF: original cifrado + imagen con marca de agua | Hecho en `fran-pdf-protegido` (decidido 02-nov: apoderados y titulos; titulos cifrados en la base; original del titulo se borra al decidir; maximo 3 paginas). 9a apoderados aceptan PDF (a8d5011); 9b-1 titulos cifrados en la base, migracion alumnos 0018 (f847cb2); 9b-2 comando `pasar_titulos_a_base` (24c6244). **Al desplegar: instalar requirements (pypdfium2), `migrate` y correr una vez `manage.py pasar_titulos_a_base`.** FALTA 9b-3 (despues de ese deploy): quitar `titulo_archivo` y actualizar `usabilidad/verificar_google_titulo.py` |
 | 10 | CSS muerto del carrito | Hecho en `fran-css-carrito` (styles.css, alumn_1.css, planes.css). Restos fuera del CSS (orden_pendiente con carrito en `test_flujos_funcionales`, flujo `/alumnos/pago` en `usabilidad/recorrido.py`) retirados en `fran-pendientes-chicos` (03a514b) |
-| 11 | Seguridad S-07 (punto 1) | |
+| 11 | Seguridad S-07 (punto 1) | Hecho (05-nov, `fran-reservas-rol`, 67ec6b6): `@alumno_required_json` en las tres vistas de reserva. 1365 pruebas OK |
 
 ### Commits por subir, en orden (no subir hasta que Fran lo pida)
 Cada rama sale de la anterior; subirlas y mergearlas en este orden. Comando: `git push -u origin <rama>`.
@@ -81,12 +81,9 @@ El enlace de cambio de cuenta exige sesion: si el profesor no la tiene, entra y 
 Decidido (31-oct): si el lunes de pago es feriado, se paga el siguiente dia habil (`alumnos/liquidacion.py`).
 
 ## Seguridad
-1. **Cinco vistas de alumno sin decorador de rol (resto de S-07).** `inscribir_clase`,
-   `listar_sesiones_disponibles`, `reservar_sesion`, `sala_virtual` e `iniciar_directo` (alumnos/views.py;
-   `enviar_reporte` se retiro en 6e)
-   usan la sesion sin `@alumno_required`: un alumno desactivado con sesion abierta las sigue usando hasta
-   que expira. Hacerlo DESPUES de mergear apoderados (1c-ii cambia sala_virtual y reservar_sesion).
-   `sala_virtual` la usa tambien el profesor: no basta con poner `@alumno_required`.
+1. **HECHO (05-nov, `fran-reservas-rol`): vistas de alumno sin decorador de rol (resto de S-07).** `inscribir_clase`,
+   `listar_sesiones_disponibles` y `reservar_sesion` usan `@alumno_required_json`; `iniciar_directo` ya tenia
+   `@profesor_required_json` y `sala_virtual` ya bloqueaba cuentas inactivas.
    Documentado en docs/MATRIZ_IDENTIDAD.md.
 2. **Confirmar en Railway la IP real.** S4-02 asume que Railway agrega la IP del cliente AL FINAL de
    `X-Forwarded-For`. Verificarlo en un deploy real (log de la cabecera en un login de prueba).

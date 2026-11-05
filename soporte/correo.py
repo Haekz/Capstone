@@ -2,7 +2,8 @@
 resumen de atrasados (al equipo y a quien espera) y respuestas en tickets de usuarios.
 
 Sin datos personales de apoderados ni profesores: solo numero, categoria y plazo.
-Tampoco el texto de las respuestas. El detalle se ve en LBWUS. Devuelven False si
+Tampoco el texto de las respuestas. El detalle se ve en LBWUS. Excepcion: al visitante de
+Contactanos le llega la respuesta, porque no tiene cuenta donde leerla. Devuelven False si
 algun correo no salio.
 """
 
@@ -41,13 +42,24 @@ def avisar_conducta(ticket):
                 for lider in lideres()])
 
 
-def avisar_respuesta(ticket):
+def avisar_respuesta(ticket, texto):
     """Al usuario que abrio el ticket: soporte respondio (o lo cerro). Un menor puede no
     tener correo: lo ve al entrar."""
+    if ticket.contacto_id:
+        return _responder_contacto(ticket, texto)
     if not ticket.autor.email:
         return False
     return enviar(f'Respuesta en tu ticket #{ticket.pk}', 'soporte/correo_respuesta.txt',
                   {'nombre': ticket.autor.first_name, 'ticket': ticket}, ticket.autor.email)
+
+
+def _responder_contacto(ticket, texto):
+    """Al visitante de Contactanos, con la respuesta: es su unico canal. No repite lo que
+    escribio: el correo no esta verificado, y citarlo dejaria a cualquiera mandar su propio
+    texto a un tercero con el remitente de LBWUS."""
+    contacto = ticket.contacto
+    return enviar('Respuesta a tu mensaje a LBWUS', 'soporte/correo_respuesta_contacto.txt',
+                  {'nombre': contacto.nombre, 'texto': texto}, contacto.correo)
 
 
 def avisar_contestacion(ticket):
@@ -101,9 +113,10 @@ def avisar_atrasados(hoy):
 
 
 def _disculpar_atraso(ticket):
-    """A quien espera: sin datos del caso, solo numero y categoria. Sin correo, nada."""
+    """A quien espera: sin datos del caso, solo numero y categoria. Sin correo, nada.
+    Tampoco al visitante de Contactanos: el aviso lo manda a una cuenta que no tiene."""
     persona = ticket.solicitante
-    if not persona.email:
+    if persona is None or not persona.email:
         return False
     return enviar(f'Tu solicitud #{ticket.pk} va con atraso', 'soporte/correo_atraso_usuario.txt',
                   {'nombre': persona.first_name, 'ticket': ticket}, persona.email)

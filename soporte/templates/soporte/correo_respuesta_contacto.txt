@@ -1,0 +1,12 @@
+{% autoescape off %}{# Texto plano: sin escapar, o un apostrofo llegaria como &#x27; #}Hola {{ nombre }},
+
+Gracias por escribirnos a través del formulario de contacto de LBWUS. Esta es nuestra respuesta:
+
+{{ texto }}
+
+Si necesitas algo más, escríbenos de nuevo desde la página Contáctanos: así tu mensaje llega directo al equipo de soporte.
+
+Nunca te pediremos tu contraseña ni datos de tarjetas por correo.
+
+Equipo LBWUS
+{% endautoescape %}

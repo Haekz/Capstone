@@ -43,6 +43,14 @@ def abrir_reporte(autor, categoria, titulo, descripcion, estudiante=None):
         return _crear(categoria, autor=autor, titulo=titulo, descripcion=descripcion, estudiante=estudiante)
 
 
+def abrir_contacto(mensaje):
+    """Guarda el ``MensajeContacto`` (sin guardar) del formulario publico y abre su ticket (H14):
+    los dos o ninguno."""
+    with transaction.atomic():
+        mensaje.save()
+        return _crear(Ticket.CONTACTO, contacto=mensaje)
+
+
 def _crear(categoria, **campos):
     """Crea el ticket con su plazo y lo asigna al agente con menos carga. Conducta:
     los lideres se enteran siempre (N5), y ese aviso ya dice si quedo sin asignar."""
@@ -71,11 +79,22 @@ def resolver(ticket):
     cerrar_tickets(Ticket.objects.filter(pk=ticket.pk))
 
 
-def agregar_mensaje(ticket, autor, texto, de_soporte, cerrar=False):
-    """Respuesta en un ticket de usuario abierto. Soporte puede cerrarlo con ella, y su
-    primera respuesta cumple el plazo. Avisa a la otra parte, sin el texto: se lee en LBWUS."""
+def _exigir_abierto(ticket):
     if ticket.estado != Ticket.ABIERTO:
         raise ValidationError('Ese ticket ya está cerrado.')
+
+
+def cerrar_sin_respuesta(ticket):
+    """Contacto que no necesita respuesta (spam, repetido): se cierra sin correo y cumple el plazo."""
+    _exigir_abierto(ticket)
+    resolver(ticket)
+
+
+def agregar_mensaje(ticket, autor, texto, de_soporte, cerrar=False):
+    """Respuesta en un ticket de usuario abierto. Soporte puede cerrarlo con ella, y su
+    primera respuesta cumple el plazo. Avisa a la otra parte; al visitante de Contactanos,
+    con el texto, porque no tiene donde leerlo (soporte/correo.avisar_respuesta)."""
+    _exigir_abierto(ticket)
     with transaction.atomic():
         Mensaje.objects.create(ticket=ticket, autor=autor, texto=texto, de_soporte=de_soporte)
         if de_soporte:
@@ -84,7 +103,7 @@ def agregar_mensaje(ticket, autor, texto, de_soporte, cerrar=False):
             cerrar_tickets(Ticket.objects.filter(pk=ticket.pk))
         ticket.refresh_from_db()
         if de_soporte:
-            transaction.on_commit(lambda: avisar_respuesta(ticket))
+            transaction.on_commit(lambda: avisar_respuesta(ticket, texto))
         elif ticket.asignado_id:
             transaction.on_commit(lambda: avisar_contestacion(ticket))
 
@@ -92,8 +111,7 @@ def agregar_mensaje(ticket, autor, texto, de_soporte, cerrar=False):
 def reasignar(ticket, agente, autor):
     """El lider pasa un ticket abierto a otro agente habilitado en su categoria.
     El plazo no cambia."""
-    if ticket.estado != Ticket.ABIERTO:
-        raise ValidationError('Ese ticket ya está cerrado.')
+    _exigir_abierto(ticket)
     if not agentes_habilitados(ticket.categoria).filter(pk=agente.pk).exists():
         raise ValidationError('Ese agente no atiende tickets de esta categoría.')
     with transaction.atomic():

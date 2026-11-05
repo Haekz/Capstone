@@ -12,7 +12,7 @@ from tests.test_apoderados import entrar
 
 class AccesoPortalAdminTests(TestCase):
     """Las pantallas internas exigen sesion de admin; la de salida no."""
-    VISTAS_PRIVADAS = ('dashboard_admin', 'crud', 'alumnos_Add', 'alumnos_Update', 'planes_adm', 'nosotros_adm', 'contactos_adm')
+    VISTAS_PRIVADAS = ('dashboard_admin', 'crud', 'alumnos_Add', 'alumnos_Update', 'planes_adm', 'nosotros_adm')
 
     @classmethod
     def setUpTestData(cls):

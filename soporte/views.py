@@ -20,7 +20,7 @@ from .permisos import agente_en_sesion, lider_required, tickets_del_agente
 from .tickets import agentes_habilitados, reasignar
 
 TICKET_RELACIONADOS = ('asignado__user', 'apoderado__user', 'vinculo__apoderado__user',
-                       'vinculo__alumno__user', 'profesor__user', 'autor')
+                       'vinculo__alumno__user', 'profesor__user', 'autor', 'contacto')
 
 
 def _supervision():

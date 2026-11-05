@@ -38,6 +38,7 @@ from apoderados.permisos import clase_pagada_por_apoderado, vinculo_contratable
 from lbwus.puerta import destino_seguro
 from .forms import AlumnoForm, FiltroClasesForm
 from admin_portal.forms import MensajeContactoForm
+from soporte.tickets import abrir_contacto
 from .decorators import alumno_required, alumno_required_json, profesor_required_json, sesion_iniciada_required
 from .exceptions import InscripcionError
 from .services import InscripcionService, exigir_mayor_de_edad
@@ -222,7 +223,8 @@ def _recibir_contacto(request):
     if not form.is_valid():
         primer_error = next(iter(form.errors.values()))[0]
         return JsonResponse({'success': False, 'message': primer_error}, status=400)
-    form.save()
+    # Lo atiende soporte, como cualquier caso (H14, D5): el admin solo ve metricas.
+    abrir_contacto(form.save(commit=False))
     cache.set(clave, enviados + 1, 3600)
     return JsonResponse({'success': True})
 

@@ -41,6 +41,28 @@ class RespuestaForm(MensajeForm):
         self.fields['texto'].help_text = 'El usuario la lee en LBWUS; el correo solo le avisa que respondiste.'
 
 
+class RespuestaContactoForm(MensajeForm):
+    """El agente responde a un visitante de Contactanos (H14). Siempre cierra: el visitante no
+    tiene cuenta para contestar, si necesita algo mas vuelve a escribir. Sin texto, solo si lo
+    cierra sin responder (spam o repetido)."""
+    sin_respuesta = forms.BooleanField(label='Cerrar sin responder (spam o mensaje repetido)', required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        texto = self.fields['texto']
+        texto.required = False
+        texto.label = 'Respuesta al visitante'
+        texto.help_text = ('Le llega tal cual a su correo y se cierra el ticket. No tiene cuenta: no pidas '
+                           'su contraseña, RUT ni datos de pago.')
+
+    def clean(self):
+        datos = super().clean()
+        if datos.get('sin_respuesta') == bool(datos.get('texto')):
+            raise forms.ValidationError('Escribe una respuesta o marca "Cerrar sin responder" (solo una de las dos).')
+        datos['cerrar'] = True
+        return datos
+
+
 class ReasignarForm(forms.Form):
     agente = forms.ModelChoiceField(
         queryset=AgenteSoporte.objects.all(),
