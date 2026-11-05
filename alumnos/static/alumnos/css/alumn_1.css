@@ -4622,3 +4622,36 @@ body.dark-mode .stat-icon {
     margin: 0;
     padding: 0;
 }
+
+/* Telefonos de ayuda (alumnos/includes/lineas_ayuda.html): la usan el banner del menor (fondo oscuro) y Calificar (tarjeta clara
+   u oscura). Fondo y borde salen del color de texto heredado: en cada fondo mantienen el contraste que ya tenia el texto. */
+.linea-ayuda-menor {
+    margin: 16px 0;
+    padding: 14px 16px;
+    border: 1px solid rgba(127, 127, 127, 0.4);
+    border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+    border-radius: 12px;
+    background: rgba(127, 127, 127, 0.12);
+    background: color-mix(in srgb, currentColor 10%, transparent);
+}
+
+.linea-ayuda-menor > p {
+    margin: 0;
+}
+
+.linea-ayuda-menor > p:first-child {
+    font-size: 1.05em;
+}
+
+.linea-ayuda-menor ul {
+    margin: 10px 0;
+    padding-left: 1.2rem;
+}
+
+.linea-ayuda-menor li + li {
+    margin-top: 6px;
+}
+
+.linea-ayuda-menor > p:last-child {
+    font-size: 0.9em;
+}
