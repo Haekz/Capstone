@@ -242,7 +242,7 @@
             const temas = document.getElementById('nav-open-interests');
             if (temas) temas.addEventListener('click', () => irAlPortal('temas'));
             // La vista dice a qué sección del menú pertenece la página (seccion_menu) para marcar su botón
-            const vistaMenu = {ayuda: 'view-support', paquetes: 'view-plans'}['{{ seccion_menu|default:""|escapejs }}'];
+            const vistaMenu = {ayuda: 'view-support', paquetes: 'view-plans', clases: 'view-my-classes'}['{{ seccion_menu|default:""|escapejs }}'];
             document.querySelectorAll('.sidebar-view-btn').forEach(btn =>
                 btn.classList.toggle('active', btn.dataset.view === vistaMenu));
         }
