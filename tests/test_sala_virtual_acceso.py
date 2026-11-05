@@ -12,7 +12,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from alumnos.models import Asignatura, Clase, Genero, Inscripcion, Profesor, SesionClase
-from alumnos.views import nombre_sala_jitsi
+from alumnos.sala_virtual import nombre_sala_jitsi
 from tests.test_especialidad import CLAVE, crear_profesor
 from tests.test_filtros_clases import crear_sesion
 from tests.test_progreso_alumno import crear_alumno

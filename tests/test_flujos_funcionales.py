@@ -37,7 +37,7 @@ class SeguridadPagoWebpayTests(TestCase):
         Alumno.objects.create(user=user, nivel_educacion='media')
         self.client.post(reverse('login'), {'username': '44444444-4', 'password': 'Clave12345!'})
 
-    @patch('alumnos.views._tx')
+    @patch('alumnos.webpay._tx')
     def test_05_confirmacion_pago_aprobado_webpay(self, mock_tx):
         """Transacción aprobada por Webpay (response_code=0, status=AUTHORIZED) renderiza éxito."""
         instancia_mock = MagicMock()
@@ -60,7 +60,7 @@ class SeguridadPagoWebpayTests(TestCase):
         self.assertEqual(resp.context['tarjeta'], '6623')
         self.assertEqual(resp.context['codigo_autorizacion'], '121314')
 
-    @patch('alumnos.views._tx')
+    @patch('alumnos.webpay._tx')
     def test_06_confirmacion_pago_rechazado_por_transbank(self, mock_tx):
         """Transacción rechazada por el banco (response_code != 0) renderiza aprobado=False."""
         instancia_mock = MagicMock()
@@ -85,7 +85,7 @@ class SeguridadPagoWebpayTests(TestCase):
         self.assertFalse(resp.context['aprobado'])
         self.assertTrue(resp.context['anulado'])
 
-    @patch('alumnos.views._tx')
+    @patch('alumnos.webpay._tx')
     def test_08_seguridad_replay_attack_no_activa_dos_veces(self, mock_tx):
         """
         Ataque de repetición (Replay Attack): el pedido vive en la base, no en la sesión.

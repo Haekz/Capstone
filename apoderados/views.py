@@ -24,7 +24,7 @@ from alumnos.models import Inscripcion, PaqueteClases, SesionClase
 from alumnos.roles import ALUMNO, APODERADO, abrir_sesion_rol, redirigir_a_portal, rol_en_sesion
 from alumnos.services import InscripcionService
 from alumnos.utils import es_menor
-from alumnos.views import iniciar_compra_paquete  # unico inicio de Webpay para paquetes
+from alumnos.webpay import iniciar_compra_paquete  # unico inicio de Webpay para paquetes
 from observaciones import panel as observaciones_panel
 from soporte.permisos import agente_en_sesion, lider_required, ticket_asignado, tickets_del_agente
 

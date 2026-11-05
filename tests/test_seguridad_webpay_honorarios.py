@@ -29,7 +29,7 @@ class EstrategiaCredencialesTransbankTests(SimpleTestCase):
 
     def test_10_estrategia_credenciales_salvaguarda_modo_test_por_defecto(self):
         """Por defecto _tx() opera forzosamente en IntegrationType.TEST (Sandbox oficial Transbank), sin cobros reales."""
-        from alumnos.views import _tx
+        from alumnos.webpay import _tx
         from transbank.common.integration_type import IntegrationType
         from transbank.common.integration_commerce_codes import IntegrationCommerceCodes
 
@@ -40,7 +40,7 @@ class EstrategiaCredencialesTransbankTests(SimpleTestCase):
 
     def test_11_salvaguarda_impide_cobro_real_si_produccion_no_esta_autorizada(self):
         """Aunque existan credenciales ficticias de producción, si TRANSBANK_PRODUCCION_HABILITADA es False, no se activa LIVE."""
-        from alumnos.views import _tx
+        from alumnos.webpay import _tx
         from transbank.common.integration_type import IntegrationType
         from transbank.common.integration_commerce_codes import IntegrationCommerceCodes
 
@@ -57,7 +57,7 @@ class EstrategiaCredencialesTransbankTests(SimpleTestCase):
 
     def test_12_estrategia_permite_produccion_solo_con_autorizacion_y_credenciales(self):
         """Solo con autorización explícita (TRANSBANK_PRODUCCION_HABILITADA=True) y credenciales LIVE se inicializa el comercio productivo."""
-        from alumnos.views import _tx
+        from alumnos.webpay import _tx
         from transbank.common.integration_type import IntegrationType
 
         with self.settings(

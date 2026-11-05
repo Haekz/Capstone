@@ -16,7 +16,7 @@ from django.utils import timezone
 
 from alumnos.models import Alumno, Asignatura, Clase, Genero, Inscripcion, PaqueteClases
 from alumnos.services import MENSAJE_MENOR
-from alumnos.views import iniciar_compra_paquete
+from alumnos.webpay import iniciar_compra_paquete
 from apoderados.forms import VERSION_DECLARACION_VINCULO
 from apoderados.models import Apoderado, Documento, RevisionVinculo, Vinculo
 from soporte.models import Ticket
@@ -218,7 +218,7 @@ class BloqueosDelMenorTests(TestCase):
         reserva.refresh_from_db()
         self.assertEqual(reserva.sesion, self.sesion)
 
-    @mock.patch('alumnos.views._tx')
+    @mock.patch('alumnos.webpay._tx')
     def test_el_menor_no_compra(self, tx):
         self.entrar_como(self.menor)
         respuesta = self.client.post(reverse('comprar_paquete'),
@@ -227,7 +227,7 @@ class BloqueosDelMenorTests(TestCase):
         tx.assert_not_called()
         self.assertEqual(PaqueteClases.objects.filter(alumno=self.menor).count(), 1)
 
-    @mock.patch('alumnos.views._tx')
+    @mock.patch('alumnos.webpay._tx')
     def test_el_menor_no_compra_a_los_14_ni_a_los_17(self, tx):
         """Los dos bordes del adolescente que tiene cuenta propia."""
         for anios in (14, 17):
@@ -239,7 +239,7 @@ class BloqueosDelMenorTests(TestCase):
         tx.assert_not_called()
         self.assertEqual(PaqueteClases.objects.filter(alumno=self.menor).count(), 1)
 
-    @mock.patch('alumnos.views._tx')
+    @mock.patch('alumnos.webpay._tx')
     def test_a_los_18_si_compra(self, tx):
         tx.return_value.create.return_value = {'url': 'https://webpay.test', 'token': 'tok'}
         User.objects.filter(pk=self.menor.user_id).update(fecha_nacimiento=hace_anios(18))
@@ -250,7 +250,7 @@ class BloqueosDelMenorTests(TestCase):
     def compra(self):
         return {'plan': 'progreso', 'profesor': self.profesor.id_profesor}
 
-    @mock.patch('alumnos.views._tx')
+    @mock.patch('alumnos.webpay._tx')
     def test_el_inicio_de_webpay_se_bloquea_aunque_no_pase_por_la_vista_del_alumno(self, tx):
         """El bloqueo esta donde se crea el paquete: una vista futura que llegue hasta aqui tambien queda cubierta."""
         peticion = RequestFactory().post('/cualquier-vista-nueva/', self.compra())
@@ -259,7 +259,7 @@ class BloqueosDelMenorTests(TestCase):
         tx.assert_not_called()
         self.assertEqual(PaqueteClases.objects.filter(alumno=self.menor).count(), 1)
 
-    @mock.patch('alumnos.views._tx')
+    @mock.patch('alumnos.webpay._tx')
     def test_el_menor_solo_pasa_con_el_vinculo_que_lo_autoriza_a_el(self, tx):
         tx.return_value.create.return_value = {'url': 'https://webpay.test', 'token': 'tok'}
         peticion = RequestFactory().post('/x/', self.compra())

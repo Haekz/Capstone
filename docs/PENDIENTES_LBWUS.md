@@ -138,8 +138,9 @@ G. **Respaldos de PostgreSQL/Railway**: conservan los documentos durante su rete
 H. **Revision juridica** del aviso de documentos y de las declaraciones v2 (apoderado y vinculo).
 
 ## Calidad
-9. **alumnos/views.py supera las 1000 lineas**: separar por tema (planes/pagos, reservas, sala virtual).
-   Hacerlo con todo mergeado para no generar conflictos.
+9. **alumnos/views.py: HECHO** (05-nov, `fran-dividir-archivos`): de 947 a 519 lineas, movimiento puro (sin
+   cambios de comportamiento). Reservas en `alumnos/reservas.py`, Webpay en `alumnos/webpay.py` (los parches de
+   pruebas apuntan a `alumnos.webpay._tx`) y sala virtual en `alumnos/sala_virtual.py`.
 10. **Revision visual en navegador** de todas las fases de apoderados (registro, revision admin, vinculos,
     invitacion de adolescentes, compra, reservas, revocacion, transicion a los 18).
 

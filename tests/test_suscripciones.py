@@ -99,7 +99,7 @@ class FlujoWebpayTests(TestCase):
     # La compra con carrito (iniciar_webpay) ya no existe: ver tests/test_paquetes.py.
     # Estas suscripciones son las de antes de los paquetes; siguen valiendo hasta vencer.
 
-    @patch('alumnos.views._tx')
+    @patch('alumnos.webpay._tx')
     def test_confirmacion_activa_aunque_vuelva_sin_cookie_de_sesion(self, mock_tx):
         Suscripcion.objects.create(alumno=self.alumno, plan='2', dias=30,
                                    monto=139990, buy_order='LB777')
@@ -109,7 +109,7 @@ class FlujoWebpayTests(TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertEqual(self.alumno.plan_vigente().buy_order, 'LB777')
 
-    @patch('alumnos.views._tx')
+    @patch('alumnos.webpay._tx')
     def test_confirmacion_rechazada_no_activa(self, mock_tx):
         Suscripcion.objects.create(alumno=self.alumno, plan='2', dias=30,
                                    monto=139990, buy_order='LB888')

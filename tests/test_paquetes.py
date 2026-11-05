@@ -166,7 +166,7 @@ class PaginaPlanesTests(Escenario):
         self.assertContains(self.client.get(reverse('home')), f'href="{reverse("planes")}"')
 
 
-@patch('alumnos.views._tx')
+@patch('alumnos.webpay._tx')
 class CompraTests(Escenario):
 
     def comprar(self, mock_tx, plan='progreso', profesor=None, **extra):
@@ -586,7 +586,7 @@ class CriteriosSaldosScrum85Tests(Escenario):
     def reservar(self, alumno, sesion):
         return InscripcionService.inscribir_alumno_en_sesion(alumno, sesion.pk)
 
-    @patch('alumnos.views._tx')
+    @patch('alumnos.webpay._tx')
     def test_compra_aprobada_de_cada_plan_deja_su_saldo(self, mock_tx):
         self.entrar(RUT_ANA)
         mock_tx.return_value.create.return_value = {'url': 'https://webpay.test/', 'token': 'tok'}
@@ -600,7 +600,7 @@ class CriteriosSaldosScrum85Tests(Escenario):
                 paquete.refresh_from_db()
                 self.assertEqual((paquete.estado, paquete.clases_disponibles), (PaqueteClases.ESTADO_ACTIVA, clases))
 
-    @patch('alumnos.views._tx')
+    @patch('alumnos.webpay._tx')
     def test_orden_desconocida_no_activa_ningun_paquete(self, mock_tx):
         """Reemplaza a test_03 de test_seguridad_webpay_honorarios (buy_order cruzada, flujo antiguo)."""
         dar_paquete(self.ana, self.profe, estado=PaqueteClases.ESTADO_PENDIENTE)
@@ -610,7 +610,7 @@ class CriteriosSaldosScrum85Tests(Escenario):
         self.assertEqual(PaqueteClases.objects.get().estado, PaqueteClases.ESTADO_PENDIENTE)
         self.assertEqual(self.ana.paquetes.vigentes().count(), 0)
 
-    @patch('alumnos.views._tx')
+    @patch('alumnos.webpay._tx')
     def test_compra_anulada_deja_el_paquete_pendiente_y_sin_uso(self, mock_tx):
         """TBK_TOKEN (el alumno anula en Webpay): no se activa ni se llama a commit()."""
         self.entrar(RUT_ANA)
