@@ -3,7 +3,6 @@ from datetime import timedelta
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import SetPasswordForm
-from django.contrib.auth.password_validation import validate_password
 from django.core.cache import cache
 from django.db import transaction
 from django.db.models import Q
@@ -11,7 +10,7 @@ from django.utils import timezone
 
 from alumnos.models import Alumno
 from alumnos.utils import (EDAD_ADULTA, EDAD_MINIMA_ESTUDIANTE, edad, error_fecha_nacimiento, es_menor,
-                           usuario_existe, validar_rut_chileno)
+                           usuario_existe, validar_clave_nueva, validar_rut_chileno)
 
 from .documentos import preparar
 from .models import (Apoderado, ClaveDelApoderado, Documento, Invitacion, Revision, RevisionIdentidad,
@@ -152,10 +151,8 @@ class _CuentaForm(AccesibleMixin, forms.Form):
         if password:
             if password != datos.get('confirmar_password'):
                 self.add_error('confirmar_password', 'Las contraseñas no coinciden.')
-            User = get_user_model()
             try:
-                validate_password(password, User(username=rut or '', email=correo or '',
-                                                 first_name=datos.get('nombre', '')))
+                validar_clave_nueva(password, rut, correo, datos.get('nombre', ''))
             except forms.ValidationError as error:
                 self.add_error('password', error)
         return datos

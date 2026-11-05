@@ -94,8 +94,9 @@ Decidido (31-oct): si el lunes de pago es feriado, se paga el siguiente dia habi
    tambien el registro publico de alumnos.** Llamaban a `validate_password` sin usuario: clave = RUT (con o sin
    puntos) o = correo pasaba. Ahora usan `alumnos.utils.validar_clave_nueva`. Matriz ID-24.
    HECHO tambien (4071d81, `fran-pendientes-chicos`): el formulario del admin (S4-02) usa el mismo helper.
-   Queda: `apoderados/forms.py` (_CuentaForm) repite la misma construccion; pasarlo al helper DESPUES de
-   mergear apoderados (agregar `nombre` opcional al helper: hoy compara tambien con first_name).
+   HECHO tambien (05-nov, `fran-dividir-archivos`): `apoderados/forms.py` (_CuentaForm) usa el helper, que
+   ahora acepta `nombre` opcional para no perder la comparacion con first_name; prueba nueva en
+   `Seg3ClaveIgualAlRutTests.test_registro_de_apoderado` (antes el apoderado no tenia prueba de Seg-3).
 
 ## Apoderados y menores
 4. **Segundo padre vinculandose a un menor ya registrado: HECHO** (02-nov, `fran-agenda`, pasos A1 a A3). Pide
