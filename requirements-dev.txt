@@ -1,0 +1,12 @@
+# Herramientas de QA (pruebas, cobertura y analisis estatico). Solo desarrollo:
+# produccion (Railway) instala requirements.txt, no este archivo.
+-r requirements.txt
+pytest==9.2.0
+pytest-django==4.14.0
+pytest-cov==7.1.0
+pytest-html==4.2.0
+pytest-xdist==3.8.0
+pytest-randomly==5.0.0
+bandit==1.9.4
+pip-audit==2.10.1
+ruff==0.17.4
