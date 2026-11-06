@@ -1,14 +1,19 @@
 """Revision QA: acceso por rol en TODAS las rutas del proyecto (tests/rutas_qa.py).
 
 Riesgo que cubre: una vista nueva sin decorador (regla 1) o con el decorador de
-otro rol queda abierta. Las pruebas recorren cada ruta con GET (los ids de
-relleno no existen) como anonimo y como cada rol, y exigen que:
+otro rol queda abierta. Las pruebas recorren cada ruta con GET y con POST sin
+datos (los ids de relleno no existen) como anonimo y como cada rol, y exigen que:
 - nadie reciba 200 fuera de la lista de lo que su rol puede ver;
+- el anonimo que hace POST a una accion termine en el login, no en la accion;
 - ninguna ruta termine en error 500.
 
 "Ver" es 200, salvo los JSON con ``success: false`` (los decoradores *_json
 responden asi a quien no tiene el rol). Si agregas una ruta publica o de un rol,
 agregala a la lista que corresponde: la prueba falla hasta entonces a proposito.
+
+Limite: con ids inexistentes, una vista con id que pierde su decorador puede
+seguir dando 404 y pasar. El acceso a objetos ajenos (IDOR) lo prueban con
+objetos reales test_qa_reservas, test_qa_apoderados y test_qa_pagos.
 """
 
 import json
@@ -56,6 +61,23 @@ PROPIAS = {
 }
 
 
+# Redirigen siempre, sin hacer nada (o inician Google): su destino no es el login.
+SOLO_REDIRIGEN = {
+    'puerta', 'alumnos_index', 'reporte_alumnos',  # a la portada o a crud, que exige admin
+    'confirmacion',  # sin token_ws ni TBK_TOKEN vuelve a planes
+    'google_login',  # POST: lleva a accounts.google.com (S-20)
+    None,  # /accounts/social/signup/ -> /accounts/3rdparty/signup/ (ruta antigua de allauth, sin nombre)
+}
+CON_BUG_O_503 = {'alumnos_findEdit', 'alumnos_del', 'comunidad_salud'}
+# Lo que responden al anonimo los endpoints JSON privados (decoradores *_json y las vistas que lo validan a mano).
+RECHAZOS_DE_SESION = {
+    'Sesión inválida.',
+    'Debes iniciar sesión como alumno para inscribirte.',
+    'Debes iniciar sesión como alumno para reservar una sesión.',
+    'No tienes permiso para crear administradores.',
+}
+
+
 def es_acceso(respuesta):
     if respuesta.status_code != 200:
         return False
@@ -97,15 +119,15 @@ class Escenario(TestCase):
             user, sesion = self.roles[rol]
             entrar(self.client, user, **sesion)
 
-    def recorrer(self, rol):
-        """{nombre: respuesta} de cada ruta como ``rol``; excepciones de la vista como respuesta 'EXC'."""
+    def recorrer(self, rol, metodo='get'):
+        """{(url, nombre): respuesta} de cada ruta como ``rol``; un error de la vista queda como 500."""
         self.como(rol)
         resultado = {}
         for url, nombre, _ in rutas():
             if es_salida(url, nombre):
                 continue
             self.client.raise_request_exception = False  # un 500 es un dato, no corta el recorrido
-            resultado[(url, nombre)] = self.client.get(url)
+            resultado[(url, nombre)] = getattr(self.client, metodo)(url)
             if rol != 'anonimo' and not self.client.session.get(next(iter(self.roles[rol][1]))):
                 self.como(rol)  # alguna vista cerro la sesion: se vuelve a entrar
         return resultado
@@ -131,12 +153,37 @@ class AccesoPorRolTests(Escenario):
                 self.assertEqual(propias - vistas, set())
 
     def test_ninguna_ruta_da_error_500_con_ids_inexistentes(self):
-        """Un id que no existe es 404, no 500. Ver aparte BUG-QA-04 (id no numerico en alumnos_findEdit)."""
+        """Un id que no existe es 404, no 500. Ver aparte BUG-QA-04 (id no numerico en alumnos_findEdit
+        y alumnos_del) y la salud de MongoDB (503 esperado)."""
         for rol in ('anonimo', *PROPIAS):
+            for metodo in ('get', 'post'):
+                with self.subTest(rol=rol, metodo=metodo):
+                    errores = {nombre for (url, nombre), r in self.recorrer(rol, metodo).items()
+                               if r.status_code >= 500 and nombre not in CON_BUG_O_503}
+                    self.assertEqual(errores, set())
+
+    def test_por_post_nadie_recibe_200_fuera_de_lo_suyo(self):
+        """Riesgo: una accion con @require_POST pierde su decorador; por GET sigue dando 405 y no se nota."""
+        for rol, propias in {'anonimo': set(), **PROPIAS}.items():
             with self.subTest(rol=rol):
-                errores = {nombre for (url, nombre), r in self.recorrer(rol).items()
-                           if r.status_code >= 500 and nombre not in ('comunidad_salud', 'alumnos_findEdit')}
-                self.assertEqual(errores, set())
+                permitidas = PUBLICAS if rol == 'anonimo' else PUBLICAS | COMUNES | propias
+                vistas = {nombre for (url, nombre), r in self.recorrer(rol, 'post').items() if es_acceso(r)}
+                self.assertEqual(vistas - permitidas, set())
+
+    def test_el_post_anonimo_a_una_accion_termina_en_el_login(self):
+        """Si una accion redirige al anonimo a otro lugar que el login, probablemente se ejecuto."""
+        fuera = {(url, nombre, r['Location']) for (url, nombre), r in self.recorrer('anonimo', 'post').items()
+                 if r.status_code in (301, 302) and nombre not in SOLO_REDIRIGEN
+                 and not r['Location'].startswith(('/accounts/login/', '/profesor/registro_profesor'))}
+        self.assertEqual(fuera, set())
+
+    def test_el_post_anonimo_a_un_json_privado_recibe_un_rechazo_de_sesion(self):
+        """Con datos vacios, una accion sin decorador tambien responde success: false (por validacion):
+        lo que la delata es el mensaje. El anonimo solo debe leer rechazos de sesion."""
+        mensajes = {nombre: json.loads(r.content).get('message')
+                    for (url, nombre), r in self.recorrer('anonimo', 'post').items()
+                    if r.get('Content-Type', '').startswith('application/json') and nombre not in PUBLICAS}
+        self.assertEqual({n: m for n, m in mensajes.items() if m not in RECHAZOS_DE_SESION}, {})
 
     def test_la_salud_de_mongodb_da_503_sin_mongodb_y_solo_al_admin(self):
         """503 es lo esperado sin MONGODB_URI (comunidad/views.py), no un error."""

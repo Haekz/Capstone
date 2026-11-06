@@ -4,6 +4,11 @@ Cubre las ramas de error que la suite no recorria: ids inexistentes o ajenos,
 profesor sin titulo y la carrera que termina en IntegrityError. En todas el
 riesgo es el mismo: que una reserva fallida gaste una clase del paquete o deje
 una inscripcion a medias.
+
+Las "carreras" simulan el IntegrityError antes de escribir: prueban que se
+traduzca a InscripcionDuplicadaError (y no a un 500), no el rollback. La
+atomicidad con escrituras reales en PostgreSQL la prueban los hilos de
+tests/test_concurrencia_inscripcion.py.
 """
 
 from datetime import time
@@ -58,9 +63,9 @@ class ReservaEnSesionTests(Reserva):
             InscripcionService.inscribir_alumno_en_sesion(self.ana, crear_sesion(clase, dias=2).pk)
         self.assertFalse(Inscripcion.objects.exists())
 
-    def test_la_carrera_que_termina_en_integrity_error_no_gasta_la_clase(self):
+    def test_la_carrera_que_termina_en_integrity_error_se_informa_y_no_gasta_la_clase(self):
         """Riesgo: dos reservas simultaneas del mismo alumno; la que choca con la restriccion
-        unica de la base debe deshacerse entera (atomic) y no consumir saldo."""
+        unica de la base debe llegar como InscripcionDuplicadaError (un aviso, no un 500) sin consumir saldo."""
         with chocar('alumnos.services.Inscripcion.objects.create'), self.assertRaises(InscripcionDuplicadaError):
             InscripcionService.inscribir_alumno_en_sesion(self.ana, self.sesion.pk)
         self.assertSinEfecto(4)
@@ -80,7 +85,7 @@ class ReservaEnClaseGeneralTests(Reserva):
             InscripcionService.inscribir_alumno_en_clase(self.ana, clase.pk)
         self.assertSinEfecto(4)
 
-    def test_la_carrera_en_clase_general_no_gasta_la_clase(self):
+    def test_la_carrera_en_clase_general_se_informa_y_no_gasta_la_clase(self):
         with chocar('alumnos.services.Inscripcion.objects.create'), self.assertRaises(InscripcionDuplicadaError):
             InscripcionService.inscribir_alumno_en_clase(self.ana, self.clase.pk)
         self.assertSinEfecto(4)
@@ -115,8 +120,8 @@ class CancelarYReprogramarAjenoTests(Reserva):
             InscripcionService.reprogramar_inscripcion(self.ana, self.reserva.pk, NO_EXISTE)
         self.assertReservaIntacta()
 
-    def test_la_carrera_al_reprogramar_deja_la_reserva_donde_estaba(self):
-        """Riesgo: el save choca con la restriccion unica y la reserva queda movida a medias."""
+    def test_la_carrera_al_reprogramar_se_informa_y_deja_la_reserva_donde_estaba(self):
+        """Riesgo: el save choca con la restriccion unica; debe llegar como InscripcionDuplicadaError."""
         with chocar('alumnos.models.Inscripcion.save'), self.assertRaises(InscripcionDuplicadaError):
             InscripcionService.reprogramar_inscripcion(self.ana, self.reserva.pk, self.otra_sesion.pk)
         self.assertReservaIntacta()
