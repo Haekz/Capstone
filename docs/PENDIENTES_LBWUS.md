@@ -89,8 +89,8 @@ parte por capa. Unidas en orden dan el original byte a byte, y la pagina las car
 (en el HTML solo cambian los `<link>`). `recuperar.css` (685) se queda: es una sola hoja que cargan 7 plantillas.
 CSS muerto probable, sin borrar: `pago/03_rediseno_checkout.css` (385 lineas, "solo pagina de pago"): 30 de sus 31 clases
 no estan en ninguna plantilla. Es lo que quedo del checkout `/alumnos/pago`, y solo `confirmacion.html` carga esas hojas.
-Bug visto, sin arreglar: en `dashboard_admin`, "ultimos alumnos/profesores" (`alumnos[:3]`) no tiene `order_by`: muestra 3
-cualesquiera, no los ultimos, y la tabla de usuarios cambia de orden entre cargas.
+Arreglado: en `dashboard_admin`, "ultimos alumnos/profesores" y las tablas de usuarios ahora llevan `order_by` (antes
+mostraba 3 cualesquiera y cambiaba de orden entre cargas). Queda sin orden la tabla de clases (`Clase.objects`).
 Doc pendiente de corregir: CONCILIACION_Y_TRANSBANK_7_6.md describe un modelo `Pago` que no existe.
 El enlace de cambio de cuenta exige sesion: si el profesor no la tiene, entra y vuelve a abrir el enlace.
 Decidido (31-oct): si el lunes de pago es feriado, se paga el siguiente dia habil (`alumnos/liquidacion.py`).
