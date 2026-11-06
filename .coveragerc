@@ -1,0 +1,18 @@
+# Cobertura de pytest-cov (docs/PRUEBAS.md): solo codigo de la aplicacion.
+[run]
+branch = True
+source = .
+omit =
+    .venv/*
+    */migrations/*
+    tests/*
+    */tests/*
+    */tests.py
+    */tests_*.py
+    usabilidad/*
+    manage.py
+    conftest.py
+    staticfiles/*
+
+[report]
+skip_empty = True
