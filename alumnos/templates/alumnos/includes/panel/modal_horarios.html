@@ -1,0 +1,37 @@
+{# Modal para elegir y reservar horarios de una clase. #}
+        <!-- Ventana Modal para Elegir y Reservar Horarios Disponibles de SesionClase -->
+        <div class="custom-modal-overlay" id="modal-horarios-sesiones">
+            <div class="custom-modal-card ap-modal-md" style="max-width: 650px; width: 95%;">
+                <div class="custom-modal-header" style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid var(--line); padding-bottom:14px; margin-bottom:16px;">
+                    <div>
+                        <h3 style="margin:0; font-size:1.25rem; font-weight:700; color:var(--text); display:flex; align-items:center; gap:8px;">
+                            <i class="bi bi-calendar-check" style="color:var(--primary);"></i>
+                            <span id="modal-horarios-titulo">Horarios Disponibles</span>
+                        </h3>
+                        <p id="modal-horarios-profesor" style="margin:4px 0 0; font-size:0.9rem; color:var(--text-light);"></p>
+                    </div>
+                    <button class="close-modal-btn" onclick="cerrarModalHorarios()">&times;</button>
+                </div>
+                <div class="custom-modal-body" style="padding:0;">
+                    <!-- Spinner de carga -->
+                    <div id="modal-horarios-loading" style="text-align:center; padding:35px 20px;">
+                        <div class="spinner-border text-primary" role="status" style="width:2.5rem; height:2.5rem; color:var(--primary);"></div>
+                        <p style="margin-top:12px; color:var(--text-light); font-size:0.95rem;">Cargando sesiones programadas...</p>
+                    </div>
+
+                    <!-- Estado sin sesiones programadas -->
+                    <div id="modal-horarios-empty" style="display:none; text-align:center; padding:35px 20px;">
+                        <div style="width:60px; height:60px; border-radius:50%; background:rgba(99, 102, 241, 0.1); color:var(--primary); display:flex; align-items:center; justify-content:center; margin:0 auto 14px; font-size:1.8rem;">
+                            <i class="bi bi-calendar-x"></i>
+                        </div>
+                        <h4 style="margin:0 0 6px; font-weight:600; color:var(--text);">No hay horarios programados</h4>
+                        <p style="margin:0; font-size:0.9rem; color:var(--text-light);">El profesor aún no ha publicado nuevas sesiones con cupos libres para esta clase. Por favor vuelve a consultar pronto.</p>
+                    </div>
+
+                    <!-- Lista de sesiones disponibles -->
+                    <div id="modal-horarios-lista" style="display:none; max-height:420px; overflow-y:auto; padding-right:4px; display:flex; flex-direction:column; gap:12px;">
+                        <!-- Se llena dinámicamente con JS -->
+                    </div>
+                </div>
+            </div>
+        </div>

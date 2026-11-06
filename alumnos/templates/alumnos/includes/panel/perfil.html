@@ -1,0 +1,69 @@
+{# Mi perfil e historial de pagos. #}
+            <!-- ── VIEW 3: PROFILE ── -->
+            <div class="dashboard-view" id="view-profile">
+                <div class="profile-card">
+                    <div class="profile-header">
+                        <div class="profile-avatar-large">{{ alumno.user.first_name|slice:":1"|upper }}</div>
+                        <div class="profile-title-box">
+                            <h2>Perfil del Alumno</h2>
+                            <span class="plan-badge"><i class="bi bi-x-circle-fill"></i> Sin Plan Activo</span>
+                        </div>
+                    </div>
+
+                    <div class="profile-details-grid">
+                        <div class="profile-field">
+                            <label>Nombre Completo</label>
+                            <p>{{ alumno.user.first_name }}</p>
+                        </div>
+                        <div class="profile-field">
+                            <label>Correo Electrónico</label>
+                            <p>{{ alumno.user.email }}</p>
+                        </div>
+                        <div class="profile-field">
+                            <label>Nivel de Educación</label>
+                            <p>{{ alumno.get_nivel_educacion_display }}</p>
+                        </div>
+                        <div class="profile-field">
+                            <label>Teléfono de Contacto</label>
+                            <p>{{ alumno.user.telefono|default:"No registrado" }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Historial de Pagos y Transacciones -->
+                    <div class="profile-transactions-section ap-transactions">
+                        <h3 class="ap-transactions-title">
+                            <i class="bi bi-credit-card-2-front-fill ap-text-primary"></i> Historial de Pagos y Transacciones
+                        </h3>
+                        <div class="classes-table-container">
+                            <table class="classes-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID Transacción</th>
+                                        <th>Plan / Concepto</th>
+                                        <th>Fecha</th>
+                                        <th>Monto</th>
+                                        <th>Método</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for pago in pagos %}
+                                    <tr>
+                                        <td><code>{{ pago.buy_order }}</code></td>
+                                        <td>{{ pago.get_plan_display }}</td>
+                                        <td>{{ pago.creada|date:"d-m-Y" }}</td>
+                                        <td>{{ pago.monto_clp }}</td>
+                                        <td>Webpay</td>
+                                        <td><span class="tx-badge {% if pago.estado == 'activa' %}success{% else %}failed{% endif %}">{{ pago.get_estado_display }}</span></td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6">Aún no tienes pagos registrados.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>

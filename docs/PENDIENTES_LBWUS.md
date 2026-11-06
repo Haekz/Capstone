@@ -79,7 +79,12 @@ Si cambia SECRET_KEY, las cuentas bancarias cifradas dejan de leerse.
 Archivos sobre 600 lineas: en curso en `fran-dividir-archivos`. Fase 1 Python HECHA: `alumnos/views.py`, `alumnos/models.py`
 (paquete `alumnos/models/` con usuarios, clases, pagos, reportes y retiros) y `apoderados/views.py` (la revision de
 soporte paso a `apoderados/views_revision.py`; el flujo del adolescente se queda porque comparte helpers del registro).
-Fase 2 plantillas (`Alumno_pag1.html`, `dashboard_admin.html`, `panel_profesor.html`) y fase 3 CSS: con revision visual.
+Fase 2 plantillas HECHA: `Alumno_pag1.html` (1478 -> 105; partes en `alumnos/includes/panel/`, y el JS en `panel/js/`,
+incluido dentro del mismo `<script>`), `dashboard_admin.html` (836 -> 170; `admin_portal/includes/dashboard/`) y
+`panel_profesor.html` (790 -> 393; `user_profesor/includes/panel/`). Verificado sin navegador: el HTML generado (alumno con
+clases, sin clases y menor, profesor y admin) es identico al de antes. Fase 3 CSS: pendiente.
+Bug visto, sin arreglar: en `dashboard_admin`, "ultimos alumnos/profesores" (`alumnos[:3]`) no tiene `order_by`: muestra 3
+cualesquiera, no los ultimos, y la tabla de usuarios cambia de orden entre cargas.
 Doc pendiente de corregir: CONCILIACION_Y_TRANSBANK_7_6.md describe un modelo `Pago` que no existe.
 El enlace de cambio de cuenta exige sesion: si el profesor no la tiene, entra y vuelve a abrir el enlace.
 Decidido (31-oct): si el lunes de pago es feriado, se paga el siguiente dia habil (`alumnos/liquidacion.py`).

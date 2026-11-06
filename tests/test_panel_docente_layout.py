@@ -13,7 +13,7 @@ from django.urls import reverse
 
 from alumnos.models import Especialidad, Genero, Profesor
 
-from .css_vars import leer, sin_definir
+from .css_vars import leer, partes, sin_definir
 
 User = get_user_model()
 
@@ -29,6 +29,7 @@ HOJAS_PANEL = [
 PLANTILLAS_PANEL = [
     'user_profesor/templates/user_profesor/base_docente.html',
     'user_profesor/templates/user_profesor/panel_profesor.html',
+    *partes('user_profesor/templates/user_profesor/includes/panel'),
     'user_profesor/templates/user_profesor/clases_solicitadas.html',
     'user_profesor/templates/user_profesor/clases_en_vivo.html',
     'user_profesor/templates/user_profesor/videos.html',

@@ -1,0 +1,138 @@
+{# Mis clases: proximas, historial y catalogo. #}
+            <!-- ── VIEW 4: MY CLASSES ── -->
+            <div class="dashboard-view" id="view-my-classes">
+                <div class="results-section ap-section-narrow">
+                    <h2 class="ap-mb-10"><i class="bi bi-journal-bookmark-fill ap-text-primary"></i> Mis Clases y Horarios</h2>
+                    <p class="ap-section-intro">Gestiona tus clases programadas y revisa el historial de tus clases completadas.</p>
+                    
+                    <!-- Upcoming Classes -->
+                    <div class="classes-subsection ap-mb-40">
+                        <h3 class="subsection-title"><i class="bi bi-calendar-check-fill"></i> Clases Próximas en las que estás Inscrito</h3>
+                        <div class="classes-grid" id="upcoming-classes-container">
+                            {% if mis_inscripciones %}
+                                {% for insc in mis_inscripciones %}
+                                <div class="class-item-card">
+                                    <div class="class-card-header">
+                                        <span class="class-badge">{{ insc.clase.profesor.especialidad }}</span>
+                                        {% if insc.sesion.estado == 'cancelada' %}
+                                        <span class="class-status-badge class-status-badge--modality">Sesión cancelada</span>
+                                        {% elif insc.estado == 'pendiente' %}
+                                        <span class="class-status-badge class-status-badge--modality">Pendiente</span>
+                                        {% else %}
+                                        <span class="class-status-badge class-status-badge--enrolled">Inscrito</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="class-card-body">
+                                        <h4>{{ insc.clase.asignatura.nombre }}</h4>
+                                        <p class="class-teacher-type"><i class="bi bi-person-workspace"></i> Prof. {{ insc.clase.profesor.user.first_name }}</p>
+                                        {% include "alumnos/includes/fecha_sesion.html" %}
+                                    </div>
+                                    <div class="ap-class-actions">
+                                        {% if insc.puede_unirse %}
+                                        <a class="btn-join-class ap-flex-1" href="{% url 'sala_virtual' insc.clase.id_clase %}" style="display:flex; justify-content:center; align-items:center; text-decoration:none;">
+                                            <i class="bi bi-camera-video-fill"></i> Unirse a la Clase
+                                        </a>
+                                        {% endif %}
+                                        {# Menores: cancelar y reprogramar lo hace su apoderado (fase 1c). #}
+                                        {% if insc.puede_reprogramar and not es_menor %}
+                                        <button type="button" class="ap-btn-cancel" title="Reprogramar clase" aria-label="Reprogramar clase" style="border:none; cursor:pointer; background:transparent;"
+                                                onclick="abrirModalHorarios({{ insc.clase.id_clase }}, '{{ insc.clase.asignatura.nombre|escapejs }}', '{{ insc.clase.profesor.user.first_name|escapejs }}', {{ insc.id_inscripcion }})">
+                                            <i class="bi bi-calendar2-week"></i>
+                                        </button>
+                                        {% endif %}
+                                        {% if insc.puede_cancelar and not es_menor %}
+                                        <form method="POST" action="{% url 'cancelar_inscripcion' insc.id_inscripcion %}" onsubmit="return confirm('{% if insc.a_tiempo_para_cambiar %}¿Seguro que deseas cancelar tu inscripción? La clase vuelve a tu paquete.{% else %}Faltan menos de 4 horas: si cancelas, pierdes esta clase de tu paquete. ¿Cancelar igual?{% endif %}')" style="display:inline;">
+                                            {% csrf_token %}
+                                            <button type="submit" class="ap-btn-cancel" title="Cancelar Inscripción" style="border:none; cursor:pointer; background:transparent;">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="empty-teachers-state ap-full-row">
+                                    <i class="bi bi-calendar-x"></i>
+                                    <p>No estás inscrito en ninguna clase todavía. ¡Revisa el catálogo abajo para inscribirte a tu primera clase!</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Historial: sesiones confirmadas que ya terminaron -->
+                    <div class="classes-subsection ap-mb-40" id="historial-clases-seccion">
+                        <h3 class="subsection-title"><i class="bi bi-check2-circle"></i> Historial de Clases Completadas</h3>
+                        <div class="classes-grid">
+                            {% for insc in historial_clases %}
+                            <div class="class-item-card">
+                                <div class="class-card-header">
+                                    <span class="class-badge">{{ insc.clase.profesor.especialidad }}</span>
+                                    <span class="class-status-badge class-status-badge--enrolled">Completada</span>
+                                </div>
+                                <div class="class-card-body">
+                                    <h4>{{ insc.clase.asignatura.nombre }}</h4>
+                                    <p class="class-teacher-type"><i class="bi bi-person-workspace"></i> Prof. {{ insc.clase.profesor.user.first_name }}</p>
+                                    {% include "alumnos/includes/fecha_sesion.html" %}
+                                </div>
+                                <div class="ap-class-actions">
+                                    <a class="btn-join-class ap-flex-1" href="{% url 'resena_calificar' insc.id_inscripcion %}" style="display:flex; justify-content:center; align-items:center; text-decoration:none;">
+                                        <i class="bi bi-star-fill"></i> Calificar
+                                    </a>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="empty-teachers-state ap-full-row">
+                                <i class="bi bi-hourglass-split"></i>
+                                <p>Todavía no tienes clases completadas. Aquí aparecerán tus sesiones ya realizadas.</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Available Classes Catalog to Enroll -->
+                    <div class="classes-subsection ap-mb-40" id="catalogo-clases-seccion">
+                        <h3 class="subsection-title"><i class="bi bi-journal-plus"></i> Catálogo de Clases Disponibles</h3>
+                        <!-- Filtros combinados: opciones y disponibilidad las resuelve el backend -->
+                        <form method="get" class="catalog-filters" id="catalogo-filtros" aria-label="Filtrar catálogo de clases">
+                            <div class="catalog-filter">{{ filtros.especialidad.label_tag }}{{ filtros.especialidad }}</div>
+                            <div class="catalog-filter">{{ filtros.modalidad.label_tag }}{{ filtros.modalidad }}</div>
+                            <div class="catalog-filter catalog-filter--check">{{ filtros.disponible }}{{ filtros.disponible.label_tag }}</div>
+                            <button type="submit" class="btn-join-class btn-join-class--primary"><i class="bi bi-funnel"></i> Filtrar</button>
+                            {% if hay_filtros %}<a href="{% url 'alumno_pag1' %}" class="catalog-filter-clear">Limpiar filtros</a>{% endif %}
+                        </form>
+                        <div class="classes-grid">
+                            {% for c in clases_disponibles %}
+                            <div class="class-item-card">
+                                <div class="class-card-header">
+                                    <span class="class-badge">{{ c.profesor.especialidad }}</span>
+                                    <span class="class-status-badge class-status-badge--modality">{{ c.get_modalidad_display }}</span>
+                                </div>
+                                <div class="class-card-body">
+                                    <h4>{{ c.asignatura.nombre }}</h4>
+                                    <p class="class-teacher-type"><i class="bi bi-person"></i> Prof. {{ c.profesor.user.first_name }}</p>
+                                    <div class="class-info-item">
+                                        <i class="bi bi-clock"></i>
+                                        <span>Horario: {{ c.horario|time:"H:i" }} hrs</span>
+                                    </div>
+                                </div>
+                                <div class="ap-class-footer">
+                                    <button class="btn-join-class btn-join-class--primary" onclick="abrirModalHorarios({{ c.id_clase }}, '{{ c.asignatura.nombre|escapejs }}', '{{ c.profesor.user.first_name|escapejs }}')">
+                                        <i class="bi bi-calendar-event"></i> Ver horarios disponibles
+                                    </button>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="empty-teachers-state ap-full-row">
+                                <i class="bi bi-inbox"></i>
+                                {% if hay_filtros %}
+                                <p>No hay clases que coincidan con los filtros seleccionados. Prueba con otra combinación o limpia los filtros.</p>
+                                {% else %}
+                                <p>No hay clases abiertas disponibles en este momento. El administrador las publicará pronto.</p>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>

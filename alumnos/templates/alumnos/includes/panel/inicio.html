@@ -1,0 +1,110 @@
+{# Inicio: bienvenida, estadisticas y clases. #}
+{% load ayuda_tags %}
+            <!-- ── VIEW 1: DASHBOARD (CLASES) ── -->
+            <div class="dashboard-view active" id="view-dashboard">
+                <div class="main-dashboard-grid">
+                    <!-- Left Panel -->
+                    <div class="dashboard-left-panel">
+                        <!-- Welcome Banner -->
+                        <div class="welcome-banner">
+                            <div class="welcome-text">
+                                <span class="welcome-eyebrow">Portal del alumno</span>
+                                <h1>¡Hola de nuevo, {{ alumno.user.first_name }}!</h1>
+                                <p>Bienvenido a tu panel de control personalizado. Aquí podrás gestionar tu aprendizaje.</p>
+                                {% if es_menor %}
+                                <p class="aviso-menor" role="status"><strong>Cuenta de estudiante menor de edad.</strong>
+                                    Puedes revisar el catálogo y entrar a las clases que reserve tu apoderado. Las reservas, cancelaciones y compras las hace tu apoderado desde su cuenta.
+                                    Si algo en una clase te hizo sentir incómodo o tienes un problema, cuéntaselo a tu apoderado: él puede pedir ayuda a nuestro equipo de soporte.
+                                    {% if tiene_solicitud %}<a href="{% url 'adolescente_solicitud' %}">Ver mi solicitud de apoderado</a>{% endif %}</p>
+                                {% lineas_de_ayuda user %}
+                                {% endif %}
+                            </div>
+                            <button class="btn-principal ap-btn-setup" id="dashboard-setup-btn">Configurar Intereses</button>
+                        </div>
+
+                        <!-- Stats Widgets -->
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-icon"><i class="bi bi-clock-history"></i></div>
+                                <div class="stat-info">
+                                    <h3>{{ mis_inscripciones|length }}</h3>
+                                    <p>Clases inscritas</p>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon"><i class="bi bi-calendar-event"></i></div>
+                                <div class="stat-info">
+                                    <h3>{{ clases_disponibles|length }}</h3>
+                                    <p>Clases disponibles</p>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon"><i class="bi bi-person-video3"></i></div>
+                                <div class="stat-info">
+                                    <h3>{{ profesores_list|length }}</h3>
+                                    <p>Profesores disponibles</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Content tabs section -->
+                        <div class="results-section">
+                            <h2>Tu Contenido Seleccionado</h2>
+
+                            {% include 'alumnos/includes/recomendados.html' %}
+
+                            <!-- Barra de Búsqueda -->
+                            <div class="dashboard-search-container ap-mb-20">
+                                <div class="search-input-wrapper">
+                                    <i class="bi bi-search search-icon"></i>
+                                    <input type="search" id="dashboard-search-input" aria-label="Buscar profesor, tutor o especialidad" placeholder="Buscar profesor, tutor o especialidad (ej. Matemáticas, Carlos)..." oninput="renderDashboardContent()">
+                                </div>
+                            </div>
+                            
+                            <!-- Tabs Navigation -->
+                            <div class="dashboard-tabs">
+                                <button class="tab-btn active" data-tab="tab-profesores">
+                                    <i class="bi bi-person-workspace"></i> Profesores
+                                </button>
+                                <button class="tab-btn" data-tab="tab-tutores">
+                                    <i class="bi bi-people-fill"></i> Tutores
+                                </button>
+                                <button class="tab-btn" data-tab="tab-videos">
+                                    <i class="bi bi-play-circle-fill"></i> Clases en Video
+                                </button>
+                            </div>
+
+                            <!-- Tab Contents -->
+                            <div class="tab-content active" id="tab-profesores">
+                                <div class="teachers-list" id="dashboard-teachers-container">
+                                    <!-- Populated via JS -->
+                                </div>
+                            </div>
+
+                            <div class="tab-content" id="tab-tutores">
+                                <p class="demo-notice"><i class="bi bi-info-circle"></i> Contenido de ejemplo: aún no hay tutores registrados en la plataforma.</p>
+                                <div class="teachers-list" id="dashboard-tutors-container">
+                                    <!-- Populated via JS -->
+                                </div>
+                            </div>
+
+                            <div class="tab-content" id="tab-videos">
+                                <p class="demo-notice"><i class="bi bi-info-circle"></i> Contenido de ejemplo: aún no hay clases en video publicadas.</p>
+                                <div class="filtered-grid" id="dashboard-videos-container">
+                                    <!-- Populated via JS -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Panel (Pulsating Ad Offer Card) -->
+                    <div class="dashboard-right-panel">
+                        <div class="promo-ad-card ap-clickable" onclick="switchView('view-plans')">
+                            <span class="promo-badge">Paquetes de clases</span>
+                            <h3>Más clases, menos precio por clase</h3>
+                            <p>Compra Flexible, Progreso o Intensivo con el profesor que elijas y reserva tus clases.</p>
+                            <a class="btn-promo-cta" href="{% url 'planes' %}" onclick="event.stopPropagation()">Ver planes y precios</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
