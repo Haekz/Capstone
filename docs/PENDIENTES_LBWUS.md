@@ -87,8 +87,9 @@ Fase 3 CSS HECHA: `alumn_1.css` (10 partes), `styles.css` (9), `admin_panel.css`
 pasan a carpetas con su mismo nombre (`alumnos/css/alumn_1/01_base.css`...; `panel.css` a `user_profesor/panel/`), una
 parte por capa. Unidas en orden dan el original byte a byte, y la pagina las carga en ese orden: la cascada no cambia
 (en el HTML solo cambian los `<link>`). `recuperar.css` (685) se queda: es una sola hoja que cargan 7 plantillas.
-CSS muerto probable, sin borrar: `pago/03_rediseno_checkout.css` (385 lineas, "solo pagina de pago"): 30 de sus 31 clases
-no estan en ninguna plantilla. Es lo que quedo del checkout `/alumnos/pago`, y solo `confirmacion.html` carga esas hojas.
+CSS muerto BORRADO: `pago/03_rediseno_checkout.css` (385 lineas, "solo pagina de pago"), resto del checkout `/alumnos/pago`:
+sus 30 clases propias no estaban en ningun HTML, JS ni Python, y la unica compartida (`dark-mode`) solo aparecia en
+selectores que exigian una clase muerta. Posible resto parecido en `pago/01_pago.css` (paneles de resumen y Webpay): sin revisar.
 Arreglado: en `dashboard_admin`, "ultimos alumnos/profesores" y las tablas de usuarios ahora llevan `order_by` (antes
 mostraba 3 cualesquiera y cambiaba de orden entre cargas). Queda sin orden la tabla de clases (`Clase.objects`).
 Doc pendiente de corregir: CONCILIACION_Y_TRANSBANK_7_6.md describe un modelo `Pago` que no existe.
