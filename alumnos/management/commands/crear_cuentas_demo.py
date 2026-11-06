@@ -1,4 +1,4 @@
-"""python manage.py crear_cuentas_demo
+"""CUENTAS_DEMO_CLAVE=<clave> python manage.py crear_cuentas_demo
 
 Crea cuentas de prueba para recorrer el sistema completo (todas con la misma clave):
 
@@ -10,8 +10,11 @@ Crea cuentas de prueba para recorrer el sistema completo (todas con la misma cla
 
 Es idempotente: se puede correr varias veces sin duplicar nada. Por seguridad solo corre con
 DEBUG=True (en Railway DEBUG=False) y nunca pisa una cuenta real que ya use uno de esos RUT.
+La clave no esta en el codigo: se pasa en la variable CUENTAS_DEMO_CLAVE. Una cuenta de demo que ya existe
+conserva la clave con que se creo.
 """
 
+import os
 from datetime import date, time, timedelta
 
 from django.conf import settings
@@ -27,7 +30,7 @@ from alumnos.models import (
 from apoderados.forms import VERSION_DECLARACION, VERSION_DECLARACION_VINCULO
 from apoderados.models import Apoderado, ClaveDelApoderado, Vinculo
 
-CLAVE = 'Demo-Lbwus-2026!'
+VARIABLE_CLAVE = 'CUENTAS_DEMO_CLAVE'
 DOMINIO = 'demo.lbwus.cl'
 PLAN_DEL_ALUMNO = 'progreso'
 BUY_ORDER = 'DEMO-LBWUS-0001'
@@ -57,9 +60,13 @@ class Command(BaseCommand):
     def handle(self, *args, **opciones):
         if not settings.DEBUG:
             raise CommandError('Las cuentas de demo tienen una clave conocida: solo se crean con DEBUG=True. No se creó nada.')
+        clave = os.environ.get(VARIABLE_CLAVE)
+        if not clave:
+            raise CommandError(f'Define la variable {VARIABLE_CLAVE} con la clave de las cuentas de demo '
+                               '(no se guarda en el código). No se creó nada.')
         with transaction.atomic():
-            usuarios = {clave: self._usuario(rut, nombre, apellido, rol)
-                        for clave, rut, nombre, apellido, rol in CUENTAS}
+            usuarios = {clave_cuenta: self._usuario(rut, nombre, apellido, rol, clave)
+                        for clave_cuenta, rut, nombre, apellido, rol in CUENTAS}
             profesor = self._profesor(usuarios['profesor'])
             self._alumno(usuarios['alumno'], nivel='media', nacimiento=_hace_anios(20))
             con_plan = self._alumno(usuarios['alumno_con_plan'], nivel='media', nacimiento=_hace_anios(21))
@@ -69,7 +76,7 @@ class Command(BaseCommand):
             self._vincular(apoderado, menor)
         self._resumen()
 
-    def _usuario(self, rut, nombre, apellido, rol):
+    def _usuario(self, rut, nombre, apellido, rol, clave):
         correo = f'{nombre.lower()}.{apellido.lower()}@{DOMINIO}'
         existente = get_user_model().objects.filter(username=rut).first()
         if existente:
@@ -78,7 +85,7 @@ class Command(BaseCommand):
             return existente
         genero, _ = Genero.objects.get_or_create(descripcion='Otro')
         return get_user_model().objects.create_user(
-            username=rut, rut=rut, email=correo, password=CLAVE, first_name=nombre, last_name=apellido,
+            username=rut, rut=rut, email=correo, password=clave, first_name=nombre, last_name=apellido,
             rol=rol, direccion='Santiago', telefono='911111111', genero=genero,
             fecha_nacimiento=_hace_anios(35),
         )
@@ -126,6 +133,6 @@ class Command(BaseCommand):
         ClaveDelApoderado.objects.get_or_create(user=menor.user)  # al cumplir 18 define la suya
 
     def _resumen(self):
-        self.stdout.write(self.style.SUCCESS('Cuentas de demo listas (clave de todas: %s)' % CLAVE))
+        self.stdout.write(self.style.SUCCESS(f'Cuentas de demo listas (clave de todas: la de {VARIABLE_CLAVE})'))
         for _, rut, nombre, apellido, rol in CUENTAS:
             self.stdout.write(f'  {rol:<10} {rut}  {nombre} {apellido}')

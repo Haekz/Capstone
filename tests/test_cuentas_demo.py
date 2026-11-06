@@ -1,9 +1,12 @@
 """Cuentas de demo (alumnos/management/commands/crear_cuentas_demo.py).
 
 Las cuentas tienen una clave conocida: el comando no debe correr en produccion ni pisar cuentas reales.
+La clave no esta en el codigo: llega por la variable CUENTAS_DEMO_CLAVE.
 """
 
+import os
 from io import StringIO
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
@@ -12,7 +15,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from alumnos.exceptions import InscripcionError
-from alumnos.management.commands.crear_cuentas_demo import BUY_ORDER, CLAVE, CUENTAS
+from alumnos.management.commands.crear_cuentas_demo import BUY_ORDER, CUENTAS, VARIABLE_CLAVE
 from alumnos.models import Alumno, Genero, Inscripcion, PaqueteClases, Profesor, SesionClase
 from alumnos.services import InscripcionService
 from apoderados.models import Apoderado, Vinculo
@@ -20,10 +23,16 @@ from alumnos.utils import es_menor
 
 User = get_user_model()
 RUT = {clave: rut for clave, rut, *_ in CUENTAS}
+CLAVE = 'clave-solo-para-pruebas-1'
+
+
+def con_clave():
+    """La variable de entorno que el comando exige, solo durante el bloque."""
+    return patch.dict(os.environ, {VARIABLE_CLAVE: CLAVE})
 
 
 def crear_cuentas():
-    with override_settings(DEBUG=True):  # el corredor de pruebas fuerza DEBUG=False
+    with override_settings(DEBUG=True), con_clave():  # el corredor de pruebas fuerza DEBUG=False
         call_command('crear_cuentas_demo', stdout=StringIO())
 
 
@@ -87,10 +96,17 @@ class SeguridadDelComandoTests(TestCase):
                 call_command('crear_cuentas_demo', stdout=StringIO())
         self.assertEqual(User.objects.count(), 0)
 
+    def test_sin_la_variable_de_clave_no_crea_nada(self):
+        with override_settings(DEBUG=True), patch.dict(os.environ):
+            os.environ.pop(VARIABLE_CLAVE, None)
+            with self.assertRaisesMessage(CommandError, VARIABLE_CLAVE):
+                call_command('crear_cuentas_demo', stdout=StringIO())
+        self.assertEqual(User.objects.count(), 0)
+
     def test_no_pisa_una_cuenta_real_con_el_mismo_rut(self):
         real = User.objects.create_user(RUT['alumno'], rut=RUT['alumno'], email='real@gmail.com', password='la-clave-real',
                                         rol='alumno', genero=Genero.objects.create(descripcion='Otro'))
-        with override_settings(DEBUG=True):
+        with override_settings(DEBUG=True), con_clave():
             with self.assertRaisesMessage(CommandError, 'no es de demo'):
                 call_command('crear_cuentas_demo', stdout=StringIO())
         real.refresh_from_db()
