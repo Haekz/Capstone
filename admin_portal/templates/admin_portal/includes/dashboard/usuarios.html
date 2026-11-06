@@ -1,0 +1,189 @@
+{# Gestion de usuarios: alumnos, profesores y administradores. #}
+                <!-- ============ SECCIÓN: GESTIÓN DE USUARIOS ============ -->
+                <div class="admin-section" id="section-usuarios">
+
+                    <div class="panel">
+                        <!-- esta parte es de las pestañas para filtrar por tipo de usuario -->
+                        <div class="filter-tabs">
+                            <button class="filter-tab active" id="tab-alumnos" onclick="showUserTab('alumnos')">
+                                <i class="bi bi-mortarboard-fill"></i> Alumnos ({{ total_alumnos }})
+                            </button>
+                            <button class="filter-tab" id="tab-profesores" onclick="showUserTab('profesores')">
+                                <i class="bi bi-person-workspace"></i> Profesores ({{ total_profesores }})
+                            </button>
+                            <button class="filter-tab" id="tab-admins" onclick="showUserTab('admins')">
+                                <i class="bi bi-shield-fill"></i> Administradores ({{ total_admins }})
+                            </button>
+                        </div>
+
+                        <!-- esta parte es de la barra con buscador y botón de agregar -->
+                        <div class="users-toolbar">
+                            <div class="search-bar" style="flex:1; max-width:360px;">
+                                <i class="bi bi-search"></i>
+                                <input type="text" id="user-search" placeholder="Buscar por nombre, RUT o correo..."
+                                    oninput="filterUsers()">
+                            </div>
+                            <a href="{% url 'alumnos_Add' %}" class="btn-primary" id="add-user-btn">
+                                <i class="bi bi-person-plus-fill"></i>
+                                Agregar Usuario
+                            </a>
+                        </div>
+
+                        <!-- esta parte es de la tabla de alumnos -->
+                        <div id="users-alumnos" style="overflow-x:auto;">
+                            <table class="user-table" id="table-alumnos">
+                                <thead>
+                                    <tr>
+                                        <th>Alumno</th>
+                                        <th>RUT</th>
+                                        <th>Nivel</th>
+                                        <th>Correo</th>
+                                        <th>Teléfono</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for alumno in alumnos %}
+                                    <tr class="user-row" data-name="{{ alumno.user.first_name|lower }}"
+                                        data-rut="{{ alumno.user.rut }}" data-correo="{{ alumno.user.email|lower }}">
+                                        <td>
+                                            <div class="user-cell">
+                                                <div class="user-avatar-sm">{{ alumno.user.first_name|slice:":1"|upper }}</div>
+                                                <div>
+                                                    <div class="user-cell-name">{{ alumno.user.first_name }}</div>
+                                                    <div class="user-cell-sub">{{ alumno.user.direccion|truncatechars:30 }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>{{ alumno.user.rut }}</td>
+                                        <td>
+                                            <span class="badge badge-alumno">{{ alumno.get_nivel_educacion_display }}</span>
+                                        </td>
+                                        <td>{{ alumno.user.email }}</td>
+                                        <td>{{ alumno.user.telefono }}</td>
+                                        <td>
+                                            <div style="display:flex; gap:6px;">
+                                                <a href="{% url 'alumnos_findEdit' alumno.id_alumno %}"
+                                                    class="btn-action edit" title="Editar">
+                                                    <i class="bi bi-pencil-fill"></i>
+                                                </a>
+                                                <form method="post" action="{% url 'alumnos_del' alumno.id_alumno %}"
+                                                    class="form-accion"
+                                                    onsubmit="return confirm('¿Seguro que quieres eliminar a {{ alumno.user.first_name }}?')">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn-action delete" title="Eliminar">
+                                                        <i class="bi bi-trash3-fill"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6">
+                                            <div class="empty-state">
+                                                <i class="bi bi-people"></i>
+                                                <p>No hay alumnos registrados todavía</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- esta parte es de la tabla de profesores (oculta por defecto) -->
+                        <div id="users-profesores" style="display:none; overflow-x:auto;">
+                            <table class="user-table" id="table-profesores">
+                                <thead>
+                                    <tr>
+                                        <th>Profesor</th>
+                                        <th>RUT</th>
+                                        <th>Especialidad</th>
+                                        <th>Correo</th>
+                                        <th>Teléfono</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for prof in profesores %}
+                                    <tr class="user-row" data-name="{{ prof.user.first_name|lower }}" data-rut="{{ prof.user.rut }}"
+                                        data-correo="{{ prof.user.email|lower }}">
+                                        <td>
+                                            <div class="user-cell">
+                                                <div class="user-avatar-sm"
+                                                    style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">{{
+                                                    prof.user.first_name|slice:":1"|upper }}</div>
+                                                <div>
+                                                    <div class="user-cell-name">{{ prof.user.first_name }}</div>
+                                                    <div class="user-cell-sub">{{ prof.user.direccion|truncatechars:30 }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>{{ prof.user.rut }}</td>
+                                        <td><span class="badge badge-profesor">{{ prof.especialidad }}</span></td>
+                                        <td>{{ prof.user.email }}</td>
+                                        <td>{{ prof.user.telefono }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="5">
+                                            <div class="empty-state">
+                                                <i class="bi bi-person-workspace"></i>
+                                                <p>No hay profesores registrados todavía</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- esta parte es de la tabla de administradores (oculta por defecto) -->
+                        <div id="users-admins" style="display:none; overflow-x:auto;">
+                            <table class="user-table" id="table-admins">
+                                <thead>
+                                    <tr>
+                                        <th>Administrador</th>
+                                        <th>RUT</th>
+                                        <th>Correo</th>
+                                        <th>Teléfono</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for admin_user in admins %}
+                                    <tr class="user-row" data-name="{{ admin_user.user.first_name|lower }}"
+                                        data-rut="{{ admin_user.user.rut }}"
+                                        data-correo="{{ admin_user.user.email|lower }}">
+                                        <td>
+                                            <div class="user-cell">
+                                                <div class="user-avatar-sm"
+                                                    style="background: linear-gradient(135deg, #f59e0b, #d97706);">{{
+                                                    admin_user.user.first_name|slice:":1"|upper }}</div>
+                                                <div>
+                                                    <div class="user-cell-name">{{ admin_user.user.first_name }}</div>
+                                                    <div class="user-cell-sub">{{ admin_user.user.direccion|truncatechars:30
+                                                        }}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>{{ admin_user.user.rut }}</td>
+                                        <td>{{ admin_user.user.email }}</td>
+                                        <td>{{ admin_user.user.telefono }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4">
+                                            <div class="empty-state">
+                                                <i class="bi bi-shield-lock"></i>
+                                                <p>No hay administradores registrados</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>

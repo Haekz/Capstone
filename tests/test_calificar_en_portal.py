@@ -4,7 +4,7 @@ from django.test import SimpleTestCase
 from django.urls import reverse
 
 from alumnos.roles import ALUMNO
-from tests.css_vars import leer, sin_definir
+from tests.css_vars import leer_hoja, sin_definir
 from tests.test_panel_docente_layout import HOJAS_RESENAS
 from tests.test_portal_alumno_variables import PAGINA_ALUMNO
 from tests.test_resenas import BaseResenas, entrar
@@ -20,7 +20,7 @@ class VariablesCssDeCalificarTests(SimpleTestCase):
 
     def test_la_caja_de_telefonos_de_ayuda_tiene_estilo(self):
         """Estaba como texto plano en todos los disenos: el banner del menor y Calificar la usan."""
-        css = leer('alumnos/static/alumnos/css/alumn_1.css')
+        css = leer_hoja('alumnos/static/alumnos/css/alumn_1')
         self.assertIn('.linea-ayuda-menor {', css)
         self.assertIn('color-mix(in srgb, currentColor', css)  # se adapta al fondo: banner oscuro o tarjeta clara
 

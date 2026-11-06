@@ -31,7 +31,7 @@ class VariablesCssDeEliminarCuentaTests(SimpleTestCase):
         self.assertEqual(sin_definir(HOJAS_TICKETS + PLANTILLAS, definidas_en=PAGINA_ALUMNO + HOJAS_TICKETS), {})
 
     def test_en_el_portal_del_docente(self):
-        definidas = [CSS_ADMIN, CSS_PORTAL, *HOJAS_TICKETS]
+        definidas = [*CSS_ADMIN, CSS_PORTAL, *HOJAS_TICKETS]
         self.assertEqual(sin_definir(HOJAS_TICKETS + PLANTILLAS, definidas_en=definidas), {})
 
 

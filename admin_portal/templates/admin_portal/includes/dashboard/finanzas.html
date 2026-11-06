@@ -1,0 +1,162 @@
+{# Finanzas y solicitudes de retiro de los profesores. #}
+{% load dinero %}
+            <!-- ============ SECCIÓN: FINANZAS Y RETIROS ============ -->
+            <div class="admin-section" id="section-finanzas">
+                <!-- Tarjetas financieras: montos reales (admin_portal/metricas.py, paso 8) -->
+                <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 28px; gap: 20px;">
+                    <div class="stat-card purple">
+                        <div class="stat-card-inner">
+                            <div class="stat-info">
+                                <div class="stat-value">{{ finanzas.cobrado|clp }}</div>
+                                <div class="stat-label">Cobrado (pagos aprobados)</div>
+                            </div>
+                            <div class="stat-icon" style="margin-left:auto;"><i class="bi bi-wallet2" aria-hidden="true"></i></div>
+                        </div>
+                    </div>
+                    <div class="stat-card purple">
+                        <div class="stat-card-inner">
+                            <div class="stat-info">
+                                <div class="stat-value">{{ finanzas.comision_estimada|clp }}</div>
+                                <div class="stat-label">Comisión estimada (15% de lo cobrado, si se dicta todo)</div>
+                            </div>
+                            <div class="stat-icon" style="margin-left:auto;"><i class="bi bi-calculator" aria-hidden="true"></i></div>
+                        </div>
+                    </div>
+                    <div class="stat-card green">
+                        <div class="stat-card-inner">
+                            <div class="stat-info">
+                                <div class="stat-value">{{ finanzas.ganancia|clp }}</div>
+                                <div class="stat-label">Ganancia LBWUS (15% de clases dictadas)</div>
+                            </div>
+                            <div class="stat-icon" style="margin-left:auto;"><i class="bi bi-graph-up-arrow" aria-hidden="true"></i></div>
+                        </div>
+                    </div>
+                    <div class="stat-card blue">
+                        <div class="stat-card-inner">
+                            <div class="stat-info">
+                                <div class="stat-value">{{ finanzas.por_dictar|clp }}</div>
+                                <div class="stat-label">Por dictar (aún no es ingreso)</div>
+                            </div>
+                            <div class="stat-icon" style="margin-left:auto;"><i class="bi bi-hourglass-split" aria-hidden="true"></i></div>
+                        </div>
+                    </div>
+                    <div class="stat-card blue">
+                        <div class="stat-card-inner">
+                            <div class="stat-info">
+                                <div class="stat-value">{{ finanzas.saldo_profesores|clp }}</div>
+                                <div class="stat-label">Saldo disponible de profesores (aún sin pedir)</div>
+                            </div>
+                            <div class="stat-icon" style="margin-left:auto;"><i class="bi bi-person-badge" aria-hidden="true"></i></div>
+                        </div>
+                    </div>
+                    <div class="stat-card green">
+                        <div class="stat-card-inner">
+                            <div class="stat-info">
+                                <div class="stat-value">{{ finanzas.retiros_pagados|clp }}</div>
+                                <div class="stat-label">Retiros Pagados</div>
+                            </div>
+                            <div class="stat-icon" style="margin-left:auto;"><i class="bi bi-cash-coin" aria-hidden="true"></i></div>
+                        </div>
+                    </div>
+                    <div class="stat-card amber">
+                        <div class="stat-card-inner">
+                            <div class="stat-info">
+                                <div class="stat-value">{{ finanzas.retiros_pendientes|clp }}</div>
+                                <div class="stat-label">Retiros Pendientes</div>
+                            </div>
+                            <div class="stat-icon" style="margin-left:auto;"><i class="bi bi-clock-history" aria-hidden="true"></i></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de solicitudes -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title"><i class="bi bi-card-list"></i> Solicitudes de Retiro</span>
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table class="user-table">
+                            <thead>
+                                <tr>
+                                    <th>Profesor</th>
+                                    <th>Monto</th>
+                                    <th>Fecha Solicitud</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for r in todas_solicitudes_retiro %}
+                                <tr>
+                                    <td>
+                                        <div class="user-cell">
+                                            <div class="user-avatar-sm" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+                                                {{ r.profesor.user.first_name|slice:":1"|upper }}
+                                            </div>
+                                            <div>
+                                                <div class="user-cell-name">{{ r.profesor.user.first_name }}</div>
+                                                <small style="color: var(--text-muted); font-size: 0.75rem;">{{ r.banco }} · {{ r.numero_cuenta }}{% if r.pagar_el %} · Pagar el {{ r.pagar_el|date:"d/m/Y" }}{% endif %}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td><strong style="color: var(--text-primary);">${{ r.monto }}</strong></td>
+                                    <td>{{ r.fecha_solicitud|date:"d/m/Y H:i" }}</td>
+                                    <td>
+                                        {% if r.estado == 'pendiente' %}
+                                        <span class="badge badge-pendiente"><i class="bi bi-clock-fill"></i> Pendiente</span>
+                                        {% elif r.estado == 'aprobado' %}
+                                        <span class="badge badge-resuelto"><i class="bi bi-check-circle-fill"></i> Aprobado, por pagar</span>
+                                        {% elif r.estado == 'pagado' %}
+                                        <span class="badge badge-resuelto"><i class="bi bi-cash-coin"></i> Pagado</span>
+                                        {% else %}
+                                        <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;"><i class="bi bi-x-circle-fill"></i> Rechazado</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if r.estado == 'pendiente' %}
+                                        <div style="display:flex; gap:6px;">
+                                            <form method="POST" action="{% url 'aprobar_retiro' r.id_solicitud %}" onsubmit="return confirm('¿Aprobar este retiro? Después transfiere y registra el número de operación.')" style="display:inline;">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn-action edit" style="border:none; background:rgba(16,185,129,0.12); color:#10b981; display:flex; align-items:center; justify-content:center; cursor:pointer; width:32px; height:32px; border-radius:6px;" title="Aprobar retiro" aria-label="Aprobar retiro">
+                                                    <i class="bi bi-check-lg"></i>
+                                                </button>
+                                            </form>
+                                            <form method="POST" action="{% url 'rechazar_retiro' r.id_solicitud %}" onsubmit="return confirm('¿Rechazar esta solicitud de retiro?')" style="display:flex; gap:6px;">
+                                                {% csrf_token %}
+                                                <input type="text" name="motivo" required maxlength="300" placeholder="Motivo del rechazo" aria-label="Motivo del rechazo (lo verá el profesor)" style="padding:4px 8px; border-radius:6px; font-size:0.8rem;">
+                                                <button type="submit" class="btn-action delete" style="border:none; background:rgba(239,68,68,0.12); color:#ef4444; display:flex; align-items:center; justify-content:center; cursor:pointer; width:32px; height:32px; border-radius:6px;" title="Rechazar retiro" aria-label="Rechazar retiro">
+                                                    <i class="bi bi-x-lg"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                        {% elif r.estado == 'aprobado' %}
+                                        {% with cuenta=r.profesor.cuenta_bancaria %}
+                                        <small style="display:block; margin-bottom:6px;">{% if cuenta.bloqueada %}La cuenta cambió hace menos de 48 h: no pagar hasta el {{ cuenta.pagable_desde|date:"d/m/Y H:i" }}.{% elif cuenta %}Transferir a {{ cuenta.banco }} · {{ cuenta.get_tipo_cuenta_display }} · N.º {{ cuenta.numero }} · RUT {{ r.profesor.user.rut }}{% else %}El profesor no tiene cuenta registrada.{% endif %}</small>
+                                        {% endwith %}
+                                        <form method="POST" action="{% url 'marcar_pagado_retiro' r.id_solicitud %}" style="display:flex; gap:6px;">
+                                            {% csrf_token %}
+                                            <input type="text" name="numero_operacion" required maxlength="40" placeholder="N.º de operación" aria-label="Número de operación de la transferencia" style="padding:4px 8px; border-radius:6px; font-size:0.8rem;">
+                                            <button type="submit" class="btn-action edit" style="border:none; background:rgba(16,185,129,0.12); color:#10b981; cursor:pointer; height:32px; padding:0 10px; border-radius:6px;">Registrar pago</button>
+                                        </form>
+                                        {% elif r.estado == 'pagado' %}
+                                        <span style="color:var(--text-muted); font-size:0.8rem;">Pagado el {{ r.fecha_pago|date:"d/m/Y" }} · Op. {{ r.numero_operacion }}</span>
+                                        {% else %}
+                                        <span style="color:var(--text-muted); font-size:0.8rem;">Rechazado el {% if r.fecha_resolucion %}{{ r.fecha_resolucion|date:"d/m/Y" }}{% else %}-{% endif %}{% if r.motivo_rechazo %}: {{ r.motivo_rechazo }}{% endif %}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5">
+                                        <div class="empty-state" style="text-align: center; padding: 30px; color: var(--text-muted);">
+                                            <i class="bi bi-wallet2" style="font-size: 2rem; display: block; margin-bottom: 8px;"></i>
+                                            No hay solicitudes de retiro registradas en el sistema.
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>

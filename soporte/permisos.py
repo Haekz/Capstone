@@ -3,7 +3,7 @@
 from functools import wraps
 
 from django.contrib.auth.views import redirect_to_login
-from django.db.models import F
+from django.db.models import Exists, OuterRef, Q
 from django.shortcuts import get_object_or_404, redirect
 
 from alumnos.decorators import soporte_required
@@ -12,7 +12,7 @@ from alumnos.roles import APODERADO, SOPORTE, abre_tickets, redirigir_a_portal, 
 from apoderados.models import Vinculo
 from apoderados.permisos import debe_renovar_clave
 
-from .models import AgenteSoporte, Ticket
+from .models import AgenteSoporte, Habilitacion, Ticket
 
 
 def agente_en_sesion(request):
@@ -21,10 +21,18 @@ def agente_en_sesion(request):
                              pk=request.session.get(SOPORTE.clave_sesion))
 
 
+def con_agente(tickets):
+    """Los de ``tickets`` que su agente asignado ve: habilitado en la categoria o lider (a
+    este le llegan escalados de cualquier categoria). Si a un agente le quitan la
+    categoria, sus tickets quedan sin nadie que los vea, y el lider se entera."""
+    habilitado = Habilitacion.objects.filter(agente=OuterRef('asignado'), categoria=OuterRef('categoria'))
+    return tickets.filter(Q(asignado__es_lider=True) | Exists(habilitado))
+
+
 def tickets_del_agente(request):
-    """Tickets abiertos asignados al agente en sesion, en categorias en que sigue habilitado."""
-    return Ticket.objects.filter(estado=Ticket.ABIERTO, asignado_id=request.session.get(SOPORTE.clave_sesion),
-                                 asignado__habilitaciones__categoria=F('categoria'))
+    """Tickets abiertos asignados al agente en sesion que puede ver (con_agente)."""
+    return con_agente(Ticket.objects.filter(estado=Ticket.ABIERTO,
+                                            asignado_id=request.session.get(SOPORTE.clave_sesion)))
 
 
 def ticket_asignado(request, **revisado):

@@ -11,7 +11,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Estilos específicos de la interfaz del administrador -->
-    <link rel="stylesheet" href="{% static 'admin_portal/css/admin_panel.css' %}">
+    {# Antes admin_panel.css: capas en orden, cada una pisa a la anterior. #}
+    <link rel="stylesheet" href="{% static 'admin_portal/css/admin_panel/01_base.css' %}">
+    <link rel="stylesheet" href="{% static 'admin_portal/css/admin_panel/02_componentes.css' %}">
+    <link rel="stylesheet" href="{% static 'admin_portal/css/admin_panel/03_widgets.css' %}">
+    <link rel="stylesheet" href="{% static 'admin_portal/css/admin_panel/04_rediseno_marco.css' %}">
+    <link rel="stylesheet" href="{% static 'admin_portal/css/admin_panel/05_rediseno_contenido.css' %}">
     <link rel="stylesheet" href="{% static 'alumnos/css/avisos.css' %}">
     {% include 'alumnos/includes/sin_copia_atras.html' %}
     {% block extra_css %}{% endblock %}
@@ -81,9 +86,9 @@
                 Nosotros
             </a>
 
-            <a id="nav-contactos" class="nav-item {% block nav_contactos %}{% endblock %}" href="{% url 'contactos_adm' %}">
-                <i class="bi bi-telephone-fill"></i>
-                Contactos
+            <a id="nav-escalados" class="nav-item {% block nav_escalados %}{% endblock %}" href="{% url 'casos_escalados' %}">
+                <i class="bi bi-exclamation-octagon-fill"></i>
+                Casos escalados
             </a>
 
             <span class="nav-label">Herramientas</span>

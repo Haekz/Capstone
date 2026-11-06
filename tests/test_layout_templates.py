@@ -1,10 +1,11 @@
 'El layout comun debe salir una sola vez y en todas las paginas publicas.\n\nNavbar y footer viven en alumnos/templates/alumnos/includes/. Estos tests\ndetectan tanto una copia pegada a mano como un include roto.\n'
-from pathlib import Path
-
 from django.test import TestCase
 from django.urls import reverse
+
+from .css_vars import leer_hoja
+
 PAGINAS_PUBLICAS = ('home', 'nosotros', 'servicios', 'planes', 'contactos', 'opcion_user')
-CSS_BASE = Path(__file__).resolve().parent.parent / 'alumnos' / 'static' / 'alumnos' / 'css' / 'styles.css'
+CSS_BASE = 'alumnos/static/alumnos/css/styles'  # styles.css, dividida en partes
 
 class LayoutCompartidoTests(TestCase):
     """Marcas que solo puede poner base.html a traves de sus includes."""
@@ -45,7 +46,7 @@ class PieAlFondoTests(TestCase):
     """Con poco contenido (Notificaciones vacia, un error) el pie no puede quedar flotando a mitad de pantalla."""
 
     def test_el_cuerpo_ocupa_la_pantalla_y_el_contenido_empuja_al_pie(self):
-        css = CSS_BASE.read_text(encoding='utf-8')
+        css = leer_hoja(CSS_BASE)
         cuerpo = css[css.index('\nbody {'):].split('}')[0]
         for regla in ('display: flex', 'flex-direction: column', 'min-height: 100vh'):
             self.assertIn(regla, cuerpo)

@@ -3,7 +3,26 @@ from alumnos.models import Alumno, Genero
 from alumnos.utils import validar_clave_nueva
 from django.contrib.auth import get_user_model
 
+from .models import MensajeContacto
+
 User = get_user_model()
+
+
+class MensajeContactoForm(forms.ModelForm):
+    """Formulario publico de contacto. La pagina lo dibuja a mano; aqui solo se valida.
+    Los mensajes son los mismos que muestra la pagina: el servidor y el navegador dicen lo mismo."""
+
+    class Meta:
+        model = MensajeContacto
+        fields = ['nombre', 'correo', 'mensaje']
+        error_messages = {
+            'nombre': {'required': 'Por favor, dinos tu nombre.',
+                       'max_length': 'Tu nombre puede tener hasta %(limit_value)d caracteres.'},
+            'correo': {'required': 'Por favor, ingresa un correo válido.',
+                       'invalid': 'Por favor, ingresa un correo válido.'},
+            'mensaje': {'required': 'Por favor, escribe tu mensaje.',
+                        'max_length': 'Tu mensaje puede tener hasta %(limit_value)d caracteres.'},
+        }
 
 
 class AdminAlumnoForm(forms.ModelForm):

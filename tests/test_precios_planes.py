@@ -13,7 +13,7 @@ from alumnos.templatetags.dinero import clp
 from tests.test_paquetes import RUT_ANA, Escenario
 
 
-@patch('alumnos.views._tx')
+@patch('alumnos.webpay._tx')
 class PreciosPlanesTests(Escenario):
 
     def test_lo_que_muestra_la_pagina_es_lo_que_se_cobra(self, mock_tx):

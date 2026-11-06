@@ -1,0 +1,29 @@
+{# Dialogo para calificar la ultima clase. #}
+{% if por_calificar %}
+<dialog id="dialogo-calificar" class="dialogo-calificar" aria-labelledby="dialogo-calificar-titulo">
+    <form method="post" action="{% url 'resena_calificar' por_calificar.id_inscripcion %}">
+        {% csrf_token %}
+        <h2 id="dialogo-calificar-titulo">¿Cómo estuvo tu clase?</h2>
+        <p>{{ por_calificar.clase.asignatura.nombre }} con {{ por_calificar.clase.profesor.user.first_name }}</p>
+        <fieldset>
+            <legend>Tu calificación</legend>
+            {% for n in "12345"|make_list %}
+            <label><input type="radio" name="puntaje" value="{{ n }}" required> {{ n }} <i class="bi bi-star-fill" aria-hidden="true"></i></label>
+            {% endfor %}
+        </fieldset>
+        <div class="dialogo-calificar__acciones">
+            <button type="submit" class="btn-principal">Enviar</button>
+            <button type="submit" formmethod="dialog" formnovalidate class="dialogo-calificar__luego">Ahora no</button>
+        </div>
+    </form>
+</dialog>
+<script>
+    // Se abre solo al entrar; "Ahora no" (o Esc) lo deja cerrado hasta la proxima sesion del navegador.
+    (function () {
+        const dialogo = document.getElementById('dialogo-calificar');
+        if (!dialogo || sessionStorage.getItem('calificar-ahora-no')) return;
+        dialogo.addEventListener('close', () => sessionStorage.setItem('calificar-ahora-no', '1'));
+        dialogo.showModal();
+    })();
+</script>
+{% endif %}

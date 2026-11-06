@@ -41,8 +41,44 @@ class RespuestaForm(MensajeForm):
         self.fields['texto'].help_text = 'El usuario la lee en LBWUS; el correo solo le avisa que respondiste.'
 
 
+class RespuestaContactoForm(MensajeForm):
+    """El agente responde a un visitante de Contactanos (H14). Siempre cierra: el visitante no
+    tiene cuenta para contestar, si necesita algo mas vuelve a escribir. Sin texto, solo si lo
+    cierra sin responder (spam o repetido)."""
+    sin_respuesta = forms.BooleanField(label='Cerrar sin responder (spam o mensaje repetido)', required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        texto = self.fields['texto']
+        texto.required = False
+        texto.label = 'Respuesta al visitante'
+        texto.help_text = ('Le llega tal cual a su correo y se cierra el ticket. No tiene cuenta: no pidas '
+                           'su contraseña, RUT ni datos de pago.')
+
+    def clean(self):
+        datos = super().clean()
+        if datos.get('sin_respuesta') == bool(datos.get('texto')):
+            raise forms.ValidationError('Escribe una respuesta o marca "Cerrar sin responder" (solo una de las dos).')
+        datos['cerrar'] = True
+        return datos
+
+
 class ReasignarForm(forms.Form):
     agente = forms.ModelChoiceField(
         queryset=AgenteSoporte.objects.all(),
         error_messages={'required': 'Elige un agente.', 'invalid_choice': 'Ese agente no existe.'},
     )
+
+
+class EscalarForm(AccesibleMixin, forms.Form):
+    """Motivo obligatorio para escalar un caso grave (al lider o a un administrador)."""
+    motivo = forms.CharField(label='¿Por qué lo escalas?', max_length=1000, widget=forms.Textarea(attrs={'rows': 4}),
+                             help_text='Por ejemplo: amenaza legal, posible delito, datos de un menor expuestos.',
+                             error_messages={'required': 'Escribe por qué lo escalas.'})
+
+
+class IndicacionForm(AccesibleMixin, forms.Form):
+    """Lo que el administrador decide en un caso escalado; soporte lo ejecuta."""
+    indicacion = forms.CharField(label='Tu indicación para soporte', max_length=1000,
+                                 widget=forms.Textarea(attrs={'rows': 3}),
+                                 error_messages={'required': 'Escribe tu indicación para soporte.'})

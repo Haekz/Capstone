@@ -1,0 +1,364 @@
+/* =============================================================
+   Estilos que antes estaban inline en Alumno_pag1.html
+   (prefijo ap- = alumno portal; #portal-alumno les da la prioridad que tenia el inline)
+   ============================================================= */
+
+#portal-alumno .ap-btn-setup {
+    padding: 12px 24px;
+}
+
+#portal-alumno .ap-mb-20 {
+    margin-bottom: 20px;
+}
+
+#portal-alumno .ap-clickable {
+    cursor: pointer;
+}
+
+#portal-alumno .ap-section-narrow {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+#portal-alumno .ap-mb-10 {
+    margin-bottom: 10px;
+}
+
+#portal-alumno .ap-text-accent {
+    color: var(--accent);
+}
+
+#portal-alumno .ap-section-intro {
+    color: var(--text-light);
+    margin-bottom: 30px;
+}
+
+#portal-alumno .ap-text-primary {
+    color: var(--primary);
+}
+
+#portal-alumno .ap-mb-40 {
+    margin-bottom: 40px;
+}
+
+#portal-alumno .class-status-badge--enrolled {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    font-weight: 600;
+}
+
+#portal-alumno .ap-class-actions {
+    display: flex;
+    gap: 8px;
+    padding: 0 15px 15px 15px;
+}
+
+#portal-alumno .ap-flex-1 {
+    flex: 1;
+}
+
+#portal-alumno .ap-btn-cancel {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 8px;
+    padding: 10px 14px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#portal-alumno .ap-full-row {
+    grid-column: 1/-1;
+}
+
+#portal-alumno .class-status-badge--modality {
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--primary);
+}
+
+#portal-alumno .ap-class-footer {
+    padding: 0 15px 15px 15px;
+}
+
+#portal-alumno .ap-btn-enrolled {
+    width: 100%;
+    background: rgba(16, 185, 129, 0.15);
+    color: #059669;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: default;
+}
+
+#portal-alumno .btn-join-class--primary {
+    width: 100%;
+    background: var(--primary);
+    color: #fff;
+}
+
+#portal-alumno .ap-btn-block {
+    width: 100%;
+    border-radius: 12px;
+    padding: 14px;
+}
+
+#portal-alumno .ap-mr-8 {
+    margin-right: 8px;
+}
+
+#portal-alumno .ap-ticket {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+#portal-alumno .ap-ticket-header {
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+}
+
+#portal-alumno .ap-ticket-id {
+    font-family: monospace;
+    color: var(--primary);
+    font-weight: bold;
+}
+
+#portal-alumno .ap-ticket-desc {
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+#portal-alumno .ap-ticket-meta {
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+#portal-alumno .ap-empty-tickets {
+    text-align: center;
+    padding: 30px;
+    color: var(--text-light);
+}
+
+#portal-alumno .ap-empty-icon {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 10px;
+}
+
+#portal-alumno .ap-section-wide {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 15px;
+}
+
+#portal-alumno .ap-mb-30 {
+    margin-bottom: 30px;
+}
+
+#portal-alumno .ap-catalog-title {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 8px;
+}
+
+#portal-alumno .ap-catalog-sub {
+    color: var(--text-light);
+    font-size: 1.05rem;
+}
+
+#portal-alumno .ap-section-medium {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+#portal-alumno .ap-mb-25 {
+    margin-bottom: 25px;
+}
+
+#portal-alumno .ap-view-sub {
+    color: var(--text-light);
+    font-size: 0.95rem;
+}
+
+#portal-alumno .stat-icon--purple {
+    background: rgba(168, 85, 247, 0.1);
+    color: var(--primary);
+}
+
+#portal-alumno .stat-icon--green {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+#portal-alumno .stat-icon--amber {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--accent);
+}
+
+#portal-alumno .ap-chart-box {
+    height: 220px;
+    position: relative;
+}
+
+#portal-alumno .ap-fill {
+    width: 100%;
+    height: 100%;
+}
+
+#portal-alumno .ap-mt-30 {
+    margin-top: 30px;
+}
+
+#portal-alumno .ap-transactions {
+    margin-top: 40px;
+    border-top: 1px solid rgba(168, 85, 247, 0.1);
+    padding-top: 30px;
+}
+
+#portal-alumno .ap-transactions-title {
+    margin-bottom: 20px;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#portal-alumno .ap-btn-accept {
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    font-weight: 700;
+    margin-top: 10px;
+}
+
+#portal-alumno .ap-modal-builder {
+    max-width: 800px;
+    max-height: 90vh;
+}
+
+#portal-alumno .ap-builder-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 5px;
+}
+
+#portal-alumno .ap-builder-sub {
+    color: var(--text-light);
+    font-size: 0.95rem;
+    margin-bottom: 10px;
+}
+
+#portal-alumno .ap-btn-block-spaced {
+    width: 100%;
+    border-radius: 12px;
+    padding: 14px;
+    margin-top: 20px;
+}
+
+/* S-19: Logout vía POST en sidebar alumno */
+.form-sb-logout {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.btn-sb-logout {
+    width: 100%;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+/* Paginas compartidas dentro del portal (Notificaciones, Ayuda y soporte... sobre base_alumno). Sus hojas (lista.css,
+   perfil_profesor.css) se escribieron para el sitio publico: usan --surface y --border (aqui son --white y --line, que
+   ya cambian con el tema) y bajan el contenido bajo un header fijo que el portal no tiene (--header-height es la altura
+   de SU barra, asi que no se puede poner en 0). */
+#portal-alumno {
+    --surface: var(--white);
+    --border: var(--line);
+    --secondary: #1a1233;                      /* los de styles.css que usa planes.css */
+    --accent-dark: #d98a0c;
+    --section-y: 64px;                         /* el sitio publico usa hasta 112px bajo el contenido */
+    --enlace: var(--primary);                  /* ~8.4:1 sobre blanco */
+}
+
+#portal-alumno.dark-mode {
+    --enlace: hsl(var(--hue), 85%, 80%);       /* --primary no cambia de noche: ~8.4:1 sobre #111827 */
+}
+
+/* El color de los enlaces lo daba styles.css (que el portal no carga): sin esto quedan en azul de navegador, ilegible de
+   noche. :where() da especificidad 0: un enlace con clase propia manda sobre esta regla. */
+:where(#portal-alumno :is(.perfil-prof, .planes-header) a:not([class])) {
+    color: var(--enlace);
+}
+
+/* apoderados.css solo pinta los input de sus formularios; select y textarea los cubria styles.css en el sitio publico.
+   Misma regla que .apod-form__campo input (gemela en portal_docente.css): los tres controles iguales y con tema. */
+#portal-alumno .apod-form__campo :is(select, textarea) {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-sm);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+}
+
+/* Los botones no heredan la fuente: sin styles.css salian en la del sistema */
+#portal-alumno .perfil-prof button {
+    font-family: inherit;
+}
+
+/* Con la barra como h1, el titulo propio de una pagina (p. ej. el de un ticket) baja a h2 con el tamano del h1 */
+#portal-alumno .perfil-prof__cabecera h2 {
+    font-size: 1.8rem;
+}
+
+#portal-alumno .perfil-prof,
+#portal-alumno .notif-pagina {
+    max-width: 900px;
+    margin: 0;
+    padding: 0;
+}
+
+/* Telefonos de ayuda (alumnos/includes/lineas_ayuda.html): la usan el banner del menor (fondo oscuro) y Calificar (tarjeta clara
+   u oscura). Fondo y borde salen del color de texto heredado: en cada fondo mantienen el contraste que ya tenia el texto. */
+.linea-ayuda-menor {
+    margin: 16px 0;
+    padding: 14px 16px;
+    border: 1px solid rgba(127, 127, 127, 0.4);
+    border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+    border-radius: 12px;
+    background: rgba(127, 127, 127, 0.12);
+    background: color-mix(in srgb, currentColor 10%, transparent);
+}
+
+.linea-ayuda-menor > p {
+    margin: 0;
+}
+
+.linea-ayuda-menor > p:first-child {
+    font-size: 1.05em;
+}
+
+.linea-ayuda-menor ul {
+    margin: 10px 0;
+    padding-left: 1.2rem;
+}
+
+.linea-ayuda-menor li + li {
+    margin-top: 6px;
+}
+
+.linea-ayuda-menor > p:last-child {
+    font-size: 0.9em;
+}

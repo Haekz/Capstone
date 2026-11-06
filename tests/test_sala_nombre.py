@@ -8,12 +8,12 @@ from django.template.loader import get_template
 from django.urls import reverse
 
 from alumnos.models import Asignatura, Clase
-from alumnos.views import nombre_sala_jitsi
+from alumnos.sala_virtual import nombre_sala_jitsi
 from tests.test_paquetes import RUT_PROFE, Escenario
 
 
 def nombre_sala(id_clase):
-    """El nombre de la sala solo depende del id de la clase (alumnos.views.nombre_sala_jitsi)."""
+    """El nombre de la sala solo depende del id de la clase (alumnos.sala_virtual.nombre_sala_jitsi)."""
     return nombre_sala_jitsi(SimpleNamespace(id_clase=id_clase))
 
 

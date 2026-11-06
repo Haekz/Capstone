@@ -27,6 +27,7 @@ from admin_portal.forms import AdminAlumnoForm
 from alumnos.forms import AlumnoForm
 from alumnos.google_adapter import entrar_al_portal
 from alumnos.models import Alumno, Especialidad, Genero, Tutor
+from apoderados.forms import RegistroApoderadoForm
 from tests.test_google_y_titulo import BaseGoogle, google_login
 
 User = get_user_model()
@@ -112,7 +113,7 @@ class S03ClaveInicialTests(TestCase):
 
 
 class Seg3ClaveIgualAlRutTests(BaseIdentidad):
-    """Seg-3: los registros de alumno, profesor y administrador rechazan la clave igual
+    """Seg-3: los registros de alumno, profesor, administrador y apoderado rechazan la clave igual
     al RUT (con o sin puntos) o al correo. Antes validaban sin usuario y pasaban."""
 
     RUT, CORREO = '11111111-1', 'nuevo@demo.cl'
@@ -147,6 +148,16 @@ class Seg3ClaveIgualAlRutTests(BaseIdentidad):
                 form = AlumnoForm(data=self.datos(clave, nivel_educacion='media'))
                 self.assertIn('password', form.errors)
         self.assertTrue(AlumnoForm(data=self.datos(CLAVE_SEGURA, nivel_educacion='media')).is_valid())
+
+    def test_registro_de_apoderado(self):
+        """Ademas compara con el nombre: el apoderado lo hacia antes de usar el helper comun."""
+        datos = {'nombre': 'Nueva Persona', 'rut': self.RUT, 'correo': self.CORREO}
+        for clave in self.CLAVES + ('Nueva Persona',):
+            with self.subTest(clave=clave):
+                form = RegistroApoderadoForm(data={**datos, 'password': clave, 'confirmar_password': clave})
+                self.assertIn('password', form.errors)
+        form = RegistroApoderadoForm(data={**datos, 'password': CLAVE_SEGURA, 'confirmar_password': CLAVE_SEGURA})
+        self.assertNotIn('password', form.errors)  # control (faltan el carnet y otros campos: no importan aqui)
 
 
 class S05LimiteDeIntentosTests(BaseIdentidad):

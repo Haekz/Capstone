@@ -13,22 +13,24 @@ from django.urls import reverse
 
 from alumnos.models import Especialidad, Genero, Profesor
 
-from .css_vars import leer, sin_definir
+from .css_vars import leer, leer_hoja, partes, sin_definir
 
 User = get_user_model()
 
 CLAVE = 'clave12345'
 CSS_PORTAL = 'user_profesor/static/user_profesor/portal_docente.css'
-CSS_ADMIN = 'admin_portal/static/admin_portal/css/admin_panel.css'
+CSS_ADMIN = partes('admin_portal/static/admin_portal/css/admin_panel')
+PANEL = 'user_profesor/static/user_profesor/panel'
 
 # Todo lo que dibuja el panel del docente: la base, el panel, sus parciales y sus hojas.
 HOJAS_PANEL = [
-    'user_profesor/static/panel.css', 'user_profesor/static/clases_solicitadas.css',
+    *partes(PANEL), 'user_profesor/static/clases_solicitadas.css',
     'user_profesor/static/videos.css', 'user_profesor/static/clases_en_vivo.css',
 ]
 PLANTILLAS_PANEL = [
     'user_profesor/templates/user_profesor/base_docente.html',
     'user_profesor/templates/user_profesor/panel_profesor.html',
+    *partes('user_profesor/templates/user_profesor/includes/panel'),
     'user_profesor/templates/user_profesor/clases_solicitadas.html',
     'user_profesor/templates/user_profesor/clases_en_vivo.html',
     'user_profesor/templates/user_profesor/videos.html',
@@ -104,13 +106,13 @@ class PanelDocenteLayoutTests(TestCase):
 
     def test_las_variables_css_de_mis_resenas_existen_en_el_portal(self):
         """Sus hojas son las del sitio publico (--line, --r-md, --surface...): el puente las traduce al portal."""
-        faltantes = sin_definir(HOJAS_RESENAS + PLANTILLAS_RESENAS, definidas_en=[CSS_ADMIN, CSS_PORTAL, *HOJAS_RESENAS])
+        faltantes = sin_definir(HOJAS_RESENAS + PLANTILLAS_RESENAS, definidas_en=[*CSS_ADMIN, CSS_PORTAL, *HOJAS_RESENAS])
         self.assertEqual(faltantes, {})
 
     def test_las_variables_css_de_notificaciones_existen_en_el_portal(self):
         faltantes = sin_definir(
             HOJAS_NOTIFICACIONES + PLANTILLAS_NOTIFICACIONES,
-            definidas_en=[CSS_ADMIN, CSS_PORTAL, *HOJAS_NOTIFICACIONES],
+            definidas_en=[*CSS_ADMIN, CSS_PORTAL, *HOJAS_NOTIFICACIONES],
         )
         self.assertEqual(faltantes, {})
 
@@ -124,7 +126,7 @@ class PanelDocenteLayoutTests(TestCase):
 
     def test_el_titulo_de_tarjeta_no_reparte_el_icono_y_el_texto_a_los_extremos(self):
         """Con space-between, 'icono + texto' mandaba el texto a la derecha. La etiqueta se empuja sola."""
-        css = leer('user_profesor/static/panel.css')
+        css = leer_hoja(PANEL)
         titulo = re.search(r'\.prof-card-title\s*\{([^}]*)\}', css).group(1)
         self.assertNotIn('space-between', titulo)
         etiqueta = re.search(r'\.prof-card-title-badge\s*\{([^}]*)\}', css).group(1)
@@ -137,5 +139,5 @@ class PanelDocenteLayoutTests(TestCase):
         existen dentro de sala_virtual.html. Cada var(--x) debe estar definida en el portal, en el puente
         o en las propias hojas del panel.
         """
-        faltantes = sin_definir(HOJAS_PANEL + PLANTILLAS_PANEL, definidas_en=[CSS_ADMIN, CSS_PORTAL, *HOJAS_PANEL])
+        faltantes = sin_definir(HOJAS_PANEL + PLANTILLAS_PANEL, definidas_en=[*CSS_ADMIN, CSS_PORTAL, *HOJAS_PANEL])
         self.assertEqual(faltantes, {})

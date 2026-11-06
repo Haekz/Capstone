@@ -4,7 +4,9 @@
 {% block title %}LBWUS | Pago Confirmado{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'alumnos/css/pago.css' %}">
+{# Antes pago.css: capas en orden, cada una pisa a la anterior. #}
+<link rel="stylesheet" href="{% static 'alumnos/css/pago/01_pago.css' %}">
+<link rel="stylesheet" href="{% static 'alumnos/css/pago/02_confirmacion.css' %}">
 {% endblock %}
 
 {% block content %}

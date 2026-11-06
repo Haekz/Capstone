@@ -1,0 +1,165 @@
+{# Vistas premium: cursos, buzon de dudas e informe de progreso. #}
+        <!-- ── VIEW 7: CURSOS PREMIUM (PREMIUM) ── -->
+        <!-- esta parte es de los cursos premium de los alumnos -->
+        <div class="dashboard-view" id="view-courses">
+            <div class="results-section ap-section-wide">
+                
+                <!-- Contenido de Cursos (Desbloqueado) -->
+                <!-- esta parte es del catalogo con los carruseles de cursos -->
+                <div class="courses-wrapper-content" id="courses-unlocked-content">
+                    
+                    <div class="courses-catalog-header ap-mb-30">
+                        <h2 class="ap-catalog-title">Catálogo de Cursos Premium</h2>
+                        <p class="ap-catalog-sub">Aprende a tu propio ritmo con cursos grabados por profesores de LBWUS.</p>
+                    </div>
+
+                    {# SCRUM-36: el catálogo de ejemplo se retiró; no se muestran cursos, precios ni videos que no existen. #}
+                    <div class="empty-teachers-state ap-full-row">
+                        <i class="bi bi-camera-video"></i>
+                        <p>Los cursos grabados estarán disponibles próximamente.</p>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ── VIEW 8: BUZÓN DE DUDAS (PREMIUM) ── -->
+        <!-- esta parte es del chat o buzon de dudas premium -->
+        <div class="dashboard-view" id="view-inbox">
+            <div class="results-section ap-section-medium">
+                
+                <!-- Pantalla de Bloqueo Premium -->
+                <div class="premium-lock-overlay" id="lock-inbox">
+                    <div class="lock-card">
+                        <div class="lock-icon-wrapper">
+                            <i class="bi bi-lock-fill"></i>
+                        </div>
+                        <h2>Función Premium Exclusiva</h2>
+                        <p>Resuelve tus dudas directamente con tus profesores preferidos. Esta función requiere un paquete de clases vigente.</p>
+                        <button class="btn-principal" onclick="switchView('view-plans')">Ver Mis Paquetes</button>
+                    </div>
+                </div>
+
+                <!-- Contenido del Buzón (Desbloqueado) -->
+                <div class="inbox-wrapper-content" id="inbox-unlocked-content" style="display: none;">
+                    {% if plan_activo.premium %}{# sin plan premium este contenido ni siquiera llega al HTML #}
+                    {% if not es_menor %}{% include 'mensajes/buzon_alumno.html' %}{% endif %}{# el menor no tiene mensajes #}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- ── VIEW 9: INFORME DE PROGRESO (PREMIUM) ── -->
+        <!-- esta parte es del reporte de notas y avance premium -->
+        <div class="dashboard-view" id="view-progress">
+            <div class="results-section ap-section-medium">
+                
+                <!-- Pantalla de Bloqueo Premium -->
+                <div class="premium-lock-overlay" id="lock-progress">
+                    <div class="lock-card">
+                        <div class="lock-icon-wrapper">
+                            <i class="bi bi-lock-fill"></i>
+                        </div>
+                        <h2>Función Premium Exclusiva</h2>
+                        <p>Obtén análisis detallados de tu avance, horas de estudio y la retroalimentación de tus tutores. Esta función requiere un paquete de clases vigente.</p>
+                        <button class="btn-principal" onclick="switchView('view-plans')">Ver Mis Paquetes</button>
+                    </div>
+                </div>
+
+                <!-- Contenido de Progreso (Desbloqueado) -->
+                <div class="progress-wrapper-content" id="progress-unlocked-content" style="display: none;">
+                    {% if plan_activo.premium %}{# sin plan premium este contenido ni siquiera llega al HTML #}
+                    <div class="ap-mb-25">
+                        <h2><i class="bi bi-bar-chart-line-fill ap-text-primary"></i> Mi Informe de Progreso</h2>
+                        <p class="ap-view-sub">Revisa tus estadísticas de estudio, horas dedicadas y el feedback de tus tutores.</p>
+                    </div>
+                    
+                    <!-- Resumen de Estadísticas -->
+                    <div class="progress-stats-grid">
+                        <div class="progress-stat-card">
+                            <div class="stat-icon stat-icon--purple"><i class="bi bi-hourglass-split"></i></div>
+                            <div class="stat-info">
+                                <h4 id="progress-stat-hours">{{ progreso.horas|floatformat:"-1" }} hrs</h4>
+                                <p>Tiempo de Estudio Total</p>
+                            </div>
+                        </div>
+                        <div class="progress-stat-card">
+                            <div class="stat-icon stat-icon--green"><i class="bi bi-check-circle-fill"></i></div>
+                            <div class="stat-info">
+                                <h4 id="progress-stat-classes">{{ progreso.clases }}</h4>
+                                <p>Clases Completadas</p>
+                            </div>
+                        </div>
+                        <div class="progress-stat-card">
+                            <div class="stat-icon stat-icon--amber"><i class="bi bi-journal-check"></i></div>
+                            <div class="stat-info">
+                                <h4 id="progress-stat-subjects">{{ progreso.ramos }}</h4>
+                                <p>Ramos Cursados</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-details-grid">
+                        <!-- Avance por ramo -->
+                        <div class="progress-details-card">
+                            <h3>Avance por Ramo</h3>
+                            <p class="ap-view-sub">Clases completadas y horas en cada ramo. La barra compara cada ramo con el que más has estudiado.</p>
+                            <div class="progress-subject-list" id="progress-subject-list">
+                                {% for ramo in progreso_ramos %}
+                                <div class="progress-subject-item">
+                                    <div class="subject-progress-header">
+                                        <span class="subject-progress-name">{{ ramo.nombre }}</span>
+                                        <span class="subject-progress-pct">{{ ramo.clases }} clase{{ ramo.clases|pluralize }} · {{ ramo.horas|floatformat:"-1" }} h</span>
+                                    </div>
+                                    <div class="progress-bar-container" aria-hidden="true">
+                                        <div class="progress-bar-fill" style="width: {{ ramo.porcentaje }}%; background-color: var(--primary);"></div>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <p>Aún no completas clases: cuando lo hagas, verás aquí tu avance por ramo.</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <!-- Gráfico de tendencia SVG -->
+                        <div class="progress-details-card">
+                            <h3>Horas de Estudio Semanales</h3>
+                            <p class="ap-view-sub">Horas de clases completadas en las últimas 5 semanas (de lunes a domingo).</p>
+                            <div class="chart-container ap-chart-box">
+                                <svg class="progress-chart-svg ap-fill" viewBox="0 0 500 200" role="img" aria-label="Horas de estudio por semana: {% for s in grafico_semanal %}semana del {{ s.desde|date:'d/m' }}, {{ s.horas|floatformat:'-1' }} horas{% if not forloop.last %}; {% endif %}{% endfor %}">
+                                    <defs>
+                                        <linearGradient id="chart-grad" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stop-color="var(--primary)" stop-opacity="0.3"/>
+                                            <stop offset="100%" stop-color="var(--primary)" stop-opacity="0.0"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <!-- Líneas de fondo -->
+                                    <line x1="40" y1="20" x2="480" y2="20" stroke="rgba(168, 85, 247, 0.08)" stroke-width="1"/>
+                                    <line x1="40" y1="70" x2="480" y2="70" stroke="rgba(168, 85, 247, 0.08)" stroke-width="1"/>
+                                    <line x1="40" y1="120" x2="480" y2="120" stroke="rgba(168, 85, 247, 0.08)" stroke-width="1"/>
+                                    <line x1="40" y1="170" x2="480" y2="170" stroke="rgba(168, 85, 247, 0.08)" stroke-width="1"/>
+                                    
+                                    <!-- Trazado del gráfico: la serie sale de alumnos/progreso.py -->
+                                    <polygon fill="url(#chart-grad)" points="{% for s in grafico_semanal %}{{ s.x }},{{ s.y }} {% endfor %}460,170 40,170"/>
+                                    <polyline fill="none" stroke="var(--primary)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" class="chart-line-path" points="{% for s in grafico_semanal %}{{ s.x }},{{ s.y }} {% endfor %}"/>
+                                    {% for s in grafico_semanal %}
+                                    <circle cx="{{ s.x }}" cy="{{ s.y }}" r="5" fill="var(--primary)"/>
+                                    <text x="{{ s.x }}" y="{{ s.y }}" dy="-10" fill="var(--text)" font-size="11" text-anchor="middle">{{ s.horas|floatformat:"-1" }} h</text>
+                                    <text x="{{ s.x }}" y="190" fill="var(--text-light)" font-size="11" text-anchor="middle">{{ s.desde|date:"d/m" }}</text>
+                                    {% endfor %}
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Retroalimentación de docentes -->
+                    <div class="progress-feedback-section ap-mt-30">
+                        <h3>Comentarios y Observaciones del Equipo Docente</h3>
+                        <div class="feedback-list-container" id="feedback-list-container">
+                            {% include 'observaciones/_lista.html' %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>

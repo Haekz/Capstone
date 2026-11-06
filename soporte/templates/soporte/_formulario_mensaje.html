@@ -1,6 +1,11 @@
-{# Formulario de respuesta (usuario o agente), accesible como apoderados/formulario.html. #}
+{# Formulario de soporte accesible como apoderados/formulario.html: respuestas y escalamientos. #}
 <form method="post" class="apod-form" novalidate style="display:grid; gap:10px; margin-top:16px;">
     {% csrf_token %}
+    {% if form.non_field_errors %}
+    <div role="alert">
+        {% for error in form.non_field_errors %}<p class="apod-form__error">{{ error }}</p>{% endfor %}
+    </div>
+    {% endif %}
     {% for campo in form %}
     {% if campo.field.widget.input_type == 'checkbox' %}
     <div class="apod-form__declaracion">{{ campo }} <label for="{{ campo.id_for_label }}">{{ campo.label }}</label></div>
@@ -18,6 +23,6 @@
     {% endif %}
     {% endfor %}
     <button type="submit" class="{{ clase_boton|default:'perfil-prof__reservar' }}">
-        <i class="bi bi-send-fill" aria-hidden="true"></i> Enviar respuesta
+        <i class="bi {{ icono_boton|default:'bi-send-fill' }}" aria-hidden="true"></i> {{ texto_boton|default:'Enviar respuesta' }}
     </button>
 </form>

@@ -58,6 +58,7 @@ class HorasEnPantallaTests(TestCase):
                                                 fecha_hora_fin=inicio + timedelta(hours=1), cupo_maximo=5)
 
     def test_modal_de_horarios_en_hora_de_chile(self):
+        self.client.post(reverse('login'), {'username': RUT_ANA, 'password': CLAVE})
         sesion = self.client.get(reverse('sesiones_disponibles')).json()['sesiones'][0]
         self.assertEqual(sesion['hora_formateada'], '10:00 - 11:00 hrs')
 

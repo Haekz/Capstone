@@ -49,7 +49,7 @@ VER_HALLAZGOS=1 python manage.py test tests.test_matriz_identidad -v 2 # muestra
 | ID-12 | Anónimo | Registro propio de allauth (`/accounts/signup/`) | Cerrado | Cerrado | **CERRADO (S4-02)** | S-06 | `S06RegistroAbiertoTests.test_el_registro_propio_de_allauth_esta_cerrado` |
 | ID-13 | Anónimo | Cuenta sin perfil creada con el correo de otra persona, que luego la completa con Google | La clave previa deja de servir | La clave previa deja de servir | **CERRADO (hallazgos)** | S-06 | `S06CuentaHuerfanaTests.test_completar_con_google_anula_la_clave_previa` |
 | ID-14 | Anónimo | Google entrega un correo no verificado | Rechazado | Rechazado | OK | — | `test_google_y_titulo.test_correo_no_verificado_por_google_se_rechaza` |
-| ID-24 | Anónimo y admin | Registro de alumno, de profesor y "crear administrador" con clave igual al RUT (con o sin puntos) o al correo | Rechazado | Rechazado (antes pasaba: se validaba sin usuario) | **CERRADO (Seg-3)** | Seg-3 | `Seg3ClaveIgualAlRutTests` |
+| ID-24 | Anónimo y admin | Registro de alumno, de profesor, de apoderado y "crear administrador" con clave igual al RUT (con o sin puntos) o al correo (el apoderado, además, al nombre) | Rechazado | Rechazado (antes pasaba: se validaba sin usuario) | **CERRADO (Seg-3)** | Seg-3 | `Seg3ClaveIgualAlRutTests` |
 
 ### Permisos y accesos por rol
 

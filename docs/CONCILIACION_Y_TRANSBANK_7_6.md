@@ -13,7 +13,7 @@ Este documento detalla la resolución técnica, arquitectural y normativa del í
 
 ## 🏛️ 2. Estrategia de Credenciales (Auditoría S-08)
 
-### Arquitectura de Configuración (`lbwus/settings.py` y `alumnos/views.py`)
+### Arquitectura de Configuración (`lbwus/settings.py` y `alumnos/webpay.py`)
 Para evitar la filtración de credenciales en el repositorio de código fuente y permitir la inyección segura de parámetros mediante variables de entorno, se definió la siguiente estrategia:
 
 ```python

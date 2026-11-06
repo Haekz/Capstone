@@ -97,3 +97,12 @@ profesor_required_json = _rol_requerido(
 admin_required_json = _rol_requerido(
     ADMIN, _sesion_invalida_json, json=True
 )
+
+# Solo el rol, como alumno_sesion_required: la regla de la clave propia ya la aplica el portal
+# (alumno_required), que es la unica pagina desde donde se llaman estos endpoints.
+# 401 y un mensaje claro: el portal muestra data.message y lee el JSON sin mirar el estado.
+alumno_required_json = _rol_requerido(
+    ALUMNO,
+    lambda _r: JsonResponse({"success": False, "message": "Debes iniciar sesión como alumno."}, status=401),
+    json=True,
+)

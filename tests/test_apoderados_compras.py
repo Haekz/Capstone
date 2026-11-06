@@ -23,7 +23,7 @@ from tests.test_filtros_clases import crear_sesion
 PRECIO_PROGRESO = 59000  # tarifa base de $15.000 (tests/test_paquetes.py)
 
 
-@mock.patch('alumnos.views._tx')
+@mock.patch('alumnos.webpay._tx')
 class CompraDelApoderadoTests(TestCase):
 
     @classmethod

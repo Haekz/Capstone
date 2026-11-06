@@ -10,9 +10,12 @@ logger = logging.getLogger(__name__)
 
 
 def enviar(asunto, plantilla, contexto, destinatario):
-    """Devuelve False si el correo no salio: un fallo de SMTP nunca deshace lo guardado."""
+    """Devuelve False si el correo no salio: un fallo de SMTP nunca deshace lo guardado.
+
+    Usa el motor 'correo' (settings.TEMPLATES): texto plano, sin escapar HTML.
+    """
     try:
-        send_mail(f'{asunto} - LBWUS', render_to_string(plantilla, contexto),
+        send_mail(f'{asunto} - LBWUS', render_to_string(plantilla, contexto, using='correo'),
                   settings.DEFAULT_FROM_EMAIL, [destinatario])
     except Exception:  # SMTP caido, timeout, credenciales: se puede reenviar
         logger.exception('No se pudo enviar el correo "%s"', asunto)

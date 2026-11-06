@@ -20,14 +20,19 @@ from .permisos import agente_en_sesion, lider_required, tickets_del_agente
 from .tickets import agentes_habilitados, reasignar
 
 TICKET_RELACIONADOS = ('asignado__user', 'apoderado__user', 'vinculo__apoderado__user',
-                       'vinculo__alumno__user', 'profesor__user', 'autor')
+                       'vinculo__alumno__user', 'profesor__user', 'autor', 'contacto')
+
+
+def _para_la_tabla(tickets):
+    """Con lo que muestra cada fila del panel, sin una consulta por ticket."""
+    return tickets.select_related(*TICKET_RELACIONADOS).annotate(escalados=Count('escalamientos'))
 
 
 def _supervision():
     """Lo que solo ve el lider: todos los abiertos, la carga del equipo y las asignaciones."""
     candidatos = {categoria: list(agentes_habilitados(categoria).select_related('user'))
                   for categoria, _ in Ticket.CATEGORIAS}
-    abiertos = list(Ticket.objects.filter(estado=Ticket.ABIERTO).select_related(*TICKET_RELACIONADOS))
+    abiertos = list(_para_la_tabla(Ticket.objects.filter(estado=Ticket.ABIERTO)))
     for ticket in abiertos:
         ticket.candidatos = candidatos[ticket.categoria]
     return {
@@ -42,7 +47,7 @@ def _supervision():
 @soporte_required
 def panel(request):
     agente = agente_en_sesion(request)
-    contexto = {'agente': agente, 'mis_tickets': tickets_del_agente(request).select_related(*TICKET_RELACIONADOS)}
+    contexto = {'agente': agente, 'mis_tickets': _para_la_tabla(tickets_del_agente(request))}
     if agente.es_lider:
         contexto.update(_supervision())
     return render(request, 'soporte/panel.html', contexto)

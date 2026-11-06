@@ -34,13 +34,14 @@ def dashboard_admin(request):
     # Consulta a la base de datos de los contadores del sistema. Los reportes de
     # usuarios los atiende soporte (paso 6e): el admin no ve su contenido.
     # select_related: la plantilla muestra nombre, correo y especialidad de cada fila (sin N+1).
-    alumnos = Alumno.objects.select_related('user')
-    profesores = Profesor.objects.select_related('user', 'especialidad')
-    admins = Tutor.objects.select_related('user')
+    # Sin order_by, PostgreSQL devuelve las filas en cualquier orden: "ultimos" no lo eran y las tablas saltaban.
+    alumnos = Alumno.objects.select_related('user').order_by('pk')
+    profesores = Profesor.objects.select_related('user', 'especialidad').order_by('pk')
+    admins = Tutor.objects.select_related('user').order_by('pk')
     clases = Clase.objects.select_related('asignatura', 'profesor__user')
 
-    ultimos_alumnos = alumnos[:3]
-    ultimos_profesores = profesores[:3]
+    ultimos_alumnos = alumnos.order_by('-pk')[:3]
+    ultimos_profesores = profesores.order_by('-pk')[:3]
 
     from alumnos.models import SolicitudRetiro
 
@@ -102,13 +103,6 @@ def planes_adm(request):
 def nosotros_adm(request):
     context = {}
     return render(request, 'admin_portal/nosotros_adm.html', context)
-
-
-@never_cache
-@admin_required
-def contactos_adm(request):
-    context = {}
-    return render(request, 'admin_portal/contactos_adm.html', context)
 
 # --- Vistas CRUD ---
 @never_cache

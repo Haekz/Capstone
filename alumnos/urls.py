@@ -2,8 +2,6 @@ from django.urls import path
 from django.views.generic import RedirectView
 
 from .views import (
-    sala_virtual,
-    iniciar_directo,
     contactos,
     nosotros,
     planes,
@@ -14,14 +12,16 @@ from .views import (
     alumno_pag1,
     custom_login,
     logout_alumno,
+)
+from .reservas import (
     inscribir_clase,
     cancelar_inscripcion,
     reprogramar_inscripcion,
     listar_sesiones_disponibles,
     reservar_sesion,
-    confirmacion,
-    comprar_paquete,
 )
+from .webpay import confirmacion, comprar_paquete
+from .sala_virtual import sala_virtual, iniciar_directo
 from .perfil_profesor import perfil_profesor
 
 urlpatterns = [

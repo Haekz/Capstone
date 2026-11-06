@@ -400,7 +400,7 @@ class ProblemaConEstePagoTests(TestCase):
         entrar(self.client, apoderado.user, apoderado_id=apoderado.id_apoderado)
         self.assertEqual(self.inicial('LB2')['estudiante'], estudiante.pk)
 
-    @mock.patch('alumnos.views._tx')
+    @mock.patch('alumnos.webpay._tx')
     def test_el_rechazo_ofrece_el_boton_y_la_anulacion_no(self, mock_tx):
         mock_tx.return_value.commit.return_value = {'response_code': -1, 'status': 'FAILED', 'buy_order': 'LB3'}
         rechazo = self.client.post(reverse('confirmacion'), {'token_ws': 'tok'})  # sin sesion, como al volver

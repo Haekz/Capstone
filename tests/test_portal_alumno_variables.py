@@ -7,13 +7,14 @@ del alumno los tokens son --line (borde), --white (fondo de tarjeta) y --text.
 
 from django.test import SimpleTestCase
 
-from .css_vars import sin_definir
+from .css_vars import partes, sin_definir
 
-# Lo que carga el portal del alumno: el marco (base_alumno), la pagina (estilos en linea) y sus dos hojas.
+# Lo que carga el portal del alumno: el marco (base_alumno), la pagina y sus partes (estilos en linea) y sus hojas.
 PAGINA_ALUMNO = [
     'alumnos/templates/alumnos/base_alumno.html',
     'alumnos/templates/alumnos/Alumno_pag1.html',
-    'alumnos/static/alumnos/css/alumn_1.css',
+    *partes('alumnos/templates/alumnos/includes/panel'),
+    *partes('alumnos/static/alumnos/css/alumn_1'),
     'alumnos/static/alumnos/css/avisos.css',
 ]
 
@@ -24,7 +25,7 @@ class VariablesCssDelPortalAlumnoTests(SimpleTestCase):
         self.assertEqual(sin_definir(PAGINA_ALUMNO, definidas_en=PAGINA_ALUMNO), {})
 
     def test_notificaciones_dentro_del_portal_alumno_tiene_todas_sus_variables(self):
-        # lista.css se escribio para el sitio publico (--surface, header fijo): alumn_1.css hace el puente.
+        # lista.css se escribio para el sitio publico (--surface, header fijo): alumn_1/ hace el puente.
         notificaciones = [
             'notificaciones/static/notificaciones/lista.css',
             'notificaciones/static/notificaciones/campanita.css',

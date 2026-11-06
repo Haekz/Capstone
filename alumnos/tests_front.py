@@ -11,7 +11,7 @@ class BotonAtrasTests(TestCase):
     Login: si hay sesion, el servidor manda al portal (no a un login viejo).
     Paginas privadas: tras cerrar sesion, no deben verse desde la memoria.
     """
-    PRIVADAS_ADMIN = ['dashboard_admin', 'crud', 'alumnos_Add', 'planes_adm', 'nosotros_adm', 'contactos_adm']
+    PRIVADAS_ADMIN = ['dashboard_admin', 'crud', 'alumnos_Add', 'planes_adm', 'nosotros_adm', 'casos_escalados']
 
     @classmethod
     def setUpTestData(cls):

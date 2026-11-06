@@ -1,0 +1,526 @@
+/* ==========================================
+   VISTAS PREMIUM EXCLUSIVAS
+   ========================================== */
+
+/* esta parte es del bloqueo premium con glassmorphism */
+.premium-lock-overlay {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 24px;
+    border: 1px solid rgba(168, 85, 247, 0.15);
+    padding: 50px 20px;
+    min-height: 480px;
+    text-align: center;
+    box-shadow: var(--shadow);
+}
+
+body.dark-mode .premium-lock-overlay {
+    background: rgba(17, 24, 39, 0.6);
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.lock-card {
+    max-width: 450px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.lock-icon-wrapper {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--white);
+    font-size: 2.2rem;
+    box-shadow: 0 8px 24px rgba(168, 85, 247, 0.3);
+    animation: lock-pulse 2s infinite ease-in-out;
+}
+
+@keyframes lock-pulse {
+    0% { transform: scale(1); box-shadow: 0 8px 24px rgba(168, 85, 247, 0.3); }
+    50% { transform: scale(1.06); box-shadow: 0 8px 32px rgba(168, 85, 247, 0.5); }
+    100% { transform: scale(1); box-shadow: 0 8px 24px rgba(168, 85, 247, 0.3); }
+}
+
+.lock-card h2 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--text);
+    margin: 0;
+}
+
+.lock-card p {
+    color: var(--text-light);
+    line-height: 1.6;
+    font-size: 0.95rem;
+    margin: 0 0 10px 0;
+}
+
+
+
+
+
+/* esta parte es del diseño de dos columnas del buzon de dudas */
+.inbox-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    background: var(--white);
+    border: 1px solid rgba(168, 85, 247, 0.08);
+    border-radius: 20px;
+    height: 550px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    margin-top: 15px;
+}
+
+body.dark-mode .inbox-layout {
+    background: #111827;
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.chat-sidebar {
+    border-right: 1px solid rgba(168, 85, 247, 0.08);
+    display: flex;
+    flex-direction: column;
+    background: rgba(168, 85, 247, 0.01);
+}
+
+.chat-sidebar-header {
+    padding: 15px;
+    border-bottom: 1px solid rgba(168, 85, 247, 0.08);
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.chat-sidebar-header i {
+    position: absolute;
+    left: 25px;
+    color: var(--text-light);
+}
+
+.chat-sidebar-header input {
+    width: 100%;
+    padding: 10px 15px 10px 35px;
+    border-radius: 12px;
+    border: 1px solid rgba(168, 85, 247, 0.12);
+    font-size: 0.85rem;
+    background: var(--white);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+body.dark-mode .chat-sidebar-header input {
+    background: #1f2937;
+}
+
+.chat-sidebar-header input:focus {
+    border-color: var(--primary);
+}
+
+.chat-contacts-list {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.chat-contact-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px;
+    border-bottom: 1px solid rgba(168, 85, 247, 0.04);
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.chat-contact-item:hover {
+    background: rgba(168, 85, 247, 0.03);
+}
+
+.chat-contact-item.active {
+    background: rgba(168, 85, 247, 0.06);
+    border-left: 4px solid var(--primary);
+}
+
+/* Mensajes sin leer (paso C1b): igual que en el buzón del profesor */
+.chat-contact-item.unread .contact-name {
+    font-weight: 800;
+}
+
+.contact-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-light) 0%, rgba(168, 85, 247, 0.2) 100%);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.contact-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.contact-name-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 3px;
+}
+
+.contact-name {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.contact-time {
+    font-size: 0.75rem;
+    color: var(--text-light);
+}
+
+.contact-meta {
+    font-size: 0.75rem;
+    color: var(--primary);
+    font-weight: 600;
+    margin-bottom: 3px;
+}
+
+.contact-last-msg {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chat-main {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--white);
+}
+
+body.dark-mode .chat-main {
+    background: #111827;
+}
+
+.chat-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid rgba(168, 85, 247, 0.08);
+    background: rgba(168, 85, 247, 0.01);
+}
+
+.chat-messages-container {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    background: rgba(168, 85, 247, 0.005);
+}
+
+.message-row {
+    display: flex;
+    width: 100%;
+}
+
+.message-row.sent {
+    justify-content: flex-end;
+}
+
+.message-row.received {
+    justify-content: flex-start;
+}
+
+.message-bubble {
+    max-width: 70%;
+    padding: 12px 16px;
+    border-radius: 16px;
+    position: relative;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+}
+
+.message-row.sent .message-bubble {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: var(--white);
+    border-bottom-right-radius: 4px;
+}
+
+.message-row.received .message-bubble {
+    background: rgba(168, 85, 247, 0.06);
+    color: var(--text);
+    border-bottom-left-radius: 4px;
+}
+
+body.dark-mode .message-row.received .message-bubble {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.message-bubble p {
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.45;
+}
+
+.msg-time {
+    display: block;
+    font-size: 0.7rem;
+    margin-top: 5px;
+    text-align: right;
+    opacity: 0.7;
+}
+
+.chat-typing-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 25px;
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+.typing-indicator {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.typing-indicator span {
+    width: 6px;
+    height: 6px;
+    background-color: var(--text-light);
+    border-radius: 50%;
+    display: inline-block;
+    animation: bounce 1.3s infinite ease-in-out both;
+}
+
+.typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+.typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes bounce {
+    0%, 80%, 100% { transform: scale(0); }
+    40% { transform: scale(1); }
+}
+
+.chat-input-area {
+    padding: 15px 20px;
+    border-top: 1px solid rgba(168, 85, 247, 0.08);
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    background: var(--white);
+}
+
+body.dark-mode .chat-input-area {
+    background: #111827;
+}
+
+.chat-input-area input {
+    flex: 1;
+    padding: 12px 18px;
+    border-radius: 14px;
+    border: 1px solid rgba(168, 85, 247, 0.12);
+    outline: none;
+    background: rgba(168, 85, 247, 0.01);
+    color: var(--text);
+    font-size: 0.88rem;
+}
+
+body.dark-mode .chat-input-area input {
+    background: #1f2937;
+}
+
+.chat-input-area input:focus {
+    border-color: var(--primary);
+}
+
+.btn-chat-send {
+    width: 44px;
+    height: 44px;
+    background: var(--primary);
+    color: var(--white);
+    border: none;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.btn-chat-send:hover {
+    transform: scale(1.05);
+    background: var(--primary-light);
+}
+
+/* esta parte es del informe de progreso y barras de avance */
+.progress-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.progress-stat-card {
+    background: var(--white);
+    border: 1px solid rgba(168, 85, 247, 0.08);
+    border-radius: 20px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: var(--shadow);
+}
+
+body.dark-mode .progress-stat-card {
+    background: #111827;
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.progress-stat-card .stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+}
+
+.progress-stat-card .stat-info h4 {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--text);
+    margin: 0 0 3px 0;
+}
+
+.progress-stat-card .stat-info p {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin: 0;
+}
+
+.progress-details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 30px;
+}
+
+@media (max-width: 768px) {
+    .progress-details-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.progress-details-card {
+    background: var(--white);
+    border: 1px solid rgba(168, 85, 247, 0.08);
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: var(--shadow);
+}
+
+body.dark-mode .progress-details-card {
+    background: #111827;
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.progress-details-card h3 {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--text);
+    margin: 0 0 20px 0;
+}
+
+.progress-subject-item {
+    margin-bottom: 20px;
+}
+
+.progress-subject-item:last-child {
+    margin-bottom: 0;
+}
+
+.subject-progress-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text-light);
+    margin-bottom: 8px;
+}
+
+.progress-bar-container {
+    width: 100%;
+    height: 10px;
+    background: rgba(168, 85, 247, 0.06);
+    border-radius: 50px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    border-radius: 50px;
+    transition: width 1s ease-out;
+}
+
+.progress-chart-svg {
+    overflow: visible;
+}
+
+.chart-line-path {
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 1000;
+    animation: draw-chart 3s forwards ease-in-out;
+}
+
+@keyframes draw-chart {
+    to { stroke-dashoffset: 0; }
+}
+
+.feedback-card-item {
+    background: rgba(168, 85, 247, 0.01);
+    border: 1px dashed rgba(168, 85, 247, 0.15);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 15px;
+}
+
+body.dark-mode .feedback-card-item {
+    background: rgba(255, 255, 255, 0.01);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.feedback-card-item:last-child {
+    margin-bottom: 0;
+}
+
+.feedback-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+
+

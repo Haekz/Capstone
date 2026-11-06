@@ -1,0 +1,55 @@
+{% extends 'soporte/base_soporte.html' %}
+
+{% block title %}Escalar ticket #{{ ticket.pk }} — Soporte LBWUS{% endblock %}
+{% block page_title %}Escalar ticket #{{ ticket.pk }}{% endblock %}
+{% block page_subtitle %}{{ ticket.get_categoria_display }} · {{ ticket.asunto }}{% endblock %}
+{% block nav_panel %}active{% endblock %}
+
+{% block content %}
+{% if messages %}
+<div class="panel" role="status" style="margin-bottom:20px; padding:14px 18px;">
+    {% for m in messages %}<div>{{ m }}</div>{% endfor %}
+</div>
+{% endif %}
+
+<div class="panel">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-clock-history" aria-hidden="true"></i> Historial de escalamientos</span>
+    </div>
+    <div style="padding:18px;">
+        {% for e in historial %}
+        <div style="padding:12px 0; border-bottom:1px solid var(--border);">
+            <p style="margin:0;"><strong>{{ e.get_destino_display }}</strong> · {{ e.fecha|date:"d-m-Y H:i" }} · {{ e.autor.first_name|default:"Cuenta eliminada" }}</p>
+            <p style="margin:6px 0 0;">{{ e.motivo|linebreaksbr }}</p>
+            {% if e.destino == 'admin' %}
+            {% if e.pendiente %}
+            <p style="margin:6px 0 0;"><span class="badge">Esperando indicación del administrador</span></p>
+            {% else %}
+            <p style="margin:6px 0 0;"><strong>Indicación de {{ e.indicado_por.first_name|default:"un administrador" }}</strong> ({{ e.indicado|date:"d-m-Y H:i" }}):<br>{{ e.indicacion|linebreaksbr }}</p>
+            {% endif %}
+            {% endif %}
+        </div>
+        {% empty %}
+        <p style="margin:0;">Este ticket no se ha escalado.</p>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="panel" style="margin-top:28px;">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-exclamation-octagon-fill" aria-hidden="true"></i> Escalar a {{ destino }}</span>
+    </div>
+    <div style="padding:0 18px 18px;">
+        {% if form %}
+        <p style="margin-top:16px;">Solo para casos graves: legales, posibles delitos, riesgo para un menor.
+            {% if destino == 'un administrador' %}El ticket sigue en soporte: el administrador lee tu motivo (no los documentos ni la conversación) y deja una indicación para ejecutarla.
+            {% else %}El ticket pasa al líder de soporte y deja de aparecer en tu panel.{% endif %}
+            El plazo no cambia.</p>
+        {% include 'soporte/_formulario_mensaje.html' with clase_boton='btn-primary' texto_boton='Escalar' icono_boton='bi-arrow-up-circle-fill' %}
+        {% else %}
+        <p style="margin-top:16px;">Ya está escalado a un administrador. Cuando deje su indicación aparecerá arriba y te llegará un correo.</p>
+        {% endif %}
+    </div>
+</div>
+<p style="margin-top:18px;"><a href="{% url 'panel_soporte' %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a mis tickets</a></p>
+{% endblock %}

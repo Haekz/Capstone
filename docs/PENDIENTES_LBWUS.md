@@ -31,13 +31,14 @@ Por mergear en GitHub: `fran-soporte-2b1` -> `fran-soporte-2b2` -> `fran-contact
 | 6e-limpieza | CSS de reportes sin uso en admin_panel.css y textos de home_adm | Hecho (d9abd67) |
 | D17-disculpa | Conducta: aviso al equipo diario, disculpa al usuario cada 3 dias habiles | Hecho (0d1a25f). 610 pruebas OK |
 | 6e-3b | Boton "Reportar problema con este pago" tras rechazo de Webpay, con la orden precargada (4.7) | Hecho (872f400). 607 pruebas OK |
-| 6e-3a | Bandeja de contacto pasa del admin a soporte (H14) | **BLOQUEADO**: `MensajeContacto` vive en `fran-contacto` (97526a9), que esta rama no contiene. Hacerlo despues de que `fran-contacto` llegue a `main` |
+| 6e-3a | Bandeja de contacto pasa del admin a soporte (H14) | Hecho (05-nov, `fran-contacto-soporte`): cada mensaje de Contactanos es un ticket de la categoria Contacto (5 dias habiles); el agente responde y al visitante le llega la respuesta por correo (sin citar su mensaje: el correo no esta verificado), o lo cierra sin responder si es spam. El admin ya no tiene la pagina Contactos. Migracion soporte 0010. **Al desplegar: habilitar al menos un agente en la categoria Contacto** (`manage.py habilitar_soporte <RUT> --agregar contacto`; el comando tambien quita temas con `--quitar`) |
 | login-next | El login no respeta `?next=`: quien llega sin sesion al boton de pago pierde la orden precargada | Hecho (04a5e66), con `destino_seguro`. 609 pruebas OK. Matriz ID-23 |
-| 7 | 3b: resto de reportes a soporte, conducta solo lideres | Hecho con 6d y 6e (tecnico/otro son tickets, conducta restringida, admin sin reportes). Solo falta H14 |
+| 7 | 3b: resto de reportes a soporte, conducta solo lideres | Hecho con 6d, 6e y H14 (tecnico/otro y contacto son tickets, conducta restringida, admin sin reportes) |
 | 8 | Metricas del admin (ganancias reales, ingresos, registros) | Completo segun DECISIONES (P12, P13, H7, H8, H9). En `fran-metricas-admin-2`: 8d H8 personas que entran por dia, solo el numero por rol, sin guardar quien (4484963, migracion admin_portal 0001); 8e P12 comision estimada y saldo disponible de profesores (8ec534b); 8f P13 soporte en cifras sin contenido (c7dfb23); 8g H9 registros por dia/mes/trimestre (f13d492). Queda opcional: historial de personas por dia (hoy solo la tarjeta de hoy). Hecho antes en `fran-metricas-admin`: 8a finanzas reales (cobrado, ganancia LBWUS = 15% de clases dictadas, por dictar; segun POLITICA_PAQUETES), 8b grafico de registros reales por mes, 8c-1 campana del admin con plazos de retiros (fuera avisos falsos), 8c-2 campana del agente de soporte (sus tickets atrasados / por vencer), 8c-3 lider (tickets sin agente, incluidos los de agentes sin la categoria, y atrasos del equipo). En `fran-pendientes-chicos`: resenas reportadas en la campana del admin (45476ef) y `planes_adm.html` con los paquetes reales (769cd7f) |
 | 9 | PDF: original cifrado + imagen con marca de agua | Hecho en `fran-pdf-protegido` (decidido 02-nov: apoderados y titulos; titulos cifrados en la base; original del titulo se borra al decidir; maximo 3 paginas). 9a apoderados aceptan PDF (a8d5011); 9b-1 titulos cifrados en la base, migracion alumnos 0018 (f847cb2); 9b-2 comando `pasar_titulos_a_base` (24c6244). **Al desplegar: instalar requirements (pypdfium2), `migrate` y correr una vez `manage.py pasar_titulos_a_base`.** FALTA 9b-3 (despues de ese deploy): quitar `titulo_archivo` y actualizar `usabilidad/verificar_google_titulo.py` |
 | 10 | CSS muerto del carrito | Hecho en `fran-css-carrito` (styles.css, alumn_1.css, planes.css). Restos fuera del CSS (orden_pendiente con carrito en `test_flujos_funcionales`, flujo `/alumnos/pago` en `usabilidad/recorrido.py`) retirados en `fran-pendientes-chicos` (03a514b) |
-| 11 | Seguridad S-07 (punto 1) | |
+| 11 | Seguridad S-07 (punto 1) | Hecho (05-nov, `fran-reservas-rol`, 67ec6b6): `@alumno_required_json` en las tres vistas de reserva. 1365 pruebas OK |
+| 12 | Escalar casos graves (D5 revisada 05-nov) | Hecho (05-nov, `fran-contacto-soporte`): boton "Escalar" en el panel y en el ticket, con motivo obligatorio. Agente -> lider (el ticket pasa al lider con menos carga); lider -> administrador (bandeja "Casos escalados" + campana urgente; el admin deja una indicacion obligatoria, el ticket sigue en soporte). Migracion soporte 0011 |
 
 ### Commits por subir, en orden (no subir hasta que Fran lo pida)
 Cada rama sale de la anterior; subirlas y mergearlas en este orden. Comando: `git push -u origin <rama>`.
@@ -75,18 +76,30 @@ ticket nuevo con plazo nuevo.
 
 Notas: los retiros de prueba antiguos guardan el numero de cuenta sin cifrar (decidir si se enmascaran).
 Si cambia SECRET_KEY, las cuentas bancarias cifradas dejan de leerse.
-Archivos sobre 600 lineas (ya lo estaban antes): `alumnos/models.py` (756), `panel_profesor.html` (1112),
-`dashboard_admin.html` (983). `user_profesor/views.py` quedo en 582 y `apoderados/views.py` en 577. Dividirlos en un PR propio.
+Archivos sobre 600 lineas: en curso en `fran-dividir-archivos`. Fase 1 Python HECHA: `alumnos/views.py`, `alumnos/models.py`
+(paquete `alumnos/models/` con usuarios, clases, pagos, reportes y retiros) y `apoderados/views.py` (la revision de
+soporte paso a `apoderados/views_revision.py`; el flujo del adolescente se queda porque comparte helpers del registro).
+Fase 2 plantillas HECHA: `Alumno_pag1.html` (1478 -> 105; partes en `alumnos/includes/panel/`, y el JS en `panel/js/`,
+incluido dentro del mismo `<script>`), `dashboard_admin.html` (836 -> 170; `admin_portal/includes/dashboard/`) y
+`panel_profesor.html` (790 -> 393; `user_profesor/includes/panel/`). Verificado sin navegador: el HTML generado (alumno con
+clases, sin clases y menor, profesor y admin) es identico al de antes.
+Fase 3 CSS HECHA: `alumn_1.css` (10 partes), `styles.css` (9), `admin_panel.css` (5), `pago.css` (3) y `panel.css` (2)
+pasan a carpetas con su mismo nombre (`alumnos/css/alumn_1/01_base.css`...; `panel.css` a `user_profesor/panel/`), una
+parte por capa. Unidas en orden dan el original byte a byte, y la pagina las carga en ese orden: la cascada no cambia
+(en el HTML solo cambian los `<link>`). `recuperar.css` (685) se queda: es una sola hoja que cargan 7 plantillas.
+CSS muerto BORRADO: `pago/03_rediseno_checkout.css` (385 lineas, "solo pagina de pago"), resto del checkout `/alumnos/pago`:
+sus 30 clases propias no estaban en ningun HTML, JS ni Python, y la unica compartida (`dark-mode`) solo aparecia en
+selectores que exigian una clase muerta. Posible resto parecido en `pago/01_pago.css` (paneles de resumen y Webpay): sin revisar.
+Arreglado: en `dashboard_admin`, "ultimos alumnos/profesores" y las tablas de usuarios ahora llevan `order_by` (antes
+mostraba 3 cualesquiera y cambiaba de orden entre cargas). Queda sin orden la tabla de clases (`Clase.objects`).
+Doc pendiente de corregir: CONCILIACION_Y_TRANSBANK_7_6.md describe un modelo `Pago` que no existe.
 El enlace de cambio de cuenta exige sesion: si el profesor no la tiene, entra y vuelve a abrir el enlace.
 Decidido (31-oct): si el lunes de pago es feriado, se paga el siguiente dia habil (`alumnos/liquidacion.py`).
 
 ## Seguridad
-1. **Cinco vistas de alumno sin decorador de rol (resto de S-07).** `inscribir_clase`,
-   `listar_sesiones_disponibles`, `reservar_sesion`, `sala_virtual` e `iniciar_directo` (alumnos/views.py;
-   `enviar_reporte` se retiro en 6e)
-   usan la sesion sin `@alumno_required`: un alumno desactivado con sesion abierta las sigue usando hasta
-   que expira. Hacerlo DESPUES de mergear apoderados (1c-ii cambia sala_virtual y reservar_sesion).
-   `sala_virtual` la usa tambien el profesor: no basta con poner `@alumno_required`.
+1. **HECHO (05-nov, `fran-reservas-rol`): vistas de alumno sin decorador de rol (resto de S-07).** `inscribir_clase`,
+   `listar_sesiones_disponibles` y `reservar_sesion` usan `@alumno_required_json`; `iniciar_directo` ya tenia
+   `@profesor_required_json` y `sala_virtual` ya bloqueaba cuentas inactivas.
    Documentado en docs/MATRIZ_IDENTIDAD.md.
 2. **Confirmar en Railway la IP real.** S4-02 asume que Railway agrega la IP del cliente AL FINAL de
    `X-Forwarded-For`. Verificarlo en un deploy real (log de la cabecera en un login de prueba).
@@ -94,8 +107,9 @@ Decidido (31-oct): si el lunes de pago es feriado, se paga el siguiente dia habi
    tambien el registro publico de alumnos.** Llamaban a `validate_password` sin usuario: clave = RUT (con o sin
    puntos) o = correo pasaba. Ahora usan `alumnos.utils.validar_clave_nueva`. Matriz ID-24.
    HECHO tambien (4071d81, `fran-pendientes-chicos`): el formulario del admin (S4-02) usa el mismo helper.
-   Queda: `apoderados/forms.py` (_CuentaForm) repite la misma construccion; pasarlo al helper DESPUES de
-   mergear apoderados (agregar `nombre` opcional al helper: hoy compara tambien con first_name).
+   HECHO tambien (05-nov, `fran-dividir-archivos`): `apoderados/forms.py` (_CuentaForm) usa el helper, que
+   ahora acepta `nombre` opcional para no perder la comparacion con first_name; prueba nueva en
+   `Seg3ClaveIgualAlRutTests.test_registro_de_apoderado` (antes el apoderado no tenia prueba de Seg-3).
 
 ## Apoderados y menores
 4. **Segundo padre vinculandose a un menor ya registrado: HECHO** (02-nov, `fran-agenda`, pasos A1 a A3). Pide
@@ -140,10 +154,15 @@ G. **Respaldos de PostgreSQL/Railway**: conservan los documentos durante su rete
 H. **Revision juridica** del aviso de documentos y de las declaraciones v2 (apoderado y vinculo).
 
 ## Calidad
-9. **alumnos/views.py supera las 1000 lineas**: separar por tema (planes/pagos, reservas, sala virtual).
-   Hacerlo con todo mergeado para no generar conflictos.
+9. **alumnos/views.py: HECHO** (05-nov, `fran-dividir-archivos`): de 947 a 519 lineas, movimiento puro (sin
+   cambios de comportamiento). Reservas en `alumnos/reservas.py`, Webpay en `alumnos/webpay.py` (los parches de
+   pruebas apuntan a `alumnos.webpay._tx`) y sala virtual en `alumnos/sala_virtual.py`.
 10. **Revision visual en navegador** de todas las fases de apoderados (registro, revision admin, vinculos,
     invitacion de adolescentes, compra, reservas, revocacion, transicion a los 18).
+11. **Correos con entidades HTML: HECHO** (05-nov, `fran-dividir-archivos`). `render_to_string` escapa aunque la
+    plantilla sea .txt: "O'Higgins" llegaba como "O&#x27;Higgins" en los 28 correos. Ahora `alumnos.correo.enviar`
+    usa el motor de plantillas `correo` (settings.TEMPLATES, `autoescape: False`); las paginas siguen escapando.
+    Prueba: `tests/test_correo.py`. Al crear un correo nuevo, mandarlo por `enviar` (no por `send_mail` directo).
 
 ## Tanda 6 a 9 (03-nov, `fran-agenda`)
 - **6. El adolescente de 14 a 17 no contrata ni paga solo: HECHO.** Revisados todos los caminos: las 4 operaciones

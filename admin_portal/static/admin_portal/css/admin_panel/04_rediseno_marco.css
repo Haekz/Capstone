@@ -1,0 +1,324 @@
+/* ==============================================================
+   REDISEÑO DEL PORTAL ADMIN (capa de ajuste, va al final)
+   - Misma identidad del sitio: fuente Outfit, morado #7c3aed,
+     menú lateral con el degradado del navbar público.
+   - No cambia estructura ni JS: solo apariencia.
+   ============================================================== */
+
+/* ── Tokens: modo oscuro (por defecto en :root) ── */
+:root {
+    --primary: #7c3aed;
+    --primary-dark: #6d28d9;
+    --primary-light: #c4b5fd;          /* acento de texto sobre oscuro */
+    --accent: #f5a524;
+    --accent-dark: #d98a0c;
+
+    --bg-main: #0f0b1a;
+    --bg-card: #171129;
+    --bg-sidebar: #171129;
+    --bg-hover: rgba(255, 255, 255, 0.06);
+    --border: rgba(255, 255, 255, 0.09);
+    --border-light: rgba(255, 255, 255, 0.16);
+
+    --text-primary: #f3f0fa;
+    --text-secondary: #a9a3bd;
+    --text-muted: #7d7794;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.35);
+    --shadow-purple: 0 10px 24px rgba(124, 58, 237, 0.28);
+
+    --radius-sm: 10px;
+    --radius-md: 16px;
+    --radius-lg: 20px;
+
+    --topbar-height: 72px;
+    --primary-soft: rgba(124, 58, 237, 0.18);
+
+    /* Degradado del navbar público (modo oscuro) */
+    --side-grad: linear-gradient(180deg, #241640 0%, #34215c 55%, #241640 100%);
+}
+
+/* ── Tokens: modo claro ── */
+body.light-mode {
+    --primary-light: #7c3aed;          /* acento de texto sobre claro */
+    --bg-main: #f6f5fa;
+    --bg-card: #ffffff;
+    --bg-sidebar: #ffffff;
+    --bg-hover: #f3f0fa;
+    --border: rgba(26, 18, 51, 0.09);
+    --border-light: rgba(26, 18, 51, 0.16);
+    --text-primary: #1a1233;
+    --text-secondary: #6b6580;
+    --text-muted: #9892ab;
+    --shadow-sm: 0 1px 2px rgba(26, 18, 51, 0.04);
+    --shadow-md: 0 1px 2px rgba(26, 18, 51, 0.04), 0 8px 24px rgba(26, 18, 51, 0.06);
+    --primary-soft: #efe9fb;
+
+    /* Degradado del navbar público (modo claro) */
+    --side-grad: linear-gradient(180deg, #7c3aed 0%, #8e3ff0 50%, #9d4ff5 100%);  /* mismos tonos del navbar, un poco más profundos para que el texto blanco se lea bien */
+}
+
+body {
+    font-family: 'Outfit', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+.search-bar input,
+.btn-primary,
+.form-input,
+.search-modal-input,
+button {
+    font-family: inherit;
+}
+
+/* ==============================================================
+   MENÚ LATERAL — degradado morado como el navbar del sitio
+   ============================================================== */
+/* body + .admin-wrapper para ganarle a "body.light-mode .sidebar"
+   del CSS original, que dejaba el menú blanco con letras blancas */
+body .admin-wrapper .sidebar,
+body.light-mode .admin-wrapper .sidebar {
+    background: var(--side-grad);
+    border-right: none;
+    box-shadow: none;
+}
+
+.admin-wrapper .sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.admin-wrapper .sidebar .sidebar-brand,
+.admin-wrapper .sidebar .sidebar-user,
+.admin-wrapper .sidebar .sidebar-footer {
+    border-color: rgba(255, 255, 255, 0.14);
+}
+
+.admin-wrapper .sidebar .sidebar-brand {
+    padding: 22px 22px;
+}
+
+.admin-wrapper .sidebar .sidebar-brand img {
+    width: 40px;
+    height: 40px;
+    border-radius: 0;
+}
+
+.admin-wrapper .sidebar .sidebar-brand-name {
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    background: none;
+    -webkit-text-fill-color: #ffffff;
+    color: #ffffff;
+}
+
+.admin-wrapper .sidebar .sidebar-brand-role {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+}
+
+.admin-wrapper .sidebar .sidebar-user {
+    margin: 14px 12px 4px;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.admin-wrapper .sidebar .sidebar-user-avatar {
+    width: 38px;
+    height: 38px;
+    background: #ffffff;
+    color: #6d28d9;
+    font-size: 0.95rem;
+}
+
+.admin-wrapper .sidebar .sidebar-user-name {
+    color: #ffffff;
+}
+
+.admin-wrapper .sidebar .sidebar-user-role {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.admin-wrapper .sidebar .nav-label {
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    padding: 16px 14px 6px;
+}
+
+.admin-wrapper .sidebar .nav-item {
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 0.93rem;
+    font-weight: 500;
+    padding: 10px 14px;
+    border-left: none;
+    border-radius: var(--radius-sm);
+}
+
+.admin-wrapper .sidebar .nav-item i {
+    font-size: 1.05rem;
+    opacity: 0.9;
+}
+
+.admin-wrapper .sidebar .nav-item:hover {
+    background: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+    transform: none;
+}
+
+/* Activo: píldora blanca con texto morado (claro) */
+.admin-wrapper .sidebar .nav-item.active {
+    background: #ffffff;
+    color: #6d28d9;
+    border-left: none;
+    font-weight: 600;
+    box-shadow: 0 4px 14px rgba(26, 18, 51, 0.15);
+}
+
+.admin-wrapper .sidebar .nav-item.active i {
+    opacity: 1;
+}
+
+/* Activo en modo oscuro: resalte translúcido */
+body:not(.light-mode) .admin-wrapper .sidebar .nav-item.active {
+    background: rgba(255, 255, 255, 0.16);
+    color: #ffffff;
+    box-shadow: none;
+}
+
+.admin-wrapper .sidebar .nav-item .nav-badge {
+    background: var(--accent);
+    color: #1a1233;
+}
+
+.admin-wrapper .sidebar .sidebar-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Botones del pie del menu: "Volver al inicio" (sutil) y "Cerrar sesion" */
+.admin-wrapper .sidebar .sidebar-home,
+.admin-wrapper .sidebar .sidebar-logout {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 50px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.admin-wrapper .sidebar .sidebar-home {
+    color: rgba(255, 255, 255, 0.85);
+    border: 1px solid transparent;
+}
+
+.admin-wrapper .sidebar .sidebar-home:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.18);
+}
+
+.admin-wrapper .sidebar .sidebar-logout {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.admin-wrapper .sidebar .sidebar-logout:hover {
+    background: #ffffff;
+    color: #b91c1c;
+}
+
+/* ==============================================================
+   BARRA SUPERIOR
+   ============================================================== */
+.topbar {
+    height: var(--topbar-height);
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    gap: 16px;
+}
+
+body.light-mode .topbar {
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+}
+
+.topbar-left h1 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.topbar-left p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.topbar-right {
+    gap: 8px;
+}
+
+.theme-btn {
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+}
+
+.theme-btn:hover {
+    background: var(--primary-soft);
+    border-color: transparent;
+    color: var(--primary-light);
+}
+
+/* Botón para abrir el menú en móvil */
+.sidebar-toggle {
+    display: none;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 1.3rem;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(20, 12, 40, 0.5);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    z-index: 90;
+}
+
+.sidebar-overlay.active {
+    display: block;
+}
+

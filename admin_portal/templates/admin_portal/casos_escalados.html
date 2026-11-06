@@ -1,0 +1,67 @@
+{% extends 'admin_portal/base_admin.html' %}
+
+{% block title %}Casos escalados — Admin LBWUS{% endblock %}
+{% block page_title %}Casos escalados{% endblock %}
+{% block page_subtitle %}Casos graves que el líder de soporte te escaló. Tú decides; soporte ejecuta tu indicación.{% endblock %}
+{% block nav_escalados %}active{% endblock %}
+
+{% block content %}
+{% if messages %}
+<div class="panel" role="status" style="margin-bottom:20px; padding:14px 18px;">
+    {% for m in messages %}<div>{{ m }}</div>{% endfor %}
+</div>
+{% endif %}
+
+<div class="panel">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-exclamation-octagon-fill" aria-hidden="true"></i> Esperan tu indicación ({{ pendientes|length }})</span>
+    </div>
+    <div style="padding:18px;">
+        <p style="margin-top:0;"><small>Ves el asunto y los motivos. Los documentos y la conversación del ticket siguen siendo solo del agente de soporte.</small></p>
+        {% for e in pendientes %}
+        <section aria-labelledby="caso-{{ e.pk }}" style="padding:14px 0; border-top:1px solid var(--border);">
+            <h2 id="caso-{{ e.pk }}" style="font-size:1rem; margin:0 0 6px;">Ticket #{{ e.ticket_id }} · {{ e.ticket.get_categoria_display }} · {{ e.ticket.asunto }}</h2>
+            <p style="margin:0;"><small>Vence {{ e.ticket.vence|date:"d-m-Y H:i" }} · lo tiene {{ e.ticket.asignado.nombre|default:"nadie" }} · {{ e.ticket.get_estado_display }}</small></p>
+            {% for previo in e.ticket.escalamientos.all %}{% if previo.destino == 'lider' %}
+            <p style="margin:8px 0 0;"><strong>El agente lo escaló al líder</strong> ({{ previo.fecha|date:"d-m-Y H:i" }}):<br>{{ previo.motivo|linebreaksbr }}</p>
+            {% endif %}{% endfor %}
+            <p style="margin:8px 0 0;"><strong>{{ e.autor.first_name|default:"El líder" }} te lo escaló</strong> ({{ e.fecha|date:"d-m-Y H:i" }}):<br>{{ e.motivo|linebreaksbr }}</p>
+            <form method="post" action="{% url 'indicar_escalado' e.pk %}" style="display:grid; gap:8px; margin-top:10px;">
+                {% csrf_token %}
+                <label for="indicacion-{{ e.pk }}">Tu indicación para soporte</label>
+                <textarea id="indicacion-{{ e.pk }}" name="indicacion" rows="3" maxlength="{{ largo_maximo }}" required
+                    style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--bg-card); color:var(--text-primary);"></textarea>
+                <div><button type="submit" class="btn-primary"><i class="bi bi-send-fill" aria-hidden="true"></i> Enviar a soporte</button></div>
+            </form>
+        </section>
+        {% empty %}
+        <p style="margin:0;">No hay casos esperando tu indicación.</p>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="panel" style="margin-top:28px;">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-check2-circle" aria-hidden="true"></i> Respondidos (últimos 20)</span>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="user-table">
+            <thead>
+                <tr><th>Ticket</th><th>Motivo</th><th>Indicación</th><th>Respondió</th></tr>
+            </thead>
+            <tbody>
+                {% for e in respondidos %}
+                <tr>
+                    <td>#{{ e.ticket_id }} <small>{{ e.ticket.get_categoria_display }}</small></td>
+                    <td>{{ e.motivo|truncatechars:120 }}</td>
+                    <td>{{ e.indicacion|truncatechars:120 }}</td>
+                    <td>{{ e.indicado_por.first_name|default:"Cuenta eliminada" }} · {{ e.indicado|date:"d-m-Y H:i" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4">Todavía no has respondido casos.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

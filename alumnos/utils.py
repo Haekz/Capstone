@@ -60,15 +60,15 @@ def usuario_existe(rut, correo, excluir_user=None):
     return None
 
 
-def validar_clave_nueva(password, rut, correo):
-    """validate_password contra el RUT y el correo de la cuenta que se crea.
+def validar_clave_nueva(password, rut, correo, nombre=''):
+    """validate_password contra el RUT, el correo y (si se da) el nombre de la cuenta que se crea.
 
     Sin usuario, Django no tiene con que compararla: la clave igual al RUT o al
     correo pasaba (Seg-3). Lanza ValidationError, como validate_password.
     """
     from django.contrib.auth import get_user_model
     from django.contrib.auth.password_validation import validate_password
-    validate_password(password, get_user_model()(username=rut or '', email=correo or ''))
+    validate_password(password, get_user_model()(username=rut or '', email=correo or '', first_name=nombre or ''))
 def formato_clp(valor):
     """Formatea un monto numérico como peso chileno (ej: '$15.000')."""
     try:

@@ -1,0 +1,90 @@
+{# Inicio del panel: metricas, agenda del dia y grafico de solicitudes. #}
+        <!-- esta parte es de la sección de inicio, la pantalla principal cuando entras al panel -->
+        <section id="sec-inicio" class="prof-section active">
+            <div class="prof-section-header">
+                <h1 class="prof-section-title">¡Bienvenido de vuelta, Prof. {{ profesor.user.first_name }}!</h1>
+                <p class="prof-section-subtitle">Este es el resumen de tus actividades del día de hoy.</p>
+            </div>
+
+            {% include 'user_profesor/titulo_aviso.html' %}
+
+            <!-- esta parte es de las tarjetas de métricas arriba del inicio, muestran el dinero del día y clases disponibles -->
+            <div class="prof-metrics-grid">
+                <div class="prof-metric-card">
+                    <div class="prof-metric-icon" style="color: var(--accent); background: rgba(245, 158, 11, 0.1);">
+                        <i class="bi bi-currency-dollar"></i>
+                    </div>
+                    <div class="prof-metric-info">
+                        <h3 class="prof-metric-val">{{ dinero_hoy }}</h3>
+                        <p class="prof-metric-label">Dinero Generado Hoy</p>
+                    </div>
+                </div>
+                
+                <div class="prof-metric-card">
+                    <div class="prof-metric-icon" style="color: var(--primary); background: rgba(168, 85, 247, 0.1);">
+                        <i class="bi bi-calendar-check"></i>
+                    </div>
+                    <div class="prof-metric-info">
+                        <h3 class="prof-metric-val">{{ clases_disponibles }}</h3>
+                        <p class="prof-metric-label">Clases Disponibles Restantes</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- esta parte es del grid del centro con la agenda del día y el gráfico -->
+            <div class="prof-dashboard-grid">
+                
+                <!-- esta parte es de la agenda de clases del día, muestra máximo 6 clases -->
+                <div class="prof-card">
+                    <h2 class="prof-card-title">Clases de Hoy <span class="prof-card-title-badge">Max. 6</span></h2>
+                    {% if clases_hoy %}
+                        <div class="prof-schedule-list">
+                            {% for ch in clases_hoy %}
+                            <div class="prof-schedule-item">
+                                <div class="prof-schedule-time">
+                                    <i class="bi bi-clock"></i> {{ ch.horario }}
+                                </div>
+                                <div class="prof-schedule-details">
+                                    <h4>{{ ch.nombre_curso }}</h4>
+                                    <p>Alumno: <strong>{{ ch.alumno }}</strong></p>
+                                </div>
+                                <div class="prof-schedule-status">
+                                    <span class="prof-badge prof-badge-{% if ch.modalidad == 'Online' or ch.modalidad == 'online' %}online{% else %}presencial{% endif %}">
+                                        {{ ch.modalidad }}
+                                    </span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="prof-empty-card">
+                            <i class="bi bi-calendar-x"></i>
+                            <p>No tienes clases programadas para el día de hoy.</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- esta parte es del gráfico de barras que muestra cuántas solicitudes tuvo el profe por mes -->
+                <div class="prof-card">
+                    <h2 class="prof-card-title">Rendimiento Mensual (Solicitudes)</h2>
+                    <p class="prof-card-subtitle">Cantidad de solicitudes recibidas en los últimos 5 meses.</p>
+                    
+                    <!-- esta parte es del contenedor del gráfico, las barras se dibujan solo con CSS -->
+                    <div class="prof-chart-container">
+                        <div class="prof-chart">
+                            {% for m in rendimiento_meses %}
+                            <div class="prof-chart-column">
+                                <div class="prof-chart-bar-wrapper">
+                                    <div class="prof-chart-bar" style="height: {{ m.porcentaje }}%;">
+                                        <span class="prof-chart-tooltip">{{ m.cantidad }} solic.</span>
+                                    </div>
+                                </div>
+                                <span class="prof-chart-label">{{ m.mes }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>

@@ -1,0 +1,177 @@
+"""Compra de paquetes con Webpay Plus (Transbank): inicio del pago y confirmacion."""
+
+import secrets
+
+from django.conf import settings
+from django.db import transaction
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+
+from . import paquetes
+from .decorators import alumno_required
+from .exceptions import InscripcionError
+from .models import Alumno, PaqueteClases, Suscripcion
+from .services import exigir_mayor_de_edad
+from .templatetags.dinero import clp as _clp  # mismo formato en vistas y plantillas
+from .views import _profesor_habilitado
+
+
+# ============================================================
+# TRANSBANK - WEBPAY PLUS
+# Ambiente de integración
+# ============================================================
+
+from transbank.webpay.webpay_plus.transaction import Transaction
+from transbank.common.options import WebpayOptions
+from transbank.common.integration_commerce_codes import IntegrationCommerceCodes
+from transbank.common.integration_api_keys import IntegrationApiKeys
+from transbank.common.integration_type import IntegrationType
+
+
+def _tx():
+    """Construye la instancia de Transaction de Webpay Plus según la estrategia de credenciales (S-08 / 7.6).
+
+    Salvaguarda estricta:
+    - Salvo que TRANSBANK_PRODUCCION_HABILITADA sea True Y se provean credenciales válidas en LIVE,
+      el sistema opera forzosamente en IntegrationType.TEST (Sandbox oficial Transbank).
+    - Evita cualquier cobro real o uso no autorizado en ambientes de prueba o desarrollo.
+    """
+    produccion_habilitada = getattr(settings, 'TRANSBANK_PRODUCCION_HABILITADA', False)
+    cc = getattr(settings, 'TRANSBANK_COMMERCE_CODE', '')
+    api_key = getattr(settings, 'TRANSBANK_API_KEY', '')
+    env_str = getattr(settings, 'TRANSBANK_ENVIRONMENT', 'TEST')
+
+    if produccion_habilitada and env_str == 'LIVE' and cc and api_key:
+        return Transaction(
+            WebpayOptions(
+                cc,
+                api_key,
+                IntegrationType.LIVE,
+            )
+        )
+
+    # Por defecto / Salvaguarda de no cobro real (Modo Integración / Sandbox oficial):
+    return Transaction(
+        WebpayOptions(
+            IntegrationCommerceCodes.WEBPAY_PLUS,
+            IntegrationApiKeys.WEBPAY,
+            IntegrationType.TEST,
+        )
+    )
+
+
+# ============================================================
+# PAGO CON WEBPAY PLUS - TRANSBANK
+# ============================================================
+
+@alumno_required  # el paquete necesita un dueño: sin alumna logueada no se cobra
+@require_POST
+def comprar_paquete(request):
+    """Inicia Webpay por un paquete. El monto lo calcula el servidor con la tarifa del profesor."""
+    return iniciar_compra_paquete(request, request.session['alumno_id'])  # el menor no pasa: ahi se bloquea
+
+
+def iniciar_compra_paquete(request, alumno_id, al_crear=None, vinculo=None):
+    """Unico inicio de Webpay para paquetes: lo usan el alumno y el apoderado.
+
+    Plan y profesor vienen del POST; el monto lo calcula el servidor. ``al_crear``
+    recibe el paquete dentro de la misma transaccion (la compra del apoderado).
+
+    Menores: solo contrata su apoderado, con el ``vinculo`` que lo autoriza. El bloqueo vive aqui y no en las
+    vistas, porque aqui se crea el paquete: cualquier vista nueva que llegue hasta este punto queda cubierta.
+    """
+    try:
+        exigir_mayor_de_edad(get_object_or_404(Alumno, pk=alumno_id), vinculo)
+    except InscripcionError:
+        return redirect('alumno_pag1')
+    plan = paquetes.POR_CODIGO.get(request.POST.get('plan', ''))
+    profesor = _profesor_habilitado(request.POST.get('profesor'))
+    if not (plan and profesor):
+        return redirect('planes')
+
+    monto = paquetes.precio(plan, profesor.tarifa)
+    # Unico (26 caracteres, el maximo de Transbank): con un numero corto al azar, un
+    # pedido abandonado podia compartir orden con una compra nueva y activarse gratis.
+    buy_order = f'PQ{secrets.token_hex(12)}'
+    session_id = f'S{secrets.token_hex(8)}'
+    try:
+        response = _tx().create(buy_order, session_id, monto, request.build_absolute_uri(reverse('confirmacion')))
+    except Exception:  # Transbank caido o rechazo la orden: no se cobra ni se crea el paquete
+        return render(request, 'alumnos/confirmacion.html', {'aprobado': False, 'items': []})
+
+    with transaction.atomic():  # paquete y registro del apoderado: ambos o ninguno
+        paquete = PaqueteClases.objects.create(
+            alumno_id=alumno_id, profesor=profesor, plan=plan.codigo,
+            clases=plan.clases, tarifa=profesor.tarifa, monto=monto, dias=plan.vigencia_dias,
+            buy_order=buy_order,
+        )
+        if al_crear:
+            al_crear(paquete)
+    return render(request, 'alumnos/redirect_webpay.html', {'url': response['url'], 'token': response['token']})
+
+
+@csrf_exempt
+def confirmacion(request):
+
+    token = (
+        request.GET.get('token_ws')
+        or request.POST.get('token_ws')
+    )
+
+    tbk_token = (
+        request.GET.get('TBK_TOKEN')
+        or request.POST.get('TBK_TOKEN')
+    )
+
+    ctx = {
+        'items': []
+    }
+
+    # Pago recibido desde Webpay
+
+    if token:
+
+        try:
+            resp = _tx().commit(token)
+        except Exception:
+            resp = {}
+
+        aprobado = (
+            resp.get('response_code') == 0
+            and resp.get('status') == 'AUTHORIZED'
+        )
+        card = resp.get('card_detail') or {}
+        buy_order = resp.get('buy_order', '')
+        paquete = PaqueteClases.objects.filter(buy_order=buy_order).first() if buy_order else None
+        if paquete and int(resp.get('amount') or 0) != paquete.monto:
+            aprobado = False
+        Suscripcion.confirmar_pago(buy_order, aprobado)
+        PaqueteClases.confirmar_pago(buy_order, aprobado)
+        ctx['items'] = [
+            {'titulo': f'{p.get_plan_display()}: {p.clases} clase(s) con {p.profesor.nombre if p.profesor else "—"}',
+             'cantidad': 1, 'precio': _clp(p.monto)}
+            for p in PaqueteClases.objects.filter(buy_order=buy_order).select_related('profesor__user')
+        ] if buy_order else []
+
+        ctx.update({
+            'aprobado': aprobado,
+            'orden': buy_order,
+            'monto': _clp(resp.get('amount', 0)),
+            'codigo_autorizacion': resp.get('authorization_code', ''),
+            'tarjeta': card.get('card_number', ''),
+            'fecha': resp.get('transaction_date', ''),
+        })
+    elif tbk_token:
+        ctx.update({
+            'aprobado': False,
+            'anulado': True
+        })
+    else:
+        return redirect('planes')
+    return render(
+        request,
+        'alumnos/confirmacion.html',
+        ctx
+    )

@@ -5,12 +5,16 @@
   cuando alguien decide (o el vinculo se revoca).
 - Alumnos, profesores y apoderados abren sus propios tickets (D10): pagos, clases,
   tecnicos u otros. Esos tienen autor, titulo y descripcion.
+- Cada mensaje del formulario publico Contactanos es un ticket (H14, D5: el admin no
+  atiende casos). El visitante no tiene cuenta: soporte le responde por correo.
 - El ticket se asigna solo al agente habilitado en su categoria con menos tickets
   abiertos; el lider de soporte puede reasignarlo.
 - Solo el agente asignado ve los documentos y decide. El administrador no.
 - Cada asignacion queda registrada: quien tuvo el ticket, desde cuando y quien lo asigno.
 - Plazo en dias habiles por categoria (soporte/plazos.py). Reasignar no lo reinicia:
   el plazo es para quien espera la respuesta.
+- Un caso grave (legal, etc.) se escala con un motivo obligatorio: el agente al lider, que
+  lo toma; el lider a un administrador, que decide y soporte ejecuta (D5, revisada 05-nov).
 """
 
 from django.conf import settings
@@ -58,12 +62,17 @@ class Ticket(models.Model):
     # Solicitud de eliminar la cuenta (app supresiones). La abre el flujo de privacidad, no el formulario
     # de tickets: por eso no esta en DE_USUARIOS.
     PRIVACIDAD = 'privacidad'
+    # Formulario publico Contactanos (H14). Lo abre un visitante sin cuenta: tampoco esta en DE_USUARIOS.
+    CONTACTO = 'contacto'
     CATEGORIAS = [(APODERADOS, 'Apoderados y menores'), (TITULOS, 'Títulos de profesores'),
                   (PAGOS, 'Pagos y retiros'), (CLASES, 'Clases'), (CONDUCTA, 'Conducta en una clase'),
-                  (TECNICO, 'Problemas técnicos'), (OTRO, 'Otro'), (PRIVACIDAD, 'Privacidad y datos')]
+                  (TECNICO, 'Problemas técnicos'), (OTRO, 'Otro'), (PRIVACIDAD, 'Privacidad y datos'),
+                  (CONTACTO, 'Contacto del sitio')]
     DE_USUARIOS = (PAGOS, CLASES, CONDUCTA, TECNICO, OTRO)  # las que abre el propio usuario (D10)
     # D4, D16, D17. Privacidad: 10 dias habiles (~14 corridos), decision por defecto a validar con la abogada.
-    DIAS_HABILES = {APODERADOS: 5, TITULOS: 5, PAGOS: 2, CLASES: 2, CONDUCTA: 2, TECNICO: 5, OTRO: 5, PRIVACIDAD: 10}
+    # Contacto: 5, como Tecnico y Otro (decidido 05-nov).
+    DIAS_HABILES = {APODERADOS: 5, TITULOS: 5, PAGOS: 2, CLASES: 2, CONDUCTA: 2, TECNICO: 5, OTRO: 5, PRIVACIDAD: 10,
+                    CONTACTO: 5}
     AVISO_CADA = 3  # dias habiles entre avisos de atraso (al equipo en casos normales, y al usuario siempre;
     #                 conducta avisa al equipo cada dia: D17)
     ABIERTO = 'abierto'
@@ -75,7 +84,8 @@ class Ticket(models.Model):
     # SET_NULL: si se borra la cuenta del agente, el ticket queda sin asignar.
     asignado = models.ForeignKey(AgenteSoporte, on_delete=models.SET_NULL, null=True, blank=True,
                                  related_name='tickets')
-    # Lo que se revisa: exactamente uno de los tres, o un autor si lo abrio un usuario.
+    # Lo que se revisa: exactamente uno de los tres, o un autor si lo abrio un usuario, o el
+    # mensaje de Contactanos de un visitante.
     apoderado = models.ForeignKey('apoderados.Apoderado', on_delete=models.CASCADE, null=True, blank=True,
                                   related_name='tickets')
     vinculo = models.ForeignKey('apoderados.Vinculo', on_delete=models.CASCADE, null=True, blank=True,
@@ -84,6 +94,9 @@ class Ticket(models.Model):
                                  related_name='tickets')
     autor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True,
                               related_name='tickets_soporte')
+    # Uno a uno: cada mensaje es su propio ticket.
+    contacto = models.OneToOneField('admin_portal.MensajeContacto', on_delete=models.CASCADE, null=True,
+                                    blank=True, related_name='ticket')
     titulo = models.CharField(max_length=120, blank=True)
     descripcion = models.TextField(max_length=2000, blank=True)
     creado = models.DateTimeField(auto_now_add=True)
@@ -100,11 +113,16 @@ class Ticket(models.Model):
         constraints = [
             models.CheckConstraint(
                 name='ticket_de_un_solo_objeto',
-                condition=(Q(apoderado__isnull=False, vinculo__isnull=True, profesor__isnull=True)
-                           | Q(apoderado__isnull=True, vinculo__isnull=False, profesor__isnull=True)
-                           | Q(apoderado__isnull=True, vinculo__isnull=True, profesor__isnull=False)
+                condition=(Q(apoderado__isnull=False, vinculo__isnull=True, profesor__isnull=True,
+                             contacto__isnull=True)
+                           | Q(apoderado__isnull=True, vinculo__isnull=False, profesor__isnull=True,
+                               contacto__isnull=True)
+                           | Q(apoderado__isnull=True, vinculo__isnull=True, profesor__isnull=False,
+                               contacto__isnull=True)
                            | Q(apoderado__isnull=True, vinculo__isnull=True, profesor__isnull=True,
-                               autor__isnull=False)),
+                               autor__isnull=False, contacto__isnull=True)
+                           | Q(apoderado__isnull=True, vinculo__isnull=True, profesor__isnull=True,
+                               autor__isnull=True, contacto__isnull=False)),
             ),
             # Un solo ticket abierto por cosa revisada.
             models.UniqueConstraint(fields=['apoderado'], condition=Q(estado='abierto'),
@@ -119,9 +137,17 @@ class Ticket(models.Model):
         return f'#{self.pk} {self.asunto} ({self.get_estado_display()})'
 
     @property
+    def es_conversacion(self):
+        """Se atiende respondiendo en soporte_reporte (lo abrio un usuario o un visitante),
+        no revisando documentos en la pantalla de su categoria."""
+        return bool(self.autor_id or self.contacto_id)
+
+    @property
     def asunto(self):
         if self.autor_id:
             return self.titulo
+        if self.contacto_id:
+            return f'Mensaje de {self.contacto.nombre}'
         if self.apoderado_id:
             return f'Identidad de {self.apoderado.nombre}'
         if self.vinculo_id:
@@ -130,9 +156,12 @@ class Ticket(models.Model):
 
     @property
     def solicitante(self):
-        """Quien espera la respuesta: el autor, o el apoderado o profesor que se verifica."""
+        """Quien espera la respuesta: el autor, o el apoderado o profesor que se verifica.
+        None si es un visitante de Contactanos: no tiene cuenta."""
         if self.autor_id:
             return self.autor
+        if self.contacto_id:
+            return None
         if self.apoderado_id:
             return self.apoderado.user
         if self.vinculo_id:
@@ -185,3 +214,34 @@ class Mensaje(models.Model):
 
     class Meta:
         ordering = ['fecha', 'id']
+
+
+class Escalamiento(models.Model):
+    """Un caso grave que sube un nivel, con su motivo. Al lider: el ticket pasa a ser suyo.
+    Al administrador: el ticket sigue en soporte; el admin ve solo el asunto y los motivos (no
+    documentos ni conversaciones), y deja una indicacion que soporte ejecuta."""
+    AL_LIDER = 'lider'
+    AL_ADMIN = 'admin'
+    DESTINOS = [(AL_LIDER, 'Al líder de soporte'), (AL_ADMIN, 'A un administrador')]
+
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='escalamientos')
+    destino = models.CharField(max_length=5, choices=DESTINOS)
+    autor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='+')
+    motivo = models.TextField(max_length=1000)
+    fecha = models.DateTimeField(auto_now_add=True)
+    indicacion = models.TextField(max_length=1000, blank=True)
+    indicado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                     related_name='+')
+    indicado = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['fecha', 'id']
+        constraints = [
+            # Hasta que el admin responda, no se le vuelve a escalar el mismo ticket.
+            models.UniqueConstraint(fields=['ticket'], condition=Q(destino='admin', indicado__isnull=True),
+                                    name='un_escalamiento_al_admin_pendiente'),
+        ]
+
+    @property
+    def pendiente(self):
+        return self.destino == self.AL_ADMIN and self.indicado is None

@@ -13,10 +13,14 @@
 
 <div class="panel">
     <div class="panel-header">
-        <span class="panel-title"><i class="bi bi-chat-left-text-fill" aria-hidden="true"></i> {{ ticket.titulo }}</span>
+        <span class="panel-title"><i class="bi bi-chat-left-text-fill" aria-hidden="true"></i> {{ ticket.asunto }}</span>
     </div>
     <dl style="padding:18px; display:grid; grid-template-columns:max-content 1fr; gap:8px 18px; margin:0;">
+        {% if ticket.contacto %}
+        <dt>Escribió</dt><dd>{{ ticket.contacto.nombre }} · {{ ticket.contacto.correo }} <small>(visitante sin cuenta, desde Contáctanos; el correo no está verificado)</small></dd>
+        {% else %}
         <dt>Abierto por</dt><dd>{{ ticket.autor.first_name }} · {{ ticket.autor.email|default:"sin correo" }}</dd>
+        {% endif %}
         {% if ticket.estudiante %}<dt>Estudiante</dt><dd>{{ ticket.estudiante.user.first_name }} (su apoderado abrió el ticket)</dd>{% endif %}
         <dt>Abierto el</dt><dd>{{ ticket.creado|date:"d-m-Y H:i" }}</dd>
         <dt>Vence</dt><dd>{{ ticket.vence|date:"d-m-Y H:i" }}{% if ticket.atrasado %} <span class="badge">Atrasado</span>{% endif %}</dd>
@@ -24,7 +28,7 @@
     </dl>
     <div style="padding:0 18px 18px;">
         <h2 style="font-size:1rem;">Lo que nos contó</h2>
-        <p>{{ ticket.descripcion|linebreaksbr }}</p>
+        <p>{% if ticket.contacto %}{{ ticket.contacto.mensaje|linebreaksbr }}{% else %}{{ ticket.descripcion|linebreaksbr }}{% endif %}</p>
         {% if ticket.reporte_conversacion %}
         <p><a href="{% url 'mensajes_soporte_leer' ticket.pk %}"><i class="bi bi-chat-left-text" aria-hidden="true"></i> Leer la conversación reportada</a> <small>(queda registrado quién la abre)</small></p>
         {% endif %}
@@ -38,5 +42,5 @@
         {% endif %}
     </div>
 </div>
-<p style="margin-top:18px;"><a href="{% url 'panel_soporte' %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a mis tickets</a></p>
+<p style="margin-top:18px;">{% if ticket.estado == 'abierto' %}<a href="{% url 'soporte_escalar' ticket.pk %}"><i class="bi bi-arrow-up-circle" aria-hidden="true"></i> Escalar este caso / ver historial</a> · {% endif %}<a href="{% url 'panel_soporte' %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a mis tickets</a></p>
 {% endblock %}

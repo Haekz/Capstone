@@ -1,4 +1,5 @@
-"""Tickets que abren los usuarios (D10): alumno, profesor y apoderado.
+"""Tickets que abren los usuarios (D10): alumno, profesor y apoderado; y los mensajes de
+Contactanos de visitantes sin cuenta (H14).
 
 El usuario ve solo los suyos y contesta mientras esten abiertos. Del lado de soporte,
 el detalle lo ve el agente que tiene el ticket abierto o un lider (que supervisa
@@ -17,24 +18,28 @@ from alumnos.decorators import soporte_required
 from alumnos.models import PaqueteClases
 from alumnos.portales import contexto_de_marco
 
-from .forms import MensajeForm, ReporteForm, RespuestaForm
+from .forms import MensajeForm, ReporteForm, RespuestaContactoForm, RespuestaForm
 from .models import Ticket
 from .permisos import (agente_en_sesion, categorias_que_reporta, estudiantes_que_reporta, reporta_required,
                        tickets_del_agente)
-from .tickets import abrir_reporte, agregar_mensaje
+from .tickets import abrir_reporte, agregar_mensaje, cerrar_sin_respuesta
 
 
 def _publicar(request, ticket, form, de_soporte):
     """Guarda la respuesta de un formulario enviado y valido. True si hubo envio."""
     if request.method != 'POST' or form is None or not form.is_valid():
         return False
+    datos = form.cleaned_data
     try:
-        agregar_mensaje(ticket, request.user, form.cleaned_data['texto'], de_soporte,
-                        cerrar=form.cleaned_data.get('cerrar', False))
+        if datos.get('sin_respuesta'):
+            cerrar_sin_respuesta(ticket)
+        else:
+            agregar_mensaje(ticket, request.user, datos['texto'], de_soporte, cerrar=datos.get('cerrar', False))
     except ValidationError as error:  # se cerro mientras escribia
         messages.error(request, error.messages[0])
     else:
-        messages.success(request, 'Respuesta enviada.')
+        messages.success(request, 'Ticket cerrado sin respuesta.' if datos.get('sin_respuesta')
+                         else 'Respuesta enviada.')
     return True
 
 
@@ -100,11 +105,12 @@ def mi_ticket(request, id_ticket):
 def ver_reporte(request, id_ticket):
     agente = agente_en_sesion(request)
     visibles = Ticket.objects.all() if agente.es_lider else tickets_del_agente(request)
-    ticket = get_object_or_404(visibles.select_related('autor', 'asignado__user'),
-                               pk=id_ticket, autor__isnull=False)
+    ticket = get_object_or_404(visibles.select_related('autor', 'contacto', 'asignado__user'),
+                               Q(autor__isnull=False) | Q(contacto__isnull=False), pk=id_ticket)
     # Responde solo quien lo tiene asignado; el lider, reasignandoselo antes.
     propio = tickets_del_agente(request).filter(pk=ticket.pk).exists()
-    form = RespuestaForm(request.POST or None) if propio else None
+    formulario = RespuestaContactoForm if ticket.contacto_id else RespuestaForm
+    form = formulario(request.POST or None) if propio else None
     if _publicar(request, ticket, form, de_soporte=True):
         # Cerrado ya no es del agente: vuelve a su panel en vez de un 404.
         return redirect('soporte_reporte', ticket.pk) if ticket.estado == Ticket.ABIERTO else redirect('panel_soporte')

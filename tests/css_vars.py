@@ -15,6 +15,22 @@ def leer(ruta):
     return (RAIZ / ruta).read_text(encoding='utf-8')
 
 
+def partes(carpeta):
+    """Rutas (relativas a la raiz) de las partes de una plantilla dividida con {% include %}, con subcarpetas.
+
+    Falla si no hay ninguna: una lista vacia haria que la prueba deje de revisar esas partes sin avisar.
+    """
+    rutas = sorted(p.relative_to(RAIZ).as_posix() for p in (RAIZ / carpeta).rglob('*') if p.is_file())
+    if not rutas:
+        raise FileNotFoundError(f'{carpeta} no tiene partes')
+    return rutas
+
+
+def leer_hoja(carpeta):
+    """Texto de una hoja CSS dividida en partes (01_..., 02_...), unidas en el orden en que la pagina las carga."""
+    return ''.join(leer(ruta) for ruta in partes(carpeta))
+
+
 def definidas(texto):
     return set(re.findall(r'(--[\w-]+)\s*:', texto))
 
