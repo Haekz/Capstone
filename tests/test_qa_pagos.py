@@ -17,7 +17,7 @@ from tests.test_paquetes import RUT_ANA, Escenario
 APROBADO = {'response_code': 0, 'status': 'AUTHORIZED'}
 
 
-@patch('alumnos.views._tx')
+@patch('alumnos.webpay._tx')
 class ConfirmacionQATests(Escenario):
 
     def comprar(self, mock_tx, plan='progreso'):
@@ -104,7 +104,7 @@ class ConfirmacionQATests(Escenario):
         self.assertEqual(self.estado(paquete), PaqueteClases.ESTADO_PENDIENTE)
 
 
-@patch('alumnos.views._tx')
+@patch('alumnos.webpay._tx')
 class CompraCsrfTests(Escenario):
 
     def test_comprar_exige_el_token_csrf(self, mock_tx):
