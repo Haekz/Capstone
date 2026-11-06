@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views, views_vinculo
+from . import views, views_revision, views_vinculo
 
 urlpatterns = [
     path('registro/', views.registro, name='registro_apoderado'),
@@ -32,9 +32,9 @@ urlpatterns = [
     path('estudiantes/mi-solicitud/reenviar/', views.reenviar_correo_adolescente, name='adolescente_reenviar_correo'),
     path('estudiantes/mi-solicitud/invitar/', views.invitar, name='adolescente_invitar'),
     path('salir/', views.logout_apoderado, name='logout_apoderado'),
-    path('revision/', views.revision, name='apoderados_revision'),
-    path('revision/documentos/<int:id_documento>/', views.ver_documento, name='apoderado_documento'),
+    path('revision/', views_revision.revision, name='apoderados_revision'),
+    path('revision/documentos/<int:id_documento>/', views_revision.ver_documento, name='apoderado_documento'),
     path('revision/vinculos/<int:id_vinculo>/revocar/', views.revocar_vinculo_admin, name='apoderados_revocar_vinculo'),
-    path('<int:id_apoderado>/revisar/', views.revisar, name='apoderado_revisar'),
-    path('vinculos/<int:id_vinculo>/revisar/', views.revisar_vinculo, name='apoderado_revisar_vinculo'),
+    path('<int:id_apoderado>/revisar/', views_revision.revisar, name='apoderado_revisar'),
+    path('vinculos/<int:id_vinculo>/revisar/', views_revision.revisar_vinculo, name='apoderado_revisar_vinculo'),
 ]

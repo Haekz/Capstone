@@ -76,8 +76,9 @@ ticket nuevo con plazo nuevo.
 
 Notas: los retiros de prueba antiguos guardan el numero de cuenta sin cifrar (decidir si se enmascaran).
 Si cambia SECRET_KEY, las cuentas bancarias cifradas dejan de leerse.
-Archivos sobre 600 lineas: en curso en `fran-dividir-archivos` (fase 1 Python: `alumnos/views.py` HECHO; `alumnos/models.py`
-HECHO, ahora paquete `alumnos/models/` con usuarios, clases, pagos, reportes y retiros; falta `apoderados/views.py`, 604).
+Archivos sobre 600 lineas: en curso en `fran-dividir-archivos`. Fase 1 Python HECHA: `alumnos/views.py`, `alumnos/models.py`
+(paquete `alumnos/models/` con usuarios, clases, pagos, reportes y retiros) y `apoderados/views.py` (la revision de
+soporte paso a `apoderados/views_revision.py`; el flujo del adolescente se queda porque comparte helpers del registro).
 Fase 2 plantillas (`Alumno_pag1.html`, `dashboard_admin.html`, `panel_profesor.html`) y fase 3 CSS: con revision visual.
 Doc pendiente de corregir: CONCILIACION_Y_TRANSBANK_7_6.md describe un modelo `Pago` que no existe.
 El enlace de cambio de cuenta exige sesion: si el profesor no la tiene, entra y vuelve a abrir el enlace.

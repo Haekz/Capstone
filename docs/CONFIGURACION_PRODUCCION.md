@@ -37,7 +37,7 @@ El inicio de sesión con Google no usa variables: el `client_id` y el secreto es
 |---|---|---|
 | Títulos de profesores (`Profesor.titulo_archivo`, `titulos/`) | Volumen de Railway en `MEDIA_ROOT=/data/media` | Solo por `admin_portal/titulos.py::ver_titulo` (`@admin_required`) |
 | Fotos de perfil (`CustomUser.foto_perfil`, `perfiles/`) | Volumen | **Ninguna vista las sirve hoy** (pendiente conocido: la imagen se ve rota) |
-| Documentos de apoderados (carnet, documento del vínculo) | **PostgreSQL, cifrados** (`apoderados.Documento.contenido`, `BinaryField`). No van a disco ni al volumen | Solo por `apoderados/views.py::ver_documento` (`@admin_required`), con marca de agua y registro de cada apertura; se borran al resolver la revisión o a los 30 días |
+| Documentos de apoderados (carnet, documento del vínculo) | **PostgreSQL, cifrados** (`apoderados.Documento.contenido`, `BinaryField`). No van a disco ni al volumen | Solo por `apoderados/views_revision.py::ver_documento` (`@soporte_required`, solo el agente con el ticket), con marca de agua y registro de cada apertura; se borran al resolver la revisión o a los 30 días |
 
 - `lbwus/urls.py` **no publica `MEDIA_URL`**: no existe ninguna ruta `/media/`. Un GET a `/media/titulos/...` o `/media/perfiles/...` da 404, también para un admin (`tests/test_configuracion_produccion.py::ArchivosPrivadosTests`).
 - WhiteNoise sirve solo `STATIC_ROOT` (`/static/`), nunca `MEDIA_ROOT`.
