@@ -64,4 +64,10 @@ python manage.py makemigrations --check --dry-run # modelos sin migracion
 
 ## Pruebas que documentan un bug
 
-Una prueba que descubre un bug sin corregir se marca `@pytest.mark.xfail(strict=True, reason="BUG-QA-NN: ...")`. `strict=True` hace que la suite falle cuando el bug se corrige y la prueba empieza a pasar: en ese momento se quita el `xfail`. El runner de Django no entiende `pytest.mark`: esas pruebas usan ademas `unittest.expectedFailure`, para que las dos herramientas den el mismo resultado.
+Una prueba que descubre un bug sin corregir se marca con `@bug_qa('BUG-QA-NN', 'motivo')` (`tests/bugs_qa.py`). Con pytest es `pytest.mark.xfail(strict=True)`; con `manage.py test`, `unittest.expectedFailure` (`conftest.py` elige cual). Se usa una sola de las dos a la vez: juntas, pytest toma el "exito inesperado" de unittest como el fallo esperado y no avisa.
+
+En los dos runners la suite falla cuando el bug se corrige y la prueba empieza a pasar (XPASS estricto / *unexpected success*): en ese momento se quita la marca. Para ver el fallo real de una prueba marcada: `pytest --runxfail tests/test_qa_pagos.py`.
+
+## Matriz de acceso por rol
+
+`tests/test_qa_acceso.py` recorre todas las rutas del proyecto (`tests/rutas_qa.py`) como anonimo y como cada rol, y falla si alguien recibe 200 fuera de lo publico, lo comun o lo propio de su rol, o si alguna ruta da 500. **Si agregas una ruta, agregala a `PUBLICAS`, `COMUNES` o `PROPIAS`**: la prueba falla hasta entonces a proposito (regla 1).

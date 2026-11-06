@@ -3,12 +3,17 @@
 - Estaticos sin manifiesto (no hace falta collectstatic).
 - DOCUMENTOS_CLAVE nueva en cada corrida, si el entorno no trae una.
 - Marcadores por modulo: integracion_atlas y postgres (pytest.ini).
+- Pruebas de bugs abiertos (@bug_qa, tests/bugs_qa.py) como xfail estricto.
 """
 
 import pytest
 from cryptography.fernet import Fernet
 from django.conf import settings
 from django.test.utils import override_settings
+
+from tests import bugs_qa
+
+bugs_qa.EN_PYTEST = True  # @bug_qa usa xfail(strict=True) y no unittest.expectedFailure
 
 MARCADORES_POR_MODULO = {
     'comunidad/tests/test_atlas.py': 'integracion_atlas',
