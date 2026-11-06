@@ -26,6 +26,11 @@ def partes(carpeta):
     return rutas
 
 
+def leer_hoja(carpeta):
+    """Texto de una hoja CSS dividida en partes (01_..., 02_...), unidas en el orden en que la pagina las carga."""
+    return ''.join(leer(ruta) for ruta in partes(carpeta))
+
+
 def definidas(texto):
     return set(re.findall(r'(--[\w-]+)\s*:', texto))
 

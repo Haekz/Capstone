@@ -1,0 +1,350 @@
+/* ==============================================================
+   CONTENIDO
+   ============================================================== */
+.page-content {
+    padding: 32px;
+    gap: 24px;
+}
+
+/* Tarjetas de estadísticas */
+.stat-card {
+    border-radius: var(--radius-md);
+    padding: 22px;
+    box-shadow: var(--shadow-md);
+}
+
+.stat-card::before {
+    display: none;
+}
+
+.stat-card:hover {
+    transform: none;
+    border-color: var(--border-light);
+    box-shadow: var(--shadow-md);
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    font-size: 1.25rem;
+}
+
+.stat-value {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+}
+
+.stat-card.purple { --stat-color: #7c3aed; --stat-color-rgb: 124,58,237; }
+body:not(.light-mode) .stat-card.purple { --stat-color: #c4b5fd; }
+
+/* Paneles */
+.panel {
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+}
+
+.panel:hover {
+    border-color: var(--border);
+}
+
+.panel-header {
+    padding: 18px 24px;
+}
+
+.panel-title {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.panel-title i {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: var(--primary-soft);
+    color: var(--primary-light);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+}
+
+.panel-action {
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.panel-body {
+    padding: 22px 24px;
+}
+
+/* Pestañas de filtro */
+.filter-tabs {
+    padding: 14px 24px 0;
+    gap: 4px;
+}
+
+.filter-tab {
+    border-radius: 0;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+}
+
+.filter-tab:hover {
+    background: transparent;
+}
+
+.filter-tab.active {
+    background: transparent;
+    color: var(--primary-light);
+    border-bottom-color: var(--primary);
+}
+
+/* Buscador */
+.search-bar {
+    border-radius: 50px;
+    padding: 9px 16px;
+}
+
+.search-bar:focus-within {
+    box-shadow: 0 0 0 4px var(--primary-soft);
+    background: var(--bg-card);
+}
+
+.search-bar input {
+    font-size: 0.93rem;
+}
+
+/* Tablas */
+.user-table {
+    font-size: 0.9rem;
+}
+
+.user-table th {
+    font-size: 0.74rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    padding: 12px 16px;
+}
+
+.user-table td {
+    padding: 14px 16px;
+}
+
+.user-avatar-sm {
+    background: var(--primary-soft);
+    color: var(--primary-light);
+    font-size: 0.8rem;
+}
+
+/* Badges: mismo tono, legibles en ambos modos */
+.badge {
+    font-size: 0.75rem;
+    padding: 4px 10px;
+}
+
+body.light-mode .badge-alumno { color: #1d4ed8; background: rgba(59, 130, 246, 0.12); }
+body.light-mode .badge-pendiente { color: #b45309; background: rgba(245, 158, 11, 0.14); }
+body.light-mode .badge-resuelto,
+body.light-mode .badge-activo { color: #047857; background: rgba(16, 185, 129, 0.12); }
+body.light-mode .badge-admin { color: #b45309; }
+
+/* Botones */
+.btn-primary {
+    background: var(--primary);
+    border-radius: 50px;
+    padding: 10px 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    display: inline-flex;
+    justify-content: center;
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+    transform: none;
+    box-shadow: var(--shadow-purple);
+}
+
+/* Botón secundario (Cancelar, etc.) */
+.btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 20px;
+    border-radius: 50px;
+    border: 1px solid var(--border-light);
+    background: transparent;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-secondary:hover {
+    background: var(--bg-hover);
+}
+
+.form-actions {
+    margin-top: 28px;
+    padding-top: 22px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.btn-action {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+}
+
+/* Formularios */
+.form-label {
+    font-size: 0.85rem;
+    color: var(--text-primary);
+}
+
+.form-input {
+    background: var(--bg-main);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 11px 14px;
+    font-size: 0.93rem;
+    color: var(--text-primary);
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: var(--bg-card);
+    box-shadow: 0 0 0 4px var(--primary-soft);
+}
+
+/* Mensaje de éxito sobre la tabla */
+.alert-ok {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 16px 24px 0;
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    color: #047857;
+    font-size: 0.9rem;
+}
+
+body:not(.light-mode) .alert-ok {
+    color: #6ee7b7;
+}
+
+/* Estado vacío */
+.empty-state i {
+    color: var(--primary-light);
+    opacity: 0.6;
+}
+
+/* Bloques de información (Nosotros) */
+.info-block {
+    background: var(--bg-main);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 20px;
+}
+
+/* Drawer de notificaciones y búsqueda */
+.notifications-drawer,
+.search-modal {
+    font-family: inherit;
+}
+
+.search-modal-backdrop {
+    background: rgba(20, 12, 40, 0.55);
+}
+
+/* ==============================================================
+   RESPONSIVE: menú lateral deslizable en móvil
+   ============================================================== */
+@media (max-width: 768px) {
+    .sidebar-toggle {
+        display: inline-flex;
+    }
+
+    .admin-wrapper .sidebar {
+        transition: transform 0.3s ease;
+        box-shadow: 10px 0 40px rgba(0, 0, 0, 0.25);
+    }
+
+    .topbar {
+        padding: 0 16px;
+    }
+
+    .topbar-left p {
+        display: none;
+    }
+
+    .page-content {
+        padding: 16px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+    }
+}
+
+/* =============================================================
+   MÓVIL: nada se sale de la pantalla
+   - Un hijo flex tiene min-width:auto y se estira al ancho de su
+     contenido (tablas anchas). min-width:0 lo deja encogerse.
+   - Las tablas anchas se desplazan dentro de su panel, no la página.
+   ============================================================= */
+.main-content,
+.page-content,
+.panel {
+    min-width: 0;
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        max-width: 100vw;
+    }
+
+    .panel {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .user-table {
+        min-width: 560px;   /* se lee bien y se desplaza con el dedo */
+    }
+}
+
+/* S-19: Logout vía POST en sidebar admin */
+.form-sidebar-logout {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.btn-sidebar-logout {
+    cursor: pointer;
+    font-family: inherit;
+}

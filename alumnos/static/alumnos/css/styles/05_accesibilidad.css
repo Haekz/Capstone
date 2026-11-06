@@ -1,0 +1,32 @@
+/* =========================================================
+   ACCESIBILIDAD: menos movimiento si el usuario lo pide
+   ========================================================= */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    html {
+        scroll-behavior: auto;
+    }
+
+    .hero-bg {
+        animation: none;
+        opacity: 0;
+    }
+
+    .hero-carousel img:first-child {
+        opacity: 1;
+        transform: none;
+    }
+
+    .hero-dots span:first-child {
+        background: #fff;
+        width: 28px;
+    }
+}
+

@@ -33,7 +33,7 @@ filosofía de trabajo.
   de HTML y CSS pueda modificar márgenes, colores, tipografías y tamaños de fuente sin esfuerzo.
 
 * SISTEMA DE COLORES Y MODO OSCURO:
-  El diseño utiliza variables CSS declaradas en `:root` (dentro de alumnos/static/alumnos/css/styles.css).
+  El diseño utiliza variables CSS declaradas en `:root` (dentro de alumnos/static/alumnos/css/styles/01_base.css).
   Variables principales:
     * `--primary`: #a855f7 (Morado corporativo)
     * `--primary-dark`: #9333ea

@@ -24,7 +24,7 @@ class VariablesCssDePlanesTests(SimpleTestCase):
         self.assertEqual(sin_definir(HOJAS + PLANTILLAS, definidas_en=PAGINA_ALUMNO + HOJAS), {})
 
     def test_en_el_portal_del_docente(self):
-        self.assertEqual(sin_definir(HOJAS + PLANTILLAS, definidas_en=[CSS_ADMIN, CSS_PORTAL, *HOJAS]), {})
+        self.assertEqual(sin_definir(HOJAS + PLANTILLAS, definidas_en=[*CSS_ADMIN, CSS_PORTAL, *HOJAS]), {})
 
 
 class PlanesEnElPortalTests(BaseResenas):

@@ -36,7 +36,7 @@ class VariablesCssDeTicketsTests(SimpleTestCase):
         self.assertEqual(faltantes, {})
 
     def test_en_el_portal_del_docente(self):
-        faltantes = sin_definir(HOJAS_TICKETS + PLANTILLAS_TICKETS, definidas_en=[CSS_ADMIN, CSS_PORTAL, *HOJAS_TICKETS])
+        faltantes = sin_definir(HOJAS_TICKETS + PLANTILLAS_TICKETS, definidas_en=[*CSS_ADMIN, CSS_PORTAL, *HOJAS_TICKETS])
         self.assertEqual(faltantes, {})
 
 

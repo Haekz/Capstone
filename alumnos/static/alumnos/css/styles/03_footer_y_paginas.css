@@ -1,0 +1,305 @@
+/* =========================================================
+   FOOTER — tinta, sin degradado morado
+   ========================================================= */
+.footer {
+    background: linear-gradient(120deg, #8e3ff0 0%, #a855f7 50%, #bd7af2 100%);
+    color: rgba(255, 255, 255, 0.9);
+    padding: 72px 0 28px;
+}
+
+body.dark-mode .footer {
+    background: linear-gradient(120deg, #241640 0%, #34215c 50%, #241640 100%);
+}
+
+.footer-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 40px;
+    margin-bottom: 48px;
+}
+
+.footer-col h3 {
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+}
+
+.footer-col p {
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+}
+
+.footer-col ul {
+    list-style: none;
+}
+
+.footer-col ul li {
+    margin-bottom: 8px;
+}
+
+.footer-col a,
+.footer-static-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    color: rgba(255, 255, 255, 0.85);
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.footer-static-link {
+    opacity: 0.78;
+}
+
+.footer-col a:hover {
+    color: #ffffff;
+}
+
+.social-box {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+}
+
+.social-box a,
+.social-box .social-placeholder {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: #ffffff;
+    font-size: 1.05rem;
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+    transition: var(--transition);
+}
+
+.social-placeholder {
+    cursor: default;
+    opacity: 0.8;
+}
+
+.social-fb {
+    background: #1877f2;
+}
+
+.social-ig {
+    background: radial-gradient(circle at 30% 107%,
+            #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285aeb 90%);
+}
+
+.social-x {
+    background: #000000;
+}
+
+.social-box a:hover {
+    transform: translateY(-3px) scale(1.06);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.28);
+}
+
+.social-box .social-placeholder:hover {
+    transform: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+
+.subscribe-box {
+    display: flex;
+    gap: 8px;
+}
+
+.subscribe-box input {
+    flex: 1;
+    min-width: 0;
+    padding: 11px 14px;
+    border-radius: 50px;
+    border: none;
+    background: #ffffff;
+    color: #111827;
+    font-family: inherit;
+    font-size: 0.95rem;
+}
+
+.subscribe-box input::placeholder {
+    color: #9ca3af;
+}
+
+.subscribe-box input:focus {
+    outline: 2px solid rgba(255, 255, 255, 0.6);
+    outline-offset: 2px;
+}
+
+.subscribe-box button {
+    padding: 11px 22px;
+    background: var(--accent);
+    color: #ffffff;
+    border: none;
+    border-radius: 50px;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.subscribe-box button:hover {
+    background: var(--accent-dark);
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+.footer-bottom {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 26px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+/* Galería "Nuestro Trabajo" (otras páginas) */
+.portfolio {
+    background: var(--surface);
+    padding: var(--section-y) 0;
+}
+
+body.dark-mode .portfolio {
+    background: var(--surface);
+}
+
+/* =========================================================
+   HERO SECUNDARIO (Nosotros, etc.)
+   ========================================================= */
+.hero-sub {
+    position: relative;
+    height: 420px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #ffffff;
+    overflow: hidden;
+    padding-top: var(--header-height);
+}
+
+.hero-sub-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+}
+
+.hero-sub-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(26, 18, 51, 0.62) 0%, rgba(26, 18, 51, 0.86) 100%);
+    z-index: 1;
+}
+
+.hero-sub-content {
+    position: relative;
+    z-index: 2;
+    padding: 0 24px;
+}
+
+.hero-sub-tag {
+    display: inline-block;
+    font-size: 0.88rem;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    padding: 6px 14px;
+    border-radius: 50px;
+    margin-bottom: 18px;
+    backdrop-filter: blur(4px);
+}
+
+.hero-sub h1 {
+    font-size: clamp(2.2rem, 5vw, 3.4rem);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.1;
+    margin-bottom: 14px;
+}
+
+.hero-sub p {
+    font-size: 1.1rem;
+    max-width: 540px;
+    margin: 0 auto;
+    color: rgba(255, 255, 255, 0.86);
+    line-height: 1.6;
+}
+
+/* =========================================================
+   PÁGINA DE SERVICIOS
+   ========================================================= */
+.services-intro {
+    margin-top: 120px;
+}
+
+.services-intro .badge {
+    margin-bottom: 14px;
+}
+
+.service-block {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    padding: 56px;
+    margin-bottom: 32px;
+    transition: var(--transition);
+}
+
+.service-block:last-child {
+    margin-bottom: 100px;
+}
+
+.service-block:hover {
+    border-color: var(--primary);
+}
+
+body.dark-mode .service-block {
+    background: var(--surface);
+    border-color: var(--line);
+}
+
+body.dark-mode .service-block:hover {
+    border-color: var(--primary);
+}
+
+.service-block .about-img::before {
+    display: none;
+}
+
+.service-block .about-img img {
+    width: 100%;
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow);
+}
+
+.service-eyebrow {
+    display: inline-block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 10px;
+}
+
+.service-block .about-text h2 {
+    margin-bottom: 14px;
+}
+
+.service-block .btn-principal {
+    margin-top: 24px;
+}
+

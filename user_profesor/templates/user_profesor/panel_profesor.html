@@ -6,8 +6,10 @@
 
 {% block extra_css %}
 {{ block.super }}
-<!-- esta parte es de los estilos del panel del profe, cámbialos en panel.css si quieres retocar algo visual -->
-<link rel="stylesheet" href="{% static 'panel.css' %}">
+<!-- esta parte es de los estilos del panel del profe, cámbialos en user_profesor/panel/ si quieres retocar algo visual -->
+{# Antes panel.css: capas en orden, cada una pisa a la anterior. #}
+<link rel="stylesheet" href="{% static 'user_profesor/panel/01_base.css' %}">
+<link rel="stylesheet" href="{% static 'user_profesor/panel/02_secciones.css' %}">
 <link rel="stylesheet" href="{% static 'clases_solicitadas.css' %}">
 <link rel="stylesheet" href="{% static 'videos.css' %}">
 <link rel="stylesheet" href="{% static 'clases_en_vivo.css' %}">
