@@ -111,10 +111,6 @@
                                 <div class="class-card-body">
                                     <h4>{{ c.asignatura.nombre }}</h4>
                                     <p class="class-teacher-type"><i class="bi bi-person"></i> Prof. {{ c.profesor.user.first_name }}</p>
-                                    <div class="class-info-item">
-                                        <i class="bi bi-clock"></i>
-                                        <span>Horario: {{ c.horario|time:"H:i" }} hrs</span>
-                                    </div>
                                 </div>
                                 <div class="ap-class-footer">
                                     <button class="btn-join-class btn-join-class--primary" onclick="abrirModalHorarios({{ c.id_clase }}, '{{ c.asignatura.nombre|escapejs }}', '{{ c.profesor.user.first_name|escapejs }}')">

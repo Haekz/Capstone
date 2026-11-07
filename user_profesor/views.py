@@ -172,7 +172,6 @@ def panel_profesor(request):
         alumno_nombre = primera_insc.alumno.user.first_name if primera_insc else "Sin asignar"
         clases_hoy_lista.append({
             'nombre_curso': clase.asignatura.nombre,
-            'horario': clase.horario,
             'modalidad': clase.get_modalidad_display() if hasattr(clase, 'get_modalidad_display') else clase.modalidad,
             'alumno': alumno_nombre
         })

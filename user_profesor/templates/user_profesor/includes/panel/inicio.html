@@ -44,9 +44,6 @@
                         <div class="prof-schedule-list">
                             {% for ch in clases_hoy %}
                             <div class="prof-schedule-item">
-                                <div class="prof-schedule-time">
-                                    <i class="bi bi-clock"></i> {{ ch.horario }}
-                                </div>
                                 <div class="prof-schedule-details">
                                     <h4>{{ ch.nombre_curso }}</h4>
                                     <p>Alumno: <strong>{{ ch.alumno }}</strong></p>

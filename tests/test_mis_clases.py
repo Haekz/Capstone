@@ -68,8 +68,17 @@ class MisClasesTests(TestCase):
                                        for h in (sesion.fecha_hora_inicio, sesion.fecha_hora_fin)))
         self.assertContains(r, f'Sesión: {dia(sesion)}')
         self.assertContains(r, horas)
-        # La inscripcion a la clase completa sigue mostrando el horario general.
-        self.assertContains(r, 'Horario: 10:00 hrs')
+        # Sin sesion no hay hora que mostrar: solo la modalidad (la hora fija de la clase ya no existe).
+        self.assertNotContains(r, 'Horario: 10:00 hrs')
+        self.assertContains(r, 'Modalidad: Online')
+
+    def test_una_clase_sin_hora_fija_se_ve_bien_en_el_portal(self):
+        # Las clases nuevas nacen sin hora fija (la hora real es la de cada bloque de la agenda).
+        Clase.objects.update(horario=None)
+        r = self._portal()
+        self.assertEqual(r.status_code, 200)
+        self.assertNotContains(r, 'Horario:')
+        self.assertNotContains(r, ' None hrs')
 
     def test_estados_pendiente_y_sesion_cancelada_sin_boton_de_unirse(self):
         r = self._portal()
