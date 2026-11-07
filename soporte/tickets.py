@@ -31,10 +31,10 @@ def _agente_con_menos_carga(categoria):
 
 def abrir_ticket(categoria, **revisado):
     """Abre el ticket de ``revisado`` (apoderado=, vinculo= o profesor=) si no tiene
-    uno abierto, con su plazo, y lo asigna solo. Sin agente habilitado queda sin
-    asignar y se avisa a los lideres."""
+    uno abierto en esa categoria, con su plazo, y lo asigna solo. Sin agente habilitado
+    queda sin asignar y se avisa a los lideres."""
     with transaction.atomic():
-        if Ticket.objects.filter(estado=Ticket.ABIERTO, **revisado).exists():
+        if Ticket.objects.filter(estado=Ticket.ABIERTO, categoria=categoria, **revisado).exists():
             return
         _crear(categoria, **revisado)
 

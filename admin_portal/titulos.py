@@ -12,6 +12,7 @@ from django.views.decorators.http import require_POST
 from alumnos.decorators import soporte_required
 from alumnos.models import Profesor
 from apoderados import documentos
+from soporte.models import Ticket
 from soporte.permisos import agente_en_sesion, ticket_asignado, tickets_del_agente
 from user_profesor import titulo
 
@@ -19,8 +20,9 @@ from .models import AccesoTitulo
 
 
 def _profesor_con_ticket(request, pk):
+    """Solo con el ticket del titulo: el de sus especializaciones no da acceso al titulo."""
     profesor = get_object_or_404(Profesor, id_profesor=pk)
-    if ticket_asignado(request, profesor=profesor) is None:
+    if ticket_asignado(request, profesor=profesor, categoria=Ticket.TITULOS) is None:
         raise Http404('Título no encontrado.')
     return profesor
 
@@ -33,7 +35,7 @@ def titulos_adm(request):
     return render(request, 'admin_portal/titulos_adm.html', {
         'agente': agente,
         'en_revision': profesores.filter(titulo_estado=Profesor.TITULO_EN_REVISION,
-                                         tickets__in=tickets_del_agente(request)),
+                                         tickets__in=tickets_del_agente(request).filter(categoria=Ticket.TITULOS)),
         'otros': profesores.exclude(titulo_estado=Profesor.TITULO_EN_REVISION) if agente.es_lider else None,
         'accesos': AccesoTitulo.objects.select_related('agente', 'profesor__user')[:50] if agente.es_lider else None,
     })
