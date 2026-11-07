@@ -13,6 +13,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
+from agenda import bloques
 from alumnos.models import Profesor
 from apoderados import documentos
 from soporte.models import Ticket
@@ -71,7 +72,12 @@ def resolver(profesor, aprobar, observacion='', ids_asignaturas=()):
         Profesor.objects.select_for_update().filter(pk=profesor.pk).first()  # a la vez que una especializacion
         profesor.save()
         _cerrar_ticket(profesor)
-        return asignaturas.asignar(profesor, elegidas)  # despues de aprobar: sus bloques ya se pueden generar
+        nuevas = asignaturas.asignar(profesor, elegidas)  # despues de aprobar: sus bloques ya se pueden generar
+        if aprobar and not nuevas:
+            # Clases que ya tenia (una especializacion aprobada antes que el titulo) no tenian bloques: sin titulo
+            # aprobado la agenda no los genera. Con nuevas, asignar() ya los genero.
+            bloques.generar(profesor)
+        return nuevas
 
 
 def pasar_a_base(profesor):

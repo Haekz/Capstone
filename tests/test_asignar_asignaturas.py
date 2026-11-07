@@ -87,6 +87,14 @@ class AsignarAsignaturasTests(TestCase):
         titulo.resolver(self.profesor, True, ids_asignaturas=[self.algebra.pk])
         self.assertTrue(SesionClase.objects.filter(clase__asignatura=self.algebra).exists())
 
+    def test_especializacion_antes_que_el_titulo_tiene_bloques_al_aprobar_el_titulo(self):
+        HorarioSemanal.objects.create(profesor=self.profesor, dia_semana=0, hora_inicio=time(15), hora_fin=time(17))
+        especializaciones.resolver(self.esp, True, ids_asignaturas=[self.algebra.pk])
+        self.assertFalse(SesionClase.objects.exists())  # sin titulo aprobado la agenda no genera bloques
+        titulo.subir(self.profesor, pdf('t.pdf'))
+        titulo.resolver(self.profesor, True)  # sin asignaturas nuevas
+        self.assertTrue(SesionClase.objects.filter(clase__asignatura=self.algebra).exists())
+
     def test_en_la_pantalla_las_propuestas_van_premarcadas_y_el_mensaje_dice_cuales_quedaron(self):
         entrar_soporte(self.client, self.agente)
         pagina = self.client.get(reverse('titulos_adm'))
