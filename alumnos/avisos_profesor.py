@@ -4,14 +4,24 @@ Correo + campanita. Privacidad: solo el nombre de pila del alumno, aunque actue
 su apoderado (el profesor no recibe datos del apoderado). InscripcionService los
 llama con transaction.on_commit: si la operacion se deshace, no sale ningun aviso.
 Un fallo del correo no afecta la campanita ni la reserva (correo.enviar lo registra).
+
+Tambien la bienvenida al registrarse, por cualquiera de los dos caminos (formulario o Google).
 """
 
+from django.db import transaction
 from django.urls import reverse
 from django.utils import timezone
 
 from notificaciones.models import notificar
 
 from .correo import enviar
+
+
+def bienvenida(user):
+    """Correo de bienvenida al profesor nuevo. Sale solo si el registro se confirma."""
+    transaction.on_commit(lambda: enviar('Te damos la bienvenida al equipo docente',
+                                         'alumnos/correo_bienvenida_profesor.txt',
+                                         {'nombre': user.first_name}, user.email))
 
 
 def _fecha(sesion):

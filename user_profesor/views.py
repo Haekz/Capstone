@@ -16,7 +16,7 @@ from django.http import FileResponse, Http404
 from django.views.decorators.http import require_POST
 from . import cambio_cuenta, foto
 from .saldos import calcular_saldos  # noqa: F401  (metricas, supresiones y pruebas lo importan desde aqui)
-from alumnos import catalogos, liquidacion, paquetes
+from alumnos import avisos_profesor, catalogos, liquidacion, paquetes
 from agenda import panel as agenda_panel
 from observaciones import panel as observaciones_panel
 from mensajes import panel as mensajes_panel
@@ -108,6 +108,7 @@ def regis_prof(request):
                 user=user,
                 especialidad=especialidad
             )
+            avisos_profesor.bienvenida(user)
 
             from django.contrib.auth import login as auth_login
             auth_login(request, user, backend='alumnos.backends.RutOrEmailBackend')
