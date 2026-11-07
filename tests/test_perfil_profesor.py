@@ -4,7 +4,6 @@ Solo profesores habilitados. Se muestran datos profesionales; el telefono solo
 si el profesor lo autorizo. Nunca RUT, correo, direccion ni fecha de nacimiento.
 """
 
-from datetime import time
 
 from django.test import TestCase
 from django.urls import reverse
@@ -27,7 +26,7 @@ class PerfilProfesorTests(TestCase):
         cls.matematicas = Especialidad.objects.create(nombre='Matemáticas')
         cls.profe = crear_profesor(RUT_PROFE, 'profe@lbwus.cl', cls.matematicas)
         clase = Clase.objects.create(asignatura=Asignatura.objects.create(nombre='Álgebra'),
-                                     modalidad='online', horario=time(10, 0), profesor=cls.profe)
+                                     modalidad='online', profesor=cls.profe)
         cls.futura = crear_sesion(clase, dias=3)
         crear_sesion(clase, dias=-2)  # realizada: cuenta
         crear_sesion(clase, dias=-1, estado=SesionClase.ESTADO_CANCELADA)  # cancelada: no cuenta

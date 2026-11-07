@@ -4,7 +4,6 @@ Con varias asignaturas hay un bloque por asignatura a la misma hora: al reservar
 uno, los demas que se cruzan dejan de ofrecerse. Datos ficticios.
 """
 
-from datetime import time
 
 from alumnos.exceptions import SesionNoDisponibleError
 from alumnos.models import Asignatura, Clase, SesionClase
@@ -20,7 +19,7 @@ class ProfesorOcupadoTests(Escenario):
 
     def setUp(self):
         self.calculo = Clase.objects.create(asignatura=Asignatura.objects.create(nombre='Calculo'),
-                                            modalidad='online', horario=time(10, 0), profesor=self.profe)
+                                            modalidad='online', profesor=self.profe)
         self.algebra_15 = crear_sesion(self.clase, dias=EN_3_DIAS, cupo=1)
         self.calculo_15 = crear_sesion(self.calculo, dias=EN_3_DIAS, cupo=1)
         dar_paquete(self.ana, self.profe)

@@ -42,7 +42,7 @@ class GenerarBloquesTests(Escenario):
 
     def test_un_bloque_por_asignatura(self):
         Clase.objects.create(asignatura=Asignatura.objects.create(nombre='Calculo'),
-                             modalidad='online', horario=time(10), profesor=self.profe)
+                             modalidad='online', profesor=self.profe)
         self.assertEqual(generar(self.profe, self.ahora), 2 * BLOQUES_LUNES_15_A_19)
 
     def test_no_duplica_si_se_corre_de_nuevo(self):

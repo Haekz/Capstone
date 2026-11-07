@@ -1,7 +1,6 @@
 """
 Suite de pruebas de regresión de la Auditoría Técnica, Seguridad Multicapa, CWV y ORM N+1.
 """
-from datetime import time as dt_time
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import connection
@@ -94,13 +93,11 @@ class AuditoriaSeguridadYArquitecturaTests(TestCase):
             asignatura=self.asig,
             profesor=self.prof_aprobado,
             modalidad="online",
-            horario=dt_time(10, 0),
         )
         self.clase_pendiente = Clase.objects.create(
             asignatura=self.asig,
             profesor=self.prof_pendiente,
             modalidad="online",
-            horario=dt_time(12, 0),
         )
 
     def test_sala_virtual_bloquea_inscripcion_cancelada(self):
@@ -192,7 +189,6 @@ class AuditoriaSeguridadYArquitecturaTests(TestCase):
                 asignatura=self.asig,
                 profesor=profesor,
                 modalidad="online",
-                horario=dt_time(desde_hora + i, 0),
             )
             Inscripcion.objects.create(alumno=self.alumno, clase=c, estado="confirmada")
             SolicitudRetiro.objects.create(

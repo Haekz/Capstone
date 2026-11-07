@@ -7,7 +7,7 @@ restricciones: una cuenta verificada no abre nada de alumnos, profesores ni admi
 
 import io
 import re
-from datetime import date, datetime, time as hora, timedelta
+from datetime import date, datetime, timedelta
 from unittest import mock
 
 from django.apps import apps
@@ -277,7 +277,7 @@ class RestriccionesDeAccesoTests(TestCase):
         cls.apoderado = crear_apoderado(RUT, Apoderado.VERIFICADO)
         profesor = crear_profesor('20000000-1', 'profe@demo.cl', None)
         cls.clase = Clase.objects.create(asignatura=Asignatura.objects.create(nombre='Álgebra'),
-                                         modalidad='online', horario=hora(10, 0), profesor=profesor)
+                                         modalidad='online', profesor=profesor)
         crear_sesion(cls.clase, dias=2)
         cls.alumno = crear_alumno('11111111-1', 'Ana', Genero.objects.create(descripcion='Otro'))
 

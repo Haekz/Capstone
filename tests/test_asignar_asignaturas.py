@@ -1,7 +1,7 @@
 """Soporte asigna asignaturas del catalogo al aprobar un titulo o una especializacion (fase 3, paso 2).
 
 Especializacion: al menos una; las propuestas van premarcadas, pero puede elegir cualquiera del catalogo.
-Titulo: opcional. Cada asignatura crea su Clase online y sin hora fija, sin duplicar, y la agenda le genera
+Titulo: opcional. Cada asignatura crea su Clase online, sin duplicar, y la agenda le genera
 bloques de inmediato. Datos ficticios.
 """
 
@@ -40,7 +40,7 @@ class AsignarAsignaturasTests(TestCase):
         nuevas = especializaciones.resolver(self.esp, True, ids_asignaturas=[self.algebra.pk, self.estadistica.pk])
         self.assertEqual(self.materias(), {'Álgebra', 'Estadística'})
         self.assertEqual(len(nuevas), 2)
-        self.assertEqual({(c.modalidad, c.horario) for c in Clase.objects.all()}, {('online', None)})
+        self.assertEqual(set(Clase.objects.values_list('modalidad', flat=True)), {'online'})
 
     def test_especializacion_sin_asignaturas_o_con_una_ajena_no_se_aprueba(self):
         for ids in ([], ['999999'], [self.algebra.pk, 'x']):

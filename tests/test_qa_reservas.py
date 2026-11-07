@@ -11,7 +11,6 @@ atomicidad con escrituras reales en PostgreSQL la prueban los hilos de
 tests/test_concurrencia_inscripcion.py.
 """
 
-from datetime import time
 from unittest.mock import patch
 
 from django.db import IntegrityError
@@ -57,7 +56,7 @@ class ReservaEnSesionTests(Reserva):
     def test_profesor_sin_titulo_no_recibe_reservas(self):
         """Riesgo: reservar (y cobrar) clases de un profesor sin titulo aprobado."""
         clase = Clase.objects.create(asignatura=self.clase.asignatura, modalidad='online',
-                                     horario=time(9, 0), profesor=self.sin_titulo)
+                                     profesor=self.sin_titulo)
         dar_paquete(self.ana, self.sin_titulo)
         with self.assertRaises(SesionNoDisponibleError):
             InscripcionService.inscribir_alumno_en_sesion(self.ana, crear_sesion(clase, dias=2).pk)
@@ -80,7 +79,7 @@ class ReservaEnClaseGeneralTests(Reserva):
 
     def test_profesor_sin_titulo_no_recibe_reservas_generales(self):
         clase = Clase.objects.create(asignatura=self.clase.asignatura, modalidad='online',
-                                     horario=time(9, 0), profesor=self.sin_titulo)
+                                     profesor=self.sin_titulo)
         with self.assertRaises(SesionNoDisponibleError):
             InscripcionService.inscribir_alumno_en_clase(self.ana, clase.pk)
         self.assertSinEfecto(4)

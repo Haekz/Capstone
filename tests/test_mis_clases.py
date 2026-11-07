@@ -4,7 +4,6 @@ Proximas = inscripciones activas cuya sesion aun no termina (o a la clase sin
 sesion puntual), en orden de fecha. Las sesiones ya realizadas van al historial.
 """
 
-from datetime import time
 
 from django.test import TestCase
 from django.urls import reverse
@@ -29,7 +28,7 @@ class MisClasesTests(TestCase):
         cls.ana = crear_alumno(RUT_ANA, 'Ana', Genero.objects.create(descripcion='Otro'))
         profesor = crear_profesor('20000000-1', 'profe@lbwus.cl', None)
         cls.clase = Clase.objects.create(asignatura=Asignatura.objects.create(nombre='Álgebra'),
-                                         modalidad='online', horario=time(10, 0), profesor=profesor)
+                                         modalidad='online', profesor=profesor)
 
         def inscribir(sesion, estado=Inscripcion.ESTADO_CONFIRMADA):
             return Inscripcion.objects.create(alumno=cls.ana, clase=cls.clase,
@@ -73,8 +72,7 @@ class MisClasesTests(TestCase):
         self.assertContains(r, 'Modalidad: Online')
 
     def test_una_clase_sin_hora_fija_se_ve_bien_en_el_portal(self):
-        # Las clases nuevas nacen sin hora fija (la hora real es la de cada bloque de la agenda).
-        Clase.objects.update(horario=None)
+        # Las clases ya no tienen hora fija (la hora real es la de cada bloque de la agenda).
         r = self._portal()
         self.assertEqual(r.status_code, 200)
         self.assertNotContains(r, 'Horario:')

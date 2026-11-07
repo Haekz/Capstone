@@ -6,7 +6,6 @@ vinculo. A los 18 el vinculo termina solo y, si el apoderado definio la
 contrasena, el estudiante debe elegir una nueva antes de seguir.
 """
 
-from datetime import time as hora
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -32,7 +31,7 @@ class RevocacionTests(TestCase):
     def setUpTestData(cls):
         profesor = crear_profesor('44444444-4', 'profe@demo.cl', None)
         clase = Clase.objects.create(asignatura=Asignatura.objects.create(nombre='Historia'),
-                                     modalidad='online', horario=hora(10, 0), profesor=profesor)
+                                     modalidad='online', profesor=profesor)
         cls.madre = crear_apoderado(RUT, Apoderado.VERIFICADO)
         cls.vinculo = crear_menor_vinculado(cls.madre)
         menor = cls.vinculo.alumno

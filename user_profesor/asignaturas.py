@@ -1,7 +1,7 @@
 """Asignaturas que soporte le asigna al profesor al aprobar su titulo o una especializacion (fase 3, 06-nov).
 
-Asignar = crear su Clase de esa asignatura: online (la cambiara el profesor en la fase 6) y sin hora fija
-(la hora real es la de cada bloque de su agenda). Si ya la tiene, no se duplica. Solo del catalogo:
+Asignar = crear su Clase de esa asignatura, online (la cambiara el profesor en la fase 6). La hora es la de
+cada bloque de su agenda. Si ya la tiene, no se duplica. Solo del catalogo:
 las asignaturas nuevas las crea el admin (fase 4).
 """
 

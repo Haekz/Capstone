@@ -5,7 +5,6 @@ y sigue el mismo flujo de pago; CompraApoderado registra quien lo pago. El
 menor no lo usa por su cuenta: reserva su apoderado (1c-ii).
 """
 
-from datetime import time as hora
 from unittest import mock
 
 from django.db import IntegrityError
@@ -112,7 +111,7 @@ class CompraDelApoderadoTests(TestCase):
         self.comprar(tx)
         self.confirmar(tx, PaqueteClases.objects.get())
         clase = Clase.objects.create(asignatura=Asignatura.objects.create(nombre='Álgebra'),
-                                     modalidad='online', horario=hora(10, 0), profesor=self.profesor)
+                                     modalidad='online', profesor=self.profesor)
         sesion = crear_sesion(clase, dias=2)
         menor = self.vinculo.alumno
         entrar(self.client, menor.user, alumno_id=menor.id_alumno)

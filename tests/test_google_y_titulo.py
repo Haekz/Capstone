@@ -6,7 +6,7 @@ callback y llamando a complete_login, que es lo que corre en produccion.
 
 import re
 import time
-from datetime import date, time as hora
+from datetime import date
 
 from allauth.account.models import EmailAddress
 from allauth.core.context import request_context
@@ -254,7 +254,7 @@ class TituloProfesorTests(TestCase):
     def test_no_se_inscribe_sin_titulo_aprobado(self):
         # (El admin ya no crea clases: las asigna soporte al aprobar, ver test_asignar_asignaturas.)
         clase = Clase.objects.create(asignatura=Asignatura.objects.create(nombre='X'),
-                                     modalidad='online', horario=hora(9), profesor=self.profesor)
+                                     modalidad='online', profesor=self.profesor)
         self.entrar('11111111-1')
         r = self.client.post(reverse('inscribir_clase'), {'id_clase': clase.id_clase}).json()
         self.assertFalse(r['success'])
@@ -267,7 +267,7 @@ class TituloProfesorTests(TestCase):
         from tests.test_paquetes import dar_paquete
         dar_paquete(self.alumno, self.profesor)  # inscribirse consume una clase pagada
         clase = Clase.objects.create(asignatura=Asignatura.objects.create(nombre='X'),
-                                     modalidad='online', horario=hora(9), profesor=self.profesor)
+                                     modalidad='online', profesor=self.profesor)
         self.entrar('11111111-1')
         r = self.client.post(reverse('inscribir_clase'), {'id_clase': clase.id_clase}).json()
         self.assertTrue(r['success'], r['message'])

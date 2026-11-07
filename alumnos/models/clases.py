@@ -47,7 +47,6 @@ class Clase(models.Model):
     id_clase = models.AutoField(primary_key=True)
     asignatura = models.ForeignKey(Asignatura, on_delete=models.CASCADE)
     modalidad = models.CharField(max_length=10, choices=MODALIDADES)
-    horario = models.TimeField(null=True, blank=True)  # en desuso: la hora real es la de cada bloque de la agenda
     profesor = models.ForeignKey(Profesor, on_delete=models.CASCADE)
     en_vivo = models.BooleanField(default=False)
     descripcion_vivo = models.TextField(blank=True, null=True)

@@ -1,6 +1,5 @@
 """Perfil del profesor dentro del portal del alumno (solo el alumno lo ve: @alumno_required). Datos ficticios."""
 
-from datetime import time
 
 from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
@@ -33,7 +32,7 @@ class PerfilDelProfesorEnElPortalTests(TestCase):
         matematicas = Especialidad.objects.create(nombre='Matemáticas')
         cls.profe = crear_profesor(RUT_PROFE, 'profe@lbwus.cl', matematicas)
         clase = Clase.objects.create(asignatura=Asignatura.objects.create(nombre='Álgebra'),
-                                     modalidad='online', horario=time(10, 0), profesor=cls.profe)
+                                     modalidad='online', profesor=cls.profe)
         crear_sesion(clase, dias=3)
 
     def perfil(self):

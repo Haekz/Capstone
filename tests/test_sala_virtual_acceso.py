@@ -5,7 +5,6 @@ mostraba "Unirse a la Clase" y la vista dejaba entrar con cualquier inscripcion,
 incluso cancelada.
 """
 
-from datetime import time
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -30,7 +29,7 @@ class AccesoSalaVirtualTests(TestCase):
         cls.ana = crear_alumno(RUT_ANA, 'Ana', Genero.objects.create(descripcion='Otro'))
         profesor = crear_profesor('20000000-1', 'profe@lbwus.cl', None)
         cls.clase = Clase.objects.create(asignatura=Asignatura.objects.create(nombre='Álgebra'),
-                                         modalidad='online', horario=time(10, 0), profesor=profesor)
+                                         modalidad='online', profesor=profesor)
 
     def inscribir(self, estado=CONFIRMADA, sesion_estado=SesionClase.ESTADO_PROGRAMADA, dias=2):
         sesion = crear_sesion(self.clase, dias=dias, estado=sesion_estado)
@@ -97,9 +96,9 @@ class MatrizAccesoSalaTests(TestCase):
                                         titulo_estado=Profesor.TITULO_EN_REVISION)
         asignatura = Asignatura.objects.create(nombre='Álgebra')
         cls.clase = Clase.objects.create(asignatura=asignatura, modalidad='online',
-                                         horario=time(10, 0), profesor=cls.titular)
+                                         profesor=cls.titular)
         cls.clase_sin_titulo = Clase.objects.create(asignatura=asignatura, modalidad='online',
-                                                    horario=time(12, 0), profesor=cls.sin_titulo)
+                                                    profesor=cls.sin_titulo)
 
     def abrir(self, user, clase=None, **sesion_extra):
         self.client.force_login(user)

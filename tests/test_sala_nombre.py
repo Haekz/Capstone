@@ -1,6 +1,5 @@
 """La sala de Jitsi no se puede adivinar probando numeros de clase."""
 
-from datetime import time
 from types import SimpleNamespace
 
 from django.test import SimpleTestCase, override_settings
@@ -39,7 +38,7 @@ class SalaVirtualUsaElNombreSeguroTests(Escenario):
 
     def test_la_sala_carga_el_nombre_firmado_y_no_el_antiguo(self):
         clase = Clase.objects.create(asignatura=Asignatura.objects.create(nombre='Álgebra'), modalidad='online',
-                                     horario=time(10, 0), profesor=self.profe)
+                                     profesor=self.profe)
         self.entrar(RUT_PROFE)
         r = self.client.get(reverse('sala_virtual', args=[clase.id_clase]))
         self.assertContains(r, f"roomName: '{nombre_sala(clase.id_clase)}'")
@@ -47,7 +46,7 @@ class SalaVirtualUsaElNombreSeguroTests(Escenario):
 
     def test_el_profesor_ve_la_pantalla_de_espera_con_sus_tildes(self):
         clase = Clase.objects.create(asignatura=Asignatura.objects.create(nombre='Álgebra'), modalidad='online',
-                                     horario=time(10, 0), profesor=self.profe)
+                                     profesor=self.profe)
         self.entrar(RUT_PROFE)
         r = self.client.get(reverse('sala_virtual', args=[clase.id_clase]))
         for texto in ('Transmisión Inactiva', 'Completa la información abajo', 'Sobre esta transmisión', 'Resolución de integrales'):

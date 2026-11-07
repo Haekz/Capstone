@@ -5,7 +5,7 @@ al menos una SesionClase programada, futura y con cupo (SesionClase.disponibles)
 Solo se ofrecen clases de profesores con titulo aprobado.
 """
 
-from datetime import time, timedelta
+from datetime import timedelta
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -56,7 +56,7 @@ class EscenarioCatalogo(TestCase):
 
         def clase(profesor, modalidad):
             return Clase.objects.create(asignatura=asignatura, modalidad=modalidad,
-                                        horario=time(10, 0), profesor=profesor)
+                                        profesor=profesor)
 
         # Matematicas online: dos sesiones con cupo (debe salir una sola vez).
         cls.mat_online = clase(prof_mat, 'online')

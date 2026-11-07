@@ -53,7 +53,6 @@ class SeguridadBlindajeTests(TestCase):
             asignatura=cls.asignatura,
             profesor=cls.profesor,
             modalidad='online',
-            horario='10:00:00'
         )
 
         # Banco y Solicitud de Retiro de prueba

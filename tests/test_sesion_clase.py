@@ -3,7 +3,7 @@ Pruebas exhaustivas para el modelo SesionClase, constraints de base de datos,
 validaciones a nivel de modelo, QuerySets de disponibilidad, concurrencia y retrocompatibilidad.
 """
 
-from datetime import time, timedelta
+from datetime import timedelta
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
@@ -63,7 +63,6 @@ def crear_fixture_base():
     clase = Clase.objects.create(
         asignatura=asignatura,
         modalidad='online',
-        horario=time(10, 0),
         profesor=profesor
     )
 

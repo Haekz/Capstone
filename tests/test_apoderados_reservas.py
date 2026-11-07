@@ -6,7 +6,6 @@ en clases pagadas por su apoderado y cada cambio se avisa por correo a todos
 sus apoderados verificados.
 """
 
-from datetime import time as hora
 from unittest import mock
 
 from django.core import mail
@@ -33,7 +32,7 @@ class ReservasDelApoderadoTests(TestCase):
     def setUpTestData(cls):
         cls.profesor = crear_profesor('44444444-4', 'profe@demo.cl', None)
         cls.clase = Clase.objects.create(asignatura=Asignatura.objects.create(nombre='Álgebra'),
-                                         modalidad='online', horario=hora(10, 0), profesor=cls.profesor)
+                                         modalidad='online', profesor=cls.profesor)
         cls.sesion, cls.otra_sesion = crear_sesion(cls.clase, dias=2), crear_sesion(cls.clase, dias=3)
         cls.madre = crear_apoderado(RUT, Apoderado.VERIFICADO)
         cls.vinculo = crear_menor_vinculado(cls.madre)
