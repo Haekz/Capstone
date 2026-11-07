@@ -1,5 +1,5 @@
-"""Revision de titulos profesionales: es de soporte, solo el agente con el ticket
-ve el titulo (como imagen con marca de agua) y decide. El administrador no entra."""
+"""Revision de documentos de profesores (titulo y especializaciones): es de soporte, solo el agente con el
+ticket de ese tema ve el documento (como imagen con marca de agua) y decide. El administrador no entra."""
 
 from cryptography.fernet import InvalidToken
 from django.contrib import messages
@@ -10,11 +10,11 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
 from alumnos.decorators import soporte_required
-from alumnos.models import Profesor
+from alumnos.models import Especializacion, Profesor
 from apoderados import documentos
 from soporte.models import Ticket
 from soporte.permisos import agente_en_sesion, ticket_asignado, tickets_del_agente
-from user_profesor import titulo
+from user_profesor import especializaciones, titulo
 
 from .models import AccesoTitulo
 
@@ -27,6 +27,25 @@ def _profesor_con_ticket(request, pk):
     return profesor
 
 
+def _especializacion_con_ticket(request, pk):
+    """Solo con el ticket de especializaciones de su profesor: el del titulo no da acceso."""
+    especializacion = get_object_or_404(Especializacion.objects.select_related('profesor__user'), pk=pk)
+    if ticket_asignado(request, profesor=especializacion.profesor, categoria=Ticket.ESPECIALIZACIONES) is None:
+        raise Http404('Especialización no encontrada.')
+    return especializacion
+
+
+def _imagen(request, contenido):
+    """El documento como imagen con marca de agua de quien lo abre. El original no sale del servidor."""
+    try:
+        imagen = documentos.con_marca_de_agua(contenido, documentos.texto_de_revision(request.user))
+    except InvalidToken:  # cambio la clave de cifrado: hay que pedir el documento de nuevo
+        raise Http404('El documento ya no se puede leer.')
+    respuesta = HttpResponse(imagen, content_type='image/jpeg')
+    respuesta['Content-Disposition'] = 'inline'  # se ve en el navegador, sin descarga directa
+    return respuesta
+
+
 @never_cache
 @soporte_required
 def titulos_adm(request):
@@ -36,8 +55,13 @@ def titulos_adm(request):
         'agente': agente,
         'en_revision': profesores.filter(titulo_estado=Profesor.TITULO_EN_REVISION,
                                          tickets__in=tickets_del_agente(request).filter(categoria=Ticket.TITULOS)),
+        'especializaciones': Especializacion.objects.filter(
+            estado=Especializacion.EN_REVISION,
+            profesor__tickets__in=tickets_del_agente(request).filter(categoria=Ticket.ESPECIALIZACIONES),
+        ).select_related('profesor__user').prefetch_related('propuestas').defer('contenido').order_by('subida'),
         'otros': profesores.exclude(titulo_estado=Profesor.TITULO_EN_REVISION) if agente.es_lider else None,
-        'accesos': AccesoTitulo.objects.select_related('agente', 'profesor__user')[:50] if agente.es_lider else None,
+        'accesos': (AccesoTitulo.objects.select_related('agente', 'profesor__user', 'especializacion')[:50]
+                    if agente.es_lider else None),
     })
 
 
@@ -49,13 +73,19 @@ def ver_titulo(request, pk):
     if not profesor.titulo_contenido:
         raise Http404('Sin título')
     AccesoTitulo.objects.create(agente=request.user, profesor=profesor)
-    try:
-        imagen = documentos.con_marca_de_agua(profesor.titulo_contenido, documentos.texto_de_revision(request.user))
-    except InvalidToken:  # cambio la clave de cifrado: hay que pedir el titulo de nuevo
-        raise Http404('El título ya no se puede leer.')
-    respuesta = HttpResponse(imagen, content_type='image/jpeg')
-    respuesta['Content-Disposition'] = 'inline'  # se ve en el navegador, sin descarga directa
-    return respuesta
+    return _imagen(request, profesor.titulo_contenido)
+
+
+@never_cache
+@soporte_required
+def ver_especializacion(request, pk):
+    """El certificado con marca de agua, solo para el agente con el ticket de especializaciones."""
+    especializacion = _especializacion_con_ticket(request, pk)
+    if not especializacion.contenido:
+        raise Http404('Sin documento')
+    AccesoTitulo.objects.create(agente=request.user, profesor=especializacion.profesor,
+                                especializacion=especializacion)
+    return _imagen(request, especializacion.contenido)
 
 
 @require_POST
@@ -70,4 +100,20 @@ def resolver_titulo(request, pk):
     else:
         estado = 'aprobado' if aprobar else 'rechazado'
         messages.success(request, f'Título de {profesor.nombre} {estado}.')
+    return redirect('titulos_adm')
+
+
+@require_POST
+@soporte_required
+def resolver_especializacion(request, pk):
+    especializacion = _especializacion_con_ticket(request, pk)
+    aprobar = request.POST.get('decision') == 'aprobar'
+    try:
+        especializaciones.resolver(especializacion, aprobar, request.POST.get('observacion', ''))
+    except ValidationError as e:
+        messages.error(request, e.messages[0])
+    else:
+        estado = 'aprobada' if aprobar else 'rechazada'
+        nombre, profesor = especializacion.nombre, especializacion.profesor.nombre
+        messages.success(request, f'Especialización «{nombre}» de {profesor} {estado}.')
     return redirect('titulos_adm')

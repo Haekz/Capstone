@@ -29,6 +29,10 @@ class AccesoTitulo(models.Model):
     """
     agente = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='+')
     profesor = models.ForeignKey(Profesor, on_delete=models.CASCADE, related_name='accesos_al_titulo')
+    # Vacio: abrio el titulo. Con valor: abrio ese certificado de especializacion (fase 2, 06-nov).
+    # CASCADE como el vinculo de AccesoDocumento: si se borra (supresion), no puede quedar como "titulo".
+    especializacion = models.ForeignKey('alumnos.Especializacion', on_delete=models.CASCADE, null=True,
+                                        blank=True, related_name='+')
     fecha = models.DateTimeField(auto_now_add=True)
 
     class Meta:

@@ -1,16 +1,18 @@
-"""Especializaciones del profesor: subirlas y mostrarlas en su panel (fase 2, 06-nov).
+"""Especializaciones del profesor: subirlas, mostrarlas en su panel y decidirlas (fase 2, 06-nov).
 
 Cada una es un certificado que soporte revisa por separado. Todas las pendientes del profesor van en
 un mismo ticket de especializaciones, aparte del ticket del titulo. Maximo 5 en revision a la vez.
+Al decidir, el documento se borra (como el titulo) y, si no queda ninguna pendiente, se cierra el ticket.
 """
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.utils import timezone
 
 from alumnos.models import Asignatura, Especializacion, Profesor
 from apoderados import documentos
 from soporte.models import Ticket
-from soporte.tickets import abrir_ticket
+from soporte.tickets import abrir_ticket, cerrar_tickets
 
 MAXIMO = Especializacion.MAX_EN_REVISION
 LARGO_NOMBRE = Especializacion._meta.get_field('nombre').max_length
@@ -46,6 +48,26 @@ def subir(profesor, nombre, archivo, ids_asignaturas):
         especializacion.propuestas.set(asignaturas)
         abrir_ticket(Ticket.ESPECIALIZACIONES, profesor=profesor)
     return especializacion
+
+
+def resolver(especializacion, aprobar, observacion=''):
+    """Decision de soporte sobre una especializacion en revision. El documento se borra (como el titulo)."""
+    observacion = (observacion or '').strip()
+    if not aprobar and not observacion:
+        raise ValidationError('Indica el motivo del rechazo.')
+    with transaction.atomic():
+        Profesor.objects.select_for_update().filter(pk=especializacion.profesor_id).first()  # ver el cierre abajo
+        decididas = Especializacion.objects.filter(pk=especializacion.pk, estado=Especializacion.EN_REVISION).update(
+            estado=Especializacion.APROBADA if aprobar else Especializacion.RECHAZADA,
+            observacion='' if aprobar else observacion[:200], revisada=timezone.now(), contenido=None, formato='')
+        if not decididas:  # ya la decidio otro agente
+            raise ValidationError('Esa especialización no está pendiente de revisión.')
+        pendientes = Especializacion.objects.filter(profesor_id=especializacion.profesor_id,
+                                                    estado=Especializacion.EN_REVISION)
+        if not pendientes.exists():  # con el profesor bloqueado: dos decisiones a la vez no dejan el ticket abierto
+            cerrar_tickets(Ticket.objects.filter(profesor_id=especializacion.profesor_id,
+                                                 categoria=Ticket.ESPECIALIZACIONES))
+    especializacion.refresh_from_db()
 
 
 def contexto_panel(profesor):

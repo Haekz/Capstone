@@ -6,7 +6,7 @@ from .views import (
     aprobar_retiro, rechazar_retiro, marcar_pagado_retiro
 )
 from .escalados import casos_escalados, indicar_escalado
-from .titulos import titulos_adm, ver_titulo, resolver_titulo
+from .titulos import titulos_adm, ver_titulo, resolver_titulo, ver_especializacion, resolver_especializacion
 
 urlpatterns = [
     # esta parte es de las rutas del portal del administrador
@@ -30,6 +30,8 @@ urlpatterns = [
     path('titulos/', titulos_adm, name='titulos_adm'),
     path('titulos/<int:pk>/archivo/', ver_titulo, name='ver_titulo'),
     path('titulos/<int:pk>/resolver/', resolver_titulo, name='resolver_titulo'),
+    path('especializaciones/<int:pk>/archivo/', ver_especializacion, name='ver_especializacion'),
+    path('especializaciones/<int:pk>/resolver/', resolver_especializacion, name='resolver_especializacion'),
 
     # esta parte es de las rutas CRUD de alumnos
     path('crud/', crud, name='crud'),
