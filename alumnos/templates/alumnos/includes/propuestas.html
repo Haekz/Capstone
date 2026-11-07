@@ -1,0 +1,1 @@
+{# Lo que propone el profesor en la especializacion e: las del catalogo y, si escribio una, la que no esta (fase 4). #}{% with del_catalogo=e.propuestas.all %}{{ del_catalogo|join:", " }}{% if e.otra_asignatura %}{% if del_catalogo %}, {% endif %}{{ e.otra_asignatura }} <em>(no está en el catálogo)</em>{% endif %}{% endwith %}

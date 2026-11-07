@@ -9,6 +9,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
+from alumnos import catalogo
 from alumnos.models import Asignatura, Especializacion, Profesor
 from apoderados import documentos
 from soporte.models import Ticket
@@ -20,14 +21,30 @@ MAXIMO = Especializacion.MAX_EN_REVISION
 LARGO_NOMBRE = Especializacion._meta.get_field('nombre').max_length
 
 
-def subir(profesor, nombre, archivo, ids_asignaturas):
-    """Guarda la especializacion cifrada, en revision, y la suma al ticket. Lanza ValidationError."""
+def _otra(nombre):
+    """La asignatura que propone fuera del catalogo, limpia ('' si no propone ninguna). Si ya esta, que la marque."""
+    if not (nombre or '').strip():
+        return ''
+    nombre = catalogo.limpio(nombre)
+    if catalogo.buscar(nombre):
+        raise ValidationError(f'«{nombre}» ya está en la lista: márcala ahí.')
+    return nombre
+
+
+def subir(profesor, nombre, archivo, ids_asignaturas, otra=''):
+    """Guarda la especializacion cifrada, en revision, y la suma al ticket. Lanza ValidationError.
+
+    Propone al menos una asignatura: del catalogo o, si falta, otra que el admin podra crear (fase 4).
+    """
     nombre = (nombre or '').strip()
     if not nombre:
         raise ValidationError('Indica el nombre de la especialización.')
     if len(nombre) > LARGO_NOMBRE:
         raise ValidationError(f'El nombre puede tener hasta {LARGO_NOMBRE} caracteres.')
-    asignaturas = del_catalogo(ids_asignaturas, obligatoria=True)
+    otra = _otra(otra)
+    if not ids_asignaturas and not otra:
+        raise ValidationError('Elige al menos una asignatura de la lista o escribe otra.')
+    asignaturas = del_catalogo(ids_asignaturas, obligatoria=False)
     if archivo is None:
         raise ValidationError('Selecciona el archivo del certificado.')
     contenido, formato = documentos.preparar(archivo)
@@ -36,7 +53,7 @@ def subir(profesor, nombre, archivo, ids_asignaturas):
         if profesor.especializaciones.filter(estado=Especializacion.EN_REVISION).count() >= MAXIMO:
             raise ValidationError(f'Ya tienes {MAXIMO} especializaciones en revisión. '
                                   'Cuando soporte las revise podrás subir más.')
-        especializacion = Especializacion.objects.create(profesor=profesor, nombre=nombre,
+        especializacion = Especializacion.objects.create(profesor=profesor, nombre=nombre, otra_asignatura=otra,
                                                          contenido=contenido, formato=formato)
         especializacion.propuestas.set(asignaturas)
         abrir_ticket(Ticket.ESPECIALIZACIONES, profesor=profesor)
@@ -80,4 +97,5 @@ def contexto_panel(profesor):
         'puede_subir_especializacion': en_revision < MAXIMO,
         'max_especializaciones': MAXIMO,
         'largo_nombre_especializacion': LARGO_NOMBRE,
+        'largo_asignatura': catalogo.LARGO,
     }

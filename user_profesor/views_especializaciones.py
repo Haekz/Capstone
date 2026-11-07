@@ -17,7 +17,7 @@ def subir_especializacion(request):
     profesor = get_object_or_404(Profesor, id_profesor=request.session['profesor_id'])
     try:
         especializaciones.subir(profesor, request.POST.get('nombre'), request.FILES.get('archivo'),
-                                request.POST.getlist('asignaturas'))
+                                request.POST.getlist('asignaturas'), request.POST.get('otra_asignatura'))
     except ValidationError as e:
         return JsonResponse({'success': False, 'message': e.messages[0]})
     return JsonResponse({

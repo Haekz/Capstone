@@ -111,7 +111,8 @@ class PanelEspecializacionesTests(TestCase):
 
     def test_un_error_vuelve_como_mensaje(self):
         respuesta = self.enviar(asignaturas=[]).json()
-        self.assertEqual(respuesta, {'success': False, 'message': 'Elige al menos una asignatura de la lista.'})
+        self.assertEqual(respuesta, {'success': False,
+                                     'message': 'Elige al menos una asignatura de la lista o escribe otra.'})
 
     def test_solo_por_post_y_solo_el_profesor(self):
         self.assertEqual(self.client.get(reverse('subir_especializacion')).status_code, 405)

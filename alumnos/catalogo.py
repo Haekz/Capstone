@@ -13,14 +13,25 @@ LARGO = Asignatura._meta.get_field('nombre').max_length
 Propuesta = Especializacion.propuestas.through  # propuestas tiene related_name='+': se consulta por aqui
 
 
-def _nombre_valido(nombre, salvo=None):
-    """El nombre limpio (sin espacios de mas). Lanza ValidationError si esta vacio, es largo o ya existe."""
+def limpio(nombre):
+    """El nombre sin espacios de mas. Lanza ValidationError si esta vacio o es largo."""
     nombre = ' '.join((nombre or '').split())
     if not nombre:
         raise ValidationError('Escribe el nombre de la asignatura.')
     if len(nombre) > LARGO:
         raise ValidationError(f'El nombre puede tener hasta {LARGO} caracteres.')
-    if Asignatura.objects.filter(nombre__iexact=nombre).exclude(pk=getattr(salvo, 'pk', None)).exists():
+    return nombre
+
+
+def buscar(nombre, salvo=None):
+    """La asignatura con ese nombre sin distinguir mayusculas, o None."""
+    return Asignatura.objects.filter(nombre__iexact=nombre).exclude(pk=getattr(salvo, 'pk', None)).first()
+
+
+def _nombre_valido(nombre, salvo=None):
+    """El nombre limpio. Lanza ValidationError si esta vacio, es largo o ya existe."""
+    nombre = limpio(nombre)
+    if buscar(nombre, salvo):
         raise ValidationError(f'Ya existe la asignatura «{nombre}».')
     return nombre
 

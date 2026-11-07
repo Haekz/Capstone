@@ -9,7 +9,7 @@
         <li>
             <strong>{{ e.nombre }}</strong>
             <span class="prof-badge">{{ e.get_estado_display }}</span>
-            <span>Propones: {{ e.propuestas.all|join:", " }}</span>
+            <span>Propones: {% include 'alumnos/includes/propuestas.html' %}</span>
             {% if e.estado == 'rechazada' %}<span>Motivo: <strong>{{ e.observacion|default:"sin observación" }}</strong></span>{% endif %}
         </li>
         {% endfor %}
@@ -24,10 +24,12 @@
             <input type="text" id="espec-nombre" name="nombre" class="prof-form-input" maxlength="{{ largo_nombre_especializacion }}" placeholder="Ej.: Diplomado en Geometría, Universidad de Chile" required>
         </div>
         <fieldset class="espec-asignaturas">
-            <legend class="titulo-label">¿Qué asignaturas podrías dictar con esta especialización? Elige al menos una.</legend>
+            <legend class="titulo-label">¿Qué asignaturas podrías dictar con esta especialización? Elige al menos una o escribe otra.</legend>
             {% for a in asignaturas_catalogo %}
             <label><input type="checkbox" name="asignaturas" value="{{ a.pk }}"> {{ a.nombre }}</label>
             {% endfor %}
+            <label for="espec-otra" class="prof-form-label">¿No está en la lista? Escríbela (opcional)</label>
+            <input type="text" id="espec-otra" name="otra_asignatura" class="prof-form-input" maxlength="{{ largo_asignatura }}" placeholder="Ej.: Física">
         </fieldset>
         <label for="espec-archivo" class="titulo-label">Archivo del certificado (JPG, PNG o PDF de hasta 3 páginas, máx. 5 MB). Se guarda cifrado y se borra cuando soporte lo revisa.</label>
         <input type="file" id="espec-archivo" name="archivo" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" required>
