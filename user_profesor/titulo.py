@@ -14,6 +14,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from agenda import bloques
+from alumnos import avisos_profesor
 from alumnos.models import Profesor
 from apoderados import documentos
 from soporte.models import Ticket
@@ -77,6 +78,7 @@ def resolver(profesor, aprobar, observacion='', ids_asignaturas=()):
             # Clases que ya tenia (una especializacion aprobada antes que el titulo) no tenian bloques: sin titulo
             # aprobado la agenda no los genera. Con nuevas, asignar() ya los genero.
             bloques.generar(profesor)
+        avisos_profesor.titulo(profesor, aprobar, nuevas)  # sale solo si la decision se confirma
         return nuevas
 
 

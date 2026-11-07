@@ -9,7 +9,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
-from alumnos import catalogo
+from alumnos import avisos_profesor, catalogo
 from alumnos.models import Asignatura, Especializacion, Profesor
 from apoderados import documentos
 from soporte.models import Ticket
@@ -78,6 +78,7 @@ def resolver(especializacion, aprobar, observacion='', ids_asignaturas=()):
         if not decididas:  # ya la decidio otro agente
             raise ValidationError('Esa especialización no está pendiente de revisión.')
         nuevas = asignar(especializacion.profesor, elegidas)  # con el profesor bloqueado: no se duplican
+        avisos_profesor.especializacion(especializacion, aprobar, nuevas)  # sale solo si se confirma
         pendientes = Especializacion.objects.filter(profesor_id=especializacion.profesor_id,
                                                     estado=Especializacion.EN_REVISION)
         if not pendientes.exists():  # con el profesor bloqueado: dos decisiones a la vez no dejan el ticket abierto
