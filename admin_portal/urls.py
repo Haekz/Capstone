@@ -5,6 +5,7 @@ from .views import (
     dashboard_admin, logout_admin,
     aprobar_retiro, rechazar_retiro, marcar_pagado_retiro
 )
+from .asignaturas import asignaturas_adm, crear_asignatura, eliminar_asignatura, renombrar_asignatura
 from .escalados import casos_escalados, indicar_escalado
 from .titulos import titulos_adm, ver_titulo, resolver_titulo, ver_especializacion, resolver_especializacion
 
@@ -23,6 +24,10 @@ urlpatterns = [
 
     # Casos graves que escala el lider de soporte (D5, revisada 05-nov)
     path('casos-escalados/', casos_escalados, name='casos_escalados'),
+    path('asignaturas/', asignaturas_adm, name='asignaturas_adm'),
+    path('asignaturas/crear/', crear_asignatura, name='crear_asignatura'),
+    path('asignaturas/<int:pk>/renombrar/', renombrar_asignatura, name='renombrar_asignatura'),
+    path('asignaturas/<int:pk>/eliminar/', eliminar_asignatura, name='eliminar_asignatura'),
     path('casos-escalados/<int:pk>/indicar/', indicar_escalado, name='indicar_escalado'),
 
     # Titulos profesionales de profesores

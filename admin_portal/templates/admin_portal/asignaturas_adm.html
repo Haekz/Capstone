@@ -1,0 +1,68 @@
+{% extends 'admin_portal/base_admin.html' %}
+
+{% block title %}Asignaturas - Admin LBWUS{% endblock %}
+{% block page_title %}Asignaturas{% endblock %}
+{% block page_subtitle %}El catálogo que soporte asigna a los profesores al aprobar sus títulos y especializaciones.{% endblock %}
+{% block nav_asignaturas %}active{% endblock %}
+
+{% block content %}
+{% if messages %}
+<div class="panel" role="status" style="margin-bottom:20px; padding:14px 18px;">
+    {% for m in messages %}<div>{{ m }}</div>{% endfor %}
+</div>
+{% endif %}
+
+<div class="panel">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-plus-circle" aria-hidden="true"></i> Nueva asignatura</span>
+    </div>
+    <form method="post" action="{% url 'crear_asignatura' %}" style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:18px;">
+        {% csrf_token %}
+        <label for="nueva-asignatura" style="font-weight:600;">Nombre</label>
+        <input type="text" id="nueva-asignatura" name="nombre" maxlength="{{ largo_maximo }}" required placeholder="Ej. Física"
+            style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--bg-card); color:var(--text-primary);">
+        <button type="submit" class="btn-primary"><i class="bi bi-plus-lg" aria-hidden="true"></i> Crear</button>
+    </form>
+</div>
+
+<div class="panel" style="margin-top:28px;">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-journal-bookmark-fill" aria-hidden="true"></i> Catálogo ({{ asignaturas|length }})</span>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="user-table">
+            <thead>
+                <tr><th>Nombre</th><th>Clases</th><th>Eliminar</th></tr>
+            </thead>
+            <tbody>
+                {% for a, usada in asignaturas %}
+                <tr>
+                    <td>
+                        <form method="post" action="{% url 'renombrar_asignatura' a.pk %}" style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+                            {% csrf_token %}
+                            <input type="text" name="nombre" value="{{ a.nombre }}" maxlength="{{ largo_maximo }}" required
+                                aria-label="Nuevo nombre de {{ a.nombre }}"
+                                style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--bg-card); color:var(--text-primary);">
+                            <button type="submit" class="btn-secondary">Renombrar</button>
+                        </form>
+                    </td>
+                    <td>{{ a.clases }}</td>
+                    <td>
+                        {% if usada %}
+                        <small>En uso (clases o especializaciones)</small>
+                        {% else %}
+                        <form method="post" action="{% url 'eliminar_asignatura' a.pk %}" onsubmit="return confirm('¿Eliminar «{{ a.nombre|escapejs }}»?')">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-secondary" aria-label="Eliminar {{ a.nombre }}"><i class="bi bi-trash" aria-hidden="true"></i> Eliminar</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3">Todavía no hay asignaturas. Crea la primera arriba.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
