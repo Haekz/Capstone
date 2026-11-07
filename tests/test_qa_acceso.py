@@ -52,7 +52,7 @@ COMUNES = {
 PROPIAS = {
     'alumno': {'alumno_pag1', 'mis_tickets', 'nuevo_ticket', 'eliminar_cuenta'},
     'profesor': {'panel_profesor', 'resenas_profesor', 'mis_tickets', 'nuevo_ticket', 'eliminar_cuenta'},
-    'admin': {'dashboard_admin', 'planes_adm', 'nosotros_adm', 'contactos_adm', 'crud', 'alumnos_Add',
+    'admin': {'dashboard_admin', 'planes_adm', 'nosotros_adm', 'casos_escalados', 'crud', 'alumnos_Add',
               'regis_tutor', 'resenas_moderacion'},
     'soporte': {'titulos_adm', 'apoderados_revision', 'panel_soporte', 'mensajes_revision', 'requerimientos',
                 'requerimiento_nuevo'},
@@ -72,8 +72,7 @@ CON_BUG_O_503 = {'alumnos_findEdit', 'alumnos_del', 'comunidad_salud'}
 # Lo que responden al anonimo los endpoints JSON privados (decoradores *_json y las vistas que lo validan a mano).
 RECHAZOS_DE_SESION = {
     'Sesión inválida.',
-    'Debes iniciar sesión como alumno para inscribirte.',
-    'Debes iniciar sesión como alumno para reservar una sesión.',
+    'Debes iniciar sesión como alumno.',
     'No tienes permiso para crear administradores.',
 }
 
