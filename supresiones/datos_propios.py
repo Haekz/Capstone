@@ -11,7 +11,7 @@ cosas que dependen del rol:
     * apoderado: compras pagadas o un vinculo que llego a estar verificado (quien tuvo autoridad sobre un menor).
 - ``limpiar``: los datos propios que se quitan siempre, se borre la cuenta o se seudonimice (la cascada no borra los
   archivos del disco ni los correos que otras filas copiaron): foto, y por rol observaciones recibidas, titulo,
-  cuenta bancaria, carnet.
+  especializaciones, cuenta bancaria, carnet.
 
 Para todos los roles: las filas de allauth (correo y datos de Google) se borran; sin eso el correo seguiria guardado.
 """
@@ -22,7 +22,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from agenda.models import HorarioSemanal
-from alumnos.models import CuentaBancaria, Inscripcion, PaqueteClases, Profesor, SesionClase
+from alumnos.models import CuentaBancaria, Especializacion, Inscripcion, PaqueteClases, Profesor, SesionClase
 from apoderados.models import Documento, Invitacion, SolicitudAdolescente, Vinculo
 from observaciones.models import Observacion
 
@@ -63,13 +63,15 @@ def _limpiar_alumno(alumno):
 
 
 def _limpiar_profesor(profesor):
-    """Sin titulo, cuenta bancaria ni horario, y fuera del catalogo: sin titulo aprobado no se hacen clases."""
+    """Sin titulo, especializaciones, cuenta bancaria ni horario, y fuera del catalogo: sin titulo aprobado no se
+    hacen clases."""
     if profesor.titulo_archivo:
         profesor.titulo_archivo.delete(save=False)  # el archivo del titulo, no solo la referencia
     profesor.titulo_contenido, profesor.titulo_formato, profesor.titulo_observacion = None, '', ''
     profesor.titulo_estado, profesor.titulo_actualizado = Profesor.TITULO_PENDIENTE, None
     profesor.save()
     CuentaBancaria.objects.filter(profesor=profesor).delete()
+    Especializacion.objects.filter(profesor=profesor).delete()  # sus certificados cifrados
     HorarioSemanal.objects.filter(profesor=profesor).delete()
     SesionClase.objects.filter(clase__profesor=profesor, estado='programada', fecha_hora_inicio__gt=timezone.now()
                                ).update(estado='cancelada')  # sin clases reservadas (lo exige la evaluacion)

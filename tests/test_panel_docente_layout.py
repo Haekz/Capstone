@@ -35,6 +35,7 @@ PLANTILLAS_PANEL = [
     'user_profesor/templates/user_profesor/clases_en_vivo.html',
     'user_profesor/templates/user_profesor/videos.html',
     'user_profesor/templates/user_profesor/titulo_aviso.html',
+    'user_profesor/templates/user_profesor/especializaciones.html',
     'agenda/templates/agenda/panel_agenda.html',
     'mensajes/templates/mensajes/buzon_profesor.html',
 ]

@@ -1,0 +1,39 @@
+{# Mis especializaciones (fase 2): el profesor sube certificados y propone asignaturas; soporte decide cada uno. #}
+<div class="prof-card espec" role="region" aria-labelledby="espec-h">
+    <h2 id="espec-h" class="prof-card-title">Mis especializaciones</h2>
+    <p class="prof-card-subtitle">Diplomados, postítulos, magíster o cursos certificados. Nuestro equipo de soporte revisa cada uno y, según lo que acredites, te asigna las asignaturas que podrás dictar.</p>
+
+    {% if especializaciones %}
+    <ul class="espec-lista">
+        {% for e in especializaciones %}
+        <li>
+            <strong>{{ e.nombre }}</strong>
+            <span class="prof-badge">{{ e.get_estado_display }}</span>
+            <span>Propones: {{ e.propuestas.all|join:", " }}</span>
+            {% if e.estado == 'rechazada' %}<span>Motivo: <strong>{{ e.observacion|default:"sin observación" }}</strong></span>{% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if puede_subir_especializacion %}
+    <form id="form-especializacion" action="{% url 'subir_especializacion' %}" method="POST" enctype="multipart/form-data" class="titulo-form espec-form" data-envio-documento>
+        {% csrf_token %}
+        <div class="prof-form-group">
+            <label for="espec-nombre" class="prof-form-label">Nombre del certificado y la institución</label>
+            <input type="text" id="espec-nombre" name="nombre" class="prof-form-input" maxlength="{{ largo_nombre_especializacion }}" placeholder="Ej.: Diplomado en Geometría, Universidad de Chile" required>
+        </div>
+        <fieldset class="espec-asignaturas">
+            <legend class="titulo-label">¿Qué asignaturas podrías dictar con esta especialización? Elige al menos una.</legend>
+            {% for a in asignaturas_catalogo %}
+            <label><input type="checkbox" name="asignaturas" value="{{ a.pk }}"> {{ a.nombre }}</label>
+            {% endfor %}
+        </fieldset>
+        <label for="espec-archivo" class="titulo-label">Archivo del certificado (JPG, PNG o PDF de hasta 3 páginas, máx. 5 MB). Se guarda cifrado y se borra cuando soporte lo revisa.</label>
+        <input type="file" id="espec-archivo" name="archivo" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" required>
+        <button type="submit" class="prof-form-btn">Enviar especialización</button>
+    </form>
+    {% else %}
+    <p>Tienes {{ max_especializaciones }} especializaciones en revisión. Cuando soporte las revise podrás subir más.</p>
+    {% endif %}
+</div>

@@ -7,6 +7,7 @@ from .clases import (
     SesionClaseQuerySet,
 )
 from .pagos import PaqueteClases, PaqueteClasesQuerySet, Suscripcion, SuscripcionQuerySet
+from .especializaciones import Especializacion
 from .reportes import Reporte
 from .retiros import TIPOS_CUENTA, Banco, CuentaBancaria, SolicitudRetiro
 
@@ -15,6 +16,7 @@ __all__ = [
     'Asignatura', 'Clase', 'ClaseQuerySet', 'Inscripcion', 'InscripcionQuerySet', 'SesionClase',
     'SesionClaseManager', 'SesionClaseQuerySet',
     'PaqueteClases', 'PaqueteClasesQuerySet', 'Suscripcion', 'SuscripcionQuerySet',
+    'Especializacion',
     'Reporte',
     'TIPOS_CUENTA', 'Banco', 'CuentaBancaria', 'SolicitudRetiro',
 ]

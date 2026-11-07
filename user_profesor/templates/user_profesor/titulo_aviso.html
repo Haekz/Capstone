@@ -17,7 +17,7 @@
             Antes de hacer clases necesitamos validar tu título. Hasta entonces no aparecerás para los alumnos.
             {% endif %}
         </p>
-        <form id="form-titulo" action="{% url 'subir_titulo' %}" method="POST" enctype="multipart/form-data" class="titulo-form">
+        <form id="form-titulo" action="{% url 'subir_titulo' %}" method="POST" enctype="multipart/form-data" class="titulo-form" data-envio-documento>
             {% csrf_token %}
             <label for="titulo-archivo" class="titulo-label">Archivo del título (JPG, PNG o PDF de hasta 3 páginas, máx. 5 MB). Se guarda cifrado y se borra cuando soporte lo revisa.</label>
             <input type="file" id="titulo-archivo" name="titulo" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" required>
@@ -26,39 +26,4 @@
         {% endif %}
     </div>
 </div>
-
-<script>
-    (function () {
-        const form = document.getElementById('form-titulo');
-        if (!form) return;
-
-        // Si el CDN de SweetAlert no carga, el profesor igual debe enterarse.
-        function avisar(titulo, texto, icono) {
-            if (window.Swal) {
-                return Swal.fire({ title: titulo, text: texto, icon: icono, confirmButtonColor: '#7c3aed' });
-            }
-            alert(titulo + '\n\n' + texto);
-            return Promise.resolve();
-        }
-
-        form.addEventListener('submit', function (e) {
-            e.preventDefault();
-            const boton = form.querySelector('button');
-            boton.disabled = true;
-            fetch(form.action, {
-                method: 'POST',
-                body: new FormData(form),
-                headers: { 'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value }
-            })
-            .then(r => r.json())
-            .then(data => avisar(
-                data.success ? '¡Recibido!' : 'Revisa el archivo',
-                data.message,
-                data.success ? 'success' : 'warning'
-            ).then(() => { if (data.success) window.location.reload(); }))
-            .catch(() => avisar('Error', 'No pudimos subir el archivo.', 'error'))
-            .finally(() => { boton.disabled = false; });
-        });
-    })();
-</script>
 {% endif %}

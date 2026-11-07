@@ -129,7 +129,8 @@ def _profesor(user, ticket):
     if en_tramite:
         bloqueos.append(f'Tiene {en_tramite} retiro(s) de dinero en trámite: hay que terminarlos antes.')
     propias = [DATOS_CUENTA,
-               Categoria('Título profesional', ELIMINA, 'El documento del título y las observaciones de su revisión.'),
+               Categoria('Título profesional y especializaciones', ELIMINA,
+                         'Los documentos de tu título y tus especializaciones, y las observaciones de su revisión.'),
                Categoria('Cuenta bancaria y horario', ELIMINA,
                          'La cuenta donde se te paga y tu horario. Dejas de aparecer en el catálogo y se cancelan '
                          'las clases programadas que no tengan reservas.')]

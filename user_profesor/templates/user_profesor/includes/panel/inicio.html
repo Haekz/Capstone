@@ -1,4 +1,5 @@
 {# Inicio del panel: metricas, agenda del dia y grafico de solicitudes. #}
+{% load static %}
         <!-- esta parte es de la sección de inicio, la pantalla principal cuando entras al panel -->
         <section id="sec-inicio" class="prof-section active">
             <div class="prof-section-header">
@@ -7,6 +8,8 @@
             </div>
 
             {% include 'user_profesor/titulo_aviso.html' %}
+            {% include 'user_profesor/especializaciones.html' %}
+            <script src="{% static 'user_profesor/envio_documento.js' %}" defer></script>
 
             <!-- esta parte es de las tarjetas de métricas arriba del inicio, muestran el dinero del día y clases disponibles -->
             <div class="prof-metrics-grid">

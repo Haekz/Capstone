@@ -14,7 +14,7 @@ from alumnos.utils import formato_clp, validar_rut_chileno, usuario_existe
 from django.core.exceptions import ValidationError
 from django.http import FileResponse, Http404
 from django.views.decorators.http import require_POST
-from . import cambio_cuenta, foto
+from . import cambio_cuenta, especializaciones, foto
 from .saldos import calcular_saldos  # noqa: F401  (metricas, supresiones y pruebas lo importan desde aqui)
 from alumnos import avisos_profesor, catalogos, liquidacion, paquetes
 from agenda import panel as agenda_panel
@@ -242,6 +242,7 @@ def panel_profesor(request):
         **agenda_panel.contexto(profesor),  # seccion Mi Agenda (agenda/panel.py)
         **observaciones_panel.contexto_profesor(profesor),  # sus clases realizadas, en la misma seccion
         **mensajes_panel.contexto_profesor(profesor, request.GET.get('c')),  # Buzon (mensajes/panel.py)
+        **especializaciones.contexto_panel(profesor),  # Mis especializaciones, en Inicio
     }
     return render(request, 'user_profesor/panel_profesor.html', context)
 

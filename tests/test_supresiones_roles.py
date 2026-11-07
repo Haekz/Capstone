@@ -14,7 +14,8 @@ from django.utils import timezone
 
 from agenda.models import HorarioSemanal
 from alumnos import catalogos
-from alumnos.models import Alumno, Clase, CuentaBancaria, CustomUser, Inscripcion, Profesor, SolicitudRetiro
+from alumnos.models import (Alumno, Clase, CuentaBancaria, CustomUser, Especializacion, Inscripcion, Profesor,
+                            SolicitudRetiro)
 from apoderados.models import Apoderado, CompraApoderado, Documento, Invitacion, SolicitudAdolescente, Vinculo
 from soporte.models import Ticket
 from supresiones import evaluacion, registro, solicitud
@@ -32,10 +33,11 @@ def nombres(ev):
 
 
 def con_datos_propios(profesor):
-    """El profesor tal como esta en produccion: titulo, cuenta bancaria y horario cargados."""
+    """El profesor tal como esta en produccion: titulo, especializacion, cuenta bancaria y horario cargados."""
     Profesor.objects.filter(pk=profesor.pk).update(
         titulo_contenido=b'cifrado', titulo_formato='PDF', titulo_observacion='Falta firma',
         titulo_estado=Profesor.TITULO_APROBADO)
+    Especializacion.objects.create(profesor=profesor, nombre='Diplomado', contenido=b'cifrado', formato='PDF')
     cuenta = CuentaBancaria(profesor=profesor, banco=list(catalogos.BANCOS)[0], tipo_cuenta='rut_vista')
     cuenta.asignar_numero('123456789')
     cuenta.save()
@@ -47,7 +49,8 @@ class EvaluacionDelProfesorTests(Escenario):
     def test_sin_pendientes_se_puede_y_dice_que_se_quita(self):
         ev = evaluacion.evaluar(self.otro.user)
         self.assertTrue(ev.puede)
-        self.assertEqual(nombres(ev), ['Datos de la cuenta', 'Título profesional', 'Cuenta bancaria y horario'])
+        self.assertEqual(nombres(ev), ['Datos de la cuenta', 'Título profesional y especializaciones',
+                                       'Cuenta bancaria y horario'])
         self.assertFalse(ev.conserva_algo)
 
     def test_una_clase_por_dictar_impide(self):
@@ -119,6 +122,7 @@ class EliminarProfesorTests(Escenario):
         self.assertEqual((profesor.titulo_contenido, profesor.titulo_formato, profesor.titulo_observacion), (None, '', ''))
         self.assertEqual(profesor.titulo_estado, Profesor.TITULO_PENDIENTE)
         self.assertFalse(CuentaBancaria.objects.filter(profesor=profesor).exists())
+        self.assertFalse(Especializacion.objects.filter(profesor=profesor).exists())  # sus certificados cifrados
         self.assertFalse(HorarioSemanal.objects.filter(profesor=profesor).exists())
         self.assertNotIn(profesor, Profesor.objects.habilitados())
         self.assertNotIn(self.clase, Clase.objects.habilitadas())
