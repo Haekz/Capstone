@@ -247,7 +247,10 @@ class AuditoriaSeguridadYArquitecturaTests(TestCase):
         self.assertEqual(despues_adm, antes_adm, "dashboard_admin crece con los datos (N+1)")
         self.assertEqual(despues_prof, antes_prof, "panel_profesor crece con los datos (N+1)")
         self.assertLessEqual(despues_adm, 36)
-        self.assertLessEqual(despues_prof, 20)
+        # Antes 20 (con 1 de holgura): el inicio con datos reales de hoy (user_profesor/inicio.py) suma 3 consultas
+        # fijas (reservas de hoy, lo ya dictado con pagables() y bloques libres). Juntarlas obligaria a copiar la
+        # regla del saldo. Sigue siendo O(1): lo que importa es la igualdad de arriba.
+        self.assertLessEqual(despues_prof, 22)
         self.assertContains(r_prof, "Cálculo Vectorial")
 
     def test_formato_clp_y_alumnos_reg_dry(self):
