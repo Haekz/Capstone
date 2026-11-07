@@ -63,7 +63,14 @@
                 <tr>
                     <td><strong>{{ e.profesor.nombre }}</strong><br><small>{{ e.profesor.rut }}</small></td>
                     <td>{{ e.nombre }}</td>
-                    <td>{% include 'alumnos/includes/propuestas.html' %}</td>
+                    <td>{% include 'alumnos/includes/propuestas.html' %}
+                        {% if agente.es_lider and e.otra_asignatura %}
+                        <form method="post" action="{% url 'pedir_asignatura' e.pk %}" style="margin-top:6px;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-secondary"><i class="bi bi-journal-plus" aria-hidden="true"></i> Pedir al admin crear «{{ e.otra_asignatura }}»</button>
+                        </form>
+                        {% endif %}
+                    </td>
                     <td>{{ e.subida|date:"d-m-Y H:i" }}</td>
                     <td><a href="{% url 'ver_especializacion' e.pk %}" target="_blank" rel="noopener"><i class="bi bi-file-earmark-text"></i> Ver certificado</a></td>
                     <td>

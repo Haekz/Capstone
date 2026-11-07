@@ -6,8 +6,9 @@ from .views import (
     aprobar_retiro, rechazar_retiro, marcar_pagado_retiro
 )
 from .asignaturas import asignaturas_adm, crear_asignatura, eliminar_asignatura, renombrar_asignatura
-from .escalados import casos_escalados, indicar_escalado
-from .titulos import titulos_adm, ver_titulo, resolver_titulo, ver_especializacion, resolver_especializacion
+from .escalados import casos_escalados, crear_asignatura_pedida, indicar_escalado
+from .titulos import (titulos_adm, ver_titulo, resolver_titulo, ver_especializacion, resolver_especializacion,
+                      pedir_asignatura)
 
 urlpatterns = [
     # esta parte es de las rutas del portal del administrador
@@ -29,6 +30,7 @@ urlpatterns = [
     path('asignaturas/<int:pk>/renombrar/', renombrar_asignatura, name='renombrar_asignatura'),
     path('asignaturas/<int:pk>/eliminar/', eliminar_asignatura, name='eliminar_asignatura'),
     path('casos-escalados/<int:pk>/indicar/', indicar_escalado, name='indicar_escalado'),
+    path('casos-escalados/<int:pk>/crear-asignatura/', crear_asignatura_pedida, name='crear_asignatura_pedida'),
 
     # Titulos profesionales de profesores
     path('titulos/', titulos_adm, name='titulos_adm'),
@@ -36,6 +38,7 @@ urlpatterns = [
     path('titulos/<int:pk>/resolver/', resolver_titulo, name='resolver_titulo'),
     path('especializaciones/<int:pk>/archivo/', ver_especializacion, name='ver_especializacion'),
     path('especializaciones/<int:pk>/resolver/', resolver_especializacion, name='resolver_especializacion'),
+    path('especializaciones/<int:pk>/pedir-asignatura/', pedir_asignatura, name='pedir_asignatura'),
 
     # esta parte es de las rutas CRUD de alumnos
     path('crud/', crud, name='crud'),

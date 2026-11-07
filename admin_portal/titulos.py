@@ -14,6 +14,7 @@ from alumnos.models import Asignatura, Especializacion, Profesor
 from apoderados import documentos
 from soporte.models import Ticket
 from soporte.permisos import agente_en_sesion, ticket_asignado, tickets_del_agente
+from soporte.tickets import escalar
 from user_profesor import especializaciones, titulo
 
 from .models import AccesoTitulo
@@ -124,4 +125,25 @@ def resolver_especializacion(request, pk):
         estado = 'aprobada' if aprobar else 'rechazada'
         nombre, profesor = especializacion.nombre, especializacion.profesor.nombre
         messages.success(request, f'Especialización «{nombre}» de {profesor} {estado}.{_asignadas(nuevas)}')
+    return redirect('titulos_adm')
+
+
+@require_POST
+@soporte_required
+def pedir_asignatura(request, pk):
+    """El lider le pide al admin crear la asignatura que propuso el profesor y no esta en el catalogo (fase 4)."""
+    especializacion = _especializacion_con_ticket(request, pk)
+    agente = agente_en_sesion(request)
+    nombre = especializacion.otra_asignatura
+    motivo = (f'Pedido de asignatura nueva: «{nombre}». El certificado «{especializacion.nombre}» de '
+              f'{especializacion.profesor.nombre} la propone y no está en el catálogo.')
+    try:
+        if not nombre:
+            raise ValidationError('Esa especialización no propone una asignatura nueva.')
+        ticket = ticket_asignado(request, profesor=especializacion.profesor, categoria=Ticket.ESPECIALIZACIONES)
+        escalar(ticket, agente, motivo, asignatura_pedida=nombre)
+    except ValidationError as e:
+        messages.error(request, e.messages[0])
+    else:
+        messages.success(request, f'Le pediste al administrador crear «{nombre}». Te avisaremos cuando responda.')
     return redirect('titulos_adm')

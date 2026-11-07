@@ -235,6 +235,8 @@ class Escalamiento(models.Model):
     destino = models.CharField(max_length=5, choices=DESTINOS)
     autor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='+')
     motivo = models.TextField(max_length=1000)
+    # Pedido de una asignatura nueva al admin (fase 4): el nombre que debe crear. Vacio en los demas casos.
+    asignatura_pedida = models.CharField(max_length=60, blank=True)
     fecha = models.DateTimeField(auto_now_add=True)
     indicacion = models.TextField(max_length=1000, blank=True)
     indicado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,

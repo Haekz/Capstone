@@ -26,6 +26,13 @@
             <p style="margin:8px 0 0;"><strong>El agente lo escaló al líder</strong> ({{ previo.fecha|date:"d-m-Y H:i" }}):<br>{{ previo.motivo|linebreaksbr }}</p>
             {% endif %}{% endfor %}
             <p style="margin:8px 0 0;"><strong>{{ e.autor.first_name|default:"El líder" }} te lo escaló</strong> ({{ e.fecha|date:"d-m-Y H:i" }}):<br>{{ e.motivo|linebreaksbr }}</p>
+            {% if e.asignatura_pedida %}
+            <form method="post" action="{% url 'crear_asignatura_pedida' e.pk %}" style="margin-top:10px;">
+                {% csrf_token %}
+                <button type="submit" class="btn-primary"><i class="bi bi-journal-plus" aria-hidden="true"></i> Crear «{{ e.asignatura_pedida }}» y avisar a soporte</button>
+            </form>
+            <p style="margin:10px 0 0;"><small>O deja otra indicación:</small></p>
+            {% endif %}
             <form method="post" action="{% url 'indicar_escalado' e.pk %}" style="display:grid; gap:8px; margin-top:10px;">
                 {% csrf_token %}
                 <label for="indicacion-{{ e.pk }}">Tu indicación para soporte</label>
