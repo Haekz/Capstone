@@ -37,6 +37,7 @@
                                 style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--bg-card); color:var(--text-primary);">
                             <button type="submit" name="decision" value="aprobar" class="btn-primary"><i class="bi bi-check-lg"></i> Aprobar</button>
                             <button type="submit" name="decision" value="rechazar" class="btn-secondary"><i class="bi bi-x-lg"></i> Rechazar</button>
+                            {% include 'admin_portal/includes/asignar_asignaturas.html' with quien=p.nombre %}
                         </form>
                     </td>
                 </tr>
@@ -73,6 +74,7 @@
                                 style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--bg-card); color:var(--text-primary);">
                             <button type="submit" name="decision" value="aprobar" class="btn-primary"><i class="bi bi-check-lg"></i> Aprobar</button>
                             <button type="submit" name="decision" value="rechazar" class="btn-secondary"><i class="bi bi-x-lg"></i> Rechazar</button>
+                            {% include 'admin_portal/includes/asignar_asignaturas.html' with quien=e.profesor.nombre marcadas=e.propuestas.all %}
                         </form>
                     </td>
                 </tr>

@@ -10,7 +10,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
 from alumnos.decorators import soporte_required
-from alumnos.models import Especializacion, Profesor
+from alumnos.models import Asignatura, Especializacion, Profesor
 from apoderados import documentos
 from soporte.models import Ticket
 from soporte.permisos import agente_en_sesion, ticket_asignado, tickets_del_agente
@@ -60,6 +60,7 @@ def titulos_adm(request):
             profesor__tickets__in=tickets_del_agente(request).filter(categoria=Ticket.ESPECIALIZACIONES),
         ).select_related('profesor__user').prefetch_related('propuestas').defer('contenido').order_by('subida'),
         'otros': profesores.exclude(titulo_estado=Profesor.TITULO_EN_REVISION) if agente.es_lider else None,
+        'asignaturas_catalogo': Asignatura.objects.order_by('nombre'),  # las que soporte puede asignar al aprobar
         'accesos': (AccesoTitulo.objects.select_related('agente', 'profesor__user', 'especializacion')[:50]
                     if agente.es_lider else None),
     })
@@ -88,18 +89,24 @@ def ver_especializacion(request, pk):
     return _imagen(request, especializacion.contenido)
 
 
+def _asignadas(clases):
+    """Fin del mensaje de exito: que asignaturas nuevas quedo dictando."""
+    return f' Asignaturas nuevas: {", ".join(c.asignatura.nombre for c in clases)}.' if clases else ''
+
+
 @require_POST
 @soporte_required
 def resolver_titulo(request, pk):
     profesor = _profesor_con_ticket(request, pk)
     aprobar = request.POST.get('decision') == 'aprobar'
     try:
-        titulo.resolver(profesor, aprobar, request.POST.get('observacion', ''))
+        nuevas = titulo.resolver(profesor, aprobar, request.POST.get('observacion', ''),
+                                 request.POST.getlist('asignaturas'))
     except ValidationError as e:
         messages.error(request, e.messages[0])
     else:
         estado = 'aprobado' if aprobar else 'rechazado'
-        messages.success(request, f'Título de {profesor.nombre} {estado}.')
+        messages.success(request, f'Título de {profesor.nombre} {estado}.{_asignadas(nuevas)}')
     return redirect('titulos_adm')
 
 
@@ -109,11 +116,12 @@ def resolver_especializacion(request, pk):
     especializacion = _especializacion_con_ticket(request, pk)
     aprobar = request.POST.get('decision') == 'aprobar'
     try:
-        especializaciones.resolver(especializacion, aprobar, request.POST.get('observacion', ''))
+        nuevas = especializaciones.resolver(especializacion, aprobar, request.POST.get('observacion', ''),
+                                            request.POST.getlist('asignaturas'))
     except ValidationError as e:
         messages.error(request, e.messages[0])
     else:
         estado = 'aprobada' if aprobar else 'rechazada'
         nombre, profesor = especializacion.nombre, especializacion.profesor.nombre
-        messages.success(request, f'Especialización «{nombre}» de {profesor} {estado}.')
+        messages.success(request, f'Especialización «{nombre}» de {profesor} {estado}.{_asignadas(nuevas)}')
     return redirect('titulos_adm')

@@ -18,6 +18,8 @@ from apoderados import documentos
 from soporte.models import Ticket
 from soporte.tickets import abrir_ticket, cerrar_tickets
 
+from . import asignaturas
+
 PASADO, A_RESUBIR, BORRADO = 'pasado', 'a_resubir', 'borrado'
 NO_SE_RECUPERO = 'No es un rechazo: no pudimos recuperar el archivo de tu título. Súbelo de nuevo, por favor.'
 
@@ -49,20 +51,27 @@ def subir(profesor, archivo):
         abrir_ticket(Ticket.TITULOS, profesor=profesor)
 
 
-def resolver(profesor, aprobar, observacion=''):
-    """Decision del agente de soporte sobre un titulo en revision. El original se borra (decidido 02-nov)."""
+def resolver(profesor, aprobar, observacion='', ids_asignaturas=()):
+    """Decision del agente de soporte sobre un titulo en revision. El original se borra (decidido 02-nov).
+
+    Al aprobar, soporte puede asignarle asignaturas del catalogo (opcional) y se crean sus clases.
+    Devuelve las clases nuevas.
+    """
     if profesor.titulo_estado != Profesor.TITULO_EN_REVISION:
         raise ValidationError('Ese título no está pendiente de revisión.')
     if not aprobar and not observacion.strip():
         raise ValidationError('Indica el motivo del rechazo.')
+    elegidas = asignaturas.del_catalogo(ids_asignaturas, obligatoria=False) if aprobar else []
     profesor.titulo_estado = Profesor.TITULO_APROBADO if aprobar else Profesor.TITULO_RECHAZADO
     profesor.titulo_observacion = '' if aprobar else observacion.strip()[:200]
     profesor.titulo_actualizado = timezone.now()
     profesor.titulo_contenido, profesor.titulo_formato = None, ''
     _borrar_archivo_antiguo(profesor)
     with transaction.atomic():
+        Profesor.objects.select_for_update().filter(pk=profesor.pk).first()  # a la vez que una especializacion
         profesor.save()
         _cerrar_ticket(profesor)
+        return asignaturas.asignar(profesor, elegidas)  # despues de aprobar: sus bloques ya se pueden generar
 
 
 def pasar_a_base(profesor):

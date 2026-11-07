@@ -30,7 +30,7 @@ class RevisionEspecializacionesTests(TestCase):
         self.agente_titulos = crear_agente('10000001-9', Ticket.TITULOS)
         self.profesor = crear_profesor()
         titulo.subir(self.profesor, pdf('titulo.pdf'))  # su ticket de titulo no debe tocarse
-        algebra = Asignatura.objects.create(nombre='Álgebra')
+        self.algebra = algebra = Asignatura.objects.create(nombre='Álgebra')
         self.a = especializaciones.subir(self.profesor, 'Diplomado A', pdf('a.pdf'), [algebra.pk])
         self.b = especializaciones.subir(self.profesor, 'Magíster B', pdf('b.pdf'), [algebra.pk])
 
@@ -38,8 +38,10 @@ class RevisionEspecializacionesTests(TestCase):
         return self.profesor.tickets.get(categoria=categoria)
 
     def decidir(self, especializacion, decision, observacion=''):
+        # Como el formulario: las propuestas (Algebra) van premarcadas; al rechazar se ignoran.
         return self.client.post(reverse('resolver_especializacion', args=[especializacion.pk]),
-                                {'decision': decision, 'observacion': observacion})
+                                {'decision': decision, 'observacion': observacion,
+                                 'asignaturas': [self.algebra.pk]})
 
     def test_el_agente_de_especializaciones_las_ve_y_abre_el_certificado_con_registro(self):
         entrar_soporte(self.client, self.agente)
@@ -87,7 +89,7 @@ class RevisionEspecializacionesTests(TestCase):
         self.assertIsNotNone(self.a.contenido)
 
     def test_no_se_decide_dos_veces(self):
-        especializaciones.resolver(self.a, aprobar=True)
+        especializaciones.resolver(self.a, aprobar=True, ids_asignaturas=[self.algebra.pk])
         with self.assertRaisesMessage(ValidationError, 'no está pendiente'):
             especializaciones.resolver(self.a, aprobar=False, observacion='tarde')
         self.a.refresh_from_db()

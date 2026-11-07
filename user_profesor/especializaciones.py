@@ -14,17 +14,10 @@ from apoderados import documentos
 from soporte.models import Ticket
 from soporte.tickets import abrir_ticket, cerrar_tickets
 
+from .asignaturas import asignar, del_catalogo
+
 MAXIMO = Especializacion.MAX_EN_REVISION
 LARGO_NOMBRE = Especializacion._meta.get_field('nombre').max_length
-
-
-def _asignaturas(ids):
-    """Las del catalogo que eligio. Un id ajeno al catalogo (o manipulado) rechaza todo."""
-    ids = set(ids)
-    asignaturas = list(Asignatura.objects.filter(pk__in=[i for i in ids if str(i).isdecimal()]))
-    if not asignaturas or len(asignaturas) != len(ids):
-        raise ValidationError('Elige al menos una asignatura de la lista.')
-    return asignaturas
 
 
 def subir(profesor, nombre, archivo, ids_asignaturas):
@@ -34,7 +27,7 @@ def subir(profesor, nombre, archivo, ids_asignaturas):
         raise ValidationError('Indica el nombre de la especialización.')
     if len(nombre) > LARGO_NOMBRE:
         raise ValidationError(f'El nombre puede tener hasta {LARGO_NOMBRE} caracteres.')
-    asignaturas = _asignaturas(ids_asignaturas)
+    asignaturas = del_catalogo(ids_asignaturas, obligatoria=True)
     if archivo is None:
         raise ValidationError('Selecciona el archivo del certificado.')
     contenido, formato = documentos.preparar(archivo)
@@ -50,11 +43,16 @@ def subir(profesor, nombre, archivo, ids_asignaturas):
     return especializacion
 
 
-def resolver(especializacion, aprobar, observacion=''):
-    """Decision de soporte sobre una especializacion en revision. El documento se borra (como el titulo)."""
+def resolver(especializacion, aprobar, observacion='', ids_asignaturas=()):
+    """Decision de soporte sobre una especializacion en revision. El documento se borra (como el titulo).
+
+    Al aprobar, soporte elige las asignaturas que podra dictar (al menos una; las propuestas van premarcadas,
+    pero puede elegir cualquiera del catalogo) y se crean sus clases. Devuelve las clases nuevas.
+    """
     observacion = (observacion or '').strip()
     if not aprobar and not observacion:
         raise ValidationError('Indica el motivo del rechazo.')
+    elegidas = del_catalogo(ids_asignaturas, obligatoria=True) if aprobar else []
     with transaction.atomic():
         Profesor.objects.select_for_update().filter(pk=especializacion.profesor_id).first()  # ver el cierre abajo
         decididas = Especializacion.objects.filter(pk=especializacion.pk, estado=Especializacion.EN_REVISION).update(
@@ -62,12 +60,14 @@ def resolver(especializacion, aprobar, observacion=''):
             observacion='' if aprobar else observacion[:200], revisada=timezone.now(), contenido=None, formato='')
         if not decididas:  # ya la decidio otro agente
             raise ValidationError('Esa especialización no está pendiente de revisión.')
+        nuevas = asignar(especializacion.profesor, elegidas)  # con el profesor bloqueado: no se duplican
         pendientes = Especializacion.objects.filter(profesor_id=especializacion.profesor_id,
                                                     estado=Especializacion.EN_REVISION)
         if not pendientes.exists():  # con el profesor bloqueado: dos decisiones a la vez no dejan el ticket abierto
             cerrar_tickets(Ticket.objects.filter(profesor_id=especializacion.profesor_id,
                                                  categoria=Ticket.ESPECIALIZACIONES))
     especializacion.refresh_from_db()
+    return nuevas
 
 
 def contexto_panel(profesor):
