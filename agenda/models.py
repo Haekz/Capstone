@@ -7,7 +7,7 @@ El profesor dice "lunes de 15 a 19 h" y el sistema crea bloques de 60 min y
 from django.core.exceptions import ValidationError
 from django.db import models
 
-from alumnos.models import Profesor, SesionClase
+from alumnos.models import Clase, Profesor, SesionClase
 
 
 class HorarioSemanal(models.Model):
@@ -17,6 +17,8 @@ class HorarioSemanal(models.Model):
             (4, 'Viernes'), (5, 'Sábado'), (6, 'Domingo')]
 
     profesor = models.ForeignKey(Profesor, on_delete=models.CASCADE, related_name='horario_semanal')
+    # La materia de la franja (fase 6). Vacia = todas sus materias, como eran las franjas hasta ahora.
+    clase = models.ForeignKey(Clase, null=True, blank=True, on_delete=models.CASCADE, related_name='franjas')
     dia_semana = models.PositiveSmallIntegerField(choices=DIAS)
     hora_inicio = models.TimeField()
     hora_fin = models.TimeField()
@@ -41,12 +43,14 @@ class HorarioSemanal(models.Model):
             raise ValidationError('Usa horas en punto (ej. 15:00): cada bloque dura 60 minutos.')
         if self.hora_fin <= self.hora_inicio:
             raise ValidationError('La hora de término debe ser posterior a la de inicio.')
+        if self.clase_id and self.clase.profesor_id != self.profesor_id:
+            raise ValidationError('Elige una de tus materias.')
         se_cruza = HorarioSemanal.objects.filter(
             profesor_id=self.profesor_id, dia_semana=self.dia_semana,
             hora_inicio__lt=self.hora_fin, hora_fin__gt=self.hora_inicio,
         ).exclude(pk=self.pk)
         if se_cruza.exists():
-            raise ValidationError('Esa franja se cruza con otra del mismo día.')
+            raise ValidationError('Esa franja se cruza con otra del mismo día: no puedes dictar dos materias a la vez.')
 
 
 class BloqueAgenda(models.Model):

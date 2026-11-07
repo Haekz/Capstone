@@ -9,7 +9,7 @@ from django.views.decorators.http import require_POST
 
 from alumnos.decorators import profesor_required
 from alumnos.exceptions import InscripcionError
-from alumnos.models import Profesor
+from alumnos.models import Clase, Profesor
 
 from . import bloques, cancelacion
 from .models import HorarioSemanal
@@ -24,7 +24,10 @@ def _profesor(request):
 def agregar_franja(request):
     profesor = _profesor(request)
     try:
-        franja = HorarioSemanal(profesor=profesor, dia_semana=int(request.POST.get('dia_semana', '')),
+        clase = None  # vacia = todas sus materias
+        if request.POST.get('clase'):
+            clase = get_object_or_404(Clase, pk=int(request.POST['clase']), profesor=profesor)  # solo las propias
+        franja = HorarioSemanal(profesor=profesor, clase=clase, dia_semana=int(request.POST.get('dia_semana', '')),
                                 hora_inicio=time.fromisoformat(request.POST.get('hora_inicio', '')),
                                 hora_fin=time.fromisoformat(request.POST.get('hora_fin', '')))
         franja.full_clean()

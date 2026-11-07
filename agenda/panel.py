@@ -43,7 +43,7 @@ def agenda(profesor, ahora=None):
 
 def contexto(profesor):
     return {
-        'franjas': HorarioSemanal.objects.filter(profesor=profesor),
+        'franjas': HorarioSemanal.objects.filter(profesor=profesor).select_related('clase__asignatura'),
         'agenda_filas': agenda(profesor),
         'dias_semana': HorarioSemanal.DIAS,
         'horas_agenda': HORAS,
