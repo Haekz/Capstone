@@ -109,7 +109,7 @@
                                                     {{ prof.user.first_name|slice:":1"|upper }}</div>
                                                 <div>
                                                     <div class="user-cell-name">{{ prof.user.first_name }}</div>
-                                                    <div class="user-cell-sub">{{ prof.especialidad }}</div>
+                                                    <div class="user-cell-sub">{{ prof.especialidad|default:"—" }}</div>
                                                 </div>
                                             </div>
                                         </td>

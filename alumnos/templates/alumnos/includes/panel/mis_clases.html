@@ -13,7 +13,7 @@
                                 {% for insc in mis_inscripciones %}
                                 <div class="class-item-card">
                                     <div class="class-card-header">
-                                        <span class="class-badge">{{ insc.clase.profesor.especialidad }}</span>
+                                        {% if insc.clase.profesor.especialidad %}<span class="class-badge">{{ insc.clase.profesor.especialidad }}</span>{% endif %}
                                         {% if insc.sesion.estado == 'cancelada' %}
                                         <span class="class-status-badge class-status-badge--modality">Sesión cancelada</span>
                                         {% elif insc.estado == 'pendiente' %}
@@ -67,7 +67,7 @@
                             {% for insc in historial_clases %}
                             <div class="class-item-card">
                                 <div class="class-card-header">
-                                    <span class="class-badge">{{ insc.clase.profesor.especialidad }}</span>
+                                    {% if insc.clase.profesor.especialidad %}<span class="class-badge">{{ insc.clase.profesor.especialidad }}</span>{% endif %}
                                     <span class="class-status-badge class-status-badge--enrolled">Completada</span>
                                 </div>
                                 <div class="class-card-body">
@@ -105,7 +105,7 @@
                             {% for c in clases_disponibles %}
                             <div class="class-item-card">
                                 <div class="class-card-header">
-                                    <span class="class-badge">{{ c.profesor.especialidad }}</span>
+                                    {% if c.profesor.especialidad %}<span class="class-badge">{{ c.profesor.especialidad }}</span>{% endif %}
                                     <span class="class-status-badge class-status-badge--modality">{{ c.get_modalidad_display }}</span>
                                 </div>
                                 <div class="class-card-body">

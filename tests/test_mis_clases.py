@@ -80,6 +80,12 @@ class MisClasesTests(TestCase):
         self.assertNotContains(r, 'Horario:')
         self.assertNotContains(r, ' None hrs')
 
+    def test_profesor_sin_especialidad_no_muestra_none(self):
+        # Su profesor no tiene especialidad: la etiqueta no se muestra (antes decia "None").
+        r = self._portal()
+        self.assertNotContains(r, 'class-badge">None<')
+        self.assertContains(r, 'Álgebra')  # las tarjetas siguen ahi
+
     def test_estados_pendiente_y_sesion_cancelada_sin_boton_de_unirse(self):
         r = self._portal()
         self.assertContains(r, '>Pendiente</span>')

@@ -26,7 +26,7 @@
                 {% for p in en_revision %}
                 <tr>
                     <td><strong>{{ p.nombre }}</strong><br><small>{{ p.rut }}</small></td>
-                    <td>{{ p.especialidad }}</td>
+                    <td>{{ p.especialidad|default:"—" }}</td>
                     <td>{{ p.titulo_actualizado|date:"d-m-Y H:i" }}</td>
                     <td><a href="{% url 'ver_titulo' p.id_profesor %}" target="_blank" rel="noopener"><i class="bi bi-file-earmark-text"></i> Ver título</a></td>
                     <td>
@@ -98,7 +98,7 @@
                 {% for p in otros %}
                 <tr>
                     <td><strong>{{ p.nombre }}</strong><br><small>{{ p.rut }}</small></td>
-                    <td>{{ p.especialidad }}</td>
+                    <td>{{ p.especialidad|default:"—" }}</td>
                     <td><span class="badge {% if p.puede_hacer_clases %}badge-activo{% endif %}">{{ p.get_titulo_estado_display }}</span></td>
                     <td>{{ p.titulo_observacion|default:"—" }}</td>
                 </tr>
