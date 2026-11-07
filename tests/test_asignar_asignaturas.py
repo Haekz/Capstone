@@ -56,10 +56,10 @@ class AsignarAsignaturasTests(TestCase):
         self.assertEqual(self.materias(), set())
 
     def test_no_duplica_una_clase_que_ya_tiene(self):
-        Clase.objects.create(profesor=self.profesor, asignatura=self.algebra, modalidad='presencial')
+        Clase.objects.create(profesor=self.profesor, asignatura=self.algebra, modalidad='online', en_vivo=True)
         nuevas = especializaciones.resolver(self.esp, True, ids_asignaturas=[self.algebra.pk])
         self.assertEqual(nuevas, [])
-        self.assertEqual(list(Clase.objects.values_list('modalidad', flat=True)), ['presencial'])  # no se toca
+        self.assertEqual(list(Clase.objects.values_list('en_vivo', flat=True)), [True])  # no se toca
 
     def test_titulo_se_aprueba_con_o_sin_asignaturas(self):
         titulo.subir(self.profesor, pdf('t.pdf'))

@@ -291,7 +291,6 @@ def alumno_pag1(request):
     criterios = filtros.cleaned_data
     clases_disponibles = Clase.objects.habilitadas().filtrar(
         especialidad=criterios.get('especialidad'),
-        modalidad=criterios.get('modalidad'),
         solo_disponibles=criterios.get('disponible', False),
     ).select_related('asignatura', 'profesor__user', 'profesor__especialidad')
 

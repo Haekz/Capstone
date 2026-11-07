@@ -37,7 +37,7 @@ class InicioProfesorTests(TestCase):
         cls.algebra = Clase.objects.create(asignatura=Asignatura.objects.create(nombre='Álgebra'),
                                            modalidad='online', profesor=cls.profesor)
         cls.calculo = Clase.objects.create(asignatura=Asignatura.objects.create(nombre='Cálculo'),
-                                           modalidad='presencial', profesor=cls.profesor)
+                                           modalidad='online', profesor=cls.profesor)
 
     def sesion(self, clase, hora, dias=0, alumno=None, estado=Inscripcion.ESTADO_CONFIRMADA):
         inicio_ = a_las(hora, dias)
@@ -56,7 +56,7 @@ class InicioProfesorTests(TestCase):
         self.sesion(self.algebra, 10, dias=1, alumno=self.luis)  # manana
         clases = inicio.contexto(self.profesor)['clases_hoy']
         self.assertEqual([(c['inicio'], c['nombre_curso'], c['alumno'], c['modalidad']) for c in clases],
-                         [(a_las(9), 'Álgebra', 'Ana', 'Online'), (a_las(15), 'Cálculo', 'Luis', 'Presencial')])
+                         [(a_las(9), 'Álgebra', 'Ana', 'Online'), (a_las(15), 'Cálculo', 'Luis', 'Online')])
 
     def test_dinero_de_hoy_es_lo_ya_dictado_hoy_como_en_su_saldo(self):
         dictada = self.sesion(self.algebra, 9, alumno=self.ana)

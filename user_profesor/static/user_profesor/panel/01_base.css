@@ -184,7 +184,7 @@ body:not(.light-mode) .prof-schedule-item {
     color: var(--text-light);
 }
 
-/* esta parte es de las etiquetas de modalidad (online o presencial) */
+/* esta parte es de las etiquetas de modalidad (todas las clases son online) */
 .prof-badge {
     display: inline-block;
     padding: 4px 10px;
@@ -198,11 +198,6 @@ body:not(.light-mode) .prof-schedule-item {
 .prof-badge-online {
     background-color: rgba(168, 85, 247, 0.1);
     color: var(--primary);
-}
-
-.prof-badge-presencial {
-    background-color: rgba(245, 158, 11, 0.1);
-    color: var(--accent);
 }
 
 /* esta parte es del estado vacío que aparece cuando no hay clases o inscripciones todavía */

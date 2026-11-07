@@ -377,7 +377,7 @@ class TestFiltrosSesionClase(TestCase):
             profesor=self.prof1, asignatura=self.asig1, modalidad='online'
         )
         self.clase2 = Clase.objects.create(
-            profesor=self.prof2, asignatura=self.asig2, modalidad='presencial'
+            profesor=self.prof2, asignatura=self.asig2, modalidad='online'
         )
 
         # Alumno
