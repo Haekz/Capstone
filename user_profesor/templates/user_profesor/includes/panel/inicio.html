@@ -37,13 +37,16 @@
             <!-- esta parte es del grid del centro con la agenda del día y el gráfico -->
             <div class="prof-dashboard-grid">
                 
-                <!-- esta parte es de la agenda de clases del día, muestra máximo 6 clases -->
+                <!-- agenda del día: las sesiones reservadas para hoy, en orden de hora (user_profesor/inicio.py) -->
                 <div class="prof-card">
-                    <h2 class="prof-card-title">Clases de Hoy <span class="prof-card-title-badge">Max. 6</span></h2>
+                    <h2 class="prof-card-title">Clases de Hoy</h2>
                     {% if clases_hoy %}
                         <div class="prof-schedule-list">
                             {% for ch in clases_hoy %}
                             <div class="prof-schedule-item">
+                                <div class="prof-schedule-time">
+                                    <i class="bi bi-clock" aria-hidden="true"></i> {{ ch.inicio|time:"H:i" }} – {{ ch.fin|time:"H:i" }}
+                                </div>
                                 <div class="prof-schedule-details">
                                     <h4>{{ ch.nombre_curso }}</h4>
                                     <p>Alumno: <strong>{{ ch.alumno }}</strong></p>
