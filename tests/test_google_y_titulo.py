@@ -251,16 +251,10 @@ class TituloProfesorTests(TestCase):
         self.entrar('22222222-2')
         self.assertIn('5 MB', self.subir(contenido=b'0' * (5 * 1024 * 1024 + 1))['message'])
 
-    def test_no_se_asigna_clase_ni_inscribe_sin_titulo_aprobado(self):
-        self.entrar('33333333-3')
-        r = self.client.post(reverse('crear_clase'), {
-            'nombre_curso': 'Algebra', 'modalidad': 'online', 'horario': '10:00',
-            'id_profesor': self.profesor.id_profesor}).json()
-        self.assertFalse(r['success'])
-
+    def test_no_se_inscribe_sin_titulo_aprobado(self):
+        # (El admin ya no crea clases: las asigna soporte al aprobar, ver test_asignar_asignaturas.)
         clase = Clase.objects.create(asignatura=Asignatura.objects.create(nombre='X'),
                                      modalidad='online', horario=hora(9), profesor=self.profesor)
-        self.client.logout()
         self.entrar('11111111-1')
         r = self.client.post(reverse('inscribir_clase'), {'id_clase': clase.id_clase}).json()
         self.assertFalse(r['success'])

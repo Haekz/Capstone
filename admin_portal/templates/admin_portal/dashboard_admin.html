@@ -115,56 +115,6 @@
         document.documentElement.style.setProperty('--primary-dark', colors[color][1]);
         Swal.fire('Color actualizado', 'El color de acento se aplico temporalmente.', 'success');
     }
-
-    // --- Seccion Clases: formulario de creacion ---
-
-    // Muestra u oculta el formulario de nueva clase.
-    function toggleCrearClaseForm() {
-        const formEl = document.getElementById('form-crear-clase');
-        if (!formEl) return;
-        const visible = formEl.style.display !== 'none';
-        formEl.style.display = visible ? 'none' : 'block';
-    }
-
-    // Envia el formulario por fetch y avisa el resultado sin salir de la pagina.
-    function submitCrearClase(event) {
-        event.preventDefault();
-        const form = document.getElementById('crearClaseForm');
-        const boton = form.querySelector('button[type="submit"]');
-
-        // El token viaja dentro del FormData gracias al tag csrf_token del
-        // formulario, asi que este archivo ya no necesita interpolarlo a mano.
-        boton.disabled = true;
-
-        fetch("{% url 'crear_clase' %}", {
-            method: 'POST',
-            body: new FormData(form)
-        })
-            .then(res => {
-                // Sesion vencida: la vista redirige al login en vez de responder JSON.
-                if (res.redirected) {
-                    window.location.href = res.url;
-                    return null;
-                }
-                if (!res.ok) throw new Error('HTTP ' + res.status);
-                return res.json();
-            })
-            .then(data => {
-                if (!data) return;
-                if (data.success) {
-                    Swal.fire('Clase creada', data.message, 'success')
-                        .then(() => window.location.reload());
-                } else {
-                    Swal.fire('No se pudo crear', data.message || 'Revisa los datos e intenta de nuevo.', 'warning');
-                    boton.disabled = false;
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                Swal.fire('Error de conexion', 'No se pudo crear la clase. Intenta nuevamente.', 'error');
-                boton.disabled = false;
-            });
-    }
 </script>
 {% endblock %}
 

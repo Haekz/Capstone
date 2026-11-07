@@ -240,9 +240,9 @@ class AuditoriaSeguridadYArquitecturaTests(TestCase):
         despues_adm, r_adm = self._contar_consultas(*admin)
         despues_prof, r_prof = self._contar_consultas(*profe)
 
-        # La tabla de clases del admin se llena (antes la vista no le pasaba `clases`).
+        # La tabla de clases del admin se llena (antes la vista no le pasaba `clases`). Es solo lectura (fase 3).
         for clase in Clase.objects.all():
-            self.assertContains(r_adm, reverse("eliminar_clase", args=[clase.id_clase]))
+            self.assertContains(r_adm, f'#{clase.id_clase}</td>')
 
         self.assertEqual(despues_adm, antes_adm, "dashboard_admin crece con los datos (N+1)")
         self.assertEqual(despues_prof, antes_prof, "panel_profesor crece con los datos (N+1)")
