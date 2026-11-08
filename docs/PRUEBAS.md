@@ -31,7 +31,7 @@ pytest --lf                                 # solo las que fallaron la ultima ve
 
 Reporte HTML de una corrida (pytest-html): `pytest --html=reporte.html --self-contained-html`.
 
-Referencia (05-11-2026, `main` en 74e8480, PostgreSQL 16 local): 1.355 pruebas, 1.349 pasan y 6 omitidas (Atlas) con las dos herramientas. `manage.py test` tarda unos 12 min, `pytest` unos 10 y `pytest -n auto` unos 2.
+Referencia (07-11-2026, `main` en 4aa8239, `manage.py test`): 1.548 pruebas, 1.542 pasan y 6 omitidas (Atlas), sin fallos esperados. Los tiempos que siguen son de la medición del 05-11 (`main` en 74e8480, 1.355 pruebas, PostgreSQL 16 local). `manage.py test` tarda unos 12 min, `pytest` unos 10 y `pytest -n auto` unos 2.
 
 `pytest.ini` desactiva `pytest-randomly` por omision (`-p no:randomly`) para que el orden sea el mismo de `manage.py test`. Una prueba que solo falla con `-p randomly` o con `-n auto` depende del orden o comparte estado con otra: se reporta, no se esconde.
 
