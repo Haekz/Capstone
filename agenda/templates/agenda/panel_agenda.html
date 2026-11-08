@@ -12,6 +12,7 @@
         {% elif not clases %}
             <p>Aún no tienes asignaturas asignadas: tus bloques se crean cuando LBWUS te asigne una.</p>
         {% endif %}
+        <p><a href="{% url 'nuevo_ticket' %}?categoria=horario"><i class="bi bi-life-preserver" aria-hidden="true"></i> Pedir ayuda a soporte con mi horario</a></p>
 
         {% if franjas %}
         <div class="prof-table-wrapper">

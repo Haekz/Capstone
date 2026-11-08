@@ -59,6 +59,8 @@ class Ticket(models.Model):
     ESPECIALIZACIONES = 'especializaciones'
     PAGOS = 'pagos'
     CLASES = 'clases'
+    # El profesor pide ayuda con su horario semanal (fase 7, decidido 07-nov): solo el la abre (DE_PROFESORES).
+    HORARIO = 'horario'
     CONDUCTA = 'conducta'
     TECNICO = 'tecnico'
     OTRO = 'otro'
@@ -69,14 +71,16 @@ class Ticket(models.Model):
     CONTACTO = 'contacto'
     CATEGORIAS = [(APODERADOS, 'Apoderados y menores'), (TITULOS, 'Títulos de profesores'),
                   (ESPECIALIZACIONES, 'Especializaciones de profesores'),
-                  (PAGOS, 'Pagos y retiros'), (CLASES, 'Clases'), (CONDUCTA, 'Conducta en una clase'),
+                  (PAGOS, 'Pagos y retiros'), (CLASES, 'Clases'), (HORARIO, 'Horario de clases'),
+                  (CONDUCTA, 'Conducta en una clase'),
                   (TECNICO, 'Problemas técnicos'), (OTRO, 'Otro'), (PRIVACIDAD, 'Privacidad y datos'),
                   (CONTACTO, 'Contacto del sitio')]
     DE_USUARIOS = (PAGOS, CLASES, CONDUCTA, TECNICO, OTRO)  # las que abre el propio usuario (D10)
+    DE_PROFESORES = DE_USUARIOS + (HORARIO,)
     # D4, D16, D17. Privacidad: 10 dias habiles (~14 corridos), decision por defecto a validar con la abogada.
-    # Contacto: 5, como Tecnico y Otro (decidido 05-nov).
-    DIAS_HABILES = {APODERADOS: 5, TITULOS: 5, ESPECIALIZACIONES: 5, PAGOS: 2, CLASES: 2, CONDUCTA: 2, TECNICO: 5,
-                    OTRO: 5, PRIVACIDAD: 10, CONTACTO: 5}
+    # Contacto: 5, como Tecnico y Otro (decidido 05-nov). Horario: 2, como Clases (toca sus reservas).
+    DIAS_HABILES = {APODERADOS: 5, TITULOS: 5, ESPECIALIZACIONES: 5, PAGOS: 2, CLASES: 2, HORARIO: 2, CONDUCTA: 2,
+                    TECNICO: 5, OTRO: 5, PRIVACIDAD: 10, CONTACTO: 5}
     AVISO_CADA = 3  # dias habiles entre avisos de atraso (al equipo en casos normales, y al usuario siempre;
     #                 conducta avisa al equipo cada dia: D17)
     ABIERTO = 'abierto'

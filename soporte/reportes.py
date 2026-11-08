@@ -58,8 +58,12 @@ def mis_tickets(request):
 @never_cache
 @reporta_required
 def nuevo_ticket(request):
-    inicial = _inicial_de_pago(request, request.GET['pago']) if 'pago' in request.GET else None
-    form = ReporteForm(request.POST or None, initial=inicial, categorias=categorias_que_reporta(request),
+    categorias = categorias_que_reporta(request)
+    if 'pago' in request.GET:
+        inicial = _inicial_de_pago(request, request.GET['pago'])
+    else:  # un enlace puede elegir el tema ("Pedir ayuda con mi horario"); el formulario solo ofrece los suyos
+        inicial = {'categoria': request.GET['categoria']} if 'categoria' in request.GET else None
+    form = ReporteForm(request.POST or None, initial=inicial, categorias=categorias,
                        estudiantes=estudiantes_que_reporta(request))
     if request.method == 'POST' and form.is_valid():
         ticket = abrir_reporte(request.user, **form.cleaned_data)
@@ -70,7 +74,8 @@ def nuevo_ticket(request):
     return render(request, 'apoderados/formulario.html', {
         'form': form, 'titulo': 'Abrir un ticket', 'subtitulo': 'Cuéntanos qué pasó', 'boton': 'Enviar',
         'volver_url': reverse('mis_tickets'),
-        'intro': 'Pagos, clases y conducta: respondemos en 2 días hábiles. Lo demás, en 5 días hábiles.',
+        'intro': (f"Pagos, clases{', horario' if Ticket.HORARIO in categorias else ''} y conducta: respondemos en "
+                  '2 días hábiles. Lo demás, en 5 días hábiles.'),
         **contexto_de_marco(request, seccion='ayuda'),
     })
 
