@@ -74,7 +74,15 @@ El inicio de sesión con Google no usa variables: el `client_id` y el secreto es
 
 Con `DEBUG=False`, `CompressedManifestStaticFilesStorage` da error 500 si una plantilla pide un estático que no existe. Las pruebas no usan el manifiesto (`lbwus/test_runner.py`), así que no necesitan `collectstatic`; a cambio, `tests/test_configuracion_produccion.py::EstaticosTests` corre `collectstatic` con el almacenamiento de producción en una carpeta temporal (falla si un CSS apunta a un archivo inexistente) y revisa que cada `{% static '...' %}` literal de las plantillas esté en el manifiesto. Las rutas armadas con variables no se revisan.
 
-**Cron de documentos.** `python manage.py borrar_documentos_vencidos` borra los documentos de apoderados con más de 30 días. No está en el `Procfile`: hay que crearlo en Railway como un servicio Cron diario (mismo repositorio y variables, comando `python manage.py borrar_documentos_vencidos`). **Verificar que exista**; sin él, los documentos pendientes no se borran solos.
+**Tareas diarias (un solo cron).** `python manage.py tareas_diarias` corre todas las tareas diarias en orden (lista en `TAREAS`, `alumnos/management/commands/tareas_diarias.py`): agenda (`generar_bloques`), pagos que no volvieron, borrado de documentos de más de 30 días, observaciones y conversaciones vencidas, y avisos a líderes y agentes. Si una falla, corren las demás y la corrida termina con error nombrándola (se ve en los logs del servicio). Una tarea nueva se suma en `TAREAS`; Railway no se toca.
+
+No está en el `Procfile` (ese arranca solo la web). Se crea **una vez** en Railway:
+1. Proyecto → **+ New → GitHub Repo** → el mismo repositorio.
+2. **Variables:** las mismas del servicio web (al menos `DATABASE_URL`, `SECRET_KEY`, `DOCUMENTOS_CLAVE` y las de correo y Transbank); conviene usar referencias a las del servicio web.
+3. **Settings → Custom Start Command:** `python manage.py tareas_diarias`. Sin esto arrancaría gunicorn por el `Procfile`.
+4. **Settings → Cron Schedule:** `0 9 * * *` (todos los días 9:00 UTC, 6:00 en Chile).
+
+**Verificar que exista y que no queden crons sueltos** de alguna de esas tareas: correrían dos veces. Sin este cron la agenda deja de ofrecer horas unas 4 semanas después de que el profesor editó su horario por última vez, y los documentos pendientes no se borran solos. `exportar_supresiones RUTA.json` no está en `tareas_diarias`: necesita una ruta de salida fuera de la base.
 
 ## 5. Respaldos (manual)
 
