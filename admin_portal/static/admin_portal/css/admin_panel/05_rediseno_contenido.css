@@ -144,6 +144,11 @@ body:not(.light-mode) .stat-card.purple { --stat-color: #c4b5fd; }
     font-size: 0.8rem;
 }
 
+/* Los profesores llevan un degradado azul inline: la inicial lila no se leia sobre el azul. */
+.user-avatar-sm[style*="gradient"] {
+    color: #ffffff;
+}
+
 /* Badges: mismo tono, legibles en ambos modos */
 .badge {
     font-size: 0.75rem;
