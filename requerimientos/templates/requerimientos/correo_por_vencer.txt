@@ -1,0 +1,10 @@
+Hola {{ nombre }},
+
+{% if atrasados %}{% if atrasados == 1 %}Hay 1 requerimiento de autoridad con el plazo vencido.{% else %}Hay {{ atrasados }} requerimientos de autoridad con el plazo vencido.{% endif %}
+{% endif %}{% if proximos %}{% if proximos == 1 %}Hay 1 requerimiento de autoridad que vence{% else %}Hay {{ proximos }} requerimientos de autoridad que vencen{% endif %} en los próximos {{ antes }} días hábiles.
+{% endif %}
+Te lo recordaremos cada día hábil mientras sigan abiertos.
+
+Revísalos en la sección "Requerimientos de autoridad" del panel de soporte de LBWUS; por seguridad, el detalle solo se ve ahí.
+
+Equipo LBWUS

@@ -511,7 +511,9 @@ Ojo: `docs/POLITICA_PAQUETES.md` (punto 10) dice liquidación semanal. Hay que a
   escribir como se verifico. Cada paso guarda quien y cuando; las entregas (que, por que medio, a quien) son filas que
   no se editan. **No copia datos personales ni documentos**: describe categorias de datos y se refiere a las personas
   por numero de ticket. Marca los requerimientos que pasaron su plazo. **Decisiones mias, a validar con la abogada:** los
-  tres controles de la verificacion y que solo los lideres lo gestionen. No avisa por correo cuando se acerca el plazo.
+  tres controles de la verificacion y que solo los lideres lo gestionen. Avisa por correo a los lideres cuando se acerca
+  el plazo (08-nov, `manage.py avisar_requerimientos_por_vencer`, cron diario, solo dias habiles): desde 3 dias habiles
+  antes y cada dia mientras siga atrasado; solo cantidades, sin autoridad ni referencia.
 - **Eliminacion de cuentas de profesores y apoderados (paso 5, 03-nov; `supresiones/datos_propios.py`):** profesores y
   apoderados pasan por el mismo `suprimir_cuenta` que los alumnos. **Profesor:** borrar la cuenta arrastraria sus clases,
   sesiones e inscripciones (historial de otros alumnos), asi que si tiene clases con inscripciones, paquetes o retiros
