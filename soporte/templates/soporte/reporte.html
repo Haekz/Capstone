@@ -33,6 +33,7 @@
         <p><a href="{% url 'mensajes_soporte_leer' ticket.pk %}"><i class="bi bi-chat-left-text" aria-hidden="true"></i> Leer la conversación reportada</a> <small>(queda registrado quién la abre)</small></p>
         {% endif %}
         {% include 'supresiones/_panel_soporte.html' %}
+        {% include 'agenda/_panel_soporte.html' %}
         <h2 style="font-size:1rem;">Conversación</h2>
         {% include 'soporte/_conversacion.html' with soporte_ve=True %}
         {% if form %}
