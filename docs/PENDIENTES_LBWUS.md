@@ -125,7 +125,8 @@ parte por capa. Unidas en orden dan el original byte a byte, y la pagina las car
 (en el HTML solo cambian los `<link>`). `recuperar.css` (685) se queda: es una sola hoja que cargan 7 plantillas.
 CSS muerto BORRADO: `pago/03_rediseno_checkout.css` (385 lineas, "solo pagina de pago"), resto del checkout `/alumnos/pago`:
 sus 30 clases propias no estaban en ningun HTML, JS ni Python, y la unica compartida (`dark-mode`) solo aparecia en
-selectores que exigian una clase muerta. Posible resto parecido en `pago/01_pago.css` (paneles de resumen y Webpay): sin revisar.
+selectores que exigian una clase muerta. Tambien BORRADO `pago/01_pago.css` (549 lineas, formulario de tarjeta del simulador):
+solo de clases, ninguna en HTML, JS ni Python; solo lo cargaba `confirmacion.html`, que usa las de `02_confirmacion.css`.
 Arreglado: en `dashboard_admin`, "ultimos alumnos/profesores" y las tablas de usuarios ahora llevan `order_by` (antes
 mostraba 3 cualesquiera y cambiaba de orden entre cargas). Queda sin orden la tabla de clases (`Clase.objects`).
 Doc pendiente de corregir: CONCILIACION_Y_TRANSBANK_7_6.md describe un modelo `Pago` que no existe.
