@@ -6,8 +6,11 @@ from django.conf import settings
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils.dateparse import parse_datetime
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+
+from lbwus.credenciales_transbank import validar_produccion
 
 from . import paquetes
 from .decorators import alumno_required
@@ -36,6 +39,7 @@ def _tx():
     Salvaguarda estricta:
     - Salvo que TRANSBANK_PRODUCCION_HABILITADA sea True Y se provean credenciales válidas en LIVE,
       el sistema opera forzosamente en IntegrationType.TEST (Sandbox oficial Transbank).
+    - Con produccion habilitada, si falta cualquier dato se levanta ImproperlyConfigured (no se vuelve a TEST).
     - Evita cualquier cobro real o uso no autorizado en ambientes de prueba o desarrollo.
     """
     produccion_habilitada = getattr(settings, 'TRANSBANK_PRODUCCION_HABILITADA', False)
@@ -43,7 +47,8 @@ def _tx():
     api_key = getattr(settings, 'TRANSBANK_API_KEY', '')
     env_str = getattr(settings, 'TRANSBANK_ENVIRONMENT', 'TEST')
 
-    if produccion_habilitada and env_str == 'LIVE' and cc and api_key:
+    validar_produccion(produccion_habilitada, env_str, cc, api_key)
+    if produccion_habilitada:
         return Transaction(
             WebpayOptions(
                 cc,
@@ -105,11 +110,31 @@ def iniciar_compra_paquete(request, alumno_id, al_crear=None, vinculo=None):
         paquete = PaqueteClases.objects.create(
             alumno_id=alumno_id, profesor=profesor, plan=plan.codigo,
             clases=plan.clases, tarifa=profesor.tarifa, monto=monto, dias=plan.vigencia_dias,
-            buy_order=buy_order,
+            buy_order=buy_order, token_ws=response['token'],
         )
         if al_crear:
             al_crear(paquete)
     return render(request, 'alumnos/redirect_webpay.html', {'url': response['url'], 'token': response['token']})
+
+
+def registrar_respuesta(resp):
+    """Aplica a la orden lo que Transbank respondio (commit al volver el alumno, o status al revisar despues).
+
+    Aprobado = codigo 0, AUTHORIZED y el monto de la orden. Idempotente: solo toca paquetes pendientes.
+    Devuelve (aprobado, buy_order).
+    """
+    aprobado = (
+        resp.get('response_code') == 0
+        and resp.get('status') == 'AUTHORIZED'
+    )
+    buy_order = resp.get('buy_order', '')
+    paquete = PaqueteClases.objects.filter(buy_order=buy_order).first() if buy_order else None
+    if paquete and int(resp.get('amount') or 0) != paquete.monto:
+        aprobado = False
+    Suscripcion.confirmar_pago(buy_order, aprobado)
+    PaqueteClases.confirmar_pago(buy_order, aprobado, resp.get('authorization_code') or '',
+                                 parse_datetime(resp.get('transaction_date') or ''))
+    return aprobado, buy_order
 
 
 @csrf_exempt
@@ -138,17 +163,8 @@ def confirmacion(request):
         except Exception:
             resp = {}
 
-        aprobado = (
-            resp.get('response_code') == 0
-            and resp.get('status') == 'AUTHORIZED'
-        )
         card = resp.get('card_detail') or {}
-        buy_order = resp.get('buy_order', '')
-        paquete = PaqueteClases.objects.filter(buy_order=buy_order).first() if buy_order else None
-        if paquete and int(resp.get('amount') or 0) != paquete.monto:
-            aprobado = False
-        Suscripcion.confirmar_pago(buy_order, aprobado)
-        PaqueteClases.confirmar_pago(buy_order, aprobado)
+        aprobado, buy_order = registrar_respuesta(resp)
         ctx['items'] = [
             {'titulo': f'{p.get_plan_display()}: {p.clases} clase(s) con {p.profesor.nombre if p.profesor else "—"}',
              'cantidad': 1, 'precio': _clp(p.monto)}

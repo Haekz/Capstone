@@ -573,3 +573,18 @@ una cuenta respete las conversaciones reportadas.
 A1 quitar telefono del profesor -> A2 regla de 4 h (cancelar/reagendar; tarde = profesor cobra) ->
 A3 profesor cancela con 12 h -> B1 horario semanal y bloques -> B2 notificaciones (campanita + correo) ->
 C1 mensajes alumno adulto <-> profesor -> C2 mensajes apoderado <-> profesor (menor sin mensajes).
+
+### Webpay: simulacion hoy, cobros reales solo con configuracion (08-nov)
+Decision: el modelo de pago es la **simulacion de Transbank** (ambiente de integracion: tarjetas de prueba, sin cobros reales).
+El dia que LBWUS tenga cuenta real, pasar a cobrar es **solo cargar variables en Railway**, sin tocar codigo:
+`TRANSBANK_PRODUCCION_HABILITADA=True`, `TRANSBANK_ENVIRONMENT=LIVE`, `TRANSBANK_COMMERCE_CODE` y `TRANSBANK_API_KEY`.
+- **Falla ruidosa** (`lbwus/credenciales_transbank.py`): con produccion habilitada, si falta algo el sitio no arranca y dice
+  que falta. Antes volvia en silencio a integracion y aceptaba tarjetas de prueba como pagos (clases gratis).
+- **Pagos que no volvieron** (`manage.py revisar_pagos_pendientes`, cron diario): a los pendientes de mas de 1 hora se les
+  pregunta el estado a Transbank con el `token_ws` guardado al iniciar. Pagado: se activa (misma regla que el retorno:
+  codigo 0, AUTHORIZED y monto exacto). Abandonado o fallido: queda rechazado. Si Transbank no responde, sigue pendiente.
+  Los pendientes anteriores a este campo no se pueden consultar: quedan para soporte.
+- **Conciliacion**: del pago aprobado se guardan `codigo_autorizacion` y `fecha_pago` (de Transbank). **No** se guardan los
+  digitos de la tarjeta (decidido: un dato personal menos que proteger y declarar).
+- Se retiraron `WEBPAY_SIMULACION_ACTIVADA` y `USUARIOS_SIMULACION_WEBPAY`: ningun flujo las usaba.
+- Pendiente (decision de negocio): devoluciones (`refund`).
