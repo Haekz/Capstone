@@ -7,6 +7,9 @@ Crea cuentas de prueba para recorrer el sistema completo (todas con la misma cla
   alumno con plan     33333333-3   con un paquete Progreso ya pagado al profesor
   apoderado           44444444-4   identidad verificada
   menor de edad       55555555-5   vinculado a su apoderado (vinculo verificado)
+  administrador       66666666-6   sin acceso al admin de Django
+  lider de soporte    77777777-7   habilitado en todos los temas
+  agente de soporte   88888888-8   habilitado en todos los temas
 
 Es idempotente: se puede correr varias veces sin duplicar nada. Por seguridad solo corre con
 DEBUG=True (en Railway DEBUG=False) y nunca pisa una cuenta real que ya use uno de esos RUT.
@@ -25,10 +28,11 @@ from django.utils import timezone
 
 from alumnos import paquetes
 from alumnos.models import (
-    Alumno, Asignatura, Clase, Especialidad, Genero, PaqueteClases, Profesor, SesionClase,
+    Alumno, Asignatura, Clase, Especialidad, Genero, PaqueteClases, Profesor, SesionClase, Tutor,
 )
 from apoderados.forms import VERSION_DECLARACION, VERSION_DECLARACION_VINCULO
 from apoderados.models import Apoderado, ClaveDelApoderado, Vinculo
+from soporte.models import AgenteSoporte, Habilitacion, Ticket
 
 VARIABLE_CLAVE = 'CUENTAS_DEMO_CLAVE'
 DOMINIO = 'demo.lbwus.cl'
@@ -43,6 +47,9 @@ CUENTAS = (
     ('alumno_con_plan', '33333333-3', 'Beto', 'ConPlan', 'alumno'),
     ('apoderado', '44444444-4', 'Marta', 'Apoderada', 'apoderado'),
     ('menor', '55555555-5', 'Nico', 'Menor', 'alumno'),
+    ('admin', '66666666-6', 'Tania', 'Admin', 'admin'),
+    ('lider', '77777777-7', 'Luis', 'Lider', 'soporte'),
+    ('agente', '88888888-8', 'Sara', 'Soporte', 'soporte'),
 )
 
 
@@ -55,7 +62,8 @@ def _hace_anios(anios):
 
 
 class Command(BaseCommand):
-    help = 'Crea cuentas de demo: profesor, alumno regular, alumno con plan, apoderado y menor vinculado.'
+    help = ('Crea cuentas de demo: profesor, alumno regular, alumno con plan, apoderado, menor vinculado, '
+            'administrador, lider y agente de soporte.')
 
     def handle(self, *args, **opciones):
         if not settings.DEBUG:
@@ -74,6 +82,9 @@ class Command(BaseCommand):
             apoderado = self._apoderado(usuarios['apoderado'])
             menor = self._alumno(usuarios['menor'], nivel='basica', nacimiento=_hace_anios(12))
             self._vincular(apoderado, menor)
+            Tutor.objects.get_or_create(user=usuarios['admin'])
+            self._agente(usuarios['lider'], lider=True)
+            self._agente(usuarios['agente'], lider=False)
         self._resumen()
 
     def _usuario(self, rut, nombre, apellido, rol, clave):
@@ -131,6 +142,13 @@ class Command(BaseCommand):
             'parentesco': 'madre', 'estado': Vinculo.VERIFICADO,
             'version_declaracion': VERSION_DECLARACION_VINCULO, 'declaracion_aceptada': timezone.now()})
         ClaveDelApoderado.objects.get_or_create(user=menor.user)  # al cumplir 18 define la suya
+
+    def _agente(self, user, lider):
+        """Habilitado en todos los temas: en la demo ningun ticket queda sin a quien asignarse."""
+        agente, creado = AgenteSoporte.objects.get_or_create(user=user, defaults={'es_lider': lider})
+        if creado:
+            Habilitacion.objects.bulk_create(
+                [Habilitacion(agente=agente, categoria=categoria) for categoria, _ in Ticket.CATEGORIAS])
 
     def _resumen(self):
         self.stdout.write(self.style.SUCCESS(f'Cuentas de demo listas (clave de todas: la de {VARIABLE_CLAVE})'))
