@@ -25,8 +25,7 @@ Todas las lee `lbwus/settings.py`, salvo donde se indica.
 | `CSP_OBLIGATORIA` | `1` hace obligatoria la Content-Security-Policy (sección 7) | No | Queda en Report-Only: el navegador avisa, pero no bloquea |
 | `SITIO_CLAVE` | Puerta "Sitio en mantenimiento" (`lbwus/puerta.py`) | No | Sin puerta |
 | `SITIO_DOMINIOS_CORREO` | Puerta por dominio de correo (tiene prioridad sobre `SITIO_CLAVE`) | No | Sin puerta por correo |
-| `TRANSBANK_PRODUCCION_HABILITADA`, `TRANSBANK_ENVIRONMENT`, `TRANSBANK_COMMERCE_CODE`, `TRANSBANK_API_KEY` | Webpay real | No: sin ellas se usa el ambiente de integración | Sin cobros reales (es lo esperado hoy) |
-| `WEBPAY_SIMULACION` | Modo simulación | — | **La lee `settings.py`, pero ningún flujo la usa hoy** (ver el reporte del sprint) |
+| `TRANSBANK_PRODUCCION_HABILITADA`, `TRANSBANK_ENVIRONMENT`, `TRANSBANK_COMMERCE_CODE`, `TRANSBANK_API_KEY` | Webpay real | No: sin ellas se usa el ambiente de integración (la simulación oficial de Transbank) | Sin cobros reales (es lo esperado hoy). **Para pasar a real: las cuatro a la vez** (`TRANSBANK_PRODUCCION_HABILITADA=True`, `TRANSBANK_ENVIRONMENT=LIVE`, código de comercio y llave). Si falta una, el sitio no arranca y dice cuál |
 | `MONGODB_INTEGRACION` | Solo pruebas | No | — |
 
 El inicio de sesión con Google no usa variables: el `client_id` y el secreto están en la base (Django admin → Social applications).

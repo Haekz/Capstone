@@ -54,8 +54,9 @@ admin.site.register(Suscripcion, SuscripcionAdmin)
 
 # Mismo soporte para los paquetes de clases ("pagué y no puedo reservar").
 class PaqueteClasesAdmin(admin.ModelAdmin):
-    list_display = ['buy_order', 'alumno', 'profesor', 'plan', 'clases', 'monto', 'estado', 'creada', 'fecha_fin']
+    list_display = ['buy_order', 'alumno', 'profesor', 'plan', 'clases', 'monto', 'estado', 'creada', 'fecha_fin',
+                    'codigo_autorizacion']
     list_filter = ['estado', 'plan']
-    search_fields = ['buy_order', 'alumno__user__first_name', 'alumno__user__last_name']
+    search_fields = ['buy_order', 'codigo_autorizacion', 'alumno__user__first_name', 'alumno__user__last_name']
 
 admin.site.register(PaqueteClases, PaqueteClasesAdmin)

@@ -109,9 +109,14 @@ class PaqueteClases(models.Model):
     monto = models.PositiveIntegerField()
     dias = models.PositiveIntegerField(validators=[MinValueValidator(1)])
     buy_order = models.CharField(max_length=26, db_index=True)
+    # Token de Webpay: con el se le pregunta a Transbank por un pago que no volvio (revisar_pagos_pendientes).
+    token_ws = models.CharField(max_length=100, blank=True, db_index=True)
     estado = models.CharField(max_length=10, choices=Suscripcion.ESTADOS, default=ESTADO_PENDIENTE)
     creada = models.DateTimeField(auto_now_add=True)
     fecha_fin = models.DateTimeField(null=True, blank=True)
+    # Del pago aprobado, para conciliar con Transbank y para soporte. Nada de la tarjeta.
+    codigo_autorizacion = models.CharField(max_length=20, blank=True)
+    fecha_pago = models.DateTimeField(null=True, blank=True)
 
     objects = PaqueteClasesQuerySet.as_manager()
 
@@ -136,5 +141,8 @@ class PaqueteClases(models.Model):
         return self.monto // self.clases
 
     @classmethod
-    def confirmar_pago(cls, buy_order, aprobado):
+    def confirmar_pago(cls, buy_order, aprobado, codigo_autorizacion='', fecha_pago=None):
+        if aprobado:  # solo los pendientes: un retorno repetido no pisa los datos del primero
+            cls.objects.filter(buy_order=buy_order, estado=cls.ESTADO_PENDIENTE).update(
+                codigo_autorizacion=codigo_autorizacion, fecha_pago=fecha_pago or timezone.now())
         _activar_pendientes(cls, buy_order, aprobado)

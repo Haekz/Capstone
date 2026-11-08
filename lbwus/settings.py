@@ -15,6 +15,8 @@ import os
 
 from django.core.exceptions import ImproperlyConfigured
 
+from lbwus.credenciales_transbank import validar_produccion
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -334,9 +336,8 @@ TRANSBANK_PRODUCCION_HABILITADA = os.environ.get('TRANSBANK_PRODUCCION_HABILITAD
 TRANSBANK_COMMERCE_CODE = os.environ.get('TRANSBANK_COMMERCE_CODE', '').strip()
 TRANSBANK_API_KEY = os.environ.get('TRANSBANK_API_KEY', '').strip()
 TRANSBANK_ENVIRONMENT = os.environ.get('TRANSBANK_ENVIRONMENT', 'TEST').upper()
-
-WEBPAY_SIMULACION_ACTIVADA = os.environ.get('WEBPAY_SIMULACION', 'True').lower() in ('true', '1', 'yes')
-USUARIOS_SIMULACION_WEBPAY = ['*']
+# Con produccion habilitada y algun dato faltante, el sitio no arranca (antes cobraba con el ambiente de pruebas).
+validar_produccion(TRANSBANK_PRODUCCION_HABILITADA, TRANSBANK_ENVIRONMENT, TRANSBANK_COMMERCE_CODE, TRANSBANK_API_KEY)
 
 # ============================================================
 # CACHÉ PERSISTENTE Y COMPARTIDO
