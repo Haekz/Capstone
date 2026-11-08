@@ -2,6 +2,12 @@
 
 Actualizado: 08-nov-2026 (lo nuevo, en la primera seccion). Ninguno bloquea los 10 PR; todos se hacen en ramas nuevas desde `main`.
 
+## Un solo cron para todas las tareas diarias (08-nov, `fran-tareas-diarias`, sale de `main`)
+Ninguna tarea diaria estaba programada en Railway. `manage.py tareas_diarias` corre las 8 en orden
+(`generar_bloques` primero) y reemplaza los crons sueltos que piden las secciones de abajo.
+**Al desplegar:** crear en Railway ese unico cron (`CONFIGURACION_PRODUCCION.md`, seccion 4). Es urgente por
+`generar_bloques`: sin el, cada profesor se queda sin horas para reservar 4 semanas despues de su ultima edicion.
+
 ## Al 07-nov: fases 1 a 7, bugs de QA y ramas sueltas
 
 ### Especialidades y horario del profesor (fases 1 a 7, 06 y 07-nov). Todo subido, falta mergear

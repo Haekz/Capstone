@@ -141,7 +141,7 @@ El comprobante solo se ve al volver de Webpay: no hay forma de reabrirlo despué
 | Credenciales fuera del código | **Cumple**: variables de entorno |
 | Producción no se activa a medias | **Cumple**: el sitio no arranca si falta algo |
 | Conciliar lo cobrado con lo que informa Transbank | **Parcial**: se guardan orden, monto, código de autorización y fecha; falta un reporte que cruce ambos lados |
-| Tarea diaria `revisar_pagos_pendientes` programada en Railway | **Pendiente**: falta programarla |
+| Tarea diaria `revisar_pagos_pendientes` programada en Railway | **Pendiente**: va en `tareas_diarias`; falta crear ese cron (`CONFIGURACION_PRODUCCION.md`, sección 4) |
 | Plazo de conservación de los registros de pago | **Pendiente**: definir con el contador y la abogada |
 
 ### E. Antes de cargar las llaves reales
