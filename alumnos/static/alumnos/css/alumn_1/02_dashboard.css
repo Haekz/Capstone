@@ -21,6 +21,11 @@
     align-items: start;
 }
 
+/* Sin panel derecho (el menor no ve la oferta de paquetes): el izquierdo ocupa todo el ancho. */
+.main-dashboard-grid > .dashboard-left-panel:only-child {
+    grid-column: 1 / -1;
+}
+
 /* Banner de Bienvenida */
 .welcome-banner {
     background: linear-gradient(135deg, var(--primary-light) 0%, rgba(245, 158, 11, 0.04) 100%);
