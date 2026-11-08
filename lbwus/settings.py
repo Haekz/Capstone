@@ -21,8 +21,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# En Railway se define DEBUG=False. Sin la variable queda en True.
-DEBUG = os.environ.get('DEBUG', 'True').lower() in ('1', 'true', 'si')
+# Sin la variable DEBUG: True en local, False en Railway (Railway define RAILWAY_ENVIRONMENT solo). LBW-03.
+_DEBUG_POR_DEFECTO = 'False' if os.environ.get('RAILWAY_ENVIRONMENT') else 'True'
+DEBUG = os.environ.get('DEBUG', _DEBUG_POR_DEFECTO).lower() in ('1', 'true', 'si')
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # Con DEBUG=False es obligatoria: sin ella el sitio no arranca (SCRUM-93).

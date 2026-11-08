@@ -27,7 +27,7 @@ from tests.test_menores_prerrequisitos import User
 from alumnos.models import Tutor
 
 SETTINGS = Path(settings.BASE_DIR) / 'lbwus' / 'settings.py'
-VARIABLES_DE_ENTORNO = ('SECRET_KEY', 'DEBUG', 'DATABASE_URL')
+VARIABLES_DE_ENTORNO = ('SECRET_KEY', 'DEBUG', 'DATABASE_URL', 'RAILWAY_ENVIRONMENT')
 URL_POSTGRES = 'postgresql://usuario:clave@localhost:5432/lbwus'
 
 
@@ -78,6 +78,22 @@ class SecretKeyTests(SimpleTestCase):
         ajustes = cargar_settings()
         self.assertTrue(ajustes['DEBUG'])
         self.assertTrue(ajustes['SECRET_KEY'].startswith('django-insecure-'))
+
+
+class DebugEnRailwayTests(SimpleTestCase):
+    """LBW-03: si falta DEBUG en Railway, el sitio arranca como produccion y no como desarrollo."""
+
+    def test_en_railway_sin_debug_queda_apagado(self):
+        ajustes = cargar_settings(RAILWAY_ENVIRONMENT='production', SECRET_KEY='clave-de-prueba')
+        self.assertFalse(ajustes['DEBUG'])
+
+    def test_en_railway_sin_debug_ni_secret_key_no_arranca(self):
+        with self.assertRaisesMessage(ImproperlyConfigured, 'SECRET_KEY'):
+            cargar_settings(RAILWAY_ENVIRONMENT='production')
+
+    def test_en_railway_un_debug_explicito_se_respeta(self):
+        ajustes = cargar_settings(RAILWAY_ENVIRONMENT='production', DEBUG='True')
+        self.assertTrue(ajustes['DEBUG'])
 
 
 class DocumentosClaveTests(SimpleTestCase):
