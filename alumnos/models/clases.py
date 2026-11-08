@@ -29,25 +29,22 @@ class ClaseQuerySet(models.QuerySet):
         sesiones = SesionClase.objects.disponibles().filter(clase=models.OuterRef('pk'))
         return self.filter(models.Exists(sesiones))
 
-    def filtrar(self, especialidad=None, modalidad=None, solo_disponibles=False):
+    def filtrar(self, especialidad=None, solo_disponibles=False):
         """Combina los filtros; los que vienen vacios no se aplican."""
         clases = self
         if especialidad:
             clases = clases.filter(profesor__especialidad=especialidad)
-        if modalidad:
-            clases = clases.filter(modalidad=modalidad)
         if solo_disponibles:
             clases = clases.con_disponibilidad()
         return clases
 
 
 class Clase(models.Model):
-    MODALIDADES = [('online', 'Online'), ('presencial', 'Presencial')]
+    MODALIDADES = [('online', 'Online')]  # todas las clases son online: no existe la presencial
 
     id_clase = models.AutoField(primary_key=True)
     asignatura = models.ForeignKey(Asignatura, on_delete=models.CASCADE)
     modalidad = models.CharField(max_length=10, choices=MODALIDADES)
-    horario = models.TimeField()
     profesor = models.ForeignKey(Profesor, on_delete=models.CASCADE)
     en_vivo = models.BooleanField(default=False)
     descripcion_vivo = models.TextField(blank=True, null=True)

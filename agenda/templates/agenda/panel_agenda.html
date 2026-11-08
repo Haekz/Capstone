@@ -12,17 +12,19 @@
         {% elif not clases %}
             <p>Aún no tienes asignaturas asignadas: tus bloques se crean cuando LBWUS te asigne una.</p>
         {% endif %}
+        <p><a href="{% url 'nuevo_ticket' %}?categoria=horario"><i class="bi bi-life-preserver" aria-hidden="true"></i> Pedir ayuda a soporte con mi horario</a></p>
 
         {% if franjas %}
         <div class="prof-table-wrapper">
             <table class="prof-table">
-                <thead><tr><th>Día</th><th>Desde</th><th>Hasta</th><th><span class="visually-hidden">Acción</span></th></tr></thead>
+                <thead><tr><th>Día</th><th>Desde</th><th>Hasta</th><th>Materia</th><th><span class="visually-hidden">Acción</span></th></tr></thead>
                 <tbody>
                     {% for f in franjas %}
                     <tr>
                         <td class="prof-table-bold">{{ f.get_dia_semana_display }}</td>
                         <td>{{ f.hora_inicio|time:"H:i" }}</td>
                         <td>{{ f.hora_fin|time:"H:i" }}</td>
+                        <td>{{ f.clase.asignatura.nombre|default:"Todas mis materias" }}</td>
                         <td>
                             <form method="post" action="{% url 'agenda_quitar_franja' f.pk %}">
                                 {% csrf_token %}
@@ -55,6 +57,13 @@
                     <label for="agenda-hasta" class="prof-form-label">Hasta</label>
                     <select id="agenda-hasta" name="hora_fin" class="prof-form-select" required>
                         {% for h in horas_agenda %}<option value="{{ h|time:'H:i' }}">{{ h|time:"H:i" }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="prof-form-group">
+                    <label for="agenda-materia" class="prof-form-label">Materia</label>
+                    <select id="agenda-materia" name="clase" class="prof-form-select">
+                        <option value="">Todas mis materias</option>
+                        {% for c in clases %}<option value="{{ c.pk }}">{{ c.asignatura.nombre }}</option>{% endfor %}
                     </select>
                 </div>
             </div>

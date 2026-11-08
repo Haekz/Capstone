@@ -6,7 +6,7 @@
   menores solo los registra un apoderado.
 """
 
-from datetime import date, time
+from datetime import date
 from functools import partial
 
 from django.contrib.auth import get_user_model
@@ -33,7 +33,7 @@ class SalaVirtualSoloParticipantesTests(TestCase):
         genero = Genero.objects.create(descripcion='Otro')
         cls.profesor = crear_profesor('20000000-1', 'profe@lbwus.cl', None)
         cls.clase = Clase.objects.create(asignatura=Asignatura.objects.create(nombre='Álgebra'),
-                                         modalidad='online', horario=time(10, 0), profesor=cls.profesor)
+                                         modalidad='online', profesor=cls.profesor)
         cls.ana = crear_alumno('11111111-1', 'Ana', genero)
         Inscripcion.objects.create(alumno=cls.ana, clase=cls.clase, sesion=crear_sesion(cls.clase, dias=2),
                                    estado=Inscripcion.ESTADO_CONFIRMADA)

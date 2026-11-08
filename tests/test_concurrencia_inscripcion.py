@@ -12,7 +12,7 @@ Verifica:
 7. Test de Concurrencia Multihilo: Simular peticiones simultáneas superando el cupo para verificar
    que exactamente el número máximo de alumnos obtenga cupo y el resto sea rechazado limpiamente.
 """
-from datetime import time, timedelta
+from datetime import timedelta
 from decimal import Decimal
 from time import sleep
 from unittest.mock import patch
@@ -97,7 +97,6 @@ class TestBlindajeTransaccionalInscripcion(TestCase):
             profesor=self.profesor,
             asignatura=self.asignatura,
             modalidad='online',
-            horario=time(10, 0)
         )
 
         # Alumnos de prueba
@@ -253,7 +252,6 @@ class TestConcurrenciaMultihiloInscripcion(TransactionTestCase):
             profesor=self.profesor,
             asignatura=self.asignatura,
             modalidad='online',
-            horario=time(14, 0)
         )
 
         # Crear 6 alumnos competidores
@@ -376,10 +374,10 @@ class TestFiltrosSesionClase(TestCase):
 
         # Clases
         self.clase1 = Clase.objects.create(
-            profesor=self.prof1, asignatura=self.asig1, modalidad='online', horario=time(9, 0)
+            profesor=self.prof1, asignatura=self.asig1, modalidad='online'
         )
         self.clase2 = Clase.objects.create(
-            profesor=self.prof2, asignatura=self.asig2, modalidad='presencial', horario=time(11, 0)
+            profesor=self.prof2, asignatura=self.asig2, modalidad='online'
         )
 
         # Alumno
@@ -514,10 +512,10 @@ class TestSeguridadReservasYControlAcceso(TestCase):
         self.asig = Asignatura.objects.create(nombre='Cálculo de Seguridad')
 
         self.clase_ok = Clase.objects.create(
-            profesor=self.prof_ok, asignatura=self.asig, modalidad='online', horario=time(10, 0)
+            profesor=self.prof_ok, asignatura=self.asig, modalidad='online'
         )
         self.clase_no = Clase.objects.create(
-            profesor=self.prof_no, asignatura=self.asig, modalidad='online', horario=time(10, 0)
+            profesor=self.prof_no, asignatura=self.asig, modalidad='online'
         )
 
         # Alumno 1 (Víctima)

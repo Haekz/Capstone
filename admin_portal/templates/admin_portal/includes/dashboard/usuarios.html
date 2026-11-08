@@ -122,7 +122,7 @@
                                             </div>
                                         </td>
                                         <td>{{ prof.user.rut }}</td>
-                                        <td><span class="badge badge-profesor">{{ prof.especialidad }}</span></td>
+                                        <td><span class="badge badge-profesor">{{ prof.especialidad|default:"—" }}</span></td>
                                         <td>{{ prof.user.email }}</td>
                                         <td>{{ prof.user.telefono }}</td>
                                     </tr>

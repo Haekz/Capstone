@@ -54,8 +54,13 @@ class AgenteSoporte(models.Model):
 class Ticket(models.Model):
     APODERADOS = 'apoderados'
     TITULOS = 'titulos'
+    # Certificados de especializacion del profesor: un ticket aparte del titulo, para que el titulo
+    # (lo que lo habilita a hacer clases) no espere a las especializaciones.
+    ESPECIALIZACIONES = 'especializaciones'
     PAGOS = 'pagos'
     CLASES = 'clases'
+    # El profesor pide ayuda con su horario semanal (fase 7, decidido 07-nov): solo el la abre (DE_PROFESORES).
+    HORARIO = 'horario'
     CONDUCTA = 'conducta'
     TECNICO = 'tecnico'
     OTRO = 'otro'
@@ -65,21 +70,24 @@ class Ticket(models.Model):
     # Formulario publico Contactanos (H14). Lo abre un visitante sin cuenta: tampoco esta en DE_USUARIOS.
     CONTACTO = 'contacto'
     CATEGORIAS = [(APODERADOS, 'Apoderados y menores'), (TITULOS, 'Títulos de profesores'),
-                  (PAGOS, 'Pagos y retiros'), (CLASES, 'Clases'), (CONDUCTA, 'Conducta en una clase'),
+                  (ESPECIALIZACIONES, 'Especializaciones de profesores'),
+                  (PAGOS, 'Pagos y retiros'), (CLASES, 'Clases'), (HORARIO, 'Horario de clases'),
+                  (CONDUCTA, 'Conducta en una clase'),
                   (TECNICO, 'Problemas técnicos'), (OTRO, 'Otro'), (PRIVACIDAD, 'Privacidad y datos'),
                   (CONTACTO, 'Contacto del sitio')]
     DE_USUARIOS = (PAGOS, CLASES, CONDUCTA, TECNICO, OTRO)  # las que abre el propio usuario (D10)
+    DE_PROFESORES = DE_USUARIOS + (HORARIO,)
     # D4, D16, D17. Privacidad: 10 dias habiles (~14 corridos), decision por defecto a validar con la abogada.
-    # Contacto: 5, como Tecnico y Otro (decidido 05-nov).
-    DIAS_HABILES = {APODERADOS: 5, TITULOS: 5, PAGOS: 2, CLASES: 2, CONDUCTA: 2, TECNICO: 5, OTRO: 5, PRIVACIDAD: 10,
-                    CONTACTO: 5}
+    # Contacto: 5, como Tecnico y Otro (decidido 05-nov). Horario: 2, como Clases (toca sus reservas).
+    DIAS_HABILES = {APODERADOS: 5, TITULOS: 5, ESPECIALIZACIONES: 5, PAGOS: 2, CLASES: 2, HORARIO: 2, CONDUCTA: 2,
+                    TECNICO: 5, OTRO: 5, PRIVACIDAD: 10, CONTACTO: 5}
     AVISO_CADA = 3  # dias habiles entre avisos de atraso (al equipo en casos normales, y al usuario siempre;
     #                 conducta avisa al equipo cada dia: D17)
     ABIERTO = 'abierto'
     CERRADO = 'cerrado'
     ESTADOS = [(ABIERTO, 'Abierto'), (CERRADO, 'Cerrado')]
 
-    categoria = models.CharField(max_length=12, choices=CATEGORIAS)
+    categoria = models.CharField(max_length=20, choices=CATEGORIAS)
     estado = models.CharField(max_length=8, choices=ESTADOS, default=ABIERTO)
     # SET_NULL: si se borra la cuenta del agente, el ticket queda sin asignar.
     asignado = models.ForeignKey(AgenteSoporte, on_delete=models.SET_NULL, null=True, blank=True,
@@ -124,13 +132,14 @@ class Ticket(models.Model):
                            | Q(apoderado__isnull=True, vinculo__isnull=True, profesor__isnull=True,
                                autor__isnull=True, contacto__isnull=False)),
             ),
-            # Un solo ticket abierto por cosa revisada.
+            # Un solo ticket abierto por cosa revisada. El profesor tiene dos cosas: su titulo y sus
+            # especializaciones, cada una con su ticket.
             models.UniqueConstraint(fields=['apoderado'], condition=Q(estado='abierto'),
                                     name='un_ticket_abierto_por_apoderado'),
             models.UniqueConstraint(fields=['vinculo'], condition=Q(estado='abierto'),
                                     name='un_ticket_abierto_por_vinculo'),
-            models.UniqueConstraint(fields=['profesor'], condition=Q(estado='abierto'),
-                                    name='un_ticket_abierto_por_profesor'),
+            models.UniqueConstraint(fields=['profesor', 'categoria'], condition=Q(estado='abierto'),
+                                    name='un_ticket_abierto_por_profesor_y_tema'),
         ]
 
     def __str__(self):
@@ -152,6 +161,8 @@ class Ticket(models.Model):
             return f'Identidad de {self.apoderado.nombre}'
         if self.vinculo_id:
             return f'Vínculo {self.vinculo.apoderado.nombre} - {self.vinculo.alumno.user.first_name}'
+        if self.categoria == self.ESPECIALIZACIONES:
+            return f'Especializaciones de {self.profesor.nombre}'
         return f'Título de {self.profesor.nombre}'
 
     @property
@@ -182,7 +193,7 @@ class Ticket(models.Model):
 class Habilitacion(models.Model):
     """Categoria en la que un agente recibe tickets."""
     agente = models.ForeignKey(AgenteSoporte, on_delete=models.CASCADE, related_name='habilitaciones')
-    categoria = models.CharField(max_length=12, choices=Ticket.CATEGORIAS)
+    categoria = models.CharField(max_length=20, choices=Ticket.CATEGORIAS)
 
     class Meta:
         verbose_name = 'habilitación'
@@ -228,6 +239,8 @@ class Escalamiento(models.Model):
     destino = models.CharField(max_length=5, choices=DESTINOS)
     autor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='+')
     motivo = models.TextField(max_length=1000)
+    # Pedido de una asignatura nueva al admin (fase 4): el nombre que debe crear. Vacio en los demas casos.
+    asignatura_pedida = models.CharField(max_length=60, blank=True)
     fecha = models.DateTimeField(auto_now_add=True)
     indicacion = models.TextField(max_length=1000, blank=True)
     indicado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,

@@ -66,10 +66,9 @@ class ProfesorCancelaTests(Escenario):
         self.assertFalse(Inscripcion.objects.pagables().filter(pk=inscripcion.pk).exists())
 
     def test_se_cierra_esa_hora_en_todas_las_asignaturas(self):
-        from datetime import time
         from alumnos.models import Asignatura, Clase
         calculo = Clase.objects.create(asignatura=Asignatura.objects.create(nombre='Calculo'),
-                                       modalidad='online', horario=time(10), profesor=self.profe)
+                                       modalidad='online', profesor=self.profe)
         inscripcion = self.reservar()
         hermano = crear_sesion(calculo, dias=EN_13_HORAS, cupo=1)
         otra_hora = crear_sesion(self.clase, dias=EN_13_HORAS + 1, cupo=1)

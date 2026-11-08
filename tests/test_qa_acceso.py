@@ -51,8 +51,8 @@ COMUNES = {
 PROPIAS = {
     'alumno': {'alumno_pag1', 'mis_tickets', 'nuevo_ticket', 'eliminar_cuenta'},
     'profesor': {'panel_profesor', 'resenas_profesor', 'mis_tickets', 'nuevo_ticket', 'eliminar_cuenta'},
-    'admin': {'dashboard_admin', 'planes_adm', 'nosotros_adm', 'casos_escalados', 'crud', 'alumnos_Add',
-              'regis_tutor', 'resenas_moderacion'},
+    'admin': {'dashboard_admin', 'planes_adm', 'nosotros_adm', 'casos_escalados', 'asignaturas_adm', 'crud',
+              'alumnos_Add', 'regis_tutor', 'resenas_moderacion'},
     'soporte': {'titulos_adm', 'apoderados_revision', 'panel_soporte', 'mensajes_revision', 'requerimientos',
                 'requerimiento_nuevo'},
     'apoderado': {'portal_apoderado', 'apoderado_registrar_estudiante', 'apoderado_vincular_estudiante',

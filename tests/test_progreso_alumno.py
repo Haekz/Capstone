@@ -5,7 +5,7 @@ termino y no se cancelo. Lo que aun no tiene modelo (calificaciones, avance
 por ramo, grafico semanal y comentarios) se identifica como tal.
 """
 
-from datetime import date, time, timedelta
+from datetime import date, timedelta
 
 from django.contrib.auth import get_user_model
 from django.template.defaultfilters import floatformat
@@ -44,7 +44,7 @@ class ProgresoAlumnoTests(TestCase):
         def clase(nombre_asignatura):
             asignatura = Asignatura.objects.create(nombre=nombre_asignatura)
             return Clase.objects.create(asignatura=asignatura, modalidad='online',
-                                        horario=time(10, 0), profesor=profesor)
+                                        profesor=profesor)
 
         algebra, fisica = clase('Álgebra'), clase('Física')
 

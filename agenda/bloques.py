@@ -1,7 +1,8 @@
 """Crea y quita los bloques de la agenda semanal (paso B1b, decidido 02-nov).
 
-- 60 min, 1 alumno, proximas 4 semanas, un bloque por asignatura del profesor:
-  el alumno elige cual y B1a impide que reserven dos a la misma hora.
+- 60 min, 1 alumno, proximas 4 semanas, un bloque por asignatura de la franja: la de la franja si
+  eligio una (fase 6) o, si no, todas las del profesor. El alumno elige cual y B1a impide que
+  reserven dos a la misma hora.
 - Idempotente: lo que ya existe no se duplica y un bloque cancelado no vuelve.
 - Solo profesores habilitados (titulo aprobado): el resto no puede hacer clases.
 """
@@ -47,7 +48,7 @@ def generar(profesor, ahora=None):
     nuevos = [(franja, clase, inicio)
               for franja in profesor.horario_semanal.all()
               for inicio in _inicios(franja, ahora, hasta)
-              for clase in clases if (clase.pk, inicio) not in existentes]
+              for clase in clases if franja.clase_id in (None, clase.pk) and (clase.pk, inicio) not in existentes]
     with transaction.atomic():
         sesiones = SesionClase.objects.bulk_create([
             SesionClase(clase=clase, fecha_hora_inicio=inicio, fecha_hora_fin=inicio + DURACION, cupo_maximo=1)

@@ -1,51 +1,13 @@
-{# Calendario de clases. #}
-            <!-- ============ SECCIÓN: CALENDARIO DE CLASES ============ -->
+{# Clases de los profesores: solo lectura. Las crea soporte al aprobar un titulo o una especializacion (fase 3). #}
+            <!-- ============ SECCIÓN: CLASES ============ -->
             <div class="admin-section" id="section-clases">
                 <div class="panel">
-                    <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
-                        <span class="panel-title"><i class="bi bi-calendar3"></i> Gestión y Agenda de Clases</span>
-                        <button type="button" class="btn btn-primary" style="background: var(--primary); color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;" onclick="toggleCrearClaseForm()">
-                            <i class="bi bi-plus-circle"></i> Nueva Clase
-                        </button>
+                    <div class="panel-header">
+                        <span class="panel-title"><i class="bi bi-calendar3"></i> Clases de los profesores</span>
                     </div>
-
-                    <!-- Formulario de Creación de Clases (Oculto por defecto) -->
-                    <div id="form-crear-clase" style="display: none; padding: 20px; background: rgba(var(--primary-rgb, 99, 102, 241), 0.05); border-bottom: 1px solid var(--border); margin-bottom: 20px;">
-                        <h4 style="margin-top: 0; margin-bottom: 15px; font-size: 1.1rem; color: var(--text-primary);"><i class="bi bi-pencil-square"></i> Crear Nueva Clase</h4>
-                        <form id="crearClaseForm" onsubmit="submitCrearClase(event)">
-                            {% csrf_token %}
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
-                                <div>
-                                    <label style="display: block; font-size: 0.85rem; margin-bottom: 5px; font-weight: 600;">Nombre del Curso / Materia</label>
-                                    <input type="text" name="nombre_curso" id="clase_nombre_curso" placeholder="Ej. Cálculo Diferencial I" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary);">
-                                </div>
-                                <div>
-                                    <label style="display: block; font-size: 0.85rem; margin-bottom: 5px; font-weight: 600;">Profesor Asignado</label>
-                                    <select name="id_profesor" id="clase_id_profesor" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary);">
-                                        <option value="" disabled selected>Selecciona un profesor...</option>
-                                        {% for prof in profesores %}
-                                        <option value="{{ prof.id_profesor }}">{{ prof.user.first_name }} ({{ prof.especialidad }})</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label style="display: block; font-size: 0.85rem; margin-bottom: 5px; font-weight: 600;">Modalidad</label>
-                                    <select name="modalidad" id="clase_modalidad" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary);">
-                                        <option value="online">Online</option>
-                                        <option value="presencial">Presencial</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label style="display: block; font-size: 0.85rem; margin-bottom: 5px; font-weight: 600;">Horario</label>
-                                    <input type="time" name="horario" id="clase_horario" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary);">
-                                </div>
-                            </div>
-                            <div style="display: flex; justify-content: flex-end; gap: 10px;">
-                                <button type="button" onclick="toggleCrearClaseForm()" style="background: transparent; border: 1px solid var(--border); color: var(--text-secondary); padding: 8px 16px; border-radius: 8px; cursor: pointer;">Cancelar</button>
-                                <button type="submit" style="background: var(--primary); color: #fff; border: none; padding: 8px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;">Guardar Clase</button>
-                            </div>
-                        </form>
-                    </div>
+                    <p style="margin: 0 20px 15px; color: var(--text-secondary); font-size: 0.9rem;">
+                        Las asigna soporte al aprobar el título o una especialización de cada profesor.
+                    </p>
 
                     <div class="panel-body" style="overflow-x: auto;">
                         <table class="user-table">
@@ -55,8 +17,6 @@
                                     <th>Curso / Materia</th>
                                     <th>Profesor</th>
                                     <th>Modalidad</th>
-                                    <th>Horario</th>
-                                    <th>Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -77,25 +37,13 @@
                                             {{ c.get_modalidad_display }}
                                         </span>
                                     </td>
-                                    <td><i class="bi bi-clock"></i> {{ c.horario|time:"H:i" }}</td>
-                                    <td>
-                                        <form method="POST" action="{% url 'eliminar_clase' c.id_clase %}" onsubmit="return confirm('¿Estás seguro de eliminar esta clase?')" style="display:inline;">
-                                            {% csrf_token %}
-                                            <button type="submit" class="btn-action delete" title="Eliminar Clase" style="border:none; background:transparent; color:#ef4444; cursor:pointer;">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </form>
-                                    </td>
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="6">
+                                    <td colspan="4">
                                         <div class="empty-state" style="text-align: center; padding: 40px 20px;">
                                             <i class="bi bi-calendar-x" style="font-size: 2.5rem; display: block; margin-bottom: 10px; color: var(--text-muted);"></i>
-                                            <p style="color: var(--text-secondary); margin-bottom: 15px;">No hay clases creadas en la base de datos.</p>
-                                            <button type="button" onclick="toggleCrearClaseForm()" style="background: var(--primary); color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer;">
-                                                Crear la primera clase
-                                            </button>
+                                            <p style="color: var(--text-secondary);">Todavía no hay clases. Aparecen cuando soporte aprueba el título o una especialización de un profesor.</p>
                                         </div>
                                     </td>
                                 </tr>

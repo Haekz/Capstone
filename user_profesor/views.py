@@ -14,9 +14,10 @@ from alumnos.utils import formato_clp, validar_rut_chileno, usuario_existe
 from django.core.exceptions import ValidationError
 from django.http import FileResponse, Http404
 from django.views.decorators.http import require_POST
-from . import cambio_cuenta, foto
+from . import cambio_cuenta, especializaciones, foto
+from . import inicio as inicio_panel
 from .saldos import calcular_saldos  # noqa: F401  (metricas, supresiones y pruebas lo importan desde aqui)
-from alumnos import catalogos, liquidacion, paquetes
+from alumnos import avisos_profesor, catalogos, liquidacion, paquetes
 from agenda import panel as agenda_panel
 from observaciones import panel as observaciones_panel
 from mensajes import panel as mensajes_panel
@@ -108,6 +109,7 @@ def regis_prof(request):
                 user=user,
                 especialidad=especialidad
             )
+            avisos_profesor.bienvenida(user)
 
             from django.contrib.auth import login as auth_login
             auth_login(request, user, backend='alumnos.backends.RutOrEmailBackend')
@@ -154,35 +156,11 @@ def panel_profesor(request):
         ).select_related('alumno', 'alumno__user', 'clase', 'clase__asignatura', 'paquete')
     )
 
-    inscripciones_por_clase = {}
     conteo_por_mes = {}
     for insc in inscripciones:
-        inscripciones_por_clase.setdefault(insc.clase_id, []).append(insc)
         if insc.fecha_inscripcion:
             mes_num = insc.fecha_inscripcion.month
             conteo_por_mes[mes_num] = conteo_por_mes.get(mes_num, 0) + 1
-
-    # 1. Clases del día (Máximo 6)
-    clases_top6 = clases[:6]
-    clases_hoy_lista = []
-    for clase in clases_top6:
-        insc_lista = inscripciones_por_clase.get(clase.id_clase, [])
-        primera_insc = insc_lista[0] if insc_lista else None
-        alumno_nombre = primera_insc.alumno.user.first_name if primera_insc else "Sin asignar"
-        clases_hoy_lista.append({
-            'nombre_curso': clase.asignatura.nombre,
-            'horario': clase.horario,
-            'modalidad': clase.get_modalidad_display() if hasattr(clase, 'get_modalidad_display') else clase.modalidad,
-            'alumno': alumno_nombre
-        })
-
-    # 2. Métricas del Día
-    # Dinero generado hoy segun las inscripciones reales de esas clases (ya cargadas en memoria).
-    ids_hoy = {c.id_clase for c in clases_top6}
-    inscripciones_hoy = [i for i in inscripciones if i.clase_id in ids_hoy]
-    dinero_hoy_val = sum(paquetes.pago_profesor(paquetes.valor_clase(i)) for i in inscripciones_hoy)
-    dinero_hoy = formato_clp(dinero_hoy_val)
-    clases_disponibles = max(0, 8 - len(clases_hoy_lista))
 
     # 3. Gráfico de solicitudes mensuales (Últimos 5 meses)
     meses_nombres = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
@@ -219,9 +197,7 @@ def panel_profesor(request):
         'profesor': profesor,
         'clases': clases,
         'inscripciones': inscripciones,
-        'clases_hoy': clases_hoy_lista,
-        'dinero_hoy': dinero_hoy,
-        'clases_disponibles': clases_disponibles,
+        **inicio_panel.contexto(profesor),  # Clases de Hoy, dinero y bloques libres de hoy (inicio.py)
         'rendimiento_meses': rendimiento_meses,
         'saldo_total': saldo_total_fmt,
         'saldo_disponible': saldo_disponible_fmt,
@@ -241,6 +217,7 @@ def panel_profesor(request):
         **agenda_panel.contexto(profesor),  # seccion Mi Agenda (agenda/panel.py)
         **observaciones_panel.contexto_profesor(profesor),  # sus clases realizadas, en la misma seccion
         **mensajes_panel.contexto_profesor(profesor, request.GET.get('c')),  # Buzon (mensajes/panel.py)
+        **especializaciones.contexto_panel(profesor),  # Mis especializaciones, en Inicio
     }
     return render(request, 'user_profesor/panel_profesor.html', context)
 

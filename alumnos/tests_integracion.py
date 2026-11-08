@@ -30,7 +30,6 @@ class IntegracionFlujosTestCase(TestCase):
             profesor=self.profesor,
             asignatura=self.asignatura,
             modalidad='online',
-            horario='10:00'
         )
 
         # Usuario Alumno

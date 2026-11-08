@@ -1,4 +1,5 @@
 {# Inicio del panel: metricas, agenda del dia y grafico de solicitudes. #}
+{% load static %}
         <!-- esta parte es de la sección de inicio, la pantalla principal cuando entras al panel -->
         <section id="sec-inicio" class="prof-section active">
             <div class="prof-section-header">
@@ -7,6 +8,8 @@
             </div>
 
             {% include 'user_profesor/titulo_aviso.html' %}
+            {% include 'user_profesor/especializaciones.html' %}
+            <script src="{% static 'user_profesor/envio_documento.js' %}" defer></script>
 
             <!-- esta parte es de las tarjetas de métricas arriba del inicio, muestran el dinero del día y clases disponibles -->
             <div class="prof-metrics-grid">
@@ -34,22 +37,22 @@
             <!-- esta parte es del grid del centro con la agenda del día y el gráfico -->
             <div class="prof-dashboard-grid">
                 
-                <!-- esta parte es de la agenda de clases del día, muestra máximo 6 clases -->
+                <!-- agenda del día: las sesiones reservadas para hoy, en orden de hora (user_profesor/inicio.py) -->
                 <div class="prof-card">
-                    <h2 class="prof-card-title">Clases de Hoy <span class="prof-card-title-badge">Max. 6</span></h2>
+                    <h2 class="prof-card-title">Clases de Hoy</h2>
                     {% if clases_hoy %}
                         <div class="prof-schedule-list">
                             {% for ch in clases_hoy %}
                             <div class="prof-schedule-item">
                                 <div class="prof-schedule-time">
-                                    <i class="bi bi-clock"></i> {{ ch.horario }}
+                                    <i class="bi bi-clock" aria-hidden="true"></i> {{ ch.inicio|time:"H:i" }} – {{ ch.fin|time:"H:i" }}
                                 </div>
                                 <div class="prof-schedule-details">
                                     <h4>{{ ch.nombre_curso }}</h4>
                                     <p>Alumno: <strong>{{ ch.alumno }}</strong></p>
                                 </div>
                                 <div class="prof-schedule-status">
-                                    <span class="prof-badge prof-badge-{% if ch.modalidad == 'Online' or ch.modalidad == 'online' %}online{% else %}presencial{% endif %}">
+                                    <span class="prof-badge prof-badge-online">
                                         {{ ch.modalidad }}
                                     </span>
                                 </div>

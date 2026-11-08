@@ -5,7 +5,7 @@ comision de LBWUS del 15% (IVA incluido). Cubre precio, cantidad de clases,
 compra, reserva, cancelacion, reprogramacion y permisos. Webpay va con mock.
 """
 
-from datetime import time, timedelta
+from datetime import timedelta
 from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
@@ -96,9 +96,9 @@ class Escenario(TestCase):
                                         titulo_estado=Profesor.TITULO_EN_REVISION)
         asignatura = Asignatura.objects.create(nombre='Algebra')
         cls.clase = Clase.objects.create(asignatura=asignatura, modalidad='online',
-                                         horario=time(10, 0), profesor=cls.profe)
+                                         profesor=cls.profe)
         cls.clase_otro = Clase.objects.create(asignatura=asignatura, modalidad='online',
-                                              horario=time(11, 0), profesor=cls.otro)
+                                              profesor=cls.otro)
 
     def entrar(self, rut):
         self.client.logout()

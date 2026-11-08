@@ -5,7 +5,6 @@ vinculo de otro (IDOR en las rutas con id_vinculo), un documento de identidad se
 abre sin el ticket o termina en 500 al rotar la clave, y enlaces alterados.
 """
 
-from datetime import time
 
 from cryptography.fernet import Fernet
 from django.test import TestCase, override_settings
@@ -48,7 +47,7 @@ class VinculoAjenoTests(TestCase):
         cls.vinculo_ajeno = crear_menor_vinculado(cls.otro, rut='19000000-1')
         profesor = crear_profesor('44444444-4', 'profe@demo.cl', None)
         clase = Clase.objects.create(asignatura=Asignatura.objects.create(nombre='Física'), modalidad='online',
-                                     horario=time(10, 0), profesor=profesor)
+                                     profesor=profesor)
         paquete = dar_paquete(cls.vinculo_ajeno.alumno, profesor)
         CompraApoderado.objects.create(paquete=paquete, apoderado=cls.otro, vinculo=cls.vinculo_ajeno)
         cls.sesion = crear_sesion(clase, dias=3)

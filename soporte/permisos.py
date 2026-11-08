@@ -8,7 +8,7 @@ from django.shortcuts import get_object_or_404, redirect
 
 from alumnos.decorators import soporte_required
 from alumnos.models import Alumno
-from alumnos.roles import APODERADO, SOPORTE, abre_tickets, redirigir_a_portal, rol_en_sesion
+from alumnos.roles import APODERADO, PROFESOR, SOPORTE, abre_tickets, redirigir_a_portal, rol_en_sesion
 from apoderados.models import Vinculo
 from apoderados.permisos import debe_renovar_clave
 
@@ -56,11 +56,12 @@ def lider_required(vista):
 
 
 def categorias_que_reporta(request):
-    """Categorias en que el usuario en sesion puede abrir tickets (D10). El alumno
-    menor ninguna: los abre su apoderado (D18, revisada el 01-nov)."""
-    if not request.user.is_authenticated or not abre_tickets(rol_en_sesion(request), request.user):
+    """Categorias en que el usuario en sesion puede abrir tickets (D10); el profesor, ademas, la de su
+    horario (fase 7). El alumno menor ninguna: los abre su apoderado (D18, revisada el 01-nov)."""
+    rol = rol_en_sesion(request)
+    if not request.user.is_authenticated or not abre_tickets(rol, request.user):
         return ()
-    return Ticket.DE_USUARIOS
+    return Ticket.DE_PROFESORES if rol is PROFESOR else Ticket.DE_USUARIOS
 
 
 def estudiantes_que_reporta(request):

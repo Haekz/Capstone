@@ -1,7 +1,6 @@
 """
 Suite de pruebas de regresión de la Auditoría Técnica, Seguridad Multicapa, CWV y ORM N+1.
 """
-from datetime import time as dt_time
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import connection
@@ -94,13 +93,11 @@ class AuditoriaSeguridadYArquitecturaTests(TestCase):
             asignatura=self.asig,
             profesor=self.prof_aprobado,
             modalidad="online",
-            horario=dt_time(10, 0),
         )
         self.clase_pendiente = Clase.objects.create(
             asignatura=self.asig,
             profesor=self.prof_pendiente,
             modalidad="online",
-            horario=dt_time(12, 0),
         )
 
     def test_sala_virtual_bloquea_inscripcion_cancelada(self):
@@ -192,7 +189,6 @@ class AuditoriaSeguridadYArquitecturaTests(TestCase):
                 asignatura=self.asig,
                 profesor=profesor,
                 modalidad="online",
-                horario=dt_time(desde_hora + i, 0),
             )
             Inscripcion.objects.create(alumno=self.alumno, clase=c, estado="confirmada")
             SolicitudRetiro.objects.create(
@@ -240,14 +236,17 @@ class AuditoriaSeguridadYArquitecturaTests(TestCase):
         despues_adm, r_adm = self._contar_consultas(*admin)
         despues_prof, r_prof = self._contar_consultas(*profe)
 
-        # La tabla de clases del admin se llena (antes la vista no le pasaba `clases`).
+        # La tabla de clases del admin se llena (antes la vista no le pasaba `clases`). Es solo lectura (fase 3).
         for clase in Clase.objects.all():
-            self.assertContains(r_adm, reverse("eliminar_clase", args=[clase.id_clase]))
+            self.assertContains(r_adm, f'#{clase.id_clase}</td>')
 
         self.assertEqual(despues_adm, antes_adm, "dashboard_admin crece con los datos (N+1)")
         self.assertEqual(despues_prof, antes_prof, "panel_profesor crece con los datos (N+1)")
         self.assertLessEqual(despues_adm, 36)
-        self.assertLessEqual(despues_prof, 20)
+        # Antes 20 (con 1 de holgura): el inicio con datos reales de hoy (user_profesor/inicio.py) suma 3 consultas
+        # fijas (reservas de hoy, lo ya dictado con pagables() y bloques libres). Juntarlas obligaria a copiar la
+        # regla del saldo. Sigue siendo O(1): lo que importa es la igualdad de arriba.
+        self.assertLessEqual(despues_prof, 22)
         self.assertContains(r_prof, "Cálculo Vectorial")
 
     def test_formato_clp_y_alumnos_reg_dry(self):

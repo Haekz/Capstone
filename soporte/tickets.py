@@ -31,10 +31,10 @@ def _agente_con_menos_carga(categoria):
 
 def abrir_ticket(categoria, **revisado):
     """Abre el ticket de ``revisado`` (apoderado=, vinculo= o profesor=) si no tiene
-    uno abierto, con su plazo, y lo asigna solo. Sin agente habilitado queda sin
-    asignar y se avisa a los lideres."""
+    uno abierto en esa categoria, con su plazo, y lo asigna solo. Sin agente habilitado
+    queda sin asignar y se avisa a los lideres."""
     with transaction.atomic():
-        if Ticket.objects.filter(estado=Ticket.ABIERTO, **revisado).exists():
+        if Ticket.objects.filter(estado=Ticket.ABIERTO, categoria=categoria, **revisado).exists():
             return
         _crear(categoria, **revisado)
 
@@ -124,13 +124,17 @@ def reasignar(ticket, agente, autor):
         transaction.on_commit(lambda: avisar_asignacion(ticket))
 
 
-def escalar(ticket, agente, motivo):
+def escalar(ticket, agente, motivo, asignatura_pedida=''):
     """Caso grave: un agente lo pasa al lider con menos carga, que lo toma como suyo (aunque no
     atienda la categoria); un lider lo lleva a los administradores, y el ticket sigue en soporte.
-    El plazo no cambia. Devuelve el Escalamiento."""
+    El plazo no cambia. Devuelve el Escalamiento.
+
+    ``asignatura_pedida`` (fase 4): el lider le pide al admin crear esa asignatura; el agente no puede."""
     _exigir_abierto(ticket)
+    if asignatura_pedida and not agente.es_lider:
+        raise ValidationError('Solo el líder de soporte puede pedirle una asignatura al administrador.')
     if agente.es_lider:
-        return _escalar_al_admin(ticket, agente.user, motivo)
+        return _escalar_al_admin(ticket, agente.user, motivo, asignatura_pedida)
     lider = _con_menos_carga(lideres())
     if lider is None:
         raise ValidationError('No hay un líder de soporte activo a quien escalarlo.')
@@ -144,11 +148,11 @@ def escalar(ticket, agente, motivo):
     return escalamiento
 
 
-def _escalar_al_admin(ticket, autor, motivo):
+def _escalar_al_admin(ticket, autor, motivo, asignatura_pedida=''):
     try:
         with transaction.atomic():
-            escalamiento = Escalamiento.objects.create(ticket=ticket, destino=Escalamiento.AL_ADMIN,
-                                                       autor=autor, motivo=motivo)
+            escalamiento = Escalamiento.objects.create(ticket=ticket, destino=Escalamiento.AL_ADMIN, autor=autor,
+                                                       motivo=motivo, asignatura_pedida=asignatura_pedida)
     except IntegrityError:  # un_escalamiento_al_admin_pendiente
         raise ValidationError('Ese ticket ya está escalado: espera la indicación del administrador.')
     transaction.on_commit(lambda: avisar_escalamiento_admin(escalamiento))

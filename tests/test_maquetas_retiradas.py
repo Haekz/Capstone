@@ -4,7 +4,6 @@ Lo que el usuario ve tiene que ser verdad: ningún mensaje con nombres de person
 de "chat privado" cuyo texto nadie recibe.
 """
 
-from datetime import time
 
 from django.urls import reverse
 
@@ -16,7 +15,7 @@ class ChatsDeVerdadTests(Escenario):
 
     def setUp(self):
         self.clase = Clase.objects.create(asignatura=Asignatura.objects.create(nombre='Álgebra'), modalidad='online',
-                                          horario=time(10, 0), profesor=self.profe)
+                                          profesor=self.profe)
 
     def test_el_panel_del_profesor_no_trae_el_chat_ni_el_estudio_simulados(self):
         self.entrar(RUT_PROFE)

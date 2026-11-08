@@ -306,6 +306,12 @@ body:not(.light-mode) .profe-chat-input-box input {
 .titulo-label { flex-basis: 100%; font-size: 0.85rem; font-weight: 600; }
 .titulo-form input[type=file] { font: inherit; font-size: 0.88rem; max-width: 100%; }
 .titulo-form .prof-form-btn { width: auto; margin: 0; }
+/* Mis especializaciones: reutiliza la tarjeta y el formulario del titulo; solo agrega la lista y la grilla */
+.espec { margin-bottom: 24px; }
+.espec-lista { list-style: none; padding: 0; margin: 0 0 16px; display: grid; gap: 8px; }
+.espec-lista li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 0.93rem; }
+.espec-form > .prof-form-group, .espec-asignaturas { flex-basis: 100%; }
+.espec-asignaturas { border: 0; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px; font-size: 0.9rem; }
 body:not(.light-mode) .titulo-aviso { background: rgba(245, 158, 11, 0.10); border-color: rgba(245, 158, 11, 0.35); color: #fcd34d; }
 body:not(.light-mode) .titulo-aviso--en_revision { background: rgba(139, 92, 246, 0.12); border-color: rgba(139, 92, 246, 0.4); color: #ddd6fe; }
 body:not(.light-mode) .titulo-aviso--rechazado { background: rgba(239, 68, 68, 0.10); border-color: rgba(239, 68, 68, 0.35); color: #fca5a5; }

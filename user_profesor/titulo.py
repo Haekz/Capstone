@@ -13,10 +13,14 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
+from agenda import bloques
+from alumnos import avisos_profesor
 from alumnos.models import Profesor
 from apoderados import documentos
 from soporte.models import Ticket
 from soporte.tickets import abrir_ticket, cerrar_tickets
+
+from . import asignaturas
 
 PASADO, A_RESUBIR, BORRADO = 'pasado', 'a_resubir', 'borrado'
 NO_SE_RECUPERO = 'No es un rechazo: no pudimos recuperar el archivo de tu título. Súbelo de nuevo, por favor.'
@@ -26,6 +30,11 @@ def _borrar_archivo_antiguo(profesor):
     """Titulos de antes del paso 9b, en disco: no deben quedar."""
     if profesor.titulo_archivo:
         profesor.titulo_archivo.delete(save=False)
+
+
+def _cerrar_ticket(profesor):
+    """Solo el del titulo: el de sus especializaciones sigue su curso."""
+    cerrar_tickets(profesor.tickets.filter(categoria=Ticket.TITULOS))
 
 
 def subir(profesor, archivo):
@@ -44,20 +53,33 @@ def subir(profesor, archivo):
         abrir_ticket(Ticket.TITULOS, profesor=profesor)
 
 
-def resolver(profesor, aprobar, observacion=''):
-    """Decision del agente de soporte sobre un titulo en revision. El original se borra (decidido 02-nov)."""
+def resolver(profesor, aprobar, observacion='', ids_asignaturas=()):
+    """Decision del agente de soporte sobre un titulo en revision. El original se borra (decidido 02-nov).
+
+    Al aprobar, soporte puede asignarle asignaturas del catalogo (opcional) y se crean sus clases.
+    Devuelve las clases nuevas.
+    """
     if profesor.titulo_estado != Profesor.TITULO_EN_REVISION:
         raise ValidationError('Ese título no está pendiente de revisión.')
     if not aprobar and not observacion.strip():
         raise ValidationError('Indica el motivo del rechazo.')
+    elegidas = asignaturas.del_catalogo(ids_asignaturas, obligatoria=False) if aprobar else []
     profesor.titulo_estado = Profesor.TITULO_APROBADO if aprobar else Profesor.TITULO_RECHAZADO
     profesor.titulo_observacion = '' if aprobar else observacion.strip()[:200]
     profesor.titulo_actualizado = timezone.now()
     profesor.titulo_contenido, profesor.titulo_formato = None, ''
     _borrar_archivo_antiguo(profesor)
     with transaction.atomic():
+        Profesor.objects.select_for_update().filter(pk=profesor.pk).first()  # a la vez que una especializacion
         profesor.save()
-        cerrar_tickets(profesor.tickets)
+        _cerrar_ticket(profesor)
+        nuevas = asignaturas.asignar(profesor, elegidas)  # despues de aprobar: sus bloques ya se pueden generar
+        if aprobar and not nuevas:
+            # Clases que ya tenia (una especializacion aprobada antes que el titulo) no tenian bloques: sin titulo
+            # aprobado la agenda no los genera. Con nuevas, asignar() ya los genero.
+            bloques.generar(profesor)
+        avisos_profesor.titulo(profesor, aprobar, nuevas)  # sale solo si la decision se confirma
+        return nuevas
 
 
 def pasar_a_base(profesor):
@@ -81,5 +103,5 @@ def pasar_a_base(profesor):
     with transaction.atomic():
         profesor.save()
         if resultado == A_RESUBIR:
-            cerrar_tickets(profesor.tickets)
+            _cerrar_ticket(profesor)
     return resultado

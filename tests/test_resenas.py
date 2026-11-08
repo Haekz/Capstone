@@ -6,7 +6,7 @@ paquete, reportes controlados que no ocultan, moderación exclusiva del admin
 con registro, protección de datos personales y retiro del contenido ficticio.
 """
 
-from datetime import time, timedelta
+from datetime import timedelta
 
 from django.contrib.auth import get_user_model
 from django.core import mail
@@ -64,7 +64,7 @@ class BaseResenas(TestCase):
     @staticmethod
     def crear_clase(profesor, asignatura):
         return Clase.objects.create(asignatura=Asignatura.objects.create(nombre=asignatura),
-                                    modalidad='online', horario=time(10, 0), profesor=profesor)
+                                    modalidad='online', profesor=profesor)
 
     @classmethod
     def inscribir(cls, alumno, dias, paquete=None, clase=None):

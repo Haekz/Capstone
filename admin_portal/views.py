@@ -7,7 +7,7 @@ from django.http import JsonResponse, HttpResponse
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 from alumnos import paquetes
-from alumnos.models import Alumno, Asignatura, Profesor, Tutor, Clase
+from alumnos.models import Alumno, Profesor, Tutor, Clase
 from alumnos.decorators import admin_required
 from supresiones import registro
 
@@ -201,38 +201,6 @@ def logout_admin(request):
     auth_logout(request)
     request.session.flush()
     return redirect('home')
-
-
-@admin_required
-def crear_clase(request):
-    if request.method == 'POST':
-        nombre_curso = request.POST.get('nombre_curso', '').strip()
-        modalidad = request.POST.get('modalidad', 'online')
-        horario = request.POST.get('horario', '').strip()
-        id_profesor = request.POST.get('id_profesor')
-
-        if not (nombre_curso and horario and id_profesor):
-            return JsonResponse({'success': False, 'message': 'Todos los campos son requeridos.'})
-
-        profesor = get_object_or_404(Profesor.objects.select_related('user'), id_profesor=id_profesor)
-        if not profesor.puede_hacer_clases:
-            return JsonResponse({'success': False, 'message': f'{profesor.nombre} aún no tiene su título profesional aprobado.'})
-        clase = Clase.objects.create(
-            asignatura=Asignatura.objects.get_or_create(nombre=nombre_curso)[0],
-            modalidad=modalidad,
-            horario=horario,
-            profesor=profesor
-        )
-        return JsonResponse({'success': True, 'message': f'Clase "{clase.asignatura.nombre}" creada exitosamente.'})
-    return JsonResponse({'success': False, 'message': 'Método no permitido.'})
-
-
-@admin_required
-@require_POST
-def eliminar_clase(request, pk):
-    clase = get_object_or_404(Clase, id_clase=pk)
-    clase.delete()
-    return redirect('dashboard_admin')
 
 
 def _avanzar_retiro(request, pk, accion, exito):

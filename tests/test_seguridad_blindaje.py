@@ -53,7 +53,6 @@ class SeguridadBlindajeTests(TestCase):
             asignatura=cls.asignatura,
             profesor=cls.profesor,
             modalidad='online',
-            horario='10:00:00'
         )
 
         # Banco y Solicitud de Retiro de prueba
@@ -120,21 +119,16 @@ class SeguridadBlindajeTests(TestCase):
     # ----------------------------------------------------
     # 2. ACCIONES CRÍTICAS DE ADMIN EXIGEN POST (ANTI CSRF)
     # ----------------------------------------------------
-    def test_02_eliminar_clase_por_get_es_rechazado_con_405(self):
-        """Un enlace GET no puede eliminar clases (requiere POST)."""
+    def test_02_el_admin_ya_no_puede_crear_ni_eliminar_clases(self):
+        """Esas rutas ya no existen (fase 3: las clases las crea soporte al aprobar)."""
         self._login_admin()
-        url = reverse('eliminar_clase', args=[self.clase.id_clase])
-        resp = self.client.get(url)
-        self.assertEqual(resp.status_code, 405)
-        self.assertTrue(Clase.objects.filter(pk=self.clase.pk).exists())
-
-    def test_03_eliminar_clase_por_post_elimina_correctamente(self):
-        """Un admin legítimo vía POST sí puede eliminar la clase."""
-        self._login_admin()
-        url = reverse('eliminar_clase', args=[self.clase.id_clase])
-        resp = self.client.post(url)
-        self.assertEqual(resp.status_code, 302)
-        self.assertFalse(Clase.objects.filter(pk=self.clase.pk).exists())
+        url = f'/admin_portal/eliminar_clase/{self.clase.id_clase}/'
+        self.assertEqual(self.client.get(url).status_code, 404)
+        self.assertEqual(self.client.post(url).status_code, 404)
+        self.assertEqual(self.client.post('/admin_portal/crear_clase/', {
+            'nombre_curso': 'Nueva', 'modalidad': 'online', 'horario': '10:00',
+            'id_profesor': self.clase.profesor_id}).status_code, 404)
+        self.assertEqual(list(Clase.objects.all()), [self.clase])
 
     def test_04_aprobar_y_rechazar_retiro_por_get_rechazado_con_405(self):
         """Aprobación o rechazo de fondos vía GET es rechazado con HTTP 405."""

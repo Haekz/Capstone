@@ -50,7 +50,7 @@
             {% for clase in clases %}
             <li>
                 <strong>{{ clase.asignatura.nombre }}</strong>
-                <span>{{ clase.get_modalidad_display }} · {{ clase.horario|time:"H:i" }} hrs</span>
+                <span>{{ clase.get_modalidad_display }}</span>
             </li>
             {% endfor %}
         </ul>

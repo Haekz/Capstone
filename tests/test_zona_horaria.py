@@ -51,7 +51,7 @@ class HorasEnPantallaTests(TestCase):
         profesor = crear_profesor('20000000-1', 'profe@lbwus.cl', None)
         dar_paquete(cls.ana, profesor)  # reservar consume una clase pagada
         clase = Clase.objects.create(asignatura=Asignatura.objects.create(nombre='Álgebra'),
-                                     modalidad='online', horario=time(10, 0), profesor=profesor)
+                                     modalidad='online', profesor=profesor)
         # "10:00" ingresado en Chile, como desde el admin o cargar_sesiones.
         inicio = timezone.make_aware(datetime.combine(timezone.localdate() + timedelta(days=3), time(10, 0)))
         cls.sesion = SesionClase.objects.create(clase=clase, fecha_hora_inicio=inicio,
@@ -95,7 +95,7 @@ class MigracionCambioDeHoraTests(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.clase = Clase.objects.create(asignatura=Asignatura.objects.create(nombre='Álgebra'),
-                                         modalidad='online', horario=time(10, 0),
+                                         modalidad='online',
                                          profesor=crear_profesor('20000000-1', 'profe@lbwus.cl', None))
 
     def migrar(self, reloj):

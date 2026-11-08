@@ -17,7 +17,6 @@
                             <h4 style="margin: 0; color: var(--primary-light); font-size: 1.1rem;">{{ c.asignatura.nombre }}</h4>
                             <span style="background: rgba(168, 85, 247, 0.1); color: var(--primary-light); padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;">{{ c.modalidad }}</span>
                         </div>
-                        <p style="margin: 0 0 15px 0; color: var(--text-light); font-size: 0.9rem;"><i class="bi bi-clock"></i> {{ c.horario|time:"H:i" }} hrs</p>
                     </div>
                     <a href="{% url 'sala_virtual' c.id_clase %}" target="_blank" class="prof-form-btn" style="text-align: center; background: #10b981; color: white; text-decoration: none; padding: 10px; display: block;">
                         <i class="bi bi-play-fill"></i> Entrar a la Sala

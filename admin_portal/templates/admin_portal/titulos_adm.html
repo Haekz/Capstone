@@ -1,8 +1,8 @@
 {% extends 'soporte/base_soporte.html' %}
 
-{% block title %}Títulos — Soporte LBWUS{% endblock %}
-{% block page_title %}Títulos Profesionales{% endblock %}
-{% block page_subtitle %}Revisa los títulos de los profesores: sin título aprobado no pueden hacer clases{% endblock %}
+{% block title %}Documentos de profesores — Soporte LBWUS{% endblock %}
+{% block page_title %}Documentos de profesores{% endblock %}
+{% block page_subtitle %}Revisa títulos y especializaciones: sin título aprobado no pueden hacer clases{% endblock %}
 {% block nav_titulos %}active{% endblock %}
 
 {% block content %}
@@ -15,7 +15,7 @@
 
 <div class="panel">
     <div class="panel-header">
-        <span class="panel-title"><i class="bi bi-hourglass-split"></i> Pendientes de revisión ({{ en_revision|length }})</span>
+        <span class="panel-title"><i class="bi bi-hourglass-split"></i> Títulos pendientes de revisión ({{ en_revision|length }})</span>
     </div>
     <div style="overflow-x:auto;">
         <table class="user-table">
@@ -26,7 +26,7 @@
                 {% for p in en_revision %}
                 <tr>
                     <td><strong>{{ p.nombre }}</strong><br><small>{{ p.rut }}</small></td>
-                    <td>{{ p.especialidad }}</td>
+                    <td>{{ p.especialidad|default:"—" }}</td>
                     <td>{{ p.titulo_actualizado|date:"d-m-Y H:i" }}</td>
                     <td><a href="{% url 'ver_titulo' p.id_profesor %}" target="_blank" rel="noopener"><i class="bi bi-file-earmark-text"></i> Ver título</a></td>
                     <td>
@@ -37,11 +37,56 @@
                                 style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--bg-card); color:var(--text-primary);">
                             <button type="submit" name="decision" value="aprobar" class="btn-primary"><i class="bi bi-check-lg"></i> Aprobar</button>
                             <button type="submit" name="decision" value="rechazar" class="btn-secondary"><i class="bi bi-x-lg"></i> Rechazar</button>
+                            {% include 'admin_portal/includes/asignar_asignaturas.html' with quien=p.nombre %}
                         </form>
                     </td>
                 </tr>
                 {% empty %}
                 <tr><td colspan="5">No hay títulos esperando revisión.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="panel" style="margin-top:28px;">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-award"></i> Especializaciones pendientes de revisión ({{ especializaciones|length }})</span>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="user-table">
+            <thead>
+                <tr><th>Profesor</th><th>Especialización</th><th>Propone</th><th>Subida</th><th>Archivo</th><th>Decisión</th></tr>
+            </thead>
+            <tbody>
+                {% for e in especializaciones %}
+                <tr>
+                    <td><strong>{{ e.profesor.nombre }}</strong><br><small>{{ e.profesor.rut }}</small></td>
+                    <td>{{ e.nombre }}</td>
+                    <td>{% include 'alumnos/includes/propuestas.html' %}
+                        {% if agente.es_lider and e.otra_asignatura %}
+                        <form method="post" action="{% url 'pedir_asignatura' e.pk %}" style="margin-top:6px;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-secondary"><i class="bi bi-journal-plus" aria-hidden="true"></i> Pedir al admin crear «{{ e.otra_asignatura }}»</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                    <td>{{ e.subida|date:"d-m-Y H:i" }}</td>
+                    <td><a href="{% url 'ver_especializacion' e.pk %}" target="_blank" rel="noopener"><i class="bi bi-file-earmark-text"></i> Ver certificado</a></td>
+                    <td>
+                        <form method="post" action="{% url 'resolver_especializacion' e.pk %}" style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+                            {% csrf_token %}
+                            <input type="text" name="observacion" maxlength="200" placeholder="Motivo si rechazas"
+                                aria-label="Motivo del rechazo de {{ e.nombre }}"
+                                style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--bg-card); color:var(--text-primary);">
+                            <button type="submit" name="decision" value="aprobar" class="btn-primary"><i class="bi bi-check-lg"></i> Aprobar</button>
+                            <button type="submit" name="decision" value="rechazar" class="btn-secondary"><i class="bi bi-x-lg"></i> Rechazar</button>
+                            {% include 'admin_portal/includes/asignar_asignaturas.html' with quien=e.profesor.nombre marcadas=e.propuestas.all %}
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6">No hay especializaciones esperando revisión.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -62,7 +107,7 @@
                 {% for p in otros %}
                 <tr>
                     <td><strong>{{ p.nombre }}</strong><br><small>{{ p.rut }}</small></td>
-                    <td>{{ p.especialidad }}</td>
+                    <td>{{ p.especialidad|default:"—" }}</td>
                     <td><span class="badge {% if p.puede_hacer_clases %}badge-activo{% endif %}">{{ p.get_titulo_estado_display }}</span></td>
                     <td>{{ p.titulo_observacion|default:"—" }}</td>
                 </tr>
@@ -76,22 +121,23 @@
 
 <div class="panel" style="margin-top:28px;">
     <div class="panel-header">
-        <span class="panel-title"><i class="bi bi-eye"></i> Últimas aperturas de títulos</span>
+        <span class="panel-title"><i class="bi bi-eye"></i> Últimas aperturas de documentos</span>
     </div>
     <div style="overflow-x:auto;">
         <table class="user-table">
             <thead>
-                <tr><th>Fecha</th><th>Profesor</th><th>Abrió</th></tr>
+                <tr><th>Fecha</th><th>Profesor</th><th>Documento</th><th>Abrió</th></tr>
             </thead>
             <tbody>
                 {% for acceso in accesos %}
                 <tr>
                     <td>{{ acceso.fecha|date:"d-m-Y H:i" }}</td>
                     <td>{{ acceso.profesor.nombre }}</td>
+                    <td>{% if acceso.especializacion %}Especialización: {{ acceso.especializacion.nombre }}{% else %}Título{% endif %}</td>
                     <td>{{ acceso.agente.first_name|default:"Cuenta eliminada" }}</td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="3">Todavía nadie ha abierto un título.</td></tr>
+                <tr><td colspan="4">Todavía nadie ha abierto un documento.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
