@@ -1,4 +1,6 @@
-"""Verificaciones puntuales de hallazgos (10.2)."""
+"""Verificaciones puntuales de hallazgos (10.2). Usa la clave de las cuentas demo (CUENTAS_DEMO_CLAVE)."""
+import os
+
 from playwright.sync_api import sync_playwright
 
 BASE = 'http://127.0.0.1:8765'
@@ -12,7 +14,7 @@ with sync_playwright() as pw:
         p = ctx.new_page()
         p.goto(BASE + '/accounts/login/')
         p.fill('input[name=username]', '11111111-1')
-        p.fill('input[name=password]', 'Demo12345!')
+        p.fill('input[name=password]', os.environ['CUENTAS_DEMO_CLAVE'])
         p.click('form[action$="/accounts/login/"] [type=submit]')
         p.wait_for_load_state('networkidle')
 

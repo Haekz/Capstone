@@ -6,16 +6,18 @@ capturas como evidencia. Uso:
 
     python usabilidad/recorrido.py [--etiqueta antes|despues]
 
-Requiere el servidor de demo en http://127.0.0.1:8765 (levantar_demo.bat).
+Requiere el servidor de demo en http://127.0.0.1:8765 (levantar_demo.bat) y la clave de las cuentas
+demo en la variable CUENTAS_DEMO_CLAVE (la misma con que se crearon).
 """
 import argparse
 import json
+import os
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
 BASE = 'http://127.0.0.1:8765'
-CLAVE = 'Demo12345!'
+CLAVE = os.environ.get('CUENTAS_DEMO_CLAVE', '')
 EDGE = r'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe'
 AQUI = Path(__file__).parent
 VISTAS = {'escritorio': {'width': 1366, 'height': 800}, 'movil': {'width': 390, 'height': 844}}
@@ -121,7 +123,7 @@ def pasos():
         ('03', 'Navegación general: Servicios', None, ir('/alumnos/servicios')),
         ('04', 'Navegación general: Planes', None, ir('/alumnos/planes')),
         ('05', 'Navegación general: Contacto', None, ir('/alumnos/contactos')),
-        ('06', 'Búsqueda pública: Simulador', None, ir('/alumnos/simulador')),
+        # 06 (simulador) se retiró con el simulador; los números no se reusan, igual que el 15.
         ('07', 'Registro: elegir tipo de usuario', None, ir('/alumnos/select')),
         ('08', 'Registro: alumno', None, ir('/alumnos/registro_alumno')),
         ('09', 'Formularios: registro alumno enviado vacío', None, registro_vacio),
@@ -140,13 +142,41 @@ def pasos():
         ('22', 'Panel profesor', 'profesor', ir('/profesor/panel')),
         ('23', 'Panel administrador', 'admin', ir('/admin_portal/dashboard/')),
         ('24', 'Administrador: listado de alumnos', 'admin', ir('/admin_portal/crud/')),
+        # 25 en adelante: roles y pantallas nuevas (apoderados, menores, soporte y fases 1 a 7).
+        ('25', 'Registro: apoderado', None, ir('/apoderados/registro/')),
+        ('26', 'Registro: adolescente de 14 a 17', None, ir('/apoderados/estudiantes/registro/')),
+        ('27', 'Ayuda y soporte: mis tickets (alumno)', 'alumno', ir('/soporte/mis-tickets/')),
+        ('28', 'Ayuda y soporte: nuevo ticket (alumno)', 'alumno', ir('/soporte/mis-tickets/nuevo/')),
+        ('29', 'Notificaciones (alumno)', 'alumno', ir('/notificaciones/')),
+        ('30', 'Eliminar mi cuenta (alumno)', 'alumno', ir('/privacidad/eliminar-cuenta/')),
+        ('31', 'Mi espacio (alumno con plan)', 'alumno_con_plan', ir('/alumnos/alumno_home')),
+        ('32', 'Mi espacio (estudiante menor)', 'menor', ir('/alumnos/alumno_home')),
+        ('33', 'Portal del apoderado', 'apoderado', ir('/apoderados/mi-cuenta/')),
+        ('34', 'Apoderado: registrar estudiante', 'apoderado', ir('/apoderados/mi-cuenta/estudiantes/nuevo/')),
+        ('35', 'Apoderado: vincular estudiante', 'apoderado', ir('/apoderados/mi-cuenta/estudiantes/vincular/')),
+        ('36', 'Apoderado: mensajes', 'apoderado', ir('/mensajes/apoderado/')),
+        ('37', 'Profesor: mis reseñas', 'profesor', ir('/resenas/mis-resenas/')),
+        ('38', 'Profesor: nuevo ticket', 'profesor', ir('/soporte/mis-tickets/nuevo/')),
+        ('39', 'Panel de soporte (agente)', 'agente', ir('/soporte/')),
+        ('40', 'Soporte: revisión de títulos', 'agente', ir('/admin_portal/titulos/')),
+        ('41', 'Soporte: revisión de apoderados', 'agente', ir('/apoderados/revision/')),
+        ('42', 'Panel de soporte (líder)', 'lider', ir('/soporte/')),
+        ('43', 'Líder: conversaciones reportadas', 'lider', ir('/mensajes/soporte/revision/')),
+        ('44', 'Líder: requerimientos de autoridad', 'lider', ir('/requerimientos/')),
+        ('45', 'Administrador: asignaturas', 'admin', ir('/admin_portal/asignaturas/')),
+        ('46', 'Administrador: casos escalados', 'admin', ir('/admin_portal/casos-escalados/')),
+        ('47', 'Administrador: moderación de reseñas', 'admin', ir('/resenas/moderacion/')),
     ]
 
 
-RUT = {'alumno': '11111111-1', 'profesor': '22222222-2', 'admin': '33333333-3'}
+# Cuentas de crear_cuentas_demo (alumnos/management/commands/crear_cuentas_demo.py).
+RUT = {'alumno': '11111111-1', 'profesor': '22222222-2', 'alumno_con_plan': '33333333-3', 'apoderado': '44444444-4',
+       'menor': '55555555-5', 'admin': '66666666-6', 'lider': '77777777-7', 'agente': '88888888-8'}
 
 
 def correr(etiqueta):
+    if not CLAVE:
+        raise SystemExit('Define CUENTAS_DEMO_CLAVE con la clave de las cuentas demo.')
     salida = AQUI / 'capturas' / etiqueta
     salida.mkdir(parents=True, exist_ok=True)
     resultados = []
