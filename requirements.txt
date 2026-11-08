@@ -24,7 +24,7 @@ transbank-sdk==6.1.0
 urllib3==2.7.0
 oauthlib==3.2.2
 requests-oauthlib==2.0.0
-Pillow>=10.0
+Pillow>=13.0.0
 # PDF de documentos a imagen con marca de agua (apoderados/documentos.py). Licencia Apache-2.0/BSD (no AGPL).
 pypdfium2==5.14.0
 # Zonas horarias (TIME_ZONE = 'America/Santiago') aunque el servidor no traiga la base del sistema.
