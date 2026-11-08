@@ -155,9 +155,11 @@ const safeIdSesion = Number(s.id_sesion) || 0;
 
         // Mueve una reserva a otro horario del mismo profesor: no gasta otra clase del paquete.
         function confirmarReprogramacion(idInscripcion, idSesion, nombreAsignatura, fechaHora) {
+            const safeAsig = window.escaparHtml ? window.escaparHtml(nombreAsignatura) : nombreAsignatura;
+            const safeFecha = window.escaparHtml ? window.escaparHtml(fechaHora) : fechaHora;
             Swal.fire({
                 title: 'Reprogramar clase',
-                html: `¿Mover tu reserva de <b>"${nombreAsignatura}"</b> a este horario?<br><br><span style="color:var(--primary); font-weight:600;"><i class="bi bi-clock"></i> ${fechaHora}</span><br><br>No usa otra clase de tu paquete.`,
+                html: `¿Mover tu reserva de <b>"${safeAsig}"</b> a este horario?<br><br><span style="color:var(--primary); font-weight:600;"><i class="bi bi-clock"></i> ${safeFecha}</span><br><br>No usa otra clase de tu paquete.`,
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonText: 'Sí, mover reserva',

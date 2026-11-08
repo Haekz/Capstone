@@ -1,4 +1,8 @@
 import html
+import re
+from pathlib import Path
+
+from django.conf import settings
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
@@ -128,6 +132,16 @@ class TestS23SeguridadXss(TestCase):
         # El modal de diálogo debe escapar el nombre de la asignatura
         self.assertIn('safeAsig', contenido)
         self.assertIn('escaparHtml(nombreAsignatura)', contenido)
+
+    def test_todos_los_dialogos_de_horarios_escapan_lo_que_interpolan(self):
+        """LBW-11: el html de cada Swal.fire de horarios.js solo interpola variables safe* (ya escapadas)."""
+        ruta = Path(settings.BASE_DIR) / 'alumnos/templates/alumnos/includes/panel/js/horarios.js'
+        dialogos = re.findall(r'html:\s*`([^`]*)`', ruta.read_text(encoding='utf-8'))
+        self.assertGreaterEqual(len(dialogos), 2)  # reservar y reprogramar
+        for dialogo in dialogos:
+            for variable in re.findall(r'\$\{\s*([^}]*?)\s*\}', dialogo):
+                with self.subTest(variable=variable):
+                    self.assertTrue(variable.startswith('safe'), f'{variable} entra al html sin escapar')
 
     def test_busqueda_global_admin_sanea_query_y_elimina_mocks_estaticos(self):
         """Verifica que la búsqueda en el portal admin no refleje queries sin escapar."""
