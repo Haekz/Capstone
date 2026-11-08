@@ -1,6 +1,42 @@
 # LBWUS: pendientes para despues de subir los PR
 
-Actualizado: 02-nov-2026. Ninguno bloquea los 10 PR; todos se hacen en ramas nuevas desde `main`.
+Actualizado: 07-nov-2026 (lo nuevo, en la primera seccion). Ninguno bloquea los 10 PR; todos se hacen en ramas nuevas desde `main`.
+
+## Al 07-nov: fases 1 a 7, bugs de QA y ramas sueltas
+
+### Especialidades y horario del profesor (fases 1 a 7, 06 y 07-nov). Todo subido, falta mergear
+Cada rama sale de la anterior: mergearlas en este orden.
+
+| Fase | Rama | Que hace | Migraciones |
+|---|---|---|---|
+| 1 | `fran-correo-bienvenida-profesor` | Correo de bienvenida al profesor que se registra (tambien con Google) | - |
+| 2 | `fran-especializaciones` | El profesor sube especializaciones y soporte las revisa una por una. Un ticket abierto por profesor y tema; categoria nueva Especializaciones | alumnos 0025, soporte 0012, admin_portal 0004 |
+| 3 | `fran-asignaturas` | Soporte asigna asignaturas al aprobar titulo o especializacion; aprobar el titulo genera los bloques; el admin solo ve las clases; se elimina la hora fija `Clase.horario` | alumnos 0026, 0027 (borra la columna: no se deshace) |
+| 4 | `fran-catalogo-asignaturas` | Pantalla Asignaturas del admin; el profesor propone una que no esta en el catalogo y el lider le pide al admin crearla | alumnos 0028, soporte 0013 |
+| 5 | `fran-avisos-profesor` | Avisos al profesor cuando soporte decide su titulo o una especializacion. 1514 pruebas OK | - |
+| 6 | `fran-horario-materia` | Cada franja puede ser de una materia (sin materia = todas; no se cruzan aunque sean de materias distintas). La modalidad presencial no existe: todas las clases son online. 1525 pruebas OK | agenda 0002, alumnos 0029 (pasa las presenciales a online: no se deshace) |
+| 7 | `fran-soporte-horario` | Ticket "Horario de clases" (solo profesores, 2 dias habiles, enlace desde Mi Agenda). El agente asignado agrega y quita franjas desde el ticket con las reglas del profesor; cada cambio queda como mensaje en el ticket y avisa al profesor. Terminos y Condiciones sin "presencial". 1539 pruebas OK | soporte 0014 |
+
+Los 7 fallos esperados de esas suites son los bugs de QA, corregidos aparte (abajo).
+**Al desplegar:** `migrate` y habilitar al menos un agente en los dos temas nuevos:
+`manage.py habilitar_soporte <RUT> --agregar especializaciones horario`. Sin agente, esos tickets quedan sin asignar.
+
+### Bugs de QA: corregidos (07-nov, `fran-bugs-qa`, sale de `main`). Subido, falta mergear
+Se puede mergear sola, antes o despues de las fases (probada fusionada con la fase 7: sin conflictos). 1436 pruebas OK y
+0 fallos esperados.
+- BUG-QA-03 (seguridad): `/accounts/email/` de allauth dejaba tomar el correo de otra cuenta sin confirmarlo. Cerrada (404).
+- BUG-QA-02 (pagos): Webpay confirmaba aunque llegaran `token_ws` y `TBK_TOKEN` juntos. Ahora se muestra como anulado.
+- BUG-QA-01: `planes?format=json` tenia precios fijos. Ahora salen de `paquetes.cotizar`, como la pantalla.
+- BUG-QA-05: `amount=None` daba 500 en la confirmacion. BUG-QA-04: un id no numerico daba 500 en `alumnos_findEdit` y
+  `alumnos_del` (ahora `<int:pk>`, 404).
+
+### Ramas sueltas (revisadas 07-nov)
+- `fran-cuentas-demo` (comando `crear_cuentas_demo`, no esta en `main`): fallaba al fusionar las fases porque usaba
+  `Clase.horario`. Rehecha como **`fran-cuentas-demo-v2`**, sobre la fase 7 y con el arreglo: mergearla despues de
+  `fran-soporte-horario` y cerrar `fran-cuentas-demo` sin mergear.
+- `fran-contacto` (29-oct): la reemplazo el contacto como ticket de soporte (H14, ya en `main`). Cerrar sin mergear.
+- `fran-ajustes-sprint1` (27 y 28-sep): trabajo en curso antiguo (simulador ya retirado, panel del admin antes de
+  dividirlo). Cerrar sin mergear.
 
 ## Plan aprobado: soporte y pagos (detalle y decisiones en DECISIONES_SOPORTE_Y_PAGOS.md)
 Por mergear en GitHub: `fran-soporte-2b1` -> `fran-soporte-2b2` -> `fran-contacto` -> `fran-saldos-realizados`.
