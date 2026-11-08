@@ -302,6 +302,13 @@ class BloqueosDelMenorTests(TestCase):
         self.entrar_como(self.adulta)
         self.assertContains(self.client.get(reverse('alumno_pag1')), 'data-view="view-inbox"')
 
+    def test_el_portal_del_menor_no_lo_invita_a_comprar_paquetes(self):
+        self.entrar_como(self.menor)
+        self.assertNotContains(self.client.get(reverse('alumno_pag1')), 'Más clases, menos precio por clase')
+
+        self.entrar_como(self.adulta)
+        self.assertContains(self.client.get(reverse('alumno_pag1')), 'Más clases, menos precio por clase')
+
     def test_el_portal_del_menor_muestra_las_lineas_de_ayuda_y_el_adulto_no(self):
         """D22: 147 (Fono Niños) y 149 (Fono Familia), validados en ChileAtiende el 02-nov."""
         self.entrar_como(self.menor)

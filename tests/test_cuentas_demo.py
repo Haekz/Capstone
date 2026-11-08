@@ -16,10 +16,11 @@ from django.urls import reverse
 
 from alumnos.exceptions import InscripcionError
 from alumnos.management.commands.crear_cuentas_demo import BUY_ORDER, CUENTAS, VARIABLE_CLAVE
-from alumnos.models import Alumno, Genero, Inscripcion, PaqueteClases, Profesor, SesionClase
+from alumnos.models import Alumno, Genero, Inscripcion, PaqueteClases, Profesor, SesionClase, Tutor
 from alumnos.services import InscripcionService
 from apoderados.models import Apoderado, Vinculo
 from alumnos.utils import es_menor
+from soporte.models import AgenteSoporte, Habilitacion, Ticket
 
 User = get_user_model()
 RUT = {clave: rut for clave, rut, *_ in CUENTAS}
@@ -45,11 +46,20 @@ class CuentasDeDemoTests(TestCase):
     def alumno(self, clave):
         return Alumno.objects.get(user__username=RUT[clave])
 
-    def test_crea_las_cinco_cuentas_con_su_rol(self):
-        self.assertEqual(User.objects.count(), 5)
+    def test_crea_las_ocho_cuentas_con_su_rol(self):
+        self.assertEqual(User.objects.count(), 8)
         self.assertTrue(Profesor.objects.get(user__username=RUT['profesor']).puede_hacer_clases)
         self.assertEqual(Apoderado.objects.get(user__username=RUT['apoderado']).estado, Apoderado.VERIFICADO)
         self.assertEqual(Alumno.objects.count(), 3)
+        self.assertFalse(Tutor.objects.get().user.is_staff)  # el admin de demo no entra a /admin/ de Django
+
+    def test_lider_y_agente_atienden_todos_los_temas(self):
+        lider = AgenteSoporte.objects.get(user__username=RUT['lider'])
+        agente = AgenteSoporte.objects.get(user__username=RUT['agente'])
+        self.assertEqual((lider.es_lider, agente.es_lider), (True, False))
+        todos = {categoria for categoria, _ in Ticket.CATEGORIAS}
+        for cuenta in (lider, agente):
+            self.assertEqual(set(Habilitacion.objects.filter(agente=cuenta).values_list('categoria', flat=True)), todos)
 
     def test_el_menor_es_menor_y_su_vinculo_esta_verificado(self):
         menor, apoderado = self.alumno('menor'), Apoderado.objects.get()
@@ -74,7 +84,7 @@ class CuentasDeDemoTests(TestCase):
         with self.assertRaises(InscripcionError):
             InscripcionService.inscribir_alumno_en_sesion(self.alumno('menor'), sesion.pk)
 
-    def test_las_cinco_cuentas_inician_sesion_con_su_rut(self):
+    def test_todas_las_cuentas_inician_sesion_con_su_rut(self):
         for clave, rut in RUT.items():
             with self.subTest(cuenta=clave):
                 self.client.logout()
@@ -82,10 +92,11 @@ class CuentasDeDemoTests(TestCase):
                 self.assertEqual(self.client.session.get('_auth_user_id'), str(User.objects.get(username=rut).pk))
 
     def test_correrlo_otra_vez_no_duplica_nada(self):
-        antes = [m.objects.count() for m in (User, Alumno, Profesor, Apoderado, Vinculo, PaqueteClases, SesionClase)]
+        modelos = (User, Alumno, Profesor, Apoderado, Vinculo, PaqueteClases, SesionClase, Tutor, AgenteSoporte,
+                   Habilitacion)
+        antes = [m.objects.count() for m in modelos]
         crear_cuentas()
-        self.assertEqual([m.objects.count() for m in (User, Alumno, Profesor, Apoderado, Vinculo, PaqueteClases, SesionClase)],
-                         antes)
+        self.assertEqual([m.objects.count() for m in modelos], antes)
 
 
 class SeguridadDelComandoTests(TestCase):

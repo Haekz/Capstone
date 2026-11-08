@@ -1,5 +1,7 @@
 {# Grafico de lineas del panel (admin_portal/metricas.grafico). #}
 {# Recibe: grafico, id (unico en la pagina) y descripcion (texto accesible; se le agrega el resumen). #}
+{# unlocalize: con es-cl, 180.0 saldria "180,0" y el navegador no dibuja el punto. #}
+{% load l10n %}
 <svg class="chart-svg" viewBox="0 0 600 220" role="img" aria-labelledby="{{ id }}-titulo">
     <title id="{{ id }}-titulo">{{ descripcion }}: {{ grafico.resumen }}</title>
     <!-- Líneas de cuadrícula horizontal -->
@@ -21,8 +23,8 @@
 
     <!-- Puntos (al pasar el mouse muestran el período y la cantidad) y períodos del eje X -->
     {% for punto in grafico.puntos %}
-    <circle class="chart-point" cx="{{ punto.x }}" cy="{{ punto.y }}" r="6" fill="var(--primary)" stroke="var(--bg-card)" stroke-width="2"><title>{{ punto.etiqueta }}: {{ punto.cantidad }}</title></circle>
-    <text x="{{ punto.x }}" y="204" fill="var(--text-muted)" font-size="11" text-anchor="middle">{{ punto.etiqueta }}</text>
+    <circle class="chart-point" cx="{{ punto.x|unlocalize }}" cy="{{ punto.y|unlocalize }}" r="6" fill="var(--primary)" stroke="var(--bg-card)" stroke-width="2"><title>{{ punto.etiqueta }}: {{ punto.cantidad }}</title></circle>
+    <text x="{{ punto.x|unlocalize }}" y="204" fill="var(--text-muted)" font-size="11" text-anchor="middle">{{ punto.etiqueta }}</text>
     {% endfor %}
 
     <!-- Definición del degradado -->

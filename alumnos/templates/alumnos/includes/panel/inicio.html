@@ -97,7 +97,8 @@
                         </div>
                     </div>
 
-                    <!-- Right Panel (Pulsating Ad Offer Card) -->
+                    <!-- Right Panel (Pulsating Ad Offer Card). El menor no compra: lo hace su apoderado. -->
+                    {% if not es_menor %}
                     <div class="dashboard-right-panel">
                         <div class="promo-ad-card ap-clickable" onclick="switchView('view-plans')">
                             <span class="promo-badge">Paquetes de clases</span>
@@ -106,5 +107,6 @@
                             <a class="btn-promo-cta" href="{% url 'planes' %}" onclick="event.stopPropagation()">Ver planes y precios</a>
                         </div>
                     </div>
+                    {% endif %}
                 </div>
             </div>
