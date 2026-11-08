@@ -25,7 +25,6 @@ from django.test import TestCase
 
 from alumnos.models import Genero, Tutor
 from apoderados.models import Apoderado
-from tests.bugs_qa import bug_qa
 from tests.rutas_qa import rutas
 from tests.test_apoderados import crear_agente, crear_apoderado, entrar
 from tests.test_especialidad import crear_profesor
@@ -68,7 +67,7 @@ SOLO_REDIRIGEN = {
     'google_login',  # POST: lleva a accounts.google.com (S-20)
     None,  # /accounts/social/signup/ -> /accounts/3rdparty/signup/ (ruta antigua de allauth, sin nombre)
 }
-CON_BUG_O_503 = {'alumnos_findEdit', 'alumnos_del', 'comunidad_salud'}
+CON_BUG_O_503 = {'comunidad_salud'}
 # Lo que responden al anonimo los endpoints JSON privados (decoradores *_json y las vistas que lo validan a mano).
 RECHAZOS_DE_SESION = {
     'Sesión inválida.',
@@ -152,8 +151,7 @@ class AccesoPorRolTests(Escenario):
                 self.assertEqual(propias - vistas, set())
 
     def test_ninguna_ruta_da_error_500_con_ids_inexistentes(self):
-        """Un id que no existe es 404, no 500. Ver aparte BUG-QA-04 (id no numerico en alumnos_findEdit
-        y alumnos_del) y la salud de MongoDB (503 esperado)."""
+        """Un id que no existe es 404, no 500. La salud de MongoDB da 503 (esperado)."""
         for rol in ('anonimo', *PROPIAS):
             for metodo in ('get', 'post'):
                 with self.subTest(rol=rol, metodo=metodo):
@@ -194,13 +192,11 @@ class AccesoPorRolTests(Escenario):
 
 class IdNoNumericoTests(Escenario):
 
-    @bug_qa('BUG-QA-04', 'alumnos_findEdit usa <str:pk> sobre un campo entero: un id no numerico da 500')
     def test_un_id_no_numerico_en_alumnos_findedit_es_404(self):
         self.como('admin')
         self.client.raise_request_exception = False
         self.assertEqual(self.client.get('/admin_portal/alumnos_findEdit/x/').status_code, 404)
 
-    @bug_qa('BUG-QA-04', 'alumnos_del usa <str:pk> sobre un campo entero: un id no numerico da 500')
     def test_un_id_no_numerico_en_alumnos_del_es_404(self):
         self.como('admin')
         self.client.raise_request_exception = False
@@ -227,12 +223,10 @@ class EmailDeAllauthTests(Escenario):
         self.client.post('/accounts/email/', {'action_primary': '', 'email': correo})
         self.ana.refresh_from_db()
 
-    @bug_qa('BUG-QA-03', '/accounts/email/ de allauth deja poner el correo de otra cuenta')
     def test_no_se_puede_tomar_el_correo_de_otra_cuenta(self):
         self.poner_como_principal(self.otro.email)
         self.assertNotEqual(self.ana.email.lower(), self.otro.email.lower())
 
-    @bug_qa('BUG-QA-03', '/accounts/email/ de allauth cambia el correo sin confirmarlo')
     def test_el_correo_no_cambia_sin_confirmarlo(self):
         anterior = self.ana.email
         self.poner_como_principal('sin-confirmar@demo.cl')

@@ -2,11 +2,18 @@ from django.conf import settings
 from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
+from django.http import Http404
 from django.views.decorators.cache import never_cache
 from django.views.generic import TemplateView
 from alumnos.views import home, custom_login
 from alumnos import google_views
 from lbwus.puerta import puerta
+
+
+def cerrada(request, *args, **kwargs):
+    """Pagina de allauth que el proyecto no usa: 404."""
+    raise Http404
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -54,6 +61,7 @@ urlpatterns = [
     path('accounts/google/verificar/', google_views.google_verificar, name='google_verificar'),
     path('accounts/google/reenviar/', google_views.google_reenviar, name='google_reenviar'),
     path('accounts/google/completar/', google_views.google_completar, name='google_completar'),
+    path('accounts/email/', cerrada),  # BUG-QA-03: el correo cambia solo por los flujos del proyecto
     path("accounts/", include("allauth.urls")),
 ]
 

@@ -34,8 +34,8 @@ urlpatterns = [
     # esta parte es de las rutas CRUD de alumnos
     path('crud/', crud, name='crud'),
     path('alumnos_Add', alumnos_Add, name='alumnos_Add'),
-    path('alumnos_del/<str:pk>/', alumnos_del, name='alumnos_del'),
-    path('alumnos_findEdit/<str:pk>/', alumnos_findEdit, name='alumnos_findEdit'),
+    path('alumnos_del/<int:pk>/', alumnos_del, name='alumnos_del'),
+    path('alumnos_findEdit/<int:pk>/', alumnos_findEdit, name='alumnos_findEdit'),
     path('alumnos_Update', alumnos_Update, name='alumnos_Update'),
     path('logout_admin/', logout_admin, name='logout_admin'),
 ]
