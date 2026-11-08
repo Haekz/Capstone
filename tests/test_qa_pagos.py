@@ -11,7 +11,6 @@ from django.test import Client
 from django.urls import reverse
 
 from alumnos.models import PaqueteClases
-from tests.bugs_qa import bug_qa
 from tests.test_paquetes import RUT_ANA, Escenario
 
 APROBADO = {'response_code': 0, 'status': 'AUTHORIZED'}
@@ -55,11 +54,10 @@ class ConfirmacionQATests(Escenario):
     def test_respuesta_sin_monto_se_rechaza(self, mock_tx):
         """Riesgo: una respuesta incompleta (sin amount) no puede valer como pago completo."""
         paquete = self.comprar(mock_tx)
-        self.client.raise_request_exception = False  # la pagina da 500: BUG-QA-05, abajo
+        self.client.raise_request_exception = False  # antes daba 500 (BUG-QA-05, corregido)
         self.volver_de_webpay(mock_tx, paquete, amount=None)
         self.assertEqual(self.estado(paquete), PaqueteClases.ESTADO_RECHAZADA)
 
-    @bug_qa('BUG-QA-05', 'con amount=None la pagina de confirmacion da 500 (filtro dinero: int(None))')
     def test_respuesta_sin_monto_muestra_el_rechazo_sin_error(self, mock_tx):
         """Riesgo: el alumno vuelve de Webpay a una pagina de error en vez del aviso de pago rechazado."""
         paquete = self.comprar(mock_tx)
@@ -91,11 +89,9 @@ class ConfirmacionQATests(Escenario):
         self.volver_de_webpay(mock_tx, paquete, client=Client())
         self.assertEqual(self.estado(paquete), PaqueteClases.ESTADO_ACTIVA)
 
-    @bug_qa('BUG-QA-02', 'confirmacion llama a commit() aunque lleguen token_ws y TBK_TOKEN juntos')
     def test_token_ws_y_tbk_token_juntos_no_confirman(self, mock_tx):
         """Riesgo: Transbank manda los dos cuando el pago es invalido (error en el formulario y vuelta al
-        comercio); su guia dice no confirmarlo. Hoy se llama a commit() igual: con un commit que
-        responde aprobado, el paquete se activa."""
+        comercio); su guia dice no confirmarlo. Antes se llamaba a commit() igual (BUG-QA-02, corregido)."""
         paquete = self.comprar(mock_tx)
         mock_tx.return_value.commit.return_value = {'amount': paquete.monto, 'buy_order': paquete.buy_order,
                                                     **APROBADO}
@@ -128,7 +124,6 @@ class CompraCsrfTests(Escenario):
 
 class PlanesJsonTests(Escenario):
 
-    @bug_qa('BUG-QA-01', 'planes?format=json devuelve precios fijos de la tarifa base, no los del profesor')
     def test_el_json_de_planes_usa_la_tarifa_del_profesor(self):
         """Riesgo: lo que muestra el sitio no es lo que se cobra (planes: 'todo precio sale de paquetes.py')."""
         self.profe.tarifa = 20000

@@ -91,10 +91,9 @@ def planes(request):
     tarifa = profesor.tarifa if profesor else paquetes.TARIFA_BASE
 
     if request.GET.get('format') == 'json' or request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        planes_data = [
-            {'nombre': 'Plan Flexible', 'clases': 1, 'precio_total': 15000, 'sin_renovacion': True},
-            {'nombre': 'Plan Progreso', 'clases': 4, 'precio_total': 59000, 'sin_renovacion': True},
-            {'nombre': 'Plan Intensivo', 'clases': 8, 'precio_total': 116000, 'sin_renovacion': True},
+        planes_data = [  # mismos precios que la pantalla (BUG-QA-01)
+            {'nombre': f'Plan {c.plan.nombre}', 'clases': c.plan.clases, 'precio_total': c.precio, 'sin_renovacion': True}
+            for c in paquetes.cotizar(tarifa)
         ]
         return JsonResponse({
             'planes': planes_data,

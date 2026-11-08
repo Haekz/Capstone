@@ -129,9 +129,9 @@ def confirmacion(request):
         'items': []
     }
 
-    # Pago recibido desde Webpay
+    # Pago recibido desde Webpay (con TBK_TOKEN tambien, es invalido: no se confirma, BUG-QA-02)
 
-    if token:
+    if token and not tbk_token:
 
         try:
             resp = _tx().commit(token)
@@ -158,7 +158,7 @@ def confirmacion(request):
         ctx.update({
             'aprobado': aprobado,
             'orden': buy_order,
-            'monto': _clp(resp.get('amount', 0)),
+            'monto': _clp(resp.get('amount') or 0),
             'codigo_autorizacion': resp.get('authorization_code', ''),
             'tarjeta': card.get('card_number', ''),
             'fecha': resp.get('transaction_date', ''),
