@@ -8,9 +8,10 @@ clases no dictadas es una obligacion y LBWUS gana su 15% solo por las dictadas.
 from datetime import date, datetime
 
 from django.contrib.auth import get_user_model
+from django.template.loader import render_to_string
 from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
-from django.utils import timezone
+from django.utils import timezone, translation
 
 from admin_portal.metricas import finanzas, grafico, personas, planes, registros
 from admin_portal.models import IngresoDiario
@@ -205,6 +206,15 @@ class GraficoTests(SimpleTestCase):
         g = grafico([('Ene', 0), ('Feb', 0)])
         self.assertEqual({p['y'] for p in g['puntos']}, {180.0})
         self.assertEqual([m['valor'] for m in g['marcas']], [3, 2, 1, 0])
+
+    def test_en_espanol_los_puntos_salen_con_punto_decimal(self):
+        # Con es-cl, Django escribia cy="180,0": el navegador lo rechaza y el punto no se dibuja.
+        g = grafico([('Oct', 0), ('Nov', 3)])
+        with translation.override('es-cl'):
+            html = render_to_string('admin_portal/includes/grafico_lineas.html',
+                                    {'grafico': g, 'id': 'g', 'descripcion': 'Prueba'})
+        self.assertIn('cy="180.0"', html)
+        self.assertNotIn('cy="180,0"', html)
 
 
 class PlanesTests(Escenario):
