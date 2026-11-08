@@ -89,3 +89,11 @@
     border-radius: var(--r-sm);
     line-height: 1.6;
 }
+
+/* Portal del apoderado: las acciones de cada estudiante van en lineas seguidas y se tocaba la de al lado.
+   Alto minimo de 24 px: es el objetivo minimo de toque (WCAG 2.5.8). */
+.apod-vinculos--acciones a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+}

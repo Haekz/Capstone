@@ -75,7 +75,7 @@
     <section class="perfil-prof__bloque" aria-labelledby="estudiantes-titulo">
         <h2 id="estudiantes-titulo">Estudiantes a tu cargo</h2>
         {% if vinculos %}
-        <ul class="apod-vinculos">
+        <ul class="apod-vinculos apod-vinculos--acciones">
             {% for v in vinculos %}
             <li>
                 <strong>{{ v.nombre_visible }}</strong> · RUT {{ v.alumno.user.rut }} · {{ v.get_parentesco_display }}<br>
