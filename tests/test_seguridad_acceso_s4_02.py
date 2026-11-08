@@ -1,4 +1,6 @@
-from django.test import TestCase, Client, RequestFactory
+from django.test import SimpleTestCase, TestCase, Client, RequestFactory
+from unittest import mock
+from django.db import DatabaseError
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.core.cache import cache
@@ -11,7 +13,7 @@ from allauth.core.exceptions import ImmediateHttpResponse
 
 from alumnos.models import Genero, Alumno, Tutor
 from admin_portal.forms import AdminAlumnoForm
-from alumnos.backends import normalizar_rut_canonico
+from alumnos.backends import normalizar_rut_canonico, obtener_identificador_rate_limit
 from alumnos.google_adapter import LbwusSocialAdapter, LbwusAccountAdapter
 
 User = get_user_model()
@@ -309,3 +311,12 @@ class SeguridadAccesoS402Tests(TestCase):
         self.client.force_login(self.staff_user)
         resp_staff = self.client.get('/admin/')
         self.assertEqual(resp_staff.status_code, 200)
+
+
+class IdentificadorLimiteSinBaseTests(SimpleTestCase):
+    """LBW-24: si la base falla al buscar al usuario, el limite sigue con el RUT normalizado y queda en el log."""
+
+    def test_error_de_base_queda_en_el_log_y_usa_el_rut_normalizado(self):
+        with mock.patch('alumnos.backends.User.objects.filter', side_effect=DatabaseError('base caida')):
+            with self.assertLogs('alumnos.backends', level='ERROR'):
+                self.assertEqual(obtener_identificador_rate_limit('11.111.111-1'), '11111111-1')

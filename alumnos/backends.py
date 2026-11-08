@@ -1,7 +1,10 @@
+import logging
+
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 
+logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
@@ -74,7 +77,7 @@ def obtener_identificador_rate_limit(identificador):
                 return normalizar_rut_canonico(user.rut)
             return user.username.lower()
     except Exception:
-        pass
+        logger.exception('No se pudo buscar al usuario del limite de intentos; se usa el identificador normalizado.')
 
     return canon
 
