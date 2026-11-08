@@ -15,7 +15,7 @@ conserva la clave con que se creo.
 """
 
 import os
-from datetime import date, time, timedelta
+from datetime import date, timedelta
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -102,7 +102,7 @@ class Command(BaseCommand):
             user=user, defaults={'especialidad': especialidad, 'titulo_estado': Profesor.TITULO_APROBADO})
         clase, _ = Clase.objects.get_or_create(
             asignatura=Asignatura.objects.get_or_create(nombre='Álgebra')[0], profesor=profesor,
-            defaults={'modalidad': 'online', 'horario': time(17, 0)})
+            defaults={'modalidad': 'online'})
         if not clase.sesiones.filter(estado=SesionClase.ESTADO_PROGRAMADA, fecha_hora_inicio__gt=timezone.now()).exists():
             for dias in DIAS_DE_LAS_SESIONES:
                 inicio = (timezone.now() + timedelta(days=dias)).replace(minute=0, second=0, microsecond=0)
