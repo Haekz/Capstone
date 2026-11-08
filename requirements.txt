@@ -28,7 +28,7 @@ Pillow>=10.0
 # PDF de documentos a imagen con marca de agua (apoderados/documentos.py). Licencia Apache-2.0/BSD (no AGPL).
 pypdfium2==5.14.0
 # Zonas horarias (TIME_ZONE = 'America/Santiago') aunque el servidor no traiga la base del sistema.
-tzdata==2026.4
+tzdata==2026.6
 # Feriados de Chile para los plazos de soporte en dias habiles (soporte/plazos.py).
 holidays==0.107
 python-dateutil==2.9.0.post0
