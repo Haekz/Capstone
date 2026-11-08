@@ -1,6 +1,6 @@
 # LBWUS: pendientes para despues de subir los PR
 
-Actualizado: 07-nov-2026 (lo nuevo, en la primera seccion). Ninguno bloquea los 10 PR; todos se hacen en ramas nuevas desde `main`.
+Actualizado: 08-nov-2026 (lo nuevo, en la primera seccion). Ninguno bloquea los 10 PR; todos se hacen en ramas nuevas desde `main`.
 
 ## Al 07-nov: fases 1 a 7, bugs de QA y ramas sueltas
 
@@ -20,6 +20,12 @@ Cada rama sale de la anterior: mergearlas en este orden.
 Los 7 fallos esperados de esas suites son los bugs de QA, corregidos aparte (abajo).
 **Al desplegar:** `migrate` y habilitar al menos un agente en los dos temas nuevos:
 `manage.py habilitar_soporte <RUT> --agregar especializaciones horario`. Sin agente, esos tickets quedan sin asignar.
+
+### Arreglos chicos (08-nov, `fran-arreglos-chicos`, sale de `main`)
+- La tabla de clases del admin sale siempre en el mismo orden (`order_by('pk')`, como las de usuarios).
+- Borrado `pago/01_pago.css`, CSS muerto del simulador (detalle en la seccion de CSS, mas abajo).
+- Aviso a los lideres por requerimientos de autoridad por vencer o atrasados (`requerimientos/avisos.py`).
+**Al desplegar:** programar en Railway el cron diario `python manage.py avisar_requerimientos_por_vencer`.
 
 ### Bugs de QA: corregidos (07-nov, `fran-bugs-qa`, sale de `main`). Subido, falta mergear
 Se puede mergear sola, antes o despues de las fases (probada fusionada con la fase 7: sin conflictos). 1436 pruebas OK y
