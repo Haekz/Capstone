@@ -28,7 +28,8 @@ TRANSBANK_ENVIRONMENT = os.environ.get('TRANSBANK_ENVIRONMENT', 'TEST').upper()
 La función de conexión a la pasarela `_tx()` implementa un candado estricto:
 1. **Bloqueo por Defecto:** Si `TRANSBANK_PRODUCCION_HABILITADA` es `False` (valor por defecto), el sistema **fuerza incondicionalmente** el modo `IntegrationType.TEST` utilizando los `IntegrationCommerceCodes.WEBPAY_PLUS` oficiales de Transbank.
 2. **Protección Anti-Accidentes:** Aunque existan variables de entorno residuales o credenciales cargadas por error, si el flag de producción no está autorizado explícitamente, jamás se establecerá conexión productiva con dinero real.
-3. **Modo Simulación Interno:** Se mantiene el flag `simular=1` (`WEBPAY_SIMULACION_ACTIVADA = True`) para que desarrolladores y testers validen el flujo de compra extremo a extremo sin interactuar con los servidores externos de Transbank.
+3. **Simulación = ambiente de integración:** la simulación es el sandbox oficial de Transbank (tarjetas de prueba, sin cobros reales). No hay un flag de simulación aparte: se retiró `WEBPAY_SIMULACION_ACTIVADA` porque ningún flujo la usaba.
+4. **Falla ruidosa:** con `TRANSBANK_PRODUCCION_HABILITADA=True`, si falta `LIVE`, el código de comercio o la llave, el sitio no arranca (`ImproperlyConfigured`). Antes volvía en silencio al ambiente de pruebas y aceptaba tarjetas de prueba como si fueran pagos.
 
 ---
 

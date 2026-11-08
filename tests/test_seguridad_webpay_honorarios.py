@@ -17,8 +17,8 @@ Decididas al integrar fran-agenda (03-11-2026): un solo flujo de pagos, el de pa
 - 08: honorarios por `Inscripcion.pago`. El modelo `Pago` se retiro (migracion 0024); el saldo del
   profesor sale de clases dictadas de paquetes pagados: test_paquetes (test_reserva_futura_no_suma_saldo_hasta_dictarse,
   test_compra_anulada_deja_el_paquete_pendiente_y_sin_uso) y test_retiros.
-- 09: modo simulacion para testers. Sigue pendiente: `WEBPAY_SIMULACION_ACTIVADA` existe en settings pero
-  el flujo de paquetes no lo usa; mientras tanto se prueba con el sandbox de Transbank (prueba 10).
+- 09: modo simulacion: es el ambiente de integracion de Transbank (sandbox oficial), que es el que usa `_tx()` por
+  defecto (prueba 10). Se retiro `WEBPAY_SIMULACION_ACTIVADA`, que ningun flujo usaba.
 """
 
 from django.test import SimpleTestCase
