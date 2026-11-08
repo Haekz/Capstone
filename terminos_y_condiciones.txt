@@ -79,7 +79,7 @@ Condiciones Comerciales y de Facturación:
 --------------------------------------------------------------------------------
 - **Aviso de Inasistencia (Alumno):** Si un alumno no puede asistir a una clase 
   agendada, deberá dar aviso al Profesor a través de la Plataforma con al menos 
-  24 horas de anticipación. De lo contrario, la sesión se considerará como dictada 
+  4 horas de anticipación. De lo contrario, la sesión se considerará como dictada 
   y no será reembolsable ni reprogramable.
 - **Inasistencia del Profesor:** Si el Profesor cancela una sesión, esta deberá 
   ser reprogramada de común acuerdo con el Alumno sin costo adicional.
