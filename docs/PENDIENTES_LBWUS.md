@@ -128,7 +128,7 @@ sus 30 clases propias no estaban en ningun HTML, JS ni Python, y la unica compar
 selectores que exigian una clase muerta. Posible resto parecido en `pago/01_pago.css` (paneles de resumen y Webpay): sin revisar.
 Arreglado: en `dashboard_admin`, "ultimos alumnos/profesores" y las tablas de usuarios ahora llevan `order_by` (antes
 mostraba 3 cualesquiera y cambiaba de orden entre cargas). Queda sin orden la tabla de clases (`Clase.objects`).
-Doc pendiente de corregir: CONCILIACION_Y_TRANSBANK_7_6.md describe un modelo `Pago` que no existe.
+Corregido (08-nov): CONCILIACION_Y_TRANSBANK_7_6.md ya describe el flujo vigente (`PaqueteClases`) y trae el checklist de validacion con Transbank (seccion 6).
 El enlace de cambio de cuenta exige sesion: si el profesor no la tiene, entra y vuelve a abrir el enlace.
 Decidido (31-oct): si el lunes de pago es feriado, se paga el siguiente dia habil (`alumnos/liquidacion.py`).
 
