@@ -415,9 +415,11 @@ body.dark-mode .teacher-card {
     margin-bottom: 4px;
 }
 
-/* SCRUM-32: enlace al perfil profesional */
+/* SCRUM-32: enlace al perfil profesional. Alto minimo de 24 px: es el objetivo minimo de toque (WCAG 2.5.8). */
 .teacher-profile-link {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
     margin-top: 6px;
     font-size: 0.85rem;
     font-weight: 600;
@@ -482,6 +484,18 @@ body.dark-mode .teacher-card {
     flex-direction: column;
     align-items: flex-end;
     gap: 5px;
+}
+
+/* En movil la tercera columna ("Ver Horarios") no cabe y el boton se salia de la tarjeta: pasa abajo, a todo el ancho. */
+@media (max-width: 600px) {
+    .teacher-card {
+        grid-template-columns: 60px 1fr;
+    }
+
+    .teacher-card .teacher-distance-box {
+        grid-column: 1 / -1;
+        align-items: stretch;
+    }
 }
 
 /* Aviso de las pestañas con datos de ejemplo (tutores y videos) */
