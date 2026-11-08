@@ -205,6 +205,13 @@ body.dark-mode .prof-select {
     box-shadow: 0 6px 20px rgba(245, 158, 11, 0.3);
 }
 
+/* "Inicia sesion aqui": el enlace es todo el texto, no va dentro de una frase. Alto minimo de 24 px (WCAG 2.5.8). */
+.prof-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+}
+
 /* esta parte es de la adaptación del formulario en pantallas chicas como celulares */
 @media (max-width: 600px) {
     .prof-forms-wrapper {
