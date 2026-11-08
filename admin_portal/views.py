@@ -38,7 +38,7 @@ def dashboard_admin(request):
     alumnos = Alumno.objects.select_related('user').order_by('pk')
     profesores = Profesor.objects.select_related('user', 'especialidad').order_by('pk')
     admins = Tutor.objects.select_related('user').order_by('pk')
-    clases = Clase.objects.select_related('asignatura', 'profesor__user')
+    clases = Clase.objects.select_related('asignatura', 'profesor__user').order_by('pk')
 
     ultimos_alumnos = alumnos.order_by('-pk')[:3]
     ultimos_profesores = profesores.order_by('-pk')[:3]

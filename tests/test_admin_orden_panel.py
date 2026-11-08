@@ -34,3 +34,6 @@ class OrdenDelPanelAdminTests(TestCase):
     def test_las_tablas_de_usuarios_salen_en_orden_de_registro(self):
         self.assertEqual(list(self.contexto['alumnos']), self.alumnos)
         self.assertEqual(list(self.contexto['profesores']), self.profesores)
+
+    def test_la_tabla_de_clases_sale_en_orden_de_creacion(self):
+        self.assertEqual(self.contexto['clases'].query.order_by, ('pk',))
