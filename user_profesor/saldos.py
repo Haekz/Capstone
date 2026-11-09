@@ -31,7 +31,8 @@ def saldos_de(profesores):
     Solo cuentan las clases ya dictadas: una reserva futura todavia se puede cancelar, y lo no
     realizado no se liquida (docs/POLITICA_PAQUETES.md, punto 10). Excepcion: si el alumno cancela
     con menos de 4 h, la clase se le paga igual (02-nov). Los videos, cada vez que los comparte (punto 12):
-    lo ya entregado se paga aunque despues venza el paquete.
+    lo ya entregado se paga aunque despues venza el paquete. Si soporte retira uno, deja de contar; si ya lo
+    habia cobrado, el saldo queda debiendo y se descuenta de lo proximo que gane (decidido 09-nov).
     """
     ids = [p.pk for p in profesores]
     valores = defaultdict(list)
@@ -40,7 +41,7 @@ def saldos_de(profesores):
         valores[inscripcion.clase.profesor_id].append(paquetes.valor_clase(inscripcion))
 
     videos = defaultdict(list)
-    for profesor_id, monto_videos, cantidad in (VideoCompartido.objects.filter(paquete__profesor_id__in=ids)
+    for profesor_id, monto_videos, cantidad in (VideoCompartido.objects.entregados().filter(paquete__profesor_id__in=ids)
                                                 .values_list('paquete__profesor_id', 'paquete__monto_videos',
                                                              'paquete__videos')):
         videos[profesor_id].append(paquetes.valor_video(monto_videos, cantidad))

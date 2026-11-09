@@ -10,7 +10,7 @@ from datetime import timezone as zona
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.utils import timezone
 
 from alumnos import paquetes
@@ -25,9 +25,9 @@ SIN_FECHA = datetime.max.replace(tzinfo=zona.utc)
 
 
 def con_agregado():
-    """Paquetes vigentes con agregado de videos, con cuántos lleva compartidos (``compartidos``)."""
-    return (PaqueteClases.objects.vigentes().filter(videos__gt=0)
-            .select_related('alumno__user').annotate(compartidos=Count('videos_compartidos')))
+    """Paquetes vigentes con agregado de videos, con cuántos lleva compartidos (``compartidos``, sin los retirados)."""
+    return (PaqueteClases.objects.vigentes().filter(videos__gt=0).select_related('alumno__user')
+            .annotate(compartidos=Count('videos_compartidos', filter=Q(videos_compartidos__retirado__isnull=True))))
 
 
 def estado(paquete, ahora):
@@ -69,8 +69,9 @@ def compartir(profesor_id, paquete_id, video_id):
         ficha = videoteca.ficha(video_id)
         if not ficha or ficha['metadata']['profesor_id'] != profesor_id:
             raise ValidationError('No encontramos ese video en tu biblioteca.')
-        if paquete.videos_compartidos.count() >= paquete.videos:
+        if paquete.videos_compartidos.entregados().count() >= paquete.videos:  # uno retirado libera su cupo
             raise ValidationError(f'Ya compartiste los {paquete.videos} videos que contrató.')
+        # Con los retirados: el que soporte retiró no se vuelve a compartir.
         if VideoCompartido.objects.filter(paquete__alumno_id=paquete.alumno_id, video_id=str(ficha['_id'])).exists():
             raise ValidationError('Ya le compartiste este video a ese alumno. Elige uno nuevo.')
         compartido = VideoCompartido.objects.create(paquete=paquete, video_id=str(ficha['_id']))

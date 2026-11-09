@@ -156,6 +156,23 @@ class EntregasTests(GridFsTestCase, Escenario):
         self.compartir(self.paquete(), self.videos[0])
         self.assertTrue(self.borrar(self.videos[1])['success'])
 
+    # --- fase 5d: soporte retira un video reportado (decidido 09-nov) ---
+    def retirar(self, video):
+        VideoCompartido.objects.filter(video_id=video).update(retirado=timezone.now())
+
+    def test_un_video_retirado_libera_el_cupo_pero_no_se_puede_repetir(self):
+        paquete = self.paquete(plan='flexible', videos=1)
+        self.compartir(paquete, self.videos[0])
+        self.retirar(self.videos[0])
+        self.assertEqual(self.entregas()[0]['compartidos'], 0)  # vuelve a deberlo
+        self.assertFalse(self.compartir(paquete, self.videos[0])['success'])  # el mismo, no: comparte el correcto
+        self.assertTrue(self.compartir(paquete, self.videos[1])['success'])
+
+    def test_un_video_retirado_ya_no_impide_borrarlo(self):
+        self.compartir(self.paquete(), self.videos[0])
+        self.retirar(self.videos[0])
+        self.assertTrue(self.borrar(self.videos[0])['success'])
+
     def test_la_pestana_trae_la_tarjeta_de_entregas(self):
         pagina = self.client.get(reverse('panel_profesor')).content.decode()
         self.assertIn('id="profe-entregas-card"', pagina)

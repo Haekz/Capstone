@@ -159,7 +159,8 @@ def eliminar(profesor_id, video_id):
         return False
     if not _archivos().find_one({'_id': oid, 'metadata.profesor_id': profesor_id}, {'_id': 1}):
         return False
-    if VideoCompartido.objects.filter(video_id=str(oid), paquete__in=PaqueteClases.objects.vigentes()).exists():
+    if (VideoCompartido.objects.entregados()
+            .filter(video_id=str(oid), paquete__in=PaqueteClases.objects.vigentes()).exists()):
         raise ValidationError('Ya compartiste este video con un alumno que tiene su paquete vigente: '
                               'podrás borrarlo cuando el paquete venza.')
     _bucket().delete(oid)

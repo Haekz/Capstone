@@ -11,7 +11,7 @@ from django.test import SimpleTestCase
 from django.utils import timezone
 
 from alumnos import paquetes
-from alumnos.models import PaqueteClases
+from alumnos.models import PaqueteClases, SolicitudRetiro
 from alumnos.models.videos import VideoCompartido
 from tests.test_paquetes import Escenario
 from user_profesor.saldos import calcular_saldos, saldos_de
@@ -68,3 +68,24 @@ class PagoPorVideosTests(Escenario):
         lote = saldos_de([self.profe, self.otro])
         self.assertEqual(lote[self.profe.pk], calcular_saldos(self.profe))
         self.assertEqual(lote[self.otro.pk], calcular_saldos(self.otro))
+
+    # --- fase 5d: soporte retira un video reportado (decidido 09-nov) ---
+    def retirar(self, paquete):
+        paquete.videos_compartidos.filter(pk=paquete.videos_compartidos.first().pk).update(retirado=timezone.now())
+
+    def test_un_video_retirado_no_se_paga(self):
+        paquete = self.paquete()
+        self.compartir(paquete, 2)
+        self.retirar(paquete)
+        self.assertEqual(calcular_saldos(self.profe), {'total_ganado': 5000, 'disponible': 3750, 'pendiente': 1250})
+
+    def test_si_ya_lo_habia_cobrado_se_descuenta_de_lo_proximo(self):
+        paquete = self.paquete()
+        self.compartir(paquete, 2)
+        SolicitudRetiro.objects.create(profesor=self.profe, monto=7500, estado=SolicitudRetiro.PAGADO)
+        self.retirar(paquete)
+        self.assertEqual(calcular_saldos(self.profe)['disponible'], 0)  # debe 3.750: se muestra 0, no se pierde
+        self.compartir(self.paquete(alumno=self.beto, plan='flexible', videos=1))
+        self.assertEqual(calcular_saldos(self.profe)['disponible'], 0)  # el video nuevo paga la deuda
+        self.compartir(self.paquete(alumno=self.beto, plan='flexible', videos=1))
+        self.assertEqual(calcular_saldos(self.profe)['disponible'], 3750)

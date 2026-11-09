@@ -71,6 +71,12 @@ class VerVideosDelAlumnoTests(Base):
         self.assertEqual(datos['videos'], [{'id': self.video, 'titulo': 'Factorización', 'asignatura': 'Algebra',
                                             'duracion': '25:00', 'profesor': self.profe.nombre, 'habilitado': False}])
 
+    def test_un_video_retirado_por_soporte_ya_no_se_ve(self):
+        """Fase 5d (decidido 09-nov): soporte lo retiro por un reclamo."""
+        VideoCompartido.objects.update(retirado=timezone.now())
+        self.assertEqual(self.client.get(reverse('videos_alumno')).json()['videos'], [])
+        self.assertEqual(self.ver().status_code, 404)
+
     def test_si_el_archivo_falta_en_mongo_no_se_lista_ni_se_cae(self):
         # El profesor ya no puede borrar un video compartido vigente (fase 4b); esto cubre que falte igual,
         # por ejemplo si se borro a mano en Atlas.

@@ -22,7 +22,7 @@ RANGO = re.compile(r'^bytes=(\d*)-(\d*)$')
 
 
 def _compartidos(alumno_id, solo_habilitados=False):
-    compartidos = VideoCompartido.objects.filter(
+    compartidos = VideoCompartido.objects.entregados().filter(
         paquete__in=PaqueteClases.objects.vigentes().filter(alumno_id=alumno_id))
     return compartidos.filter(habilitado_menor__isnull=False) if solo_habilitados else compartidos
 
