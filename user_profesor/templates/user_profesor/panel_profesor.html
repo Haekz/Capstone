@@ -306,8 +306,51 @@ input:checked + .slider:before {
                 `;
                 gridEl.appendChild(card);
             });
+            renderEntregas(data);
         })
         .catch(() => avisoVideos('No pudimos cargar tus videos. Revisa tu conexión.'));
+    }
+
+    // esta parte es de la lista de alumnos que contrataron videos: fecha límite y el botón para compartir
+    function renderEntregas(data) {
+        const card = document.getElementById('profe-entregas-card');
+        const lista = document.getElementById('profe-entregas-lista');
+        card.hidden = !data.entregas.length;
+        const opciones = data.videos.map(v => `<option value="${escVideo(v.id)}">${escVideo(v.titulo)} (${escVideo(v.asignatura)})</option>`).join('');
+        lista.innerHTML = data.entregas.map(e => {
+            const estado = !e.falta ? 'Entrega completa'
+                : `${e.atrasada ? 'Atrasado: debías haber entregado hasta' : 'Próxima entrega'} el ${escVideo(e.proxima)} (faltan ${Number(e.falta)})`;
+            const acciones = e.compartidos >= e.videos ? '' : (opciones ? `
+                <div class="profe-entrega-acciones">
+                    <select class="prof-form-select" aria-label="Video para ${escVideo(e.alumno)}">${opciones}</select>
+                    <button class="prof-form-btn" style="width:auto;padding:10px 20px" data-paquete="${Number(e.paquete)}" onclick="shareVideo(this)">Compartir</button>
+                </div>` : '<p class="profe-entrega-estado">Sube un video a tu biblioteca para poder compartirlo.</p>');
+            return `<li class="profe-entrega${e.atrasada ? ' atrasada' : ''}">
+                <strong>${escVideo(e.alumno)}</strong>
+                <span>Plan ${escVideo(e.plan)} · ${Number(e.compartidos)} de ${Number(e.videos)} compartidos</span>
+                <span class="profe-entrega-estado">${estado}</span>${acciones}
+            </li>`;
+        }).join('');
+    }
+
+    // esta parte es de compartir un video de la biblioteca con un alumno
+    function shareVideo(boton) {
+        const datos = new FormData();
+        datos.append('paquete', boton.dataset.paquete);
+        datos.append('video', boton.parentElement.querySelector('select').value);
+        boton.disabled = true;
+        fetch("{% url 'compartir_video' %}", { method: 'POST', headers: { 'X-CSRFToken': '{{ csrf_token }}' }, body: datos })
+        .then(res => res.json())
+        .then(data => {
+            Swal.fire({
+                title: data.success ? '¡Video compartido!' : 'Atención',
+                text: data.message,
+                icon: data.success ? 'success' : 'warning',
+                confirmButtonColor: '#a855f7'
+            });
+            renderTeacherVideos();
+        })
+        .catch(() => { boton.disabled = false; Swal.fire('Error', 'Hubo un error de conexión al compartir el video.', 'error'); });
     }
 
     // esta parte es para abrir y cerrar el modal de carga de videos
@@ -394,5 +437,6 @@ input:checked + .slider:before {
     window.closeUploadModal = closeUploadModal;
     window.submitUploadedVideo = submitUploadedVideo;
     window.deleteTeacherVideo = deleteTeacherVideo;
+    window.shareVideo = shareVideo;
 </script>
 {% endblock %}

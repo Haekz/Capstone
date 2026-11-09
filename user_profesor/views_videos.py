@@ -11,7 +11,7 @@ from pymongo.errors import PyMongoError
 from alumnos.decorators import profesor_required_json
 from comunidad import mongo
 
-from . import videoteca
+from . import entregas, videoteca
 
 ERRORES_MONGO = (mongo.MongoNoConfigurado, PyMongoError)
 
@@ -30,7 +30,8 @@ def videos_profesor(request):
     except ERRORES_MONGO:
         return _no_disponible()
     return JsonResponse({'success': True, 'disponible': True, 'videos': videos,
-                         'asignaturas': videoteca.materias(profesor_id)})
+                         'asignaturas': videoteca.materias(profesor_id),
+                         'entregas': entregas.pendientes(profesor_id)})
 
 
 @require_POST
@@ -44,6 +45,18 @@ def subir_video(request):
     except ERRORES_MONGO:
         return _no_disponible()
     return JsonResponse({'success': True, 'disponible': True, 'message': 'Video publicado en tu biblioteca.'})
+
+
+@require_POST
+@profesor_required_json
+def compartir_video(request):
+    try:
+        entregas.compartir(request.session['profesor_id'], request.POST.get('paquete'), request.POST.get('video'))
+    except ValidationError as e:
+        return JsonResponse({'success': False, 'disponible': True, 'message': e.messages[0]})
+    except ERRORES_MONGO:
+        return _no_disponible()
+    return JsonResponse({'success': True, 'disponible': True, 'message': 'Video compartido con tu alumno.'})
 
 
 @require_POST

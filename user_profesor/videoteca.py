@@ -118,6 +118,15 @@ def listar(profesor_id):
     } for d in docs]
 
 
+def ficha(video_id):
+    """El documento del video en GridFS (con su metadata), o None si el id no existe o no es valido."""
+    try:
+        oid = ObjectId(video_id)
+    except (InvalidId, TypeError):
+        return None
+    return _archivos().find_one({'_id': oid})
+
+
 def eliminar(profesor_id, video_id):
     """Borra el video si es suyo. True si lo borró."""
     try:

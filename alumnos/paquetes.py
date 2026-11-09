@@ -8,6 +8,7 @@ Fracciones exactas: nada de floats con plata.
 """
 
 from dataclasses import dataclass
+from datetime import timedelta
 from fractions import Fraction
 
 from django.core.exceptions import ValidationError
@@ -81,6 +82,15 @@ def pago_profesor(monto, tasa=COMISION):
 def precio_agregado(plan):
     """Videos que trae el plan al contratarlo, a precio fijo por video."""
     return plan.videos * PRECIO_VIDEO
+
+
+def fechas_entrega(plan, inicio):
+    """Fechas limite del profesor para compartir videos: [(fecha, videos acumulados que debe haber entregado)]."""
+    fechas, acumulado = [], 0
+    for dias, cantidad in plan.entregas:
+        acumulado += cantidad
+        fechas.append((inicio + timedelta(days=dias), acumulado))
+    return fechas
 
 
 def precio_videos_extra(cantidad):
