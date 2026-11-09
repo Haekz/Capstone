@@ -6,7 +6,6 @@ que es lo que permite adelantar y retroceder en el reproductor. Mongo en memoria
 """
 
 from datetime import timedelta
-from types import SimpleNamespace
 
 from django.test import override_settings
 from django.urls import reverse
@@ -16,7 +15,7 @@ from alumnos.models import PaqueteClases
 from alumnos.models.videos import VideoCompartido
 from apoderados.models import Apoderado
 from comunidad import mongo
-from comunidad.tests.base import MongoTestCase
+from comunidad.tests.base import GridFsTestCase
 from tests.test_apoderados import crear_apoderado, entrar
 from tests.test_apoderados_vinculos import crear_menor_vinculado
 from tests.test_paquetes import RUT_ANA, RUT_BETO, RUT_PROFE, Escenario
@@ -32,11 +31,10 @@ def cuerpo(respuesta):
     return b''.join(respuesta.streaming_content)
 
 
-class Base(MongoTestCase, Escenario):
+class Base(GridFsTestCase, Escenario):
 
     def setUp(self):
         super().setUp()
-        mongo.get_client().options = SimpleNamespace(timeout=None)  # GridFS lo pide; mongomock no lo trae
         self.contenido = mp4(1500)
         self.video = self.subir('Factorización', self.contenido)
 

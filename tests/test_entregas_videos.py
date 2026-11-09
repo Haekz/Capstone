@@ -11,13 +11,11 @@ from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase
 from django.urls import reverse
 from django.utils import timezone
-from types import SimpleNamespace
 
 from alumnos import paquetes
 from alumnos.models import PaqueteClases
 from alumnos.models.videos import VideoCompartido
-from comunidad import mongo
-from comunidad.tests.base import MongoTestCase
+from comunidad.tests.base import GridFsTestCase
 from tests.test_paquetes import RUT_ANA, RUT_OTRO, RUT_PROFE, Escenario
 from tests.test_videoteca import archivo
 from user_profesor import entregas, videoteca
@@ -41,11 +39,10 @@ class FechasDeEntregaTests(SimpleTestCase):
                 self.assertEqual(paquetes.fechas_entrega(plan, INICIO)[-1][1], plan.videos)
 
 
-class EntregasTests(MongoTestCase, Escenario):
+class EntregasTests(GridFsTestCase, Escenario):
 
     def setUp(self):
         super().setUp()
-        mongo.get_client().options = SimpleNamespace(timeout=None)  # GridFS lo pide; mongomock no lo trae
         self.entrar(RUT_PROFE)
         self.videos = [videoteca.subir(self.profe.id_profesor, self.clase.asignatura_id, f'Video {n}', archivo())
                        for n in range(6)]

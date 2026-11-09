@@ -6,20 +6,16 @@ videoteca.duracion_mp4 (cajas ftyp, mdat y moov/mvhd).
 
 import io
 import struct
-from types import SimpleNamespace
 
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import SimpleTestCase, override_settings
 from django.urls import reverse
-from mongomock.gridfs import enable_gridfs_integration
 
 from comunidad import mongo
-from comunidad.tests.base import MongoTestCase
+from comunidad.tests.base import GridFsTestCase
 from tests.test_paquetes import RUT_ANA, RUT_OTRO, RUT_PROFE, Escenario
 from user_profesor import videoteca
-
-enable_gridfs_integration()
 
 
 def caja(tipo, contenido):
@@ -52,12 +48,10 @@ class DuracionMp4Tests(SimpleTestCase):
                 videoteca.duracion_mp4(io.BytesIO(malo))
 
 
-class VideotecaTests(MongoTestCase, Escenario):
+class VideotecaTests(GridFsTestCase, Escenario):
 
     def setUp(self):
         super().setUp()
-        # GridFS de pymongo lee client.options.timeout; mongomock no lo trae. Sin limite, como pymongo por omision.
-        mongo.get_client().options = SimpleNamespace(timeout=None)
         self.entrar(RUT_PROFE)
 
     def subir(self, **datos):
