@@ -1,0 +1,40 @@
+"""Reglas de los videos extra (fase 6, politica seccion 12): quien puede comprar, cuantos y a que precio.
+
+Despues de contratar, cualquier paquete vigente al que le queden 14 dias o mas puede sumar hasta 6 videos extra
+(en total, no por compra). Una compra pendiente ya cuenta para el tope; una rechazada no. El precio sale de
+paquetes.precio_videos_extra. Solo reglas: el pago con Webpay va aparte.
+"""
+
+from django.core.exceptions import ValidationError
+from django.db.models import Sum
+from django.utils import timezone
+
+from . import paquetes
+from .models import PaqueteClases
+from .models.videos import CompraVideosExtra
+
+
+def comprados(paquete):
+    """Extras ya comprados o en proceso de pago (los rechazados no cuentan)."""
+    return (paquete.compras_videos_extra.exclude(estado=CompraVideosExtra.ESTADO_RECHAZADA)
+            .aggregate(total=Sum('cantidad'))['total'] or 0)
+
+
+def disponibles(paquete):
+    """Cuantos mas puede comprar este paquete sin pasar el tope."""
+    return max(0, paquetes.MAX_VIDEOS_EXTRA - comprados(paquete))
+
+
+def validar(paquete, cantidad, ahora=None):
+    """El precio de comprar ``cantidad`` extras para ``paquete``, o ValidationError con el motivo."""
+    ahora = ahora or timezone.now()
+    if paquete.estado != PaqueteClases.ESTADO_ACTIVA or not paquete.fecha_fin or paquete.fecha_fin <= ahora:
+        raise ValidationError('Solo puedes comprar videos extra con un paquete vigente.')
+    if (paquete.fecha_fin - ahora).days < paquetes.MIN_DIAS_PARA_EXTRA:
+        raise ValidationError(f'Le deben quedar al menos {paquetes.MIN_DIAS_PARA_EXTRA} días al paquete para '
+                              'comprar videos extra: tu profesor necesita tiempo para compartirlos.')
+    precio = paquetes.precio_videos_extra(cantidad)  # ValidationError si no esta entre 1 y el maximo
+    if cantidad > disponibles(paquete):
+        raise ValidationError(f'Puedes tener máximo {paquetes.MAX_VIDEOS_EXTRA} videos extra por paquete; '
+                              f'te quedan {disponibles(paquete)}.')
+    return precio

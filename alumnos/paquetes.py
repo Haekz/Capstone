@@ -28,6 +28,8 @@ PRECIO_VIDEO = 5000
 PROMO_VIDEOS_CANTIDAD = 3
 PROMO_VIDEOS_PRECIO = 13500  # 3 videos extra con 10% de descuento
 MAX_VIDEOS_EXTRA = 6  # comprados despues de contratar, por paquete
+MIN_DIAS_PARA_EXTRA = 14  # al paquete deben quedarle al menos estos dias para comprar extras
+DIAS_ENTREGA_EXTRA = 14  # el profesor los comparte dentro de estos dias desde cada compra
 COMISION_VIDEOS = Fraction(25, 100)  # LBWUS aloja los videos; IVA incluido
 
 
