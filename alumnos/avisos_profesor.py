@@ -95,6 +95,17 @@ def entrega_proxima(paquete, limite, falta):
               f'(fecha límite: {timezone.localtime(limite):%d/%m/%Y}). Hazlo desde la pestaña Videos de tu panel.')
 
 
+def video_retirado(compartido):
+    """Soporte retiro un video que compartió, por un reclamo (fase 5e). Sale solo si el retiro se confirma.
+    Sin el motivo (como en los rechazos): el reclamo es del alumno, el profesor no ve su ticket."""
+    if not compartido.paquete.profesor_id:
+        return
+    texto = (f'Soporte retiró un video que compartiste con {compartido.paquete.alumno.user.first_name} por un reclamo: '
+             'ya no se te paga. Compártele uno que corresponda en 2 días hábiles.')
+    transaction.on_commit(lambda: _decision(compartido.paquete.profesor.user, 'Retiramos un video que compartiste',
+                                            texto))
+
+
 def _avisar(inscripcion, asunto, texto):
     user = inscripcion.clase.profesor.user
     notificar(user, texto, reverse('panel_profesor'))

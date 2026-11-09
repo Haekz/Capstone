@@ -4,6 +4,9 @@ Lo usan el alumno y el apoderado (de su estudiante); cada uno valida primero su 
 Regla unica: se ve un video solo si esta compartido con ESE alumno y su paquete sigue vigente. Si no, 404 (no se
 revela si el video existe). Si el alumno es menor, ademas su apoderado tiene que haberlo habilitado (solo_habilitados).
 Se entrega por partes con soporte de Range: es lo que permite adelantar y retroceder.
+
+Soporte (fase 5e) ve los videos que nombra un reclamo de Videos de apoyo: del_ticket() decide cuales, y la vista de
+soporte entrega el archivo con archivo_respuesta(), sin las reglas del alumno.
 """
 
 import re
@@ -12,13 +15,15 @@ from django.http import Http404, HttpResponse, JsonResponse, StreamingHttpRespon
 from django.utils import timezone
 
 from comunidad import mongo
+from soporte.models import Ticket
 from user_profesor import videoteca
 
-from .models import PaqueteClases
+from .models import Alumno, PaqueteClases
 from .models.videos import VideoCompartido
 
 TROZO = 256 * 1024
 RANGO = re.compile(r'^bytes=(\d*)-(\d*)$')
+ID_VIDEO = re.compile(r'\b[0-9a-f]{24}\b')
 
 
 def _compartidos(alumno_id, solo_habilitados=False):
@@ -84,6 +89,11 @@ def transmitir(request, alumno_id, video_id, solo_habilitados=False):
     """El video (completo o el tramo pedido) si es del alumno y esta vigente; Http404 si no."""
     if not _compartidos(alumno_id, solo_habilitados).filter(video_id=video_id).exists():
         raise Http404
+    return _archivo(request, video_id)
+
+
+def _archivo(request, video_id):
+    """El archivo, completo o el tramo pedido. Quien llama ya valido el acceso."""
     ficha = videoteca.ficha(video_id)
     if not ficha:
         raise Http404
@@ -123,5 +133,28 @@ def video_respuesta(request, alumno_id, video_id, solo_habilitados=False):
     """transmitir() con Mongo caido convertido en 503."""
     try:
         return transmitir(request, alumno_id, video_id, solo_habilitados)
+    except mongo.ERRORES:
+        return HttpResponse(status=503)
+
+
+def del_ticket(ticket):
+    """Videos que nombra un reclamo de Videos de apoyo y que de verdad se compartieron con su estudiante (fase 5e).
+
+    El estudiante es el que indico el apoderado o, si no, el alumno que lo abrio. El texto lo escribe el usuario:
+    un id que no se le compartio a ese estudiante se ignora. Incluye los ya retirados (para mostrarlo).
+    """
+    if ticket.categoria != Ticket.VIDEOS:
+        return VideoCompartido.objects.none()
+    alumno_id = (ticket.estudiante_id
+                 or Alumno.objects.filter(user_id=ticket.autor_id).values_list('pk', flat=True).first())
+    return (VideoCompartido.objects
+            .filter(paquete__alumno_id=alumno_id, video_id__in=set(ID_VIDEO.findall(ticket.descripcion)))
+            .select_related('paquete__alumno__user', 'paquete__profesor__user'))
+
+
+def archivo_respuesta(request, video_id):
+    """Para soporte, ya autorizado por su ticket: el archivo sin las reglas del alumno. Mongo caido = 503."""
+    try:
+        return _archivo(request, video_id)
     except mongo.ERRORES:
         return HttpResponse(status=503)

@@ -21,7 +21,7 @@ from alumnos.portales import contexto_de_marco
 from .forms import MensajeForm, ReporteForm, RespuestaContactoForm, RespuestaForm
 from .models import Ticket
 from .permisos import (agente_en_sesion, categorias_que_reporta, estudiantes_que_reporta, reporta_required,
-                       tickets_del_agente)
+                       tickets_del_agente, tickets_visibles)
 from .tickets import abrir_reporte, agregar_mensaje, cerrar_sin_respuesta
 
 
@@ -128,8 +128,7 @@ def mi_ticket(request, id_ticket):
 @soporte_required
 def ver_reporte(request, id_ticket):
     agente = agente_en_sesion(request)
-    visibles = Ticket.objects.all() if agente.es_lider else tickets_del_agente(request)
-    ticket = get_object_or_404(visibles.select_related('autor', 'contacto', 'asignado__user'),
+    ticket = get_object_or_404(tickets_visibles(request).select_related('autor', 'contacto', 'asignado__user'),
                                Q(autor__isnull=False) | Q(contacto__isnull=False), pk=id_ticket)
     # Responde solo quien lo tiene asignado; el lider, reasignandoselo antes.
     propio = tickets_del_agente(request).filter(pk=ticket.pk).exists()
