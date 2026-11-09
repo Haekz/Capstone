@@ -22,6 +22,13 @@ IVA = Fraction(19, 100)
 REDONDEO_PAQUETE = 1000
 VALOR_INSCRIPCION = 15000  # inscripciones antiguas, sin paquete: valor fijo por clase
 
+# Agregado de videos (decidido 08-nov-2026): precio fijo, igual con todos los profesores.
+PRECIO_VIDEO = 5000
+PROMO_VIDEOS_CANTIDAD = 3
+PROMO_VIDEOS_PRECIO = 13500  # 3 videos extra con 10% de descuento
+MAX_VIDEOS_EXTRA = 6  # comprados despues de contratar, por paquete
+COMISION_VIDEOS = Fraction(25, 100)  # LBWUS aloja los videos; IVA incluido
+
 
 @dataclass(frozen=True)
 class Plan:
@@ -30,12 +37,17 @@ class Plan:
     clases: int
     descuento: Fraction  # sobre la tarifa por clase
     vigencia_dias: int
+    entregas: tuple  # agregado de videos: ((dia limite desde la compra, videos), ...)
+
+    @property
+    def videos(self):
+        return sum(cantidad for _, cantidad in self.entregas)
 
 
 PLANES = (
-    Plan('flexible', 'Flexible', 1, Fraction(0), 30),
-    Plan('progreso', 'Progreso', 4, Fraction(1, 60), 60),     # 1,7% por clase
-    Plan('intensivo', 'Intensivo', 8, Fraction(1, 30), 90),   # 3,3% por clase
+    Plan('flexible', 'Flexible', 1, Fraction(0), 30, ((14, 1),)),
+    Plan('progreso', 'Progreso', 4, Fraction(1, 60), 60, ((30, 2), (60, 2))),                # 1,7% por clase
+    Plan('intensivo', 'Intensivo', 8, Fraction(1, 30), 90, ((30, 2), (60, 2), (90, 2))),     # 3,3% por clase
 )
 POR_CODIGO = {plan.codigo: plan for plan in PLANES}
 CHOICES = [(plan.codigo, plan.nombre) for plan in PLANES]
@@ -51,9 +63,9 @@ def precio(plan, tarifa):
     return _redondear(plan.clases * tarifa * (1 - plan.descuento), REDONDEO_PAQUETE)
 
 
-def comision(monto):
-    """Parte de LBWUS (15%, IVA incluido) de un monto pagado."""
-    return _redondear(monto * COMISION)
+def comision(monto, tasa=COMISION):
+    """Parte de LBWUS (IVA incluido) de un monto pagado: 15% en clases, COMISION_VIDEOS en videos."""
+    return _redondear(monto * tasa)
 
 
 def iva_incluido(monto):
@@ -61,9 +73,22 @@ def iva_incluido(monto):
     return _redondear(monto * IVA / (1 + IVA))
 
 
-def pago_profesor(monto):
-    """Lo que le queda al profesor (85%) de un monto pagado."""
-    return monto - comision(monto)
+def pago_profesor(monto, tasa=COMISION):
+    """Lo que le queda al profesor de un monto pagado (85% en clases)."""
+    return monto - comision(monto, tasa)
+
+
+def precio_agregado(plan):
+    """Videos que trae el plan al contratarlo, a precio fijo por video."""
+    return plan.videos * PRECIO_VIDEO
+
+
+def precio_videos_extra(cantidad):
+    """Videos comprados despues de contratar: cada grupo de 3 va con la promocion."""
+    if not 1 <= cantidad <= MAX_VIDEOS_EXTRA:
+        raise ValidationError(f'Se pueden comprar entre 1 y {MAX_VIDEOS_EXTRA} videos extra.')
+    promociones, sueltos = divmod(cantidad, PROMO_VIDEOS_CANTIDAD)
+    return promociones * PROMO_VIDEOS_PRECIO + sueltos * PRECIO_VIDEO
 
 
 def valor_clase(inscripcion):

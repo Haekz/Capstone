@@ -202,3 +202,22 @@ Las funciones de `alumnos/paquetes.py` (`cotizar`, `precio`, `comision`, `pago_p
 | Dos reservas simultáneas por la última clase o el último cupo: gana una | `select_for_update` sobre sesión, inscripciones y paquetes | `TestConcurrenciaMultihiloInscripcion` (ver abajo) |
 
 **Concurrencia.** Las pruebas con hilos de `tests/test_concurrencia_inscripcion.py` corren siempre, contra PostgreSQL, y exigen el resultado exacto (gana una y la otra recibe `CupoAgotadoError` o `SinClasesDisponiblesError`). Para correrlas: `DATABASE_URL=<PostgreSQL de pruebas> python manage.py test tests.test_concurrencia_inscripcion`. **Nunca con la base de producción**: Django crea y borra una base `test_…` en ese servidor.
+
+## 12. Agregado de videos (decidido 08-nov-2026)
+
+Reglas en `alumnos/paquetes.py`; pruebas en `tests/test_paquetes_videos.py`. Fase 0: solo reglas, todavía no se vende.
+
+| Plan | Videos del agregado | Precio | Entrega obligatoria del profesor |
+|---|---|---|---|
+| Flexible | 1 | $5.000 | 1 video a más tardar el día 14 |
+| Progreso | 4 | $20.000 | 2 videos el mes 1 (día 30) y 2 el mes 2 (día 60) |
+| Intensivo | 6 | $30.000 | 2 videos por mes (días 30, 60 y 90) |
+
+- **Precio fijo**: $5.000 por video, igual con todos los profesores. Se ofrece en una ventana al agregar el paquete y se paga junto con él.
+- **Videos extra** (después de contratar): $5.000 cada uno, o la promoción de **3 por $13.500**. Máximo **6 por paquete**, solo si al paquete le quedan 14 días o más; el profesor los comparte dentro de 14 días.
+- **Reparto**: **25% LBWUS** (aloja los videos) y 75% el profesor, que gana cada vez que comparte un video, aunque sea el mismo.
+- **Videos**: el profesor los sube por cada materia que enseña, de **máximo 30 minutos**, y se los va compartiendo al alumno. Se guardan en MongoDB; la compra y el saldo, en PostgreSQL. El alumno solo ve los de su profesor y su materia, **mientras el paquete esté vigente**. Si renueva, el profesor comparte contenido nuevo.
+- **Sin revisión previa**. El alumno reclama con un ticket: si **no corresponde a la materia**, soporte lo deriva al profesor, que tiene **2 días hábiles** para compartir el correcto; si es **inapropiado**, lo revisa soporte y toma las medidas.
+- **Atrasos**: aviso al profesor 3 días antes de cada fecha; si pasa la fecha, se abre un ticket automático para soporte y ese video no se paga hasta que lo comparta.
+- **Menores**: el agregado lo compra el apoderado, igual que el paquete.
+- **Pendiente**: plan de MongoDB Atlas para producción (en modo prueba basta el actual) y si se devuelve dinero por videos no entregados.
