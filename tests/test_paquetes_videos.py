@@ -20,15 +20,16 @@ class VideosPorPlanTests(SimpleTestCase):
         self.assertEqual(PLANES['flexible'].entregas, ((14, 1),))
 
     def test_progreso_e_intensivo_entregan_2_videos_por_mes(self):
-        self.assertEqual(PLANES['progreso'].entregas, ((30, 2), (60, 2)))
-        self.assertEqual(PLANES['intensivo'].entregas, ((30, 2), (60, 2), (90, 2)))
+        self.assertEqual(PLANES['progreso'].entregas, ((30, 2), (53, 2)))
+        self.assertEqual(PLANES['intensivo'].entregas, ((30, 2), (60, 2), (83, 2)))
 
-    def test_ninguna_entrega_vence_despues_del_paquete(self):
+    def test_la_ultima_entrega_es_al_menos_7_dias_antes_del_vencimiento(self):
+        """Decidido 09-nov: si se atrasa, todavia hay ticket y alcanza a compartirlo antes de que venza el paquete."""
         for plan in paquetes.PLANES:
             with self.subTest(plan=plan.codigo):
                 dias = [dia for dia, _ in plan.entregas]
                 self.assertEqual(dias, sorted(dias))
-                self.assertLessEqual(dias[-1], plan.vigencia_dias)
+                self.assertLessEqual(dias[-1], plan.vigencia_dias - 7)
 
 
 class PrecioVideosTests(SimpleTestCase):

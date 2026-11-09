@@ -30,7 +30,7 @@ class FechasDeEntregaTests(SimpleTestCase):
 
     def test_cada_fecha_pide_los_videos_acumulados(self):
         self.assertEqual(self.fechas('flexible'), [(15, 1)])
-        self.assertEqual(self.fechas('progreso'), [(31, 2), (31 + 30, 4)])
+        self.assertEqual(self.fechas('progreso'), [(31, 2), (31 + 23, 4)])  # la ultima, 7 dias antes de vencer
         self.assertEqual(self.fechas('intensivo')[-1][1], 6)
 
     def test_el_ultimo_acumulado_es_todo_lo_comprado(self):

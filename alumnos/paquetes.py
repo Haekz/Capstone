@@ -45,10 +45,11 @@ class Plan:
         return sum(cantidad for _, cantidad in self.entregas)
 
 
+# Entregas de videos: la ultima, 7 dias antes de que venza el paquete (09-nov), para que un atraso alcance a corregirse.
 PLANES = (
     Plan('flexible', 'Flexible', 1, Fraction(0), 30, ((14, 1),)),
-    Plan('progreso', 'Progreso', 4, Fraction(1, 60), 60, ((30, 2), (60, 2))),                # 1,7% por clase
-    Plan('intensivo', 'Intensivo', 8, Fraction(1, 30), 90, ((30, 2), (60, 2), (90, 2))),     # 3,3% por clase
+    Plan('progreso', 'Progreso', 4, Fraction(1, 60), 60, ((30, 2), (53, 2))),                # 1,7% por clase
+    Plan('intensivo', 'Intensivo', 8, Fraction(1, 30), 90, ((30, 2), (60, 2), (83, 2))),     # 3,3% por clase
 )
 POR_CODIGO = {plan.codigo: plan for plan in PLANES}
 CHOICES = [(plan.codigo, plan.nombre) for plan in PLANES]

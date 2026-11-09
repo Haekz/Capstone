@@ -2,7 +2,7 @@
 
 Politica (docs/POLITICA_PAQUETES.md, seccion 12). Corre a diario dentro de tareas_diarias. El ticket se abre como
 conversacion a nombre del profesor: soporte lo atiende en su pantalla de siempre y el profesor puede responder.
-Los paquetes se arman relativos a hoy: Progreso tiene fechas limite el dia 30 (2 videos) y el 60 (4 en total).
+Los paquetes se arman relativos a hoy: Progreso tiene fechas limite el dia 30 (2 videos) y el 53 (4 en total).
 """
 
 from datetime import timedelta
@@ -61,7 +61,7 @@ class PlazosVideosTests(Escenario):
     def test_si_ya_cumplio_esa_fecha_avisa_de_la_siguiente(self):
         self.compartir(self.paquete(dia=27), 2)  # ya entrego los 2 del dia 30
         self.assertEqual(plazos_videos.revisar(), (0, 0))
-        self.compartir(self.paquete(dia=57, alumno=self.beto), 2)  # al dia 57 le faltan 2 para el dia 60
+        self.compartir(self.paquete(dia=50, alumno=self.beto), 2)  # al dia 50 le faltan 2 para el dia 53
         self.assertEqual(plazos_videos.revisar(), (1, 0))
         self.assertIn('2 videos con Beto', self.avisos()[0])
 

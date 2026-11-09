@@ -210,8 +210,8 @@ Reglas en `alumnos/paquetes.py`; pruebas en `tests/test_paquetes_videos.py`. Ya 
 | Plan | Videos del agregado | Precio | Entrega obligatoria del profesor |
 |---|---|---|---|
 | Flexible | 1 | $5.000 | 1 video a más tardar el día 14 |
-| Progreso | 4 | $20.000 | 2 videos el mes 1 (día 30) y 2 el mes 2 (día 60) |
-| Intensivo | 6 | $30.000 | 2 videos por mes (días 30, 60 y 90) |
+| Progreso | 4 | $20.000 | 2 videos el mes 1 (día 30) y 2 más a más tardar el día 53 |
+| Intensivo | 6 | $30.000 | 2 videos por mes (días 30, 60 y 83) |
 
 - **Precio fijo**: $5.000 por video, igual con todos los profesores. Se ofrece en una ventana al agregar el paquete y se paga junto con él.
 - **Videos extra** (después de contratar): $5.000 cada uno, o la promoción de **3 por $13.500**. Máximo **6 por paquete**, solo si al paquete le quedan 14 días o más; el profesor los comparte dentro de 14 días.
