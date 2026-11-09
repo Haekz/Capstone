@@ -70,4 +70,8 @@ urlpatterns = [
          name='soporte_ver_video'),
     path('soporte/<int:id_ticket>/videos/<str:video_id>/retirar/', views_soporte_videos.retirar_video,
          name='soporte_retirar_video'),
+    path('soporte/<int:id_ticket>/videos/devolver/', views_soporte_videos.devolver_videos,
+         name='soporte_devolver_videos'),
+    path('soporte/<int:id_ticket>/videos/devoluciones/<int:id_devolucion>/hecha/', views_soporte_videos.devolucion_hecha,
+         name='soporte_devolucion_hecha'),
 ]

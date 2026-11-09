@@ -8,6 +8,7 @@ cupo: por eso casi todo usa entregados(). La regla de no repetir un video al mis
 
 from datetime import timedelta
 
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
@@ -99,3 +100,26 @@ class CompraVideosExtra(models.Model):
         if not self.fecha_pago:
             return None
         return self.fecha_pago + timedelta(days=paquetes.DIAS_ENTREGA_EXTRA)
+
+
+class DevolucionVideos(models.Model):
+    """Dinero que se le devuelve al alumno por videos que el profesor no entrego (fase 6e, decidido 09-nov).
+
+    Soporte la registra desde el ticket de Videos y el dinero se devuelve a mano (no hay reversa de Webpay): aqui solo
+    queda el caso. ``monto`` lo calcula el servidor (alumnos/devoluciones_videos.py); ``devuelta`` lo marca soporte
+    cuando transfiere. SET_NULL: si se borra el ticket o la cuenta del agente, la evidencia queda.
+    """
+    paquete = models.ForeignKey(PaqueteClases, on_delete=models.CASCADE, related_name='devoluciones_videos')
+    cantidad = models.PositiveSmallIntegerField()
+    monto = models.PositiveIntegerField()  # pesos chilenos
+    ticket = models.ForeignKey('soporte.Ticket', on_delete=models.SET_NULL, null=True, related_name='devoluciones_videos')
+    registrada_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='+')
+    creada = models.DateTimeField(auto_now_add=True)
+    devuelta = models.DateTimeField(null=True, blank=True)  # vacio = por devolver
+
+    class Meta:
+        ordering = ['-creada', '-id']
+        constraints = [models.CheckConstraint(condition=models.Q(cantidad__gt=0), name='devolucion_videos_cantidad_positiva')]
+
+    def __str__(self):
+        return f'{self.cantidad} video(s) sin entregar -> {self.paquete} (${self.monto})'

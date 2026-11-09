@@ -21,6 +21,7 @@ from .exceptions import InscripcionError
 from .models import Alumno, CompraVideosExtra, PaqueteClases, Suscripcion
 from .services import exigir_mayor_de_edad
 from .templatetags.dinero import clp as _clp  # mismo formato en vistas y plantillas
+from .utils import entero
 from .views import _profesor_habilitado
 
 logger = logging.getLogger(__name__)
@@ -125,14 +126,6 @@ def iniciar_compra_paquete(request, alumno_id, al_crear=None, vinculo=None):
     return render(request, 'alumnos/redirect_webpay.html', {'url': response['url'], 'token': response['token']})
 
 
-def _entero(valor):
-    """El numero que mando el navegador, o None si no lo es."""
-    try:
-        return int(valor)
-    except (TypeError, ValueError):
-        return None
-
-
 @alumno_required
 @require_POST
 def comprar_videos_extra(request):
@@ -156,8 +149,8 @@ def iniciar_compra_videos_extra(request, alumno_id, al_crear=None, vinculo=None,
         exigir_mayor_de_edad(alumno, vinculo)
     except InscripcionError:
         return redirect('alumno_pag1')
-    paquete = get_object_or_404(PaqueteClases, pk=_entero(request.POST.get('paquete')), alumno=alumno)
-    cantidad = _entero(request.POST.get('cantidad')) or 0
+    paquete = get_object_or_404(PaqueteClases, pk=entero(request.POST.get('paquete')), alumno=alumno)
+    cantidad = entero(request.POST.get('cantidad')) or 0
     try:
         monto = videos_extra.validar(paquete, cantidad)
     except ValidationError as error:

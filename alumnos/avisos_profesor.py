@@ -106,6 +106,18 @@ def video_retirado(compartido):
                                             texto))
 
 
+def videos_devueltos(devolucion):
+    """Soporte aprobo devolverle al alumno el dinero de videos que el profesor no compartio (fase 6e). Sale solo si
+    el registro se confirma. Sin el motivo ni el ticket: el reclamo es del alumno."""
+    paquete = devolucion.paquete
+    if not paquete.profesor_id:
+        return
+    videos = f'{devolucion.cantidad} video{"" if devolucion.cantidad == 1 else "s"}'
+    texto = (f'Soporte aprobó devolverle a {paquete.alumno.user.first_name} el dinero de {videos} que no le compartiste. '
+             'Ya no tienes que compartirlos y no se te pagan.')
+    transaction.on_commit(lambda: _decision(paquete.profesor.user, 'Devolvimos videos que no se compartieron', texto))
+
+
 def videos_extra_comprados(compra):
     """Un alumno pago videos extra (fase 6d): cuantos y para cuando. Solo su nombre de pila. Sale solo al confirmarse
     el pago (on_commit, desde webpay.registrar_respuesta)."""

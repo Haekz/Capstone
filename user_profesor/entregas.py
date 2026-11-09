@@ -54,11 +54,13 @@ def _calendario(paquete):
 
 
 def estado(paquete, ahora):
-    """Cuántos faltan para la próxima fecha límite que todavía no se cumple, y si ya se pasó.
-    ``paquete`` viene de con_agregado(). También lo usan los avisos diarios (plazos_videos.py)."""
+    """Cuántos faltan para la próxima fecha límite que todavía no se cumple, y si ya se pasó. Lo devuelto por videos
+    no entregados (fase 6e) cuenta como saldado. ``paquete`` viene de con_agregado(). También lo usan los avisos
+    diarios (plazos_videos.py)."""
+    saldados = paquete.compartidos + paquete.devueltos
     for limite, acumulado in _calendario(paquete):
-        if acumulado > paquete.compartidos:
-            return limite, acumulado - paquete.compartidos, limite < ahora
+        if acumulado > saldados:
+            return limite, acumulado - saldados, limite < ahora
     return None, 0, False
 
 
@@ -70,7 +72,8 @@ def pendientes(profesor_id, ahora=None):
         limite, falta, atrasada = estado(paquete, ahora)
         filas.append((atrasada, limite, {
             'paquete': paquete.pk, 'alumno': paquete.alumno.user.first_name, 'plan': paquete.get_plan_display(),
-            'compartidos': paquete.compartidos, 'videos': paquete.videos + paquete.extra_videos, 'falta': falta,
+            'compartidos': paquete.compartidos, 'videos': paquete.videos + paquete.extra_videos - paquete.devueltos,
+            'falta': falta,
             'atrasada': atrasada, 'proxima': timezone.localtime(limite).strftime('%d-%m-%Y') if limite else None,
         }))
     filas.sort(key=lambda f: (not f[0], f[1] or SIN_FECHA))

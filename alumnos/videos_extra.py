@@ -5,7 +5,8 @@ Despues de contratar, cualquier paquete vigente al que le queden 14 dias o mas p
 paquetes.precio_videos_extra. Solo reglas: el pago con Webpay va aparte.
 
 Un extra solo cuenta para entregar, plazo y saldo cuando su pago esta confirmado (estado activa): anotar() y
-contratados() son el unico lugar que lo calcula (fase 6d).
+contratados() son el unico lugar que lo calcula (fase 6d). Lo que se devolvio por videos no entregados (fase 6e) se
+resta de lo que el profesor debe entregar, pero no cambia lo pagado: por eso totales() es bruto y contratados() neto.
 """
 
 from django.core.exceptions import ValidationError
@@ -15,24 +16,35 @@ from django.utils import timezone
 
 from . import paquetes
 from .models import PaqueteClases
-from .models.videos import CompraVideosExtra
+from .models.videos import CompraVideosExtra, DevolucionVideos
 
 
 def anotar(paquete_ref='pk'):
-    """Para ``.annotate(**anotar())``: extra_videos y extra_monto de las compras ACTIVAS del paquete, sin consultas
-    extra por fila. ``paquete_ref``: como llega al paquete desde lo que se consulta ('paquete_id' desde un video)."""
-    def suma(campo):
-        activas = (CompraVideosExtra.objects.filter(paquete=OuterRef(paquete_ref), estado=CompraVideosExtra.ESTADO_ACTIVA)
-                   .values('paquete').annotate(total=Sum(campo)).values('total'))
-        return Coalesce(Subquery(activas, output_field=IntegerField()), 0)
+    """Para ``.annotate(**anotar())``: extra_videos y extra_monto de las compras ACTIVAS del paquete, y devueltos (videos
+    ya devueltos), sin consultas extra por fila. ``paquete_ref``: como llega al paquete desde lo que se consulta
+    ('paquete_id' desde un video)."""
+    def suma(modelo, campo, **filtros):
+        filas = (modelo.objects.filter(paquete=OuterRef(paquete_ref), **filtros)
+                 .values('paquete').annotate(total=Sum(campo)).values('total'))
+        return Coalesce(Subquery(filas, output_field=IntegerField()), 0)
 
-    return {'extra_videos': suma('cantidad'), 'extra_monto': suma('monto')}
+    activas = {'estado': CompraVideosExtra.ESTADO_ACTIVA}
+    return {'extra_videos': suma(CompraVideosExtra, 'cantidad', **activas),
+            'extra_monto': suma(CompraVideosExtra, 'monto', **activas),
+            'devueltos': suma(DevolucionVideos, 'cantidad')}
+
+
+def totales(paquete):
+    """(monto, videos) de todo lo pagado por videos: el agregado y los extra confirmados, sin descontar devoluciones."""
+    extra = paquete.compras_videos_extra.filter(estado=CompraVideosExtra.ESTADO_ACTIVA).aggregate(
+        monto=Sum('monto'), videos=Sum('cantidad'))
+    return paquete.monto_videos + (extra['monto'] or 0), paquete.videos + (extra['videos'] or 0)
 
 
 def contratados(paquete):
-    """Videos que el profesor debe entregar en total: los del agregado y los extra ya pagados."""
-    extra = paquete.compras_videos_extra.filter(estado=CompraVideosExtra.ESTADO_ACTIVA).aggregate(total=Sum('cantidad'))
-    return paquete.videos + (extra['total'] or 0)
+    """Videos que el profesor debe entregar todavia: los del agregado y los extra ya pagados, menos los devueltos."""
+    devueltos = paquete.devoluciones_videos.aggregate(total=Sum('cantidad'))['total'] or 0
+    return totales(paquete)[1] - devueltos
 
 
 def comprados(paquete):

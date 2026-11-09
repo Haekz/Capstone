@@ -137,16 +137,24 @@ def video_respuesta(request, alumno_id, video_id, solo_habilitados=False):
         return HttpResponse(status=503)
 
 
+def alumno_id_del_ticket(ticket):
+    """El estudiante de un reclamo de Videos de apoyo: el que indico el apoderado o, si no, el alumno que lo abrio.
+    None si no es un ticket de Videos o no hay a quien se refiera."""
+    if ticket.categoria != Ticket.VIDEOS:
+        return None
+    return (ticket.estudiante_id
+            or Alumno.objects.filter(user_id=ticket.autor_id).values_list('pk', flat=True).first())
+
+
 def del_ticket(ticket):
     """Videos que nombra un reclamo de Videos de apoyo y que de verdad se compartieron con su estudiante (fase 5e).
 
-    El estudiante es el que indico el apoderado o, si no, el alumno que lo abrio. El texto lo escribe el usuario:
-    un id que no se le compartio a ese estudiante se ignora. Incluye los ya retirados (para mostrarlo).
+    El texto lo escribe el usuario: un id que no se le compartio a ese estudiante se ignora. Incluye los ya retirados
+    (para mostrarlo).
     """
-    if ticket.categoria != Ticket.VIDEOS:
+    alumno_id = alumno_id_del_ticket(ticket)
+    if alumno_id is None:
         return VideoCompartido.objects.none()
-    alumno_id = (ticket.estudiante_id
-                 or Alumno.objects.filter(user_id=ticket.autor_id).values_list('pk', flat=True).first())
     return (VideoCompartido.objects
             .filter(paquete__alumno_id=alumno_id, video_id__in=set(ID_VIDEO.findall(ticket.descripcion)))
             .select_related('paquete__alumno__user', 'paquete__profesor__user'))

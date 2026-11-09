@@ -4,9 +4,13 @@ Mismo patron que el horario (agenda/views_soporte.py). Solo los videos que nombr
 compartieron con ese estudiante (videos_compartidos.del_ticket). Ver: el agente asignado o un lider. Retirar: solo el
 agente asignado (el lider, reasignandoselo antes). El retiro queda como mensaje de soporte en el ticket (el registro
 de quien, que y cuando, y el aviso al que reclamo) y se avisa al profesor; si el mensaje falla, no se retira.
+
+Fase 6e: con el mismo criterio (solo el agente asignado, mensaje en el ticket y aviso al profesor) soporte registra la
+devolucion de videos que el profesor no entrego y despues la marca devuelta (reglas en devoluciones_videos.py).
 """
 
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
@@ -17,9 +21,11 @@ from soporte.models import Ticket
 from soporte.permisos import tickets_del_agente, tickets_visibles
 from soporte.tickets import agregar_mensaje
 
-from . import avisos_profesor, videos_compartidos
+from . import avisos_profesor, devoluciones_videos, videos_compartidos
 from .decorators import soporte_required
 from .models import VideoCompartido
+from .templatetags.dinero import clp
+from .utils import entero
 
 
 def _del_ticket(tickets, id_ticket, video_id):
@@ -50,4 +56,46 @@ def retirar_video(request, id_ticket, video_id):
                                               'Tu profesor puede compartirte otro.', de_soporte=True)
         avisos_profesor.video_retirado(compartido)
     messages.success(request, 'Video retirado. Se lo contamos en el ticket y le avisamos al profesor.')
+    return redirect('soporte_reporte', ticket.pk)
+
+
+def _videos(cantidad):
+    return f'{cantidad} video{"" if cantidad == 1 else "s"}'
+
+
+@require_POST
+@soporte_required
+def devolver_videos(request, id_ticket):
+    """Registra la devolucion de videos que el profesor no entrego. El monto lo calcula el servidor."""
+    ticket = get_object_or_404(tickets_del_agente(request), pk=id_ticket, categoria=Ticket.VIDEOS)
+    try:
+        with transaction.atomic():  # si el mensaje al reclamante falla, no queda registrada
+            devolucion = devoluciones_videos.registrar(
+                ticket, request.POST.get('paquete'), entero(request.POST.get('cantidad')) or 0, request.user)
+            agregar_mensaje(ticket, request.user,
+                            f'Aprobamos devolverte {clp(devolucion.monto)} por {_videos(devolucion.cantidad)} que tu '
+                            'profesor no te compartió. Soporte te hará llegar el dinero y te avisará aquí cuando esté devuelto.',
+                            de_soporte=True)
+            avisos_profesor.videos_devueltos(devolucion)
+    except ValidationError as error:
+        messages.error(request, error.messages[0])
+    else:
+        messages.success(request, 'Devolución registrada. Se lo contamos en el ticket y le avisamos al profesor.')
+    return redirect('soporte_reporte', ticket.pk)
+
+
+@require_POST
+@soporte_required
+def devolucion_hecha(request, id_ticket, id_devolucion):
+    """Soporte ya transfirio el dinero: queda marcada (una sola vez) y se le cuenta al reclamante en el ticket."""
+    ticket = get_object_or_404(tickets_del_agente(request), pk=id_ticket, categoria=Ticket.VIDEOS)
+    try:
+        with transaction.atomic():
+            devolucion = devoluciones_videos.marcar_devuelta(ticket, id_devolucion)
+            agregar_mensaje(ticket, request.user,
+                            f'Ya te devolvimos {clp(devolucion.monto)} por {_videos(devolucion.cantidad)} que tu '
+                            'profesor no te compartió.', de_soporte=True)
+    except ValidationError:  # no es de este ticket o ya estaba marcada
+        raise Http404
+    messages.success(request, 'Devolución marcada como devuelta. Se lo contamos en el ticket.')
     return redirect('soporte_reporte', ticket.pk)
