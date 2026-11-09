@@ -215,6 +215,7 @@ Reglas en `alumnos/paquetes.py`; pruebas en `tests/test_paquetes_videos.py`. Ya 
 
 - **Precio fijo**: $5.000 por video, igual con todos los profesores. Se ofrece en una ventana al agregar el paquete y se paga junto con él.
 - **Videos extra** (después de contratar): $5.000 cada uno, o la promoción de **3 por $13.500**. Máximo **6 por paquete**, solo si al paquete le quedan 14 días o más; el profesor los comparte dentro de 14 días.
+  Pueden comprarlos paquetes con o sin el agregado inicial (09-nov). Los 14 días corren desde cada compra con el pago confirmado; una compra pendiente cuenta para el tope pero no para el plazo, el cupo ni el saldo. El profesor recibe aviso al confirmarse. El valor por video es el promedio de lo pagado (agregado + extra); como todo video, se paga al compartirlo.
 - **Reparto**: **25% LBWUS** (aloja los videos) y 75% el profesor, que gana cada vez que comparte un video, aunque sea el mismo.
 - **Videos**: el profesor los sube por cada materia que enseña, de **máximo 30 minutos**, y se los va compartiendo al alumno. Se guardan en MongoDB; la compra y el saldo, en PostgreSQL. El alumno solo ve los de su profesor y su materia, **mientras el paquete esté vigente**. Si renueva, el profesor comparte contenido nuevo.
 - **Pago**: se suma al saldo del profesor (`user_profesor/saldos.py`) cuando comparte el video; lo ya entregado se paga aunque después venza el paquete. Un video compartido con un paquete vigente **no se puede borrar** hasta que el paquete venza (el alumno lo pagó).

@@ -8,7 +8,7 @@ from collections import defaultdict
 
 from django.db.models import Sum
 
-from alumnos import paquetes
+from alumnos import paquetes, videos_extra
 from alumnos.models import Inscripcion, SolicitudRetiro, VideoCompartido
 
 
@@ -40,11 +40,12 @@ def saldos_de(profesores):
                         .select_related('paquete', 'clase')):
         valores[inscripcion.clase.profesor_id].append(paquetes.valor_clase(inscripcion))
 
-    videos = defaultdict(list)
-    for profesor_id, monto_videos, cantidad in (VideoCompartido.objects.entregados().filter(paquete__profesor_id__in=ids)
-                                                .values_list('paquete__profesor_id', 'paquete__monto_videos',
-                                                             'paquete__videos')):
-        videos[profesor_id].append(paquetes.valor_video(monto_videos, cantidad))
+    videos = defaultdict(list)  # el valor de cada video compartido: promedio de lo pagado (agregado + extra activos)
+    compartidos = (VideoCompartido.objects.entregados().filter(paquete__profesor_id__in=ids)
+                   .annotate(**videos_extra.anotar('paquete_id')))
+    for profesor_id, monto, cantidad, extra_monto, extra_cantidad in compartidos.values_list(
+            'paquete__profesor_id', 'paquete__monto_videos', 'paquete__videos', 'extra_monto', 'extra_videos'):
+        videos[profesor_id].append(paquetes.valor_video(monto + extra_monto, cantidad + extra_cantidad))
 
     aprobados, pendientes = defaultdict(int), defaultdict(int)
     for fila in (SolicitudRetiro.objects.filter(profesor_id__in=ids)

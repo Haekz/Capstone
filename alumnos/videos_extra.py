@@ -3,15 +3,36 @@
 Despues de contratar, cualquier paquete vigente al que le queden 14 dias o mas puede sumar hasta 6 videos extra
 (en total, no por compra). Una compra pendiente ya cuenta para el tope; una rechazada no. El precio sale de
 paquetes.precio_videos_extra. Solo reglas: el pago con Webpay va aparte.
+
+Un extra solo cuenta para entregar, plazo y saldo cuando su pago esta confirmado (estado activa): anotar() y
+contratados() son el unico lugar que lo calcula (fase 6d).
 """
 
 from django.core.exceptions import ValidationError
-from django.db.models import Sum
+from django.db.models import IntegerField, OuterRef, Subquery, Sum
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 
 from . import paquetes
 from .models import PaqueteClases
 from .models.videos import CompraVideosExtra
+
+
+def anotar(paquete_ref='pk'):
+    """Para ``.annotate(**anotar())``: extra_videos y extra_monto de las compras ACTIVAS del paquete, sin consultas
+    extra por fila. ``paquete_ref``: como llega al paquete desde lo que se consulta ('paquete_id' desde un video)."""
+    def suma(campo):
+        activas = (CompraVideosExtra.objects.filter(paquete=OuterRef(paquete_ref), estado=CompraVideosExtra.ESTADO_ACTIVA)
+                   .values('paquete').annotate(total=Sum(campo)).values('total'))
+        return Coalesce(Subquery(activas, output_field=IntegerField()), 0)
+
+    return {'extra_videos': suma('cantidad'), 'extra_monto': suma('monto')}
+
+
+def contratados(paquete):
+    """Videos que el profesor debe entregar en total: los del agregado y los extra ya pagados."""
+    extra = paquete.compras_videos_extra.filter(estado=CompraVideosExtra.ESTADO_ACTIVA).aggregate(total=Sum('cantidad'))
+    return paquete.videos + (extra['total'] or 0)
 
 
 def comprados(paquete):

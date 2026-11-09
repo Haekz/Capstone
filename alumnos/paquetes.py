@@ -88,9 +88,9 @@ def precio_agregado(plan):
 
 
 def valor_video(monto_videos, videos):
-    """Lo pagado por cada video del agregado: el monto se reparte en partes iguales. Al profesor le queda
-    pago_profesor(valor, COMISION_VIDEOS), y solo cuando lo comparte (seccion 12 de la politica)."""
-    return monto_videos // videos
+    """Lo pagado por cada video: el monto (del agregado mas los extra pagados) se reparte en partes iguales. Al
+    profesor le queda pago_profesor(valor, COMISION_VIDEOS), y solo cuando lo comparte (seccion 12 de la politica)."""
+    return monto_videos // videos if videos else 0
 
 
 def fechas_entrega(plan, inicio):

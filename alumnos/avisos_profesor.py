@@ -106,6 +106,18 @@ def video_retirado(compartido):
                                             texto))
 
 
+def videos_extra_comprados(compra):
+    """Un alumno pago videos extra (fase 6d): cuantos y para cuando. Solo su nombre de pila. Sale solo al confirmarse
+    el pago (on_commit, desde webpay.registrar_respuesta)."""
+    paquete = compra.paquete
+    if not paquete.profesor_id:  # el profesor se borro: el pago queda en el historial, no hay a quien avisar
+        return
+    videos = f'{compra.cantidad} video{"" if compra.cantidad == 1 else "s"} más'
+    _decision(paquete.profesor.user, 'Videos extra por compartir',
+              f'{paquete.alumno.user.first_name} compró {videos}. Compártelos a más tardar el '
+              f'{timezone.localtime(compra.fecha_limite):%d/%m/%Y}, desde la pestaña Videos de tu panel.')
+
+
 def _avisar(inscripcion, asunto, texto):
     user = inscripcion.clase.profesor.user
     notificar(user, texto, reverse('panel_profesor'))

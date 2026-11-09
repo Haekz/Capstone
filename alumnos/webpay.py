@@ -180,12 +180,12 @@ def iniciar_compra_videos_extra(request, alumno_id, al_crear=None, vinculo=None)
     return render(request, 'alumnos/redirect_webpay.html', {'url': response['url'], 'token': response['token']})
 
 
-def _avisar_agregado(paquete):
-    """Avisa al profesor del agregado de videos. El pago ya esta confirmado: un fallo aqui se registra y no lo tumba."""
+def _avisar_profesor(aviso, pago):
+    """Avisa al profesor de un pago. El pago ya esta confirmado: un fallo aqui se registra y no lo tumba."""
     try:
-        avisos_profesor.agregado_videos(paquete)
+        aviso(pago)
     except Exception:
-        logger.exception('No se pudo avisar al profesor del agregado de videos (paquete %s)', paquete.pk)
+        logger.exception('No se pudo avisar al profesor (%r, pago %s)', aviso, pago.pk)
 
 
 def registrar_respuesta(resp):
@@ -207,10 +207,13 @@ def registrar_respuesta(resp):
     Suscripcion.confirmar_pago(buy_order, aprobado)
     autorizacion, fecha = resp.get('authorization_code') or '', parse_datetime(resp.get('transaction_date') or '')
     activados = PaqueteClases.confirmar_pago(buy_order, aprobado, autorizacion, fecha)
-    CompraVideosExtra.confirmar_pago(buy_order, aprobado, autorizacion, fecha)
-    for paquete in activados:  # solo los que ESTA llamada activo: el aviso sale una vez por compra
+    extras_activados = CompraVideosExtra.confirmar_pago(buy_order, aprobado, autorizacion, fecha)
+    # Solo lo que ESTA llamada activo: el aviso al profesor sale una vez por compra, aunque el retorno llegue dos veces.
+    for paquete in activados:
         if paquete.videos:
-            transaction.on_commit(lambda paquete=paquete: _avisar_agregado(paquete))
+            transaction.on_commit(lambda paquete=paquete: _avisar_profesor(avisos_profesor.agregado_videos, paquete))
+    for compra in extras_activados:
+        transaction.on_commit(lambda compra=compra: _avisar_profesor(avisos_profesor.videos_extra_comprados, compra))
     return aprobado, buy_order
 
 

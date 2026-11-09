@@ -68,15 +68,24 @@ class CompraVideosExtra(models.Model):
 
     @classmethod
     def confirmar_pago(cls, buy_order, aprobado, codigo_autorizacion='', fecha_pago=None):
-        """Activa o rechaza la compra pendiente de la orden. Devuelve cuantas cambio.
+        """Activa o rechaza la compra pendiente de la orden. Devuelve las que ESTA llamada dejo activas.
 
-        Idempotente: solo toca las pendientes, asi un retorno repetido (o un rechazo tardio) no pisa lo ya resuelto.
+        Idempotente: solo toca las pendientes (el UPDATE condicional decide quien gana si dos retornos llegan juntos), asi
+        un retorno repetido, o un rechazo tardio, no pisa lo ya resuelto y el aviso al profesor sale una sola vez.
         """
         pendientes = cls.objects.filter(buy_order=buy_order, estado=cls.ESTADO_PENDIENTE)
         if not aprobado:
-            return pendientes.update(estado=cls.ESTADO_RECHAZADA)
-        return pendientes.update(estado=cls.ESTADO_ACTIVA, codigo_autorizacion=codigo_autorizacion,
-                                 fecha_pago=fecha_pago or timezone.now())
+            pendientes.update(estado=cls.ESTADO_RECHAZADA)
+            return []
+        fecha_pago = fecha_pago or timezone.now()
+        activadas = []
+        for compra in pendientes.select_related('paquete__profesor__user', 'paquete__alumno__user'):
+            if cls.objects.filter(pk=compra.pk, estado=cls.ESTADO_PENDIENTE).update(
+                    estado=cls.ESTADO_ACTIVA, codigo_autorizacion=codigo_autorizacion, fecha_pago=fecha_pago):
+                compra.estado, compra.codigo_autorizacion, compra.fecha_pago = (
+                    cls.ESTADO_ACTIVA, codigo_autorizacion, fecha_pago)
+                activadas.append(compra)
+        return activadas
 
     @property
     def fecha_limite(self):
