@@ -11,12 +11,15 @@ Y lo que soporte decide sobre su titulo o una especializacion (fase 5, decidido 
 rechazo no va ni en la campanita ni en el correo: se lee solo en el panel (como en los escalamientos).
 """
 
+from datetime import timedelta
+
 from django.db import transaction
 from django.urls import reverse
 from django.utils import timezone
 
 from notificaciones.models import notificar
 
+from . import paquetes
 from .correo import enviar
 
 
@@ -58,6 +61,30 @@ def especializacion(especializacion, aprobada, clases_nuevas=()):
 
 def _fecha(sesion):
     return timezone.localtime(sesion.fecha_hora_inicio).strftime('%d/%m/%Y a las %H:%M')
+
+
+def agregado_videos(paquete):
+    """Un alumno contrato el agregado de videos (fase 3c): cuantos, para cuando y las reglas. Solo su nombre de pila.
+
+    La campanita es corta (el texto tiene tope); las reglas completas van en el correo.
+    """
+    if not paquete.profesor_id:  # el profesor se borro: el pago queda en el historial, no hay a quien avisar
+        return
+    user = paquete.profesor.user
+    alumno = paquete.alumno.user.first_name
+    cantidad = f'{paquete.videos} video{"" if paquete.videos == 1 else "s"} de apoyo'
+    inicio = paquete.fecha_fin - timedelta(days=paquete.dias)
+    fechas = '; '.join(f'el {timezone.localtime(fecha):%d/%m/%Y} ({acumulado} en total)'
+                       for fecha, acumulado in paquetes.fechas_entrega(paquetes.POR_CODIGO[paquete.plan], inicio))
+    notificar(user, f'{alumno} contrató {cantidad}. Revisa las fechas de entrega en la pestaña Videos de tu panel.',
+              reverse('panel_profesor'))
+    enviar('Nuevo agregado de videos', 'alumnos/correo_decision_profesor.txt', {'nombre': user.first_name, 'texto': (
+        f'{alumno} contrató {cantidad}.\n\n'
+        f'Fechas límite para compartirlos: {fechas}.\n\n'
+        'Cómo funciona:\n'
+        '- Compártelos desde la pestaña Videos de tu panel, eligiendo de tu biblioteca.\n'
+        '- No puedes repetir el mismo video con el mismo alumno.\n'
+        '- El alumno los ve mientras su paquete esté vigente.')}, user.email)
 
 
 def _avisar(inscripcion, asunto, texto):

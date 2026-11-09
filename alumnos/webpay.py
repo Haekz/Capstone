@@ -1,5 +1,6 @@
 """Compra de paquetes con Webpay Plus (Transbank): inicio del pago y confirmacion."""
 
+import logging
 import secrets
 
 from django.conf import settings
@@ -12,13 +13,15 @@ from django.views.decorators.http import require_POST
 
 from lbwus.credenciales_transbank import validar_produccion
 
-from . import paquetes
+from . import avisos_profesor, paquetes
 from .decorators import alumno_required
 from .exceptions import InscripcionError
 from .models import Alumno, PaqueteClases, Suscripcion
 from .services import exigir_mayor_de_edad
 from .templatetags.dinero import clp as _clp  # mismo formato en vistas y plantillas
 from .views import _profesor_habilitado
+
+logger = logging.getLogger(__name__)
 
 
 # ============================================================
@@ -120,6 +123,14 @@ def iniciar_compra_paquete(request, alumno_id, al_crear=None, vinculo=None):
     return render(request, 'alumnos/redirect_webpay.html', {'url': response['url'], 'token': response['token']})
 
 
+def _avisar_agregado(paquete):
+    """Avisa al profesor del agregado de videos. El pago ya esta confirmado: un fallo aqui se registra y no lo tumba."""
+    try:
+        avisos_profesor.agregado_videos(paquete)
+    except Exception:
+        logger.exception('No se pudo avisar al profesor del agregado de videos (paquete %s)', paquete.pk)
+
+
 def registrar_respuesta(resp):
     """Aplica a la orden lo que Transbank respondio (commit al volver el alumno, o status al revisar despues).
 
@@ -135,8 +146,11 @@ def registrar_respuesta(resp):
     if paquete and int(resp.get('amount') or 0) != paquete.total:
         aprobado = False
     Suscripcion.confirmar_pago(buy_order, aprobado)
-    PaqueteClases.confirmar_pago(buy_order, aprobado, resp.get('authorization_code') or '',
-                                 parse_datetime(resp.get('transaction_date') or ''))
+    activados = PaqueteClases.confirmar_pago(buy_order, aprobado, resp.get('authorization_code') or '',
+                                             parse_datetime(resp.get('transaction_date') or ''))
+    for paquete in activados:  # solo los que ESTA llamada activo: el aviso sale una vez por compra
+        if paquete.videos:
+            transaction.on_commit(lambda paquete=paquete: _avisar_agregado(paquete))
     return aprobado, buy_order
 
 
