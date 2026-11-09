@@ -1,0 +1,63 @@
+{% load static %}
+{# Videos que el profesor le compartió al alumno. Lo incluyen el panel del alumno y la página del apoderado. #}
+{# Recibe url_lista (JSON) y url_ver (con VIDEO_ID de marcador). Carga al hacerse visible: el panel no depende de Mongo. #}
+<link rel="stylesheet" href="{% static 'alumnos/css/videos_apoyo.css' %}?v=1">
+<section class="va" data-lista="{{ url_lista }}" data-ver="{{ url_ver }}">
+    <p class="va-nota">Los videos están disponibles mientras tu paquete esté vigente.</p>
+    <p class="va-aviso" role="status" hidden></p>
+    <div class="va-grid"></div>
+</section>
+<dialog class="va-dialogo" aria-label="Reproductor de video">
+    <form method="dialog"><button class="va-cerrar" aria-label="Cerrar video">&times;</button></form>
+    <p class="va-dialogo-titulo"></p>
+    <video controls preload="metadata"></video>
+</dialog>
+<script>
+    (() => {
+        const raiz = document.querySelector('.va');
+        const aviso = raiz.querySelector('.va-aviso');
+        const grilla = raiz.querySelector('.va-grid');
+        const dialogo = document.querySelector('.va-dialogo');
+        const video = dialogo.querySelector('video');
+        let cargado = false, cargando = false;
+
+        const mostrar = (texto) => { aviso.textContent = texto || ''; aviso.hidden = !texto; };
+
+        function tarjeta(v) {
+            const boton = document.createElement('button');
+            boton.type = 'button';
+            boton.className = 'va-card';
+            for (const [etiqueta, texto] of [['strong', v.titulo], ['span', v.asignatura], ['span', `${v.profesor} · ${v.duracion}`]]) {
+                const nodo = document.createElement(etiqueta);
+                nodo.textContent = texto;  // textContent: nada de lo que viene del servidor se interpreta como HTML
+                boton.appendChild(nodo);
+            }
+            boton.addEventListener('click', () => {
+                dialogo.querySelector('.va-dialogo-titulo').textContent = v.titulo;
+                video.src = raiz.dataset.ver.replace('VIDEO_ID', encodeURIComponent(v.id));
+                dialogo.showModal();
+                video.play().catch(() => {});
+            });
+            return boton;
+        }
+
+        dialogo.addEventListener('close', () => { video.pause(); video.removeAttribute('src'); video.load(); });
+
+        function cargar() {
+            if (cargado || cargando) return;
+            cargando = true;
+            fetch(raiz.dataset.lista, { credentials: 'same-origin' })
+            .then(res => res.json())
+            .then(data => {
+                if (!data.disponible) { mostrar(data.message); return; }
+                grilla.replaceChildren(...data.videos.map(tarjeta));
+                mostrar(data.videos.length ? '' : 'Todavía no tienes videos. Tu profesor te los irá compartiendo durante tu paquete.');
+                cargado = true;
+            })
+            .catch(() => mostrar('No pudimos cargar tus videos. Revisa tu conexión.'))
+            .finally(() => { cargando = false; });
+        }
+
+        new IntersectionObserver((entradas) => { if (entradas.some(e => e.isIntersecting)) cargar(); }).observe(raiz);
+    })();
+</script>

@@ -105,9 +105,8 @@ def subir(profesor_id, asignatura, titulo, archivo):
     return str(_bucket().upload_from_stream(archivo.name, archivo, metadata=metadata))
 
 
-def listar(profesor_id):
-    """Sus videos, del más nuevo al más antiguo, listos para mostrar."""
-    docs = list(_archivos().find({'metadata.profesor_id': profesor_id}).sort('uploadDate', -1))
+def _presentar(docs):
+    """Documentos de GridFS convertidos a lo que se muestra: id, titulo, materia, duracion y fecha."""
     nombres = dict(Asignatura.objects.filter(id__in={d['metadata']['asignatura_id'] for d in docs}).values_list('id', 'nombre'))
     return [{
         'id': str(d['_id']),
@@ -116,6 +115,27 @@ def listar(profesor_id):
         'duracion': '{}:{:02d}'.format(*divmod(d['metadata']['duracion_seg'], 60)),
         'subido': d['uploadDate'].strftime('%d-%m-%Y'),
     } for d in docs]
+
+
+def listar(profesor_id):
+    """Sus videos, del más nuevo al más antiguo, listos para mostrar."""
+    return _presentar(list(_archivos().find({'metadata.profesor_id': profesor_id}).sort('uploadDate', -1)))
+
+
+def por_id(video_ids):
+    """{id: video listo para mostrar} de los que existen; los ids inválidos o borrados no aparecen."""
+    oids = []
+    for video_id in video_ids:
+        try:
+            oids.append(ObjectId(video_id))
+        except (InvalidId, TypeError):
+            pass
+    return {v['id']: v for v in _presentar(list(_archivos().find({'_id': {'$in': oids}})))}
+
+
+def abrir(oid):
+    """Lector del archivo (con seek y read) para entregarlo por partes; quien lo abre debe cerrarlo."""
+    return _bucket().open_download_stream(oid)
 
 
 def ficha(video_id):

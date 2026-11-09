@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views, views_revision, views_vinculo
+from . import views, views_revision, views_videos, views_vinculo
 
 urlpatterns = [
     path('registro/', views.registro, name='registro_apoderado'),
@@ -23,6 +23,10 @@ urlpatterns = [
          name='apoderado_cancelar_clase'),
     path('mi-cuenta/estudiantes/<int:id_vinculo>/clases/<int:id_inscripcion>/reprogramar/', views.reprogramar_clase,
          name='apoderado_reprogramar_clase'),
+    path('mi-cuenta/estudiantes/<int:id_vinculo>/videos/', views_videos.videos_estudiante,
+         name='apoderado_videos_estudiante'),
+    path('mi-cuenta/estudiantes/<int:id_vinculo>/videos/<str:video_id>/ver/', views_videos.ver_video_estudiante,
+         name='apoderado_ver_video'),
     path('invitacion/<str:token>/', views.invitacion, name='apoderado_invitacion'),
     # Adolescentes de 14 a 17: su cuenta es de alumno, restringida.
     path('estudiantes/registro/', views.registro_adolescente, name='adolescente_registro'),

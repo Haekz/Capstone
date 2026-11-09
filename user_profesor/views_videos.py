@@ -6,14 +6,13 @@ Si MongoDB no está configurado o no responde, contestan {'disponible': False} y
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET, require_POST
-from pymongo.errors import PyMongoError
 
 from alumnos.decorators import profesor_required_json
 from comunidad import mongo
 
 from . import entregas, videoteca
 
-ERRORES_MONGO = (mongo.MongoNoConfigurado, PyMongoError)
+ERRORES_MONGO = mongo.ERRORES
 
 
 def _no_disponible():

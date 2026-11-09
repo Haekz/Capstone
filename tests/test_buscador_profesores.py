@@ -116,10 +116,11 @@ class BuscadorProfesoresTests(TestCase):
                     html=False)
                 self.assertContains(r, 'No hay profesores que coincidan con tu búsqueda.')
 
-    def test_tutores_y_videos_de_ejemplo_estan_identificados(self):
+    def test_tutores_de_ejemplo_estan_identificados_y_los_videos_ya_son_reales(self):
         r = self._portal()
         self.assertContains(r, 'Contenido de ejemplo: aún no hay tutores registrados')
-        self.assertContains(r, 'Contenido de ejemplo: aún no hay clases en video')
+        self.assertNotContains(r, 'aún no hay clases en video')  # los videos ya vienen de lo que comparte el profesor
+        self.assertContains(r, reverse('videos_alumno'))
 
     def test_busqueda_no_distingue_tildes(self):
         # "matematicas" debe encontrar "Matemáticas": la consulta y los datos

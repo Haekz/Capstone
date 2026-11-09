@@ -53,13 +53,3 @@
             { id: 104, name: "Tutora Patricia Soto", specialties: ["Biología"], initial: "PS" }
         ];
 
-        // Videos
-        const videos = [
-            { title: "Álgebra Básica: Resolución de Ecuaciones", specialty: "Matemáticas", teacher: "Carlos Ruiz", duration: "15 min" },
-            { title: "Leyes de la Termodinámica y Calor", specialty: "Física", teacher: "Pedro Rojas", duration: "22 min" },
-            { title: "Introducción a Python y Estructuras", specialty: "Programación", teacher: "David Silva", duration: "30 min" },
-            { title: "Gramática Inglesa Avanzada (Phrasal Verbs)", specialty: "Inglés", teacher: "Ana Contreras", duration: "18 min" },
-            { title: "Reacciones Químicas Orgánicas y Enlaces", specialty: "Química", teacher: "Lucía Méndez", duration: "25 min" },
-            { title: "Historia Universal: El Imperio Romano", specialty: "Historia", teacher: "Sofía Vergara", duration: "20 min" },
-            { title: "Célula Eucariota y Procariota: Estructura", specialty: "Biología", teacher: "Lucía Méndez", duration: "12 min" }
-        ];

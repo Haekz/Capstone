@@ -135,46 +135,6 @@
                     });
                 }
             }
-
-            // 3. Videos
-            const videosContainer = document.getElementById('dashboard-videos-container');
-            if (videosContainer) {
-                videosContainer.innerHTML = '';
-                let filteredVideos = videos;
-                if (selectedTopics.length > 0) {
-                    filteredVideos = filteredVideos.filter(v => selectedTopics.includes(v.specialty));
-                }
-                if (searchQuery) {
-                    filteredVideos = filteredVideos.filter(v => 
-                        normalizar(v.title).includes(searchQuery) ||
-                        normalizar(v.specialty).includes(searchQuery) ||
-                        normalizar(v.teacher).includes(searchQuery)
-                    );
-                }
-
-                if (filteredVideos.length === 0) {
-                    videosContainer.innerHTML = `<div class="empty-teachers-state" style="grid-column: 1/-1;"><i class="bi bi-play-btn-fill"></i><p>No hay videos de clases que coincidan con tu búsqueda.</p></div>`;
-                } else {
-                    filteredVideos.forEach(v => {
-                        const card = document.createElement('div');
-                        card.className = 'video-card';
-                        card.innerHTML = `
-                            <div class="video-thumbnail">
-                                <div class="video-play-btn"><i class="bi bi-play-fill"></i></div>
-                            </div>
-                            <div class="video-info">
-                                <h4 class="video-title">${escaparHtml(v.title)}</h4>
-                                <span class="video-specialty">${escaparHtml(v.specialty)}</span>
-                                <div class="video-meta">
-                                    <span><i class="bi bi-person-video"></i> ${escaparHtml(v.teacher)}</span>
-                                    <span><i class="bi bi-clock"></i> ${escaparHtml(v.duration)}</span>
-                                </div>
-                            </div>
-                        `;
-                        videosContainer.appendChild(card);
-                    });
-                }
-            }
         }
 
         // Favorites Tab
