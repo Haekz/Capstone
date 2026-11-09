@@ -63,6 +63,8 @@ def compartir_video(request):
 def eliminar_video(request, video_id):
     try:
         borrado = videoteca.eliminar(request.session['profesor_id'], video_id)
+    except ValidationError as e:
+        return JsonResponse({'success': False, 'disponible': True, 'message': e.messages[0]})
     except ERRORES_MONGO:
         return _no_disponible()
     if not borrado:

@@ -138,6 +138,24 @@ class EntregasTests(GridFsTestCase, Escenario):
         self.client.post(reverse('compartir_video'), {'paquete': paquete.pk, 'video': self.videos[0]})
         self.assertEqual(VideoCompartido.objects.count(), 0)
 
+    def borrar(self, video):
+        return self.client.post(reverse('eliminar_video', args=[video])).json()
+
+    def test_no_borra_un_video_compartido_con_un_paquete_vigente(self):
+        """Fase 4b: el alumno lo pago y el profesor ya cobro su parte; borrarlo lo dejaria sin el video."""
+        paquete = self.paquete()
+        self.compartir(paquete, self.videos[0])
+        r = self.borrar(self.videos[0])
+        self.assertFalse(r['success'])
+        self.assertIn('vigente', r['message'])
+        self.assertIsNotNone(videoteca.ficha(self.videos[0]))
+        PaqueteClases.objects.filter(pk=paquete.pk).update(fecha_fin=timezone.now() - timedelta(minutes=1))
+        self.assertTrue(self.borrar(self.videos[0])['success'])  # al vencer el paquete, ya se puede
+
+    def test_los_videos_no_compartidos_se_borran_como_siempre(self):
+        self.compartir(self.paquete(), self.videos[0])
+        self.assertTrue(self.borrar(self.videos[1])['success'])
+
     def test_la_pestana_trae_la_tarjeta_de_entregas(self):
         pagina = self.client.get(reverse('panel_profesor')).content.decode()
         self.assertIn('id="profe-entregas-card"', pagina)

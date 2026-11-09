@@ -205,7 +205,7 @@ Las funciones de `alumnos/paquetes.py` (`cotizar`, `precio`, `comision`, `pago_p
 
 ## 12. Agregado de videos (decidido 08-nov-2026)
 
-Reglas en `alumnos/paquetes.py`; pruebas en `tests/test_paquetes_videos.py`. Fase 0: solo reglas, todavía no se vende.
+Reglas en `alumnos/paquetes.py`; pruebas en `tests/test_paquetes_videos.py`. Ya funciona: venta junto con el paquete, biblioteca del profesor, entrega y visualización, aviso al profesor y pago. Falta: videos extra, recordatorios y tickets por atraso, y reclamos.
 
 | Plan | Videos del agregado | Precio | Entrega obligatoria del profesor |
 |---|---|---|---|
@@ -217,7 +217,8 @@ Reglas en `alumnos/paquetes.py`; pruebas en `tests/test_paquetes_videos.py`. Fas
 - **Videos extra** (después de contratar): $5.000 cada uno, o la promoción de **3 por $13.500**. Máximo **6 por paquete**, solo si al paquete le quedan 14 días o más; el profesor los comparte dentro de 14 días.
 - **Reparto**: **25% LBWUS** (aloja los videos) y 75% el profesor, que gana cada vez que comparte un video, aunque sea el mismo.
 - **Videos**: el profesor los sube por cada materia que enseña, de **máximo 30 minutos**, y se los va compartiendo al alumno. Se guardan en MongoDB; la compra y el saldo, en PostgreSQL. El alumno solo ve los de su profesor y su materia, **mientras el paquete esté vigente**. Si renueva, el profesor comparte contenido nuevo.
+- **Pago**: se suma al saldo del profesor (`user_profesor/saldos.py`) cuando comparte el video; lo ya entregado se paga aunque después venza el paquete. Un video compartido con un paquete vigente **no se puede borrar** hasta que el paquete venza (el alumno lo pagó).
 - **Sin revisión previa**. El alumno reclama con un ticket: si **no corresponde a la materia**, soporte lo deriva al profesor, que tiene **2 días hábiles** para compartir el correcto; si es **inapropiado**, lo revisa soporte y toma las medidas.
 - **Atrasos**: aviso al profesor 3 días antes de cada fecha; si pasa la fecha, se abre un ticket automático para soporte y ese video no se paga hasta que lo comparta.
-- **Menores**: el agregado lo compra el apoderado, igual que el paquete.
+- **Menores**: el agregado lo compra el apoderado, igual que el paquete. El apoderado **revisa cada video y lo habilita** antes de que su estudiante lo vea, y puede quitar la habilitación (decidido 09-nov). Se le avisa cuando el profesor comparte uno.
 - **Pendiente**: plan de MongoDB Atlas para producción (en modo prueba basta el actual) y si se devuelve dinero por videos no entregados.

@@ -13,7 +13,7 @@ from bson.errors import InvalidId
 from django.core.exceptions import ValidationError
 from gridfs import GridFSBucket
 
-from alumnos.models import Asignatura, Clase
+from alumnos.models import Asignatura, Clase, PaqueteClases, VideoCompartido
 from comunidad import mongo
 
 BUCKET = 'videos'
@@ -148,12 +148,19 @@ def ficha(video_id):
 
 
 def eliminar(profesor_id, video_id):
-    """Borra el video si es suyo. True si lo borró."""
+    """Borra el video si es suyo. True si lo borró.
+
+    ValidationError si ya lo compartió con un alumno de paquete vigente (fase 4b): el alumno lo pagó y el profesor
+    ya cobró su parte; borrarlo lo dejaría sin el video. Al vencer el paquete, se puede.
+    """
     try:
         oid = ObjectId(video_id)
     except (InvalidId, TypeError):
         return False
     if not _archivos().find_one({'_id': oid, 'metadata.profesor_id': profesor_id}, {'_id': 1}):
         return False
+    if VideoCompartido.objects.filter(video_id=str(oid), paquete__in=PaqueteClases.objects.vigentes()).exists():
+        raise ValidationError('Ya compartiste este video con un alumno que tiene su paquete vigente: '
+                              'podrás borrarlo cuando el paquete venza.')
     _bucket().delete(oid)
     return True

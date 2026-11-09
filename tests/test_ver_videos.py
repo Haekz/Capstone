@@ -7,6 +7,7 @@ que es lo que permite adelantar y retroceder en el reproductor. Mongo en memoria
 
 from datetime import timedelta
 
+from bson import ObjectId
 from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -70,8 +71,10 @@ class VerVideosDelAlumnoTests(Base):
         self.assertEqual(datos['videos'], [{'id': self.video, 'titulo': 'Factorización', 'asignatura': 'Algebra',
                                             'duracion': '25:00', 'profesor': self.profe.nombre, 'habilitado': False}])
 
-    def test_si_el_profesor_borro_el_video_no_se_lista_ni_se_cae(self):
-        videoteca.eliminar(self.profe.id_profesor, self.video)
+    def test_si_el_archivo_falta_en_mongo_no_se_lista_ni_se_cae(self):
+        # El profesor ya no puede borrar un video compartido vigente (fase 4b); esto cubre que falte igual,
+        # por ejemplo si se borro a mano en Atlas.
+        videoteca._bucket().delete(ObjectId(self.video))
         self.assertEqual(self.client.get(reverse('videos_alumno')).json()['videos'], [])
         self.assertEqual(self.ver().status_code, 404)
 
