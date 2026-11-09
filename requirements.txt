@@ -6,7 +6,7 @@ psycopg2-binary
 asgiref==3.8.1
 certifi==2026.5.20
 cffi==2.0.0
-charset-normalizer==3.4.7
+charset-normalizer==3.5.2
 cryptography==49.0.0
 dj-database-url==3.1.2
 django-allauth==65.18.0
