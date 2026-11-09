@@ -87,6 +87,14 @@ def agregado_videos(paquete):
         '- El alumno los ve mientras su paquete esté vigente.')}, user.email)
 
 
+def entrega_proxima(paquete, limite, falta):
+    """Recordatorio diario (fase 5a): le quedan 3 días para la próxima fecha límite del agregado de videos."""
+    videos = f'{falta} video{"" if falta == 1 else "s"}'
+    _decision(paquete.profesor.user, 'Recordatorio: videos por compartir',
+              f'Te quedan 3 días para compartir {videos} con {paquete.alumno.user.first_name} '
+              f'(fecha límite: {timezone.localtime(limite):%d/%m/%Y}). Hazlo desde la pestaña Videos de tu panel.')
+
+
 def _avisar(inscripcion, asunto, texto):
     user = inscripcion.clase.profesor.user
     notificar(user, texto, reverse('panel_profesor'))

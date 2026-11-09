@@ -24,8 +24,15 @@ from . import videoteca
 SIN_FECHA = datetime.max.replace(tzinfo=zona.utc)
 
 
-def _estado(paquete, ahora):
-    """Cuántos faltan para la próxima fecha límite que todavía no se cumple, y si ya se pasó."""
+def con_agregado():
+    """Paquetes vigentes con agregado de videos, con cuántos lleva compartidos (``compartidos``)."""
+    return (PaqueteClases.objects.vigentes().filter(videos__gt=0)
+            .select_related('alumno__user').annotate(compartidos=Count('videos_compartidos')))
+
+
+def estado(paquete, ahora):
+    """Cuántos faltan para la próxima fecha límite que todavía no se cumple, y si ya se pasó.
+    ``paquete`` viene de con_agregado(). También lo usan los avisos diarios (plazos_videos.py)."""
     inicio = paquete.fecha_fin - timedelta(days=paquete.dias)
     for limite, acumulado in paquetes.fechas_entrega(paquetes.POR_CODIGO[paquete.plan], inicio):
         if acumulado > paquete.compartidos:
@@ -37,9 +44,8 @@ def pendientes(profesor_id, ahora=None):
     """Sus alumnos con agregado de videos vigente: las entregas atrasadas primero, luego la fecha más próxima."""
     ahora = ahora or timezone.now()
     filas = []
-    for paquete in (PaqueteClases.objects.vigentes().filter(profesor_id=profesor_id, videos__gt=0)
-                    .select_related('alumno__user').annotate(compartidos=Count('videos_compartidos'))):
-        limite, falta, atrasada = _estado(paquete, ahora)
+    for paquete in con_agregado().filter(profesor_id=profesor_id):
+        limite, falta, atrasada = estado(paquete, ahora)
         filas.append((atrasada, limite, {
             'paquete': paquete.pk, 'alumno': paquete.alumno.user.first_name, 'plan': paquete.get_plan_display(),
             'compartidos': paquete.compartidos, 'videos': paquete.videos, 'falta': falta, 'atrasada': atrasada,

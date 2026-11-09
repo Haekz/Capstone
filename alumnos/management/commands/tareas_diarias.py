@@ -23,6 +23,7 @@ TAREAS = (
     'avisar_tickets_atrasados',
     'avisar_revisiones_pendientes',
     'avisar_requerimientos_por_vencer',
+    'avisar_entregas_videos',
 )
 
 
