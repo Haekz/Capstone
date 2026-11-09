@@ -16,6 +16,8 @@ from django.utils import timezone
 from alumnos import paquetes
 from alumnos.models import PaqueteClases
 from alumnos.models.videos import VideoCompartido
+from alumnos.utils import es_menor
+from apoderados.correo import avisar_video_por_revisar
 
 from . import videoteca
 
@@ -65,4 +67,8 @@ def compartir(profesor_id, paquete_id, video_id):
             raise ValidationError(f'Ya compartiste los {paquete.videos} videos que contrató.')
         if VideoCompartido.objects.filter(paquete__alumno_id=paquete.alumno_id, video_id=str(ficha['_id'])).exists():
             raise ValidationError('Ya le compartiste este video a ese alumno. Elige uno nuevo.')
-        return VideoCompartido.objects.create(paquete=paquete, video_id=str(ficha['_id']))
+        compartido = VideoCompartido.objects.create(paquete=paquete, video_id=str(ficha['_id']))
+    alumno = paquete.alumno
+    if es_menor(alumno.user):  # su apoderado lo revisa y lo habilita antes de que lo vea; robust: el aviso no tumba nada
+        transaction.on_commit(lambda: avisar_video_por_revisar(alumno), robust=True)
+    return compartido

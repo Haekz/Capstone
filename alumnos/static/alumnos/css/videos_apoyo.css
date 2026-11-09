@@ -32,9 +32,33 @@
 }
 
 .va-card:focus-visible,
-.va-cerrar:focus-visible {
+.va-cerrar:focus-visible,
+.va-habilitar:focus-visible {
     outline: 3px solid var(--primary, #7c3aed);
     outline-offset: 2px;
+}
+
+/* Apoderado: cada video con su boton para habilitarlo al estudiante menor */
+.va-item {
+    display: grid;
+    gap: 6px;
+}
+
+.va-habilitar {
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 1px solid var(--primary, #7c3aed);
+    border-radius: 10px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 0.88rem;
+    cursor: pointer;
+}
+
+.va-habilitar:disabled {
+    opacity: 0.6;
+    cursor: wait;
 }
 
 .va-card span {

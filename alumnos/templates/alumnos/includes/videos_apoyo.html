@@ -1,8 +1,9 @@
 {% load static %}
 {# Videos que el profesor le compartió al alumno. Lo incluyen el panel del alumno y la página del apoderado. #}
 {# Recibe url_lista (JSON) y url_ver (con VIDEO_ID de marcador). Carga al hacerse visible: el panel no depende de Mongo. #}
-<link rel="stylesheet" href="{% static 'alumnos/css/videos_apoyo.css' %}?v=1">
-<section class="va" data-lista="{{ url_lista }}" data-ver="{{ url_ver }}">
+{# Opcional url_habilitar (apoderado): boton para habilitar cada video a su estudiante menor despues de revisarlo. #}
+<link rel="stylesheet" href="{% static 'alumnos/css/videos_apoyo.css' %}?v=2">
+<section class="va" data-lista="{{ url_lista }}" data-ver="{{ url_ver }}"{% if url_habilitar %} data-habilitar="{{ url_habilitar }}" data-csrf="{{ csrf_token }}"{% endif %}>
     <p class="va-nota">Los videos están disponibles mientras tu paquete esté vigente.</p>
     <p class="va-aviso" role="status" hidden></p>
     <div class="va-grid"></div>
@@ -38,6 +39,33 @@
                 dialogo.showModal();
                 video.play().catch(() => {});
             });
+            if (!raiz.dataset.habilitar) return boton;
+            const item = document.createElement('div');  // el interruptor va al lado: un boton dentro de otro es invalido
+            item.className = 'va-item';
+            item.append(boton, interruptor(v));
+            return item;
+        }
+
+        // Apoderado: despues de revisarlo, habilita (o quita) el video para su estudiante menor.
+        function interruptor(v) {
+            const boton = document.createElement('button');
+            boton.type = 'button';
+            boton.className = 'va-habilitar';
+            const pintar = () => {
+                boton.textContent = v.habilitado ? 'Habilitado para tu estudiante · Quitar' : 'Habilitar para tu estudiante';
+            };
+            pintar();
+            boton.addEventListener('click', () => {
+                const datos = new FormData();
+                datos.append('habilitar', v.habilitado ? '0' : '1');
+                boton.disabled = true;
+                fetch(raiz.dataset.habilitar.replace('VIDEO_ID', encodeURIComponent(v.id)),
+                      { method: 'POST', headers: { 'X-CSRFToken': raiz.dataset.csrf }, body: datos, credentials: 'same-origin' })
+                .then(res => res.json())
+                .then(data => { v.habilitado = data.habilitado; pintar(); })
+                .catch(() => mostrar('No pudimos guardar el cambio. Intenta de nuevo.'))
+                .finally(() => { boton.disabled = false; });
+            });
             return boton;
         }
 
@@ -51,7 +79,9 @@
             .then(data => {
                 if (!data.disponible) { mostrar(data.message); return; }
                 grilla.replaceChildren(...data.videos.map(tarjeta));
-                mostrar(data.videos.length ? '' : 'Todavía no tienes videos. Tu profesor te los irá compartiendo durante tu paquete.');
+                const n = data.por_revisar || 0;  // menor: los que su apoderado aun no habilita
+                const espera = n ? `Tienes ${n} video${n === 1 ? '' : 's'} esperando que tu apoderado ${n === 1 ? 'lo' : 'los'} revise.` : '';
+                mostrar(espera || (data.videos.length ? '' : 'Todavía no tienes videos. Tu profesor te los irá compartiendo durante tu paquete.'));
                 cargado = true;
             })
             .catch(() => mostrar('No pudimos cargar tus videos. Revisa tu conexión.'))

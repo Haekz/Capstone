@@ -95,7 +95,8 @@
 
     <section class="perfil-prof__bloque" aria-labelledby="videos-titulo">
     <h2 id="videos-titulo">Videos de apoyo</h2>
-    {% url 'apoderado_videos_estudiante' vinculo.pk as url_lista %}{% url 'apoderado_ver_video' vinculo.pk 'VIDEO_ID' as url_ver %}
+    <p>Revisa cada video antes de habilitarlo: {{ vinculo.alumno.user.first_name }} solo ve los que tú habilitas.</p>
+    {% url 'apoderado_videos_estudiante' vinculo.pk as url_lista %}{% url 'apoderado_ver_video' vinculo.pk 'VIDEO_ID' as url_ver %}{% url 'apoderado_habilitar_video' vinculo.pk 'VIDEO_ID' as url_habilitar %}
     {% include 'alumnos/includes/videos_apoyo.html' %}
 </section>
 

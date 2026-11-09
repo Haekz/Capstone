@@ -68,7 +68,7 @@ class VerVideosDelAlumnoTests(Base):
         datos = self.client.get(reverse('videos_alumno')).json()
         self.assertTrue(datos['disponible'])
         self.assertEqual(datos['videos'], [{'id': self.video, 'titulo': 'Factorización', 'asignatura': 'Algebra',
-                                            'duracion': '25:00', 'profesor': self.profe.nombre}])
+                                            'duracion': '25:00', 'profesor': self.profe.nombre, 'habilitado': False}])
 
     def test_si_el_profesor_borro_el_video_no_se_lista_ni_se_cae(self):
         videoteca.eliminar(self.profe.id_profesor, self.video)

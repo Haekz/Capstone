@@ -2,12 +2,14 @@
 
 Lo usan el alumno y el apoderado (de su estudiante); cada uno valida primero su propio acceso y luego llama aqui.
 Regla unica: se ve un video solo si esta compartido con ESE alumno y su paquete sigue vigente. Si no, 404 (no se
-revela si el video existe). Se entrega por partes con soporte de Range: es lo que permite adelantar y retroceder.
+revela si el video existe). Si el alumno es menor, ademas su apoderado tiene que haberlo habilitado (solo_habilitados).
+Se entrega por partes con soporte de Range: es lo que permite adelantar y retroceder.
 """
 
 import re
 
 from django.http import Http404, HttpResponse, JsonResponse, StreamingHttpResponse
+from django.utils import timezone
 
 from comunidad import mongo
 from user_profesor import videoteca
@@ -19,18 +21,28 @@ TROZO = 256 * 1024
 RANGO = re.compile(r'^bytes=(\d*)-(\d*)$')
 
 
-def _compartidos(alumno_id):
-    return VideoCompartido.objects.filter(paquete__in=PaqueteClases.objects.vigentes().filter(alumno_id=alumno_id))
+def _compartidos(alumno_id, solo_habilitados=False):
+    compartidos = VideoCompartido.objects.filter(
+        paquete__in=PaqueteClases.objects.vigentes().filter(alumno_id=alumno_id))
+    return compartidos.filter(habilitado_menor__isnull=False) if solo_habilitados else compartidos
 
 
-def listar(alumno_id):
+def listar(alumno_id, solo_habilitados=False):
     """Sus videos vigentes, del mas nuevo al mas antiguo. Los que el profesor ya borro no aparecen."""
-    compartidos = list(_compartidos(alumno_id).select_related('paquete__profesor__user'))
+    compartidos = list(_compartidos(alumno_id, solo_habilitados).select_related('paquete__profesor__user'))
     videos = videoteca.por_id([c.video_id for c in compartidos])
     return [{
         'id': c.video_id, 'titulo': videos[c.video_id]['titulo'], 'asignatura': videos[c.video_id]['asignatura'],
         'duracion': videos[c.video_id]['duracion'], 'profesor': c.paquete.profesor.nombre if c.paquete.profesor else '',
+        'habilitado': c.habilitado_menor is not None,
     } for c in compartidos if c.video_id in videos]
+
+
+def habilitar(alumno_id, video_id, habilitado):
+    """El apoderado habilita (o quita) un video de su estudiante menor. Http404 si no es suyo o no esta vigente."""
+    if not _compartidos(alumno_id).filter(video_id=video_id).update(
+            habilitado_menor=timezone.now() if habilitado else None):
+        raise Http404
 
 
 def _rango(cabecera, total):
@@ -68,9 +80,9 @@ def _trozos(lector, desde, hasta):
         lector.close()
 
 
-def transmitir(request, alumno_id, video_id):
+def transmitir(request, alumno_id, video_id, solo_habilitados=False):
     """El video (completo o el tramo pedido) si es del alumno y esta vigente; Http404 si no."""
-    if not _compartidos(alumno_id).filter(video_id=video_id).exists():
+    if not _compartidos(alumno_id, solo_habilitados).filter(video_id=video_id).exists():
         raise Http404
     ficha = videoteca.ficha(video_id)
     if not ficha:
@@ -93,18 +105,23 @@ def transmitir(request, alumno_id, video_id):
     return respuesta
 
 
-def lista_json(alumno_id):
-    """Respuesta JSON de la lista; si Mongo no esta disponible lo avisa en vez de caerse."""
+def lista_json(alumno_id, solo_habilitados=False):
+    """Respuesta JSON de la lista; si Mongo no esta disponible lo avisa en vez de caerse.
+
+    por_revisar: los que el menor todavia no puede ver porque su apoderado no los habilito.
+    """
+    por_revisar = _compartidos(alumno_id).filter(habilitado_menor__isnull=True).count() if solo_habilitados else 0
     try:
-        return JsonResponse({'success': True, 'disponible': True, 'videos': listar(alumno_id)})
+        return JsonResponse({'success': True, 'disponible': True, 'videos': listar(alumno_id, solo_habilitados),
+                             'por_revisar': por_revisar})
     except mongo.ERRORES:
         return JsonResponse({'success': False, 'disponible': False,
                              'message': 'Los videos no están disponibles por ahora. Intenta más tarde.'})
 
 
-def video_respuesta(request, alumno_id, video_id):
+def video_respuesta(request, alumno_id, video_id, solo_habilitados=False):
     """transmitir() con Mongo caido convertido en 503."""
     try:
-        return transmitir(request, alumno_id, video_id)
+        return transmitir(request, alumno_id, video_id, solo_habilitados)
     except mongo.ERRORES:
         return HttpResponse(status=503)

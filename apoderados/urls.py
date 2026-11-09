@@ -27,6 +27,8 @@ urlpatterns = [
          name='apoderado_videos_estudiante'),
     path('mi-cuenta/estudiantes/<int:id_vinculo>/videos/<str:video_id>/ver/', views_videos.ver_video_estudiante,
          name='apoderado_ver_video'),
+    path('mi-cuenta/estudiantes/<int:id_vinculo>/videos/<str:video_id>/habilitar/',
+         views_videos.habilitar_video_estudiante, name='apoderado_habilitar_video'),
     path('invitacion/<str:token>/', views.invitacion, name='apoderado_invitacion'),
     # Adolescentes de 14 a 17: su cuenta es de alumno, restringida.
     path('estudiantes/registro/', views.registro_adolescente, name='adolescente_registro'),
