@@ -136,6 +136,10 @@ class Cotizacion:
     def pago_profesor(self):
         return pago_profesor(self.precio)
 
+    @property
+    def precio_videos(self):
+        return precio_agregado(self.plan)
+
 
 def cotizar(tarifa):
     return [Cotizacion(plan, tarifa) for plan in PLANES]

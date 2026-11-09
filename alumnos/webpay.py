@@ -97,12 +97,14 @@ def iniciar_compra_paquete(request, alumno_id, al_crear=None, vinculo=None):
         return redirect('planes')
 
     monto = paquetes.precio(plan, profesor.tarifa)
+    con_videos = request.POST.get('videos') == '1'  # el navegador solo dice si lo quiere; el precio es del servidor
+    monto_videos = paquetes.precio_agregado(plan) if con_videos else 0
     # Unico (26 caracteres, el maximo de Transbank): con un numero corto al azar, un
     # pedido abandonado podia compartir orden con una compra nueva y activarse gratis.
     buy_order = f'PQ{secrets.token_hex(12)}'
     session_id = f'S{secrets.token_hex(8)}'
     try:
-        response = _tx().create(buy_order, session_id, monto, request.build_absolute_uri(reverse('confirmacion')))
+        response = _tx().create(buy_order, session_id, monto + monto_videos, request.build_absolute_uri(reverse('confirmacion')))
     except Exception:  # Transbank caido o rechazo la orden: no se cobra ni se crea el paquete
         return render(request, 'alumnos/confirmacion.html', {'aprobado': False, 'items': []})
 
@@ -110,6 +112,7 @@ def iniciar_compra_paquete(request, alumno_id, al_crear=None, vinculo=None):
         paquete = PaqueteClases.objects.create(
             alumno_id=alumno_id, profesor=profesor, plan=plan.codigo,
             clases=plan.clases, tarifa=profesor.tarifa, monto=monto, dias=plan.vigencia_dias,
+            videos=plan.videos if con_videos else 0, monto_videos=monto_videos,
             buy_order=buy_order, token_ws=response['token'],
         )
         if al_crear:
@@ -129,7 +132,7 @@ def registrar_respuesta(resp):
     )
     buy_order = resp.get('buy_order', '')
     paquete = PaqueteClases.objects.filter(buy_order=buy_order).first() if buy_order else None
-    if paquete and int(resp.get('amount') or 0) != paquete.monto:
+    if paquete and int(resp.get('amount') or 0) != paquete.total:
         aprobado = False
     Suscripcion.confirmar_pago(buy_order, aprobado)
     PaqueteClases.confirmar_pago(buy_order, aprobado, resp.get('authorization_code') or '',
@@ -165,11 +168,15 @@ def confirmacion(request):
 
         card = resp.get('card_detail') or {}
         aprobado, buy_order = registrar_respuesta(resp)
+        de_la_orden = list(PaqueteClases.objects.filter(buy_order=buy_order).select_related('profesor__user')) if buy_order else []
         ctx['items'] = [
             {'titulo': f'{p.get_plan_display()}: {p.clases} clase(s) con {p.profesor.nombre if p.profesor else "—"}',
              'cantidad': 1, 'precio': _clp(p.monto)}
-            for p in PaqueteClases.objects.filter(buy_order=buy_order).select_related('profesor__user')
-        ] if buy_order else []
+            for p in de_la_orden
+        ] + [
+            {'titulo': f'Agregado: {p.videos} video{"s" if p.videos != 1 else ""} de ayuda', 'cantidad': 1, 'precio': _clp(p.monto_videos)}
+            for p in de_la_orden if p.monto_videos
+        ]
 
         ctx.update({
             'aprobado': aprobado,

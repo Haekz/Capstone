@@ -314,7 +314,7 @@ def alumno_pag1(request):
         key=lambda pago: pago.creada, reverse=True,
     )
     for pago in pagos:
-        pago.monto_clp = _clp(pago.monto)  # mismo formato que la confirmacion de Webpay
+        pago.monto_clp = _clp(pago.total if isinstance(pago, PaqueteClases) else pago.monto)  # lo cobrado en Webpay
 
     calificaciones = calificaciones_por_profesor()
     profesor_por_id = {p.id_profesor: p for p in profesores_list}

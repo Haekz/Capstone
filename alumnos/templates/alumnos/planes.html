@@ -7,7 +7,7 @@
 
 {% block extra_css %}
 {{ block.super }}
-<link rel="stylesheet" href="{% static 'alumnos/css/planes.css' %}?v=3">
+<link rel="stylesheet" href="{% static 'alumnos/css/planes.css' %}?v=4">
 {% endblock %}
 
 {% block content %}
@@ -70,19 +70,21 @@
                 <p class="plan-billing-info">{{ c.plan.clases }} clase{{ c.plan.clases|pluralize }} de {{ duracion_clase }} min · {{ c.precio_por_clase|clp }} por clase · Sin renovación obligatoria</p>
 
                 {% if profesor and estudiante %}
-                <form method="post" action="{% url 'apoderado_comprar_paquete' estudiante.pk %}">
+                <form method="post" action="{% url 'apoderado_comprar_paquete' estudiante.pk %}" class="pl-compra" data-videos="{{ c.plan.videos }}" data-precio-videos="{{ c.precio_videos|clp }}">
                     {% csrf_token %}
                     <input type="hidden" name="profesor" value="{{ profesor.id_profesor }}">
                     <input type="hidden" name="plan" value="{{ c.plan.codigo }}">
+                    <input type="hidden" name="videos" value="0">
                     <button type="submit" class="plan-btn-action">Contratar {{ c.plan.nombre }} para {{ estudiante.alumno.user.first_name }}</button>
                 </form>
                 {% elif profesor and es_menor %}
                 <p role="status">Tu apoderado contrata por ti desde su cuenta.</p>
                 {% elif profesor and es_alumno %}
-                <form method="post" action="{% url 'comprar_paquete' %}">
+                <form method="post" action="{% url 'comprar_paquete' %}" class="pl-compra" data-videos="{{ c.plan.videos }}" data-precio-videos="{{ c.precio_videos|clp }}">
                     {% csrf_token %}
                     <input type="hidden" name="profesor" value="{{ profesor.id_profesor }}">
                     <input type="hidden" name="plan" value="{{ c.plan.codigo }}">
+                    <input type="hidden" name="videos" value="0">
                     <button type="submit" class="plan-btn-action">Comprar {{ c.plan.nombre }}</button>
                 </form>
                 {% elif profesor %}
@@ -147,6 +149,21 @@
     </div>
 </div>
 
+{% if profesor %}
+{# Agregado de videos: se ofrece al comprar. Sin JavaScript se compra solo el paquete (videos=0). #}
+<dialog id="pl-videos" class="pl-videos" aria-labelledby="pl-videos-titulo" aria-describedby="pl-videos-texto">
+    <form method="dialog">
+        <h2 id="pl-videos-titulo">¿Agregas videos de ayuda?</h2>
+        <p id="pl-videos-texto"></p>
+        <p class="pl-videos-nota">Los hace el profesor de la materia y los comparte durante el paquete. Se pagan junto con el paquete.</p>
+        <div class="pl-videos-acciones">
+            <button type="submit" value="1" class="plan-btn-action">Sí, agregar videos</button>
+            <button type="submit" value="0" class="pl-videos-no">No, solo el paquete</button>
+        </div>
+    </form>
+</dialog>
+{% endif %}
+
 <!-- Modal de Bienvenida General -->
 <section class="modal-info" id="welcome-modal">
     <div class="modal-info-content">
@@ -171,6 +188,26 @@
                 modal.style.display = 'none';
             });
         }
+
+        // Agregado de videos: antes de ir a Webpay pregunta si lo quiere. Con Esc no compra nada.
+        const dialogo = document.getElementById('pl-videos');
+        document.querySelectorAll('form.pl-compra').forEach(form => {
+            form.addEventListener('submit', (e) => {
+                if (!dialogo || form.dataset.decidido) return;
+                e.preventDefault();
+                const n = Number(form.dataset.videos);
+                document.getElementById('pl-videos-texto').textContent =
+                    `Por ${form.dataset.precioVideos}, accede a ${n} video${n === 1 ? '' : 's'} de ayuda.`;
+                dialogo.onclose = () => {
+                    if (!['0', '1'].includes(dialogo.returnValue)) return;
+                    form.elements.videos.value = dialogo.returnValue;
+                    form.dataset.decidido = '1';
+                    form.requestSubmit();
+                };
+                dialogo.returnValue = '';
+                dialogo.showModal();
+            });
+        });
     });
 </script>
 {% endblock %}
