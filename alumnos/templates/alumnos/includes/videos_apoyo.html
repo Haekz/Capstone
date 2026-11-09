@@ -2,7 +2,8 @@
 {# Videos que el profesor le compartió al alumno. Lo incluyen el panel del alumno y la página del apoderado. #}
 {# Recibe url_lista (JSON) y url_ver (con VIDEO_ID de marcador). Carga al hacerse visible: el panel no depende de Mongo. #}
 {# Opcional url_habilitar (apoderado): boton para habilitar cada video a su estudiante menor despues de revisarlo. #}
-<link rel="stylesheet" href="{% static 'alumnos/css/videos_apoyo.css' %}?v=2">
+{# Opcional url_reportar (formulario de tickets): "Reportar este video". No se pasa al menor: reporta su apoderado. #}
+<link rel="stylesheet" href="{% static 'alumnos/css/videos_apoyo.css' %}?v=3">
 <section class="va" data-lista="{{ url_lista }}" data-ver="{{ url_ver }}"{% if url_habilitar %} data-habilitar="{{ url_habilitar }}" data-csrf="{{ csrf_token }}"{% endif %}>
     <p class="va-nota">Los videos están disponibles mientras tu paquete esté vigente.</p>
     <p class="va-aviso" role="status" hidden></p>
@@ -12,6 +13,7 @@
     <form method="dialog"><button class="va-cerrar" aria-label="Cerrar video">&times;</button></form>
     <p class="va-dialogo-titulo"></p>
     <video controls preload="metadata"></video>
+    {% if url_reportar %}<a class="va-reportar" href="{{ url_reportar }}?video=" data-base="{{ url_reportar }}?video=">¿No corresponde a la materia o tiene contenido inapropiado? Repórtalo</a>{% endif %}
 </dialog>
 <script>
     (() => {
@@ -20,6 +22,7 @@
         const grilla = raiz.querySelector('.va-grid');
         const dialogo = document.querySelector('.va-dialogo');
         const video = dialogo.querySelector('video');
+        const reportar = dialogo.querySelector('.va-reportar');
         let cargado = false, cargando = false;
 
         const mostrar = (texto) => { aviso.textContent = texto || ''; aviso.hidden = !texto; };
@@ -36,6 +39,7 @@
             boton.addEventListener('click', () => {
                 dialogo.querySelector('.va-dialogo-titulo').textContent = v.titulo;
                 video.src = raiz.dataset.ver.replace('VIDEO_ID', encodeURIComponent(v.id));
+                if (reportar) reportar.href = reportar.dataset.base + encodeURIComponent(v.id);
                 dialogo.showModal();
                 video.play().catch(() => {});
             });

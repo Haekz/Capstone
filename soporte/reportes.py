@@ -15,7 +15,7 @@ from django.utils import timezone
 from django.views.decorators.cache import never_cache
 
 from alumnos.decorators import soporte_required
-from alumnos.models import PaqueteClases
+from alumnos.models import PaqueteClases, VideoCompartido
 from alumnos.portales import contexto_de_marco
 
 from .forms import MensajeForm, ReporteForm, RespuestaContactoForm, RespuestaForm
@@ -61,6 +61,8 @@ def nuevo_ticket(request):
     categorias = categorias_que_reporta(request)
     if 'pago' in request.GET:
         inicial = _inicial_de_pago(request, request.GET['pago'])
+    elif 'video' in request.GET:
+        inicial = _inicial_de_video(request, request.GET['video'])
     else:  # un enlace puede elegir el tema ("Pedir ayuda con mi horario"); el formulario solo ofrece los suyos
         inicial = {'categoria': request.GET['categoria']} if 'categoria' in request.GET else None
     form = ReporteForm(request.POST or None, initial=inicial, categorias=categorias,
@@ -74,8 +76,8 @@ def nuevo_ticket(request):
     return render(request, 'apoderados/formulario.html', {
         'form': form, 'titulo': 'Abrir un ticket', 'subtitulo': 'Cuéntanos qué pasó', 'boton': 'Enviar',
         'volver_url': reverse('mis_tickets'),
-        'intro': (f"Pagos, clases{', horario' if Ticket.HORARIO in categorias else ''} y conducta: respondemos en "
-                  '2 días hábiles. Lo demás, en 5 días hábiles.'),
+        'intro': (f"Pagos, clases{', horario' if Ticket.HORARIO in categorias else ''}, conducta y videos: respondemos "
+                  'en 2 días hábiles. Lo demás, en 5 días hábiles.'),
         **contexto_de_marco(request, seccion='ayuda'),
     })
 
@@ -91,6 +93,23 @@ def _inicial_de_pago(request, orden):
         inicial.update(titulo=f'Problema con el pago {orden}', descripcion=f'Orden de compra: {orden}\n\n')
         if paquete.alumno.user_id != request.user.pk:  # el apoderado reporta por su estudiante
             inicial['estudiante'] = paquete.alumno.pk
+    return inicial
+
+
+def _inicial_de_video(request, video_id):
+    """"Reportar este video" (fase 5b, politica seccion 12): precarga un ticket de Videos. Como el del pago: el video
+    se usa solo si se le compartio al usuario o a su estudiante; si no, solo se elige el tema."""
+    inicial = {'categoria': Ticket.VIDEOS}
+    compartido = (VideoCompartido.objects.filter(
+        Q(paquete__alumno__user=request.user) | Q(paquete__alumno__in=estudiantes_que_reporta(request)),
+        video_id=video_id).select_related('paquete__alumno', 'paquete__profesor__user').first())
+    if compartido:
+        profesor = compartido.paquete.profesor
+        inicial.update(titulo='Problema con un video de apoyo', descripcion=(
+            f'Video: {video_id}\nProfesor: {profesor.nombre if profesor else "-"}\n\n'
+            '¿No corresponde a la materia o tiene contenido inapropiado? Cuéntanos qué pasó:\n'))
+        if compartido.paquete.alumno.user_id != request.user.pk:  # el apoderado reporta por su estudiante
+            inicial['estudiante'] = compartido.paquete.alumno.pk
     return inicial
 
 

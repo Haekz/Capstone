@@ -90,6 +90,7 @@
 
                             <div class="tab-content" id="tab-videos">
                                 {% url 'videos_alumno' as url_lista %}{% url 'ver_video' 'VIDEO_ID' as url_ver %}
+                                {% if not es_menor %}{% url 'nuevo_ticket' as url_reportar %}{% endif %}{# el menor no abre tickets: su apoderado (D18) #}
                                 {% include 'alumnos/includes/videos_apoyo.html' %}
                             </div>
                         </div>

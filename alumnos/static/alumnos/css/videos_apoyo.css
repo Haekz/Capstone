@@ -33,9 +33,21 @@
 
 .va-card:focus-visible,
 .va-cerrar:focus-visible,
-.va-habilitar:focus-visible {
+.va-habilitar:focus-visible,
+.va-reportar:focus-visible {
     outline: 3px solid var(--primary, #7c3aed);
     outline-offset: 2px;
+}
+
+/* Reclamo por el video abierto (fase 5b): enlace al formulario de tickets */
+.va-reportar {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    margin-top: 8px;
+    color: inherit;
+    font-size: 0.88rem;
+    text-decoration: underline;
 }
 
 /* Apoderado: cada video con su boton para habilitarlo al estudiante menor */

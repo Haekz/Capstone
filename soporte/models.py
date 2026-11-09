@@ -77,7 +77,7 @@ class Ticket(models.Model):
                   (CONDUCTA, 'Conducta en una clase'),
                   (TECNICO, 'Problemas técnicos'), (OTRO, 'Otro'), (PRIVACIDAD, 'Privacidad y datos'),
                   (CONTACTO, 'Contacto del sitio'), (VIDEOS, 'Videos de apoyo')]
-    DE_USUARIOS = (PAGOS, CLASES, CONDUCTA, TECNICO, OTRO)  # las que abre el propio usuario (D10)
+    DE_USUARIOS = (PAGOS, CLASES, CONDUCTA, VIDEOS, TECNICO, OTRO)  # las que abre el propio usuario (D10)
     DE_PROFESORES = DE_USUARIOS + (HORARIO,)
     # D4, D16, D17. Privacidad: 10 dias habiles (~14 corridos), decision por defecto a validar con la abogada.
     # Contacto: 5, como Tecnico y Otro (decidido 05-nov). Horario: 2, como Clases (toca sus reservas).
