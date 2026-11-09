@@ -9,6 +9,7 @@ cupo: por eso casi todo usa entregados(). La regla de no repetir un video al mis
 from datetime import timedelta
 
 from django.db import models
+from django.utils import timezone
 
 from .. import paquetes
 from .pagos import PaqueteClases, Suscripcion
@@ -64,6 +65,18 @@ class CompraVideosExtra(models.Model):
 
     def __str__(self):
         return f'{self.cantidad} extra -> {self.paquete} ({self.get_estado_display()})'
+
+    @classmethod
+    def confirmar_pago(cls, buy_order, aprobado, codigo_autorizacion='', fecha_pago=None):
+        """Activa o rechaza la compra pendiente de la orden. Devuelve cuantas cambio.
+
+        Idempotente: solo toca las pendientes, asi un retorno repetido (o un rechazo tardio) no pisa lo ya resuelto.
+        """
+        pendientes = cls.objects.filter(buy_order=buy_order, estado=cls.ESTADO_PENDIENTE)
+        if not aprobado:
+            return pendientes.update(estado=cls.ESTADO_RECHAZADA)
+        return pendientes.update(estado=cls.ESTADO_ACTIVA, codigo_autorizacion=codigo_autorizacion,
+                                 fecha_pago=fecha_pago or timezone.now())
 
     @property
     def fecha_limite(self):

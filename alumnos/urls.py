@@ -20,7 +20,7 @@ from .reservas import (
     listar_sesiones_disponibles,
     reservar_sesion,
 )
-from .webpay import confirmacion, comprar_paquete
+from .webpay import comprar_paquete, comprar_videos_extra, confirmacion
 from .sala_virtual import sala_virtual, iniciar_directo
 from .perfil_profesor import perfil_profesor
 from .views_videos import ver_video, videos_alumno
@@ -61,6 +61,7 @@ urlpatterns = [
     # Pago / Transbank
     path('confirmacion', confirmacion, name='confirmacion'),
     path('comprar-paquete/', comprar_paquete, name='comprar_paquete'),
+    path('comprar-videos-extra/', comprar_videos_extra, name='comprar_videos_extra'),
 
     # Videos que el profesor le compartió (agregado de videos)
     path('mis-videos/', videos_alumno, name='videos_alumno'),
