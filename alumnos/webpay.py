@@ -140,14 +140,17 @@ def comprar_videos_extra(request):
     return iniciar_compra_videos_extra(request, request.session['alumno_id'])  # el menor no pasa: ahi se bloquea
 
 
-def iniciar_compra_videos_extra(request, alumno_id, al_crear=None, vinculo=None):
+def iniciar_compra_videos_extra(request, alumno_id, al_crear=None, vinculo=None, volver=None):
     """Unico inicio de Webpay para videos extra: lo usan el alumno y el apoderado (fase 6).
 
     El paquete viene del POST y debe ser de ese alumno (si no, 404); la cantidad se valida con las reglas de
     alumnos/videos_extra.py y el monto lo pone el servidor. Menores: solo compra su apoderado, con el ``vinculo``
     que lo autoriza. Se valida antes de llamar a Transbank (no se cobra lo que no se puede comprar) y otra vez
-    dentro del candado del paquete, para que dos compras simultaneas no pasen del tope.
+    dentro del candado del paquete, para que dos compras simultaneas no pasen del tope. ``al_crear`` recibe la
+    compra dentro de la misma transaccion; ``volver`` es donde se muestra el motivo si no procede (por defecto, la
+    pestana de videos del alumno).
     """
+    volver = volver or reverse('alumno_pag1') + '?pestana=videos'
     alumno = get_object_or_404(Alumno, pk=alumno_id)
     try:
         exigir_mayor_de_edad(alumno, vinculo)
@@ -159,7 +162,7 @@ def iniciar_compra_videos_extra(request, alumno_id, al_crear=None, vinculo=None)
         monto = videos_extra.validar(paquete, cantidad)
     except ValidationError as error:
         messages.error(request, error.messages[0])
-        return redirect('alumno_pag1')
+        return redirect(volver)
     buy_order = f'VX{secrets.token_hex(12)}'  # 26 caracteres, el maximo de Transbank; unico como en los paquetes
     session_id = f'S{secrets.token_hex(8)}'
     try:
@@ -176,7 +179,7 @@ def iniciar_compra_videos_extra(request, alumno_id, al_crear=None, vinculo=None)
                 al_crear(compra)
     except ValidationError as error:  # otra compra se adelanto: el token de Transbank queda sin usar
         messages.error(request, error.messages[0])
-        return redirect('alumno_pag1')
+        return redirect(volver)
     return render(request, 'alumnos/redirect_webpay.html', {'url': response['url'], 'token': response['token']})
 
 

@@ -205,7 +205,7 @@ Las funciones de `alumnos/paquetes.py` (`cotizar`, `precio`, `comision`, `pago_p
 
 ## 12. Agregado de videos (decidido 08-nov-2026)
 
-Reglas en `alumnos/paquetes.py`; pruebas en `tests/test_paquetes_videos.py`. Ya funciona: venta junto con el paquete, biblioteca del profesor, entrega y visualización, aviso al profesor, pago, atrasos y reclamos. Falta: videos extra.
+Reglas en `alumnos/paquetes.py` y `alumnos/videos_extra.py`; pruebas en `tests/test_paquetes_videos.py` y `tests/test_*videos_extra*.py`. Ya funciona: venta junto con el paquete, biblioteca del profesor, entrega y visualización, aviso al profesor, pago, atrasos, reclamos y la compra de videos extra (pantalla del alumno adulto y del apoderado del menor, con registro de quién pagó). Falta: la devolución proporcional si el profesor no entrega una clase de video (soporte confirma el caso).
 
 | Plan | Videos del agregado | Precio | Entrega obligatoria del profesor |
 |---|---|---|---|

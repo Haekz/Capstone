@@ -3,7 +3,7 @@
 {# Recibe url_lista (JSON) y url_ver (con VIDEO_ID de marcador). Carga al hacerse visible: el panel no depende de Mongo. #}
 {# Opcional url_habilitar (apoderado): boton para habilitar cada video a su estudiante menor despues de revisarlo. #}
 {# Opcional url_reportar (formulario de tickets): "Reportar este video". No se pasa al menor: reporta su apoderado. #}
-<link rel="stylesheet" href="{% static 'alumnos/css/videos_apoyo.css' %}?v=3">
+<link rel="stylesheet" href="{% static 'alumnos/css/videos_apoyo.css' %}?v=4">
 <section class="va" data-lista="{{ url_lista }}" data-ver="{{ url_ver }}"{% if url_habilitar %} data-habilitar="{{ url_habilitar }}" data-csrf="{{ csrf_token }}"{% endif %}>
     <p class="va-nota">Los videos están disponibles mientras tu paquete esté vigente.</p>
     <p class="va-aviso" role="status" hidden></p>

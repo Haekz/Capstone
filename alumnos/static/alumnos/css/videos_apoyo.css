@@ -116,3 +116,52 @@
     line-height: 1;
     cursor: pointer;
 }
+
+/* Comprar mas videos (fase 6c): un formulario por paquete, con el precio de cada cantidad */
+.va-compra {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(168, 85, 247, 0.25);
+}
+
+.va-compra__titulo {
+    margin: 0 0 6px;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.va-compra__form {
+    display: grid;
+    gap: 8px;
+    max-width: 420px;
+    margin-bottom: 14px;
+}
+
+.va-compra__select,
+.va-compra__boton {
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 1px solid var(--primary, #7c3aed);
+    border-radius: 10px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+}
+
+.va-compra__boton {
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.va-compra__select:focus-visible,
+.va-compra__boton:focus-visible {
+    outline: 3px solid var(--primary, #7c3aed);
+    outline-offset: 2px;
+}
+
+.va-compra__error {
+    margin: 0 0 12px;
+    padding: 10px 14px;
+    border: 1px solid #dc2626;
+    border-radius: 10px;
+}

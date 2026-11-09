@@ -59,6 +59,12 @@ class CompraVideosExtra(models.Model):
     creada = models.DateTimeField(auto_now_add=True)
     codigo_autorizacion = models.CharField(max_length=20, blank=True)
     fecha_pago = models.DateTimeField(null=True, blank=True)
+    # Si pago el apoderado de un menor: quien y con que vinculo, como en CompraApoderado de los paquetes. SET_NULL: si
+    # se borra la cuenta o el vinculo, la evidencia del pago queda.
+    apoderado = models.ForeignKey('apoderados.Apoderado', on_delete=models.SET_NULL, null=True, blank=True,
+                                  related_name='compras_videos_extra')
+    vinculo = models.ForeignKey('apoderados.Vinculo', on_delete=models.SET_NULL, null=True, blank=True,
+                                related_name='compras_videos_extra')
 
     class Meta:
         ordering = ['-creada']

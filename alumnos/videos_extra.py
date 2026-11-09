@@ -46,6 +46,22 @@ def disponibles(paquete):
     return max(0, paquetes.MAX_VIDEOS_EXTRA - comprados(paquete))
 
 
+def ofertas(alumno_id, ahora=None):
+    """Lo que el alumno puede comprar ahora, para la pantalla: por cada paquete vigente que cumple las reglas,
+    [{'paquete': ..., 'opciones': [(cantidad, precio), ...], 'dias_entrega': ...}] desde 1 hasta lo que le queda bajo el tope.
+    El precio es informativo: el que se cobra lo vuelve a calcular el servidor (webpay.iniciar_compra_videos_extra)."""
+    ofertas = []
+    for paquete in (PaqueteClases.objects.vigentes().filter(alumno_id=alumno_id)
+                    .select_related('profesor__user').order_by('fecha_fin')):
+        try:
+            validar(paquete, 1, ahora)
+        except ValidationError:
+            continue
+        ofertas.append({'paquete': paquete, 'dias_entrega': paquetes.DIAS_ENTREGA_EXTRA,
+                        'opciones': [(n, paquetes.precio_videos_extra(n)) for n in range(1, disponibles(paquete) + 1)]})
+    return ofertas
+
+
 def validar(paquete, cantidad, ahora=None):
     """El precio de comprar ``cantidad`` extras para ``paquete``, o ValidationError con el motivo."""
     ahora = ahora or timezone.now()
