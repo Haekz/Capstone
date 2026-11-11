@@ -31,5 +31,5 @@ pypdfium2==5.14.0
 tzdata==2026.6
 # Feriados de Chile para los plazos de soporte en dias habiles (soporte/plazos.py).
 holidays==0.108
-python-dateutil==2.9.0.post0
+python-dateutil==4.0.0
 six==1.17.0
