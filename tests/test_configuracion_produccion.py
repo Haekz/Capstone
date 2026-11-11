@@ -222,3 +222,9 @@ class ProcfileTests(SimpleTestCase):
         self.assertEqual([p.split()[2] if p.startswith('python') else p.split()[0] for p in pasos],
                          ['migrate', 'collectstatic', 'check', 'gunicorn'])
         self.assertIn('--deploy', pasos[2])
+
+    def test_gunicorn_aguanta_videos_largos(self):
+        """Videos (MP4 de hasta 30 min): con hilos, ver o subir un video no bloquea el proceso ni lo corta a los 30 s."""
+        gunicorn = (Path(settings.BASE_DIR) / 'Procfile').read_text().split('&&')[-1].split()
+        for opcion, valor in (('--worker-class', 'gthread'), ('--threads', '4'), ('--timeout', '120')):
+            self.assertEqual(gunicorn[gunicorn.index(opcion) + 1], valor)

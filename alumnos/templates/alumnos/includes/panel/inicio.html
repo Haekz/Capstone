@@ -70,7 +70,7 @@
                                     <i class="bi bi-people-fill"></i> Tutores
                                 </button>
                                 <button class="tab-btn" data-tab="tab-videos">
-                                    <i class="bi bi-play-circle-fill"></i> Clases en Video
+                                    <i class="bi bi-play-circle-fill"></i> Mis videos
                                 </button>
                             </div>
 
@@ -89,10 +89,13 @@
                             </div>
 
                             <div class="tab-content" id="tab-videos">
-                                <p class="demo-notice"><i class="bi bi-info-circle"></i> Contenido de ejemplo: aún no hay clases en video publicadas.</p>
-                                <div class="filtered-grid" id="dashboard-videos-container">
-                                    <!-- Populated via JS -->
-                                </div>
+                                {% url 'videos_alumno' as url_lista %}{% url 'ver_video' 'VIDEO_ID' as url_ver %}
+                                {% if not es_menor %}{% url 'nuevo_ticket' as url_reportar %}{% endif %}{# el menor no abre tickets: su apoderado (D18) #}
+                                {% include 'alumnos/includes/videos_apoyo.html' %}
+                                {% if not es_menor %}{# el menor no compra: lo hace su apoderado #}
+                                    {% url 'comprar_videos_extra' as url_comprar %}
+                                    {% include 'alumnos/includes/comprar_videos_extra.html' with estudiante=alumno con_mensajes=True %}
+                                {% endif %}
                             </div>
                         </div>
                     </div>

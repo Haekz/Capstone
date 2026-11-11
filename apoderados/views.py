@@ -23,7 +23,7 @@ from alumnos.models import Inscripcion, PaqueteClases, SesionClase
 from alumnos.roles import ALUMNO, APODERADO, abrir_sesion_rol, redirigir_a_portal, rol_en_sesion
 from alumnos.services import InscripcionService
 from alumnos.utils import es_menor
-from alumnos.webpay import iniciar_compra_paquete  # unico inicio de Webpay para paquetes
+from alumnos.webpay import iniciar_compra_paquete, iniciar_compra_videos_extra  # unico inicio de Webpay de cada compra
 from observaciones import panel as observaciones_panel
 from soporte.permisos import lider_required
 
@@ -270,6 +270,20 @@ def comprar_paquete(request, id_vinculo):
     vinculo = _vinculo_o_404(request, id_vinculo)
     return iniciar_compra_paquete(request, vinculo.alumno_id, vinculo=vinculo, al_crear=lambda paquete: (
         CompraApoderado.objects.create(paquete=paquete, apoderado=vinculo.apoderado, vinculo=vinculo)))
+
+
+@require_POST
+@apoderado_required
+def comprar_videos_extra(request, id_vinculo):
+    """Mismo Webpay que el alumno, para un paquete de su estudiante; queda registrado quien pago (fase 6c)."""
+    vinculo = _vinculo_o_404(request, id_vinculo)
+
+    def registrar_quien_pago(compra):
+        compra.apoderado, compra.vinculo = vinculo.apoderado, vinculo
+        compra.save(update_fields=['apoderado', 'vinculo'])
+
+    return iniciar_compra_videos_extra(request, vinculo.alumno_id, vinculo=vinculo, al_crear=registrar_quien_pago,
+                                       volver=reverse('apoderado_clases_estudiante', args=[vinculo.pk]))
 
 
 @never_cache

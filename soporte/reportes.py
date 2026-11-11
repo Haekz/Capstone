@@ -15,13 +15,13 @@ from django.utils import timezone
 from django.views.decorators.cache import never_cache
 
 from alumnos.decorators import soporte_required
-from alumnos.models import PaqueteClases
+from alumnos.models import PaqueteClases, VideoCompartido
 from alumnos.portales import contexto_de_marco
 
 from .forms import MensajeForm, ReporteForm, RespuestaContactoForm, RespuestaForm
 from .models import Ticket
 from .permisos import (agente_en_sesion, categorias_que_reporta, estudiantes_que_reporta, reporta_required,
-                       tickets_del_agente)
+                       tickets_del_agente, tickets_visibles)
 from .tickets import abrir_reporte, agregar_mensaje, cerrar_sin_respuesta
 
 
@@ -61,6 +61,8 @@ def nuevo_ticket(request):
     categorias = categorias_que_reporta(request)
     if 'pago' in request.GET:
         inicial = _inicial_de_pago(request, request.GET['pago'])
+    elif 'video' in request.GET:
+        inicial = _inicial_de_video(request, request.GET['video'])
     else:  # un enlace puede elegir el tema ("Pedir ayuda con mi horario"); el formulario solo ofrece los suyos
         inicial = {'categoria': request.GET['categoria']} if 'categoria' in request.GET else None
     form = ReporteForm(request.POST or None, initial=inicial, categorias=categorias,
@@ -74,8 +76,8 @@ def nuevo_ticket(request):
     return render(request, 'apoderados/formulario.html', {
         'form': form, 'titulo': 'Abrir un ticket', 'subtitulo': 'Cuéntanos qué pasó', 'boton': 'Enviar',
         'volver_url': reverse('mis_tickets'),
-        'intro': (f"Pagos, clases{', horario' if Ticket.HORARIO in categorias else ''} y conducta: respondemos en "
-                  '2 días hábiles. Lo demás, en 5 días hábiles.'),
+        'intro': (f"Pagos, clases{', horario' if Ticket.HORARIO in categorias else ''}, conducta y videos: respondemos "
+                  'en 2 días hábiles. Lo demás, en 5 días hábiles.'),
         **contexto_de_marco(request, seccion='ayuda'),
     })
 
@@ -94,6 +96,23 @@ def _inicial_de_pago(request, orden):
     return inicial
 
 
+def _inicial_de_video(request, video_id):
+    """"Reportar este video" (fase 5b, politica seccion 12): precarga un ticket de Videos. Como el del pago: el video
+    se usa solo si se le compartio al usuario o a su estudiante; si no, solo se elige el tema."""
+    inicial = {'categoria': Ticket.VIDEOS}
+    compartido = (VideoCompartido.objects.filter(
+        Q(paquete__alumno__user=request.user) | Q(paquete__alumno__in=estudiantes_que_reporta(request)),
+        video_id=video_id).select_related('paquete__alumno', 'paquete__profesor__user').first())
+    if compartido:
+        profesor = compartido.paquete.profesor
+        inicial.update(titulo='Problema con un video de apoyo', descripcion=(
+            f'Video: {video_id}\nProfesor: {profesor.nombre if profesor else "-"}\n\n'
+            '¿No corresponde a la materia o tiene contenido inapropiado? Cuéntanos qué pasó:\n'))
+        if compartido.paquete.alumno.user_id != request.user.pk:  # el apoderado reporta por su estudiante
+            inicial['estudiante'] = compartido.paquete.alumno.pk
+    return inicial
+
+
 @never_cache
 @reporta_required
 def mi_ticket(request, id_ticket):
@@ -109,8 +128,7 @@ def mi_ticket(request, id_ticket):
 @soporte_required
 def ver_reporte(request, id_ticket):
     agente = agente_en_sesion(request)
-    visibles = Ticket.objects.all() if agente.es_lider else tickets_del_agente(request)
-    ticket = get_object_or_404(visibles.select_related('autor', 'contacto', 'asignado__user'),
+    ticket = get_object_or_404(tickets_visibles(request).select_related('autor', 'contacto', 'asignado__user'),
                                Q(autor__isnull=False) | Q(contacto__isnull=False), pk=id_ticket)
     # Responde solo quien lo tiene asignado; el lider, reasignandoselo antes.
     propio = tickets_del_agente(request).filter(pk=ticket.pk).exists()

@@ -262,42 +262,95 @@ input:checked + .slider:before {
         });
     }
 
-    // esta parte es del renderizado del catalogo de videos docente
+    // esta parte es de la biblioteca de videos del profe: los trae del servidor (se guardan en MongoDB)
+    const escVideo = (str) => String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+
+    function avisoVideos(texto) {
+        const aviso = document.getElementById('profe-videos-aviso');
+        if (aviso) { aviso.textContent = texto || ''; aviso.hidden = !texto; }
+    }
+
     function renderTeacherVideos() {
         const gridEl = document.getElementById('profe-cursos-grid-el');
         if (!gridEl) return;
-        gridEl.innerHTML = '';
-        
-        // esta parte es de actualizar el número de lecciones totales que se muestran en el indicador superior de estadísticas
-        const counterEl = document.getElementById('profe-stat-videos-count');
-        if (counterEl) counterEl.innerText = `${teacherVideos.length} Lecciones`;
-
-        const escVideo = (str) => String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-        teacherVideos.forEach(video => {
-            const card = document.createElement('div');
-            card.className = 'profe-cursos-card';
-            const safeTitle = escVideo(video.title);
-            const safeDuration = escVideo(video.duration);
-            const safeCourse = escVideo(video.course);
-            card.innerHTML = `
-                <div class="profe-cursos-thumb">
-                    <i class="bi bi-play-circle-fill"></i>
-                    <span class="profe-cursos-badge-duration">${safeDuration}</span>
-                </div>
-                <div class="profe-cursos-body">
-                    <h4 class="profe-cursos-title" title="${safeTitle}">${safeTitle}</h4>
-                    <span class="profe-cursos-category">${safeCourse}</span>
-                    <div class="profe-cursos-meta">
-                        <span><i class="bi bi-eye"></i> ${escVideo(video.views)} vistas</span>
-                        <span><i class="bi bi-calendar"></i> ${escVideo(video.date)}</span>
+        fetch("{% url 'videos_profesor' %}")
+        .then(res => res.json())
+        .then(data => {
+            gridEl.innerHTML = '';
+            if (!data.disponible) { avisoVideos(data.message); return; }
+            document.getElementById('upload-course').innerHTML = data.asignaturas
+                .map(a => `<option value="${Number(a.id)}">${escVideo(a.nombre)}</option>`).join('');
+            avisoVideos(!data.asignaturas.length ? 'Para subir videos necesitas tener al menos una materia en tus clases.'
+                        : (data.videos.length ? '' : 'Todavía no has subido videos.'));
+            const counterEl = document.getElementById('profe-stat-videos-count');
+            if (counterEl) counterEl.innerText = `${data.videos.length} ${data.videos.length === 1 ? 'video' : 'videos'}`;
+            data.videos.forEach(video => {
+                const card = document.createElement('div');
+                card.className = 'profe-cursos-card';
+                const safeTitle = escVideo(video.titulo);
+                card.innerHTML = `
+                    <div class="profe-cursos-thumb">
+                        <i class="bi bi-play-circle-fill"></i>
+                        <span class="profe-cursos-badge-duration">${escVideo(video.duracion)}</span>
                     </div>
-                    <button class="profe-cursos-delete-btn" onclick="deleteTeacherVideo(${Number(video.id) || 0})">
-                        <i class="bi bi-trash3-fill"></i> Eliminar Clase
-                    </button>
-                </div>
-            `;
-            gridEl.appendChild(card);
-        });
+                    <div class="profe-cursos-body">
+                        <h4 class="profe-cursos-title" title="${safeTitle}">${safeTitle}</h4>
+                        <span class="profe-cursos-category">${escVideo(video.asignatura)}</span>
+                        <div class="profe-cursos-meta">
+                            <span><i class="bi bi-calendar"></i> ${escVideo(video.subido)}</span>
+                        </div>
+                        <button class="profe-cursos-delete-btn" data-id="${escVideo(video.id)}" onclick="deleteTeacherVideo(this.dataset.id)">
+                            <i class="bi bi-trash3-fill"></i> Eliminar video
+                        </button>
+                    </div>
+                `;
+                gridEl.appendChild(card);
+            });
+            renderEntregas(data);
+        })
+        .catch(() => avisoVideos('No pudimos cargar tus videos. Revisa tu conexión.'));
+    }
+
+    // esta parte es de la lista de alumnos que contrataron videos: fecha límite y el botón para compartir
+    function renderEntregas(data) {
+        const card = document.getElementById('profe-entregas-card');
+        const lista = document.getElementById('profe-entregas-lista');
+        card.hidden = !data.entregas.length;
+        const opciones = data.videos.map(v => `<option value="${escVideo(v.id)}">${escVideo(v.titulo)} (${escVideo(v.asignatura)})</option>`).join('');
+        lista.innerHTML = data.entregas.map(e => {
+            const estado = !e.falta ? 'Entrega completa'
+                : `${e.atrasada ? 'Atrasado: debías haber entregado hasta' : 'Próxima entrega'} el ${escVideo(e.proxima)} (faltan ${Number(e.falta)})`;
+            const acciones = e.compartidos >= e.videos ? '' : (opciones ? `
+                <div class="profe-entrega-acciones">
+                    <select class="prof-form-select" aria-label="Video para ${escVideo(e.alumno)}">${opciones}</select>
+                    <button class="prof-form-btn" style="width:auto;padding:10px 20px" data-paquete="${Number(e.paquete)}" onclick="shareVideo(this)">Compartir</button>
+                </div>` : '<p class="profe-entrega-estado">Sube un video a tu biblioteca para poder compartirlo.</p>');
+            return `<li class="profe-entrega${e.atrasada ? ' atrasada' : ''}">
+                <strong>${escVideo(e.alumno)}</strong>
+                <span>Plan ${escVideo(e.plan)} · ${Number(e.compartidos)} de ${Number(e.videos)} compartidos</span>
+                <span class="profe-entrega-estado">${estado}</span>${acciones}
+            </li>`;
+        }).join('');
+    }
+
+    // esta parte es de compartir un video de la biblioteca con un alumno
+    function shareVideo(boton) {
+        const datos = new FormData();
+        datos.append('paquete', boton.dataset.paquete);
+        datos.append('video', boton.parentElement.querySelector('select').value);
+        boton.disabled = true;
+        fetch("{% url 'compartir_video' %}", { method: 'POST', headers: { 'X-CSRFToken': '{{ csrf_token }}' }, body: datos })
+        .then(res => res.json())
+        .then(data => {
+            Swal.fire({
+                title: data.success ? '¡Video compartido!' : 'Atención',
+                text: data.message,
+                icon: data.success ? 'success' : 'warning',
+                confirmButtonColor: '#a855f7'
+            });
+            renderTeacherVideos();
+        })
+        .catch(() => { boton.disabled = false; Swal.fire('Error', 'Hubo un error de conexión al compartir el video.', 'error'); });
     }
 
     // esta parte es para abrir y cerrar el modal de carga de videos
@@ -311,57 +364,44 @@ input:checked + .slider:before {
         if (modal) modal.classList.remove('open');
     }
 
-    // esta parte es para simular la carga y publicacion de un video
+    // esta parte es de subir el video al servidor: valida materia, MP4 y 30 minutos
     function submitUploadedVideo(event) {
         event.preventDefault();
-        const title = document.getElementById('upload-title').value.trim();
-        const duration = document.getElementById('upload-duration').value.trim();
-        const courseSelect = document.getElementById('upload-course');
-        const courseText = courseSelect.options[courseSelect.selectedIndex].text;
-        const courseId = courseSelect.value;
-        
+        const form = event.target;
         Swal.fire({
-            title: 'Subiendo Clase',
-            text: 'Subiendo archivo de video e indexando lección...',
-            icon: 'info',
+            title: 'Subiendo video',
+            text: 'Puede tardar unos minutos según el tamaño del archivo.',
             allowOutsideClick: false,
             showConfirmButton: false,
-            timer: 2000,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        }).then(() => {
-            const newVideo = {
-                id: Date.now(),
-                title: title,
-                duration: duration,
-                course: courseText,
-                courseId: courseId,
-                views: 0,
-                date: new Date().toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' })
-            };
-            
-            teacherVideos.unshift(newVideo);
-            closeUploadModal();
-            renderTeacherVideos();
-            
-            // esta parte es de resetear y limpiar los campos del formulario de subida de video
-            document.getElementById('profe-video-upload-form').reset();
-            
+            didOpen: () => Swal.showLoading()
+        });
+        fetch("{% url 'subir_video' %}", {
+            method: 'POST',
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+            body: new FormData(form)
+        })
+        .then(res => res.json())
+        .then(data => {
             Swal.fire({
-                title: '¡Clase Publicada!',
-                text: 'La lección ya se encuentra disponible para los alumnos inscritos.',
-                icon: 'success',
+                title: data.success ? '¡Video publicado!' : 'Atención',
+                text: data.message,
+                icon: data.success ? 'success' : 'warning',
                 confirmButtonColor: '#a855f7'
             });
-        });
+            if (data.success) {
+                form.reset();
+                closeUploadModal();
+                renderTeacherVideos();
+            }
+        })
+        .catch(() => Swal.fire('Error', 'Hubo un error de conexión al subir el video.', 'error'));
     }
 
-    // esta parte es de eliminar una clase grabada
+    // esta parte es de eliminar un video de la biblioteca
     function deleteTeacherVideo(videoId) {
         Swal.fire({
-            title: '¿Eliminar lección?',
-            text: "Esta acción no se puede deshacer y los alumnos perderán acceso al video.",
+            title: '¿Eliminar video?',
+            text: 'Esta acción no se puede deshacer.',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#ef4444',
@@ -369,16 +409,22 @@ input:checked + .slider:before {
             confirmButtonText: 'Sí, eliminar',
             cancelButtonText: 'Cancelar'
         }).then((result) => {
-            if (result.isConfirmed) {
-                teacherVideos = teacherVideos.filter(v => v.id !== videoId);
-                renderTeacherVideos();
+            if (!result.isConfirmed) return;
+            fetch("{% url 'eliminar_video' 'VIDEO_ID' %}".replace('VIDEO_ID', encodeURIComponent(videoId)), {
+                method: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+            })
+            .then(res => res.json())
+            .then(data => {
                 Swal.fire({
-                    title: 'Eliminado',
-                    text: 'La lección ha sido retirada del catálogo.',
-                    icon: 'success',
+                    title: data.success ? 'Eliminado' : 'Atención',
+                    text: data.message,
+                    icon: data.success ? 'success' : 'warning',
                     confirmButtonColor: '#a855f7'
                 });
-            }
+                if (data.success) renderTeacherVideos();
+            })
+            .catch(() => Swal.fire('Error', 'Hubo un error de conexión al eliminar el video.', 'error'));
         });
     }
 
@@ -391,5 +437,6 @@ input:checked + .slider:before {
     window.closeUploadModal = closeUploadModal;
     window.submitUploadedVideo = submitUploadedVideo;
     window.deleteTeacherVideo = deleteTeacherVideo;
+    window.shareVideo = shareVideo;
 </script>
 {% endblock %}

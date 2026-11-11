@@ -1,0 +1,9 @@
+Hola,
+
+El profesor de {{ estudiante }} le compartió un video de apoyo en LBWUS.
+
+Antes de que {{ estudiante }} pueda verlo, revísalo y habilítalo desde la página de clases de tu estudiante, en la sección «Videos de apoyo». Si después cambias de opinión, puedes quitar la habilitación cuando quieras.
+
+Si el video no te parece adecuado, no lo habilites y escríbenos desde la página de contacto de LBWUS para que lo revisemos.
+
+Equipo LBWUS

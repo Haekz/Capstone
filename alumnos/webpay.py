@@ -1,8 +1,11 @@
 """Compra de paquetes con Webpay Plus (Transbank): inicio del pago y confirmacion."""
 
+import logging
 import secrets
 
 from django.conf import settings
+from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -12,13 +15,16 @@ from django.views.decorators.http import require_POST
 
 from lbwus.credenciales_transbank import validar_produccion
 
-from . import paquetes
+from . import avisos_profesor, paquetes, videos_extra
 from .decorators import alumno_required
 from .exceptions import InscripcionError
-from .models import Alumno, PaqueteClases, Suscripcion
+from .models import Alumno, CompraVideosExtra, PaqueteClases, Suscripcion
 from .services import exigir_mayor_de_edad
 from .templatetags.dinero import clp as _clp  # mismo formato en vistas y plantillas
+from .utils import entero
 from .views import _profesor_habilitado
+
+logger = logging.getLogger(__name__)
 
 
 # ============================================================
@@ -97,12 +103,14 @@ def iniciar_compra_paquete(request, alumno_id, al_crear=None, vinculo=None):
         return redirect('planes')
 
     monto = paquetes.precio(plan, profesor.tarifa)
+    con_videos = request.POST.get('videos') == '1'  # el navegador solo dice si lo quiere; el precio es del servidor
+    monto_videos = paquetes.precio_agregado(plan) if con_videos else 0
     # Unico (26 caracteres, el maximo de Transbank): con un numero corto al azar, un
     # pedido abandonado podia compartir orden con una compra nueva y activarse gratis.
     buy_order = f'PQ{secrets.token_hex(12)}'
     session_id = f'S{secrets.token_hex(8)}'
     try:
-        response = _tx().create(buy_order, session_id, monto, request.build_absolute_uri(reverse('confirmacion')))
+        response = _tx().create(buy_order, session_id, monto + monto_videos, request.build_absolute_uri(reverse('confirmacion')))
     except Exception:  # Transbank caido o rechazo la orden: no se cobra ni se crea el paquete
         return render(request, 'alumnos/confirmacion.html', {'aprobado': False, 'items': []})
 
@@ -110,11 +118,70 @@ def iniciar_compra_paquete(request, alumno_id, al_crear=None, vinculo=None):
         paquete = PaqueteClases.objects.create(
             alumno_id=alumno_id, profesor=profesor, plan=plan.codigo,
             clases=plan.clases, tarifa=profesor.tarifa, monto=monto, dias=plan.vigencia_dias,
+            videos=plan.videos if con_videos else 0, monto_videos=monto_videos,
             buy_order=buy_order, token_ws=response['token'],
         )
         if al_crear:
             al_crear(paquete)
     return render(request, 'alumnos/redirect_webpay.html', {'url': response['url'], 'token': response['token']})
+
+
+@alumno_required
+@require_POST
+def comprar_videos_extra(request):
+    """Inicia Webpay por videos extra de un paquete del alumno. El monto lo calcula el servidor."""
+    return iniciar_compra_videos_extra(request, request.session['alumno_id'])  # el menor no pasa: ahi se bloquea
+
+
+def iniciar_compra_videos_extra(request, alumno_id, al_crear=None, vinculo=None, volver=None):
+    """Unico inicio de Webpay para videos extra: lo usan el alumno y el apoderado (fase 6).
+
+    El paquete viene del POST y debe ser de ese alumno (si no, 404); la cantidad se valida con las reglas de
+    alumnos/videos_extra.py y el monto lo pone el servidor. Menores: solo compra su apoderado, con el ``vinculo``
+    que lo autoriza. Se valida antes de llamar a Transbank (no se cobra lo que no se puede comprar) y otra vez
+    dentro del candado del paquete, para que dos compras simultaneas no pasen del tope. ``al_crear`` recibe la
+    compra dentro de la misma transaccion; ``volver`` es donde se muestra el motivo si no procede (por defecto, la
+    pestana de videos del alumno).
+    """
+    volver = volver or reverse('alumno_pag1') + '?pestana=videos'
+    alumno = get_object_or_404(Alumno, pk=alumno_id)
+    try:
+        exigir_mayor_de_edad(alumno, vinculo)
+    except InscripcionError:
+        return redirect('alumno_pag1')
+    paquete = get_object_or_404(PaqueteClases, pk=entero(request.POST.get('paquete')), alumno=alumno)
+    cantidad = entero(request.POST.get('cantidad')) or 0
+    try:
+        monto = videos_extra.validar(paquete, cantidad)
+    except ValidationError as error:
+        messages.error(request, error.messages[0])
+        return redirect(volver)
+    buy_order = f'VX{secrets.token_hex(12)}'  # 26 caracteres, el maximo de Transbank; unico como en los paquetes
+    session_id = f'S{secrets.token_hex(8)}'
+    try:
+        response = _tx().create(buy_order, session_id, monto, request.build_absolute_uri(reverse('confirmacion')))
+    except Exception:  # Transbank caido o rechazo la orden: no se cobra ni se crea la compra
+        return render(request, 'alumnos/confirmacion.html', {'aprobado': False, 'items': []})
+    try:
+        with transaction.atomic():
+            PaqueteClases.objects.select_for_update().get(pk=paquete.pk)
+            videos_extra.validar(paquete, cantidad)
+            compra = CompraVideosExtra.objects.create(
+                paquete=paquete, cantidad=cantidad, monto=monto, buy_order=buy_order, token_ws=response['token'])
+            if al_crear:
+                al_crear(compra)
+    except ValidationError as error:  # otra compra se adelanto: el token de Transbank queda sin usar
+        messages.error(request, error.messages[0])
+        return redirect(volver)
+    return render(request, 'alumnos/redirect_webpay.html', {'url': response['url'], 'token': response['token']})
+
+
+def _avisar_profesor(aviso, pago):
+    """Avisa al profesor de un pago. El pago ya esta confirmado: un fallo aqui se registra y no lo tumba."""
+    try:
+        aviso(pago)
+    except Exception:
+        logger.exception('No se pudo avisar al profesor (%r, pago %s)', aviso, pago.pk)
 
 
 def registrar_respuesta(resp):
@@ -129,11 +196,20 @@ def registrar_respuesta(resp):
     )
     buy_order = resp.get('buy_order', '')
     paquete = PaqueteClases.objects.filter(buy_order=buy_order).first() if buy_order else None
-    if paquete and int(resp.get('amount') or 0) != paquete.monto:
+    compra = CompraVideosExtra.objects.filter(buy_order=buy_order).first() if buy_order else None
+    esperado = paquete.total if paquete else compra.monto if compra else None
+    if esperado is not None and int(resp.get('amount') or 0) != esperado:
         aprobado = False
     Suscripcion.confirmar_pago(buy_order, aprobado)
-    PaqueteClases.confirmar_pago(buy_order, aprobado, resp.get('authorization_code') or '',
-                                 parse_datetime(resp.get('transaction_date') or ''))
+    autorizacion, fecha = resp.get('authorization_code') or '', parse_datetime(resp.get('transaction_date') or '')
+    activados = PaqueteClases.confirmar_pago(buy_order, aprobado, autorizacion, fecha)
+    extras_activados = CompraVideosExtra.confirmar_pago(buy_order, aprobado, autorizacion, fecha)
+    # Solo lo que ESTA llamada activo: el aviso al profesor sale una vez por compra, aunque el retorno llegue dos veces.
+    for paquete in activados:
+        if paquete.videos:
+            transaction.on_commit(lambda paquete=paquete: _avisar_profesor(avisos_profesor.agregado_videos, paquete))
+    for compra in extras_activados:
+        transaction.on_commit(lambda compra=compra: _avisar_profesor(avisos_profesor.videos_extra_comprados, compra))
     return aprobado, buy_order
 
 
@@ -165,11 +241,19 @@ def confirmacion(request):
 
         card = resp.get('card_detail') or {}
         aprobado, buy_order = registrar_respuesta(resp)
+        de_la_orden = list(PaqueteClases.objects.filter(buy_order=buy_order).select_related('profesor__user')) if buy_order else []
         ctx['items'] = [
             {'titulo': f'{p.get_plan_display()}: {p.clases} clase(s) con {p.profesor.nombre if p.profesor else "—"}',
              'cantidad': 1, 'precio': _clp(p.monto)}
-            for p in PaqueteClases.objects.filter(buy_order=buy_order).select_related('profesor__user')
-        ] if buy_order else []
+            for p in de_la_orden
+        ] + [
+            {'titulo': f'Agregado: {p.videos} video{"s" if p.videos != 1 else ""} de ayuda', 'cantidad': 1, 'precio': _clp(p.monto_videos)}
+            for p in de_la_orden if p.monto_videos
+        ] + [
+            {'titulo': f'Videos extra: {c.cantidad} video{"s" if c.cantidad != 1 else ""} de apoyo',
+             'cantidad': 1, 'precio': _clp(c.monto)}
+            for c in (CompraVideosExtra.objects.filter(buy_order=buy_order) if buy_order else [])
+        ]
 
         ctx.update({
             'aprobado': aprobado,

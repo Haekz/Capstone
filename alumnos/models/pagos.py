@@ -17,17 +17,22 @@ class SuscripcionQuerySet(models.QuerySet):
 def _activar_pendientes(modelo, buy_order, aprobado):
     """Activa o rechaza los pagos pendientes de una orden de Webpay (Suscripcion o PaqueteClases).
 
-    Idempotente: si Webpay vuelve dos veces, la segunda no encuentra pendientes.
+    Idempotente: si Webpay vuelve dos veces, la segunda no encuentra pendientes. Devuelve los pagos que ESTA llamada
+    activo (el UPDATE solo cuenta si seguia pendiente), para avisar una sola vez aunque dos retornos lleguen juntos.
     """
     pendientes = modelo.objects.filter(buy_order=buy_order, estado=modelo.ESTADO_PENDIENTE)
     if not aprobado:
         pendientes.update(estado=modelo.ESTADO_RECHAZADA)
-        return
+        return []
     ahora = timezone.now()
+    activados = []
     for pago in pendientes:
-        pago.estado = modelo.ESTADO_ACTIVA
-        pago.fecha_fin = ahora + timedelta(days=pago.dias)
-        pago.save(update_fields=['estado', 'fecha_fin'])
+        fecha_fin = ahora + timedelta(days=pago.dias)
+        if modelo.objects.filter(pk=pago.pk, estado=modelo.ESTADO_PENDIENTE).update(
+                estado=modelo.ESTADO_ACTIVA, fecha_fin=fecha_fin):
+            pago.estado, pago.fecha_fin = modelo.ESTADO_ACTIVA, fecha_fin
+            activados.append(pago)
+    return activados
 
 
 class Suscripcion(models.Model):
@@ -107,6 +112,9 @@ class PaqueteClases(models.Model):
     clases = models.PositiveSmallIntegerField(validators=[MinValueValidator(1)])
     tarifa = models.PositiveIntegerField()
     monto = models.PositiveIntegerField()
+    # Agregado de videos: se cobra junto con el paquete y aparte de `monto`, que es solo de las clases.
+    videos = models.PositiveSmallIntegerField(default=0)
+    monto_videos = models.PositiveIntegerField(default=0)
     dias = models.PositiveIntegerField(validators=[MinValueValidator(1)])
     buy_order = models.CharField(max_length=26, db_index=True)
     # Token de Webpay: con el se le pregunta a Transbank por un pago que no volvio (revisar_pagos_pendientes).
@@ -140,9 +148,15 @@ class PaqueteClases(models.Model):
     def precio_por_clase(self):
         return self.monto // self.clases
 
+    @property
+    def total(self):
+        """Lo que se cobra en Webpay: las clases y el agregado de videos."""
+        return self.monto + self.monto_videos
+
     @classmethod
     def confirmar_pago(cls, buy_order, aprobado, codigo_autorizacion='', fecha_pago=None):
+        """Confirma o rechaza la orden. Devuelve los paquetes que esta llamada dejo activos."""
         if aprobado:  # solo los pendientes: un retorno repetido no pisa los datos del primero
             cls.objects.filter(buy_order=buy_order, estado=cls.ESTADO_PENDIENTE).update(
                 codigo_autorizacion=codigo_autorizacion, fecha_pago=fecha_pago or timezone.now())
-        _activar_pendientes(cls, buy_order, aprobado)
+        return _activar_pendientes(cls, buy_order, aprobado)

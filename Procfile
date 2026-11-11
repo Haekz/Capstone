@@ -1,1 +1,1 @@
-web: python manage.py migrate --noinput && python manage.py collectstatic --noinput && python manage.py check --deploy --fail-level ERROR && gunicorn lbwus.wsgi --bind 0.0.0.0:$PORT
+web: python manage.py migrate --noinput && python manage.py collectstatic --noinput && python manage.py check --deploy --fail-level ERROR && gunicorn lbwus.wsgi --bind 0.0.0.0:$PORT --worker-class gthread --threads 4 --timeout 120

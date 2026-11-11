@@ -20,9 +20,11 @@ from .reservas import (
     listar_sesiones_disponibles,
     reservar_sesion,
 )
-from .webpay import confirmacion, comprar_paquete
+from .webpay import comprar_paquete, comprar_videos_extra, confirmacion
 from .sala_virtual import sala_virtual, iniciar_directo
 from .perfil_profesor import perfil_profesor
+from .views_videos import ver_video, videos_alumno
+from . import views_soporte_videos
 
 urlpatterns = [
     path('profesores/<int:id_profesor>/', perfil_profesor, name='perfil_profesor'),
@@ -59,4 +61,17 @@ urlpatterns = [
     # Pago / Transbank
     path('confirmacion', confirmacion, name='confirmacion'),
     path('comprar-paquete/', comprar_paquete, name='comprar_paquete'),
+    path('comprar-videos-extra/', comprar_videos_extra, name='comprar_videos_extra'),
+
+    # Videos que el profesor le compartió (agregado de videos)
+    path('mis-videos/', videos_alumno, name='videos_alumno'),
+    path('mis-videos/<str:video_id>/ver/', ver_video, name='ver_video'),
+    path('soporte/<int:id_ticket>/videos/<str:video_id>/ver/', views_soporte_videos.ver_video,
+         name='soporte_ver_video'),
+    path('soporte/<int:id_ticket>/videos/<str:video_id>/retirar/', views_soporte_videos.retirar_video,
+         name='soporte_retirar_video'),
+    path('soporte/<int:id_ticket>/videos/devolver/', views_soporte_videos.devolver_videos,
+         name='soporte_devolver_videos'),
+    path('soporte/<int:id_ticket>/videos/devoluciones/<int:id_devolucion>/hecha/', views_soporte_videos.devolucion_hecha,
+         name='soporte_devolucion_hecha'),
 ]

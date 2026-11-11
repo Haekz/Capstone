@@ -62,7 +62,7 @@ El inicio de sesión con Google no usa variables: el `client_id` y el secreto es
 
 ## 4. Despliegue y reinicio
 
-`Procfile`: `migrate --noinput` → `collectstatic --noinput` → `check --deploy --fail-level ERROR` → `gunicorn lbwus.wsgi`. Si falta una clave obligatoria, el despliegue falla en el paso 3 y gunicorn no arranca (revisa los logs del despliegue en Railway). Los avisos (`W…`) de `check --deploy` no lo detienen.
+`Procfile`: `migrate --noinput` → `collectstatic --noinput` → `check --deploy --fail-level ERROR` → `gunicorn lbwus.wsgi` (con hilos: `--worker-class gthread --threads 4 --timeout 120`, para que ver o subir un video largo no corte la conexión ni bloquee al resto). Si falta una clave obligatoria, el despliegue falla en el paso 3 y gunicorn no arranca (revisa los logs del despliegue en Railway). Los avisos (`W…`) de `check --deploy` no lo detienen.
 
 | Qué | ¿Sobrevive a un redespliegue o reinicio? | Por qué |
 |---|---|---|

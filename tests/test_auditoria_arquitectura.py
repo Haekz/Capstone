@@ -246,7 +246,8 @@ class AuditoriaSeguridadYArquitecturaTests(TestCase):
         # Antes 20 (con 1 de holgura): el inicio con datos reales de hoy (user_profesor/inicio.py) suma 3 consultas
         # fijas (reservas de hoy, lo ya dictado con pagables() y bloques libres). Juntarlas obligaria a copiar la
         # regla del saldo. Sigue siendo O(1): lo que importa es la igualdad de arriba.
-        self.assertLessEqual(despues_prof, 22)
+        # 23: el saldo suma 1 consulta fija por los videos compartidos (agregado de videos, fase 4a).
+        self.assertLessEqual(despues_prof, 23)
         self.assertContains(r_prof, "Cálculo Vectorial")
 
     def test_formato_clp_y_alumnos_reg_dry(self):

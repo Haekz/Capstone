@@ -14,6 +14,7 @@ from django.utils.http import urlsafe_base64_encode
 from alumnos.ayuda import lineas_para
 from alumnos.correo import enviar as _enviar
 from alumnos.utils import edad, es_menor
+from notificaciones.models import notificar
 from soporte.correo import avisar_documentos_por_vencer
 from soporte.models import Ticket
 
@@ -53,11 +54,29 @@ def enviar_invitacion(request, invitacion):
     }, invitacion.correo)
 
 
+def _vinculos_verificados(alumno):
+    """Vinculos verificados del estudiante con apoderados verificados: a quienes se avisa."""
+    return Vinculo.objects.filter(alumno=alumno, estado=Vinculo.VERIFICADO, apoderado__estado=Apoderado.VERIFICADO)
+
+
 def _correos_de_apoderados(alumno):
     """De cada apoderado con vinculo verificado del estudiante."""
-    return (Vinculo.objects.filter(alumno=alumno, estado=Vinculo.VERIFICADO,
-                                   apoderado__estado=Apoderado.VERIFICADO)
-            .values_list('apoderado__user__email', flat=True))
+    return _vinculos_verificados(alumno).values_list('apoderado__user__email', flat=True)
+
+
+def avisar_video_por_revisar(alumno):
+    """El profesor compartio un video con un estudiante menor: sus apoderados lo revisan y lo habilitan (09-nov).
+
+    Campanita que lleva a la pagina de clases del estudiante, y correo. Un correo por persona.
+    """
+    estudiante = alumno.user.first_name
+    envios = []
+    for vinculo in _vinculos_verificados(alumno).select_related('apoderado__user'):
+        notificar(vinculo.apoderado.user, f'Hay un video nuevo para {estudiante}: revísalo y habilítalo para que pueda verlo.',
+                  reverse('apoderado_clases_estudiante', args=[vinculo.pk]))
+        envios.append(_enviar(f'Video nuevo para {estudiante}', 'apoderados/correo_video_por_revisar.txt',
+                              {'estudiante': estudiante}, vinculo.apoderado.user.email))
+    return all(envios)
 
 
 def _correo_del_adolescente(alumno):

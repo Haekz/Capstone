@@ -28,6 +28,14 @@ def edad(fecha):
     return hoy.year - fecha.year - ((hoy.month, hoy.day) < (fecha.month, fecha.day))
 
 
+def entero(valor):
+    """El numero que mando el navegador, o None si no lo es (lo que llega por POST nunca se da por bueno)."""
+    try:
+        return int(valor)
+    except (TypeError, ValueError):
+        return None
+
+
 def es_menor(user):
     """True si la cuenta es de un menor. Todos los registros exigen la fecha."""
     return bool(user.fecha_nacimiento) and edad(user.fecha_nacimiento) < EDAD_ADULTA

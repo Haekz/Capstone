@@ -40,7 +40,7 @@ class TicketHorarioTests(TestCase):
         entrar(self.client, self.profesor.user, profesor_id=self.profesor.id_profesor)
         r = self.client.get(reverse('nuevo_ticket'), {'categoria': Ticket.HORARIO})
         self.assertContains(r, OPCION.format(' selected'), html=True)
-        self.assertContains(r, 'Pagos, clases, horario y conducta: respondemos en 2 d\u00edas h\u00e1biles.')
+        self.assertContains(r, 'Pagos, clases, horario, conducta y videos: respondemos en 2 d\u00edas h\u00e1biles.')
 
     def test_alumno_y_apoderado_no_lo_ven_ni_lo_abren(self):
         alumno = crear_alumno_adulto()
@@ -52,7 +52,7 @@ class TicketHorarioTests(TestCase):
                 entrar(self.client, user, **sesion)
                 r = self.client.get(reverse('nuevo_ticket'), {'categoria': Ticket.HORARIO})
                 self.assertNotContains(r, 'value="horario"')
-                self.assertContains(r, 'Pagos, clases y conducta: respondemos')
+                self.assertContains(r, 'Pagos, clases, conducta y videos: respondemos')
                 self.client.post(reverse('nuevo_ticket'), datos(categoria=Ticket.HORARIO))
                 self.assertFalse(Ticket.objects.exists())
 

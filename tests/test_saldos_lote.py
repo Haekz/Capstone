@@ -49,5 +49,5 @@ class SaldosEnLoteTests(Escenario):
 
     def test_consultas_fijas_sin_importar_cuantos_profesores(self):
         profesores = list(self.profesores)  # ya cargados (con un queryset se suma 1 para leerlo)
-        with self.assertNumQueries(2):  # inscripciones dictadas + retiros agrupados
+        with self.assertNumQueries(3):  # inscripciones dictadas + videos compartidos + retiros agrupados
             saldos_de(profesores)

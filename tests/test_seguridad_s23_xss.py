@@ -73,10 +73,10 @@ class TestS23SeguridadXss(TestCase):
         self.assertIn('${escaparHtml(t.name)}', contenido)
         self.assertIn("${escaparHtml(t.specialties.join(', '))}", contenido)
 
-        # Videos
-        self.assertIn('${escaparHtml(v.title)}', contenido)
-        self.assertIn('${escaparHtml(v.specialty)}', contenido)
-        self.assertIn('${escaparHtml(v.teacher)}', contenido)
+        # Videos: el componente real (videos_apoyo.html) arma las tarjetas con textContent, nunca con innerHTML,
+        # asi que titulo, materia y profesor que vienen del servidor no se interpretan como HTML.
+        self.assertIn('nodo.textContent = texto', contenido)
+        self.assertNotIn('boton.innerHTML', contenido)
 
     def test_buzon_alumno_y_profesor_escapan_nombres_y_mensajes(self):
         """El Buzon real (mensajes/panel.py) muestra nombres y textos escapados en ambos portales.

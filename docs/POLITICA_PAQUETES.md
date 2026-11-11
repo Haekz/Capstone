@@ -202,3 +202,26 @@ Las funciones de `alumnos/paquetes.py` (`cotizar`, `precio`, `comision`, `pago_p
 | Dos reservas simultáneas por la última clase o el último cupo: gana una | `select_for_update` sobre sesión, inscripciones y paquetes | `TestConcurrenciaMultihiloInscripcion` (ver abajo) |
 
 **Concurrencia.** Las pruebas con hilos de `tests/test_concurrencia_inscripcion.py` corren siempre, contra PostgreSQL, y exigen el resultado exacto (gana una y la otra recibe `CupoAgotadoError` o `SinClasesDisponiblesError`). Para correrlas: `DATABASE_URL=<PostgreSQL de pruebas> python manage.py test tests.test_concurrencia_inscripcion`. **Nunca con la base de producción**: Django crea y borra una base `test_…` en ese servidor.
+
+## 12. Agregado de videos (decidido 08-nov-2026)
+
+Reglas en `alumnos/paquetes.py` y `alumnos/videos_extra.py`; pruebas en `tests/test_paquetes_videos.py` y `tests/test_*videos_extra*.py`. Ya funciona: venta junto con el paquete, biblioteca del profesor, entrega y visualización, aviso al profesor, pago, atrasos, reclamos y la compra de videos extra (pantalla del alumno adulto y del apoderado del menor, con registro de quién pagó) y la devolución de videos no entregados (la registra soporte desde el ticket). Falta: la reversa automática en Webpay de las devoluciones (hoy se devuelve a mano).
+
+| Plan | Videos del agregado | Precio | Entrega obligatoria del profesor |
+|---|---|---|---|
+| Flexible | 1 | $5.000 | 1 video a más tardar el día 14 |
+| Progreso | 4 | $20.000 | 2 videos el mes 1 (día 30) y 2 más a más tardar el día 53 |
+| Intensivo | 6 | $30.000 | 2 videos por mes (días 30, 60 y 83) |
+
+- **Precio fijo**: $5.000 por video, igual con todos los profesores. Se ofrece en una ventana al agregar el paquete y se paga junto con él.
+- **Videos extra** (después de contratar): $5.000 cada uno, o la promoción de **3 por $13.500**. Máximo **6 por paquete**, solo si al paquete le quedan 14 días o más; el profesor los comparte dentro de 14 días.
+  Pueden comprarlos paquetes con o sin el agregado inicial (09-nov). Los 14 días corren desde cada compra con el pago confirmado; una compra pendiente cuenta para el tope pero no para el plazo, el cupo ni el saldo. El profesor recibe aviso al confirmarse. El valor por video es el promedio de lo pagado (agregado + extra); como todo video, se paga al compartirlo.
+- **Reparto**: **25% LBWUS** (aloja los videos) y 75% el profesor, que gana cada vez que comparte un video, aunque sea el mismo.
+- **Videos**: el profesor los sube por cada materia que enseña, de **máximo 30 minutos**, y se los va compartiendo al alumno. Se guardan en MongoDB; la compra y el saldo, en PostgreSQL. El alumno solo ve los de su profesor y su materia, **mientras el paquete esté vigente**. Si renueva, el profesor comparte contenido nuevo.
+- **Pago**: se suma al saldo del profesor (`user_profesor/saldos.py`) cuando comparte el video; lo ya entregado se paga aunque después venza el paquete. Un video compartido con un paquete vigente **no se puede borrar** hasta que el paquete venza (el alumno lo pagó).
+- **Sin revisión previa**. El alumno reclama con un ticket: si **no corresponde a la materia**, soporte lo deriva al profesor, que tiene **2 días hábiles** para compartir el correcto; si es **inapropiado**, lo revisa soporte y toma las medidas.
+- **Atrasos**: aviso al profesor 3 días antes de cada fecha; si pasa la fecha, se abre un ticket automático para soporte y ese video no se paga hasta que lo comparta. La última fecha es 7 días antes del vencimiento del paquete, para que un atraso alcance a corregirse (09-nov).
+- **Reclamos** (09-nov): el alumno o su apoderado reporta el video desde el reproductor (el menor no abre tickets). Soporte lo ve desde el ticket y, si corresponde, lo **retira**: el alumno deja de verlo, al profesor **se le descuenta** y se libera el cupo para que comparta el correcto (nunca el mismo). Si ya lo había cobrado, se descuenta de lo próximo que gane.
+- **Menores**: el agregado lo compra el apoderado, igual que el paquete. El apoderado **revisa cada video y lo habilita** antes de que su estudiante lo vea, y puede quitar la habilitación (decidido 09-nov). Se le avisa cuando el profesor comparte uno.
+- **Devolución por videos no entregados** (decidido 09-nov): soporte la registra desde el ticket de Videos (solo el agente asignado) y el dinero se devuelve **a mano**; el sistema guarda el caso y soporte lo marca "devuelta" una sola vez. Se devuelve lo pagado por cada video (el promedio entre el agregado y los extra) por los que faltan: lo contratado, menos lo compartido y lo ya devuelto. El monto lo calcula el servidor. Lo devuelto sale de lo que el profesor debe entregar (no puede compartirlo y cobrarlo dos veces ni cuenta como atraso) y no cambia lo que cobra por lo que sí entregó. Se le cuenta al alumno en el ticket y se avisa al profesor.
+- **Pendiente**: plan de MongoDB Atlas para producción (en modo prueba basta el actual), la reversa automática en Webpay (hoy el dinero se devuelve a mano) y la devolución por clases en vivo que el profesor no dicta (aparte de los videos).

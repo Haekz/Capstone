@@ -1,0 +1,47 @@
+{# Panel del detalle de un ticket de Videos de apoyo (fase 6e): videos que el profesor no entrego y su devolucion. #}
+{# El monto lo calcula el servidor; el dinero se devuelve a mano y aqui queda el registro. #}
+{% load videos_tags dinero %}
+{% devoluciones_del_ticket ticket as casos %}
+{% if casos.paquetes or casos.devoluciones %}
+<section aria-labelledby="devolucion-titulo" style="margin-top:18px;">
+    <h2 id="devolucion-titulo" style="font-size:1rem;">Videos que el profesor no entreg&oacute;</h2>
+    <p><small>Confirma el caso antes de registrar. Cada video se devuelve por lo que se pag&oacute; por &eacute;l. Lo devuelto deja de ser un atraso del profesor y ya no se le paga; el dinero se transfiere a mano y aqu&iacute; queda el registro.</small></p>
+    {% for caso in casos.paquetes %}
+    <p>{{ caso.paquete.get_plan_display }} con {{ caso.paquete.profesor.nombre|default:"(profesor que ya no est&aacute;)" }}, comprado el {{ caso.paquete.creada|date:"d-m-Y" }}: faltan {{ caso.faltan }} video{{ caso.faltan|pluralize }}.</p>
+    {% if form %}
+    <form method="post" action="{% url 'soporte_devolver_videos' ticket.pk %}">
+        {% csrf_token %}
+        <input type="hidden" name="paquete" value="{{ caso.paquete.pk }}">
+        <label for="devolver-{{ caso.paquete.pk }}">Videos a devolver</label>
+        <select id="devolver-{{ caso.paquete.pk }}" name="cantidad">
+            {% for cantidad, monto in caso.opciones %}
+            <option value="{{ cantidad }}">{{ cantidad }} video{{ cantidad|pluralize }} &middot; {{ monto|clp }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Registrar devoluci&oacute;n</button>
+    </form>
+    {% endif %}
+    {% endfor %}
+    {% if casos.paquetes and not form %}<p><small>Solo el agente asignado registra la devoluci&oacute;n. Para hacerlo, reas&iacute;gnatelo desde el panel.</small></p>{% endif %}
+    {% if casos.devoluciones %}
+    <h3 style="font-size:.95rem;">Devoluciones registradas</h3>
+    <ul>
+        {% for d in casos.devoluciones %}
+        <li style="margin-bottom:8px;">
+            {{ d.cantidad }} video{{ d.cantidad|pluralize }} &middot; {{ d.monto|clp }} &middot; registrada el {{ d.creada|date:"d-m-Y" }}
+            {% if d.devuelta %}
+            <span class="badge">Devuelta el {{ d.devuelta|date:"d-m-Y" }}</span>
+            {% elif form %}
+            <form method="post" action="{% url 'soporte_devolucion_hecha' ticket.pk d.pk %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit">Marcar como devuelta</button>
+            </form>
+            {% else %}
+            <span class="badge">Por devolver</span>
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+</section>
+{% endif %}

@@ -35,6 +35,11 @@ def tickets_del_agente(request):
                                             asignado_id=request.session.get(SOPORTE.clave_sesion)))
 
 
+def tickets_visibles(request):
+    """Los que el agente en sesion puede leer: todos si es lider (supervisa); si no, los suyos."""
+    return Ticket.objects.all() if agente_en_sesion(request).es_lider else tickets_del_agente(request)
+
+
 def ticket_asignado(request, **revisado):
     """Ticket abierto de ``revisado`` asignado al agente en sesion, o None.
 
