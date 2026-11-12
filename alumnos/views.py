@@ -1,3 +1,6 @@
+from django.utils import timezone
+import random
+import uuid
 import json
 import os
 import secrets
@@ -89,6 +92,13 @@ def _tx():
         )
     )
 
+
+PERIODOS = {
+    'mensual': 1,
+    '3semanas': 0.75,
+    '2semanas': 0.50,
+    '1semana': 0.25,
+}
 
 PRECIOS_PLANES_OFICIALES = {
     # Planes vigentes (S4-03): Tarifa base $15.000 / $59.000 / $116.000
@@ -886,81 +896,257 @@ def iniciar_compra_paquete(request, alumno_id, al_crear=None):
     return render(request, 'alumnos/redirect_webpay.html', {'url': response['url'], 'token': response['token']})
 
 
-@csrf_exempt
-def confirmacion(request):
+def _simulacion_permitida(user):
+    if not getattr(settings, 'WEBPAY_SIMULACION_ACTIVADA', True):
+        return False
+    usuarios_permitidos = getattr(settings, 'USUARIOS_SIMULACION_WEBPAY', ['*'])
+    if '*' in usuarios_permitidos:
+        return True
+    if user and user.is_authenticated:
+        return (
+            user.is_staff
+            or user.is_superuser
+            or user.username in usuarios_permitidos
+            or user.email in usuarios_permitidos
+        )
+    return False
 
-    token = (
-        request.GET.get('token_ws')
-        or request.POST.get('token_ws')
+
+def iniciar_webpay(request):
+    if request.method != 'POST':
+        return redirect('planes')
+
+    carrito_json = request.POST.get('carrito', '[]')
+    try:
+        carrito = json.loads(carrito_json)
+        if not isinstance(carrito, list) or not carrito:
+            return redirect('planes')
+    except (ValueError, TypeError):
+        return redirect('planes')
+
+    monto_calculado = sum(_precio_item(item) for item in carrito)
+    if monto_calculado >= 350:
+        amount = monto_calculado
+    else:
+        return redirect('planes')
+
+    buy_order = 'LB' + str(random.randrange(1000000, 9999999))
+    session_id = 'S' + str(random.randrange(1000000, 9999999))
+
+    alumno_obj = None
+    if request.user.is_authenticated:
+        alumno_obj = Alumno.objects.filter(user=request.user).first()
+    if not alumno_obj and request.session.get('alumno_id'):
+        alumno_obj = Alumno.objects.filter(pk=request.session.get('alumno_id')).first()
+
+    es_simulacion = request.POST.get('simular') == '1' or request.GET.get('simular') == '1'
+    if es_simulacion and _simulacion_permitida(request.user):
+        token_sim = f'sim_{uuid.uuid4().hex[:20]}'
+        buy_order_sim = f'LB-SIM-{random.randrange(100000, 999999)}'
+        pago = Pago.objects.create(
+            buy_order=buy_order_sim,
+            session_id=session_id,
+            token_ws=token_sim,
+            monto=amount,
+            estado=Pago.ESTADO_PAGADA,
+            es_simulacion=True,
+            usuario=request.user if request.user.is_authenticated else None,
+            alumno=alumno_obj,
+            detalle_carrito=carrito,
+            authorization_code=str(random.randint(100000, 999999)),
+            ultimos_digitos_tarjeta='6623',
+            fecha_transaccion=timezone.now(),
+        )
+
+        request.session['orden_pendiente'] = {
+            'buy_order': buy_order_sim,
+            'carrito': carrito_json,
+            'pago_id': pago.id_pago,
+            'token': token_sim,
+            'amount': amount,
+        }
+
+        return redirect(f"{reverse('confirmacion')}?token_ws={token_sim}")
+
+    pago = Pago.objects.create(
+        buy_order=buy_order,
+        session_id=session_id,
+        monto=amount,
+        estado=Pago.ESTADO_INICIADA,
+        es_simulacion=False,
+        usuario=request.user if request.user.is_authenticated else None,
+        alumno=alumno_obj,
+        detalle_carrito=carrito,
     )
 
-    tbk_token = (
-        request.GET.get('TBK_TOKEN')
-        or request.POST.get('TBK_TOKEN')
-    )
+    return_url = request.build_absolute_uri(reverse('confirmacion'))
+    try:
+        response = _tx().create(buy_order, session_id, amount, return_url)
+        pago.token_ws = response['token']
+        pago.save(update_fields=['token_ws'])
+    except Exception:
+        pago.estado = Pago.ESTADO_RECHAZADA
+        pago.save(update_fields=['estado'])
+        return redirect('planes')
 
-    ctx = {
-        'items': []
+    request.session['orden_pendiente'] = {
+        'buy_order': buy_order,
+        'carrito': carrito_json,
+        'pago_id': pago.id_pago,
+        'token': response['token'],
+        'amount': amount,
     }
 
-    # Pago recibido desde Webpay
+    return render(
+        request,
+        'alumnos/redirect_webpay.html',
+        {
+            'url': response['url'],
+            'token': response['token'],
+        }
+    )
 
+
+@csrf_exempt
+def confirmacion(request):
+    token = request.GET.get('token_ws') or request.POST.get('token_ws')
+    tbk_token = request.GET.get('TBK_TOKEN') or request.POST.get('TBK_TOKEN')
+
+    orden = request.session.pop('orden_pendiente', {})
+    try:
+        carrito = json.loads(orden.get('carrito', '[]'))
+    except (ValueError, TypeError):
+        carrito = []
+
+    pago = None
     if token:
+        pago = Pago.objects.filter(token_ws=token).first()
+    elif tbk_token:
+        pago = Pago.objects.filter(token_ws=tbk_token).first()
 
-        try:
-            resp = _tx().commit(token)
-        except Exception:
-            resp = {}
+    if not pago and orden.get('pago_id'):
+        pago = Pago.objects.filter(pk=orden.get('pago_id')).first()
+    if not pago and orden.get('buy_order'):
+        pago = Pago.objects.filter(buy_order=orden.get('buy_order')).first()
 
-        aprobado = (
-            resp.get('response_code') == 0
-            and resp.get('status') == 'AUTHORIZED'
-        )
-        card = resp.get('card_detail') or {}
-        buy_order = resp.get('buy_order', '')
-        paquete = PaqueteClases.objects.filter(buy_order=buy_order).first() if buy_order else None
-        if paquete and int(resp.get('amount') or 0) != paquete.monto:
-            aprobado = False
-        Suscripcion.confirmar_pago(buy_order, aprobado)
-        PaqueteClases.confirmar_pago(buy_order, aprobado)
+    if not carrito and pago and pago.detalle_carrito:
+        carrito = pago.detalle_carrito
+
+    items = [
+        {
+            'titulo': item.get('titulo', ''),
+            'cantidad': item.get('cantidad', 1),
+            'precio': _clp(_precio_item(item)),
+        }
+        for item in carrito
+    ]
+
+    ctx = {'items': items}
+
+    # Anulado en pasarela
+    if tbk_token:
+        if pago:
+            pago.estado = Pago.ESTADO_ANULADA
+            pago.save(update_fields=['estado', 'updated_at'])
+        ctx.update({
+            'aprobado': False,
+            'anulado': True,
+            'orden': pago.buy_order if pago else orden.get('buy_order', ''),
+        })
+        return render(request, 'alumnos/confirmacion.html', ctx)
+
+    if not token:
+        return redirect('planes')
+
+    # Idempotencia
+    if pago and pago.estado == Pago.ESTADO_PAGADA:
+        ctx.update({
+            'aprobado': True,
+            'orden': pago.buy_order,
+            'monto': _clp(pago.monto),
+            'codigo_autorizacion': pago.authorization_code,
+            'tarjeta': pago.ultimos_digitos_tarjeta or '6623',
+            'fecha': str(pago.fecha_transaccion or pago.created_at),
+        })
+        return render(request, 'alumnos/confirmacion.html', ctx)
+
+    if pago and pago.estado in (Pago.ESTADO_RECHAZADA, Pago.ESTADO_ANULADA):
+        ctx.update({
+            'aprobado': False,
+            'anulado': (pago.estado == Pago.ESTADO_ANULADA),
+            'orden': pago.buy_order,
+            'monto': _clp(pago.monto),
+        })
+        return render(request, 'alumnos/confirmacion.html', ctx)
+
+    # Validar con Transbank
+    expected_order = pago.buy_order if pago else orden.get('buy_order', '')
+    expected_amount = pago.monto if pago else orden.get('amount')
+    if expected_amount is None and carrito:
+        expected_amount = sum(_precio_item(it) for it in carrito)
+
+    try:
+        resp = _tx().commit(token)
+    except Exception:
+        if pago:
+            pago.estado = Pago.ESTADO_RECHAZADA
+            pago.save(update_fields=['estado', 'updated_at'])
+        ctx.update({
+            'aprobado': False,
+            'orden': expected_order,
+            'monto': _clp(expected_amount or 0),
+        })
+        return render(request, 'alumnos/confirmacion.html', ctx)
+
+    card = resp.get('card_detail') or {}
+    resp_order = resp.get('buy_order', '')
+    resp_amount = int(resp.get('amount', 0))
+    resp_code = resp.get('response_code')
+    resp_status = resp.get('status')
+
+    aprobado_tbk = (resp_code == 0 and resp_status == 'AUTHORIZED')
+    orden_valida = (not expected_order or resp_order == expected_order)
+    monto_valido = (not expected_amount or resp_amount == int(expected_amount))
+    aprobado = bool(aprobado_tbk and orden_valida and monto_valido)
+
+    buy_order = resp_order or expected_order
+    paquete = PaqueteClases.objects.filter(buy_order=buy_order).first() if buy_order else None
+    if paquete and int(resp.get('amount') or 0) != paquete.monto:
+        aprobado = False
+    Suscripcion.confirmar_pago(buy_order, aprobado)
+    PaqueteClases.confirmar_pago(buy_order, aprobado)
+
+    if not ctx['items'] and buy_order:
         ctx['items'] = [
             {'titulo': f'{p.get_plan_display()}: {p.clases} clase(s) con {p.profesor.nombre if p.profesor else "—"}',
              'cantidad': 1, 'precio': _clp(p.monto)}
             for p in PaqueteClases.objects.filter(buy_order=buy_order).select_related('profesor__user')
-        ] if buy_order else []
+        ]
 
-        pago = Pago.objects.filter(buy_order=buy_order).first() if buy_order else None
-        if pago:
-            if aprobado:
-                pago.estado = Pago.ESTADO_PAGADA
-                pago.authorization_code = resp.get('authorization_code', '')
-                pago.ultimos_digitos_tarjeta = card.get('card_number', '')
-                pago.fecha_transaccion = timezone.now()
-                pago.save()
-            else:
-                pago.estado = Pago.ESTADO_RECHAZADA
-                pago.save(update_fields=['estado', 'updated_at'])
+    if not pago and buy_order:
+        pago = Pago.objects.filter(buy_order=buy_order).first()
 
-        ctx.update({
-            'aprobado': aprobado,
-            'orden': buy_order,
-            'monto': _clp(resp.get('amount', 0)),
-            'codigo_autorizacion': resp.get('authorization_code', ''),
-            'tarjeta': card.get('card_number', ''),
-            'fecha': resp.get('transaction_date', ''),
-        })
-    elif tbk_token:
-        ctx.update({
-            'aprobado': False,
-            'anulado': True
-        })
-    else:
-        return redirect('planes')
-    return render(
-        request,
-        'alumnos/confirmacion.html',
-        ctx
-    )
+    if pago:
+        if aprobado:
+            pago.estado = Pago.ESTADO_PAGADA
+            pago.authorization_code = resp.get('authorization_code', '')
+            pago.ultimos_digitos_tarjeta = card.get('card_number', '')
+            pago.fecha_transaccion = timezone.now()
+            pago.save()
+        else:
+            pago.estado = Pago.ESTADO_RECHAZADA
+            pago.save(update_fields=['estado', 'updated_at'])
+
+    ctx.update({
+        'aprobado': aprobado,
+        'orden': buy_order,
+        'monto': _clp(resp.get('amount', expected_amount or 0)),
+        'codigo_autorizacion': resp.get('authorization_code', ''),
+        'tarjeta': card.get('card_number', ''),
+        'fecha': resp.get('transaction_date', ''),
+    })
+    return render(request, 'alumnos/confirmacion.html', ctx)
+
 
 
 
@@ -991,8 +1177,7 @@ def sala_virtual(request, clase_id):
         insc.puede_unirse and (not menor or clase_pagada_por_apoderado(insc))
         for insc in Inscripcion.objects.filter(propias, clase=clase).select_related('sesion', 'alumno')
     )
-    es_admin = bool(request.session.get('admin_id')) or getattr(request.user, 'is_staff', False) or getattr(request.user, 'is_superuser', False)
-    if not (es_profesor or es_alumno or es_admin):
+    if not (es_profesor or es_alumno):
         from django.http import HttpResponseForbidden
         return HttpResponseForbidden("Acceso denegado: debes estar inscrito activamente en la clase o ser el profesor asignado.")
 

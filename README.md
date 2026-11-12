@@ -38,6 +38,11 @@ Python 3.13+
 pip
 Git
 
+Instalar dependencias para desarrollo y pruebas (incluye las de producción):
+pip install -r requirements-dev.txt
+
+Producción instala únicamente `requirements.txt` (sin herramientas de desarrollo o prueba).
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Pruebas

@@ -25,7 +25,7 @@ User = get_user_model()
 class SeguridadWebpayYHonorariosTests(TestCase):
     def setUp(self):
         self.client = Client()
-        self.url_iniciar = reverse('comprar_paquete')
+        self.url_iniciar = reverse('iniciar_webpay')
         self.url_confirmacion = reverse('confirmacion')
         self.url_planes = reverse('planes')
 
@@ -271,37 +271,47 @@ class SeguridadWebpayYHonorariosTests(TestCase):
     # 5. HONORARIOS DOCENTE BASADOS ÚNICAMENTE EN TRANSACCIONES CONFIRMADAS
     # -------------------------------------------------------------------------
     def test_08_remuneracion_docente_solo_con_transacciones_confirmadas(self):
-        """calcular_saldos solo suma remuneración a inscripciones asociadas a un Pago en estado 'pagada'."""
-        # 1. Sin inscripciones: saldo 0
+        """calcular_saldos solo suma remuneracion a planes/transacciones confirmadas en estado 'pagada'."""
+        from alumnos.models import PlanAlumno
+        # 1. Sin inscripciones ni planes: saldo 0
         saldos = calcular_saldos(self.profesor)
         self.assertEqual(saldos['disponible'], 0)
         self.assertEqual(saldos['total_ganado'], 0)
 
-        # 2. Inscripción sin pago (o pago pendiente): no debe sumar saldo docente
-        inscripcion = Inscripcion.objects.create(
+        # 2. Plan pendiente sin pago: saldo sigue siendo 0
+        plan = PlanAlumno.objects.create(
             alumno=self.alumno,
-            clase=self.clase,
-            estado=Inscripcion.ESTADO_CONFIRMADA,
+            profesor=self.profesor,
+            tipo_plan=PlanAlumno.PLAN_FLEXIBLE,
+            total_clases=1,
+            clases_disponibles=1,
+            clases_consumidas=1,
+            monto_total=VALOR_INSCRIPCION,
+            comision_lbwus=VALOR_INSCRIPCION - PAGO_PROFESOR,
+            monto_tutor=PAGO_PROFESOR,
+            estado=PlanAlumno.ESTADO_PENDIENTE,
             pago=None
         )
         saldos_sin_pago = calcular_saldos(self.profesor)
         self.assertEqual(saldos_sin_pago['disponible'], 0)
 
-        # 3. Inscripción con pago en estado 'iniciada' o 'rechazada': saldo sigue siendo 0
+        # 3. Plan con pago en estado 'iniciada' o 'rechazada': saldo sigue siendo 0
         pago_iniciado = Pago.objects.create(
             buy_order='LB_TEST_HON_1',
             monto=VALOR_INSCRIPCION,
             estado=Pago.ESTADO_INICIADA
         )
-        inscripcion.pago = pago_iniciado
-        inscripcion.save()
+        plan.pago = pago_iniciado
+        plan.save()
 
         saldos_iniciada = calcular_saldos(self.profesor)
         self.assertEqual(saldos_iniciada['disponible'], 0)
 
-        # 4. Transacción confirmada (estado='pagada'): el profesor recibe su honorario ($12.000)
+        # 4. Transaccion confirmada (estado='pagada'): el profesor recibe su honorario
         pago_iniciado.estado = Pago.ESTADO_PAGADA
         pago_iniciado.save()
+        plan.estado = PlanAlumno.ESTADO_ACTIVO
+        plan.save()
 
         saldos_pagado = calcular_saldos(self.profesor)
         self.assertEqual(saldos_pagado['total_ganado'], VALOR_INSCRIPCION)
@@ -317,7 +327,7 @@ class SeguridadWebpayYHonorariosTests(TestCase):
         self.assertEqual(saldos_post_retiro['disponible'], PAGO_PROFESOR - 5000)
 
     # -------------------------------------------------------------------------
-    # 6. MODO DE SIMULACIÓN DE PAGO PARA USUARIOS DE PRUEBA / TESTERS
+    # 6. MODO DE SIMULACION DE PAGO PARA USUARIOS DE PRUEBA / TESTERS
     # -------------------------------------------------------------------------
     def test_09_modo_simulacion_de_pago_para_testers(self):
         """Un tester puede simular una transacción aprobada sin contactar a Transbank ni usar dinero real."""

@@ -1,0 +1,5 @@
+-r requirements.txt
+
+# Herramientas exclusivas de desarrollo y pruebas (excluidas de producción)
+django-extensions==4.1
+mongomock==4.3.0

@@ -22,6 +22,7 @@ from .views import (
     listar_sesiones_disponibles,
     reservar_sesion,
     confirmacion,
+    iniciar_webpay,
     comprar_paquete,
 )
 from .perfil_profesor import perfil_profesor
@@ -62,5 +63,6 @@ urlpatterns = [
 
     # Pago / Transbank
     path('confirmacion', confirmacion, name='confirmacion'),
+    path('iniciar-webpay/', iniciar_webpay, name='iniciar_webpay'),
     path('comprar-paquete/', comprar_paquete, name='comprar_paquete'),
 ]
