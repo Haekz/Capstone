@@ -13,8 +13,16 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 from importlib.util import find_spec
 from pathlib import Path
 import os
+import sys
+import tempfile
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Propaga el modo de pruebas a procesos hijos creados con `manage.py test --parallel` en Windows.
+if len(sys.argv) > 1 and sys.argv[1] == 'test':
+    os.environ.setdefault('LBWUS_TESTING', '1')
+
+TESTING = os.environ.get('LBWUS_TESTING') == '1'
 
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -324,3 +332,9 @@ CACHES = {
         }
     }
 }
+
+# Aceleracion y aislamiento exclusivos de pruebas (sin afectar produccion).
+if TESTING:
+    PASSWORD_HASHERS = ['django.contrib.auth.hashers.MD5PasswordHasher']
+    if not os.environ.get('MEDIA_ROOT'):
+        MEDIA_ROOT = Path(tempfile.gettempdir()) / f'lbwus_test_media_{os.getpid()}'

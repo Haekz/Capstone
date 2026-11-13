@@ -1,8 +1,8 @@
-Django>=5.0.6
+Django==5.2.17
 gunicorn==26.2.2
 setuptools==68.0.0
 whitenoise==6.12.0
-psycopg2-binary
+psycopg2-binary==2.9.12
 asgiref==3.8.1
 certifi==2026.5.20
 cffi==2.0.0
@@ -22,6 +22,6 @@ transbank-sdk==6.1.0
 urllib3==2.7.0
 oauthlib==3.2.2
 requests-oauthlib==2.0.0
-Pillow>=10.0
+Pillow==12.2.0
 # Zonas horarias (TIME_ZONE = 'America/Santiago') aunque el servidor no traiga la base del sistema.
 tzdata==2026.4

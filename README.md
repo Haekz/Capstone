@@ -47,7 +47,8 @@ Producción instala únicamente `requirements.txt` (sin herramientas de desarrol
 
 Pruebas
 
-Rapidas (SQLite local): python manage.py test
+Rapidas en paralelo (SQLite local): python manage.py test --parallel
+Secuenciales (SQLite local): python manage.py test
 
 Contra PostgreSQL, la base de produccion (reservas, bloqueos y concurrencia se validan de verdad solo aqui).
 EXIGIR_POSTGRES=1 detiene la ejecucion si falta DATABASE_URL, en vez de caer en SQLite sin avisar:

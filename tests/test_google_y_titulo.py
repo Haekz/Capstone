@@ -208,8 +208,11 @@ class TituloProfesorTests(TestCase):
         cls.alumno = Alumno.objects.create(user=ual, nivel_educacion='media')
 
     def setUp(self):
+        import shutil
         import tempfile
-        self.media = override_settings(MEDIA_ROOT=tempfile.mkdtemp())
+        media = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, media, ignore_errors=True)
+        self.media = override_settings(MEDIA_ROOT=media)
         self.media.enable()
         self.addCleanup(self.media.disable)
 

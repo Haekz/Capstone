@@ -2,10 +2,12 @@
 Suite de pruebas de regresión de la Auditoría Técnica, Seguridad Multicapa, CWV y ORM N+1.
 """
 from datetime import time as dt_time
+import shutil
+import tempfile
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import connection
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 
@@ -30,6 +32,12 @@ User = get_user_model()
 
 class AuditoriaSeguridadYArquitecturaTests(TestCase):
     def setUp(self):
+        media = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, media, ignore_errors=True)
+        ajuste_media = override_settings(MEDIA_ROOT=media)
+        ajuste_media.enable()
+        self.addCleanup(ajuste_media.disable)
+
         self.genero = Genero.objects.create(descripcion="No especifica")
         self.esp = Especialidad.objects.create(nombre="Matemáticas Avanzadas")
         self.asig = Asignatura.objects.create(nombre="Cálculo Vectorial")
