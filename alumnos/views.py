@@ -427,107 +427,91 @@ def _obtener_ip(request):
     return request.META.get('REMOTE_ADDR', '').strip() or '127.0.0.1'
 
 
+def _estado_rate_limit_login(request, username):
+    """Obtiene claves de caché y conteos de intentos fallidos para IP y usuario."""
+    ip = _obtener_ip(request)
+    # Mismo contador para todas las formas de escribir el RUT.
+    canon_user = obtener_identificador_rate_limit(username)
+    clave_ip = f'intentos_login_ip_{ip}'
+    clave_user = f'intentos_login_user_{canon_user}'
+    intentos_ip = cache.get(clave_ip, 0)
+    intentos_user = cache.get(clave_user, 0)
+    return {
+        'clave_ip': clave_ip,
+        'clave_user': clave_user,
+        'canon_user': canon_user,
+        'intentos_ip': intentos_ip,
+        'intentos_user': intentos_user,
+        'bloqueado': intentos_ip >= 15 or intentos_user >= 5,
+    }
+
+
+def _registrar_fallo_login(rate_limit):
+    """Incrementa contadores de intentos fallidos en caché por 5 minutos."""
+    cache.set(rate_limit['clave_ip'], rate_limit['intentos_ip'] + 1, 300)
+    if rate_limit['canon_user']:
+        cache.set(rate_limit['clave_user'], rate_limit['intentos_user'] + 1, 300)
+
+
+def _autenticar_y_abrir_sesion(request, username, password, rate_limit):
+    """Autentica credenciales, resuelve el rol y abre sesión o retorna mensaje de error."""
+    user = authenticate(request, username=username, password=password)
+    if user is None:
+        _registrar_fallo_login(rate_limit)
+        return None, "RUT/Correo o contraseña incorrectos. Inténtalo de nuevo."
+
+    cache.delete(rate_limit['clave_ip'])
+    cache.delete(rate_limit['clave_user'])
+
+    # El rol lo define el perfil asociado (ver alumnos/roles.py). Sin perfil no se abre sesion.
+    rol, perfil = resolver_rol(user)
+    if rol is None:
+        return None, "Tu cuenta no tiene un perfil asignado en el sistema."
+
+    auth_login(request, user)
+    abrir_sesion_rol(request, rol, perfil)
+    return redirigir_a_portal(rol), None
+
+
 # never_cache: si el navegador guarda el login, al volver "atras" desde el
 # portal muestra esa copia (con los datos escritos) en vez de preguntarle al
 # servidor, que habria redirigido al portal porque la sesion sigue activa.
 @sensitive_post_parameters('password')
 @never_cache
 def custom_login(request):
-
     # Si ya existe una sesión activa, redirigir al portal de ese rol.
     rol_activo = rol_en_sesion(request)
     if rol_activo is not None:
         return redirigir_a_portal(rol_activo)
 
-    error = None
+    if request.method != 'POST':
+        return render(request, 'registration/login.html', {'error': None})
 
-    if request.method == 'POST':
+    username = request.POST.get('username', '').strip()
+    password = request.POST.get('password', '')
+    rate_limit = _estado_rate_limit_login(request, username)
 
-        username = request.POST.get(
-            'username',
-            ''
-        ).strip()
-
-        password = request.POST.get(
-            'password',
-            ''
+    if rate_limit['bloqueado']:
+        return render(
+            request,
+            'registration/login.html',
+            {
+                'error': (
+                    "Demasiados intentos fallidos. "
+                    "Por seguridad, el acceso ha sido bloqueado "
+                    "temporalmente por 5 minutos."
+                )
+            },
         )
 
-        ip = _obtener_ip(request)
-        # Mismo contador para todas las formas de escribir el RUT.
-        canon_user = obtener_identificador_rate_limit(username)
-        clave_cache_ip = f'intentos_login_ip_{ip}'
-        clave_cache_user = f'intentos_login_user_{canon_user}'
+    if not username or not password:
+        return render(request, 'registration/login.html', {'error': "Por favor ingrese todos los campos."})
 
-        intentos_ip = cache.get(clave_cache_ip, 0)
-        intentos_user = cache.get(clave_cache_user, 0)
+    respuesta_portal, error = _autenticar_y_abrir_sesion(request, username, password, rate_limit)
+    if respuesta_portal is not None:
+        return respuesta_portal
 
-        if intentos_ip >= 15 or intentos_user >= 5:
-            return render(
-                request,
-                'registration/login.html',
-                {
-                    'error': (
-                        "Demasiados intentos fallidos. "
-                        "Por seguridad, el acceso ha sido bloqueado "
-                        "temporalmente por 5 minutos."
-                    )
-                }
-            )
-
-        if not username or not password:
-
-            error = (
-                "Por favor ingrese todos "
-                "los campos."
-            )
-
-        else:
-
-            user = authenticate(
-                request,
-                username=username,
-                password=password
-            )
-
-            if user is not None:
-
-                cache.delete(clave_cache_ip)
-                cache.delete(clave_cache_user)
-
-                # El rol lo define el perfil asociado (ver alumnos/roles.py).
-                # Sin perfil no se abre sesion.
-                rol, perfil = resolver_rol(user)
-
-                if rol is None:
-                    error = (
-                        "Tu cuenta no tiene "
-                        "un perfil asignado "
-                        "en el sistema."
-                    )
-                else:
-                    auth_login(request, user)
-                    abrir_sesion_rol(request, rol, perfil)
-                    return redirigir_a_portal(rol)
-
-            else:
-                cache.set(clave_cache_ip, intentos_ip + 1, 300)
-                if canon_user:
-                    cache.set(clave_cache_user, intentos_user + 1, 300)
-
-                error = (
-                    "RUT/Correo o contraseña "
-                    "incorrectos. "
-                    "Inténtalo de nuevo."
-                )
-
-    return render(
-        request,
-        'registration/login.html',
-        {
-            'error': error
-        }
-    )
+    return render(request, 'registration/login.html', {'error': error})
 
 
 # ============================================================
@@ -912,62 +896,66 @@ def _simulacion_permitida(user):
     return False
 
 
-def iniciar_webpay(request):
-    if request.method != 'POST':
-        return redirect('planes')
-
+def _parsear_carrito_y_monto_webpay(request):
+    """Extrae el carrito desde POST y calcula el monto total validando mínimo Webpay."""
     carrito_json = request.POST.get('carrito', '[]')
     try:
         carrito = json.loads(carrito_json)
-        if not isinstance(carrito, list) or not carrito:
-            return redirect('planes')
     except (ValueError, TypeError):
-        return redirect('planes')
+        return None
+    if not isinstance(carrito, list) or not carrito:
+        return None
+    monto = sum(_precio_item(item) for item in carrito)
+    if monto < 350:
+        return None
+    return carrito, carrito_json, monto
 
-    monto_calculado = sum(_precio_item(item) for item in carrito)
-    if monto_calculado >= 350:
-        amount = monto_calculado
-    else:
-        return redirect('planes')
 
-    buy_order = 'LB' + str(random.randrange(1000000, 9999999))
-    session_id = 'S' + str(random.randrange(1000000, 9999999))
-
+def _resolver_alumno_webpay(request):
+    """Obtiene el Alumno asociado al usuario autenticado o a la sesión actual."""
     alumno_obj = None
     if request.user.is_authenticated:
         alumno_obj = Alumno.objects.filter(user=request.user).first()
     if not alumno_obj and request.session.get('alumno_id'):
         alumno_obj = Alumno.objects.filter(pk=request.session.get('alumno_id')).first()
+    return alumno_obj
 
-    es_simulacion = request.POST.get('simular') == '1' or request.GET.get('simular') == '1'
-    if es_simulacion and _simulacion_permitida(request.user):
-        token_sim = f'sim_{uuid.uuid4().hex[:20]}'
-        buy_order_sim = f'LB-SIM-{random.randrange(100000, 999999)}'
-        pago = Pago.objects.create(
-            buy_order=buy_order_sim,
-            session_id=session_id,
-            token_ws=token_sim,
-            monto=amount,
-            estado=Pago.ESTADO_PAGADA,
-            es_simulacion=True,
-            usuario=request.user if request.user.is_authenticated else None,
-            alumno=alumno_obj,
-            detalle_carrito=carrito,
-            authorization_code=str(random.randint(100000, 999999)),
-            ultimos_digitos_tarjeta='6623',
-            fecha_transaccion=timezone.now(),
-        )
 
-        request.session['orden_pendiente'] = {
-            'buy_order': buy_order_sim,
-            'carrito': carrito_json,
-            'pago_id': pago.id_pago,
-            'token': token_sim,
-            'amount': amount,
-        }
+def _guardar_orden_pendiente_sesion(request, buy_order, carrito_json, pago, token, amount):
+    """Persiste en sesión el resumen de la orden en curso para la vista de confirmación."""
+    request.session['orden_pendiente'] = {
+        'buy_order': buy_order,
+        'carrito': carrito_json,
+        'pago_id': pago.id_pago,
+        'token': token,
+        'amount': amount,
+    }
 
-        return redirect(f"{reverse('confirmacion')}?token_ws={token_sim}")
 
+def _procesar_webpay_simulado(request, alumno_obj, carrito, carrito_json, amount, session_id):
+    """Crea un pago aprobado en modo simulación y redirige directamente a confirmación."""
+    token_sim = f'sim_{uuid.uuid4().hex[:20]}'
+    buy_order_sim = f'LB-SIM-{random.randrange(100000, 999999)}'
+    pago = Pago.objects.create(
+        buy_order=buy_order_sim,
+        session_id=session_id,
+        token_ws=token_sim,
+        monto=amount,
+        estado=Pago.ESTADO_PAGADA,
+        es_simulacion=True,
+        usuario=request.user if request.user.is_authenticated else None,
+        alumno=alumno_obj,
+        detalle_carrito=carrito,
+        authorization_code=str(random.randint(100000, 999999)),
+        ultimos_digitos_tarjeta='6623',
+        fecha_transaccion=timezone.now(),
+    )
+    _guardar_orden_pendiente_sesion(request, buy_order_sim, carrito_json, pago, token_sim, amount)
+    return redirect(f"{reverse('confirmacion')}?token_ws={token_sim}")
+
+
+def _procesar_webpay_real(request, alumno_obj, carrito, carrito_json, amount, buy_order, session_id):
+    """Registra el Pago inicial, crea la transacción en Transbank y renderiza el redirect."""
     pago = Pago.objects.create(
         buy_order=buy_order,
         session_id=session_id,
@@ -978,7 +966,6 @@ def iniciar_webpay(request):
         alumno=alumno_obj,
         detalle_carrito=carrito,
     )
-
     return_url = request.build_absolute_uri(reverse('confirmacion'))
     try:
         response = _tx().create(buy_order, session_id, amount, return_url)
@@ -989,35 +976,36 @@ def iniciar_webpay(request):
         pago.save(update_fields=['estado'])
         return redirect('planes')
 
-    request.session['orden_pendiente'] = {
-        'buy_order': buy_order,
-        'carrito': carrito_json,
-        'pago_id': pago.id_pago,
-        'token': response['token'],
-        'amount': amount,
-    }
-
+    _guardar_orden_pendiente_sesion(request, buy_order, carrito_json, pago, response['token'], amount)
     return render(
         request,
         'alumnos/redirect_webpay.html',
-        {
-            'url': response['url'],
-            'token': response['token'],
-        }
+        {'url': response['url'], 'token': response['token']},
     )
 
 
-@csrf_exempt
-def confirmacion(request):
-    token = request.GET.get('token_ws') or request.POST.get('token_ws')
-    tbk_token = request.GET.get('TBK_TOKEN') or request.POST.get('TBK_TOKEN')
+def iniciar_webpay(request):
+    if request.method != 'POST':
+        return redirect('planes')
 
-    orden = request.session.pop('orden_pendiente', {})
-    try:
-        carrito = json.loads(orden.get('carrito', '[]'))
-    except (ValueError, TypeError):
-        carrito = []
+    parsed = _parsear_carrito_y_monto_webpay(request)
+    if parsed is None:
+        return redirect('planes')
+    carrito, carrito_json, amount = parsed
 
+    buy_order = 'LB' + str(random.randrange(1000000, 9999999))
+    session_id = 'S' + str(random.randrange(1000000, 9999999))
+    alumno_obj = _resolver_alumno_webpay(request)
+
+    es_simulacion = request.POST.get('simular') == '1' or request.GET.get('simular') == '1'
+    if es_simulacion and _simulacion_permitida(request.user):
+        return _procesar_webpay_simulado(request, alumno_obj, carrito, carrito_json, amount, session_id)
+
+    return _procesar_webpay_real(request, alumno_obj, carrito, carrito_json, amount, buy_order, session_id)
+
+
+def _buscar_pago_confirmacion(token, tbk_token, orden):
+    """Localiza el registro Pago usando token_ws, TBK_TOKEN o los datos en sesión."""
     pago = None
     if token:
         pago = Pago.objects.filter(token_ws=token).first()
@@ -1028,6 +1016,15 @@ def confirmacion(request):
         pago = Pago.objects.filter(pk=orden.get('pago_id')).first()
     if not pago and orden.get('buy_order'):
         pago = Pago.objects.filter(buy_order=orden.get('buy_order')).first()
+    return pago
+
+
+def _cargar_carrito_e_items(orden, pago):
+    """Reconstruye el carrito desde sesión o desde Pago y formatea sus ítems para plantilla."""
+    try:
+        carrito = json.loads(orden.get('carrito', '[]'))
+    except (ValueError, TypeError):
+        carrito = []
 
     if not carrito and pago and pago.detalle_carrito:
         carrito = pago.detalle_carrito
@@ -1040,10 +1037,11 @@ def confirmacion(request):
         }
         for item in carrito
     ]
+    return carrito, items
 
-    ctx = {'items': items}
 
-    # Anulado en pasarela
+def _respuesta_estado_previo(request, pago, token, tbk_token, orden, ctx):
+    """Resuelve anulación en pasarela, falta de token o pagos ya procesados (idempotencia)."""
     if tbk_token:
         if pago:
             pago.estado = Pago.ESTADO_ANULADA
@@ -1058,7 +1056,6 @@ def confirmacion(request):
     if not token:
         return redirect('planes')
 
-    # Idempotencia
     if pago and pago.estado == Pago.ESTADO_PAGADA:
         ctx.update({
             'aprobado': True,
@@ -1079,7 +1076,58 @@ def confirmacion(request):
         })
         return render(request, 'alumnos/confirmacion.html', ctx)
 
-    # Validar con Transbank
+    return None
+
+
+def _actualizar_pago_confirmado(pago, buy_order, aprobado, resp):
+    """Actualiza el estado del Pago según la respuesta final validada de Transbank."""
+    if not pago and buy_order:
+        pago = Pago.objects.filter(buy_order=buy_order).first()
+    if not pago:
+        return
+
+    card = resp.get('card_detail') or {}
+    if aprobado:
+        pago.estado = Pago.ESTADO_PAGADA
+        pago.authorization_code = resp.get('authorization_code', '')
+        pago.ultimos_digitos_tarjeta = card.get('card_number', '')
+        pago.fecha_transaccion = timezone.now()
+        pago.save()
+    else:
+        pago.estado = Pago.ESTADO_RECHAZADA
+        pago.save(update_fields=['estado', 'updated_at'])
+
+
+def _evaluar_aprobacion_transbank(resp, expected_order, expected_amount):
+    """Valida respuesta AUTHORIZED de Transbank contra orden, monto y paquete asociado."""
+    resp_order = resp.get('buy_order', '')
+    resp_amount = int(resp.get('amount', 0))
+    aprobado_tbk = (resp.get('response_code') == 0 and resp.get('status') == 'AUTHORIZED')
+    orden_valida = (not expected_order or resp_order == expected_order)
+    monto_valido = (not expected_amount or resp_amount == int(expected_amount))
+    aprobado = bool(aprobado_tbk and orden_valida and monto_valido)
+
+    buy_order = resp_order or expected_order
+    paquete = PaqueteClases.objects.filter(buy_order=buy_order).first() if buy_order else None
+    if paquete and int(resp.get('amount') or 0) != paquete.monto:
+        aprobado = False
+    return buy_order, aprobado
+
+
+def _items_paquetes_por_orden(buy_order):
+    """Construye el listado visual de paquetes asociados a un buy_order."""
+    return [
+        {
+            'titulo': f'{p.get_plan_display()}: {p.clases} clase(s) con {p.profesor.nombre if p.profesor else "—"}',
+            'cantidad': 1,
+            'precio': _clp(p.monto),
+        }
+        for p in PaqueteClases.objects.filter(buy_order=buy_order).select_related('profesor__user')
+    ]
+
+
+def _confirmar_con_transbank(token, pago, orden, carrito, ctx):
+    """Ejecuta commit en Transbank, valida orden/monto y aplica efectos en modelos."""
     expected_order = pago.buy_order if pago else orden.get('buy_order', '')
     expected_amount = pago.monto if pago else orden.get('amount')
     if expected_amount is None and carrito:
@@ -1096,47 +1144,17 @@ def confirmacion(request):
             'orden': expected_order,
             'monto': _clp(expected_amount or 0),
         })
-        return render(request, 'alumnos/confirmacion.html', ctx)
+        return ctx
 
-    card = resp.get('card_detail') or {}
-    resp_order = resp.get('buy_order', '')
-    resp_amount = int(resp.get('amount', 0))
-    resp_code = resp.get('response_code')
-    resp_status = resp.get('status')
-
-    aprobado_tbk = (resp_code == 0 and resp_status == 'AUTHORIZED')
-    orden_valida = (not expected_order or resp_order == expected_order)
-    monto_valido = (not expected_amount or resp_amount == int(expected_amount))
-    aprobado = bool(aprobado_tbk and orden_valida and monto_valido)
-
-    buy_order = resp_order or expected_order
-    paquete = PaqueteClases.objects.filter(buy_order=buy_order).first() if buy_order else None
-    if paquete and int(resp.get('amount') or 0) != paquete.monto:
-        aprobado = False
+    buy_order, aprobado = _evaluar_aprobacion_transbank(resp, expected_order, expected_amount)
     Suscripcion.confirmar_pago(buy_order, aprobado)
     PaqueteClases.confirmar_pago(buy_order, aprobado)
 
     if not ctx['items'] and buy_order:
-        ctx['items'] = [
-            {'titulo': f'{p.get_plan_display()}: {p.clases} clase(s) con {p.profesor.nombre if p.profesor else "—"}',
-             'cantidad': 1, 'precio': _clp(p.monto)}
-            for p in PaqueteClases.objects.filter(buy_order=buy_order).select_related('profesor__user')
-        ]
+        ctx['items'] = _items_paquetes_por_orden(buy_order)
 
-    if not pago and buy_order:
-        pago = Pago.objects.filter(buy_order=buy_order).first()
-
-    if pago:
-        if aprobado:
-            pago.estado = Pago.ESTADO_PAGADA
-            pago.authorization_code = resp.get('authorization_code', '')
-            pago.ultimos_digitos_tarjeta = card.get('card_number', '')
-            pago.fecha_transaccion = timezone.now()
-            pago.save()
-        else:
-            pago.estado = Pago.ESTADO_RECHAZADA
-            pago.save(update_fields=['estado', 'updated_at'])
-
+    _actualizar_pago_confirmado(pago, buy_order, aprobado, resp)
+    card = resp.get('card_detail') or {}
     ctx.update({
         'aprobado': aprobado,
         'orden': buy_order,
@@ -1145,6 +1163,24 @@ def confirmacion(request):
         'tarjeta': card.get('card_number', ''),
         'fecha': resp.get('transaction_date', ''),
     })
+    return ctx
+
+
+@csrf_exempt
+def confirmacion(request):
+    token = request.GET.get('token_ws') or request.POST.get('token_ws')
+    tbk_token = request.GET.get('TBK_TOKEN') or request.POST.get('TBK_TOKEN')
+    orden = request.session.pop('orden_pendiente', {})
+
+    pago = _buscar_pago_confirmacion(token, tbk_token, orden)
+    carrito, items = _cargar_carrito_e_items(orden, pago)
+    ctx = {'items': items}
+
+    respuesta_previa = _respuesta_estado_previo(request, pago, token, tbk_token, orden, ctx)
+    if respuesta_previa is not None:
+        return respuesta_previa
+
+    ctx = _confirmar_con_transbank(token, pago, orden, carrito, ctx)
     return render(request, 'alumnos/confirmacion.html', ctx)
 
 
