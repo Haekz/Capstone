@@ -1138,7 +1138,7 @@ input:checked + .slider:before {
                 const msg = mockMessages[index];
                 const msgEl = document.createElement('div');
                 msgEl.className = 'profe-studio-chat-msg';
-                const escFn = window.escaparHtml || ((str) => String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;'));
+                const escFn = window.escaparHtml;
                 msgEl.innerHTML = `<strong>${escFn(msg.name)}:</strong> <span>${escFn(msg.text)}</span>`;
                 chatContainer.appendChild(msgEl);
                 chatContainer.scrollTop = chatContainer.scrollHeight;

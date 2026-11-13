@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function actualizarCarrito() {
         limpiarHTML();
-        const esc = window.escaparHtml || (s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;'));
+        const esc = window.escaparHtml;
         if (tbody) {
             articulosCarrito.forEach(curso => {
                 const row = document.createElement('tr');

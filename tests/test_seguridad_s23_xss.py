@@ -47,13 +47,12 @@ class TestS23SeguridadXss(TestCase):
         cls.profesor = Profesor.objects.create(user=cls.user_prof, especialidad=cls.especialidad)
 
     def test_base_html_incluye_escapar_html_global_y_carrito_seguro(self):
-        """Verifica que base.html declare window.escaparHtml de forma global contra XSS."""
+        """Verifica que base.html cargue lbwus-utils.js con window.escaparHtml global contra XSS."""
         response = self.client.get(reverse('home'))
         contenido = response.content.decode('utf-8')
 
-        # Declaración global de escaparHtml
-        self.assertIn('function escaparHtml(str)', contenido)
-        self.assertIn('window.escaparHtml = escaparHtml;', contenido)
+        # Carga de la utilidad compartida donde vive window.escaparHtml
+        self.assertIn('alumnos/java/lbwus-utils', contenido)
 
     def test_catalogo_asignaturas_y_videos_sanean_campos_dinamicos(self):
         """Verifica que en el portal del alumno las asignaturas y videos escapen campos dinámicos."""
