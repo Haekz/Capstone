@@ -312,7 +312,7 @@ class ContenidoFicticioTests(BaseResenas):
     def test_catalogo_de_cursos_sin_contenido_de_ejemplo(self):
         entrar(self.client, self.ana, ALUMNO)
         respuesta = self.client.get(reverse('alumno_pag1'))
-        self.assertContains(respuesta, 'Los cursos grabados estarán disponibles próximamente.')
+        # La vista vacia de cursos se quito (B5): los videos reales estan en Mis videos (tests/test_menu_mis_videos.py).
         for texto in ('Lo más vendido', 'Universidad Python', 'oldPrice', 'gtv-videos-bucket'):
             self.assertNotContains(respuesta, texto)
 

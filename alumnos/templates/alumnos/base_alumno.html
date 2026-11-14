@@ -76,6 +76,12 @@
                         <span>Mis Clases</span>
                     </button>
                 </li>
+                <li>{# B5: abre la pestana de videos del Inicio (data-tab); no es premium, se pagan aparte #}
+                    <button class="sidebar-nav-item sidebar-view-btn" data-view="view-dashboard" data-tab="tab-videos">
+                        <i class="bi bi-play-circle-fill"></i>
+                        <span>Mis videos</span>
+                    </button>
+                </li>
                 <li>
                     <button class="sidebar-nav-item sidebar-view-btn" data-view="view-favorites">
                         <i class="bi bi-heart-fill"></i>
@@ -90,12 +96,6 @@
                 </li>
 
                 <li class="sb-label">Premium</li>
-                <li>
-                    <button class="sidebar-nav-item sidebar-view-btn" data-view="view-courses">
-                        <i class="bi bi-play-circle-fill"></i>
-                        <span>Cursos Premium</span>
-                    </button>
-                </li>
                 <li>
                     {% if not es_menor %}{# Menores: sin mensajeria privada (decisiones de menores) #}
                     <button class="sidebar-nav-item sidebar-view-btn" data-view="view-inbox">
@@ -243,12 +243,12 @@
             if (nav) nav.classList.toggle('scrolled', window.scrollY > 20);
         }, { passive: true });
 
-        // ── FUERA DEL PORTAL (p. ej. Notificaciones): no existen las vistas, así que el menú lleva al portal y abre la vista (#hash) ──
+        // ── FUERA DEL PORTAL (p. ej. Notificaciones): no existen las vistas, así que el menú lleva al portal y abre la vista (#hash) o la pestaña (Mis videos) ──
         if (!document.querySelector('.dashboard-view')) {
             const irAlPortal = (vista) => { window.location.href = "{% url 'alumno_pag1' %}#" + vista; };
             window.switchView = irAlPortal;  // la ficha del alumno (arriba del menú) la llama con onclick
             document.querySelectorAll('.sidebar-view-btn').forEach(btn =>
-                btn.addEventListener('click', () => irAlPortal(btn.dataset.view)));
+                btn.addEventListener('click', () => irAlPortal(btn.dataset.tab || btn.dataset.view)));
             const temas = document.getElementById('nav-open-interests');
             if (temas) temas.addEventListener('click', () => irAlPortal('temas'));
             // La vista dice a qué sección del menú pertenece la página (seccion_menu) para marcar su botón

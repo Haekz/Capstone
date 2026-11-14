@@ -43,6 +43,7 @@
         // Exponer funciones globalmente para manejadores onclick inline en HTML
         window.confirmarReprogramacion = confirmarReprogramacion;
         window.switchView = switchView;
+        window.abrirPestana = abrirPestana;  // la usa el #hash de abajo (Mis videos, B5)
         window.toggleFavorite = toggleFavorite;
         window.requestClassAccess = requestClassAccess;
         window.filterChatContacts = filterChatContacts;
@@ -65,7 +66,6 @@
                 'view-dashboard': ['Dashboard', 'Tu panel de aprendizaje'],
                 'view-my-classes': ['Mis Clases', 'Tus clases agendadas e historial'],
                 'view-favorites': ['Profesores Favoritos', 'Los profesores que guardaste'],
-                'view-courses': ['Cursos Premium', 'Catálogo de cursos en video'],
                 'view-inbox': ['Buzón de Dudas', 'Conversa con tus profesores'],
                 'view-progress': ['Informe de Progreso', 'Tu avance por asignatura'],
                 'view-plans': ['Mis Paquetes', 'Tus clases disponibles y vigencia'],
@@ -91,12 +91,17 @@
             if (new URLSearchParams(window.location.search).has('c')) switchView('view-inbox');
         });
         {% endif %}
-        // Llegar con #view-... (el menú de otras páginas del portal, como Notificaciones) abre esa vista. Solo valen las que
-        // tienen botón en el menú: al menor no se le ofrecen el Buzón ni el Soporte, y un #hash escrito a mano no los abre.
+        // Llegar con #view-... (el menú de otras páginas del portal, como Notificaciones) abre esa vista, y con #tab-... la
+        // pestaña del Inicio (Mis videos). Solo valen las que tienen botón en el menú: al menor no se le ofrecen el Buzón
+        // ni el Soporte, y un #hash escrito a mano no los abre.
         document.addEventListener('DOMContentLoaded', () => {
             const vista = window.location.hash.slice(1);
-            const hayBoton = Array.from(document.querySelectorAll('.sidebar-view-btn')).some(b => b.dataset.view === vista);
-            if (hayBoton) switchView(vista);
+            const boton = Array.from(document.querySelectorAll('.sidebar-view-btn'))
+                .find(b => (b.dataset.tab || b.dataset.view) === vista);
+            if (boton) {
+                switchView(boton.dataset.view);
+                if (boton.dataset.tab) abrirPestana(boton);
+            }
             else if (vista === 'temas') document.getElementById('nav-open-interests').click();
         });
         })();

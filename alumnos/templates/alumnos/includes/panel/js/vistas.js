@@ -8,7 +8,8 @@
             // Remove active state from all buttons and views
             viewBtns.forEach(btn => {
                 const viewAttr = btn.getAttribute('data-view');
-                if (viewAttr === targetViewId) {
+                // Los que abren una pestana (data-tab: Mis videos) se marcan solos en abrirPestana, no junto al Inicio
+                if (viewAttr === targetViewId && !btn.dataset.tab) {
                     btn.classList.add('active');
                 } else {
                     btn.classList.remove('active');
@@ -53,10 +54,18 @@
             }
         };
 
+        // Boton del menu que abre una pestana del Inicio (B5, Mis videos): abre la pestana y queda marcado solo el.
+        const abrirPestana = (btn) => {
+            const pestana = document.querySelector(`.tab-btn[data-tab="${btn.dataset.tab}"]`);
+            if (pestana) pestana.click();
+            viewBtns.forEach(b => b.classList.toggle('active', b === btn));
+        };
+
         viewBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 const targetViewId = btn.getAttribute('data-view');
                 switchView(targetViewId);
+                if (btn.dataset.tab) abrirPestana(btn);
                 if (window.innerWidth <= 900) closeSidebar();
             });
         });
