@@ -73,7 +73,9 @@ class SoporteReembolsoTests(Base):
         pagina = self.pagina()
         self.assertContains(pagina, 'Periodo de anulacion excedido')
         self.assertContains(pagina, reverse('soporte_reintentar_reembolso', args=[self.ticket.pk, devolucion.pk]))
-        self.assertContains(pagina, reverse('soporte_devolucion_hecha', args=[self.ticket.pk, devolucion.pk]))  # y a mano
+        self.assertContains(pagina, reverse('soporte_pedir_aprobacion', args=[self.ticket.pk, devolucion.pk]))
+        # a mano solo despues de que el admin apruebe: ver tests/test_aprobacion_devolucion.py
+        self.assertNotContains(pagina, reverse('soporte_devolucion_hecha', args=[self.ticket.pk, devolucion.pk]))
 
     def test_reintentar_por_transbank_la_deja_devuelta_y_avisa_al_alumno(self):
         self.tx.refund.side_effect = Exception('Error del autorizador')

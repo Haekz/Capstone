@@ -34,18 +34,27 @@
             {% elif form %}
             {% if d.error_reembolso %}<br><small>No sali&oacute; por Transbank: {{ d.error_reembolso }}</small>{% endif %}
             {% if d.por_devolver != d.monto %}<br><small>Faltan {{ d.por_devolver|clp }} por devolver.</small>{% endif %}
-            <form method="post" action="{% url 'soporte_reintentar_reembolso' ticket.pk d.pk %}" style="display:inline;">
-                {% csrf_token %}
-                <button type="submit">Reintentar por Transbank</button>
-            </form>
-            <form method="post" action="{% url 'soporte_pedir_aprobacion' ticket.pk d.pk %}" style="display:inline;">
-                {% csrf_token %}
-                <button type="submit">Pedir aprobaci&oacute;n al administrador</button>
-            </form>
+            {% if d.aprobada %}
+            <br><small>Aprobada por el administrador el {{ d.aprobada|date:"d-m-Y" }}: transfiere y m&aacute;rcala devuelta.</small>
             <form method="post" action="{% url 'soporte_devolucion_hecha' ticket.pk d.pk %}" style="display:inline;">
                 {% csrf_token %}
                 <button type="submit">Marcar como devuelta</button>
             </form>
+            {% else %}
+            {% if d.escalamiento.indicado %}<br><small>El administrador respondi&oacute;: {{ d.escalamiento.indicacion }}</small>{% endif %}
+            <form method="post" action="{% url 'soporte_reintentar_reembolso' ticket.pk d.pk %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit">Reintentar por Transbank</button>
+            </form>
+            {% if d.escalamiento.pendiente %}
+            <br><small>Esperando la aprobaci&oacute;n del administrador para transferir a mano.</small>
+            {% else %}
+            <form method="post" action="{% url 'soporte_pedir_aprobacion' ticket.pk d.pk %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit">Pedir aprobaci&oacute;n al administrador</button>
+            </form>
+            {% endif %}
+            {% endif %}
             {% else %}
             <span class="badge">Por devolver</span>
             {% endif %}

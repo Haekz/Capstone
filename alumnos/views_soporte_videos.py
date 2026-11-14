@@ -138,7 +138,7 @@ def reintentar_reembolso(request, id_ticket, id_devolucion):
 @require_POST
 @soporte_required
 def devolucion_hecha(request, id_ticket, id_devolucion):
-    """Soporte ya transfirio el dinero: queda marcada (una sola vez) y se le cuenta al reclamante en el ticket."""
+    """Soporte ya transfirio el dinero a mano (con la aprobacion del admin): queda marcada (una sola vez) y se le cuenta al reclamante."""
     ticket = get_object_or_404(tickets_del_agente(request), pk=id_ticket, categoria=Ticket.VIDEOS)
     try:
         with transaction.atomic():
@@ -146,7 +146,10 @@ def devolucion_hecha(request, id_ticket, id_devolucion):
             agregar_mensaje(ticket, request.user,
                             f'Ya te devolvimos {clp(devolucion.monto)} por {_videos(devolucion.cantidad)} que tu '
                             'profesor no te compartió.', de_soporte=True)
-    except ValidationError:  # no es de este ticket o ya estaba marcada
-        raise Http404
+    except ValidationError as error:
+        if error.code != 'sin_aprobacion':  # no es de este ticket o ya estaba marcada
+            raise Http404
+        messages.error(request, error.messages[0])
+        return redirect('soporte_reporte', ticket.pk)
     messages.success(request, 'Devolución marcada como devuelta. Se lo contamos en el ticket.')
     return redirect('soporte_reporte', ticket.pk)

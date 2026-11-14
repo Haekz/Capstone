@@ -96,12 +96,16 @@ def aprobar(escalamiento, admin):
 
 
 def marcar_devuelta(ticket, devolucion_id):
-    """Soporte ya transfirio el dinero de una devolucion de ``ticket``. Una sola vez: ValidationError si ya estaba."""
+    """Soporte ya transfirio el dinero a mano de una devolucion de ``ticket``. Una sola vez, y solo si el admin la aprobo.
+
+    ValidationError si no existe o ya estaba (sin codigo), o si falta la aprobacion (codigo ``sin_aprobacion``)."""
     with transaction.atomic():
         devolucion = (DevolucionVideos.objects.select_for_update().select_related('paquete__alumno__user')
                       .filter(pk=devolucion_id, ticket=ticket, devuelta__isnull=True).first())
         if not devolucion:
             raise ValidationError('Esa devoluci\u00f3n no existe o ya est\u00e1 marcada como devuelta.')
+        if not devolucion.aprobada:
+            raise ValidationError('Falta la aprobaci\u00f3n del administrador para transferir a mano.', code='sin_aprobacion')
         devolucion.devuelta = timezone.now()
         devolucion.save(update_fields=['devuelta'])
         return devolucion
@@ -121,4 +125,4 @@ def casos_del_ticket(ticket):
             valor = valor_por_video(paquete)
             faltantes.append({'paquete': paquete, 'faltan': faltan,
                               'opciones': [(n, n * valor) for n in range(1, faltan + 1)]})
-    return {'paquetes': faltantes, 'devoluciones': list(ticket.devoluciones_videos.select_related('paquete'))}
+    return {'paquetes': faltantes, 'devoluciones': list(ticket.devoluciones_videos.select_related('paquete', 'escalamiento'))}

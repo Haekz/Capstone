@@ -2,11 +2,14 @@
 
 Si Transbank no puede devolver, soporte pide la aprobacion: se escala al admin con un motivo armado por el sistema, el
 admin ve el monto y aprueba (queda quien y cuando) y soporte recibe la indicacion como en cualquier caso escalado.
-Aqui: pedir y aprobar. Que sin aprobacion no se pueda marcar devuelta esta en test_devolucion_a_mano_requiere_aprobacion.
+Aqui: pedir y aprobar, y que sin aprobacion no se pueda marcar devuelta (transferir a mano).
 """
 
+from django.core.exceptions import ValidationError
 from django.urls import reverse
+from django.utils import timezone
 
+from alumnos import devoluciones_videos
 from alumnos.models.videos import DevolucionVideos
 from soporte.models import Escalamiento, Ticket
 from soporte.tickets import abrir_reporte
@@ -113,3 +116,45 @@ class AprobacionDeDevolucionTests(Base):
         self.como_admin()
         self.client.post(reverse('indicar_escalado', args=[escalamiento.pk]), {'indicacion': 'No: revisen el caso.'})
         self.assertIsNone(DevolucionVideos.objects.get().aprobada)
+        entrar_soporte(self.client, self.agente)  # soporte lee la respuesta y puede volver a pedir
+        pagina = self.client.get(reverse('soporte_reporte', args=[self.ticket.pk]))
+        self.assertContains(pagina, 'No: revisen el caso.')
+        self.assertContains(pagina, reverse('soporte_pedir_aprobacion', args=[self.ticket.pk, self.devolucion.pk]))
+
+    # ---- sin aprobacion no se transfiere a mano ----
+
+    def marcar(self):
+        return self.client.post(reverse('soporte_devolucion_hecha', args=[self.ticket.pk, self.devolucion.pk]))
+
+    def test_sin_aprobacion_no_se_marca_devuelta_y_se_le_explica_a_soporte(self):
+        respuesta = self.marcar()  # no es un 404: el caso existe, falta la aprobacion
+        self.assertRedirects(respuesta, reverse('soporte_reporte', args=[self.ticket.pk]), fetch_redirect_response=False)
+        self.assertIsNone(DevolucionVideos.objects.get().devuelta)
+        self.assertFalse(self.ticket.mensajes.exists())  # y no se le dijo al alumno que ya se le devolvio
+        with self.assertRaises(ValidationError):
+            devoluciones_videos.marcar_devuelta(self.ticket, self.devolucion.pk)
+
+    def test_con_la_aprobacion_del_admin_si_se_marca_devuelta(self):
+        self.pedir()
+        self.aprobar(self.escalamiento())
+        entrar_soporte(self.client, self.agente)
+        self.marcar()
+        self.assertIsNotNone(DevolucionVideos.objects.get().devuelta)
+        [mensaje] = self.ticket.mensajes.all()
+        self.assertIn('Ya te devolvimos $10.000', mensaje.texto)
+
+    def test_el_panel_cambia_segun_el_paso(self):
+        pedir = reverse('soporte_pedir_aprobacion', args=[self.ticket.pk, self.devolucion.pk])
+        hecha = reverse('soporte_devolucion_hecha', args=[self.ticket.pk, self.devolucion.pk])
+        pagina = self.client.get(reverse('soporte_reporte', args=[self.ticket.pk]))
+        self.assertContains(pagina, pedir)
+        self.assertNotContains(pagina, hecha)
+        self.pedir()  # esperando al admin: ni se vuelve a pedir ni se puede transferir
+        pagina = self.client.get(reverse('soporte_reporte', args=[self.ticket.pk]))
+        self.assertContains(pagina, 'Esperando la aprobaci')
+        self.assertNotContains(pagina, pedir)
+        self.assertNotContains(pagina, hecha)
+        DevolucionVideos.objects.filter(pk=self.devolucion.pk).update(aprobada=timezone.now())  # aprobada
+        pagina = self.client.get(reverse('soporte_reporte', args=[self.ticket.pk]))
+        self.assertContains(pagina, hecha)
+        self.assertNotContains(pagina, pedir)

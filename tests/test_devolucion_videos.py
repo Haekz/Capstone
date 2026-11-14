@@ -8,6 +8,7 @@ profesor, deja de ser atraso y no cambia lo que cobra por lo que si entrego. Sol
 
 from django.core.exceptions import ValidationError
 from django.urls import reverse
+from django.utils import timezone
 
 from alumnos import devoluciones_videos
 from alumnos.models import PaqueteClases
@@ -132,6 +133,7 @@ class ReglasTests(Base):
 
     def test_marcar_devuelta_es_una_sola_vez(self):
         devolucion = self.devolver(self.paquete(videos=2), 1)
+        DevolucionVideos.objects.filter(pk=devolucion.pk).update(aprobada=timezone.now())  # a mano: la aprobo el admin
         devoluciones_videos.marcar_devuelta(self.ticket, devolucion.pk)
         devolucion.refresh_from_db()
         primera = devolucion.devuelta
@@ -212,8 +214,9 @@ class SoporteTests(Base):
     def test_marcar_devuelta_queda_en_el_ticket_y_no_se_repite(self):
         self.devolver('2')
         devolucion = DevolucionVideos.objects.get()
+        DevolucionVideos.objects.filter(pk=devolucion.pk).update(aprobada=timezone.now())  # a mano: la aprobo el admin
         url = reverse('soporte_devolucion_hecha', args=[self.ticket.pk, devolucion.pk])
-        self.assertContains(self.pagina(), url)  # el boton, mientras este por devolver
+        self.assertContains(self.pagina(), url)  # el boton, mientras este aprobada y por devolver
         self.assertRedirects(self.client.post(url), reverse('soporte_reporte', args=[self.ticket.pk]),
                              fetch_redirect_response=False)
         devolucion.refresh_from_db()
