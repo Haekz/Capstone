@@ -7,8 +7,12 @@ paquetes.precio_videos_extra. Solo reglas: el pago con Webpay va aparte.
 Un extra solo cuenta para entregar, plazo y saldo cuando su pago esta confirmado (estado activa): anotar() y
 contratados() son el unico lugar que lo calcula (fase 6d). Lo que se devolvio por videos no entregados (fase 6e) se
 resta de lo que el profesor debe entregar, pero no cambia lo pagado: por eso totales() es bruto y contratados() neto.
+
+Sin MongoDB no se vende ningun video, ni extra ni agregado (B2): exigir_a_la_venta() es la unica regla y la usan
+validar() y el inicio de la compra del paquete (alumnos/webpay.py).
 """
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db.models import IntegerField, OuterRef, Subquery, Sum
 from django.db.models.functions import Coalesce
@@ -74,8 +78,15 @@ def ofertas(alumno_id, ahora=None):
     return ofertas
 
 
+def exigir_a_la_venta():
+    """ValidationError si los videos no se venden: sin MongoDB (settings.VIDEOS_A_LA_VENTA) nadie podria entregarlos."""
+    if not settings.VIDEOS_A_LA_VENTA:
+        raise ValidationError('Los videos de ayuda no están disponibles por ahora. Intenta más tarde.')
+
+
 def validar(paquete, cantidad, ahora=None):
     """El precio de comprar ``cantidad`` extras para ``paquete``, o ValidationError con el motivo."""
+    exigir_a_la_venta()
     ahora = ahora or timezone.now()
     if paquete.estado != PaqueteClases.ESTADO_ACTIVA or not paquete.fecha_fin or paquete.fecha_fin <= ahora:
         raise ValidationError('Solo puedes comprar videos extra con un paquete vigente.')
