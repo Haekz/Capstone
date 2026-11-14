@@ -291,6 +291,7 @@ def alumno_pag1(request):
     clases_disponibles = Clase.objects.habilitadas().filtrar(
         especialidad=criterios.get('especialidad'),
         solo_disponibles=criterios.get('disponible', False),
+        profesor=criterios.get('profesor'),
     ).select_related('asignatura', 'profesor__user', 'profesor__especialidad')
 
     relacionadas = ('clase__asignatura', 'clase__profesor__user', 'clase__profesor__especialidad', 'sesion')
@@ -342,6 +343,7 @@ def alumno_pag1(request):
         ],
         'clases_disponibles': clases_disponibles,
         'filtros': filtros,
+        'profesor_filtrado': criterios.get('profesor'),
         'hay_filtros': any(criterios.values()),
         'especialidades': filtros.fields['especialidad'].queryset,
         'mis_inscripciones': mis_inscripciones,
