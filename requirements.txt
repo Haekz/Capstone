@@ -1,8 +1,8 @@
-Django>=5.0.6
-gunicorn==26.2.2
+Django==5.2.18
+gunicorn==26.2.0
 setuptools==68.0.0
 whitenoise==6.12.0
-psycopg2-binary
+psycopg2-binary==2.9.13
 asgiref==3.8.1
 certifi==2026.5.20
 cffi==2.0.0
@@ -10,10 +10,8 @@ charset-normalizer==3.4.7
 cryptography==49.0.0
 dj-database-url==3.1.2
 django-allauth==65.18.0
-django-extensions==4.1
 dnspython==2.8.0
 idna==3.18
-mongomock==4.3.0
 packaging==26.2
 pycparser==3.12
 pymongo==4.19.0
@@ -24,7 +22,7 @@ transbank-sdk==6.1.0
 urllib3==2.7.0
 oauthlib==3.2.2
 requests-oauthlib==2.0.0
-Pillow>=13.0.0
+Pillow==13.0.0
 # PDF de documentos a imagen con marca de agua (apoderados/documentos.py). Licencia Apache-2.0/BSD (no AGPL).
 pypdfium2==5.14.0
 # Zonas horarias (TIME_ZONE = 'America/Santiago') aunque el servidor no traiga la base del sistema.
