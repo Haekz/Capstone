@@ -131,6 +131,31 @@ def regis_prof(request):
     return render(request, 'user_profesor/regis_prof.html', context)
 
 
+def _rendimiento_mensual(inscripciones, mes_actual):
+    """Grafico de solicitudes de los ultimos 5 meses (el actual al final): [{mes, cantidad, porcentaje}].
+
+    Cuenta por numero de mes, sin mirar el año. Un mes sin inscripciones vale 0; el 100% son 40.
+    """
+    meses_nombres = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+    tope_grafico = 40
+    conteo_por_mes = {}
+    for insc in inscripciones:
+        if insc.fecha_inscripcion:
+            mes_num = insc.fecha_inscripcion.month
+            conteo_por_mes[mes_num] = conteo_por_mes.get(mes_num, 0) + 1
+
+    grafico = []
+    for atras in range(4, -1, -1):
+        indice = (mes_actual - atras - 1) % 12
+        cantidad = conteo_por_mes.get(indice + 1, 0)
+        grafico.append({
+            'mes': meses_nombres[indice],
+            'cantidad': cantidad,
+            'porcentaje': min(100, int((cantidad / tope_grafico) * 100)),
+        })
+    return grafico
+
+
 @never_cache
 @profesor_required
 def panel_profesor(request):
@@ -156,28 +181,6 @@ def panel_profesor(request):
         ).select_related('alumno', 'alumno__user', 'clase', 'clase__asignatura', 'paquete')
     )
 
-    conteo_por_mes = {}
-    for insc in inscripciones:
-        if insc.fecha_inscripcion:
-            mes_num = insc.fecha_inscripcion.month
-            conteo_por_mes[mes_num] = conteo_por_mes.get(mes_num, 0) + 1
-
-    # 3. Gráfico de solicitudes mensuales (Últimos 5 meses)
-    meses_nombres = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
-    current_month = timezone.localdate().month  # mes en Chile, no el del servidor
-    rendimiento_meses = []
-    # Un mes sin inscripciones vale 0.
-    tope_grafico = 40
-    for i in range(4, -1, -1):
-        month_idx = (current_month - i - 1) % 12
-        month_name = meses_nombres[month_idx]
-        real_count = conteo_por_mes.get(month_idx + 1, 0)
-        rendimiento_meses.append({
-            'mes': month_name,
-            'cantidad': real_count,
-            'porcentaje': min(100, int((real_count / tope_grafico) * 100))
-        })
-
     # 4. Saldo generado y gestión de retiros
     mis_retiros = list(
         SolicitudRetiro.objects.filter(profesor=profesor)
@@ -198,7 +201,7 @@ def panel_profesor(request):
         'clases': clases,
         'inscripciones': inscripciones,
         **inicio_panel.contexto(profesor),  # Clases de Hoy, dinero y bloques libres de hoy (inicio.py)
-        'rendimiento_meses': rendimiento_meses,
+        'rendimiento_meses': _rendimiento_mensual(inscripciones, timezone.localdate().month),  # mes en Chile
         'saldo_total': saldo_total_fmt,
         'saldo_disponible': saldo_disponible_fmt,
         'saldo_disponible_raw': saldo_disponible,
