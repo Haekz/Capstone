@@ -78,7 +78,7 @@ No hay tabla de desglose (`DesgloseOperacion` no existe): comisión, IVA y pago 
 2. **Excepción acordada (02-nov):** si el alumno cancela con menos de 4 horas, la clase se le paga igual al profesor.
 3. **Saldos del profesor** (`calcular_saldos`): `total_ganado`, `disponible` (su 85 % menos retiros aprobados, pagados y en trámite) y `pendiente` (comisión de la plataforma más lo que está en trámite).
 4. **Retiros:** mínimo de $10.000 (`liquidacion.MINIMO`); el saldo se acumula hasta alcanzarlo.
-5. **Panel del admin** (`admin_portal/metricas.finanzas`): `cobrado`, `comision_estimada`, `ganancia` (comisión de las clases ya dictadas), `por_dictar`, `saldo_profesores`, `retiros_pagados` y `retiros_pendientes`.
+5. **Panel del admin** (`admin_portal/metricas.finanzas`): `cobrado`, `comision_estimada`, `ganancia` (comisión de las clases ya dictadas y de los videos ya compartidos), `por_dictar` (clases por dictar y videos por entregar), `saldo_profesores`, `retiros_pagados` y `retiros_pendientes`. Los videos (agregado y extras pagados) cuentan desde el 13-nov (B1); lo devuelto por videos no entregados se resta de lo cobrado.
 
 ---
 
