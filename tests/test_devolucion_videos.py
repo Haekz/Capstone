@@ -176,7 +176,8 @@ class SoporteTests(Base):
         self.assertRedirects(respuesta, reverse('soporte_reporte', args=[self.ticket.pk]), fetch_redirect_response=False)
         [devolucion] = DevolucionVideos.objects.all()
         self.assertEqual((devolucion.cantidad, devolucion.monto), (2, 10000))
-        [mensaje] = self.ticket.mensajes.all()
+        mensaje, pendiente = self.ticket.mensajes.order_by('id')  # "aprobamos" y, sin Transbank, "soporte te hara llegar"
+        self.assertIn('Soporte te hará llegar el dinero', pendiente.texto)
         self.assertTrue(mensaje.de_soporte)
         self.assertIn('$10.000', mensaje.texto)
         [aviso] = Notificacion.objects.filter(usuario=self.profe.user)
@@ -217,7 +218,7 @@ class SoporteTests(Base):
                              fetch_redirect_response=False)
         devolucion.refresh_from_db()
         self.assertIsNotNone(devolucion.devuelta)
-        self.assertEqual(self.ticket.mensajes.count(), 2)  # el de registrar y el de devuelta
+        self.assertEqual(self.ticket.mensajes.count(), 3)  # aprobamos, soporte te hara llegar (sin Transbank) y devuelta
         self.assertEqual(self.client.post(url).status_code, 404)
         self.assertNotContains(self.pagina(), url)
 

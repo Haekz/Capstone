@@ -74,4 +74,6 @@ urlpatterns = [
          name='soporte_devolver_videos'),
     path('soporte/<int:id_ticket>/videos/devoluciones/<int:id_devolucion>/hecha/', views_soporte_videos.devolucion_hecha,
          name='soporte_devolucion_hecha'),
+    path('soporte/<int:id_ticket>/videos/devoluciones/<int:id_devolucion>/reintentar/',
+         views_soporte_videos.reintentar_reembolso, name='soporte_reintentar_reembolso'),
 ]

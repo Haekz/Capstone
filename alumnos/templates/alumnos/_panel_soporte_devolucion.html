@@ -1,11 +1,11 @@
 {# Panel del detalle de un ticket de Videos de apoyo (fase 6e): videos que el profesor no entrego y su devolucion. #}
-{# El monto lo calcula el servidor; el dinero se devuelve a mano y aqui queda el registro. #}
+{# El monto lo calcula el servidor. Se intenta devolver por Transbank; si no sale, se devuelve a mano y aqui queda el registro. #}
 {% load videos_tags dinero %}
 {% devoluciones_del_ticket ticket as casos %}
 {% if casos.paquetes or casos.devoluciones %}
 <section aria-labelledby="devolucion-titulo" style="margin-top:18px;">
     <h2 id="devolucion-titulo" style="font-size:1rem;">Videos que el profesor no entreg&oacute;</h2>
-    <p><small>Confirma el caso antes de registrar. Cada video se devuelve por lo que se pag&oacute; por &eacute;l. Lo devuelto deja de ser un atraso del profesor y ya no se le paga; el dinero se transfiere a mano y aqu&iacute; queda el registro.</small></p>
+    <p><small>Confirma el caso antes de registrar. Cada video se devuelve por lo que se pag&oacute; por &eacute;l. Lo devuelto deja de ser un atraso del profesor y ya no se le paga. Al registrar se intenta devolver por Transbank, por el mismo medio de pago; si no sale, aqu&iacute; ves el motivo y puedes reintentar o transferir a mano.</small></p>
     {% for caso in casos.paquetes %}
     <p>{{ caso.paquete.get_plan_display }} con {{ caso.paquete.profesor.nombre|default:"(profesor que ya no est&aacute;)" }}, comprado el {{ caso.paquete.creada|date:"d-m-Y" }}: faltan {{ caso.faltan }} video{{ caso.faltan|pluralize }}.</p>
     {% if form %}
@@ -32,6 +32,12 @@
             {% if d.devuelta %}
             <span class="badge">Devuelta el {{ d.devuelta|date:"d-m-Y" }}</span>
             {% elif form %}
+            {% if d.error_reembolso %}<br><small>No sali&oacute; por Transbank: {{ d.error_reembolso }}</small>{% endif %}
+            {% if d.por_devolver != d.monto %}<br><small>Faltan {{ d.por_devolver|clp }} por devolver.</small>{% endif %}
+            <form method="post" action="{% url 'soporte_reintentar_reembolso' ticket.pk d.pk %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit">Reintentar por Transbank</button>
+            </form>
             <form method="post" action="{% url 'soporte_devolucion_hecha' ticket.pk d.pk %}" style="display:inline;">
                 {% csrf_token %}
                 <button type="submit">Marcar como devuelta</button>
