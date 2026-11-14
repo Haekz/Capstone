@@ -1,4 +1,11 @@
 {% extends 'alumnos/base_alumno.html' %}
+{% load static %}
+
+{# Reseñas (estrellas del diálogo de calificar) y reservas (ventana de horarios): componentes compartidos #}
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'resenas/resenas.css' %}">
+{% endblock %}
 
 {% block content %}
             
