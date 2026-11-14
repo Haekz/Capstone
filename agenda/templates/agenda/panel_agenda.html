@@ -12,7 +12,7 @@
         {% elif not clases %}
             <p>Aún no tienes asignaturas asignadas: tus bloques se crean cuando LBWUS te asigne una.</p>
         {% endif %}
-        <p><a href="{% url 'nuevo_ticket' %}?categoria=horario"><i class="bi bi-life-preserver" aria-hidden="true"></i> Pedir ayuda a soporte con mi horario</a></p>
+        <p><a class="agenda-ayuda" href="{% url 'nuevo_ticket' %}?categoria=horario"><i class="bi bi-life-preserver" aria-hidden="true"></i> Pedir ayuda a soporte con mi horario</a></p>
 
         {% if franjas %}
         <div class="prof-table-wrapper">
@@ -28,7 +28,7 @@
                         <td>
                             <form method="post" action="{% url 'agenda_quitar_franja' f.pk %}">
                                 {% csrf_token %}
-                                <button type="submit" class="prof-form-btn" aria-label="Quitar franja del {{ f.get_dia_semana_display }} de {{ f.hora_inicio|time:'H:i' }} a {{ f.hora_fin|time:'H:i' }}">Quitar</button>
+                                <button type="submit" class="agenda-btn agenda-btn--peligro" aria-label="Quitar franja del {{ f.get_dia_semana_display }} de {{ f.hora_inicio|time:'H:i' }} a {{ f.hora_fin|time:'H:i' }}">Quitar</button>
                             </form>
                         </td>
                     </tr>
@@ -84,23 +84,26 @@
                         <td>{{ fila.inicio|time:"H:i" }}</td>
                         <td>
                             {% for r in fila.reservas %}
-                                <span class="prof-badge prof-badge-online">Reservado</span> {{ r.alumno }} · {{ r.asignatura }}
-                                <form method="post" action="{% url 'mensajes_profesor_abrir' r.id %}" style="display:inline;">
-                                    {% csrf_token %}
-                                    <button type="submit" class="prof-form-btn" aria-label="Escribir al {{ r.escribe_a }} de {{ r.alumno }} sobre la clase de {{ r.asignatura }} del {{ fila.inicio|date:'d/m' }}">Escribir al {{ r.escribe_a }}</button>
-                                </form>
-                                {% if r.puede_cancelar %}
-                                <form method="post" action="{% url 'agenda_cancelar_clase' r.id %}" style="display:inline;"
-                                      onsubmit="return confirm('¿Cancelar esta clase? Esa hora se cierra y avisamos al alumno para que reagende.');">
-                                    {% csrf_token %}
-                                    <button type="submit" class="prof-form-btn" aria-label="Cancelar la clase de {{ r.asignatura }} con {{ r.alumno }} del {{ fila.inicio|date:'d/m' }} a las {{ fila.inicio|time:'H:i' }}">Cancelar clase</button>
-                                </form>
-                                {% else %}
-                                <small>Faltan menos de 12 h: ya no se puede cancelar.</small>
-                                {% endif %}
-                                {% if not forloop.last %}<br>{% endif %}
+                            <div class="agenda-reserva">
+                                <span class="prof-badge prof-badge-online">Reservado</span>
+                                <span class="agenda-reserva__quien">{{ r.alumno }} · {{ r.asignatura }}</span>
+                                <div class="agenda-reserva__acciones">
+                                    <form method="post" action="{% url 'mensajes_profesor_abrir' r.id %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="agenda-btn" aria-label="Escribir al {{ r.escribe_a }} de {{ r.alumno }} sobre la clase de {{ r.asignatura }} del {{ fila.inicio|date:'d/m' }}"><i class="bi bi-chat-dots" aria-hidden="true"></i> Escribir al {{ r.escribe_a }}</button>
+                                    </form>
+                                    {% if r.puede_cancelar %}
+                                    <form method="post" action="{% url 'agenda_cancelar_clase' r.id %}"
+                                          onsubmit="return confirm('¿Cancelar esta clase? Esa hora se cierra y avisamos al alumno para que reagende.');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="agenda-btn agenda-btn--peligro" aria-label="Cancelar la clase de {{ r.asignatura }} con {{ r.alumno }} del {{ fila.inicio|date:'d/m' }} a las {{ fila.inicio|time:'H:i' }}"><i class="bi bi-x-circle" aria-hidden="true"></i> Cancelar clase</button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                                {% if not r.puede_cancelar %}<small class="agenda-reserva__nota">Faltan menos de 12 h: ya no se puede cancelar.</small>{% endif %}
+                            </div>
                             {% empty %}
-                                Libre
+                            <span class="agenda-libre">Libre</span>
                             {% endfor %}
                         </td>
                     </tr>

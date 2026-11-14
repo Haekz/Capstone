@@ -1,0 +1,131 @@
+/* Agenda del profesor y "Clases realizadas" (portal docente). Tokens del portal: portal_docente.css los traduce
+   (--text, --text-light, --line, --r-sm, --r-md) y --primary-light cambia con el tema (AA en claro y oscuro).
+   Jerarquia: .prof-form-btn queda como el boton principal ("Agregar franja"); el resto son acciones secundarias. */
+
+.agenda-ayuda {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    /* Con clase ya no le toca ':where(.page-content a:not([class]))' de portal_docente.css: mismo color, explicito */
+    color: var(--primary-light);
+}
+
+/* ── Estado de cada hora ── */
+.agenda-libre {
+    display: inline-flex;
+    padding: 2px 10px;
+    border: 1px dashed var(--line);
+    border-radius: 999px;
+    color: var(--text-light);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.agenda-reserva {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+}
+
+.agenda-reserva + .agenda-reserva {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--line);
+}
+
+.agenda-reserva__quien {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.agenda-reserva__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.agenda-reserva__acciones form {
+    margin: 0;
+}
+
+.agenda-reserva__nota {
+    flex-basis: 100%;
+    color: var(--text-light);
+}
+
+/* ── Acciones secundarias: chicas y en linea ── */
+.agenda-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 36px; /* objetivo de toque >= 24 px (WCAG 2.5.8) */
+    padding: 6px 14px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.agenda-btn:hover,
+.agenda-btn:focus-visible {
+    border-color: var(--primary-light);
+    background: var(--primary-soft);
+}
+
+.agenda-btn:focus-visible {
+    outline: 2px solid var(--primary-light);
+    outline-offset: 2px;
+}
+
+/* Destructivas (cancelar una clase, quitar una franja): rojo legible, nunca con el peso del boton principal */
+.agenda-btn--peligro {
+    color: #b91c1c;
+}
+
+.agenda-btn--peligro:hover,
+.agenda-btn--peligro:focus-visible {
+    border-color: #dc2626;
+    background: rgba(220, 38, 38, 0.08);
+}
+
+body:not(.light-mode) .agenda-btn--peligro {
+    color: #fca5a5;
+}
+
+/* ── Clases realizadas: una tarjeta compacta por clase ── */
+.obs-lista {
+    display: grid;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.obs-item {
+    margin: 0;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+}
+
+.obs-item .prof-form-label {
+    margin-bottom: 8px;
+}
+
+.obs-item__pie {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 10px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .agenda-btn {
+        transition: none;
+    }
+}
