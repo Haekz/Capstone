@@ -446,101 +446,100 @@ def _es_admin(request):
     return bool(request.session.get(ADMIN.clave_sesion)) and request.user.is_active
 
 
+_CAMPOS_REGISTRO_TUTOR = (
+    'nombre', 'rut', 'direccion', 'fecha_nacimiento', 'correo_electronico',
+    'telefono', 'genero', 'password', 'confirm_password',
+)
+
+
+def _error(mensaje):
+    return JsonResponse({"success": False, "message": mensaje})
+
+
+def _validar_mayoria_edad(fecha_nacimiento):
+    """Mensaje de error si la fecha no es YYYY-MM-DD, no es pasada o la persona tiene menos de 18; si no, None."""
+    try:
+        fnac = datetime.datetime.strptime(fecha_nacimiento, '%Y-%m-%d').date()
+    except ValueError:
+        return "Formato de fecha inválido."
+    hoy = datetime.date.today()
+    if fnac >= hoy:
+        return "La fecha de nacimiento no puede ser actual ni futura."
+    edad = hoy.year - fnac.year - ((hoy.month, hoy.day) < (fnac.month, fnac.day))
+    if edad < 18:
+        return "Debes ser mayor o igual a 18 años para registrarte como administrador."
+    return None
+
+
+def _error_en_datos_de_registro(datos):
+    """Primer problema de los datos del formulario (mismo orden de siempre), o None si estan bien."""
+    if not all(datos.values()):
+        return "Todos los campos son obligatorios para registrarse."
+    if datos['password'] != datos['confirm_password']:
+        return "Las contraseñas no coinciden."
+    if len(datos['password']) < 6:
+        return "La contraseña debe tener al menos 6 caracteres."
+    from alumnos.utils import validar_clave_nueva
+    from django.core.exceptions import ValidationError as DjangoValidationError
+    try:
+        validar_clave_nueva(datos['password'], datos['rut'], datos['correo_electronico'])
+    except DjangoValidationError as e:
+        return " | ".join(e.messages)
+    if not validar_rut_chileno(datos['rut']):
+        return "El RUT ingresado no es válido."
+    return usuario_existe(datos['rut'], datos['correo_electronico']) or _validar_mayoria_edad(datos['fecha_nacimiento'])
+
+
+def _crear_administrador(request, datos):
+    """Crea el usuario con su perfil Tutor y abre su sesion de administrador."""
+    genero = get_object_or_404(Genero, id_genero=datos['genero'])
+
+    from django.contrib.auth import get_user_model, login as auth_login
+    user = get_user_model().objects.create_user(
+        username=datos['rut'],
+        rut=datos['rut'],
+        email=datos['correo_electronico'],
+        rol='admin',
+        password=datos['password'],
+        first_name=datos['nombre'],
+        telefono=datos['telefono'],
+        direccion=datos['direccion'],
+        fecha_nacimiento=datos['fecha_nacimiento'],
+        genero=genero,
+    )
+    user.save()
+
+    tutor = Tutor.objects.create(user=user)
+    auth_login(request, user, backend='alumnos.backends.RutOrEmailBackend')
+    abrir_sesion_rol(request, ADMIN, tutor)
+
+
 def regis_tutor(request):
     # Registro de un nuevo administrador (modelo Tutor). No es un registro publico.
     if not _es_admin(request):
         if request.method == 'POST':
             return JsonResponse(
-                {
-                    "success": False,
-                    "message": "No tienes permiso para crear administradores.",
-                },
+                {"success": False, "message": "No tienes permiso para crear administradores."},
                 status=403,
             )
-
         return redirect('login')
 
-    if request.method == 'POST':
-        try:
-            nombre = request.POST.get('nombre', '').strip()
-            rut = request.POST.get('rut', '').strip()
-            direccion = request.POST.get('direccion', '').strip()
-            fecha_nacimiento = request.POST.get('fecha_nacimiento', '').strip()
-            correo_electronico = request.POST.get('correo_electronico', '').strip()
-            telefono = request.POST.get('telefono', '').strip()
-            genero_id = request.POST.get('genero', '').strip()
-            password = request.POST.get('password', '').strip()
-            confirm_password = request.POST.get('confirm_password', '').strip()
+    if request.method != 'POST':
+        return render(request, 'user_profesor/regis_tutor.html', {'generos': Genero.objects.all()})
 
-            if not all([nombre, rut, direccion, fecha_nacimiento, correo_electronico, telefono, genero_id, password, confirm_password]):
-                return JsonResponse({"success": False, "message": "Todos los campos son obligatorios para registrarse."})
-
-            if password != confirm_password:
-                return JsonResponse({"success": False, "message": "Las contraseñas no coinciden."})
-
-            if len(password) < 6:
-                return JsonResponse({"success": False, "message": "La contraseña debe tener al menos 6 caracteres."})
-
-            from alumnos.utils import validar_clave_nueva
-            from django.core.exceptions import ValidationError as DjangoValidationError
-            try:
-                validar_clave_nueva(password, rut, correo_electronico)
-            except DjangoValidationError as e:
-                return JsonResponse({"success": False, "message": " | ".join(e.messages)})
-
-            if not validar_rut_chileno(rut):
-                return JsonResponse({"success": False, "message": "El RUT ingresado no es válido."})
-
-            error_msg = usuario_existe(rut, correo_electronico)
-            if error_msg:
-                return JsonResponse({"success": False, "message": error_msg})
-
-            try:
-                fnac = datetime.datetime.strptime(fecha_nacimiento, '%Y-%m-%d').date()
-                today = datetime.date.today()
-                if fnac >= today:
-                    return JsonResponse({"success": False, "message": "La fecha de nacimiento no puede ser actual ni futura."})
-                age = today.year - fnac.year - ((today.month, today.day) < (fnac.month, fnac.day))
-                if age < 18:
-                    return JsonResponse({"success": False, "message": "Debes ser mayor o igual a 18 años para registrarte como administrador."})
-            except ValueError:
-                return JsonResponse({"success": False, "message": "Formato de fecha inválido."})
-
-            genero = get_object_or_404(Genero, id_genero=genero_id)
-
-            from django.contrib.auth import get_user_model
-            User = get_user_model()
-            user = User.objects.create_user(
-                username=rut,
-                rut=rut,
-                email=correo_electronico,
-                rol='admin',
-                password=password,
-                first_name=nombre,
-                telefono=telefono,
-                direccion=direccion,
-                fecha_nacimiento=fecha_nacimiento,
-                genero=genero
-            )
-            user.save()
-
-            tutor = Tutor.objects.create(user=user)
-
-            from django.contrib.auth import login as auth_login
-            auth_login(request, user, backend='alumnos.backends.RutOrEmailBackend')
-            abrir_sesion_rol(request, ADMIN, tutor)
-
-            return JsonResponse({
-                "success": True,
-                "message": "Administrador registrado exitosamente. Ingresando al panel..."
-            })
-        except Exception:
-            logger.exception("Error interno en regis_tutor")
-            return JsonResponse({"success": False, "message": "Error interno al registrar el administrador."}, status=500)
-
-    generos = Genero.objects.all()
-    context = {'generos': generos}
-    return render(request, 'user_profesor/regis_tutor.html', context)
+    try:
+        datos = {campo: request.POST.get(campo, '').strip() for campo in _CAMPOS_REGISTRO_TUTOR}
+        mensaje = _error_en_datos_de_registro(datos)
+        if mensaje:
+            return _error(mensaje)
+        _crear_administrador(request, datos)
+        return JsonResponse({
+            "success": True,
+            "message": "Administrador registrado exitosamente. Ingresando al panel..."
+        })
+    except Exception:
+        logger.exception("Error interno en regis_tutor")
+        return JsonResponse({"success": False, "message": "Error interno al registrar el administrador."}, status=500)
 
 
 from django.contrib.auth import logout as auth_logout
