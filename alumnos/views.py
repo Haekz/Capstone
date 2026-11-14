@@ -386,6 +386,27 @@ def _obtener_ip(request):
     return request.META.get('REMOTE_ADDR', '').strip() or '127.0.0.1'
 
 
+LIMITE_INTENTOS_IP = 15
+LIMITE_INTENTOS_USUARIO = 5
+BLOQUEO_LOGIN_SEGUNDOS = 300
+MENSAJE_LOGIN_BLOQUEADO = (
+    "Demasiados intentos fallidos. Por seguridad, el acceso ha sido bloqueado temporalmente por 5 minutos."
+)
+
+
+def _abrir_sesion(request, user, siguiente):
+    """(respuesta, error): abre la sesion del rol del usuario y lo manda a su portal (o a ``siguiente``).
+
+    El rol lo define el perfil asociado (ver alumnos/roles.py). Sin perfil no se abre sesion.
+    """
+    rol, perfil = resolver_rol(user)
+    if rol is None:
+        return None, "Tu cuenta no tiene un perfil asignado en el sistema."
+    auth_login(request, user)
+    abrir_sesion_rol(request, rol, perfil)
+    return (redirect(siguiente) if siguiente else redirigir_a_portal(rol)), None
+
+
 # never_cache: si el navegador guarda el login, al volver "atras" desde el
 # portal muestra esa copia (con los datos escritos) en vez de preguntarle al
 # servidor, que habria redirigido al portal porque la sesion sigue activa.
@@ -405,16 +426,8 @@ def custom_login(request):
     siguiente = '' if siguiente == '/' else siguiente
 
     if request.method == 'POST':
-
-        username = request.POST.get(
-            'username',
-            ''
-        ).strip()
-
-        password = request.POST.get(
-            'password',
-            ''
-        )
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '')
 
         ip = _obtener_ip(request)
         # Mismo contador para todas las formas de escribir el RUT.
@@ -425,73 +438,26 @@ def custom_login(request):
         intentos_ip = cache.get(clave_cache_ip, 0)
         intentos_user = cache.get(clave_cache_user, 0)
 
-        if intentos_ip >= 15 or intentos_user >= 5:
-            return render(
-                request,
-                'registration/login.html',
-                {
-                    'error': (
-                        "Demasiados intentos fallidos. "
-                        "Por seguridad, el acceso ha sido bloqueado "
-                        "temporalmente por 5 minutos."
-                    )
-                }
-            )
+        if intentos_ip >= LIMITE_INTENTOS_IP or intentos_user >= LIMITE_INTENTOS_USUARIO:
+            return render(request, 'registration/login.html', {'error': MENSAJE_LOGIN_BLOQUEADO})
 
         if not username or not password:
-
-            error = (
-                "Por favor ingrese todos "
-                "los campos."
-            )
-
+            error = "Por favor ingrese todos los campos."
         else:
-
-            user = authenticate(
-                request,
-                username=username,
-                password=password
-            )
-
+            user = authenticate(request, username=username, password=password)
             if user is not None:
-
                 cache.delete(clave_cache_ip)
                 cache.delete(clave_cache_user)
-
-                # El rol lo define el perfil asociado (ver alumnos/roles.py).
-                # Sin perfil no se abre sesion.
-                rol, perfil = resolver_rol(user)
-
-                if rol is None:
-                    error = (
-                        "Tu cuenta no tiene "
-                        "un perfil asignado "
-                        "en el sistema."
-                    )
-                else:
-                    auth_login(request, user)
-                    abrir_sesion_rol(request, rol, perfil)
-                    return redirect(siguiente) if siguiente else redirigir_a_portal(rol)
-
+                respuesta, error = _abrir_sesion(request, user, siguiente)
+                if respuesta is not None:
+                    return respuesta
             else:
-                cache.set(clave_cache_ip, intentos_ip + 1, 300)
+                cache.set(clave_cache_ip, intentos_ip + 1, BLOQUEO_LOGIN_SEGUNDOS)
                 if canon_user:
-                    cache.set(clave_cache_user, intentos_user + 1, 300)
+                    cache.set(clave_cache_user, intentos_user + 1, BLOQUEO_LOGIN_SEGUNDOS)
+                error = "RUT/Correo o contraseña incorrectos. Inténtalo de nuevo."
 
-                error = (
-                    "RUT/Correo o contraseña "
-                    "incorrectos. "
-                    "Inténtalo de nuevo."
-                )
-
-    return render(
-        request,
-        'registration/login.html',
-        {
-            'error': error,
-            'siguiente': siguiente,
-        }
-    )
+    return render(request, 'registration/login.html', {'error': error, 'siguiente': siguiente})
 
 
 # ============================================================
