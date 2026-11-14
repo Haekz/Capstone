@@ -98,9 +98,9 @@
                 }
             }
 
-            // 2. Tutors
+            // 2. Tutors (sin tutores reales, el aviso de la pestana ya lo explica: no se dibuja nada)
             const tutorsContainer = document.getElementById('dashboard-tutors-container');
-            if (tutorsContainer) {
+            if (tutorsContainer && tutors.length) {
                 tutorsContainer.innerHTML = '';
                 let filteredTutors = tutors;
                 if (selectedTopics.length > 0) {
