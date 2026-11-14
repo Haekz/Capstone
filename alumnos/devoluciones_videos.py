@@ -1,7 +1,9 @@
 """Devolucion por videos no entregados (fase 6e, decidido 09-nov): soporte la registra desde el ticket de Videos.
 
-Se devuelve a mano (no hay reversa de Webpay): el sistema solo registra el caso y soporte lo marca devuelto cuando
-transfiere. Lo que falta = lo contratado (agregado + extras pagados) - lo compartido - lo ya devuelto: es una cuenta,
+Primero se intenta devolver por Transbank (alumnos/reembolsos.py). Si no se puede, se transfiere a mano y eso lo aprueba
+un administrador antes (13-nov): soporte pide la aprobacion (se escala al admin con un motivo armado aqui) y el admin la
+deja registrada con quien y cuando. Lo que falta = lo contratado (agregado + extras pagados) - lo compartido - lo ya
+devuelto: es una cuenta,
 no una opinion. El monto lo calcula el servidor (valor promedio por video x cantidad); soporte nunca lo escribe.
 Lo devuelto sale de lo que el profesor debe entregar (videos_extra.contratados): no puede compartirlo y cobrarlo
 dos veces, ni cuenta como atraso, y lo que cobra por lo que si entrego no cambia. Los avisos y el mensaje del ticket
@@ -12,9 +14,12 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
+from soporte.tickets import escalar_al_admin, indicar
+
 from . import paquetes, videos_compartidos, videos_extra
 from .models import PaqueteClases
 from .models.videos import DevolucionVideos
+from .templatetags.dinero import clp
 
 
 def sin_entregar(paquete):
@@ -55,6 +60,39 @@ def registrar(ticket, paquete_id, cantidad, agente):
         return DevolucionVideos.objects.create(paquete=paquete, cantidad=cantidad,
                                                monto=valor_por_video(paquete) * cantidad,
                                                ticket=ticket, registrada_por=agente)
+
+
+def pedir_aprobacion(devolucion, autor):
+    """Soporte no pudo devolver por Transbank: escala al admin, con el monto y el motivo, para que apruebe transferir a mano.
+
+    ValidationError si ya esta aprobada, si ya hay un pedido esperando respuesta o si el ticket ya esta escalado. Si el
+    admin respondio otra cosa (no la aprobo), se puede volver a pedir.
+    """
+    if devolucion.aprobada:
+        raise ValidationError('Esa devoluci\u00f3n ya est\u00e1 aprobada: puedes transferirla.')
+    if devolucion.escalamiento_id and devolucion.escalamiento.pendiente:
+        raise ValidationError('Ya pediste la aprobaci\u00f3n: espera la respuesta del administrador.')
+    cantidad = f'{devolucion.cantidad} video{"" if devolucion.cantidad == 1 else "s"}'
+    motivo = (f'Devolver {cantidad} sin entregar a un alumno. Transbank no pudo hacerlo'
+              f'{f" ({devolucion.error_reembolso})" if devolucion.error_reembolso else ""}. '
+              f'Pido aprobar transferir {clp(devolucion.por_devolver)} a mano.')
+    with transaction.atomic():
+        devolucion.escalamiento = escalar_al_admin(devolucion.ticket, autor, motivo)
+        devolucion.save(update_fields=['escalamiento'])
+
+
+def aprobar(escalamiento, admin):
+    """El admin aprueba transferir a mano la devolucion que soporte pidio en ``escalamiento``. Una sola vez, todo o nada:
+    queda quien y cuando, y a soporte le llega la indicacion como en cualquier caso escalado."""
+    with transaction.atomic():
+        devolucion = (DevolucionVideos.objects.select_for_update()
+                      .filter(escalamiento=escalamiento, devuelta__isnull=True, aprobada__isnull=True).first())
+        if not devolucion:
+            raise ValidationError('Ese caso no tiene una devoluci\u00f3n por aprobar.')
+        devolucion.aprobada, devolucion.aprobada_por = timezone.now(), admin
+        devolucion.save(update_fields=['aprobada', 'aprobada_por'])
+        indicar(escalamiento, admin, f'Aprobado: transfiere {clp(devolucion.por_devolver)} a mano y m\u00e1rcala devuelta.')
+        return devolucion
 
 
 def marcar_devuelta(ticket, devolucion_id):

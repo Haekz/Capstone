@@ -38,6 +38,10 @@
                 {% csrf_token %}
                 <button type="submit">Reintentar por Transbank</button>
             </form>
+            <form method="post" action="{% url 'soporte_pedir_aprobacion' ticket.pk d.pk %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit">Pedir aprobaci&oacute;n al administrador</button>
+            </form>
             <form method="post" action="{% url 'soporte_devolucion_hecha' ticket.pk d.pk %}" style="display:inline;">
                 {% csrf_token %}
                 <button type="submit">Marcar como devuelta</button>

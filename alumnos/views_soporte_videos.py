@@ -107,6 +107,23 @@ def devolver_videos(request, id_ticket):
 
 @require_POST
 @soporte_required
+def pedir_aprobacion_devolucion(request, id_ticket, id_devolucion):
+    """Soporte no pudo devolver por Transbank: le pide al administrador que apruebe transferir a mano (solo el agente asignado)."""
+    ticket = get_object_or_404(tickets_del_agente(request), pk=id_ticket, categoria=Ticket.VIDEOS)
+    devolucion = get_object_or_404(DevolucionVideos.objects.select_related('ticket', 'escalamiento'),
+                                   pk=id_devolucion, ticket=ticket, devuelta__isnull=True)
+    try:
+        with transaction.atomic():
+            devoluciones_videos.pedir_aprobacion(devolucion, request.user)
+    except ValidationError as error:
+        messages.error(request, error.messages[0])
+    else:
+        messages.success(request, 'Se lo pedimos al administrador. Cuando apruebe, podrás transferir y marcarla devuelta.')
+    return redirect('soporte_reporte', ticket.pk)
+
+
+@require_POST
+@soporte_required
 def reintentar_reembolso(request, id_ticket, id_devolucion):
     """Soporte vuelve a intentar por Transbank una devolucion que no salio (solo el agente asignado)."""
     ticket = get_object_or_404(tickets_del_agente(request), pk=id_ticket, categoria=Ticket.VIDEOS)

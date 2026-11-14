@@ -105,9 +105,10 @@ class CompraVideosExtra(models.Model):
 class DevolucionVideos(models.Model):
     """Dinero que se le devuelve al alumno por videos que el profesor no entrego (fase 6e, decidido 09-nov).
 
-    Soporte la registra desde el ticket de Videos y el dinero se devuelve a mano (no hay reversa de Webpay): aqui solo
-    queda el caso. ``monto`` lo calcula el servidor (alumnos/devoluciones_videos.py); ``devuelta`` lo marca soporte
-    cuando transfiere. SET_NULL: si se borra el ticket o la cuenta del agente, la evidencia queda.
+    Soporte la registra desde el ticket de Videos. Primero se intenta devolver por Transbank (alumnos/reembolsos.py); si
+    no se puede, se transfiere a mano y eso lo aprueba un administrador antes (13-nov). ``monto`` lo calcula el servidor
+    (alumnos/devoluciones_videos.py); ``devuelta`` queda cuando el dinero salio, sea por Transbank o a mano. SET_NULL:
+    si se borra el ticket o la cuenta del agente, la evidencia queda.
     """
     paquete = models.ForeignKey(PaqueteClases, on_delete=models.CASCADE, related_name='devoluciones_videos')
     cantidad = models.PositiveSmallIntegerField()
@@ -118,6 +119,12 @@ class DevolucionVideos(models.Model):
     devuelta = models.DateTimeField(null=True, blank=True)  # vacio = por devolver
     # Por que fallo el ultimo intento de reembolso automatico por Transbank (alumnos/reembolsos.py); lo lee soporte.
     error_reembolso = models.CharField(max_length=200, blank=True)
+    # Transferencia a mano: soporte la pide (escalamiento al admin) y el admin la aprueba; sin aprobacion no se transfiere.
+    escalamiento = models.ForeignKey('soporte.Escalamiento', on_delete=models.SET_NULL, null=True, blank=True,
+                                     related_name='devoluciones_videos')
+    aprobada = models.DateTimeField(null=True, blank=True)
+    aprobada_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                     related_name='+')
 
     class Meta:
         ordering = ['-creada', '-id']
