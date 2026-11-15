@@ -47,18 +47,15 @@
                         // Lo que vale para todos los horarios se dice una vez, arriba (no en cada tarjeta).
                         const primera = data.sesiones[0];
                         const modalidad = String(primera.modalidad || '');
-                        const precioUnico = new Set(data.sesiones.map(s => s.precio_formateado)).size === 1;
                         const safeNota = [
                             idInscripcion ? 'Reprogramar no usa otra clase de tu paquete' : 'Cada reserva usa 1 clase de tu paquete',
                             `${escaparHtml(modalidad.charAt(0).toUpperCase() + modalidad.slice(1))} · ${Number(primera.duracion_minutos) || 0} min`,
-                            precioUnico ? escaparHtml(primera.precio_formateado) : '',
-                        ].filter(Boolean).join(' · ');
+                        ].join(' · ');
                         listaEl.innerHTML = `<p class="horarios-nota"><i class="bi bi-info-circle" aria-hidden="true"></i>${safeNota}</p>` + data.sesiones.map(s => {
                             const safeIdSesion = Number(s.id_sesion) || 0;
                             const safeAsignatura = escaparHtml(s.asignatura);
                             const safeFecha = escaparHtml(s.fecha_formateada);
                             const safeHora = escaparHtml(s.hora_formateada);
-                            const safePrecio = precioUnico ? '' : ` · ${escaparHtml(s.precio_formateado)}`;
                             const safeDuracion = Number(s.duracion_minutos) || 0;
                             const safeCupos = Number(s.cupos_disponibles) || 0;
                             const safePartes = partesDeFecha(s.fecha_formateada);
@@ -80,7 +77,7 @@
                                     <div>
                                         <p class="horario__titulo">${safePartes.largo}</p>
                                         <p class="horario__meta">
-                                            <span><i class="bi bi-clock" aria-hidden="true"></i> ${safeHora} (${safeDuracion} min)${safePrecio}</span>
+                                            <span><i class="bi bi-clock" aria-hidden="true"></i> ${safeHora} (${safeDuracion} min)</span>
                                             <span class="horario__cupos${pocos}"><i class="bi bi-people-fill" aria-hidden="true"></i> ${safeCupos} cupo${safeCupos === 1 ? '' : 's'} disponible${safeCupos === 1 ? '' : 's'}</span>
                                         </p>
                                     </div>

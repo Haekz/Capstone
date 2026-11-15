@@ -102,6 +102,25 @@ class ProximosHorariosTests(Escenario):
             self.assertEqual(horarios_profesores.proximos_horarios([]), {})
 
 
+class VentanaDeHorariosSinPrecioTests(Escenario):
+    """El precio es el paquete, no la sesion: la ventana de horarios ya no anuncia un valor (antes decia "Gratis")."""
+
+    def test_el_servicio_ya_no_entrega_precio_por_sesion(self):
+        crear_sesion(self.clase, dias=1)
+        self.entrar(RUT_ANA)
+        sesion = self.client.get(reverse('sesiones_disponibles'), {'clase_id': self.clase.pk}).json()['sesiones'][0]
+        self.assertNotIn('precio', sesion)
+        self.assertNotIn('precio_formateado', sesion)
+        self.assertEqual(sesion['asignatura'], 'Algebra')  # lo demas sigue igual
+
+    def test_la_ventana_no_dibuja_precio(self):
+        self.entrar(RUT_ANA)
+        html = self.client.get(reverse('alumno_pag1')).content.decode()
+        self.assertIn('abrirModalHorarios', html)
+        for resto in ('precio_formateado', 'precioUnico', 'safePrecio', 'Gratis'):
+            self.assertNotIn(resto, html)
+
+
 class ListaDeProfesoresTests(Escenario):
     """El portal del alumno entrega a cada tarjeta sus horarios (profesores_js[...]['horarios'])."""
 

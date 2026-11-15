@@ -127,8 +127,6 @@ def listar_sesiones_disponibles(request):
             'duracion_minutos': s.duracion_minutos,
             'cupo_maximo': s.cupo_maximo,
             'cupos_disponibles': s.cupos_disponibles,
-            'precio': str(s.precio),
-            'precio_formateado': f"${int(s.precio):,}".replace(',', '.') if s.precio > 0 else 'Gratis',
             'ya_inscrito': s.id_sesion in inscritas_sesion_ids,
         }
         for s in sesiones
