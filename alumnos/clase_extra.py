@@ -7,14 +7,18 @@ y que la hora quede de verdad fuera de lo que el profesor ya ofrece. El modelo y
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
+from agenda import avisos_alumno
 from agenda.models import HorarioSemanal
 
 from . import avisos_profesor
-from .exceptions import SolicitudExtraError
+from .exceptions import InscripcionError, SolicitudExtraError
 from .models import Inscripcion, SesionClase, SolicitudClaseExtra
-from .services import _paquete_con_clases, exigir_mayor_de_edad
+from .sala_virtual import es_profesor_habilitado_de
+from .services import InscripcionService, _paquete_con_clases, exigir_mayor_de_edad
 
 MAXIMO_MENSAJE = 500
+PLAZO_VENCIDO = 'Ya pasó el plazo para responder.'
+NADIE_RESPONDIO = 'Nadie respondió a tiempo.'
 
 
 def _dentro_del_horario(profesor, inicio, fin):
@@ -73,3 +77,87 @@ def solicitar(alumno, clase, inicio, mensaje='', ahora=None):
             raise repetida from exc
         transaction.on_commit(lambda: avisos_profesor.clase_extra_solicitada(solicitud))
     return solicitud
+
+
+def _bloquear(pk):
+    """La solicitud con su fila bloqueada: dos respuestas a la vez se atienden en fila y la segunda ve a la primera."""
+    return (SolicitudClaseExtra.objects.select_for_update(of=('self',))
+            .select_related('alumno__user', 'clase__asignatura', 'clase__profesor__user').get(pk=pk))
+
+
+def _cerrar(solicitud, estado, ahora, motivo=''):
+    solicitud.estado, solicitud.fecha_resolucion, solicitud.motivo_rechazo = estado, ahora, motivo
+    solicitud.save(update_fields=['estado', 'fecha_resolucion', 'motivo_rechazo', 'sesion'])
+
+
+def _vencer(solicitud, ahora, motivo):
+    _cerrar(solicitud, SolicitudClaseExtra.VENCIDA, ahora)
+    transaction.on_commit(lambda: avisos_alumno.clase_extra_vencida(solicitud, motivo))
+
+
+def _responder(solicitud, usuario, ahora, resolver):
+    """Resuelve la solicitud con `resolver(solicitud, ahora)`, solo si responde el profesor de la clase y sigue pendiente.
+
+    Si ya paso el plazo, o `resolver` choca con una regla de reserva (el paquete se agoto o vencio, el profesor
+    ya tomo esa hora), la solicitud queda **vencida** (eso se guarda) y se lanza el motivo. Lo que `resolver` alcanzo a
+    crear se deshace: va dentro de su propio punto de guardado.
+    """
+    ahora = ahora or timezone.now()
+    with transaction.atomic():
+        solicitud = _bloquear(solicitud.pk)
+        if not es_profesor_habilitado_de(solicitud.clase, usuario):
+            raise SolicitudExtraError('Solo el profesor de esta clase puede responder la solicitud.')
+        if solicitud.estado != SolicitudClaseExtra.PENDIENTE:
+            raise SolicitudExtraError(f'Esta solicitud ya está {solicitud.get_estado_display().lower()}.')
+        problema = PLAZO_VENCIDO if solicitud.vence_el <= ahora else None
+        if problema is None:
+            try:
+                with transaction.atomic():
+                    resolver(solicitud, ahora)
+            except InscripcionError as exc:
+                problema = exc.messages[0]
+        if problema is not None:
+            _vencer(solicitud, ahora, problema)
+    if problema is not None:  # fuera de la transaccion: lanzarlo adentro habria deshecho el cierre
+        raise SolicitudExtraError(f'{problema} La solicitud quedó vencida.')
+    return solicitud
+
+
+def _reservar(solicitud, ahora):
+    """Crea la sesion de 60 min y reserva al alumno con el servicio de siempre (cupo, profesor libre y paquete)."""
+    sesion = SesionClase.objects.create(
+        clase=solicitud.clase, fecha_hora_inicio=solicitud.fecha_hora_inicio,
+        fecha_hora_fin=solicitud.fecha_hora_fin, cupo_maximo=1,
+    )
+    InscripcionService.inscribir_alumno_en_sesion(solicitud.alumno, sesion.pk)
+    solicitud.sesion = sesion
+    _cerrar(solicitud, SolicitudClaseExtra.ACEPTADA, ahora)
+    transaction.on_commit(lambda: avisos_alumno.clase_extra_aceptada(solicitud))
+
+
+def aceptar(solicitud, usuario, ahora=None):
+    """El profesor acepta: queda la clase reservada, con una clase menos en el paquete del alumno."""
+    return _responder(solicitud, usuario, ahora, _reservar)
+
+
+def rechazar(solicitud, usuario, motivo='', ahora=None):
+    """El profesor la rechaza, con un mensaje opcional que ve el alumno."""
+    def rechazada(pendiente, momento):
+        _cerrar(pendiente, SolicitudClaseExtra.RECHAZADA, momento, motivo.strip()[:MAXIMO_MENSAJE])
+        transaction.on_commit(lambda: avisos_alumno.clase_extra_rechazada(pendiente))
+    return _responder(solicitud, usuario, ahora, rechazada)
+
+
+def vencer_las_vencidas(ahora=None):
+    """Cierra las pendientes cuyo plazo ya pasó y le avisa al alumno. Devuelve cuántas cerró (se puede repetir)."""
+    ahora = ahora or timezone.now()
+    por_cerrar = list(SolicitudClaseExtra.objects.filter(
+        estado=SolicitudClaseExtra.PENDIENTE, vence_el__lte=ahora).values_list('pk', flat=True))
+    cerradas = 0
+    for pk in por_cerrar:
+        with transaction.atomic():
+            solicitud = _bloquear(pk)
+            if solicitud.estado == SolicitudClaseExtra.PENDIENTE:  # el profesor pudo responder mientras tanto
+                _vencer(solicitud, ahora, NADIE_RESPONDIO)
+                cerradas += 1
+    return cerradas
