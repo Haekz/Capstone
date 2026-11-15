@@ -37,14 +37,30 @@ Los codigos LBW-xx y Dx son los del backlog y las decisiones grupales del 08-nov
 ## Menores y legal
 - **No habilitar menores reales** hasta la revision juridica (LBW-02, D1): declaracion de facultad, revocacion,
   transicion a los 18, aviso de documentos y declaraciones v2. Y definir quien verifica certificados y como.
+- **Antes de abrir al público: reemplazar los datos de ejemplo del responsable** (B7, 15-nov). Las páginas
+  `/terminos/` y `/privacidad/` y el pie ya existen, pero muestran un responsable inventado (`LBWUS SpA`, RUT
+  `76.000.000-0`, domicilio y correo de ejemplo). Se cambian con las variables `LEGAL_*` de Railway, sin tocar código
+  (ver CONFIGURACION_PRODUCCION.md). Hay que definir razón social o nombre, RUT, domicilio y un correo de derechos
+  que alguien lea de verdad (L-1 y L-4). Ambos textos son un borrador a revisar por la abogada; lo más delicado es
+  Terminos §9, "no se devuelve dinero por clases" (revisar contra la ley del consumidor y el retracto). En Privacidad faltan
+  confirmar país y contratos de los proveedores (L-2), los respaldos (L-3) y los plazos contables (L-5).
+- **Aceptación de Términos y Privacidad (15-nov):** se pide al comprar un paquete (alumno y apoderado, un solo control
+  en `webpay.iniciar_compra_paquete`) y queda registrada por versión (`AceptacionLegal`). Al cambiar los textos hay
+  que subir `VERSION` en `alumnos/aceptacion.py`: se vuelve a pedir una vez. **No se pide al registrarse**: los
+  profesores, que no compran, hoy no aceptan nada, y la compra de videos extra no la repite porque exige un paquete
+  ya comprado. Decidir con la abogada si también debe ir en el registro (4 formularios: alumno, profesor, apoderado
+  y Google).
+- **Descarga de datos del alumno: decidido no hacerla (15-nov).** Las solicitudes de una copia se atienden a mano,
+  por soporte o por el correo de derechos, como dice la política de privacidad (sección 5). Retomar solo si la
+  abogada la exige.
 - Fuera de desarrollo: responsable del tratamiento, proveedores reales, respaldos, correo
   de derechos y plazos contables. Cuanto se conserva al seudonimizar una cuenta: con asesoria legal.
 
 ## En espera (solo si hace falta)
 - Sala de Jitsi privada con JWT: hoy es la sala publica `meet.jit.si` (LBW-28, D4).
 - Tope de reintentos para apoderados rechazados, si aparece abuso. Invitacion del adolescente tambien para el
-  tutor legal (hoy solo madre o padre; cambia textos legales). Observaciones del profesor en una futura descarga
-  de datos del alumno. Historial de personas que entran por dia (hoy solo la tarjeta de hoy). Ver D9.
+  tutor legal (hoy solo madre o padre; cambia textos legales). Observaciones del profesor en una descarga de datos
+  del alumno, si algun dia se hace. Historial de personas que entran por dia (hoy solo la tarjeta de hoy). Ver D9.
 
 ## Notas vigentes
 - Si cambia `SECRET_KEY`, lo cifrado con `alumnos/cifrado.py` sin clave propia (por ejemplo, las cuentas

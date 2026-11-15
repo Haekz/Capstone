@@ -1,0 +1,7 @@
+{# Casilla obligatoria de aceptacion (alumnos/aceptacion.py): solo si falta aceptar la version vigente. #}
+{% if pendiente %}
+<label class="pl-acepta">
+    <input type="checkbox" name="{{ campo }}" value="1" required>
+    <span>Acepto los <a href="{% url 'terminos' %}" target="_blank" rel="noopener">Términos y condiciones</a> y la <a href="{% url 'privacidad' %}" target="_blank" rel="noopener">Política de privacidad</a></span>
+</label>
+{% endif %}

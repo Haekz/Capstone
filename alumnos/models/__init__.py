@@ -12,6 +12,7 @@ from .especializaciones import Especializacion
 from .reportes import Reporte
 from .retiros import TIPOS_CUENTA, Banco, CuentaBancaria, SolicitudRetiro
 from .clase_extra import SolicitudClaseExtra
+from .aceptacion import AceptacionLegal
 
 __all__ = [
     'Alumno', 'CustomUser', 'Especialidad', 'Genero', 'Profesor', 'ProfesorQuerySet', 'Tutor',
@@ -23,4 +24,5 @@ __all__ = [
     'Reporte',
     'TIPOS_CUENTA', 'Banco', 'CuentaBancaria', 'SolicitudRetiro',
     'SolicitudClaseExtra',
+    'AceptacionLegal',
 ]

@@ -1,0 +1,66 @@
+{% extends 'alumnos/legal_base.html' %}
+
+{% block title %}LBWUS | Política de privacidad{% endblock %}
+{% block titulo_pagina %}Política de privacidad{% endblock %}
+
+{% block texto %}
+<p>Aquí te contamos qué datos tuyos trata LBWUS, para qué, por cuánto tiempo, con quién los compartimos y cómo ejercer tus derechos. Si eres menor de edad, esta información también es para tu madre, padre o tutor legal.</p>
+
+<h2>1. Quién es el responsable</h2>
+{% include 'alumnos/includes/ficha_responsable.html' %}
+
+<h2>2. Qué datos tratamos y para qué</h2>
+<div class="lg-tabla-caja">
+    <table class="lg-tabla">
+        <thead>
+            <tr><th>Datos</th><th>Para qué</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Nombre, RUT, correo y clave (guardada de forma que no se puede leer)</td><td>Crear tu cuenta y proteger su acceso.</td></tr>
+            <tr><td>Reservas, paquetes, clases y pagos. De la tarjeta, LBWUS recibe de Webpay solo el resultado del pago y los últimos dígitos: los datos de la tarjeta los ingresas en Webpay.</td><td>Que puedas contratar, reservar y tomar tus clases, y llevar la contabilidad.</td></tr>
+            <tr><td>Conversaciones con tu profesor y solicitudes a soporte</td><td>Coordinar las clases y resolver tus consultas. Un filtro automático revisa los mensajes; avisamos antes de abrir el chat.</td></tr>
+            <tr><td>Profesores: título, horario, cuenta bancaria (cifrada, con solo los últimos dígitos a la vista) y observaciones de clases</td><td>Verificar al profesor, agendar, pagar sus retiros y orientar al alumno.</td></tr>
+            <tr><td>Menores y apoderados: carnet, certificados y otros documentos</td><td>Comprobar que quien autoriza a un menor tiene la facultad de hacerlo. Los documentos se guardan cifrados, se abren con una marca de agua y cada acceso queda registrado.</td></tr>
+            <tr><td>Videos de apoyo de tus clases</td><td>Que el profesor te los comparta y puedas verlos.</td></tr>
+            <tr><td>Datos de conexión, como la dirección IP</td><td>Seguridad: limitar intentos repetidos de inicio de sesión.</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<h2>3. Cuánto tiempo los guardamos</h2>
+<ul>
+    <li><strong>Documentos de apoderados:</strong> se borran al aprobar o rechazar la solicitud, o a los {{ dias_documentos }} días si nadie la revisó.</li>
+    <li><strong>Conversaciones:</strong> se borran tras {{ dias_mensajes }} días sin actividad, salvo que haya un paquete vigente, un ticket abierto o un reporte en revisión.</li>
+    <li><strong>Observaciones del profesor sobre una clase:</strong> se borran a los {{ meses_observaciones }} meses.</li>
+    <li><strong>Cuenta eliminada:</strong> sus datos personales se reemplazan por una versión sin identificar (seudonimización). Los registros de clases y pagos se conservan aparte, por el plazo que exijan las normas contables y tributarias.</li>
+</ul>
+
+<h2>4. Con quién los compartimos</h2>
+<p>Para entregarte el servicio usamos estos proveedores, que reciben solo lo necesario:</p>
+<ul>
+    <li><strong>Transbank (Webpay):</strong> procesa los pagos.</li>
+    <li><strong>Google:</strong> inicio de sesión con tu cuenta de Google, si lo eliges, y fuentes de texto de la página.</li>
+    <li><strong>Railway:</strong> aloja la plataforma y su base de datos.</li>
+    <li><strong>MongoDB Atlas:</strong> guarda los videos de apoyo.</li>
+    <li><strong>Jitsi:</strong> las videollamadas de las clases.</li>
+    <li><strong>Servicio de correo:</strong> envía los avisos y mensajes a tu correo.</li>
+    <li><strong>jsDelivr y Cloudflare:</strong> entregan íconos y componentes de la página.</li>
+</ul>
+<p>Algunos de ellos pueden tratar datos en servidores fuera de Chile. Solo entregamos datos a una autoridad cuando un requerimiento lo justifica, y únicamente lo necesario.</p>
+
+<h2>5. Tus derechos</h2>
+<p>Puedes pedirnos saber qué datos tuyos tenemos, corregirlos, eliminarlos u oponerte a un uso.</p>
+<ul>
+    <li><strong>Eliminar tu cuenta:</strong> hazlo desde <a href="{% url 'eliminar_cuenta' %}">Eliminar mi cuenta</a>. Un integrante de soporte revisa la solicitud y te responde en {{ dias_habiles_eliminacion }} días hábiles.</li>
+    <li><strong>Cualquier otra solicitud:</strong> escríbenos a <a href="mailto:{{ legal.correo_datos }}">{{ legal.correo_datos }}</a>, o desde «Ayuda y soporte» en tu cuenta.</li>
+</ul>
+
+<h2>6. Copias de seguridad</h2>
+<p>Si alguna vez restauramos una copia de seguridad, volvemos a aplicar las eliminaciones ya hechas, para que una cuenta eliminada no reaparezca.</p>
+
+<h2>7. Menores de edad</h2>
+<p>Un menor usa la plataforma a través de su apoderado, que contrata, paga y recibe los avisos importantes. Por eso pedimos documentos que acrediten esa facultad, con el tratamiento descrito arriba.</p>
+
+<h2>8. Cambios a esta política</h2>
+<p>Si la cambiamos, publicaremos aquí la versión nueva con su fecha de actualización. Los términos del servicio están en <a href="{% url 'terminos' %}">Términos y condiciones</a>.</p>
+{% endblock %}

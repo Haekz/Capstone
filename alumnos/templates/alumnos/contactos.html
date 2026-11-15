@@ -13,18 +13,18 @@
             ayudarte.</p>
 
         <div class="ct-quick">
-            <a href="tel:1234567890" class="ct-quick-item">
+            <a href="tel:{{ legal.telefono_enlace }}" class="ct-quick-item">
                 <i class="bi bi-telephone"></i>
                 <div>
                     <span>Llámanos</span>
-                    <strong>123-456-7890</strong>
+                    <strong>{{ legal.telefono }}</strong>
                 </div>
             </a>
-            <a href="mailto:teachers@lbwus.cl" class="ct-quick-item">
+            <a href="mailto:{{ legal.correo_contacto }}" class="ct-quick-item">
                 <i class="bi bi-envelope"></i>
                 <div>
                     <span>Escríbenos</span>
-                    <strong>teachers@lbwus.cl</strong>
+                    <strong>{{ legal.correo_contacto }}</strong>
                 </div>
             </a>
             <div class="ct-quick-item">
@@ -87,21 +87,21 @@
                     <i class="bi bi-telephone"></i>
                     <div>
                         <span>Teléfono</span>
-                        <a href="tel:1234567890">123-456-7890</a>
+                        <a href="tel:{{ legal.telefono_enlace }}">{{ legal.telefono }}</a>
                     </div>
                 </li>
                 <li>
                     <i class="bi bi-envelope"></i>
                     <div>
                         <span>Correo</span>
-                        <a href="mailto:teachers@lbwus.cl">teachers@lbwus.cl</a>
+                        <a href="mailto:{{ legal.correo_contacto }}">{{ legal.correo_contacto }}</a>
                     </div>
                 </li>
                 <li>
                     <i class="bi bi-geo-alt"></i>
                     <div>
                         <span>Ubicación</span>
-                        <p>Pacifico Norte 123, Santiago, Chile</p>
+                        <p>{{ legal.domicilio }}</p>
                     </div>
                 </li>
                 <li>
