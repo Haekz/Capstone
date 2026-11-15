@@ -6,6 +6,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}LBWUS | Learn Better With Us{% endblock %}</title>
+    {# Las paginas publicas pasan su propia descripcion (ver includes/meta_seo.html). #}
+    {% block meta_seo %}{% include 'alumnos/includes/meta_seo.html' with descripcion='Clases online con profesores y especialistas de todo Chile, a tu ritmo y según el plan que elijas.' %}{% endblock %}
     <link rel="icon" href="{% static 'alumnos/img/Logo.png' %}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">

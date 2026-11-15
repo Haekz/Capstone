@@ -23,6 +23,7 @@ Todas las lee `lbwus/settings.py`, salvo donde se indica.
 | `MONGODB_URI` | MongoDB Atlas (app `comunidad`) | Sí, si se usa la comunidad | MongoDB queda desactivado y el sitio funciona igual |
 | `MONGODB_DB`, `MONGODB_TIMEOUT_MS` | Base de MongoDB y tiempo de espera | No (por omisión `lbwus_dev`, 5000) | **En producción debe ser `lbwus_prod`** |
 | `CSP_OBLIGATORIA` | `1` hace obligatoria la Content-Security-Policy (sección 7) | No | Queda en Report-Only: el navegador avisa, pero no bloquea |
+| `SITIO_URL` | Dirección pública del sitio: la usan la dirección canónica, la vista previa al compartir (WhatsApp, redes), `robots.txt` y `sitemap.xml` (`lbwus/seo.py`). Así, entrando por `*.up.railway.app` los buscadores siguen viendo `lbwus.xyz` | No | Usa `https://lbwus.xyz`. **Si el dominio cambia hay que definirla**: si no, Google tomaría la dirección vieja como la oficial |
 | `SITIO_CLAVE` | Puerta "Sitio en mantenimiento" (`lbwus/puerta.py`) | No | Sin puerta |
 | `SITIO_DOMINIOS_CORREO` | Puerta por dominio de correo (tiene prioridad sobre `SITIO_CLAVE`) | No | Sin puerta por correo |
 | `TRANSBANK_PRODUCCION_HABILITADA`, `TRANSBANK_ENVIRONMENT`, `TRANSBANK_COMMERCE_CODE`, `TRANSBANK_API_KEY` | Webpay real | No: sin ellas se usa el ambiente de integración (la simulación oficial de Transbank) | Sin cobros reales (es lo esperado hoy). **Para pasar a real: las cuatro a la vez** (`TRANSBANK_PRODUCCION_HABILITADA=True`, `TRANSBANK_ENVIRONMENT=LIVE`, código de comercio y llave). Si falta una, el sitio no arranca y dice cuál |

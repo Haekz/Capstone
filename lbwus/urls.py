@@ -7,6 +7,7 @@ from django.views.decorators.cache import never_cache
 from django.views.generic import TemplateView
 from alumnos.views import home, custom_login
 from alumnos import google_views
+from lbwus.seo import robots, sitemap
 from lbwus.puerta import puerta
 
 
@@ -17,6 +18,8 @@ def cerrada(request, *args, **kwargs):
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('robots.txt', robots, name='robots'),
+    path('sitemap.xml', sitemap, name='sitemap'),
     
     # Ruta raíz que muestra la página de inicio.
     # Este es el UNICO lugar donde se registra name='home'.

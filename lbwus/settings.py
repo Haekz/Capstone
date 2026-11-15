@@ -53,6 +53,10 @@ OBSERVACIONES_MESES = 12
 # acepta comodines tipo '*.dominio'.
 ALLOWED_HOSTS = ['lbwus.xyz', '.up.railway.app', 'localhost', '127.0.0.1']
 
+# Direccion publica del sitio: canonical, Open Graph, robots.txt y sitemap.xml la usan (lbwus/seo.py), aunque se
+# entre por el dominio de Railway.
+SITIO_URL = os.environ.get('SITIO_URL', 'https://lbwus.xyz').rstrip('/')
+
 CSRF_TRUSTED_ORIGINS = [
     'https://lbwus.xyz',
     'https://capstone-production-eddd.up.railway.app'
@@ -156,6 +160,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                # SITIO_URL para canonical y Open Graph (lbwus/seo.py)
+                'lbwus.seo.sitio',
                 # Expone 'usuario_sesion' al menu global (alumnos/base.html)
                 'alumnos.context_processors.estado_sesion',
                 # Contador de la campanita (notificaciones/context_processors.py)
