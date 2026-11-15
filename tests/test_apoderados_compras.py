@@ -14,6 +14,7 @@ from django.urls import reverse
 from alumnos.models import Asignatura, Clase, PaqueteClases
 from alumnos.services import MENSAJE_MENOR
 from apoderados.models import Apoderado, CompraApoderado, Vinculo
+from tests.aceptacion import aceptar_terminos
 from tests.test_apoderados import RUT, crear_apoderado, entrar
 from tests.test_apoderados_vinculos import RUT_HERMANA, crear_menor_vinculado
 from tests.test_especialidad import crear_profesor
@@ -29,6 +30,7 @@ class CompraDelApoderadoTests(TestCase):
     def setUpTestData(cls):
         cls.profesor = crear_profesor('44444444-4', 'profe@demo.cl', None)
         cls.apoderado = crear_apoderado(RUT, Apoderado.VERIFICADO)
+        aceptar_terminos(cls.apoderado.user)  # compra: esta clase no es de la aceptacion
         cls.vinculo = crear_menor_vinculado(cls.apoderado)
 
     def setUp(self):

@@ -44,6 +44,12 @@ Los codigos LBW-xx y Dx son los del backlog y las decisiones grupales del 08-nov
   que alguien lea de verdad (L-1 y L-4). Ambos textos son un borrador a revisar por la abogada; lo más delicado es
   Terminos §9, "no se devuelve dinero por clases" (revisar contra la ley del consumidor y el retracto). En Privacidad faltan
   confirmar país y contratos de los proveedores (L-2), los respaldos (L-3) y los plazos contables (L-5).
+- **Aceptación de Términos y Privacidad (15-nov):** se pide al comprar un paquete (alumno y apoderado, un solo control
+  en `webpay.iniciar_compra_paquete`) y queda registrada por versión (`AceptacionLegal`). Al cambiar los textos hay
+  que subir `VERSION` en `alumnos/aceptacion.py`: se vuelve a pedir una vez. **No se pide al registrarse**: los
+  profesores, que no compran, hoy no aceptan nada, y la compra de videos extra no la repite porque exige un paquete
+  ya comprado. Decidir con la abogada si también debe ir en el registro (4 formularios: alumno, profesor, apoderado
+  y Google).
 - Fuera de desarrollo: responsable del tratamiento, proveedores reales, respaldos, correo
   de derechos y plazos contables. Cuanto se conserva al seudonimizar una cuenta: con asesoria legal.
 

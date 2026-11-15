@@ -14,9 +14,8 @@ from mensajes.retencion import DIAS_SIN_ACTIVIDAD
 from soporte.models import Ticket
 
 from . import paquetes
+from .aceptacion import VERSION
 from .models import Inscripcion, SolicitudClaseExtra
-
-ACTUALIZADO = '15 de noviembre de 2026'
 
 
 def _horas(plazo):
@@ -25,7 +24,7 @@ def _horas(plazo):
 
 def terminos(request):
     contexto = {
-        'actualizado': ACTUALIZADO,
+        'actualizado': VERSION,
         'cotizaciones': paquetes.cotizar(),
         'comision_pct': int(paquetes.COMISION * 100),
         'precio_video': paquetes.PRECIO_VIDEO,
@@ -40,7 +39,7 @@ def terminos(request):
 
 def privacidad(request):
     contexto = {
-        'actualizado': ACTUALIZADO,
+        'actualizado': VERSION,
         'dias_documentos': Documento.VIGENCIA.days,
         'dias_mensajes': DIAS_SIN_ACTIVIDAD,
         'meses_observaciones': settings.OBSERVACIONES_MESES,

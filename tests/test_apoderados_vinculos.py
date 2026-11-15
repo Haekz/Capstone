@@ -20,6 +20,7 @@ from alumnos.webpay import iniciar_compra_paquete
 from apoderados.forms import VERSION_DECLARACION_VINCULO
 from apoderados.models import Apoderado, Documento, RevisionVinculo, Vinculo
 from soporte.models import Ticket
+from tests.aceptacion import aceptar_terminos
 from tests.test_apoderados import CLAVE, RUT, adjuntar, crear_agente, crear_apoderado, entrar, entrar_soporte, imagen
 from tests.test_especialidad import crear_profesor
 from tests.test_filtros_clases import crear_sesion
@@ -243,6 +244,7 @@ class BloqueosDelMenorTests(TestCase):
     def test_a_los_18_si_compra(self, tx):
         tx.return_value.create.return_value = {'url': 'https://webpay.test', 'token': 'tok'}
         User.objects.filter(pk=self.menor.user_id).update(fecha_nacimiento=hace_anios(18))
+        aceptar_terminos(self.menor.user)
         self.entrar_como(self.menor)
         self.assertEqual(self.client.post(reverse('comprar_paquete'), self.compra()).status_code, 200)
         self.assertEqual(PaqueteClases.objects.filter(alumno=self.menor).count(), 2)
@@ -264,6 +266,8 @@ class BloqueosDelMenorTests(TestCase):
         tx.return_value.create.return_value = {'url': 'https://webpay.test', 'token': 'tok'}
         peticion = RequestFactory().post('/x/', self.compra())
         propio = Vinculo.objects.get(alumno=self.menor)
+        peticion.user = aceptar_terminos(propio.apoderado.user)  # quien compra, ya con Terminos aceptados
+        peticion.session = {}  # la vista real siempre trae usuario y sesion
         ajeno = crear_menor_vinculado(propio.apoderado, rut=RUT_HERMANA)  # vinculo verificado, pero de otro estudiante
         self.assertEqual(iniciar_compra_paquete(peticion, self.menor.pk, vinculo=ajeno).status_code, 302)
         self.assertEqual(PaqueteClases.objects.filter(alumno=self.menor).count(), 1)
