@@ -38,6 +38,9 @@ Python 3.13+
 pip
 Git
 
+Desarrollo y pruebas (incluye las de produccion): pip install -r requirements-dev.txt
+Produccion (Railway) instala solo requirements.txt, sin herramientas de desarrollo ni de pruebas.
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Pruebas

@@ -212,8 +212,11 @@ class TituloProfesorTests(TestCase):
         cls.revisor = crear_agente('34343434-3', Ticket.TITULOS)  # recibe el ticket al subir el titulo
 
     def setUp(self):
+        import shutil
         import tempfile
-        self.media = override_settings(MEDIA_ROOT=tempfile.mkdtemp())
+        media = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, media, ignore_errors=True)  # no dejar carpetas temporales sueltas
+        self.media = override_settings(MEDIA_ROOT=media)
         self.media.enable()
         self.addCleanup(self.media.disable)
 

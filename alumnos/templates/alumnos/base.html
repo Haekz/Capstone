@@ -40,19 +40,8 @@
 
     {% include 'alumnos/includes/footer.html' %}
 
+    <script src="{% static 'alumnos/java/lbwus-utils.js' %}"></script>{# window.escaparHtml (S-23) #}
     <script>
-        // ===== ESCAPE CONTEXTUAL SEGURO ANTI-XSS (S-23) =====
-        function escaparHtml(str) {
-            if (str === null || str === undefined) return '';
-            return String(str)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
-        }
-        window.escaparHtml = escaparHtml;
-
         function toggleTheme() {
             const body = document.body;
             body.classList.toggle('dark-mode');

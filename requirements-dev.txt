@@ -1,6 +1,11 @@
 # Herramientas de QA (pruebas, cobertura y analisis estatico). Solo desarrollo:
 # produccion (Railway) instala requirements.txt, no este archivo.
 -r requirements.txt
+# Solo desarrollo y pruebas (antes estaban en requirements.txt e iban a produccion):
+django-extensions==4.1
+mongomock==4.3.0
+tblib==3.2.2
+# QA
 pytest==9.2.0
 pytest-django==4.14.0
 pytest-cov==7.1.0

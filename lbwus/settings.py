@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
+from importlib.util import find_spec
 from pathlib import Path
 import os
 
@@ -99,8 +100,11 @@ INSTALLED_APPS = [
     'supresiones',
     'requerimientos',
     'observaciones',
-    'django_extensions',
 ]
+
+# Herramienta solo de desarrollo (requirements-dev.txt): produccion no la instala ni la carga.
+if DEBUG and find_spec('django_extensions') is not None:
+    INSTALLED_APPS.append('django_extensions')
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

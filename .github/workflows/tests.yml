@@ -1,0 +1,50 @@
+name: Pruebas automáticas
+# PR #107 (Franco), ajustado a main: el proyecto exige PostgreSQL (SQLite ya no se usa), asi que el job levanta uno.
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # Base desechable del job: Django crea y borra test_postgres. Nunca la de produccion.
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+      # Las pruebas corren con DEBUG=False, donde SECRET_KEY es obligatoria. Valor solo para CI.
+      SECRET_KEY: clave-solo-para-ci-no-es-secreta
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'  # la del README (Prerrequisitos)
+          cache: pip
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Verificar configuración de Django
+        run: python manage.py check
+
+      - name: Ejecutar pruebas
+        run: python manage.py test --noinput
