@@ -21,6 +21,7 @@ from .reservas import (
     reservar_sesion,
 )
 from .webpay import comprar_paquete, comprar_videos_extra, confirmacion
+from .views_clase_extra import horas_clase_extra, pedir_clase_extra
 from .sala_virtual import sala_virtual, iniciar_directo
 from .perfil_profesor import perfil_profesor
 from .views_videos import ver_video, videos_alumno
@@ -51,6 +52,8 @@ urlpatterns = [
     path('inscribir_clase/', inscribir_clase, name='inscribir_clase'),
     path('sesiones-disponibles/', listar_sesiones_disponibles, name='sesiones_disponibles'),
     path('reservar-sesion/', reservar_sesion, name='reservar_sesion'),
+    path('clase-extra/horas/', horas_clase_extra, name='clase_extra_horas'),
+    path('clase-extra/pedir/', pedir_clase_extra, name='clase_extra_pedir'),
     path(
         'cancelar_inscripcion/<int:pk>/',
         cancelar_inscripcion,

@@ -4,6 +4,8 @@ Pedirla exige lo mismo que reservar (paquete vigente con ese profesor; un menor,
 y que la hora quede de verdad fuera de lo que el profesor ya ofrece. El modelo y el plazo: models/clase_extra.py.
 """
 
+from datetime import datetime, time
+
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
@@ -11,12 +13,13 @@ from agenda import avisos_alumno
 from agenda.models import HorarioSemanal
 
 from . import avisos_profesor
-from .exceptions import InscripcionError, SolicitudExtraError
+from .exceptions import InscripcionError, SinClasesDisponiblesError, SolicitudExtraError
 from .models import Inscripcion, SesionClase, SolicitudClaseExtra
 from .sala_virtual import es_profesor_habilitado_de
-from .services import InscripcionService, _paquete_con_clases, exigir_mayor_de_edad
+from .services import InscripcionService, _paquete_con_clases, exigir_mayor_de_edad, paquetes_vigentes
 
 MAXIMO_MENSAJE = 500
+HORAS_DEL_DIA = range(8, 22)  # las que ofrece la pantalla: de 08:00 a 21:00, en punto (la ultima termina a las 22)
 PLAZO_VENCIDO = 'Ya pasó el plazo para responder.'
 NADIE_RESPONDIO = 'Nadie respondió a tiempo.'
 
@@ -35,12 +38,15 @@ def _dentro_del_horario(profesor, inicio, fin):
     ).exists()
 
 
-def _exigir_que_se_pueda_pedir(alumno, clase, inicio, ahora):
-    """Las reglas que no necesitan bloquear nada, de la mas barata a la que consulta la base."""
+def _exigir_alumno_y_profesor(alumno, profesor):
+    """Lo que no depende de la hora: si falla, no se puede pedir ninguna."""
     exigir_mayor_de_edad(alumno)
-    profesor = clase.profesor
     if not profesor.puede_hacer_clases:
         raise SolicitudExtraError('Este profesor aún no tiene su título validado.')
+
+
+def _exigir_la_hora(profesor, inicio, ahora):
+    """Las reglas de la hora que no necesitan bloquear nada, de la mas barata a la que consulta la base."""
     local = timezone.localtime(inicio)
     if local.minute or local.second or local.microsecond:
         raise SolicitudExtraError('Elige una hora en punto (por ejemplo 15:00): cada clase dura 60 minutos.')
@@ -56,6 +62,41 @@ def _exigir_que_se_pueda_pedir(alumno, clase, inicio, ahora):
             'Esa hora ya es parte de los horarios del profesor: reserva uno de sus bloques disponibles.')
 
 
+def _vence_el_paquete(alumno, profesor, ahora):
+    """Hasta cuando puede empezar una clase con ese profesor: el paquete con clases que vence mas tarde.
+
+    Lo mismo que exige la reserva (`_paquete_con_clases`), pero solo mirando: no bloquea.
+    """
+    vencimientos = [p.fecha_fin for p in paquetes_vigentes(alumno, profesor, ahora) if p.clases_disponibles]
+    if not vencimientos:
+        raise SinClasesDisponiblesError(
+            f'No tienes clases disponibles con {profesor.nombre}. Compra un paquete en Planes.')
+    return max(vencimientos)
+
+
+def horas_para_pedir(alumno, clase, fecha, ahora=None):
+    """Las horas de `fecha` (dia local) para una clase extra: [(inicio, motivo)], motivo '' si se puede pedir.
+
+    Mismas reglas que solicitar(), sin bloquear nada (solo muestra). Si no se puede pedir ninguna (menor de
+    edad, profesor sin titulo, sin clases con ese profesor) lanza el error, con un mensaje para el alumno.
+    """
+    ahora = ahora or timezone.now()
+    profesor = clase.profesor
+    _exigir_alumno_y_profesor(alumno, profesor)
+    vence = _vence_el_paquete(alumno, profesor, ahora)
+    horas = []
+    for hora in HORAS_DEL_DIA:
+        inicio = timezone.make_aware(datetime.combine(fecha, time(hora)))
+        try:
+            _exigir_la_hora(profesor, inicio, ahora)
+            if inicio > vence:
+                raise SolicitudExtraError('Tu paquete con este profesor vence antes de esa hora.')
+            horas.append((inicio, ''))
+        except SolicitudExtraError as exc:
+            horas.append((inicio, exc.messages[0]))
+    return horas
+
+
 def solicitar(alumno, clase, inicio, mensaje='', ahora=None):
     """Registra el pedido y le avisa al profesor. Devuelve la solicitud pendiente.
 
@@ -63,7 +104,8 @@ def solicitar(alumno, clase, inicio, mensaje='', ahora=None):
     mensaje que se le puede mostrar tal cual al alumno.
     """
     ahora = ahora or timezone.now()
-    _exigir_que_se_pueda_pedir(alumno, clase, inicio, ahora)
+    _exigir_alumno_y_profesor(alumno, clase.profesor)
+    _exigir_la_hora(clase.profesor, inicio, ahora)
     repetida = SolicitudExtraError('Ya pediste esa clase extra y el profesor aún no responde.')
     with transaction.atomic():
         _paquete_con_clases(alumno, clase.profesor, inicio)  # solo comprueba: el cupo se gasta al aceptar
