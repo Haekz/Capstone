@@ -22,10 +22,10 @@ from tests.test_paquetes import RUT_ANA, Escenario
 
 class AvisoAgregadoTests(Escenario):
 
-    def pendiente(self, plan='progreso', videos=4, profesor=True):
+    def pendiente(self, plan='progreso', videos=4, profesor=True, dias=None):
         return PaqueteClases.objects.create(
             alumno=self.ana, profesor=self.profe if profesor else None, plan=plan, clases=4, tarifa=15000, monto=59000,
-            videos=videos, monto_videos=videos * paquetes.PRECIO_VIDEO, dias=paquetes.POR_CODIGO[plan].vigencia_dias,
+            videos=videos, monto_videos=videos * paquetes.PRECIO_VIDEO, dias=dias or paquetes.POR_CODIGO[plan].vigencia_dias,
             buy_order=f'PQ{PaqueteClases.objects.count():024d}', estado=PaqueteClases.ESTADO_PENDIENTE)
 
     def pagar(self, paquete, monto=None):
@@ -51,6 +51,17 @@ class AvisoAgregadoTests(Escenario):
             self.assertIn(f'el {timezone.localtime(fecha):%d/%m/%Y} ({acumulado} en total)', correo.body)
         for regla in ('pestaña Videos', 'mismo video', 'vigente'):
             self.assertIn(regla, correo.body)
+
+    def test_un_paquete_ya_vendido_con_60_dias_avisa_con_su_calendario(self):
+        paquete = self.pendiente(dias=60)
+        self.pagar(paquete)
+        paquete.refresh_from_db()
+        inicio = paquete.fecha_fin - timedelta(days=60)
+        cuerpo = mail.outbox[0].body
+        for fecha, acumulado in paquetes.fechas_entrega(paquetes.POR_CODIGO['progreso'], inicio, 60):
+            self.assertIn(f'el {timezone.localtime(fecha):%d/%m/%Y} ({acumulado} en total)', cuerpo)
+        # El calendario nuevo (dias 15 y 23) no se le aplica.
+        self.assertNotIn(f'el {timezone.localtime(inicio + timedelta(days=15)):%d/%m/%Y} (2 en total)', cuerpo)
 
     def test_no_entrega_datos_del_alumno_mas_que_el_nombre_de_pila(self):
         self.pagar(self.pendiente())

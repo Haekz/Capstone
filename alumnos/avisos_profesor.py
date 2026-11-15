@@ -79,7 +79,7 @@ def agregado_videos(paquete):
     cantidad = f'{paquete.videos} video{"" if paquete.videos == 1 else "s"} de apoyo'
     inicio = paquete.fecha_fin - timedelta(days=paquete.dias)
     fechas = '; '.join(f'el {timezone.localtime(fecha):%d/%m/%Y} ({acumulado} en total)'
-                       for fecha, acumulado in paquetes.fechas_entrega(paquetes.POR_CODIGO[paquete.plan], inicio))
+                       for fecha, acumulado in paquetes.fechas_entrega(paquetes.POR_CODIGO[paquete.plan], inicio, paquete.dias))
     notificar(user, f'{alumno} contrató {cantidad}. Revisa las fechas de entrega en la pestaña Videos de tu panel.',
               reverse('panel_profesor'))
     enviar('Nuevo agregado de videos', 'alumnos/correo_decision_profesor.txt', {'nombre': user.first_name, 'texto': (

@@ -45,14 +45,22 @@ class Plan:
         return sum(cantidad for _, cantidad in self.entregas)
 
 
+# Vigencias (decidido 14-nov-2026): 1 y 4 clases, 1 mes; 8 clases, 2 meses.
 # Entregas de videos: la ultima, 7 dias antes de que venza el paquete (09-nov), para que un atraso alcance a corregirse.
 PLANES = (
     Plan('flexible', 'Flexible', 1, Fraction(0), 30, ((14, 1),)),
-    Plan('progreso', 'Progreso', 4, Fraction(1, 60), 60, ((30, 2), (53, 2))),                # 1,7% por clase
-    Plan('intensivo', 'Intensivo', 8, Fraction(1, 30), 90, ((30, 2), (60, 2), (83, 2))),     # 3,3% por clase
+    Plan('progreso', 'Progreso', 4, Fraction(1, 60), 30, ((15, 2), (23, 2))),                # 1,7% por clase
+    Plan('intensivo', 'Intensivo', 8, Fraction(1, 30), 60, ((20, 2), (40, 2), (53, 2))),     # 3,3% por clase
 )
 POR_CODIGO = {plan.codigo: plan for plan in PLANES}
 CHOICES = [(plan.codigo, plan.nombre) for plan in PLANES]
+
+# Lo ya vendido no cambia (14-nov): un paquete conserva la duracion con que se compro, y con ella su calendario.
+# {(plan, vigencia en dias): entregas} de las vigencias que ya no se venden. Historico: no se toca.
+ENTREGAS_ANTERIORES = {
+    ('progreso', 60): ((30, 2), (53, 2)),
+    ('intensivo', 90): ((30, 2), (60, 2), (83, 2)),
+}
 
 
 def _redondear(valor, paso=1):
@@ -92,10 +100,15 @@ def valor_video(monto_videos, videos):
     return monto_videos // videos if videos else 0
 
 
-def fechas_entrega(plan, inicio):
-    """Fechas limite del profesor para compartir videos: [(fecha, videos acumulados que debe haber entregado)]."""
+def fechas_entrega(plan, inicio, vigencia_dias=None):
+    """Fechas limite del profesor para compartir videos: [(fecha, videos acumulados que debe haber entregado)].
+
+    `vigencia_dias` es la duracion del paquete (PaqueteClases.dias): si es una de las que ya no se venden, rige su
+    calendario de entonces; con cualquier otra, o sin decirla, el del plan.
+    """
+    entregas = ENTREGAS_ANTERIORES.get((plan.codigo, vigencia_dias), plan.entregas)
     fechas, acumulado = [], 0
-    for dias, cantidad in plan.entregas:
+    for dias, cantidad in entregas:
         acumulado += cantidad
         fechas.append((inicio + timedelta(days=dias), acumulado))
     return fechas

@@ -25,13 +25,17 @@ INICIO = datetime(2026, 11, 1, 12, 0, tzinfo=utc.utc)
 
 class FechasDeEntregaTests(SimpleTestCase):
 
-    def fechas(self, plan):
-        return [(f.day + (f.month - 11) * 30, n) for f, n in paquetes.fechas_entrega(paquetes.POR_CODIGO[plan], INICIO)]
+    def fechas(self, plan, vigencia=None):
+        return [(f.day + (f.month - 11) * 30, n)
+                for f, n in paquetes.fechas_entrega(paquetes.POR_CODIGO[plan], INICIO, vigencia)]
 
     def test_cada_fecha_pide_los_videos_acumulados(self):
         self.assertEqual(self.fechas('flexible'), [(15, 1)])
-        self.assertEqual(self.fechas('progreso'), [(31, 2), (31 + 23, 4)])  # la ultima, 7 dias antes de vencer
+        self.assertEqual(self.fechas('progreso'), [(16, 2), (16 + 8, 4)])  # la ultima, 7 dias antes de vencer (30)
         self.assertEqual(self.fechas('intensivo')[-1][1], 6)
+
+    def test_un_paquete_vendido_con_60_dias_conserva_su_calendario(self):
+        self.assertEqual(self.fechas('progreso', 60), [(31, 2), (31 + 23, 4)])
 
     def test_el_ultimo_acumulado_es_todo_lo_comprado(self):
         for plan in paquetes.PLANES:
@@ -48,10 +52,10 @@ class EntregasTests(GridFsTestCase, Escenario):
                        for n in range(6)]
 
     def paquete(self, alumno=None, plan='progreso', videos=4, estado=PaqueteClases.ESTADO_ACTIVA, dias_restantes=60,
-                profesor=None, **extra):
+                profesor=None, dias=60, **extra):
         return PaqueteClases.objects.create(
             alumno=alumno or self.ana, profesor=profesor or self.profe, plan=plan, clases=4, tarifa=15000, monto=59000,
-            videos=videos, monto_videos=videos * paquetes.PRECIO_VIDEO, dias=60,
+            videos=videos, monto_videos=videos * paquetes.PRECIO_VIDEO, dias=dias,
             buy_order=f'PQ{PaqueteClases.objects.count():024d}', estado=estado,
             fecha_fin=timezone.now() + timedelta(days=dias_restantes), **extra)
 
@@ -69,6 +73,17 @@ class EntregasTests(GridFsTestCase, Escenario):
         self.assertFalse(fila['atrasada'])
         # Solo lo necesario para entregar: de la alumna, el nombre de pila (nada de RUT, correo ni apellido).
         self.assertEqual(set(fila), {'paquete', 'alumno', 'plan', 'compartidos', 'videos', 'falta', 'atrasada', 'proxima'})
+
+    def test_cada_paquete_entrega_segun_su_propia_duracion(self):
+        """Uno nuevo (30 dias) entrega el dia 15; uno ya vendido con 60 dias conserva el dia 30."""
+        ahora = timezone.now()
+        nuevo = self.paquete(dias=30, dias_restantes=30)
+        vendido = self.paquete(alumno=self.beto, dias=60, dias_restantes=60)
+        for paquete, esperado in ((nuevo, 15), (vendido, 30)):
+            with self.subTest(dias=paquete.dias):
+                limite = entregas.estado(entregas.con_agregado().get(pk=paquete.pk), ahora)[0]
+                inicio = paquete.fecha_fin - timedelta(days=paquete.dias)
+                self.assertEqual(limite - inicio, timedelta(days=esperado))
 
     def test_marca_atrasada_la_entrega_cuya_fecha_ya_paso(self):
         self.paquete(dias_restantes=10)  # empezó hace 50 días: el límite del día 30 ya pasó

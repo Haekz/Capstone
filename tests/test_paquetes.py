@@ -64,7 +64,7 @@ class CalculoTests(SimpleTestCase):
 
     def test_cantidad_de_clases_y_vigencia(self):
         self.assertEqual([(p.nombre, p.clases, p.vigencia_dias) for p in paquetes.PLANES],
-                         [('Flexible', 1, 30), ('Progreso', 4, 60), ('Intensivo', 8, 90)])
+                         [('Flexible', 1, 30), ('Progreso', 4, 30), ('Intensivo', 8, 60)])  # decidido 14-nov
 
     def test_comision_15_por_ciento_con_iva_incluido(self):
         flexible, progreso, intensivo = paquetes.cotizar()
@@ -108,7 +108,7 @@ class PaginaPlanesTests(Escenario):
                       '1 clase de 60 min', '4 clases de 60 min', '8 clases de 60 min',
                       '$15.747 por clase', '$15.498 por clase',
                       'Descuento de $243 por clase (1,5%)', 'Descuento de $492 por clase (3,1%)',
-                      'comisión LBWUS de 15%', 'IVA incluido', 'Vigencia de 90 días'):
+                      'comisión LBWUS de 15%', 'IVA incluido', 'Vigencia de 30 días', 'Vigencia de 60 días'):
             self.assertContains(r, texto)
 
     def test_ya_no_ofrece_los_planes_antiguos_ni_funciones_simuladas(self):
@@ -271,7 +271,9 @@ class CompraTests(Escenario):
         self.assertContains(r, 'Progreso: 4 clase(s) con Profe')
         paquete = PaqueteClases.objects.get()
         self.assertEqual(paquete.estado, PaqueteClases.ESTADO_ACTIVA)
-        self.assertAlmostEqual((paquete.fecha_fin - timezone.now()).days, 59, delta=1)
+        vigencia = paquetes.POR_CODIGO['progreso'].vigencia_dias
+        self.assertEqual(paquete.dias, vigencia)
+        self.assertAlmostEqual((paquete.fecha_fin - timezone.now()).days, vigencia - 1, delta=1)
         self.assertEqual(paquete.clases_disponibles, 4)
 
     def test_pago_rechazado_no_da_clases_y_repetir_el_token_no_duplica(self, mock_tx):
