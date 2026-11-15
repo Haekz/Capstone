@@ -35,8 +35,9 @@ Los codigos LBW-xx y Dx son los del backlog y las decisiones grupales del 08-nov
 - Cuanto se guardan los registros de pago: contador y abogada (LBW-20, D2).
 
 ## Menores y legal
-- **No habilitar menores reales** hasta la revision juridica (LBW-02, D1): declaracion de facultad, revocacion,
-  transicion a los 18, aviso de documentos y declaraciones v2. Y definir quien verifica certificados y como.
+- **Menores habilitados (15-nov).** La revision juridica ya se hizo. Los certificados y documentos de los apoderados
+  los revisan los agentes de soporte: cada revision es un ticket (LBW-02, D1). Sin agente habilitado esos tickets
+  quedan sin asignar (ver Railway, mas arriba).
 - **Antes de abrir al público: reemplazar los datos de ejemplo del responsable** (B7, 15-nov). Las páginas
   `/terminos/` y `/privacidad/` y el pie ya existen, pero muestran un responsable inventado (`LBWUS SpA`, RUT
   `76.000.000-0` y domicilio de ejemplo; el teléfono y los correos ya son los reales, hoy el mismo para contacto y para
