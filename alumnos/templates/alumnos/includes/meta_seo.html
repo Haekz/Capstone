@@ -1,0 +1,11 @@
+{% comment %}Etiquetas para buscadores y vistas previas (Google, WhatsApp). Cada pagina publica pasa su `descripcion`
+(alumnos/base.html trae una por defecto). La direccion sale de SITIO_URL (lbwus/seo.py), sin parametros de la consulta.
+Titulo y descripcion de la vista previa los toman del <title> y de la descripcion de abajo.{% endcomment %}{% load static %}
+<meta name="description" content="{{ descripcion }}">
+<link rel="canonical" href="{{ SITIO_URL }}{{ request.path }}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="LBWUS">
+<meta property="og:locale" content="es_CL">
+<meta property="og:url" content="{{ SITIO_URL }}{{ request.path }}">
+<meta property="og:image" content="{{ SITIO_URL }}{% static 'alumnos/img/Logo.png' %}">
+<meta name="twitter:card" content="summary">
