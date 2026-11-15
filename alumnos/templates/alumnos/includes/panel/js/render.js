@@ -92,8 +92,10 @@
                             <div class="teacher-distance-box">
                                 <button class="btn-contact-teacher" onclick="requestClassAccess(${t.id})">Ver Horarios</button>
                             </div>
+                            ${tiraHorarios(t)}
                         `;
                         teachersContainer.appendChild(card);
+                        mostrarDiaElegido(card);
                     });
                 }
             }
