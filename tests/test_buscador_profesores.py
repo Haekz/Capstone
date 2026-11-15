@@ -73,6 +73,7 @@ class BuscadorProfesoresTests(TestCase):
             'specialties': ['Matemáticas'],
             'initial': 'C',
             'rating': None,  # la calificacion sale de resenas reales (tests/test_calificacion_profesores.py)
+            'horarios': [],  # proximos horarios libres (tests/test_horarios_profesores.py)
         }])
         # Ni en los datos ni en las tarjetas que arma el JS: distancia y precio no existen, y la
         # calificacion nunca se inventa (sin resenas el valor es None y la tarjeta dice "Nuevo").

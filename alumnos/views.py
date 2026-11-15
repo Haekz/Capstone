@@ -20,7 +20,7 @@ from .models import (
     PaqueteClases,
     Suscripcion,
 )
-from . import paquetes, progreso
+from . import horarios_profesores, paquetes, progreso
 from mensajes import panel as mensajes_panel
 from observaciones import panel as observaciones_panel
 from resenas.consultas import (
@@ -318,6 +318,7 @@ def alumno_pag1(request):
         pago.monto_clp = _clp(pago.total if isinstance(pago, PaqueteClases) else pago.monto)  # lo cobrado en Webpay
 
     calificaciones = calificaciones_por_profesor()
+    horarios = horarios_profesores.proximos_horarios(profesores_list, alumno=alumno)
     profesor_por_id = {p.id_profesor: p for p in profesores_list}
     recomendados = [
         {'profesor': profesor_por_id[id_profesor], 'rating': _rating_para_tarjeta(calificaciones[id_profesor])}
@@ -338,6 +339,7 @@ def alumno_pag1(request):
                 'specialties': [p.especialidad.nombre] if p.especialidad else [],
                 'initial': p.nombre[:1].upper(),
                 'rating': _rating_para_tarjeta(calificaciones.get(p.id_profesor)),
+                'horarios': horarios[p.id_profesor],
             }
             for p in profesores_list
         ],
