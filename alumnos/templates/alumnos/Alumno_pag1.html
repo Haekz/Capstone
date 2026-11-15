@@ -50,6 +50,8 @@
 
 {% include 'alumnos/includes/panel/js/horarios.js' %}
 
+{% include 'alumnos/includes/panel/js/clase_extra.js' %}
+
         // Exponer funciones globalmente para manejadores onclick inline en HTML
         window.confirmarReprogramacion = confirmarReprogramacion;
         window.switchView = switchView;
@@ -60,6 +62,7 @@
         window.abrirModalHorarios = abrirModalHorarios;
         window.cerrarModalHorarios = cerrarModalHorarios;
         window.confirmarReservaSesion = confirmarReservaSesion;
+        window.abrirClaseExtra = abrirClaseExtra;
 
         // Initialize Rendering
         renderDashboardContent();

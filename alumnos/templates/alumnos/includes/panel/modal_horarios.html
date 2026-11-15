@@ -32,6 +32,15 @@
                     <div id="modal-horarios-lista" style="display:none; max-height:420px; overflow-y:auto; padding-right:4px; display:flex; flex-direction:column; gap:12px;">
                         <!-- Se llena dinámicamente con JS -->
                     </div>
+
+                    <!-- Clase extra (js/clase_extra.js): cuando ninguna hora le sirve. Solo al reservar, no al reprogramar. -->
+                    <div id="modal-horarios-extra-entrada" class="extra-entrada" hidden>
+                        <p>¿Ninguna hora te sirve?</p>
+                        <button type="button" class="extra-boton" onclick="abrirClaseExtra()">
+                            <i class="bi bi-calendar-plus" aria-hidden="true"></i> Pide una clase extra
+                        </button>
+                    </div>
+                    <section id="clase-extra" class="clase-extra" aria-labelledby="clase-extra-titulo" hidden></section>
                 </div>
             </div>
         </div>

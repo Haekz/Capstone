@@ -37,6 +37,7 @@
             listaEl.innerHTML = '';
 
             modal.classList.add('open');
+            prepararClaseExtra(idClase, nombreAsignatura, nombreProfesor, !idInscripcion);  // js/clase_extra.js
 
             fetch(`{% url 'sesiones_disponibles' %}?clase_id=${idClase}`)
                 .then(res => res.json())

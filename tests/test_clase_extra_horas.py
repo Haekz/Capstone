@@ -218,7 +218,9 @@ class VistasTests(Agenda):
                          (self.ana, self.clase, el_dia(DIAS, 10), 'Hola'))
         self.assertTrue(datos['success'])
         self.assertEqual(datos['vence_el'], solicitud.vence_el.isoformat())
-        self.assertIn(timezone.localtime(solicitud.vence_el).strftime('%d/%m/%Y a las %H:%M'), datos['message'])
+        plazo = timezone.localtime(solicitud.vence_el)
+        dia = ('lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo')[plazo.weekday()]
+        self.assertIn(f'Tiene hasta el {dia} {plazo:%d/%m} a las {plazo:%H:%M} para responder', datos['message'])
 
     def test_pedir_una_hora_que_no_se_puede_explica_por_que_y_no_guarda_nada(self):
         self.franja(10, 11)
@@ -245,3 +247,21 @@ class VistasTests(Agenda):
         for r in (self.horas(), self.pedir()):
             self.assertEqual((r.status_code, r.json()['success']), (401, False))
         self.assertFalse(SolicitudClaseExtra.objects.exists())
+
+
+class PantallaTests(Agenda):
+    """El panel del alumno trae la entrada en la ventana de horarios y el asistente (js/clase_extra.js).
+
+    Lo que hace el asistente en el navegador se recorre con Playwright (ver la descripcion del PR).
+    """
+
+    def test_el_panel_trae_la_entrada_y_el_asistente_con_sus_direcciones(self):
+        self.entrar(RUT_ANA)
+        r = self.client.get(reverse('alumno_pag1'))
+        self.assertEqual(r.status_code, 200)
+        for pieza in ('id="modal-horarios-extra-entrada"', 'Pide una clase extra', 'id="clase-extra"',
+                      reverse('clase_extra_horas'), reverse('clase_extra_pedir'), '12_clase_extra.css',
+                      'window.abrirClaseExtra = abrirClaseExtra',
+                      'prepararClaseExtra(idClase, nombreAsignatura, nombreProfesor, !idInscripcion)'):
+            with self.subTest(pieza=pieza):
+                self.assertContains(r, pieza)

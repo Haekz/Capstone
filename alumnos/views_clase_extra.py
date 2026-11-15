@@ -12,10 +12,14 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
+from agenda.models import HorarioSemanal
+
 from . import clase_extra
 from .decorators import alumno_required_json
 from .exceptions import InscripcionError
 from .models import Alumno, Clase
+
+DIAS_DE_LA_SEMANA = dict(HorarioSemanal.DIAS)
 
 
 def _error(mensaje, status=400):
@@ -30,7 +34,9 @@ def _clase(valor):
 
 
 def _cuando(momento):
-    return timezone.localtime(momento).strftime('%d/%m/%Y a las %H:%M')
+    """'lunes 16/11 a las 14:00': el plazo vence a mas tardar en 24 horas, el anio sobra."""
+    local = timezone.localtime(momento)
+    return f"{DIAS_DE_LA_SEMANA[local.weekday()].lower()} {local:%d/%m} a las {local:%H:%M}"
 
 
 @alumno_required_json
