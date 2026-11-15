@@ -8,6 +8,7 @@ from django.views.generic import TemplateView
 from alumnos.views import home, custom_login
 from alumnos import google_views
 from lbwus.puerta import puerta
+from lbwus.salud import salud
 
 
 def cerrada(request, *args, **kwargs):
@@ -23,6 +24,7 @@ urlpatterns = [
     # No volver a declararlo en las urls de las apps: Django permite nombres
     # duplicados sin avisar y el ultimo registrado gana el reverse().
     path('', home, name='home'),
+    path('salud/', salud, name='salud'),
     path('puerta/', puerta, name='puerta'),
     path('alumnos/', include('alumnos.urls')),
     path('admin_portal/', include('admin_portal.urls')),

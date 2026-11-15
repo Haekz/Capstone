@@ -41,6 +41,8 @@ PUBLICAS = {
     'socialaccount_login_cancelled',
     # Con SOCIALACCOUNT_LOGIN_ON_GET = False, el GET solo muestra el boton que hace POST (S-20).
     'google_login',
+    # Direccion de salud: la consulta un monitor, sin sesion (lbwus/salud.py).
+    'salud',
 }
 # Cualquier cuenta con sesion.
 COMUNES = {

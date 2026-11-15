@@ -72,6 +72,16 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
 
+# Aviso por correo de los errores 500 (lbwus/aviso_errores.py): correos separados por comas. Vacio = no se avisa.
+ERRORES_CORREOS = [c.strip() for c in os.environ.get('ERRORES_CORREOS', '').split(',') if c.strip()]
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {'aviso_errores': {'class': 'lbwus.aviso_errores.AvisoDeError', 'level': 'ERROR'}},
+    # propagate: Django sigue registrando el error como siempre (consola, registros de Railway).
+    'loggers': {'django.request': {'handlers': ['aviso_errores'], 'level': 'ERROR', 'propagate': True}},
+}
+
 
 # Application definition
 
