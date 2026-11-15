@@ -137,3 +137,13 @@ class ListaDeProfesoresTests(Escenario):
         with CaptureQueriesContext(connection) as despues:
             self.client.get(reverse('alumno_pag1'))
         self.assertEqual(len(despues), len(antes))
+
+    def test_el_portal_dibuja_la_tira_solo_en_la_lista_de_profesores(self):
+        self.entrar(RUT_ANA)
+        html = self.client.get(reverse('alumno_pag1')).content.decode()
+        self.assertIn('11_horarios_profesor.css', html)  # estilos de la tira
+        self.assertIn('function tiraHorarios(t)', html)
+        self.assertEqual(html.count('${tiraHorarios(t)}'), 1)  # solo en la lista del panel, no en favoritos
+        self.assertIn('mostrarDiaElegido(card);', html)  # en movil, el dia con horas queda a la vista
+        # Reservar reutiliza la confirmacion de siempre (la que valida el plan en el servidor).
+        self.assertIn('confirmarReservaSesion(hora.dataset.sesion, hora.dataset.asig, hora.dataset.fechahora)', html)
