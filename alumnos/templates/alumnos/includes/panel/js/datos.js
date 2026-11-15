@@ -1,4 +1,8 @@
 {# Parte del <script> principal de alumnos/Alumno_pag1.html: se incluye dentro de el (no es un archivo estatico). #}
+        // ── LO GUARDADO EN EL NAVEGADOR VA POR CUENTA: sin el id, dos cuentas en un mismo equipo compartirían favoritos, intereses y bienvenida ──
+        const cuentaId = JSON.parse(document.getElementById('cuenta-id').textContent);
+        const claveLocal = (nombre) => `${nombre}:${cuentaId}`;
+
         // ── PLAN ACTIVO: lo decide el servidor (paquete vigente o suscripción antigua), no localStorage ──
         const planActivo = JSON.parse(document.getElementById('plan-activo').textContent);
         const hasPlan = planActivo !== null;

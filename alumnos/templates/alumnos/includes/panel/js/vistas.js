@@ -88,7 +88,7 @@
 
         const applyFiltersAndClose = () => {
             const selectedTopics = getSelectedTopics();
-            localStorage.setItem('selected-topics', JSON.stringify(selectedTopics));
+            localStorage.setItem(claveLocal('selected-topics'), JSON.stringify(selectedTopics));
             renderDashboardContent();
             closeModal();
         };
@@ -104,16 +104,16 @@
         }
 
         // First Login Auto-Open
-        const firstLoginDone = localStorage.getItem('first_login_done');
+        const firstLoginDone = localStorage.getItem(claveLocal('first_login_done'));
         if (!firstLoginDone) {
             setTimeout(() => {
                 openModal();
-                localStorage.setItem('first_login_done', 'true');
+                localStorage.setItem(claveLocal('first_login_done'), 'true');
             }, 800);
         }
 
         // ── FAVORITES SYSTEM ──
-        let favoriteIds = JSON.parse(localStorage.getItem('favorite-teachers') || '[]');
+        let favoriteIds = JSON.parse(localStorage.getItem(claveLocal('favorite-teachers')) || '[]');
 
         const toggleFavorite = (teacherId, event) => {
             event.stopPropagation(); // Evita clics no deseados en la tarjeta
@@ -125,7 +125,7 @@
                 favoriteIds.splice(index, 1);
             }
             
-            localStorage.setItem('favorite-teachers', JSON.stringify(favoriteIds));
+            localStorage.setItem(claveLocal('favorite-teachers'), JSON.stringify(favoriteIds));
             
             // Re-render
             renderDashboardContent();
