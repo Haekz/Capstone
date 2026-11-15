@@ -23,7 +23,7 @@ from tests.test_matriz_identidad import crear_usuario
 from tests.test_paquetes import RUT_ANA, RUT_BETO, Escenario, dar_paquete
 from user_profesor.views import calcular_saldos
 
-POR_CLASE_INTENSIVO = 14500  # $116.000 / 8 clases, con la tarifa base
+POR_CLASE_INTENSIVO = 15498  # $123.990 / 8 clases, hacia abajo
 RUT_ADMIN = '66666666-6'
 
 
@@ -37,7 +37,7 @@ def panel_admin(test, ruta='dashboard_admin', **parametros):
 class FinanzasTests(Escenario):
 
     def setUp(self):
-        self.intensivo = dar_paquete(self.ana, self.profe, 'intensivo')  # $116.000
+        self.intensivo = dar_paquete(self.ana, self.profe, 'intensivo')  # $123.990
         for dias in (-1, -2):  # dos clases dictadas
             Inscripcion.objects.create(alumno=self.ana, clase=self.clase, paquete=self.intensivo,
                                        sesion=crear_sesion(self.clase, dias=dias))
@@ -51,9 +51,9 @@ class FinanzasTests(Escenario):
 
     def test_cobrado_ganancia_y_por_dictar(self):
         cifras = finanzas()
-        self.assertEqual(cifras['cobrado'], 116000)
+        self.assertEqual(cifras['cobrado'], 123990)
         self.assertEqual(cifras['ganancia'], 2 * paquetes.comision(POR_CLASE_INTENSIVO))  # solo lo dictado
-        self.assertEqual(cifras['por_dictar'], 116000 - 2 * POR_CLASE_INTENSIVO)
+        self.assertEqual(cifras['por_dictar'], 123990 - 2 * POR_CLASE_INTENSIVO)
 
     def test_la_ganancia_es_lo_que_no_va_al_profesor(self):
         """La misma cuenta que el saldo del profesor, vista desde LBWUS."""
@@ -62,13 +62,13 @@ class FinanzasTests(Escenario):
     def test_solo_cuentan_pagos_aprobados(self):
         dar_paquete(self.beto, self.profe, 'flexible', estado=PaqueteClases.ESTADO_PENDIENTE)
         dar_paquete(self.beto, self.profe, 'flexible', estado=PaqueteClases.ESTADO_RECHAZADA)
-        self.assertEqual(finanzas()['cobrado'], 116000)
+        self.assertEqual(finanzas()['cobrado'], 123990)
 
     def test_un_paquete_vencido_sin_usar_no_pasa_a_ser_ganancia(self):
-        dar_paquete(self.beto, self.profe, 'flexible', dias=-1)  # $15.000, vencido, ninguna clase
+        dar_paquete(self.beto, self.profe, 'flexible', dias=-1)  # $15.990, vencido, ninguna clase
         cifras = finanzas()
         self.assertEqual(cifras['ganancia'], 2 * paquetes.comision(POR_CLASE_INTENSIVO))
-        self.assertEqual(cifras['por_dictar'], 116000 + 15000 - 2 * POR_CLASE_INTENSIVO)
+        self.assertEqual(cifras['por_dictar'], 123990 + 15990 - 2 * POR_CLASE_INTENSIVO)
 
     def test_el_panel_muestra_las_cifras(self):
         respuesta = panel_admin(self)
@@ -78,7 +78,7 @@ class FinanzasTests(Escenario):
         self.assertNotContains(respuesta, 'Ingresos Totales')
 
     def test_comision_estimada_es_el_15_de_lo_cobrado(self):
-        self.assertEqual(finanzas()['comision_estimada'], paquetes.comision(116000))
+        self.assertEqual(finanzas()['comision_estimada'], paquetes.comision(123990))
 
     def test_saldo_de_profesores_es_el_que_ve_cada_uno(self):
         dictado = 2 * paquetes.pago_profesor(POR_CLASE_INTENSIVO)  # dos clases dictadas, sin retiros
@@ -226,11 +226,11 @@ class PlanesTests(Escenario):
         dar_paquete(self.beto, self.profe, 'flexible', dias=-1)  # vencido
         dar_paquete(self.ana, self.profe, 'progreso', estado=PaqueteClases.ESTADO_PENDIENTE)  # sin pagar
         self.assertEqual([(c.plan.codigo, c.precio, vigentes) for c, vigentes in planes()],
-                         [('flexible', 15000, 0), ('progreso', 59000, 0), ('intensivo', 116000, 2)])
+                         [('flexible', 15990, 0), ('progreso', 62990, 0), ('intensivo', 123990, 2)])
 
     def test_la_pagina_muestra_los_paquetes_reales(self):
         respuesta = panel_admin(self, 'planes_adm')
-        for real in ('Flexible', 'Progreso', 'Intensivo', '$59.000', '$116.000', '0 vigentes'):
+        for real in ('Flexible', 'Progreso', 'Intensivo', '$62.990', '$123.990', '0 vigentes'):
             self.assertContains(respuesta, real)
         for falso in ('Plan Básico', 'Educación Media', '$25.000 / mes', '$35.000 / mes'):
             self.assertNotContains(respuesta, falso)

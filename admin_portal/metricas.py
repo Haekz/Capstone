@@ -154,10 +154,10 @@ def grafico(serie):
 
 
 def planes():
-    """Cada paquete con la tarifa base (alumnos/paquetes.py) y cuantos hay vigentes de el."""
+    """Cada paquete con su precio (alumnos/paquetes.py) y cuantos hay vigentes de el."""
     vigentes = Counter(PaqueteClases.objects.vigentes().values_list('plan', flat=True))
     return [(cotizacion, vigentes[cotizacion.plan.codigo])
-            for cotizacion in paquetes.cotizar(paquetes.TARIFA_BASE)]
+            for cotizacion in paquetes.cotizar()]
 
 
 def _promedio(duraciones, unidad):

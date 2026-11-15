@@ -6,30 +6,26 @@ Las cifras salen de `alumnos/paquetes.py`, que es la única fuente de precios (p
 > **Cómo leerlo.** Las secciones 1 a 5 describen el sistema **tal como está hoy**. La sección 6 recoge las **decisiones del equipo (26-oct-2026)** y lo que falta construir para cumplirlas. La sección 7 es el flujo de caja con esas decisiones.
 > La sección 6 sigue la **versión consolidada del 26-oct-2026**, propuesta integral que espera la aprobación del equipo. Nada de este documento certifica cumplimiento legal ni autoriza a recibir pagos reales: antes hay que completar las validaciones de la sección 8.
 
-## 1. Precio según tutor
+## 1. Precio fijo de LBWUS
 
-- Cada profesor define su **tarifa por clase** desde su panel: entre $10.000 y $50.000, en múltiplos de $1.000. Si no define una, es $15.000 (`validar_tarifa`, `Profesor.tarifa`).
-- Precio del paquete = `clases × tarifa × (1 − descuento)`, redondeado al $1.000 más cercano (las mitades suben).
-- La tarifa, el monto y las clases **quedan fijos al comprar**. Si el profesor cambia su tarifa, solo afecta a ventas futuras (`PaqueteClases`).
+> **Decisión del 14-nov-2026:** el precio lo fija LBWUS, igual con todos los profesores. El profesor ya no define tarifa (se quitó `Profesor.tarifa`, migración `0038`). Las tablas de las secciones 7 en adelante que usan $15.000 / $59.000 / $116.000 son el análisis hecho con los precios anteriores.
 
-| Plan | Clases | Descuento | Vigencia | Precio con tarifa base ($15.000) |
-|---|---|---|---|---|
-| Flexible | 1 | 0 | 30 días | $15.000 |
-| Progreso | 4 | 1/60 | 60 días | $59.000 |
-| Intensivo | 8 | 1/30 | 90 días | $116.000 |
+- Una clase suelta cuesta **$15.990** (`paquetes.TARIFA`), con cualquier profesor.
+- Precio del paquete = `clases × TARIFA × (1 − descuento)`, llevado al número terminado en **$990** más cercano (`paquetes.precio`).
+- El precio por clase de un paquete se redondea hacia abajo (`monto // clases`): sobran $2 del Progreso y $6 del Intensivo, que no se asignan a ninguna clase.
+- La tarifa, el monto y las clases **quedan fijos al comprar**. Si cambian los precios, solo afecta a ventas futuras (`PaqueteClases`).
+
+| Plan | Clases | Descuento | Vigencia | Precio | Por clase |
+|---|---|---|---|---|---|
+| Flexible | 1 | 0 | 30 días | $15.990 | $15.990 |
+| Progreso | 4 | 1/60 | 60 días | $62.990 | $15.747 (1,5%) |
+| Intensivo | 8 | 1/30 | 90 días | $123.990 | $15.498 (3,1%) |
 
 ## 2. Descuentos
 
-- El descuento lo fija el **plan**, no el profesor, y hoy se aplica a todos los profesores. No existen cupones.
+- El descuento lo fija el **plan**, no el profesor, y se aplica a todos los profesores. No existen cupones.
 - Es voluntario para el alumno: lo obtiene solo si elige un paquete mayor.
-- **Observación:** el "1,7% / 3,3%" es exacto solo con la tarifa base. Como el precio se redondea a $1.000, el descuento real cambia con la tarifa:
-
-| Tarifa | Progreso | Intensivo |
-|---|---|---|
-| $10.000 | 2,5% | 3,8% |
-| $15.000 | 1,7% | 3,3% |
-| $20.000 | 1,2% | 3,1% |
-| $50.000 | 1,5% | 3,2% |
+- Por el redondeo a $990, el descuento real es **1,5%** (Progreso) y **3,1%** (Intensivo), no el 1/60 y 1/30 exactos.
 
 ## 3. Vigencia
 

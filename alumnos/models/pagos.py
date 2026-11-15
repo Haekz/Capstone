@@ -97,8 +97,8 @@ class PaqueteClases(models.Model):
     """Paquete Flexible, Progreso o Intensivo comprado a un profesor (ver alumnos/paquetes.py).
 
     Nace pendiente al iniciar Webpay y solo se activa cuando Transbank aprueba.
-    Plan, clases, tarifa y monto quedan fijos al comprar: si el profesor cambia
-    su tarifa, lo ya vendido no cambia. Cada inscripcion activa consume una
+    Plan, clases, tarifa y monto quedan fijos al comprar: si cambian los precios
+    de LBWUS, lo ya vendido no cambia. Cada inscripcion activa consume una
     clase; al cancelarla vuelve, porque las usadas se cuentan, no se restan.
     """
     ESTADO_PENDIENTE = Suscripcion.ESTADO_PENDIENTE

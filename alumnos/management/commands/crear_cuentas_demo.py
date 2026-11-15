@@ -127,8 +127,8 @@ class Command(BaseCommand):
             return
         plan = paquetes.POR_CODIGO[PLAN_DEL_ALUMNO]
         PaqueteClases.objects.create(
-            alumno=alumno, profesor=profesor, plan=plan.codigo, clases=plan.clases, tarifa=profesor.tarifa,
-            monto=paquetes.precio(plan, profesor.tarifa), dias=plan.vigencia_dias, buy_order=BUY_ORDER,
+            alumno=alumno, profesor=profesor, plan=plan.codigo, clases=plan.clases, tarifa=paquetes.TARIFA,
+            monto=paquetes.precio(plan), dias=plan.vigencia_dias, buy_order=BUY_ORDER,
             estado=PaqueteClases.ESTADO_ACTIVA, fecha_fin=timezone.now() + timedelta(days=plan.vigencia_dias))
 
     def _apoderado(self, user):

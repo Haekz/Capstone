@@ -84,16 +84,16 @@ def _alumno_en_sesion_es_menor(request):
 
 
 def planes(request):
-    """Paquetes con los precios del profesor elegido (?profesor=id) o de la tarifa base.
+    """Paquetes con los precios de LBWUS, iguales con todos los profesores; ?profesor=id solo elige con quien.
     Todo precio sale de alumnos/paquetes.py: la pantalla no calcula nada.
     """
     profesor = _profesor_habilitado(request.GET.get('profesor'))
-    tarifa = profesor.tarifa if profesor else paquetes.TARIFA_BASE
+    tarifa = paquetes.TARIFA
 
     if request.GET.get('format') == 'json' or request.headers.get('x-requested-with') == 'XMLHttpRequest':
         planes_data = [  # mismos precios que la pantalla (BUG-QA-01)
             {'nombre': f'Plan {c.plan.nombre}', 'clases': c.plan.clases, 'precio_total': c.precio, 'sin_renovacion': True}
-            for c in paquetes.cotizar(tarifa)
+            for c in paquetes.cotizar()
         ]
         return JsonResponse({
             'planes': planes_data,
@@ -112,8 +112,7 @@ def planes(request):
                                                     .order_by('user__first_name', 'user__last_name'),
         'profesor': profesor,
         'tarifa': tarifa,
-        'tarifa_base': paquetes.TARIFA_BASE,
-        'cotizaciones': paquetes.cotizar(tarifa),
+        'cotizaciones': paquetes.cotizar(),
         'duracion_clase': paquetes.DURACION_CLASE_MIN,
         'comision_pct': int(paquetes.COMISION * 100),
         'videos_a_la_venta': settings.VIDEOS_A_LA_VENTA,  # sin MongoDB no se pregunta por el agregado (B2)
