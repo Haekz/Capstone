@@ -20,6 +20,7 @@ Todas las lee `lbwus/settings.py`, salvo donde se indica.
 | `EMAIL_HOST`, `EMAIL_PORT` | Servidor SMTP | No (por omisión Gmail, 587) | — |
 | `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD` | Cuenta de correo | Sí | Fallan la recuperación de contraseña, el código de Google y los correos de apoderados |
 | `DEFAULT_FROM_EMAIL` | Remitente | No (usa `EMAIL_HOST_USER`) | — |
+| `ERRORES_CORREOS` | Correos, separados por comas, que reciben un aviso cuando hay un error 500 (`lbwus/aviso_errores.py`). El aviso **no lleva datos de las personas** ni el mensaje del error: solo la pantalla, el tipo de error, el id de la cuenta y por dónde pasó el código | Recomendada | No se avisa por correo; el error igual queda completo en los registros de Railway |
 | `MONGODB_URI` | MongoDB Atlas (app `comunidad`) | Sí, si se usa la comunidad | MongoDB queda desactivado y el sitio funciona igual |
 | `MONGODB_DB`, `MONGODB_TIMEOUT_MS` | Base de MongoDB y tiempo de espera | No (por omisión `lbwus_dev`, 5000) | **En producción debe ser `lbwus_prod`** |
 | `CSP_OBLIGATORIA` | `1` hace obligatoria la Content-Security-Policy (sección 7) | No | Queda en Report-Only: el navegador avisa, pero no bloquea |
@@ -30,6 +31,8 @@ Todas las lee `lbwus/settings.py`, salvo donde se indica.
 | `MONGODB_INTEGRACION` | Solo pruebas | No | — |
 
 El inicio de sesión con Google no usa variables: el `client_id` y el secreto están en la base (Django admin → Social applications).
+
+**Salud del sitio.** `/salud/` responde `200` (`{"estado": "ok"}`) si el sitio y la base de datos funcionan y `503` si la base no responde. No pide sesión ni la clave de la puerta, y no muestra detalles. Para enterarse de una caída conviene un monitor externo gratuito (por ejemplo UptimeRobot) que consulte `https://lbwus.xyz/salud/` cada 5 minutos. **No uses el "Healthcheck Path" de Railway con esta dirección sin antes permitir el host `healthcheck.railway.app` en `ALLOWED_HOSTS`** (hoy no está, según la documentación de Railway la consulta sale desde ese host): cada despliegue fallaría con error 400.
 
 ## 2. Archivos privados
 
