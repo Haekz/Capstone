@@ -17,10 +17,11 @@ from datetime import date, datetime, time, timedelta
 from django.db.models import Sum
 from django.utils import timezone
 
-from alumnos import paquetes
+from alumnos import paquetes, videos_extra
 from alumnos.models import Alumno, Inscripcion, PaqueteClases, Profesor, SolicitudRetiro, Suscripcion
+from alumnos.models.videos import DevolucionVideos, VideoCompartido
 from soporte.models import Ticket
-from user_profesor.saldos import saldos_de  # el mismo saldo que ve cada profesor
+from user_profesor.saldos import saldos_de, valores_videos  # las mismas cuentas que ve cada profesor
 
 from .models import IngresoDiario
 
@@ -37,21 +38,30 @@ def _suma(consulta):
 
 
 def finanzas():
-    """Montos en pesos para las tarjetas de Finanzas (P12)."""
+    """Montos en pesos para las tarjetas de Finanzas (P12).
+
+    Los videos (agregado y extras pagados) se ganan al compartirlos, con el 25% para LBWUS (como en el saldo del
+    profesor); lo devuelto por videos no entregados sale de lo cobrado y de lo pendiente.
+    """
     # Pagos aprobados por Webpay. Las suscripciones ya no se venden, pero su dinero entro.
-    paquetes_pagados = list(PaqueteClases.objects.filter(estado=PaqueteClases.ESTADO_ACTIVA)
-                            .values_list('monto', flat=True))
+    filas = list(PaqueteClases.objects.filter(estado=PaqueteClases.ESTADO_ACTIVA).annotate(**videos_extra.anotar())
+                 .values_list('monto', 'monto_videos', 'extra_monto'))  # extra_monto: solo extras pagados
+    paquetes_pagados = [monto for monto, _, _ in filas]
     pagados = paquetes_pagados + list(Suscripcion.objects.filter(estado=Suscripcion.ESTADO_ACTIVA)
                                       .values_list('monto', flat=True))
     cobrado_paquetes = sum(paquetes_pagados)
     dictadas = list(Inscripcion.objects.pagables().select_related('paquete'))  # + canceladas tarde: se pagan
     dictado_de_paquetes = sum(paquetes.valor_clase(i) for i in dictadas if i.paquete_id)
+    videos_cobrados = sum(agregado + extra for _, agregado, extra in filas) - _suma(DevolucionVideos.objects.all())
+    compartidos = [valor for _, valor in valores_videos(VideoCompartido.objects.entregados())]
     return {
-        'cobrado': sum(pagados),
-        # Si se dictara todo lo vendido; la ganancia real es solo la de lo ya dictado.
-        'comision_estimada': sum(paquetes.comision(monto) for monto in pagados),
-        'ganancia': sum(paquetes.comision(paquetes.valor_clase(i)) for i in dictadas),
-        'por_dictar': max(0, cobrado_paquetes - dictado_de_paquetes),
+        'cobrado': sum(pagados) + videos_cobrados,
+        # Si se dictara y entregara todo lo vendido; la ganancia real es solo la de lo ya dictado o compartido.
+        'comision_estimada': (sum(paquetes.comision(monto) for monto in pagados)
+                              + paquetes.comision(videos_cobrados, paquetes.COMISION_VIDEOS)),
+        'ganancia': (sum(paquetes.comision(paquetes.valor_clase(i)) for i in dictadas)
+                     + sum(paquetes.comision(valor, paquetes.COMISION_VIDEOS) for valor in compartidos)),
+        'por_dictar': max(0, cobrado_paquetes - dictado_de_paquetes) + max(0, videos_cobrados - sum(compartidos)),
         # Lo que los profesores ya pueden pedir (sin contar retiros en tramite).
         'saldo_profesores': sum(s['disponible'] for s in saldos_de(Profesor.objects.all()).values()),
         'retiros_pagados': _suma(SolicitudRetiro.objects.filter(estado=SolicitudRetiro.PAGADO)),

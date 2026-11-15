@@ -27,6 +27,7 @@
 </section>
 
 <div class="planes-container">
+    {% include 'apoderados/_mensajes.html' %}{# p. ej. si los videos no estan a la venta (B2) #}
 
     {# Solo el apoderado elige profesor aqui: es su unico camino. El alumno busca profesores en su portal. #}
     {% if estudiante %}
@@ -149,8 +150,8 @@
     </div>
 </div>
 
-{% if profesor %}
-{# Agregado de videos: se ofrece al comprar. Sin JavaScript se compra solo el paquete (videos=0). #}
+{% if profesor and videos_a_la_venta %}
+{# Agregado de videos: se ofrece al comprar. Sin JavaScript, o sin MongoDB (no hay dialogo), se compra solo el paquete (videos=0). #}
 <dialog id="pl-videos" class="pl-videos" aria-labelledby="pl-videos-titulo" aria-describedby="pl-videos-texto">
     <form method="dialog">
         <h2 id="pl-videos-titulo">¿Agregas videos de ayuda?</h2>

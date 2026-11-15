@@ -195,6 +195,9 @@ DATABASES = {
 MONGODB_URI = os.environ.get('MONGODB_URI')          # None = MongoDB desactivado
 MONGODB_DB = os.environ.get('MONGODB_DB', 'lbwus_dev')
 MONGODB_TIMEOUT_MS = int(os.environ.get('MONGODB_TIMEOUT_MS', '5000'))
+# Venta de videos (agregado y extras): solo con MongoDB configurado, donde viven los archivos (B2). Sin el no se
+# cobra lo que nadie podria entregar; el paquete de clases se sigue vendiendo (alumnos/videos_extra.py).
+VIDEOS_A_LA_VENTA = bool(MONGODB_URI)
 
 # Puerta con clave para todo el sitio (lbwus/puerta.py). Vacia = sin puerta.
 # La clave se define solo como variable de entorno, nunca en el codigo.

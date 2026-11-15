@@ -25,6 +25,15 @@ def _saldos(valores, videos, aprobados, pendientes):
     }
 
 
+def valores_videos(compartidos):
+    """[(id_profesor, valor)] de cada video de ``compartidos``, en una consulta: el promedio de lo pagado por videos
+    del paquete (agregado + extra activos). La misma cuenta para el saldo del profesor y las finanzas del admin."""
+    filas = compartidos.annotate(**videos_extra.anotar('paquete_id')).values_list(
+        'paquete__profesor_id', 'paquete__monto_videos', 'paquete__videos', 'extra_monto', 'extra_videos')
+    return [(profesor_id, paquetes.valor_video(monto + extra_monto, cantidad + extra_cantidad))
+            for profesor_id, monto, cantidad, extra_monto, extra_cantidad in filas]
+
+
 def saldos_de(profesores):
     """{id_profesor: saldos} de ``profesores`` (queryset o lista); quien no tiene movimientos queda en 0.
 
@@ -40,12 +49,9 @@ def saldos_de(profesores):
                         .select_related('paquete', 'clase')):
         valores[inscripcion.clase.profesor_id].append(paquetes.valor_clase(inscripcion))
 
-    videos = defaultdict(list)  # el valor de cada video compartido: promedio de lo pagado (agregado + extra activos)
-    compartidos = (VideoCompartido.objects.entregados().filter(paquete__profesor_id__in=ids)
-                   .annotate(**videos_extra.anotar('paquete_id')))
-    for profesor_id, monto, cantidad, extra_monto, extra_cantidad in compartidos.values_list(
-            'paquete__profesor_id', 'paquete__monto_videos', 'paquete__videos', 'extra_monto', 'extra_videos'):
-        videos[profesor_id].append(paquetes.valor_video(monto + extra_monto, cantidad + extra_cantidad))
+    videos = defaultdict(list)
+    for profesor_id, valor in valores_videos(VideoCompartido.objects.entregados().filter(paquete__profesor_id__in=ids)):
+        videos[profesor_id].append(valor)
 
     aprobados, pendientes = defaultdict(int), defaultdict(int)
     for fila in (SolicitudRetiro.objects.filter(profesor_id__in=ids)
