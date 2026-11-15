@@ -37,6 +37,7 @@
 
     <!-- App Logic -->
     {{ plan_activo|json_script:"plan-activo" }}
+    {{ user.pk|json_script:"cuenta-id" }}
     <script>
 {% include 'alumnos/includes/panel/js/datos.js' %}
 

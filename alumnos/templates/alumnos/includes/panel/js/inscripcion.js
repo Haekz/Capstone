@@ -64,7 +64,7 @@
         window.inscribirAClase = inscribirAClase;
 
         // ── RESTORE INTERESTS FROM STORAGE ──
-        const savedTopics = JSON.parse(localStorage.getItem('selected-topics') || '[]');
+        const savedTopics = JSON.parse(localStorage.getItem(claveLocal('selected-topics')) || '[]');
         const topicButtons = document.querySelectorAll('.topic-tag');
         topicButtons.forEach(btn => {
             const topic = btn.getAttribute('data-topic');
