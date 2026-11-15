@@ -108,6 +108,13 @@ class ClaseQuerySetTests(EscenarioCatalogo):
             with self.subTest(**{k: str(v) for k, v in filtros.items()}):
                 self.assertEqual(set(Clase.objects.habilitadas().filtrar(**filtros)), esperado)
 
+    def test_filtro_por_profesor(self):
+        profesor_mat = self.mat_con_sesiones.profesor
+        self.assertEqual(set(Clase.objects.habilitadas().filtrar(profesor=profesor_mat)),
+                         {self.mat_con_sesiones, self.mat_sin_sesiones})
+        self.assertEqual(set(Clase.objects.habilitadas().filtrar(profesor=profesor_mat, solo_disponibles=True)),
+                         {self.mat_con_sesiones})
+
 
 class CatalogoInterfazTests(EscenarioCatalogo):
 
@@ -133,6 +140,25 @@ class CatalogoInterfazTests(EscenarioCatalogo):
         self.assertNotContains(r, f'abrirModalHorarios({self.de_pendiente.id_clase},')
         self.assertFalse(r.context['hay_filtros'])
         self.assertNotContains(r, 'Limpiar filtros')
+
+    def test_ver_horarios_de_un_profesor_filtra_el_catalogo_por_ese_profesor(self):
+        profesor = self.mat_con_sesiones.profesor
+        r = self._portal(profesor=profesor.pk)
+        self.assertMuestraClases(r, [self.mat_con_sesiones, self.mat_sin_sesiones])
+        self.assertTrue(r.context['hay_filtros'])  # asi el portal salta solo al catalogo
+        self.assertContains(r, f'Mostrando las clases de {profesor.nombre}')
+        self.assertContains(r, f'name="profesor" value="{profesor.pk}"')  # se conserva al combinar con los otros filtros
+
+    def test_un_profesor_invalido_o_sin_titulo_no_filtra_ni_rompe_la_pagina(self):
+        for valor in (self.de_pendiente.profesor.pk, 999999, 'abc'):
+            with self.subTest(profesor=valor):
+                r = self._portal(profesor=valor)
+                self.assertMuestraClases(r, self.habilitadas)
+                self.assertNotContains(r, 'Mostrando las clases de')
+
+    def test_el_boton_ver_horarios_manda_el_id_del_profesor_al_catalogo(self):
+        r = self._portal()
+        self.assertContains(r, f'{reverse("alumno_pag1")}?profesor=')
 
     def test_opciones_de_filtro_salen_del_backend(self):
         r = self._portal()

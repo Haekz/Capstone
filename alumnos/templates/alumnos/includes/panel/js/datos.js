@@ -45,11 +45,6 @@
         // Minusculas y sin tildes, para que "matematicas" encuentre "Matemáticas".
         const normalizar = (texto) => String(texto).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
-        // Tutors: datos de EJEMPLO (aun no hay tutores reales). La pestana lo avisa.
-        const tutors = [
-            { id: 101, name: "Tutor Juan Pablo", specialties: ["Matemáticas", "Programación"], initial: "JP" },
-            { id: 102, name: "Tutora Camila Gómez", specialties: ["Inglés", "Lenguaje"], initial: "CG" },
-            { id: 103, name: "Tutor Roberto Muñoz", specialties: ["Física", "Química"], initial: "RM" },
-            { id: 104, name: "Tutora Patricia Soto", specialties: ["Biología"], initial: "PS" }
-        ];
+        // Tutores: aun no hay tutores reales, asi que la lista va vacia (antes eran 4 personas inventadas). La pestana lo avisa.
+        const tutors = [];
 

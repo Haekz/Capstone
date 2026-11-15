@@ -29,9 +29,11 @@ class ClaseQuerySet(models.QuerySet):
         sesiones = SesionClase.objects.disponibles().filter(clase=models.OuterRef('pk'))
         return self.filter(models.Exists(sesiones))
 
-    def filtrar(self, especialidad=None, solo_disponibles=False):
+    def filtrar(self, especialidad=None, solo_disponibles=False, profesor=None):
         """Combina los filtros; los que vienen vacios no se aplican."""
         clases = self
+        if profesor:
+            clases = clases.filter(profesor=profesor)
         if especialidad:
             clases = clases.filter(profesor__especialidad=especialidad)
         if solo_disponibles:
