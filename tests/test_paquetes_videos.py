@@ -3,6 +3,8 @@
 alumnos/paquetes.py manda. Si alguien cambia una regla sin actualizar la política, estos tests fallan.
 """
 
+from datetime import datetime, timezone as utc
+
 from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase
 
@@ -19,9 +21,10 @@ class VideosPorPlanTests(SimpleTestCase):
     def test_el_basico_entrega_su_video_a_las_2_semanas(self):
         self.assertEqual(PLANES['flexible'].entregas, ((14, 1),))
 
-    def test_progreso_e_intensivo_entregan_2_videos_por_mes(self):
-        self.assertEqual(PLANES['progreso'].entregas, ((30, 2), (53, 2)))
-        self.assertEqual(PLANES['intensivo'].entregas, ((30, 2), (60, 2), (83, 2)))
+    def test_progreso_e_intensivo_entregan_2_videos_por_etapa(self):
+        """Vigencias nuevas (decidido 14-nov): Progreso 30 dias, Intensivo 60."""
+        self.assertEqual(PLANES['progreso'].entregas, ((15, 2), (23, 2)))
+        self.assertEqual(PLANES['intensivo'].entregas, ((20, 2), (40, 2), (53, 2)))
 
     def test_la_ultima_entrega_es_al_menos_7_dias_antes_del_vencimiento(self):
         """Decidido 09-nov: si se atrasa, todavia hay ticket y alcanza a compartirlo antes de que venza el paquete."""
@@ -30,6 +33,38 @@ class VideosPorPlanTests(SimpleTestCase):
                 dias = [dia for dia, _ in plan.entregas]
                 self.assertEqual(dias, sorted(dias))
                 self.assertLessEqual(dias[-1], plan.vigencia_dias - 7)
+
+    def test_lo_mismo_vale_para_las_vigencias_que_ya_no_se_venden(self):
+        for (codigo, vigencia), entregas in paquetes.ENTREGAS_ANTERIORES.items():
+            with self.subTest(plan=codigo, vigencia=vigencia):
+                dias = [dia for dia, _ in entregas]
+                self.assertEqual(dias, sorted(dias))
+                self.assertLessEqual(dias[-1], vigencia - 7)
+                self.assertEqual(sum(cantidad for _, cantidad in entregas), PLANES[codigo].videos)
+
+
+class PaquetesYaVendidosTests(SimpleTestCase):
+    """Lo ya vendido no cambia (decidido 14-nov): cada paquete conserva su duracion y su calendario de entregas."""
+
+    INICIO = datetime(2026, 11, 1, 12, 0, tzinfo=utc.utc)
+
+    def dias(self, plan, vigencia=None):
+        return [(f - self.INICIO).days for f, _ in paquetes.fechas_entrega(PLANES[plan], self.INICIO, vigencia)]
+
+    def test_las_vigencias_anteriores_siguen_con_su_calendario(self):
+        self.assertEqual(self.dias('progreso', 60), [30, 53])
+        self.assertEqual(self.dias('intensivo', 90), [30, 60, 83])
+
+    def test_la_vigencia_vigente_usa_el_calendario_nuevo(self):
+        self.assertEqual(self.dias('progreso', 30), [15, 23])
+        self.assertEqual(self.dias('intensivo', 60), [20, 40, 53])
+        self.assertEqual(self.dias('flexible', 30), [14])
+
+    def test_sin_decir_la_vigencia_usa_el_calendario_del_plan(self):
+        self.assertEqual(self.dias('progreso'), [15, 23])
+
+    def test_una_vigencia_que_nunca_existio_usa_el_calendario_del_plan(self):
+        self.assertEqual(self.dias('progreso', 45), [15, 23])
 
 
 class PrecioVideosTests(SimpleTestCase):

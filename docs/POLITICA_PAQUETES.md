@@ -18,8 +18,8 @@ Las cifras salen de `alumnos/paquetes.py`, que es la única fuente de precios (p
 | Plan | Clases | Descuento | Vigencia | Precio | Por clase |
 |---|---|---|---|---|---|
 | Flexible | 1 | 0 | 30 días | $15.990 | $15.990 |
-| Progreso | 4 | 1/60 | 60 días | $62.990 | $15.747 (1,5%) |
-| Intensivo | 8 | 1/30 | 90 días | $123.990 | $15.498 (3,1%) |
+| Progreso | 4 | 1/60 | 30 días | $62.990 | $15.747 (1,5%) |
+| Intensivo | 8 | 1/30 | 60 días | $123.990 | $15.498 (3,1%) |
 
 ## 2. Descuentos
 
@@ -32,6 +32,7 @@ Las cifras salen de `alumnos/paquetes.py`, que es la única fuente de precios (p
 - El paquete se activa **solo cuando Webpay aprueba el pago**. La vigencia se cuenta desde ese momento (`_activar_pendientes`).
 - Reenviar el mismo pago no lo activa dos veces ni extiende la vigencia (prueba de replay en `test_flujos_funcionales.py`).
 - La clase debe comenzar **antes del vencimiento**. Con el paquete vencido no se puede reservar (`test_paquete_vencido_o_sesion_fuera_de_la_vigencia`).
+- **Desde el 14-nov-2026** (antes, Progreso 60 y Intensivo 90 días): 1 y 4 clases, **30 días**; 8 clases, **60 días**. **Lo ya vendido no cambia**: cada paquete guarda su duración (`PaqueteClases.dias`) y con ella su calendario de videos (`ENTREGAS_ANTERIORES` en `alumnos/paquetes.py`), así que no se mueve ninguna fecha límite del profesor.
 - Hoy las clases sin usar al vencer **se pierden**: no hay prórroga ni devolución. La decisión del equipo cambia esto (sección 6).
 
 ## 4. Reprogramación y cancelación
@@ -65,7 +66,7 @@ Sigue los puntos 1 a 11 de la versión consolidada del equipo. Los puntos 12 a 1
 |---|---|---|---|
 | 1 | **Devoluciones y retracto.** Devolución total si no usó ninguna clase; proporcional al precio pagado (con su descuento) si usó parte. No se descuentan multas ni costos de Transbank. Retracto de 10 días cuando sea aplicable, antes de la prestación. Si Webpay no permite devolver directamente, un procedimiento alternativo autorizado y documentado | No existe | Solicitudes de devolución total y parcial, su estado y la trazabilidad de los montos devueltos |
 | 2 | **Cancelaciones.** Gratis con 4 h de anticipación (decidido 07-nov; antes 24 h), recuperando el crédito. Con menos de 4 h: **una excepción gratuita por paquete**. Cancelaciones tardías injustificadas reiteradas: registro de incidencias y posible revisión administrativa de reservas futuras, con criterios objetivos. **Sin multas, retenciones ni pérdida automática de créditos.** Las clases canceladas no cuentan como realizadas ni generan pago al profesor ni comisión | Con 4 h o más se cancela y la clase vuelve al paquete. Con menos queda "cancelada con menos de 4 h": se pierde la clase y el profesor cobra (`ANTICIPACION_SIN_COSTO`) | Contador de la excepción por paquete (no existe) y registro de incidencias. **Por decidir:** esta fila dice "sin pérdida automática de créditos" y el sistema la pierde con menos de 4 h |
-| 3 | **Vigencia.** Clases de 60 min. Vigencia de 30, 60 y 90 días desde la confirmación de la compra. **Prórroga gratuita única de 15 días** en Progreso e Intensivo, pedida antes del vencimiento. Vencido el paquete no se reserva, pero lo no realizado **no pasa a ser ingreso** de LBWUS y se puede pedir su devolución proporcional. Si el vencimiento se debe al profesor o a la plataforma, LBWUS ofrece una solución | Duración y vigencias **implementadas** (`DURACION_CLASE_MIN`, `vigencia_dias`). Las clases vencidas se pierden | Prórroga única y tratamiento de lo vencido como obligación |
+| 3 | **Vigencia.** Clases de 60 min. Vigencia de 30 y 60 días desde la confirmación de la compra. **Prórroga gratuita única de 15 días** en Progreso e Intensivo, pedida antes del vencimiento. Vencido el paquete no se reserva, pero lo no realizado **no pasa a ser ingreso** de LBWUS y se puede pedir su devolución proporcional. Si el vencimiento se debe al profesor o a la plataforma, LBWUS ofrece una solución | Duración y vigencias **implementadas** (`DURACION_CLASE_MIN`, `vigencia_dias`). Las clases vencidas se pierden | Prórroga única y tratamiento de lo vencido como obligación |
 | 4 | **Términos y Condiciones** reescritos: precios, descuentos, vigencias, cancelaciones, reprogramaciones, devoluciones, retracto, responsabilidades de profesores, reclamos, datos personales, menores y apoderados. Revisión jurídica antes de pagos reales y **aceptación expresa al contratar** | Desactualizados (sección 5). La compra **no muestra ni pide aceptar** los Términos; el pie de página los marca como "próximamente" | Redacción, revisión jurídica, publicación y aceptación en el flujo de compra |
 | 5 | **Tarifas y descuentos voluntarios.** Tarifa del profesor desde su panel. Cada profesor decide **por paquete** si ofrece Progreso e Intensivo; si no, ese paquete no se puede contratar y queda Flexible. Descuentos de ≈1,67% y ≈3,33% sobre la tarifa, redondeo a $1.000. Precios de referencia: $15.000, $59.000 y $116.000. Los cambios solo afectan compras futuras | Tarifa, descuentos, redondeo, precios y condiciones fijas al comprar: **implementado**. Todos los profesores ofrecen los tres paquetes | Opción del profesor por paquete y ocultar el paquete no ofrecido |
 | 6 | **Comisión** de 15% IVA incluido sobre el precio final; 85% bruto para el profesor. LBWUS asume sus costos de procesamiento sin cambiar la comisión del profesor. El 15% **no es ingreso neto** | **Implementado** (`COMISION`) | Nada en el cálculo |
@@ -127,7 +128,7 @@ El 50/50 es un supuesto financiero, no un comportamiento observado. Se reemplaza
 
 ### Cómo se registra el dinero cobrado por adelantado
 
-El alumno paga todo el paquete al comprar, pero las clases se dictan durante 60 o 90 días. Hay que separar tres cosas. Ejemplo con un **Intensivo ($116.000) tras 2 de 8 clases realizadas**:
+El alumno paga todo el paquete al comprar, pero las clases se dictan durante 30 o 60 días. Hay que separar tres cosas. Ejemplo con un **Intensivo ($116.000) tras 2 de 8 clases realizadas**:
 
 | Concepto | Monto |
 |---|---|
@@ -206,8 +207,8 @@ Reglas en `alumnos/paquetes.py` y `alumnos/videos_extra.py`; pruebas en `tests/t
 | Plan | Videos del agregado | Precio | Entrega obligatoria del profesor |
 |---|---|---|---|
 | Flexible | 1 | $5.000 | 1 video a más tardar el día 14 |
-| Progreso | 4 | $20.000 | 2 videos el mes 1 (día 30) y 2 más a más tardar el día 53 |
-| Intensivo | 6 | $30.000 | 2 videos por mes (días 30, 60 y 83) |
+| Progreso | 4 | $20.000 | 2 videos el día 15 y 2 más a más tardar el día 23 |
+| Intensivo | 6 | $30.000 | 2 videos el día 20, 2 el día 40 y 2 a más tardar el día 53 |
 
 - **Precio fijo**: $5.000 por video, igual con todos los profesores. Se ofrece en una ventana al agregar el paquete y se paga junto con él.
 - **Videos extra** (después de contratar): $5.000 cada uno, o la promoción de **3 por $13.500**. Máximo **6 por paquete**, solo si al paquete le quedan 14 días o más; el profesor los comparte dentro de 14 días.
@@ -230,4 +231,4 @@ Reglas en `alumnos/clase_extra.py` y `alumnos/models/clase_extra.py`; pruebas en
 - **Cómo se paga**: se descuenta del paquete que el alumno tiene con ese profesor. **Sin paquete**, paga el valor de la clase (la clase suelta, $15.990). Ese cobro **todavía no existe**: hoy, sin paquete, no se puede pedir la clase extra.
 - **Plazo para responder**: 24 horas, o hasta 4 horas antes de la clase si eso llega antes. Pasado el plazo, la solicitud queda **vencida**. Se pide con 4 horas de anticipación como mínimo.
 - **Si el paquete ya no sirve cuando el profesor acepta** (se agotó o venció): la solicitud queda **vencida**, no pendiente.
-- **Los paquetes no duran para siempre**. Ya funciona: la vigencia es de **30, 60 y 90 días** (Flexible, Progreso, Intensivo) desde que Webpay aprueba el pago; el alumno y su apoderado ven «vence el …»; la clase debe **empezar antes del vencimiento** (también la clase extra, con prueba); y lo no usado al vencer se pierde. **Falta, y queda anotado**: un **aviso al alumno cuando a su paquete le queda poco** (no existe); la prórroga gratuita única de 15 días y la devolución proporcional de lo no usado, que ya están decididas en la sección 6.
+- **Los paquetes no duran para siempre**. Ya funciona: la vigencia es de **30 días** (Flexible y Progreso) y **60 días** (Intensivo) desde que Webpay aprueba el pago; el alumno y su apoderado ven «vence el …»; la clase debe **empezar antes del vencimiento** (también la clase extra, con prueba); y lo no usado al vencer se pierde. **Falta, y queda anotado**: un **aviso al alumno cuando a su paquete le queda poco** (no existe); la prórroga gratuita única de 15 días y la devolución proporcional de lo no usado, que ya están decididas en la sección 6.

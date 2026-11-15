@@ -42,7 +42,7 @@ def _calendario(paquete):
     entregas, anterior = [], 0
     if paquete.videos:
         inicio = paquete.fecha_fin - timedelta(days=paquete.dias)
-        for fecha, acumulado in paquetes.fechas_entrega(paquetes.POR_CODIGO[paquete.plan], inicio):
+        for fecha, acumulado in paquetes.fechas_entrega(paquetes.POR_CODIGO[paquete.plan], inicio, paquete.dias):
             entregas.append((fecha, acumulado - anterior))
             anterior = acumulado
     entregas += [(compra.fecha_limite, compra.cantidad) for compra in paquete.extras_activas]
