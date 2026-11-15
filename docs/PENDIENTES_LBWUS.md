@@ -50,14 +50,17 @@ Los codigos LBW-xx y Dx son los del backlog y las decisiones grupales del 08-nov
   profesores, que no compran, hoy no aceptan nada, y la compra de videos extra no la repite porque exige un paquete
   ya comprado. Decidir con la abogada si también debe ir en el registro (4 formularios: alumno, profesor, apoderado
   y Google).
+- **Descarga de datos del alumno: decidido no hacerla (15-nov).** Las solicitudes de una copia se atienden a mano,
+  por soporte o por el correo de derechos, como dice la política de privacidad (sección 5). Retomar solo si la
+  abogada la exige.
 - Fuera de desarrollo: responsable del tratamiento, proveedores reales, respaldos, correo
   de derechos y plazos contables. Cuanto se conserva al seudonimizar una cuenta: con asesoria legal.
 
 ## En espera (solo si hace falta)
 - Sala de Jitsi privada con JWT: hoy es la sala publica `meet.jit.si` (LBW-28, D4).
 - Tope de reintentos para apoderados rechazados, si aparece abuso. Invitacion del adolescente tambien para el
-  tutor legal (hoy solo madre o padre; cambia textos legales). Observaciones del profesor en una futura descarga
-  de datos del alumno. Historial de personas que entran por dia (hoy solo la tarjeta de hoy). Ver D9.
+  tutor legal (hoy solo madre o padre; cambia textos legales). Observaciones del profesor en una descarga de datos
+  del alumno, si algun dia se hace. Historial de personas que entran por dia (hoy solo la tarjeta de hoy). Ver D9.
 
 ## Notas vigentes
 - Si cambia `SECRET_KEY`, lo cifrado con `alumnos/cifrado.py` sin clave propia (por ejemplo, las cuentas
