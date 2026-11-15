@@ -9,6 +9,7 @@
 {{ block.super }}
 <link rel="stylesheet" href="{% static 'alumnos/css/perfil_profesor.css' %}">
 <link rel="stylesheet" href="{% static 'resenas/resenas.css' %}">
+<link rel="stylesheet" href="{% static 'alumnos/css/reservas.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -62,11 +63,22 @@
     <section class="perfil-prof__bloque" aria-labelledby="perfil-sesiones">
         <h2 id="perfil-sesiones">Próximos horarios disponibles</h2>
         {% if proximas_sesiones %}
-        <ul class="perfil-prof__lista">
+        <ul class="horarios-lista">
             {% for sesion in proximas_sesiones %}
-            <li>
-                <strong>{{ sesion.clase.asignatura.nombre }}</strong>
-                <span>{{ sesion.fecha_hora_inicio|date:"d/m/Y" }} · {{ sesion.fecha_hora_inicio|time:"H:i" }} - {{ sesion.fecha_hora_fin|time:"H:i" }} hrs · {{ sesion.cupos_disponibles }} cupo{{ sesion.cupos_disponibles|pluralize }}</span>
+            <li class="horario horario--solo-info">
+                <div class="reserva-fecha" aria-hidden="true">
+                    <span class="reserva-fecha__dia">{{ sesion.fecha_hora_inicio|date:"D" }}</span>
+                    <span class="reserva-fecha__num">{{ sesion.fecha_hora_inicio|date:"j" }}</span>
+                    <span class="reserva-fecha__mes">{{ sesion.fecha_hora_inicio|date:"M" }}</span>
+                </div>
+                <div>
+                    <p class="horario__titulo">{{ sesion.fecha_hora_inicio|date:"l"|capfirst }} · {{ sesion.fecha_hora_inicio|date:"d/m/Y" }}</p>
+                    <p class="horario__meta">
+                        <span><i class="bi bi-clock" aria-hidden="true"></i> {{ sesion.fecha_hora_inicio|time:"H:i" }} - {{ sesion.fecha_hora_fin|time:"H:i" }} hrs</span>
+                        <span class="horario__cupos{% if sesion.cupos_disponibles <= 2 %} horario__cupos--pocos{% endif %}"><i class="bi bi-people-fill" aria-hidden="true"></i> {{ sesion.cupos_disponibles }} cupo{{ sesion.cupos_disponibles|pluralize }}</span>
+                        <span><i class="bi bi-journal-text" aria-hidden="true"></i> {{ sesion.clase.asignatura.nombre }}</span>
+                    </p>
+                </div>
             </li>
             {% endfor %}
         </ul>

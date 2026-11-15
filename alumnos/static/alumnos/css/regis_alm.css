@@ -23,12 +23,12 @@ body.dark-mode .registration-container {
 
 .registration-card {
     display: grid;
-    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
     background: #ffffff;
     border: 1px solid rgba(26, 18, 51, 0.10);
     border-radius: 24px;
     box-shadow: 0 1px 2px rgba(26, 18, 51, 0.04), 0 16px 40px rgba(26, 18, 51, 0.08);
-    max-width: 960px;
+    max-width: 1040px;
     width: 100%;
     overflow: hidden;
 }
@@ -168,6 +168,20 @@ body.dark-mode .registration-card {
     margin-bottom: 16px;
 }
 
+/* Campos de a dos para que el formulario no sea una columna de 10 filas. Solo se agrupan campos que ya son
+   vecinos en el HTML (nombre|rut, fecha|correo, telefono|genero, clave|confirmar): el orden de tabulacion no cambia. */
+#formAlumnosreg {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 16px;
+}
+
+#formAlumnosreg .form-group:has(#id_nivel_educacion),
+#formAlumnosreg .form-group:has(#id_direccion),
+#formAlumnosreg .btn-principal {
+    grid-column: 1 / -1;
+}
+
 .form-group label {
     display: block;
     margin-bottom: 7px;
@@ -283,6 +297,11 @@ body.dark-mode .registration-login-link a {
 
     .reg-brand {
         display: none;
+    }
+
+    /* La tarjeta queda angosta (480 px): campos de a uno */
+    #formAlumnosreg {
+        grid-template-columns: 1fr;
     }
 }
 

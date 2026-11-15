@@ -56,17 +56,24 @@ def ids_recomendados(calificaciones, entre, minimo=MIN_RESENAS_RECOMENDADO, tope
     return [id_profesor for id_profesor, _ in elegibles[:tope]]
 
 
+def distribucion_de(resenas):
+    """Barras del resumen, de 5 a 1 estrellas: ``[(5, cantidad), ..., (1, cantidad)]``. Sin consultas extra."""
+    return [(estrellas, sum(1 for r in resenas if r.puntaje == estrellas)) for estrellas in range(5, 0, -1)]
+
+
 def contexto_resenas(profesor, alumno_id=None, ruta_reporte=None):
     """Solo reseñas visibles, con su promedio. ``alumno_id`` marca las propias."""
     resenas = list(Resena.objects.visibles().de_profesor(profesor).select_related(*RELACIONADAS))
     for resena in resenas:
         resena.es_propia = resena.inscripcion.alumno_id == alumno_id
     total = len(resenas)
-    promedio = formatear_promedio(sum(r.puntaje for r in resenas) / total) if total else None
+    media = sum(r.puntaje for r in resenas) / total if total else None
     return {
         'resenas': resenas,
         'total_resenas': total,
-        'promedio': promedio,
+        'promedio': formatear_promedio(media) if total else None,
+        'promedio_estrellas': int(media + 0.5) if total else 0,  # estrellas llenas; round() de Python dejaria 4,5 en 4
+        'distribucion': distribucion_de(resenas),
         'ruta_reporte': ruta_reporte,
         'motivos': MOTIVOS,
     }
