@@ -1,0 +1,32 @@
+Recursos de terceros alojados en el propio sitio
+================================================
+
+Antes se pedian a servidores de internet (jsDelivr, Google Fonts) en cada visita. Eso mandaba la IP de cada
+persona a un tercero, dejaba el sitio sin iconos ni letras cuando la conexion fallaba y obligaba a permitir esos
+dominios en la politica de seguridad de contenido (lbwus/cabeceras.py). Ahora se sirven desde /static/vendor/.
+
+Que hay y de donde salio
+------------------------
+bootstrap-icons/   Bootstrap Icons 1.11.3, licencia MIT (LICENSE.txt).
+                   Archivos tal cual de https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/ : el CSS pide
+                   sus fuentes a fonts/ (junto a el), asi que no se debe mover ni renombrar nada.
+fuentes/           Outfit e Inter 5.3.0, licencia SIL OFL 1.1 (LICENSE-outfit.txt, LICENSE-inter.txt).
+                   Archivos .woff2 de https://cdn.jsdelivr.net/npm/@fontsource-variable/outfit@5.3.0/files/ y de
+                   .../inter@5.3.0/files/ (solo latin y latin-ext). fuentes.css lo escribimos nosotros: usa los
+                   nombres 'Outfit' e 'Inter' que ya piden las hojas de estilo y los rangos de caracteres originales.
+
+Para actualizar una version
+---------------------------
+1. Bajar los archivos nuevos de la misma ruta (cambiando el numero de version) y reemplazarlos.
+2. Cambiar la version en este archivo y en el encabezado de fuentes.css.
+3. Correr las pruebas: tests/test_recursos_locales.py revisa que ninguna plantilla ni hoja de estilo vuelva a pedir
+   iconos o letras a internet, y que cada url() de estos CSS apunte a un archivo que existe.
+
+Font Awesome
+------------
+Se cargaba en base.html y base_alumno.html, pero ninguna pantalla usa sus iconos (no hay clases fa-*): se quito.
+
+Lo que sigue viniendo de internet
+---------------------------------
+- SweetAlert2 (script, cdn.jsdelivr.net/npm/sweetalert2@11): no es un icono ni una letra; queda pendiente alojarlo.
+- correo_recuperacion_clave.html: la letra del correo de recuperar clave. Un correo no puede traer archivos propios.

@@ -17,10 +17,8 @@ TRANSBANK = ('https://webpay3gint.transbank.cl', 'https://webpay3g.transbank.cl'
 CSP = {
     'default-src': ("'self'",),
     'script-src': ("'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', JITSI),
-    'style-src': ("'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com',
-                  'https://fonts.googleapis.com'),
-    'font-src': ("'self'", 'data:', 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com',
-                 'https://fonts.gstatic.com'),
+    'style-src': ("'self'", "'unsafe-inline'"),  # iconos y letras son propios (static/vendor)
+    'font-src': ("'self'", 'data:'),
     'img-src': ("'self'", 'data:', 'https://commondatastorage.googleapis.com'),
     'media-src': ("'self'", 'https://commondatastorage.googleapis.com'),
     'connect-src': ("'self'", JITSI, 'wss://meet.jit.si'),
