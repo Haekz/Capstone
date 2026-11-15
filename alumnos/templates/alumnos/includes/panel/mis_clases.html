@@ -35,16 +35,16 @@
                                         {% endif %}
                                         {# Menores: cancelar y reprogramar lo hace su apoderado (fase 1c). #}
                                         {% if insc.puede_reprogramar and not es_menor %}
-                                        <button type="button" class="ap-btn-cancel" title="Reprogramar clase" aria-label="Reprogramar clase" style="border:none; cursor:pointer; background:transparent;"
+                                        <button type="button" class="reserva-accion" title="Reprogramar clase" aria-label="Reprogramar clase"
                                                 onclick="abrirModalHorarios({{ insc.clase.id_clase }}, '{{ insc.clase.asignatura.nombre|escapejs }}', '{{ insc.clase.profesor.user.first_name|escapejs }}', {{ insc.id_inscripcion }})">
-                                            <i class="bi bi-calendar2-week"></i>
+                                            <i class="bi bi-calendar2-week" aria-hidden="true"></i> Reprogramar
                                         </button>
                                         {% endif %}
                                         {% if insc.puede_cancelar and not es_menor %}
                                         <form method="POST" action="{% url 'cancelar_inscripcion' insc.id_inscripcion %}" onsubmit="return confirm('{% if insc.a_tiempo_para_cambiar %}¿Seguro que deseas cancelar tu inscripción? La clase vuelve a tu paquete.{% else %}Faltan menos de 4 horas: si cancelas, pierdes esta clase de tu paquete. ¿Cancelar igual?{% endif %}')" style="display:inline;">
                                             {% csrf_token %}
-                                            <button type="submit" class="ap-btn-cancel" title="Cancelar Inscripción" style="border:none; cursor:pointer; background:transparent;">
-                                                <i class="bi bi-trash"></i>
+                                            <button type="submit" class="reserva-accion reserva-accion--peligro" title="Cancelar Inscripción">
+                                                <i class="bi bi-x-circle" aria-hidden="true"></i> Cancelar
                                             </button>
                                         </form>
                                         {% endif %}
@@ -99,7 +99,9 @@
                             <div class="catalog-filter catalog-filter--check">{{ filtros.disponible }}{{ filtros.disponible.label_tag }}</div>
                             <button type="submit" class="btn-join-class btn-join-class--primary"><i class="bi bi-funnel"></i> Filtrar</button>
                             {% if hay_filtros %}<a href="{% url 'alumno_pag1' %}" class="catalog-filter-clear">Limpiar filtros</a>{% endif %}
+                            {{ filtros.profesor }}
                         </form>
+                        {% if profesor_filtrado %}<p class="catalog-filter-profesor"><i class="bi bi-person-check"></i> Mostrando las clases de {{ profesor_filtrado.nombre }}.</p>{% endif %}
                         <div class="classes-grid">
                             {% for c in clases_disponibles %}
                             <div class="class-item-card">

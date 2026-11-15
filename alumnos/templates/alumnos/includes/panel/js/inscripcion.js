@@ -1,6 +1,12 @@
 {# Parte del <script> principal de alumnos/Alumno_pag1.html: se incluye dentro de el (no es un archivo estatico). #}
         // ── MANDATORY PLAN ACCESS VERIFICATION & CLASS SCHEDULING ──
+        // Con un profesor ("Ver Horarios"): recarga el portal con ese filtro; con filtros en la URL el portal vuelve solo al
+        // catalogo (hay_filtros) y llega aqui sin id. Sin id: abre el catalogo tal cual.
         const requestClassAccess = (teacherId) => {
+            if (teacherId) {
+                window.location.href = "{% url 'alumno_pag1' %}?profesor=" + encodeURIComponent(teacherId);
+                return;
+            }
             switchView('view-my-classes');
             setTimeout(() => {
                 const targetEl = document.getElementById('catalogo-clases-seccion');

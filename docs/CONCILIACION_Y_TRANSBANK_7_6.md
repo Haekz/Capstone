@@ -41,7 +41,7 @@ La función de conexión a la pasarela `_tx()` implementa un candado estricto:
 Cada compra iniciada crea un `PaqueteClases` **pendiente**. Solo pasa a activo cuando Transbank aprueba. Campos de trazabilidad:
 - `buy_order`: orden única, `PQ` + 24 caracteres al azar (26 en total, el máximo de Transbank). Se busca por orden y no por sesión: Webpay puede volver sin la cookie.
 - `token_ws`: token que entrega Transbank al iniciar. Sirve para preguntarle el estado a Transbank si el alumno no vuelve.
-- `monto`, `plan`, `clases`, `tarifa`, `dias`: quedan fijos al comprar; si el profesor cambia su tarifa, lo ya vendido no cambia.
+- `monto`, `plan`, `clases`, `tarifa`, `dias`: quedan fijos al comprar; si cambian los precios de LBWUS, lo ya vendido no cambia.
 - `estado`: `pendiente`, `activa` o `rechazada`.
 - `codigo_autorizacion` y `fecha_pago`: los entrega Transbank al aprobar. **No se guardan los dígitos de la tarjeta.**
 - `creada` y `fecha_fin` (vigencia).
@@ -49,7 +49,7 @@ Cada compra iniciada crea un `PaqueteClases` **pendiente**. Solo pasa a activo c
 No existen `es_simulacion` ni `detalle_carrito`: el ambiente (prueba o real) lo define la configuración, y cada compra es un solo paquete. El `session_id` que pide Transbank se genera al iniciar (`S` + 16 caracteres) y no se guarda.
 
 ### Mitigación de Vulnerabilidades de Pago
-1. **Zero Trust / Manipulación de Montos (*Price Tampering*):** `comprar_paquete` ignora cualquier monto, precio o cantidad de clases que llegue del navegador. Recalcula el precio en el servidor con `alumnos/paquetes.py` (plan + tarifa del profesor), única fuente de precios.
+1. **Zero Trust / Manipulación de Montos (*Price Tampering*):** `comprar_paquete` ignora cualquier monto, precio o cantidad de clases que llegue del navegador. Recalcula el precio en el servidor con `alumnos/paquetes.py` (plan + precio fijo de LBWUS), única fuente de precios.
 2. **Validación Cruzada en Callback (`confirmacion` → `registrar_respuesta`):** se aprueba solo con `response_code == 0`, `status == 'AUTHORIZED'` **y** `amount` igual al monto del paquete de esa orden. Una orden desconocida no activa nada.
 3. **Idempotencia y Replay:** solo se tocan paquetes pendientes. Un retorno repetido llama de nuevo a `commit()` (Transbank lo rechaza), pero no cambia lo ya resuelto: un rechazado no se reactiva, un activo no extiende su vigencia ni pisa su código de autorización.
 4. **Anulaciones y retornos inválidos:** si llega `TBK_TOKEN` (el alumno anuló en Webpay) se muestra "Pago Anulado", no se llama a `commit()` y el paquete queda pendiente: **no hay estado `anulada`**. Si llegan `token_ws` y `TBK_TOKEN` juntos (formulario inválido) tampoco se confirma, como indica la guía de Transbank.
@@ -62,14 +62,14 @@ No existen `es_simulacion` ni `detalle_carrito`: el ambiente (prueba o real) lo 
 ### Reglas Económicas Oficiales (`alumnos/paquetes.py`)
 - **Comisión de Plataforma LBWUS:** **15 % IVA incluido** sobre lo pagado por el alumno. El IVA contenido (19 %) se calcula con `iva_incluido()`.
 - **Pago al profesor:** el **85 %** restante (`pago_profesor()`).
-- **Tarifa por clase:** la fija cada profesor entre $10.000 y $50.000, de a $1.000. La tarifa base de referencia es $15.000.
-- **Precio del paquete:** clases × tarifa con el descuento del plan, redondeado a $1.000. Con la tarifa base:
+- **Precio por clase:** lo fija LBWUS, igual con todos los profesores: **$15.990** la clase suelta (`TARIFA`, decidido 14-nov-2026). El profesor no lo elige.
+- **Precio del paquete:** clases × $15.990 con el descuento del plan, al número terminado en $990 más cercano:
 
 | Plan | Clases | Vigencia | Total | LBWUS (15 %) | Profesor (85 %) |
 |---|---|---|---|---|---|
-| Flexible | 1 | 30 días | $15.000 | $2.250 | $12.750 |
-| Progreso | 4 | 60 días | $59.000 | $8.850 | $50.150 |
-| Intensivo | 8 | 90 días | $116.000 | $17.400 | $98.600 |
+| Flexible | 1 | 30 días | $15.990 | $2.399 | $13.591 |
+| Progreso | 4 | 60 días | $62.990 | $9.449 | $53.541 |
+| Intensivo | 8 | 90 días | $123.990 | $18.599 | $105.391 |
 
 No hay tabla de desglose (`DesgloseOperacion` no existe): comisión, IVA y pago al profesor se calculan cada vez con las funciones de `alumnos/paquetes.py`, para tener una sola fuente.
 
@@ -78,7 +78,7 @@ No hay tabla de desglose (`DesgloseOperacion` no existe): comisión, IVA y pago 
 2. **Excepción acordada (02-nov):** si el alumno cancela con menos de 4 horas, la clase se le paga igual al profesor.
 3. **Saldos del profesor** (`calcular_saldos`): `total_ganado`, `disponible` (su 85 % menos retiros aprobados, pagados y en trámite) y `pendiente` (comisión de la plataforma más lo que está en trámite).
 4. **Retiros:** mínimo de $10.000 (`liquidacion.MINIMO`); el saldo se acumula hasta alcanzarlo.
-5. **Panel del admin** (`admin_portal/metricas.finanzas`): `cobrado`, `comision_estimada`, `ganancia` (comisión de las clases ya dictadas), `por_dictar`, `saldo_profesores`, `retiros_pagados` y `retiros_pendientes`.
+5. **Panel del admin** (`admin_portal/metricas.finanzas`): `cobrado`, `comision_estimada`, `ganancia` (comisión de las clases ya dictadas y de los videos ya compartidos), `por_dictar` (clases por dictar y videos por entregar), `saldo_profesores`, `retiros_pagados` y `retiros_pendientes`. Los videos (agregado y extras pagados) cuentan desde el 13-nov (B1); lo devuelto por videos no entregados se resta de lo cobrado.
 
 ---
 

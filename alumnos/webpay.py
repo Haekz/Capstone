@@ -102,8 +102,14 @@ def iniciar_compra_paquete(request, alumno_id, al_crear=None, vinculo=None):
     if not (plan and profesor):
         return redirect('planes')
 
-    monto = paquetes.precio(plan, profesor.tarifa)
+    monto = paquetes.precio(plan)
     con_videos = request.POST.get('videos') == '1'  # el navegador solo dice si lo quiere; el precio es del servidor
+    if con_videos:
+        try:
+            videos_extra.exigir_a_la_venta()  # sin MongoDB no se cobra un agregado que nadie podria entregar
+        except ValidationError as error:
+            messages.error(request, error.messages[0])
+            return redirect('planes')
     monto_videos = paquetes.precio_agregado(plan) if con_videos else 0
     # Unico (26 caracteres, el maximo de Transbank): con un numero corto al azar, un
     # pedido abandonado podia compartir orden con una compra nueva y activarse gratis.
@@ -117,7 +123,7 @@ def iniciar_compra_paquete(request, alumno_id, al_crear=None, vinculo=None):
     with transaction.atomic():  # paquete y registro del apoderado: ambos o ninguno
         paquete = PaqueteClases.objects.create(
             alumno_id=alumno_id, profesor=profesor, plan=plan.codigo,
-            clases=plan.clases, tarifa=profesor.tarifa, monto=monto, dias=plan.vigencia_dias,
+            clases=plan.clases, tarifa=paquetes.TARIFA, monto=monto, dias=plan.vigencia_dias,
             videos=plan.videos if con_videos else 0, monto_videos=monto_videos,
             buy_order=buy_order, token_ws=response['token'],
         )

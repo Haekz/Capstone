@@ -124,9 +124,7 @@ class CompraCsrfTests(Escenario):
 
 class PlanesJsonTests(Escenario):
 
-    def test_el_json_de_planes_usa_la_tarifa_del_profesor(self):
+    def test_el_json_de_planes_tiene_los_precios_fijos(self):
         """Riesgo: lo que muestra el sitio no es lo que se cobra (planes: 'todo precio sale de paquetes.py')."""
-        self.profe.tarifa = 20000
-        self.profe.save()
         r = self.client.get(reverse('planes'), {'profesor': self.profe.id_profesor, 'format': 'json'})
-        self.assertEqual([p['precio_total'] for p in r.json()['planes']], [20000, 79000, 155000])
+        self.assertEqual([p['precio_total'] for p in r.json()['planes']], [15990, 62990, 123990])

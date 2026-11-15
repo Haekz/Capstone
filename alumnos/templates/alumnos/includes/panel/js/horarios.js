@@ -1,5 +1,24 @@
 {# Parte del <script> principal de alumnos/Alumno_pag1.html: se incluye dentro de el (no es un archivo estatico). #}
         // ── GESTIÓN DE MODAL DE HORARIOS Y RESERVAS DE SESIONES ──
+        // "16/11/2026" -> {dia: 'lun', num: '16', mes: 'nov', largo: 'Lunes · 16/11/2026'}, ya escapado para el html.
+        // Mismo formato que el perfil del profesor y "Mis clases" (Sesión: dd/mm/aaaa).
+        function partesDeFecha(fechaDdMmAaaa) {
+            const [d, m, a] = String(fechaDdMmAaaa).split('/').map(Number);
+            const fecha = new Date(a, m - 1, d);
+            if (Number.isNaN(fecha.getTime())) {
+                const safeTal = escaparHtml(fechaDdMmAaaa);
+                return {dia: '', num: '', mes: '', largo: safeTal};
+            }
+            const parte = opciones => fecha.toLocaleDateString('es-CL', opciones).replace('.', '');
+            const diaLargo = parte({weekday: 'long'});
+            return {
+                dia: escaparHtml(parte({weekday: 'short'})),
+                num: String(d),
+                mes: escaparHtml(parte({month: 'short'})),
+                largo: escaparHtml(`${diaLargo.charAt(0).toUpperCase() + diaLargo.slice(1)} · ${fechaDdMmAaaa}`),
+            };
+        }
+
         // idInscripcion: modo "mover reserva" (reprogramar) en vez de reservar una nueva.
         function abrirModalHorarios(idClase, nombreAsignatura, nombreProfesor, idInscripcion = null) {
             const modal = document.getElementById('modal-horarios-sesiones');
@@ -25,47 +44,48 @@
                     loadingEl.style.display = 'none';
                     if (data.success && data.sesiones && data.sesiones.length > 0) {
                         listaEl.style.display = 'flex';
-                        listaEl.innerHTML = data.sesiones.map(s => {
-                            const cuposColor = s.cupos_disponibles <= 2 ? '#ef4444' : '#10b981';
-const safeIdSesion = Number(s.id_sesion) || 0;
+                        // Lo que vale para todos los horarios se dice una vez, arriba (no en cada tarjeta).
+                        const primera = data.sesiones[0];
+                        const modalidad = String(primera.modalidad || '');
+                        const precioUnico = new Set(data.sesiones.map(s => s.precio_formateado)).size === 1;
+                        const safeNota = [
+                            idInscripcion ? 'Reprogramar no usa otra clase de tu paquete' : 'Cada reserva usa 1 clase de tu paquete',
+                            `${escaparHtml(modalidad.charAt(0).toUpperCase() + modalidad.slice(1))} · ${Number(primera.duracion_minutos) || 0} min`,
+                            precioUnico ? escaparHtml(primera.precio_formateado) : '',
+                        ].filter(Boolean).join(' · ');
+                        listaEl.innerHTML = `<p class="horarios-nota"><i class="bi bi-info-circle" aria-hidden="true"></i>${safeNota}</p>` + data.sesiones.map(s => {
+                            const safeIdSesion = Number(s.id_sesion) || 0;
                             const safeAsignatura = escaparHtml(s.asignatura);
                             const safeFecha = escaparHtml(s.fecha_formateada);
                             const safeHora = escaparHtml(s.hora_formateada);
-                            const safeModalidad = escaparHtml(s.modalidad).toUpperCase();
-                            const safePrecio = escaparHtml(s.precio_formateado);
+                            const safePrecio = precioUnico ? '' : ` · ${escaparHtml(s.precio_formateado)}`;
                             const safeDuracion = Number(s.duracion_minutos) || 0;
                             const safeCupos = Number(s.cupos_disponibles) || 0;
+                            const safePartes = partesDeFecha(s.fecha_formateada);
+                            const pocos = safeCupos <= 2 ? ' horario__cupos--pocos' : '';
 
-                            const btnHtml = s.ya_inscrito 
-                                ? `<button class="ap-btn-enrolled" disabled style="padding: 8px 16px; font-size: 0.85rem;"><i class="bi bi-check-circle-fill"></i> Ya reservado</button>`
+                            const btnHtml = s.ya_inscrito
+                                ? `<button class="ap-btn-enrolled" disabled><i class="bi bi-check-circle-fill" aria-hidden="true"></i> Ya reservado</button>`
                                 : idInscripcion
-                                ? `<button class="btn-principal btn-mover-sesion" data-id="${safeIdSesion}" data-asig="${safeAsignatura}" data-fechahora="${safeFecha} ${safeHora}" data-inscripcion="${idInscripcion}" style="padding: 8px 16px; font-size: 0.85rem;"><i class="bi bi-calendar2-check ap-mr-4"></i>Mover a este horario</button>`
-                                : `<button class="btn-principal btn-reservar-sesion" data-id="${safeIdSesion}" data-asig="${safeAsignatura}" data-fechahora="${safeFecha} ${safeHora}" style="padding: 8px 16px; font-size: 0.85rem;"><i class="bi bi-bookmark-plus-fill ap-mr-4"></i>Reservar este horario</button>`;
+                                ? `<button class="btn-principal btn-mover-sesion" data-id="${safeIdSesion}" data-asig="${safeAsignatura}" data-fechahora="${safeFecha} ${safeHora}" data-inscripcion="${idInscripcion}"><i class="bi bi-calendar2-check" aria-hidden="true"></i> Mover a este horario</button>`
+                                : `<button class="btn-principal btn-reservar-sesion" data-id="${safeIdSesion}" data-asig="${safeAsignatura}" data-fechahora="${safeFecha} ${safeHora}"><i class="bi bi-bookmark-plus-fill" aria-hidden="true"></i> Reservar este horario</button>`;
 
                             return `
-                                <div class="sesion-item-card" style="border: 1px solid var(--line); background: var(--white); border-radius: 12px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
-                                    <div style="display: flex; flex-direction: column; gap: 4px;">
-                                        <div style="display: flex; align-items: center; gap: 10px;">
-                                            <span style="font-weight: 700; font-size: 1.05rem; color: var(--text);">
-                                                <i class="bi bi-calendar3" style="color: var(--primary); margin-right: 6px;"></i>${safeFecha}
-                                            </span>
-                                            <span class="class-status-badge class-status-badge--modality">${safeModalidad}</span>
-                                        </div>
-                                        <div style="font-size: 0.88rem; color: var(--text-light); display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-                                            <span><i class="bi bi-clock ap-mr-4"></i>${safeHora} (${safeDuracion} min)</span>
-                                            <span style="color: ${cuposColor}; font-weight: 600;">
-                                                <i class="bi bi-people-fill ap-mr-4"></i>${safeCupos} cupo${safeCupos === 1 ? '' : 's'} disponible${safeCupos === 1 ? '' : 's'}
-                                            </span>
-                                        </div>
-<div style="font-size: 0.9rem; font-weight: 700; color: var(--primary); margin-top: 2px;">
-                                            ${idInscripcion ? 'No usa otra clase de tu paquete' : 'Usa 1 clase de tu paquete'}
-                                        </div>
+                                <article class="horario sesion-item-card${s.ya_inscrito ? ' horario--reservado' : ''}">
+                                    <div class="reserva-fecha" aria-hidden="true">
+                                        <span class="reserva-fecha__dia">${safePartes.dia}</span>
+                                        <span class="reserva-fecha__num">${safePartes.num}</span>
+                                        <span class="reserva-fecha__mes">${safePartes.mes}</span>
                                     </div>
-                                    <div style="display: flex; align-items: center; gap: 12px;">
-                                        <span style="font-weight: 700; font-size: 1rem; color: var(--text);">${safePrecio}</span>
-                                        ${btnHtml}
+                                    <div>
+                                        <p class="horario__titulo">${safePartes.largo}</p>
+                                        <p class="horario__meta">
+                                            <span><i class="bi bi-clock" aria-hidden="true"></i> ${safeHora} (${safeDuracion} min)${safePrecio}</span>
+                                            <span class="horario__cupos${pocos}"><i class="bi bi-people-fill" aria-hidden="true"></i> ${safeCupos} cupo${safeCupos === 1 ? '' : 's'} disponible${safeCupos === 1 ? '' : 's'}</span>
+                                        </p>
                                     </div>
-                                </div>
+                                    <div class="horario__accion">${btnHtml}</div>
+                                </article>
                             `;
                         }).join('');
 

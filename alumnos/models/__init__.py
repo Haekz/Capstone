@@ -7,7 +7,7 @@ from .clases import (
     SesionClaseQuerySet,
 )
 from .pagos import PaqueteClases, PaqueteClasesQuerySet, Suscripcion, SuscripcionQuerySet
-from .videos import CompraVideosExtra, DevolucionVideos, VideoCompartido
+from .videos import CompraVideosExtra, DevolucionVideos, ReembolsoTransbank, VideoCompartido
 from .especializaciones import Especializacion
 from .reportes import Reporte
 from .retiros import TIPOS_CUENTA, Banco, CuentaBancaria, SolicitudRetiro

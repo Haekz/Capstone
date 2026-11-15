@@ -3,9 +3,8 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
-from django.core.validators import MaxValueValidator, MinValueValidator
 
-from .. import liquidacion, paquetes
+from .. import liquidacion
 
 
 class Genero(models.Model):
@@ -115,12 +114,7 @@ class Profesor(models.Model):
     titulo_estado = models.CharField(max_length=12, choices=ESTADOS_TITULO, default=TITULO_PENDIENTE)
     titulo_observacion = models.CharField(max_length=200, blank=True)
     titulo_actualizado = models.DateTimeField(null=True, blank=True)
-    # Valor de una clase de 60 min; de aqui salen los precios de los paquetes.
-    tarifa = models.PositiveIntegerField(
-        default=paquetes.TARIFA_BASE,
-        validators=[MinValueValidator(paquetes.TARIFA_MIN), MaxValueValidator(paquetes.TARIFA_MAX)],
-        help_text='Valor de una clase de 60 minutos, en pesos.',
-    )
+    # Sin tarifa propia: el precio de una clase lo fija LBWUS (alumnos/paquetes.py, TARIFA).
     # Ciclo de pago (alumnos/liquidacion.py). Un cambio rige desde frecuencia_nueva_desde.
     frecuencia_pago = models.CharField(max_length=10, choices=liquidacion.FRECUENCIAS, default=liquidacion.SEMANAL)
     frecuencia_nueva = models.CharField(max_length=10, choices=liquidacion.FRECUENCIAS, blank=True, default='')

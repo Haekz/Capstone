@@ -18,18 +18,15 @@ class PreciosPlanesTests(Escenario):
 
     def test_lo_que_muestra_la_pagina_es_lo_que_se_cobra(self, mock_tx):
         mock_tx.return_value.create.return_value = {'url': 'https://webpay.test/', 'token': 'tok'}
-        for tarifa in (15000, 20000, 33000, 10000, 50000):
-            self.profe.tarifa = tarifa
-            self.profe.save()
-            self.entrar(RUT_ANA)
-            pagina = self.client.get(reverse('planes'), {'profesor': self.profe.id_profesor})
+        self.entrar(RUT_ANA)
+        for profesor in (self.profe, self.otro):  # mismo precio con todos
+            pagina = self.client.get(reverse('planes'), {'profesor': profesor.id_profesor})
             for plan in paquetes.PLANES:
-                with self.subTest(tarifa=tarifa, plan=plan.codigo):
-                    self.assertContains(pagina, f'<span class="plan-price">{clp(paquetes.precio(plan, tarifa))}</span>')
+                with self.subTest(profesor=profesor.nombre, plan=plan.codigo):
+                    self.assertContains(pagina, f'<span class="plan-price">{clp(paquetes.precio(plan))}</span>')
                     self.client.post(reverse('comprar_paquete'),
-                                     {'plan': plan.codigo, 'profesor': self.profe.id_profesor})
-                    self.assertEqual(mock_tx.return_value.create.call_args[0][2],
-                                     paquetes.precio(plan, tarifa))
+                                     {'plan': plan.codigo, 'profesor': profesor.id_profesor})
+                    self.assertEqual(mock_tx.return_value.create.call_args[0][2], paquetes.precio(plan))
 
     def test_el_portal_ya_no_ofrece_precios_viejos(self, mock_tx):
         self.entrar(RUT_ANA)

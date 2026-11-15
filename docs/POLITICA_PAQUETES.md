@@ -6,30 +6,26 @@ Las cifras salen de `alumnos/paquetes.py`, que es la única fuente de precios (p
 > **Cómo leerlo.** Las secciones 1 a 5 describen el sistema **tal como está hoy**. La sección 6 recoge las **decisiones del equipo (26-oct-2026)** y lo que falta construir para cumplirlas. La sección 7 es el flujo de caja con esas decisiones.
 > La sección 6 sigue la **versión consolidada del 26-oct-2026**, propuesta integral que espera la aprobación del equipo. Nada de este documento certifica cumplimiento legal ni autoriza a recibir pagos reales: antes hay que completar las validaciones de la sección 8.
 
-## 1. Precio según tutor
+## 1. Precio fijo de LBWUS
 
-- Cada profesor define su **tarifa por clase** desde su panel: entre $10.000 y $50.000, en múltiplos de $1.000. Si no define una, es $15.000 (`validar_tarifa`, `Profesor.tarifa`).
-- Precio del paquete = `clases × tarifa × (1 − descuento)`, redondeado al $1.000 más cercano (las mitades suben).
-- La tarifa, el monto y las clases **quedan fijos al comprar**. Si el profesor cambia su tarifa, solo afecta a ventas futuras (`PaqueteClases`).
+> **Decisión del 14-nov-2026:** el precio lo fija LBWUS, igual con todos los profesores. El profesor ya no define tarifa (se quitó `Profesor.tarifa`, migración `0038`). Las tablas de las secciones 7 en adelante que usan $15.000 / $59.000 / $116.000 son el análisis hecho con los precios anteriores.
 
-| Plan | Clases | Descuento | Vigencia | Precio con tarifa base ($15.000) |
-|---|---|---|---|---|
-| Flexible | 1 | 0 | 30 días | $15.000 |
-| Progreso | 4 | 1/60 | 60 días | $59.000 |
-| Intensivo | 8 | 1/30 | 90 días | $116.000 |
+- Una clase suelta cuesta **$15.990** (`paquetes.TARIFA`), con cualquier profesor.
+- Precio del paquete = `clases × TARIFA × (1 − descuento)`, llevado al número terminado en **$990** más cercano (`paquetes.precio`).
+- El precio por clase de un paquete se redondea hacia abajo (`monto // clases`): sobran $2 del Progreso y $6 del Intensivo, que no se asignan a ninguna clase.
+- La tarifa, el monto y las clases **quedan fijos al comprar**. Si cambian los precios, solo afecta a ventas futuras (`PaqueteClases`).
+
+| Plan | Clases | Descuento | Vigencia | Precio | Por clase |
+|---|---|---|---|---|---|
+| Flexible | 1 | 0 | 30 días | $15.990 | $15.990 |
+| Progreso | 4 | 1/60 | 60 días | $62.990 | $15.747 (1,5%) |
+| Intensivo | 8 | 1/30 | 90 días | $123.990 | $15.498 (3,1%) |
 
 ## 2. Descuentos
 
-- El descuento lo fija el **plan**, no el profesor, y hoy se aplica a todos los profesores. No existen cupones.
+- El descuento lo fija el **plan**, no el profesor, y se aplica a todos los profesores. No existen cupones.
 - Es voluntario para el alumno: lo obtiene solo si elige un paquete mayor.
-- **Observación:** el "1,7% / 3,3%" es exacto solo con la tarifa base. Como el precio se redondea a $1.000, el descuento real cambia con la tarifa:
-
-| Tarifa | Progreso | Intensivo |
-|---|---|---|
-| $10.000 | 2,5% | 3,8% |
-| $15.000 | 1,7% | 3,3% |
-| $20.000 | 1,2% | 3,1% |
-| $50.000 | 1,5% | 3,2% |
+- Por el redondeo a $990, el descuento real es **1,5%** (Progreso) y **3,1%** (Intensivo), no el 1/60 y 1/30 exactos.
 
 ## 3. Vigencia
 
@@ -46,7 +42,7 @@ Las cifras salen de `alumnos/paquetes.py`, que es la única fuente de precios (p
 
 ## 5. Devoluciones y renovación automática (estado actual)
 
-**Devoluciones en dinero: no están implementadas.** Cancelar devuelve la clase al paquete, no el dinero. No hay flujo de reembolso ni reversa en Webpay en el código.
+**Devoluciones en dinero de clases: no están implementadas, y se decidió (13-nov) que por ahora no se hacen.** Los paquetes son una compra: la clase se puede reagendar o cancelar con la anticipación permitida y vuelve al paquete como crédito, pero no se devuelve dinero. Esto choca con los puntos 1 y 3 de la sección 6 (devolución total o proporcional de lo no usado) y con un posible derecho de retracto: queda para la **revisión jurídica** (Ley N.º 19.496) antes de cobrar con tarjetas reales. **Sí existe** la devolución de dinero por **videos no entregados** (sección de videos más abajo), con reembolso automático por Webpay (`Transaction.refund`).
 
 **Sin renovación automática: se cumple.** Evidencia:
 - Cada compra es un pago Webpay Plus explícito. No se guarda la tarjeta ni se usa inscripción OneClick.
@@ -223,5 +219,5 @@ Reglas en `alumnos/paquetes.py` y `alumnos/videos_extra.py`; pruebas en `tests/t
 - **Atrasos**: aviso al profesor 3 días antes de cada fecha; si pasa la fecha, se abre un ticket automático para soporte y ese video no se paga hasta que lo comparta. La última fecha es 7 días antes del vencimiento del paquete, para que un atraso alcance a corregirse (09-nov).
 - **Reclamos** (09-nov): el alumno o su apoderado reporta el video desde el reproductor (el menor no abre tickets). Soporte lo ve desde el ticket y, si corresponde, lo **retira**: el alumno deja de verlo, al profesor **se le descuenta** y se libera el cupo para que comparta el correcto (nunca el mismo). Si ya lo había cobrado, se descuenta de lo próximo que gane.
 - **Menores**: el agregado lo compra el apoderado, igual que el paquete. El apoderado **revisa cada video y lo habilita** antes de que su estudiante lo vea, y puede quitar la habilitación (decidido 09-nov). Se le avisa cuando el profesor comparte uno.
-- **Devolución por videos no entregados** (decidido 09-nov): soporte la registra desde el ticket de Videos (solo el agente asignado) y el dinero se devuelve **a mano**; el sistema guarda el caso y soporte lo marca "devuelta" una sola vez. Se devuelve lo pagado por cada video (el promedio entre el agregado y los extra) por los que faltan: lo contratado, menos lo compartido y lo ya devuelto. El monto lo calcula el servidor. Lo devuelto sale de lo que el profesor debe entregar (no puede compartirlo y cobrarlo dos veces ni cuenta como atraso) y no cambia lo que cobra por lo que sí entregó. Se le cuenta al alumno en el ticket y se avisa al profesor.
-- **Pendiente**: plan de MongoDB Atlas para producción (en modo prueba basta el actual), la reversa automática en Webpay (hoy el dinero se devuelve a mano) y la devolución por clases en vivo que el profesor no dicta (aparte de los videos).
+- **Devolución por videos no entregados** (decidido 09-nov; reembolso automático y aprobación, 13-nov): soporte la registra desde el ticket de Videos (solo el agente asignado). El sistema intenta devolver **por Webpay, por el mismo medio de pago** (reversa dentro de las 3 horas y por el total; después, anulación, hasta 90 días desde la venta; el parcial en crédito solo vale sin cuotas o con cuotas emisor). El agregado va dentro de la transacción del paquete y cada extra en la suya: el monto se reparte entre ellas sin pasarse de lo pagado en cada una, y cada reembolso queda registrado **antes** de llamar a Transbank para no devolver dos veces. Si Transbank rechaza, soporte ve el motivo y puede reintentar; si no se puede, **soporte pide la aprobación del administrador** para transferir a mano (opción A: el segundo control es solo para la transferencia manual) y recién entonces la marca "devuelta", una sola vez. Se devuelve lo pagado por cada video (el promedio entre el agregado y los extra) por los que faltan: lo contratado, menos lo compartido y lo ya devuelto. El monto lo calcula el servidor. Lo devuelto sale de lo que el profesor debe entregar (no puede compartirlo y cobrarlo dos veces ni cuenta como atraso) y no cambia lo que cobra por lo que sí entregó. Se le cuenta al alumno en el ticket y se avisa al profesor. **Requisito externo:** Transbank debe habilitar la anulación por API para el comercio.
+- **Pendiente**: plan de MongoDB Atlas para producción (en modo prueba basta el actual) y la devolución por clases en vivo (decidido 13-nov: no por ahora, ver sección 5).

@@ -8,7 +8,7 @@
                         <div class="stat-card-inner">
                             <div class="stat-info">
                                 <div class="stat-value">{{ finanzas.cobrado|clp }}</div>
-                                <div class="stat-label">Cobrado (pagos aprobados)</div>
+                                <div class="stat-label">Cobrado (pagos aprobados, sin lo devuelto)</div>
                             </div>
                             <div class="stat-icon" style="margin-left:auto;"><i class="bi bi-wallet2" aria-hidden="true"></i></div>
                         </div>
@@ -17,7 +17,7 @@
                         <div class="stat-card-inner">
                             <div class="stat-info">
                                 <div class="stat-value">{{ finanzas.comision_estimada|clp }}</div>
-                                <div class="stat-label">Comisión estimada (15% de lo cobrado, si se dicta todo)</div>
+                                <div class="stat-label">Comisión estimada (15% de clases y 25% de videos, si se entrega todo)</div>
                             </div>
                             <div class="stat-icon" style="margin-left:auto;"><i class="bi bi-calculator" aria-hidden="true"></i></div>
                         </div>
@@ -26,7 +26,7 @@
                         <div class="stat-card-inner">
                             <div class="stat-info">
                                 <div class="stat-value">{{ finanzas.ganancia|clp }}</div>
-                                <div class="stat-label">Ganancia LBWUS (15% de clases dictadas)</div>
+                                <div class="stat-label">Ganancia LBWUS (15% de clases dictadas y 25% de videos compartidos)</div>
                             </div>
                             <div class="stat-icon" style="margin-left:auto;"><i class="bi bi-graph-up-arrow" aria-hidden="true"></i></div>
                         </div>
@@ -35,7 +35,7 @@
                         <div class="stat-card-inner">
                             <div class="stat-info">
                                 <div class="stat-value">{{ finanzas.por_dictar|clp }}</div>
-                                <div class="stat-label">Por dictar (aún no es ingreso)</div>
+                                <div class="stat-label">Por dictar o entregar (aún no es ingreso)</div>
                             </div>
                             <div class="stat-icon" style="margin-left:auto;"><i class="bi bi-hourglass-split" aria-hidden="true"></i></div>
                         </div>

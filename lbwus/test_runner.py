@@ -8,6 +8,8 @@
 - Hasher MD5: crear miles de usuarios con PBKDF2 hacia lenta la suite. Solo en pruebas;
   ninguna verifica el algoritmo (PR #107, Franco).
 - ``MEDIA_ROOT`` temporal y borrado al final: las pruebas no ensucian ``media/`` (PR #107).
+- ``VIDEOS_A_LA_VENTA`` prendida: en Railway la da MONGODB_URI; aqui Mongo es mongomock (comunidad/tests/base.py).
+  tests.test_videos_sin_mongo la apaga para probar que sin Mongo no se cobran videos.
 """
 
 import shutil
@@ -32,6 +34,7 @@ class RunnerLBWUS(DiscoverRunner):
             DOCUMENTOS_CLAVE=settings.DOCUMENTOS_CLAVE or Fernet.generate_key().decode(),
             PASSWORD_HASHERS=['django.contrib.auth.hashers.MD5PasswordHasher'],
             MEDIA_ROOT=self._media,
+            VIDEOS_A_LA_VENTA=True,
         )
         self._ajustes.enable()
 

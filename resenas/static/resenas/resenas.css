@@ -1,78 +1,288 @@
-/* SCRUM-36: reseñas verificadas. Complementa perfil_profesor.css y usa sus tokens (modo oscuro incluido). */
+/* Reseñas verificadas: perfil del profesor, "Mis reseñas" y calificar (página y diálogo del panel).
+   Solo usa los tokens que definen el portal del alumno y el docente (tests/test_calificar_en_portal.py lo vigila):
+   claro y oscuro salen solos. Cada pieza existe una vez y la comparten todas las pantallas. */
+.resenas,
+.resena-form,
+.dialogo-calificar {
+    --estrella: #d97706; /* el ámbar de siempre: >= 3:1 en fondo claro y oscuro */
+    --estrella-vacia: color-mix(in srgb, var(--text-light) 45%, transparent);
+    --pista: color-mix(in srgb, var(--text-light) 18%, transparent); /* fondo de las barras: tenue, no compite */
+}
+
+/* Texto solo para lectores de pantalla */
+.resenas-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ── Estrellas (solo lectura) ──
+   '.resena-lista .resena-estrellas' gana a reglas de lista como '.perfil-prof__lista span' (0,1,1), que ya las
+   dejaron grises una vez. Es el mismo ámbar de --estrella, escrito tal cual porque la prueba de regresión lo exige. */
+.resena-estrellas,
+.resena-lista .resena-estrellas {
+    display: inline-flex;
+    gap: 2px;
+    line-height: 1;
+    color: #d97706;
+}
+
+.resena-estrellas .bi-star {
+    color: var(--estrella-vacia);
+}
+
+/* ── Resumen: nota grande + barras por puntaje ── */
 .resena-resumen {
-    margin-bottom: 14px;
-    font-size: 1.05rem;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 20px 32px;
+    margin-bottom: 8px;
+    padding: 20px 24px;
+    border-radius: var(--r-md);
+    background: var(--primary-soft);
 }
 
-.resena-resumen .bi-star-fill,
-.resena-lista .resena-estrellas, /* gana a '.perfil-prof__lista span' (0,1,1) del perfil, que las dejaba grises */
-.resena-estrellas {
-    color: #d97706; /* contraste >= 3:1 en fondo claro y oscuro */
+.resena-resumen__nota {
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+    min-width: 140px;
+    padding-right: 32px;
+    border-right: 1px solid var(--line);
+    text-align: center;
 }
 
-.resena-lista li {
-    display: block; /* perfil-prof__lista usa flex en una fila; aquí cada reseña se apila */
+.resena-resumen__promedio {
+    margin: 0;
+}
+
+.resena-resumen__promedio strong {
+    font-size: 2.75rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.02em;
+}
+
+.resena-resumen__nota .resena-estrellas {
+    font-size: 1.1rem;
+}
+
+.resena-resumen__total {
+    margin: 0;
+    color: var(--text-light);
+    font-size: 0.85rem;
+}
+
+.resena-resumen__barras {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.resena-resumen__barras li {
+    display: grid;
+    grid-template-columns: 2.5em 1fr 2ch;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.85rem;
+}
+
+.resena-resumen__etiqueta {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--text-light);
+    font-weight: 600;
+}
+
+.resena-resumen__etiqueta .bi {
+    color: var(--estrella);
+    font-size: 0.75rem;
+}
+
+.resena-resumen progress {
+    width: 100%;
+    height: 8px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--pista);
+    appearance: none;
+    overflow: hidden;
+}
+
+.resena-resumen progress::-webkit-progress-bar {
+    background: var(--pista);
+}
+
+.resena-resumen progress::-webkit-progress-value {
+    border-radius: 999px;
+    background: var(--estrella);
+}
+
+.resena-resumen progress::-moz-progress-bar {
+    border-radius: 999px;
+    background: var(--estrella);
+}
+
+.resena-resumen__cantidad {
+    color: var(--text-light);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ── Cada reseña ── */
+.resena-lista {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.resena {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    gap: 14px;
+    padding: 20px 0;
+    border-top: 1px solid var(--line);
+}
+
+.resena:first-child {
+    border-top: 0;
+}
+
+.resena__avatar {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--primary-soft);
+    color: var(--text);
+    font-weight: 700;
+}
+
+.resena__cuerpo {
+    min-width: 0;
 }
 
 .resena__cabecera {
     display: flex;
     flex-wrap: wrap;
+    align-items: baseline;
     justify-content: space-between;
-    gap: 6px 16px;
+    gap: 2px 12px;
 }
 
-.resena__verificada {
-    display: inline-flex;
-    gap: 6px;
-    margin: 6px 0;
+.resena__autor {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+}
+
+.resena__propia {
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--primary-soft);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.resena__fecha {
     color: var(--text-light);
+    font-size: 0.8rem;
+}
+
+.resena .resena-estrellas {
+    margin-top: 6px;
     font-size: 0.9rem;
 }
 
+.resena__verificada {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 8px 0 0;
+    color: var(--text-light);
+    font-size: 0.8rem;
+}
+
+.resena__verificada .bi {
+    color: var(--primary);
+}
+
 .resena__comentario {
+    margin: 10px 0 0;
+    line-height: 1.6;
     white-space: pre-line;
     overflow-wrap: anywhere;
 }
 
+/* "Reportar": una acción discreta, no un triángulo en cada reseña. <details> sigue funcionando sin JavaScript. */
 .resena__reporte {
-    margin-top: 8px;
-}
-
-.resena__reporte summary {
-    width: fit-content;
-    color: var(--text-light);
-    cursor: pointer;
-}
-
-.resena__reporte summary:hover,
-.resena__reporte summary:focus-visible {
-    color: var(--text);
-    text-decoration: underline;
-}
-
-.resena__reporte form,
-.resena-form {
-    display: grid;
-    gap: 8px;
     margin-top: 10px;
 }
 
-.resena__reporte select,
-.resena__reporte textarea,
-.resena-form textarea {
-    width: 100%;
-    padding: 8px 10px;
-    border: 1px solid var(--line);
+.resena__reporte summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 28px; /* objetivo de toque >= 24 px (WCAG 2.5.8) */
+    margin-left: -8px;
+    padding: 2px 8px;
     border-radius: var(--r-sm);
-    background: var(--surface);
-    color: var(--text);
-    font: inherit;
+    color: var(--text-light);
+    font-size: 0.8rem;
+    list-style: none;
+    cursor: pointer;
 }
 
+.resena__reporte summary::-webkit-details-marker {
+    display: none;
+}
+
+.resena__reporte summary:hover,
+.resena__reporte[open] summary {
+    background: var(--primary-soft);
+    color: var(--text);
+}
+
+.resena__reporte form {
+    margin-top: 8px;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-sm);
+}
+
+/* ── Sin reseñas ── */
+.resenas-vacio {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    padding: 24px 12px;
+    text-align: center;
+}
+
+.resenas-vacio .bi {
+    color: var(--primary);
+    font-size: 2rem;
+}
+
+/* ── Elegir estrellas (página de calificar y diálogo del panel) ──
+   Siguen siendo radios: teclado (flechas) y lector de pantalla funcionan igual. Solo cambia cómo se ven. */
 .resena-form__puntaje {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px 16px;
+    margin: 0;
+    padding: 0;
     border: none;
 }
 
@@ -81,16 +291,121 @@
     font-weight: 600;
 }
 
-.resena-form__opcion {
+.resena-form__estrellas {
     display: inline-flex;
-    align-items: center;
-    gap: 6px;
+    gap: 2px;
+}
+
+.resena-form__opcion {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--r-sm);
+    color: var(--estrella-vacia);
+    font-size: 1.85rem;
     cursor: pointer;
+    transition: color 0.12s ease, transform 0.12s ease;
+}
+
+.resena-form__opcion input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+}
+
+/* Elegidas: todas hasta la marcada. Al pasar el mouse, vista previa. */
+.resena-form__estrellas:has(:checked) .resena-form__opcion,
+.resena-form__estrellas:hover .resena-form__opcion {
+    color: var(--estrella);
+}
+
+.resena-form__opcion:has(:checked) ~ .resena-form__opcion,
+.resena-form__estrellas .resena-form__opcion:hover ~ .resena-form__opcion {
+    color: var(--estrella-vacia);
+}
+
+.resena-form__opcion:hover {
+    transform: scale(1.1);
+}
+
+.resena-form__opcion:has(:focus-visible) {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* El valor elegido en palabras, sin JavaScript */
+.resena-form__valor {
+    margin: 4px 0 0;
+    color: var(--text-light);
+    font-size: 0.85rem;
+}
+
+.resena-form__valor span {
+    display: none;
+}
+
+.resena-form__puntaje:not(:has(:checked)) [data-valor="0"],
+.resena-form__puntaje:has([value="1"]:checked) [data-valor="1"],
+.resena-form__puntaje:has([value="2"]:checked) [data-valor="2"],
+.resena-form__puntaje:has([value="3"]:checked) [data-valor="3"],
+.resena-form__puntaje:has([value="4"]:checked) [data-valor="4"],
+.resena-form__puntaje:has([value="5"]:checked) [data-valor="5"] {
+    display: inline;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .resena-form__opcion {
+        transition: none;
+    }
+
+    .resena-form__opcion:hover {
+        transform: none;
+    }
+}
+
+/* ── Formularios (calificar y reportar) ── */
+.resena__reporte form,
+.resena-form {
+    display: grid;
+    gap: 8px;
+}
+
+.resena-form {
+    gap: 12px;
+}
+
+.resena__reporte label,
+.resena-form > label {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.resena__reporte select,
+.resena__reporte textarea,
+.resena-form textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-sm);
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+}
+
+.resena__reporte select:focus-visible,
+.resena__reporte textarea:focus-visible,
+.resena-form textarea:focus-visible {
+    border-color: var(--primary);
+    outline: 2px solid var(--primary-soft);
 }
 
 .resena-form .perfil-prof__reservar,
 .resena__reporte .perfil-prof__reservar {
     width: fit-content;
+    margin-top: 4px;
     border: none;
     cursor: pointer;
 }
@@ -112,4 +427,29 @@
     padding: 10px 14px;
     border-radius: var(--r-sm);
     background: var(--primary-soft);
+}
+
+/* ── Pantallas chicas ── */
+@media (max-width: 600px) {
+    .resena-resumen {
+        grid-template-columns: 1fr;
+        padding: 18px;
+    }
+
+    .resena-resumen__nota {
+        padding: 0 0 16px;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+    }
+
+    .resena {
+        grid-template-columns: 32px 1fr;
+        gap: 10px;
+    }
+
+    .resena__avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 0.85rem;
+    }
 }

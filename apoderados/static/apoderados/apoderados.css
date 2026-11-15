@@ -97,3 +97,80 @@
     align-items: center;
     min-height: 24px;
 }
+
+/* ── Registro (apoderado, estudiante y adolescente) ──
+   formulario.html lo usan ~12 pantallas (tickets, reportes, vínculos...). Para no tocarlas, todo lo de esta sección
+   se activa solo en formularios con campo de confirmar clave, que son los de registro. */
+.apod-form:has(#id_confirmar_password) .apod-form__campo input:not([type="checkbox"]):not([type="file"]) {
+    padding: 13px 16px;
+    border-radius: 12px;
+}
+
+.apod-form:has(#id_confirmar_password) .apod-form__campo input:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 1px;
+    border-color: var(--primary);
+}
+
+/* Subir el carnet: caja punteada y botón propio en vez del selector gris del navegador */
+.apod-form:has(#id_confirmar_password) input[type="file"] {
+    padding: 12px;
+    border: 1px dashed var(--line);
+    border-radius: 12px;
+    background: var(--surface);
+    color: var(--text-light);
+    font: inherit;
+    font-size: 0.9rem;
+}
+
+.apod-form:has(#id_confirmar_password) input[type="file"]::file-selector-button {
+    margin-right: 12px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 999px;
+    background: var(--primary);
+    color: #ffffff;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.apod-form:has(#id_confirmar_password) input[type="file"]::file-selector-button:hover {
+    background: var(--primary-dark);
+}
+
+/* La declaración legal, destacada: es lo último que se acepta antes de crear la cuenta */
+.apod-form:has(#id_confirmar_password) .apod-form__declaracion {
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--primary-soft);
+}
+
+/* Botón principal a todo el ancho, como en el registro de alumno y de profesor */
+.apod-form:has(#id_confirmar_password) .perfil-prof__reservar {
+    width: 100%;
+    justify-content: center;
+    padding: 14px 18px;
+    border-radius: 999px;
+    font-size: 1rem;
+}
+
+/* Registro de apoderado sin errores: campos de a dos (rut|correo, teléfono|fecha, clave|confirmar, carnet frente|reverso).
+   Con errores vuelve a una columna: cada mensaje es hermano del campo y así sigue pegado a él, sin huecos. */
+.apod-form:has(#id_carnet_frente):has(#id_confirmar_password):not(:has([role="alert"])) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 16px;
+}
+
+.apod-form:has(#id_carnet_frente):has(#id_confirmar_password):not(:has([role="alert"])) .apod-form__campo:has(#id_nombre),
+.apod-form:has(#id_carnet_frente):has(#id_confirmar_password):not(:has([role="alert"])) .apod-form__declaracion,
+.apod-form:has(#id_carnet_frente):has(#id_confirmar_password):not(:has([role="alert"])) .perfil-prof__reservar {
+    grid-column: 1 / -1;
+}
+
+@media (max-width: 600px) {
+    .apod-form:has(#id_carnet_frente):has(#id_confirmar_password):not(:has([role="alert"])) {
+        grid-template-columns: 1fr;
+    }
+}

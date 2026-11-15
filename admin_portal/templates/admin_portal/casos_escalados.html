@@ -1,4 +1,5 @@
 {% extends 'admin_portal/base_admin.html' %}
+{% load dinero %}
 
 {% block title %}Casos escalados — Admin LBWUS{% endblock %}
 {% block page_title %}Casos escalados{% endblock %}
@@ -33,6 +34,13 @@
             </form>
             <p style="margin:10px 0 0;"><small>O deja otra indicación:</small></p>
             {% endif %}
+            {% for d in e.devoluciones_videos.all %}
+            <form method="post" action="{% url 'aprobar_devolucion_manual' e.pk %}" style="margin-top:10px;">
+                {% csrf_token %}
+                <button type="submit" class="btn-primary"><i class="bi bi-cash-coin" aria-hidden="true"></i> Aprobar transferir {{ d.por_devolver|clp }} a mano ({{ d.cantidad }} video{{ d.cantidad|pluralize }})</button>
+            </form>
+            <p style="margin:10px 0 0;"><small>O deja otra indicaci&oacute;n:</small></p>
+            {% endfor %}
             <form method="post" action="{% url 'indicar_escalado' e.pk %}" style="display:grid; gap:8px; margin-top:10px;">
                 {% csrf_token %}
                 <label for="indicacion-{{ e.pk }}">Tu indicación para soporte</label>
