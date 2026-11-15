@@ -41,13 +41,7 @@
         {% if editable %}
         <form method="post" class="resena-form">
             {% csrf_token %}
-            <fieldset class="resena-form__puntaje">
-                <legend>{{ form.puntaje.label }}</legend>
-                {% for opcion in form.puntaje %}
-                <label class="resena-form__opcion">{{ opcion.tag }} {{ opcion.choice_label }}</label>
-                {% endfor %}
-                {% for error in form.puntaje.errors %}<p class="resena-form__error" role="alert">{{ error }}</p>{% endfor %}
-            </fieldset>
+            {% include 'resenas/_elegir_estrellas.html' with campo=form.puntaje leyenda=form.puntaje.label %}
             <label for="{{ form.comentario.id_for_label }}">{{ form.comentario.label }}</label>
             {{ form.comentario }}
             <small class="perfil-prof__vacio">{{ form.comentario.help_text }}</small>

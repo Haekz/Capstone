@@ -116,9 +116,11 @@ class BuscadorProfesoresTests(TestCase):
                     html=False)
                 self.assertContains(r, 'No hay profesores que coincidan con tu búsqueda.')
 
-    def test_tutores_de_ejemplo_estan_identificados_y_los_videos_ya_son_reales(self):
+    def test_sin_tutores_inventados_y_los_videos_ya_son_reales(self):
         r = self._portal()
-        self.assertContains(r, 'Contenido de ejemplo: aún no hay tutores registrados')
+        self.assertContains(r, 'Aún no hay tutores registrados en la plataforma.')
+        for inventado in ('Tutor Juan Pablo', 'Tutora Camila Gómez', 'Tutor Roberto Muñoz', 'Tutora Patricia Soto'):
+            self.assertNotContains(r, inventado)  # personas que no existen, con un "Contactar" que no lleva a nadie
         self.assertNotContains(r, 'aún no hay clases en video')  # los videos ya vienen de lo que comparte el profesor
         self.assertContains(r, reverse('videos_alumno'))
 

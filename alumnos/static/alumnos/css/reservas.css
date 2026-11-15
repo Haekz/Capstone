@@ -1,0 +1,256 @@
+/* Reservas de horarios: ventana de horarios, "Mis clases", perfil del profesor y clases del menor (apoderado).
+   Piezas compartidas: el bloque de fecha (LUN / 16 / NOV) y la fila de un horario. Solo usa los tokens del sitio
+   (--text, --text-light, --line, --primary, --primary-soft, --r-sm, --r-md): claro y oscuro salen solos. */
+
+/* ── Bloque de fecha: se reconoce de un vistazo ── */
+.reserva-fecha {
+    display: grid;
+    justify-items: center;
+    align-content: center;
+    width: 56px;
+    min-height: 60px;
+    padding: 6px 0;
+    border-radius: var(--r-sm);
+    background: var(--primary-soft);
+    color: var(--text);
+    line-height: 1.1;
+    text-transform: uppercase;
+}
+
+.reserva-fecha__dia,
+.reserva-fecha__mes {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.reserva-fecha__dia {
+    color: var(--primary);
+}
+
+.reserva-fecha__num {
+    font-size: 1.35rem;
+    font-weight: 800;
+}
+
+body.dark-mode .reserva-fecha__dia {
+    color: inherit; /* el morado sobre el tinte oscuro no llega a 4,5:1 */
+}
+
+/* ── Cuándo es una reserva (tarjetas de Mis clases): bloque de fecha + fecha y hora ── */
+.reserva-cuando {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.reserva-cuando__texto {
+    display: grid;
+    gap: 2px;
+    color: var(--text-light);
+    font-size: 0.875rem;
+}
+
+.reserva-cuando__texto span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.reserva-cuando__fecha {
+    color: var(--text);
+    font-weight: 600;
+}
+
+/* ── Acciones de una reserva: con texto, no íconos sueltos (objetivo >= 24 px, WCAG 2.5.8) ── */
+#portal-alumno .ap-class-actions {
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+/* Jerarquía: "Unirse" (principal) a todo el ancho; debajo, Reprogramar y Cancelar mitad y mitad */
+#portal-alumno .ap-class-actions .btn-join-class {
+    flex-basis: 100%;
+}
+
+.ap-class-actions > .reserva-accion,
+.ap-class-actions > form:has(.reserva-accion) {
+    flex: 1 1 0;
+}
+
+.ap-class-actions > form .reserva-accion {
+    width: 100%;
+}
+
+.reserva-accion {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 40px;
+    padding: 8px 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-sm);
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.reserva-accion:hover,
+.reserva-accion:focus-visible {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+}
+
+.reserva-accion:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* Cancelar: secundaria y en rojo legible, nunca con el peso del botón principal */
+.reserva-accion--peligro {
+    color: #b91c1c;
+}
+
+.reserva-accion--peligro:hover,
+.reserva-accion--peligro:focus-visible {
+    border-color: #dc2626;
+    background: rgba(220, 38, 38, 0.08);
+}
+
+body.dark-mode .reserva-accion--peligro {
+    color: #fca5a5;
+}
+
+/* ── Fila de un horario: fecha | hora y cupos | acción ── */
+.horario {
+    display: grid;
+    grid-template-columns: 56px 1fr auto;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 16px 12px 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    background: var(--white, transparent);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.horario:hover {
+    border-color: var(--primary);
+    box-shadow: 0 4px 14px rgba(26, 18, 51, 0.06);
+}
+
+.horario--reservado {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+}
+
+/* Lista informativa (perfil del profesor): se reserva con el botón de abajo, la fila no es clicable */
+.horarios-lista {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.horario--solo-info {
+    grid-template-columns: 56px 1fr;
+}
+
+.horario--solo-info:hover {
+    border-color: var(--line);
+    box-shadow: none;
+}
+
+.horario__titulo {
+    margin: 0;
+    color: var(--text);
+    font-weight: 700;
+}
+
+.horario__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+    margin: 4px 0 0;
+    color: var(--text-light);
+    font-size: 0.875rem;
+}
+
+.horario__meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Pocos cupos: el aviso va en texto oscuro/claro con contraste, no en verde o rojo sobre blanco */
+.horario__cupos--pocos {
+    color: #b45309;
+    font-weight: 600;
+}
+
+body.dark-mode .horario__cupos--pocos {
+    color: #fbbf24;
+}
+
+.horario__accion .btn-principal,
+.horario__accion .ap-btn-enrolled {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 8px 16px;
+    font-size: 0.875rem;
+    white-space: nowrap;
+}
+
+/* Lo que vale para todos los horarios se dice una vez, arriba */
+.horarios-nota {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    margin: 0 0 4px;
+    padding: 10px 14px;
+    border-radius: var(--r-sm);
+    background: var(--primary-soft);
+    color: var(--text);
+    font-size: 0.875rem;
+}
+
+.horarios-nota .bi {
+    color: var(--primary);
+}
+
+body.dark-mode .horarios-nota .bi {
+    color: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .horario,
+    .reserva-accion {
+        transition: none;
+    }
+}
+
+@media (max-width: 560px) {
+    .horario {
+        grid-template-columns: 56px 1fr;
+    }
+
+    .horario__accion {
+        grid-column: 1 / -1;
+    }
+
+    .horario__accion .btn-principal,
+    .horario__accion .ap-btn-enrolled {
+        justify-content: center;
+        width: 100%;
+    }
+}

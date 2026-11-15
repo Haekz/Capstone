@@ -1,5 +1,5 @@
 from django import forms
-from .models import Alumno, Especialidad, Genero
+from .models import Alumno, Especialidad, Genero, Profesor
 from django.contrib.auth import get_user_model
 
 
@@ -16,6 +16,10 @@ class FiltroClasesForm(forms.Form):
     )
     disponible = forms.BooleanField(
         required=False, label='Solo con horarios y cupos disponibles',
+    )
+    # "Ver horarios" de un profesor: va oculto y solo acepta profesores con titulo aprobado (como el resto del catalogo).
+    profesor = forms.ModelChoiceField(
+        queryset=Profesor.objects.habilitados(), required=False, widget=forms.HiddenInput(),
     )
 
     def __init__(self, *args, **kwargs):
