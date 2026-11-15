@@ -93,8 +93,7 @@ def reporte_alumnos(request):
 def planes_adm(request):
     return render(request, 'admin_portal/planes_adm.html', {
         'planes': metricas.planes(),
-        'tarifa': {'base': paquetes.TARIFA_BASE, 'min': paquetes.TARIFA_MIN,
-                   'max': paquetes.TARIFA_MAX, 'paso': paquetes.TARIFA_PASO},
+        'tarifa': paquetes.TARIFA,
     })
 
 

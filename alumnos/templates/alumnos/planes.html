@@ -36,12 +36,12 @@
         <label for="pl-profesor">Profesor</label>
         <div class="pl-selector-fila">
             <select id="pl-profesor" name="profesor">
-                <option value="">Precio de referencia ({{ tarifa_base|clp }} por clase)</option>
+                <option value="">Elige un profesor</option>
                 {% for p in profesores %}
-                <option value="{{ p.id_profesor }}"{% if p == profesor %} selected{% endif %}>{{ p.nombre }}{% if p.especialidad %} · {{ p.especialidad }}{% endif %} · {{ p.tarifa|clp }} por clase</option>
+                <option value="{{ p.id_profesor }}"{% if p == profesor %} selected{% endif %}>{{ p.nombre }}{% if p.especialidad %} · {{ p.especialidad }}{% endif %}</option>
                 {% endfor %}
             </select>
-            <button type="submit" class="plan-btn-action pl-selector-btn">Ver precios</button>
+            <button type="submit" class="plan-btn-action pl-selector-btn">Continuar</button>
         </div>
         {% if not profesores %}
         <p class="pl-selector-nota">Todavía no hay profesores habilitados para vender clases.</p>
@@ -53,9 +53,9 @@
         {% if estudiante %}<p role="status"><strong>Contratando para {{ estudiante.alumno.user.first_name }}.</strong> El paquete quedará a su nombre y lo pagas tú con Webpay.</p>{% endif %}
         {% if profesor %}
         <h2>Precios con {{ profesor.nombre }}</h2>
-        <p>Tarifa de {{ tarifa|clp }} por clase.{% if es_alumno %} <a href="{% url 'perfil_profesor' profesor.id_profesor %}">Ver perfil del profesor</a>{% endif %}</p>
+        <p>Clase suelta a {{ tarifa|clp }}: el mismo precio con todos los profesores.{% if es_alumno %} <a href="{% url 'perfil_profesor' profesor.id_profesor %}">Ver perfil del profesor</a>{% endif %}</p>
         {% else %}
-        <p>Precios de referencia, con una tarifa de {{ tarifa|clp }} por clase. Cada profesor define la suya.</p>
+        <p>El mismo precio con todos los profesores: la clase suelta cuesta {{ tarifa|clp }} y los paquetes traen descuento.</p>
         {% endif %}
     </div>
 
@@ -104,7 +104,7 @@
 
                 <ul class="plan-features-list">
                     <li><i class="bi bi-tag check-icon" aria-hidden="true"></i>
-                        {% if c.descuento_por_clase %}Descuento de {{ c.descuento_por_clase|clp }} por clase ({{ c.descuento_pct }}%){% else %}Sin descuento: pagas la tarifa del profesor{% endif %}</li>
+                        {% if c.descuento_por_clase %}Descuento de {{ c.descuento_por_clase|clp }} por clase ({{ c.descuento_pct }}%){% else %}Precio de una clase suelta, sin descuento{% endif %}</li>
                     {% if c.ahorro_total %}
                     <li><i class="bi bi-piggy-bank check-icon" aria-hidden="true"></i> Ahorras {{ c.ahorro_total|clp }} frente a {{ c.plan.clases }} clases sueltas</li>
                     {% endif %}
@@ -125,7 +125,7 @@
             <li>Si cancelas una reserva antes de que empiece la clase, la clase vuelve a tu paquete. Una vez iniciada, ya no se puede cancelar.</li>
             <li>Si el profesor cancela la sesión, la clase vuelve a tu paquete.</li>
             <li>Las clases que no uses dentro de la vigencia vencen.</li>
-            <li>El precio queda fijo al comprar: si después el profesor cambia su tarifa, tu paquete no cambia.</li>
+            <li>El precio queda fijo al comprar: si después cambian los precios, tu paquete no cambia.</li>
             <li>Precios en pesos chilenos. Incluyen la comisión de servicio de LBWUS ({{ comision_pct }}%, IVA incluido); el resto es para el profesor.</li>
         </ul>
     </section>
@@ -137,7 +137,7 @@
         </div>
         <details class="pl-faq-item">
             <summary>¿Puedo usar un paquete con varios profesores?</summary>
-            <p>No. Cada paquete es con un profesor y su tarifa. Para tomar clases con otro profesor, compra un paquete con él.</p>
+            <p>No. Cada paquete es con un profesor. Para tomar clases con otro profesor, compra un paquete con él.</p>
         </details>
         <details class="pl-faq-item">
             <summary>¿Dónde veo cuántas clases me quedan?</summary>

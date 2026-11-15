@@ -19,7 +19,7 @@ from tests.test_apoderados_vinculos import crear_menor_vinculado
 from tests.test_especialidad import crear_profesor
 from tests.test_paquetes import RUT_ANA, Escenario
 
-PRECIO_PROGRESO = 59000  # tarifa base de $15.000
+PRECIO_PROGRESO = 62990  # precio fijo de LBWUS
 
 
 def respuesta_webpay(paquete, monto):
@@ -48,7 +48,7 @@ class AgregadoDelAlumnoTests(Escenario):
             with self.subTest(plan=plan):
                 PaqueteClases.objects.all().delete()
                 paquete = self.comprar(tx, plan, videos='1')
-                cotizacion = paquetes.Cotizacion(paquetes.POR_CODIGO[plan], self.profe.tarifa)
+                cotizacion = paquetes.Cotizacion(paquetes.POR_CODIGO[plan])
                 self.assertEqual(tx.return_value.create.call_args.args[2], cotizacion.precio + precio)
                 self.assertEqual((paquete.videos, paquete.monto_videos), (videos, precio))
                 self.assertEqual((paquete.monto, paquete.precio_por_clase), (cotizacion.precio, cotizacion.precio_por_clase))

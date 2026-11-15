@@ -100,7 +100,7 @@ class RetirosTests(Escenario):
         paquete = dar_paquete(self.ana, self.profe, 'intensivo')
         Inscripcion.objects.create(alumno=self.ana, clase=self.clase, paquete=paquete,
                                    sesion=crear_sesion(self.clase, dias=-1))
-        self.retiro.monto = paquetes.pago_profesor(14500)
+        self.retiro.monto = paquetes.pago_profesor(paquete.precio_por_clase)  # todo lo ganado
         self.retiro.save()
         self.retiro.aprobar(self.admin)
         self.retiro.marcar_pagado(self.admin, 'OP-7')

@@ -1,8 +1,8 @@
 """Paquetes de clases: Flexible, Progreso e Intensivo (analisis de mercado 2.13-2.14, F-11).
 
 Unica fuente de precios: la pagina de planes, el cobro en Webpay y el saldo del
-profesor usan estas funciones. El precio depende de la tarifa por clase de
-cada profesor; con la tarifa base ($15.000) da $15.000 / $59.000 / $116.000.
+profesor usan estas funciones. Los precios los fija LBWUS, iguales con todos los
+profesores (decidido 14-nov-2026): $15.990 / $62.990 / $123.990.
 
 Fracciones exactas: nada de floats con plata.
 """
@@ -13,15 +13,13 @@ from fractions import Fraction
 
 from django.core.exceptions import ValidationError
 
-TARIFA_BASE = 15000
-TARIFA_MIN = 10000
-TARIFA_MAX = 50000
-TARIFA_PASO = 1000
+TARIFA = 15990  # una clase suelta; los paquetes le aplican su descuento. El profesor no la elige.
 DURACION_CLASE_MIN = 60
 COMISION = Fraction(15, 100)  # la retiene LBWUS, IVA incluido
 IVA = Fraction(19, 100)
 REDONDEO_PAQUETE = 1000
-VALOR_INSCRIPCION = 15000  # inscripciones antiguas, sin paquete: valor fijo por clase
+TERMINACION = 990  # todo precio de paquete termina en $990
+VALOR_INSCRIPCION = 15000  # inscripciones antiguas, sin paquete: valor fijo por clase (historico, no cambia)
 
 # Agregado de videos (decidido 08-nov-2026): precio fijo, igual con todos los profesores.
 PRECIO_VIDEO = 5000
@@ -62,9 +60,10 @@ def _redondear(valor, paso=1):
     return int(Fraction(valor) / paso + Fraction(1, 2)) * paso
 
 
-def precio(plan, tarifa):
-    """Precio del paquete: clases x tarifa con el descuento, redondeado a $1.000."""
-    return _redondear(plan.clases * tarifa * (1 - plan.descuento), REDONDEO_PAQUETE)
+def precio(plan):
+    """Precio del paquete: clases x TARIFA con el descuento, al numero terminado en $990 mas cercano."""
+    ajuste = REDONDEO_PAQUETE - TERMINACION
+    return _redondear(plan.clases * TARIFA * (1 - plan.descuento) + ajuste, REDONDEO_PAQUETE) - ajuste
 
 
 def comision(monto, tasa=COMISION):
@@ -117,17 +116,18 @@ def valor_clase(inscripcion):
 
 @dataclass(frozen=True)
 class Cotizacion:
-    """Un plan con el precio de un profesor, listo para mostrar."""
+    """Un plan con su precio, listo para mostrar."""
     plan: Plan
-    tarifa: int
+    tarifa = TARIFA
 
     @property
     def precio(self):
-        return precio(self.plan, self.tarifa)
+        return precio(self.plan)
 
     @property
     def precio_por_clase(self):
-        return self.precio // self.plan.clases  # exacto: multiplo de $1.000 entre 1, 4 u 8
+        # Hacia abajo, igual que PaqueteClases.precio_por_clase: $62.990 / 4 = $15.747 (sobran $2 del paquete)
+        return self.precio // self.plan.clases
 
     @property
     def descuento_por_clase(self):
@@ -160,19 +160,5 @@ class Cotizacion:
         return precio_agregado(self.plan)
 
 
-def cotizar(tarifa):
-    return [Cotizacion(plan, tarifa) for plan in PLANES]
-
-
-def validar_tarifa(valor):
-    """Tarifa por clase que define el profesor. Devuelve el entero o lanza ValidationError."""
-    try:
-        tarifa = int(str(valor).strip())
-    except (TypeError, ValueError):
-        raise ValidationError('La tarifa debe ser un número entero en pesos.')
-    if not TARIFA_MIN <= tarifa <= TARIFA_MAX or tarifa % TARIFA_PASO:
-        raise ValidationError(
-            f'La tarifa debe estar entre ${TARIFA_MIN:,} y ${TARIFA_MAX:,}, '
-            f'en múltiplos de ${TARIFA_PASO:,}.'.replace(',', '.')
-        )
-    return tarifa
+def cotizar():
+    return [Cotizacion(plan) for plan in PLANES]

@@ -17,7 +17,7 @@ from django.views.decorators.http import require_POST
 from . import cambio_cuenta, especializaciones, foto
 from . import inicio as inicio_panel
 from .saldos import calcular_saldos  # noqa: F401  (metricas, supresiones y pruebas lo importan desde aqui)
-from alumnos import avisos_profesor, catalogos, liquidacion, paquetes
+from alumnos import avisos_profesor, catalogos, liquidacion
 from agenda import panel as agenda_panel
 from observaciones import panel as observaciones_panel
 from mensajes import panel as mensajes_panel
@@ -299,20 +299,12 @@ def actualizar_perfil_prof(request):
             except ValidationError as e:
                 return JsonResponse({"success": False, "message": e.messages[0]}, status=400)
 
-            # Tarifa por clase: opcional; solo afecta a los paquetes que se vendan despues.
-            tarifa_txt = request.POST.get('tarifa', '').strip()
-            try:
-                tarifa = paquetes.validar_tarifa(tarifa_txt) if tarifa_txt else profesor.tarifa
-            except ValidationError as e:
-                return JsonResponse({"success": False, "message": e.messages[0]})
-
             profesor.user.first_name = nombre
             profesor.user.last_name = ''
             profesor.user.rut = rut
             profesor.user.username = rut
             profesor.especialidad = especialidad
             profesor.telefono_publico = request.POST.get('telefono_publico') in ('on', 'true', '1')
-            profesor.tarifa = tarifa
             profesor.user.direccion = direccion
             profesor.user.email = correo
             profesor.user.telefono = telefono
