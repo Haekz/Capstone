@@ -38,18 +38,13 @@ body.dark-mode .footer {
     margin-bottom: 8px;
 }
 
-.footer-col a,
-.footer-static-link {
+.footer-col a {
     display: inline-flex;
     align-items: center;
     min-height: 28px;
     color: rgba(255, 255, 255, 0.85);
     text-decoration: none;
     transition: var(--transition);
-}
-
-.footer-static-link {
-    opacity: 0.78;
 }
 
 .footer-col a:hover {
@@ -80,6 +75,29 @@ body.dark-mode .footer {
 .social-placeholder {
     cursor: default;
     opacity: 0.8;
+    position: relative;
+}
+
+/* "Próximamente" al pasar el cursor por una red que aún no existe (pie y Contacto). Los lectores de pantalla
+   ya lo oyen en el aria-label del ícono. Blanco con texto oscuro: se lee sobre el pie morado y sobre el fondo
+   oscuro de Contacto (un globo oscuro se perdía ahí). */
+.social-placeholder:hover::after {
+    content: 'Próximamente';
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 4px 10px;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #1a1233;
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+    pointer-events: none;
+    z-index: 5;
 }
 
 .social-fb {

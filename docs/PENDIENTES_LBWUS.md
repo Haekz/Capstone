@@ -37,6 +37,13 @@ Los codigos LBW-xx y Dx son los del backlog y las decisiones grupales del 08-nov
 ## Menores y legal
 - **No habilitar menores reales** hasta la revision juridica (LBW-02, D1): declaracion de facultad, revocacion,
   transicion a los 18, aviso de documentos y declaraciones v2. Y definir quien verifica certificados y como.
+- **Antes de abrir al público: reemplazar los datos de ejemplo del responsable** (B7, 15-nov). Las páginas
+  `/terminos/` y `/privacidad/` y el pie ya existen, pero muestran un responsable inventado (`LBWUS SpA`, RUT
+  `76.000.000-0`, domicilio y correo de ejemplo). Se cambian con las variables `LEGAL_*` de Railway, sin tocar código
+  (ver CONFIGURACION_PRODUCCION.md). Hay que definir razón social o nombre, RUT, domicilio y un correo de derechos
+  que alguien lea de verdad (L-1 y L-4). Ambos textos son un borrador a revisar por la abogada; lo más delicado es
+  Terminos §9, "no se devuelve dinero por clases" (revisar contra la ley del consumidor y el retracto). En Privacidad faltan
+  confirmar país y contratos de los proveedores (L-2), los respaldos (L-3) y los plazos contables (L-5).
 - Fuera de desarrollo: responsable del tratamiento, proveedores reales, respaldos, correo
   de derechos y plazos contables. Cuanto se conserva al seudonimizar una cuenta: con asesoria legal.
 

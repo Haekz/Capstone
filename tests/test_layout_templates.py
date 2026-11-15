@@ -4,7 +4,7 @@ from django.urls import reverse
 
 from .css_vars import leer_hoja
 
-PAGINAS_PUBLICAS = ('home', 'nosotros', 'servicios', 'planes', 'contactos', 'opcion_user')
+PAGINAS_PUBLICAS = ('home', 'nosotros', 'servicios', 'planes', 'contactos', 'opcion_user', 'terminos', 'privacidad')
 CSS_BASE = 'alumnos/static/alumnos/css/styles'  # styles.css, dividida en partes
 
 class LayoutCompartidoTests(TestCase):

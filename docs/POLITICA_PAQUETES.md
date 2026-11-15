@@ -50,13 +50,7 @@ Las cifras salen de `alumnos/paquetes.py`, que es la única fuente de precios (p
 - El `Procfile` define solo el proceso `web`: no hay tareas programadas ni colas.
 - `requirements.txt` no incluye librerías de planificación.
 
-**Los Términos y Condiciones (`terminos_y_condiciones.txt`) contradicen el sistema:**
-
-| Dice | El sistema hace |
-|---|---|
-| "La suscripción se realiza de manera mensual" (§4) | Compra única por paquete, sin cobro recurrente |
-| Planes Básico, Medio y Superior (§4) | Flexible, Progreso e Intensivo (los anteriores quedan solo como historial en el modelo `Suscripcion`) |
-| Sin aviso de 24 h la sesión "no será reembolsable ni reprogramable" (§5; ahora dice 4 h, decidido 07-nov) | Con 4 h o más se cancela y reprograma; con menos se pierde la clase y el profesor cobra |
+**Resuelto (15-nov): los Términos y Condiciones ya no contradicen el sistema.** El archivo `terminos_y_condiciones.txt` (suscripción mensual, planes Básico/Medio/Superior, precios y plazos viejos) se eliminó y lo reemplaza la página `/terminos/` (`alumnos/views_legal.py`), que lee los precios, vigencias y plazos del mismo código que los aplica: no puede volver a quedar atrás. Su texto sigue pendiente de revisión jurídica (ver `PENDIENTES_LBWUS.md`).
 
 ## 6. Política consolidada (26-oct-2026) y lo que falta construir
 

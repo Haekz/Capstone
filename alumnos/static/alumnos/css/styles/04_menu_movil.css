@@ -455,8 +455,7 @@ body.dark-mode .cuenta-item--salir i {
         gap: 6px;
     }
 
-    .footer-col a,
-    .footer-static-link {
+    .footer-col a {
         min-height: 32px;
     }
 }

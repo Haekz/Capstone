@@ -1,0 +1,15 @@
+{% extends 'alumnos/base.html' %}
+{# Marco de las paginas legales: encabezado y texto angosto. Cada pagina pone su titulo y su texto. #}
+
+{% block content %}
+<header class="lg-cabecera">
+    <div class="contenedor">
+        <h1>{% block titulo_pagina %}{% endblock %}</h1>
+        <p>Última actualización: {{ actualizado }}</p>
+    </div>
+</header>
+
+<article class="contenedor lg-texto">
+    {% block texto %}{% endblock %}
+</article>
+{% endblock %}

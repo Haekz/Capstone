@@ -158,6 +158,8 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 # Expone 'usuario_sesion' al menu global (alumnos/base.html)
                 'alumnos.context_processors.estado_sesion',
+                # Responsable de los datos y contacto, para el pie, Contacto, Terminos y Privacidad (settings.LEGAL)
+                'alumnos.context_processors.datos_legales',
                 # Contador de la campanita (notificaciones/context_processors.py)
                 'notificaciones.context_processors.sin_leer',
             ],
@@ -218,6 +220,19 @@ CSP_OBLIGATORIA = os.environ.get('CSP_OBLIGATORIA', 'False').lower() in ('1', 't
 
 # La pagina de error de Django oculta tambien MONGODB_URI y SITIO_CLAVE.
 DEFAULT_EXCEPTION_REPORTER_FILTER = 'lbwus.reporte_errores.FiltroReporteErrores'
+
+# Quien responde por los datos personales y como contactarlo (pie de pagina, Contacto, Terminos y Privacidad).
+# VALORES DE EJEMPLO mientras LBWUS define los suyos (L-1 y L-4 de docs/PENDIENTES_LBWUS.md): hay que cambiarlos por
+# los reales con estas variables de entorno ANTES de abrir al publico. Un RUT o un correo inventados no son un
+# responsable de verdad: una solicitud de datos enviada a un correo que nadie lee no se responde.
+LEGAL = {
+    'nombre': os.environ.get('LEGAL_NOMBRE', 'LBWUS SpA'),
+    'rut': os.environ.get('LEGAL_RUT', '76.000.000-0'),
+    'domicilio': os.environ.get('LEGAL_DOMICILIO', 'Pacifico Norte 123, Santiago, Chile'),
+    'telefono': os.environ.get('LEGAL_TELEFONO', '+56 2 2123 4567'),
+    'correo_datos': os.environ.get('LEGAL_CORREO_DATOS', 'privacidad@lbwus.cl'),
+    'correo_contacto': os.environ.get('LEGAL_CORREO_CONTACTO', 'teachers@lbwus.cl'),
+}
 
 
 

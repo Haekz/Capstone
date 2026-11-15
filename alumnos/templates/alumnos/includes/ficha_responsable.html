@@ -1,0 +1,11 @@
+{# Quien responde por los datos (settings.LEGAL): la misma ficha en Terminos y en Privacidad. #}
+<dl class="lg-ficha">
+    <dt>Nombre o razón social</dt>
+    <dd>{{ legal.nombre }}</dd>
+    <dt>RUT</dt>
+    <dd>{{ legal.rut }}</dd>
+    <dt>Domicilio</dt>
+    <dd>{{ legal.domicilio }}</dd>
+    <dt>Correo para solicitudes sobre datos personales</dt>
+    <dd><a href="mailto:{{ legal.correo_datos }}">{{ legal.correo_datos }}</a></dd>
+</dl>
