@@ -33,6 +33,15 @@ def exigir_mayor_de_edad(alumno, vinculo=None):
         raise InscripcionError(MENSAJE_MENOR)
 
 
+def paquetes_vigentes(alumno, profesor, hasta):
+    """Paquetes activos del alumno con ese profesor que siguen vigentes en `hasta`, el que vence antes primero.
+
+    Solo consulta: quien va a gastar una clase los bloquea (_paquete_con_clases)."""
+    return PaqueteClases.objects.filter(
+        alumno=alumno, profesor=profesor, estado=PaqueteClases.ESTADO_ACTIVA, fecha_fin__gte=hasta,
+    ).order_by('fecha_fin', 'pk')
+
+
 def _paquete_con_clases(alumno, profesor, hasta):
     """Paquete vigente del alumno con ese profesor, con clases libres y que vence antes.
 
@@ -41,9 +50,7 @@ def _paquete_con_clases(alumno, profesor, hasta):
     ultima clase. PostgreSQL no admite FOR UPDATE con GROUP BY, por eso las
     usadas se cuentan aparte y no con annotate.
     """
-    candidatos = PaqueteClases.objects.select_for_update().filter(
-        alumno=alumno, profesor=profesor, estado=PaqueteClases.ESTADO_ACTIVA, fecha_fin__gte=hasta,
-    ).order_by('fecha_fin', 'pk')
+    candidatos = paquetes_vigentes(alumno, profesor, hasta).select_for_update()
     for paquete in candidatos:
         if paquete.clases_disponibles:
             return paquete

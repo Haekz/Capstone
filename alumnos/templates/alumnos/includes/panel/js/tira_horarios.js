@@ -47,7 +47,8 @@
 
         // Un solo oyente para todas las tarjetas (se vuelven a dibujar al filtrar o buscar).
         document.addEventListener('click', (e) => {
-            const dia = e.target.closest('.tira-dia');
+            // Solo los chips de la tarjeta del profesor: el asistente de clase extra usa las mismas clases (js/clase_extra.js).
+            const dia = e.target.closest('.tira-horarios .tira-dia');
             if (dia) {
                 const tira = dia.closest('.tira-horarios');
                 const t = teachers.find(p => p.id === Number(tira.dataset.profesor));
@@ -55,6 +56,6 @@
                 tira.querySelector('.tira-horas').innerHTML = htmlHoras(t, dia.dataset.dia);
                 return;
             }
-            const hora = e.target.closest('.tira-hora');
+            const hora = e.target.closest('.tira-horarios .tira-hora');
             if (hora) confirmarReservaSesion(hora.dataset.sesion, hora.dataset.asig, hora.dataset.fechahora);
         });
