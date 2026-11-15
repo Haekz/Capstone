@@ -222,16 +222,15 @@ CSP_OBLIGATORIA = os.environ.get('CSP_OBLIGATORIA', 'False').lower() in ('1', 't
 DEFAULT_EXCEPTION_REPORTER_FILTER = 'lbwus.reporte_errores.FiltroReporteErrores'
 
 # Quien responde por los datos personales y como contactarlo (pie de pagina, Contacto, Terminos y Privacidad).
-# El telefono y el correo de contacto son los reales (15-nov). El nombre, el RUT, el domicilio y el correo de datos
-# siguen siendo VALORES DE EJEMPLO mientras LBWUS define los suyos (L-1 y L-4 de docs/PENDIENTES_LBWUS.md): hay que
-# cambiarlos por los reales con estas variables de entorno ANTES de abrir al publico. Un RUT o un correo inventados no
-# son un responsable de verdad: una solicitud de datos enviada a un correo que nadie lee no se responde.
+# El telefono y los correos son los reales (15-nov). El nombre, el RUT y el domicilio siguen siendo VALORES DE EJEMPLO
+# mientras LBWUS define los suyos (L-1 de docs/PENDIENTES_LBWUS.md): hay que cambiarlos por los reales con estas
+# variables de entorno ANTES de abrir al publico. Un RUT inventado no es un responsable de verdad.
 LEGAL = {
     'nombre': os.environ.get('LEGAL_NOMBRE', 'LBWUS SpA'),
     'rut': os.environ.get('LEGAL_RUT', '76.000.000-0'),
     'domicilio': os.environ.get('LEGAL_DOMICILIO', 'Pacifico Norte 123, Santiago, Chile'),
     'telefono': os.environ.get('LEGAL_TELEFONO', '+56 9 3906 2158'),
-    'correo_datos': os.environ.get('LEGAL_CORREO_DATOS', 'privacidad@lbwus.cl'),
+    'correo_datos': os.environ.get('LEGAL_CORREO_DATOS', 'lbwus.proyecto@gmail.com'),
     'correo_contacto': os.environ.get('LEGAL_CORREO_CONTACTO', 'lbwus.proyecto@gmail.com'),
 }
 
