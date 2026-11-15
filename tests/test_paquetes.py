@@ -21,6 +21,7 @@ from alumnos.models import (
     Asignatura, Clase, Especialidad, Genero, Inscripcion, PaqueteClases, Profesor, SesionClase,
 )
 from alumnos.services import InscripcionService
+from tests.aceptacion import aceptar_terminos
 from tests.test_especialidad import CLAVE, crear_profesor
 from tests.test_filtros_clases import crear_sesion
 from tests.test_progreso_alumno import crear_alumno
@@ -84,6 +85,8 @@ class Escenario(TestCase):
         genero = Genero.objects.create(descripcion='Otro')
         cls.ana = crear_alumno(RUT_ANA, 'Ana', genero)
         cls.beto = crear_alumno(RUT_BETO, 'Beto', genero)
+        for alumno in (cls.ana, cls.beto):
+            aceptar_terminos(alumno.user)  # estas pruebas son de compra, no de la aceptacion
         mate = Especialidad.objects.create(nombre='Matematicas')
         cls.profe = crear_profesor(RUT_PROFE, 'profe@lbwus.cl', mate)
         cls.otro = crear_profesor(RUT_OTRO, 'otro@lbwus.cl', mate)

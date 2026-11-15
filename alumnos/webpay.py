@@ -15,7 +15,7 @@ from django.views.decorators.http import require_POST
 
 from lbwus.credenciales_transbank import validar_produccion
 
-from . import avisos_profesor, paquetes, videos_extra
+from . import aceptacion, avisos_profesor, paquetes, videos_extra
 from .decorators import alumno_required
 from .exceptions import InscripcionError
 from .models import Alumno, CompraVideosExtra, PaqueteClases, Suscripcion
@@ -100,6 +100,9 @@ def iniciar_compra_paquete(request, alumno_id, al_crear=None, vinculo=None):
     plan = paquetes.POR_CODIGO.get(request.POST.get('plan', ''))
     profesor = _profesor_habilitado(request.POST.get('profesor'))
     if not (plan and profesor):
+        return redirect('planes')
+    if not aceptacion.confirmar(request):  # sin aceptar los Terminos y la Privacidad no se cobra ni se crea el paquete
+        messages.error(request, 'Para comprar debes aceptar los Términos y condiciones y la Política de privacidad.')
         return redirect('planes')
 
     monto = paquetes.precio(plan)

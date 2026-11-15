@@ -1,5 +1,5 @@
 {% extends base|default:'alumnos/base.html' %}
-{% load static dinero %}
+{% load static dinero legal %}
 
 {% block title %}LBWUS | Planes{% endblock %}
 {% block page_title %}{% if titulo_en_barra %}Planes y precios{% else %}{{ block.super }}{% endif %}{% endblock %}
@@ -76,6 +76,7 @@
                     <input type="hidden" name="profesor" value="{{ profesor.id_profesor }}">
                     <input type="hidden" name="plan" value="{{ c.plan.codigo }}">
                     <input type="hidden" name="videos" value="0">
+                    {% acepta_terminos %}
                     <button type="submit" class="plan-btn-action">Contratar {{ c.plan.nombre }} para {{ estudiante.alumno.user.first_name }}</button>
                 </form>
                 {% elif profesor and es_menor %}
@@ -86,6 +87,7 @@
                     <input type="hidden" name="profesor" value="{{ profesor.id_profesor }}">
                     <input type="hidden" name="plan" value="{{ c.plan.codigo }}">
                     <input type="hidden" name="videos" value="0">
+                    {% acepta_terminos %}
                     <button type="submit" class="plan-btn-action">Comprar {{ c.plan.nombre }}</button>
                 </form>
                 {% elif profesor %}

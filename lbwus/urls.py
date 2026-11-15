@@ -6,6 +6,7 @@ from django.http import Http404
 from django.views.decorators.cache import never_cache
 from django.views.generic import TemplateView
 from alumnos.views import home, custom_login
+from alumnos.views_legal import privacidad, terminos
 from alumnos import google_views
 from lbwus.puerta import puerta
 
@@ -24,6 +25,7 @@ urlpatterns = [
     # duplicados sin avisar y el ultimo registrado gana el reverse().
     path('', home, name='home'),
     path('puerta/', puerta, name='puerta'),
+    path('terminos/', terminos, name='terminos'),
     path('alumnos/', include('alumnos.urls')),
     path('admin_portal/', include('admin_portal.urls')),
     path('profesor/', include('user_profesor.urls')),
@@ -34,6 +36,7 @@ urlpatterns = [
     path('notificaciones/', include('notificaciones.urls')),
     path('agenda/', include('agenda.urls')),
     path('mensajes/', include('mensajes.urls')),
+    path('privacidad/', privacidad, name='privacidad'),
     path('privacidad/', include('supresiones.urls')),
     path('requerimientos/', include('requerimientos.urls')),
     path('observaciones/', include('observaciones.urls')),

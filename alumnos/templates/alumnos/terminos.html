@@ -1,0 +1,92 @@
+{% extends 'alumnos/legal_base.html' %}
+{% load dinero %}
+
+{% block title %}LBWUS | Términos y condiciones{% endblock %}
+{% block titulo_pagina %}Términos y condiciones{% endblock %}
+
+{% block texto %}
+<p>Estos términos regulan el uso de la plataforma LBWUS (Learn Better With Us). Al registrarte, comprar un paquete de clases o usar cualquiera de sus servicios, aceptas lo que sigue. Si no estás de acuerdo, no uses la plataforma.</p>
+
+<h2>1. Quién ofrece el servicio</h2>
+{% include 'alumnos/includes/ficha_responsable.html' %}
+<p>El tratamiento de tus datos personales se explica en la <a href="{% url 'privacidad' %}">política de privacidad</a>.</p>
+
+<h2>2. Qué es LBWUS</h2>
+<p>LBWUS conecta a alumnos con profesores para clases de reforzamiento académico por videollamada, y ofrece videos de apoyo grabados por el profesor. La plataforma pone la tecnología de conexión y de pago; las clases las dicta el profesor.</p>
+<p>No garantizamos resultados académicos específicos: dependen del trabajo de cada alumno.</p>
+
+<h2>3. Cuenta y menores de edad</h2>
+<ul>
+    <li>Cada persona tiene una cuenta, con datos verdaderos y al día. Eres responsable de guardar tu clave: lo que se haga desde tu cuenta se entiende hecho por ti.</li>
+    <li>Un menor de edad usa la plataforma con la autorización y la supervisión de su madre, padre o tutor legal, que se registra como apoderado y es quien contrata y paga.</li>
+</ul>
+
+<h2>4. Paquetes y precios</h2>
+<p>Las clases se compran en paquetes prepagados. No hay renovación automática ni suscripción. Los precios están en pesos chilenos, con IVA incluido.</p>
+<div class="lg-tabla-caja">
+    <table class="lg-tabla">
+        <thead>
+            <tr><th>Plan</th><th>Clases</th><th>Precio</th><th>Vigencia</th><th>Videos de apoyo (opcional)</th></tr>
+        </thead>
+        <tbody>
+            {% for c in cotizaciones %}
+            <tr>
+                <td>{{ c.plan.nombre }}</td>
+                <td>{{ c.plan.clases }}</td>
+                <td>{{ c.precio|clp }}</td>
+                <td>{{ c.plan.vigencia_dias }} días</td>
+                <td>{{ c.plan.videos }} video{{ c.plan.videos|pluralize }} por {{ c.precio_videos|clp }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<ul>
+    <li>Las clases se acreditan a tu paquete cuando Webpay aprueba el pago, y se usan a medida que reservas y el profesor confirma.</li>
+    <li>Los pagos se hacen por Webpay (Transbank). Los datos de tu tarjeta los ingresas en Webpay.</li>
+    <li>LBWUS retiene una comisión de {{ comision_pct }} % (IVA incluido) del precio de las clases; el resto corresponde al profesor.</li>
+</ul>
+
+<h2>5. Vigencia del paquete</h2>
+<p>El paquete vence una vez cumplida la vigencia de su plan, contada desde que Webpay aprueba el pago. La clase debe <strong>empezar antes del vencimiento</strong>. Las clases que no uses al vencer se pierden.</p>
+
+<h2>6. Reservas, cancelación y reprogramación</h2>
+<ul>
+    <li><strong>Si cancelas o reagendas con {{ horas_cancelar }} horas o más de anticipación</strong>, no pierdes la clase: vuelve a tu paquete como crédito.</li>
+    <li><strong>Con menos de {{ horas_cancelar }} horas</strong>, la clase se considera dictada y no se devuelve ni se reprograma.</li>
+    <li><strong>Si el profesor cancela</strong>, debe hacerlo con {{ horas_cancela_profesor }} horas o más de anticipación; la clase vuelve a tu paquete sin costo. Con menos tiempo, primero lo conversa contigo.</li>
+</ul>
+
+<h2>7. Clase extra</h2>
+<p>Si tienes un paquete con un profesor, puedes proponerle una clase en un día y hora <strong>fuera de su horario</strong>. El profesor decide si la acepta:</p>
+<ul>
+    <li>Tiene {{ horas_respuesta_extra }} horas para responder, o hasta {{ horas_cancelar }} horas antes de la clase si eso llega antes. Pasado ese plazo, la solicitud vence.</li>
+    <li>Si acepta, la clase se descuenta de tu paquete con ese profesor y se dicta como cualquier otra.</li>
+    <li>Debes pedirla con al menos {{ horas_cancelar }} horas de anticipación.</li>
+</ul>
+
+<h2>8. Videos de apoyo</h2>
+<ul>
+    <li>Al contratar un paquete puedes sumar los videos de su plan, a {{ precio_video|clp }} cada uno. El profesor los comparte en las fechas de entrega de tu paquete.</li>
+    <li>Después de contratar puedes comprar hasta {{ max_videos_extra }} videos extra por paquete; el profesor los comparte dentro de {{ dias_entrega_extra }} días desde cada compra.</li>
+    <li>Si un video no se entrega, puedes pedir su devolución por soporte. Se intenta devolver por Webpay, al mismo medio de pago; si no es posible, se transfiere con la aprobación de un administrador.</li>
+</ul>
+
+<h2>9. Devoluciones de dinero por clases</h2>
+<p>Un paquete es una compra: las clases no se devuelven en dinero. Lo que sí puedes hacer es reagendarlas o cancelarlas con la anticipación indicada, y vuelven a tu paquete como crédito.</p>
+
+<h2>10. Conducta</h2>
+<p>Alumnos y profesores se tratan con respeto. Está prohibido usar lenguaje ofensivo, discriminatorio o acosador en los chats y videollamadas; usar la plataforma para fines ajenos al reforzamiento escolar; y intentar vulnerar su seguridad o enviar spam. Podemos suspender una cuenta que incumpla estas reglas.</p>
+
+<h2>11. Propiedad intelectual</h2>
+<p>Los logotipos, el diseño, el código y los textos de la plataforma son de LBWUS. Los videos y materiales de estudio son para tu uso personal y educativo: no puedes distribuirlos comercialmente ni publicarlos en otras redes.</p>
+
+<h2>12. Limitación de responsabilidad</h2>
+<p>LBWUS no responde por fallas ajenas a la plataforma, como cortes de luz, problemas de tu conexión a internet o de tu equipo, que dificulten una clase online.</p>
+
+<h2>13. Cambios y ley aplicable</h2>
+<p>Podemos modificar estos términos; publicaremos la versión nueva aquí, con su fecha de actualización. Se rigen por las leyes de la República de Chile y cualquier disputa se somete a sus tribunales ordinarios de justicia.</p>
+
+<h2>14. Contacto</h2>
+<p>Para cualquier duda, escríbenos a <a href="mailto:{{ legal.correo_contacto }}">{{ legal.correo_contacto }}</a> o desde «Ayuda y soporte» dentro de tu cuenta.</p>
+{% endblock %}
