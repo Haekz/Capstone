@@ -11,6 +11,7 @@ Todas las lee `lbwus/settings.py`, salvo donde se indica.
 |---|---|---|---|
 | `SECRET_KEY` | Firma de sesiones, CSRF, tokens de recuperación y nombres de sala Jitsi | **Sí** | Con `DEBUG=False`, el sitio **no arranca** (`ImproperlyConfigured`). En desarrollo usa una clave insegura |
 | `DOCUMENTOS_CLAVE` | Clave Fernet de los documentos de apoderados (sección 3) | **Sí** | **El despliegue no arranca**: el `Procfile` corre `check --deploy`, que da el error `apoderados.E001` (o `E002` si la clave no es válida) |
+| `SUPRESIONES_CLAVE` | Clave de las huellas del registro de supresiones (`supresiones/registro.py`) | Recomendada | Se deriva de `SECRET_KEY`. Si la clave cambia, el registro y los archivos exportados **dejan de reconocer a las personas eliminadas**: definirla aparte y guardarla junto con los respaldos, nunca en la base de datos |
 | `DEBUG` | Modo depuración | Sí, `False` | En Railway queda en `False` (se detecta por `RAILWAY_ENVIRONMENT`) y exige `SECRET_KEY`; en local queda en `True` |
 | `DATABASE_URL` | PostgreSQL (la crea Railway al enlazar la base) | Sí | Sin ella (o con una URL que no sea PostgreSQL) el sitio no arranca |
 | `MEDIA_ROOT` | Carpeta de archivos subidos | Sí, `/data/media` (el volumen) | Usa `media/` dentro del contenedor, que se borra en cada despliegue |
