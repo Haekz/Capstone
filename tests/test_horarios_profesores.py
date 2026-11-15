@@ -6,12 +6,15 @@ con los mismos criterios de disponibilidad que la ventana de horarios (SesionCla
 
 from datetime import datetime, time, timedelta
 
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
+from django.urls import reverse
 from django.utils import timezone
 
 from alumnos import horarios_profesores
 from alumnos.models import Inscripcion, SesionClase
 from tests.test_filtros_clases import crear_sesion
-from tests.test_paquetes import Escenario
+from tests.test_paquetes import RUT_ANA, Escenario
 
 
 def sesion_el(clase, dia_local, hora, minuto=0, cupo=5):
@@ -97,3 +100,40 @@ class ProximosHorariosTests(Escenario):
     def test_sin_profesores_no_consulta(self):
         with self.assertNumQueries(0):
             self.assertEqual(horarios_profesores.proximos_horarios([]), {})
+
+
+class ListaDeProfesoresTests(Escenario):
+    """El portal del alumno entrega a cada tarjeta sus horarios (profesores_js[...]['horarios'])."""
+
+    def tarjetas(self):
+        self.entrar(RUT_ANA)
+        r = self.client.get(reverse('alumno_pag1'))
+        self.assertEqual(r.status_code, 200)
+        return {t['id']: t for t in r.context['profesores_js']}
+
+    def test_cada_tarjeta_trae_sus_horarios(self):
+        mia = crear_sesion(self.clase, dias=1)
+        crear_sesion(self.clase_otro, dias=2)
+        tarjetas = self.tarjetas()
+        self.assertEqual([h['id_sesion'] for h in tarjetas[self.profe.id_profesor]['horarios']], [mia.pk])
+        self.assertEqual(len(tarjetas[self.otro.id_profesor]['horarios']), 1)
+
+    def test_profesor_sin_horarios_trae_lista_vacia(self):
+        self.assertEqual(self.tarjetas()[self.profe.id_profesor]['horarios'], [])
+
+    def test_no_ofrece_lo_que_el_alumno_ya_reservo(self):
+        reservada = crear_sesion(self.clase, dias=1)
+        Inscripcion.objects.create(alumno=self.ana, clase=self.clase, sesion=reservada,
+                                   estado=Inscripcion.ESTADO_CONFIRMADA)
+        self.assertEqual(self.tarjetas()[self.profe.id_profesor]['horarios'], [])
+
+    def test_mas_horarios_no_agregan_consultas_al_portal(self):
+        self.entrar(RUT_ANA)
+        with CaptureQueriesContext(connection) as antes:
+            self.client.get(reverse('alumno_pag1'))
+        for dias in range(1, 6):
+            crear_sesion(self.clase, dias=dias)
+            crear_sesion(self.clase_otro, dias=dias)
+        with CaptureQueriesContext(connection) as despues:
+            self.client.get(reverse('alumno_pag1'))
+        self.assertEqual(len(despues), len(antes))
