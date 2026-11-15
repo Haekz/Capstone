@@ -59,8 +59,12 @@ def especializacion(especializacion, aprobada, clases_nuevas=()):
     transaction.on_commit(lambda: _decision(especializacion.profesor.user, 'Tu especialización fue revisada', texto))
 
 
+def _cuando(momento):
+    return timezone.localtime(momento).strftime('%d/%m/%Y a las %H:%M')
+
+
 def _fecha(sesion):
-    return timezone.localtime(sesion.fecha_hora_inicio).strftime('%d/%m/%Y a las %H:%M')
+    return _cuando(sesion.fecha_hora_inicio)
 
 
 def agregado_videos(paquete):
@@ -131,7 +135,10 @@ def videos_extra_comprados(compra):
 
 
 def _avisar(inscripcion, asunto, texto):
-    user = inscripcion.clase.profesor.user
+    _avisar_a(inscripcion.clase.profesor.user, asunto, texto)
+
+
+def _avisar_a(user, asunto, texto):
     notificar(user, texto, reverse('panel_profesor'))
     enviar(asunto, 'alumnos/correo_aviso_profesor.txt', {'nombre': user.first_name, 'texto': texto}, user.email)
 
@@ -158,3 +165,12 @@ def reagenda(inscripcion, sesion_anterior):
     alumno, asignatura = _quien_y_que(inscripcion)
     _avisar(inscripcion, 'Clase reagendada',
             f'{alumno} movió {asignatura} del {_fecha(sesion_anterior)} al {_fecha(inscripcion.sesion)}.')
+
+
+def clase_extra_solicitada(solicitud):
+    """Un alumno pide un día y hora fuera de tu horario: tú decides (alumnos/clase_extra.py)."""
+    _avisar_a(
+        solicitud.profesor.user, 'Pedido de clase extra',
+        f'{solicitud.alumno.user.first_name} pidió una clase extra de {solicitud.clase.asignatura.nombre} '
+        f'para el {_cuando(solicitud.fecha_hora_inicio)}. Responde antes del {_cuando(solicitud.vence_el)}.',
+    )

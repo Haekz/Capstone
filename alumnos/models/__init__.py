@@ -11,6 +11,7 @@ from .videos import CompraVideosExtra, DevolucionVideos, ReembolsoTransbank, Vid
 from .especializaciones import Especializacion
 from .reportes import Reporte
 from .retiros import TIPOS_CUENTA, Banco, CuentaBancaria, SolicitudRetiro
+from .clase_extra import SolicitudClaseExtra
 
 __all__ = [
     'Alumno', 'CustomUser', 'Especialidad', 'Genero', 'Profesor', 'ProfesorQuerySet', 'Tutor',
@@ -21,4 +22,5 @@ __all__ = [
     'Especializacion',
     'Reporte',
     'TIPOS_CUENTA', 'Banco', 'CuentaBancaria', 'SolicitudRetiro',
+    'SolicitudClaseExtra',
 ]
