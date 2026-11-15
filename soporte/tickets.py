@@ -148,6 +148,13 @@ def escalar(ticket, agente, motivo, asignatura_pedida=''):
     return escalamiento
 
 
+def escalar_al_admin(ticket, autor, motivo):
+    """Un caso que solo un administrador puede aprobar (p. ej. transferir dinero a mano): va directo a el, sin pasar por el
+    lider, con un motivo que arma el sistema. Mismas reglas que ``escalar`` al admin. Devuelve el Escalamiento."""
+    _exigir_abierto(ticket)
+    return _escalar_al_admin(ticket, autor, motivo)
+
+
 def _escalar_al_admin(ticket, autor, motivo, asignatura_pedida=''):
     try:
         with transaction.atomic():

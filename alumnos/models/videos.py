@@ -105,9 +105,10 @@ class CompraVideosExtra(models.Model):
 class DevolucionVideos(models.Model):
     """Dinero que se le devuelve al alumno por videos que el profesor no entrego (fase 6e, decidido 09-nov).
 
-    Soporte la registra desde el ticket de Videos y el dinero se devuelve a mano (no hay reversa de Webpay): aqui solo
-    queda el caso. ``monto`` lo calcula el servidor (alumnos/devoluciones_videos.py); ``devuelta`` lo marca soporte
-    cuando transfiere. SET_NULL: si se borra el ticket o la cuenta del agente, la evidencia queda.
+    Soporte la registra desde el ticket de Videos. Primero se intenta devolver por Transbank (alumnos/reembolsos.py); si
+    no se puede, se transfiere a mano y eso lo aprueba un administrador antes (13-nov). ``monto`` lo calcula el servidor
+    (alumnos/devoluciones_videos.py); ``devuelta`` queda cuando el dinero salio, sea por Transbank o a mano. SET_NULL:
+    si se borra el ticket o la cuenta del agente, la evidencia queda.
     """
     paquete = models.ForeignKey(PaqueteClases, on_delete=models.CASCADE, related_name='devoluciones_videos')
     cantidad = models.PositiveSmallIntegerField()
@@ -116,6 +117,14 @@ class DevolucionVideos(models.Model):
     registrada_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='+')
     creada = models.DateTimeField(auto_now_add=True)
     devuelta = models.DateTimeField(null=True, blank=True)  # vacio = por devolver
+    # Por que fallo el ultimo intento de reembolso automatico por Transbank (alumnos/reembolsos.py); lo lee soporte.
+    error_reembolso = models.CharField(max_length=200, blank=True)
+    # Transferencia a mano: soporte la pide (escalamiento al admin) y el admin la aprueba; sin aprobacion no se transfiere.
+    escalamiento = models.ForeignKey('soporte.Escalamiento', on_delete=models.SET_NULL, null=True, blank=True,
+                                     related_name='devoluciones_videos')
+    aprobada = models.DateTimeField(null=True, blank=True)
+    aprobada_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                     related_name='+')
 
     class Meta:
         ordering = ['-creada', '-id']
@@ -123,3 +132,34 @@ class DevolucionVideos(models.Model):
 
     def __str__(self):
         return f'{self.cantidad} video(s) sin entregar -> {self.paquete} (${self.monto})'
+
+    @property
+    def por_devolver(self):
+        """Lo que falta devolver a mano: el monto menos lo que Transbank ya reembolso (confirmado)."""
+        reembolsado = self.reembolsos.filter(confirmado__isnull=False).aggregate(total=models.Sum('monto'))['total']
+        return self.monto - (reembolsado or 0)
+
+
+class ReembolsoTransbank(models.Model):
+    """Una devolucion hecha por Transbank sobre UNA transaccion (el agregado va en la del paquete; cada extra, en la suya).
+
+    Se crea ANTES de llamar a Transbank y ``confirmado`` se llena al responder: la unicidad (devolucion, token) hace que
+    dos intentos a la vez, o uno que se cayo a la mitad, nunca devuelvan dos veces. Un registro sin confirmar es una
+    devolucion que hay que verificar en Transbank antes de repetir. Ver alumnos/reembolsos.py.
+    """
+    devolucion = models.ForeignKey(DevolucionVideos, on_delete=models.CASCADE, related_name='reembolsos')
+    token_ws = models.CharField(max_length=100)
+    monto = models.PositiveIntegerField()  # pesos chilenos
+    tipo = models.CharField(max_length=10, blank=True)  # REVERSED o NULLIFIED, segun responde Transbank
+    codigo_autorizacion = models.CharField(max_length=20, blank=True)  # una reversa no lo trae
+    creado = models.DateTimeField(auto_now_add=True)
+    confirmado = models.DateTimeField(null=True, blank=True)  # vacio = pedido sin respuesta todavia
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['devolucion', 'token_ws'], name='reembolso_unico_por_devolucion_y_transaccion'),
+            models.CheckConstraint(condition=models.Q(monto__gt=0), name='reembolso_transbank_monto_positivo'),
+        ]
+
+    def __str__(self):
+        return f'${self.monto} -> {self.token_ws[:8]}... ({self.tipo or "sin confirmar"})'
