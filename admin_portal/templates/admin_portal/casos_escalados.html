@@ -17,8 +17,8 @@
     <div class="panel-header">
         <span class="panel-title"><i class="bi bi-exclamation-octagon-fill" aria-hidden="true"></i> Esperan tu indicación ({{ pendientes|length }})</span>
     </div>
-    <div style="padding:18px;">
-        <p style="margin-top:0;"><small>Ves el asunto y los motivos. Los documentos y la conversación del ticket siguen siendo solo del agente de soporte.</small></p>
+    <div class="panel-body">
+        <p class="adm-panel-intro adm-panel-intro--dentro">Ves el asunto y los motivos. Los documentos y la conversación del ticket siguen siendo solo del agente de soporte.</p>
         {% for e in pendientes %}
         <section aria-labelledby="caso-{{ e.pk }}" style="padding:14px 0; border-top:1px solid var(--border);">
             <h2 id="caso-{{ e.pk }}" style="font-size:1rem; margin:0 0 6px;">Ticket #{{ e.ticket_id }} · {{ e.ticket.get_categoria_display }} · {{ e.ticket.asunto }}</h2>
@@ -50,12 +50,12 @@
             </form>
         </section>
         {% empty %}
-        <p style="margin:0;">No hay casos esperando tu indicación.</p>
+        <p class="adm-vacio">No hay casos esperando tu indicación.</p>
         {% endfor %}
     </div>
 </div>
 
-<div class="panel" style="margin-top:28px;">
+<div class="panel">
     <div class="panel-header">
         <span class="panel-title"><i class="bi bi-check2-circle" aria-hidden="true"></i> Respondidos (últimos 20)</span>
     </div>
