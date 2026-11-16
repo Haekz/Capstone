@@ -17,10 +17,17 @@
     <link rel="stylesheet" href="{% static 'admin_portal/css/admin_panel/04_rediseno_marco.css' %}">
     <link rel="stylesheet" href="{% static 'admin_portal/css/admin_panel/05_rediseno_contenido.css' %}">
     <link rel="stylesheet" href="{% static 'alumnos/css/avisos.css' %}">
+    {# Capa de diseño del portal admin (06*): todo cuelga de #portal-admin. Soporte y Docente la dejan vacía: tienen la suya. #}
+    {% block capa_admin %}
+    <link rel="stylesheet" href="{% static 'admin_portal/css/admin_panel/06a_pulido_admin_marco.css' %}">
+    <link rel="stylesheet" href="{% static 'admin_portal/css/admin_panel/06b_pulido_admin_resumen.css' %}">
+    <link rel="stylesheet" href="{% static 'admin_portal/css/admin_panel/06c_pulido_admin_pantallas.css' %}">
+    <link rel="stylesheet" href="{% static 'admin_portal/css/admin_panel/06d_pulido_admin_cierre.css' %}">
+    {% endblock %}
     {% include 'alumnos/includes/sin_copia_atras.html' %}
     {% block extra_css %}{% endblock %}
 </head>
-<body{% block body_attrs %}{% endblock %} class="light-mode">
+<body{% block body_attrs %} id="portal-admin"{% endblock %} class="light-mode">
 {% avisos_campana as avisos %}{# plazos de quien abre la pagina, segun su rol (admin_portal/avisos.py) #}
 <script>
     // Aplica el tema guardado antes de pintar (evita el destello claro en modo oscuro)

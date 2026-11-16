@@ -1,0 +1,197 @@
+/* Portal de admin, capa de diseno (de la copia: 06_pulido_admin.css), parte «pantallas»: tablas, Usuarios, Finanzas, formularios y Nosotros.
+   Las partes cargan en este orden: 06a marco, 06b resumen, 06c pantallas, 06d cierre. Todo cuelga de #portal-admin. */
+
+/* ── 6. Tablas ── */
+#portal-admin .user-table th {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+#portal-admin .user-table td {
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+#portal-admin .user-table td:nth-child(n+3) {
+    color: var(--text-secondary);
+}
+
+/* Filas "no hay…": como estado vacío, no como dato */
+#portal-admin .user-table td[colspan] {
+    padding: 26px 16px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+#portal-admin .user-table tbody tr:has(td[colspan]):hover {
+    background: transparent;
+}
+
+#portal-admin .empty-state {
+    padding: 8px;
+}
+
+#portal-admin .empty-state i {
+    font-size: 1.6rem;
+    margin: 0;
+}
+
+/* ── 7. Usuarios ── */
+#portal-admin .filter-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+}
+
+#portal-admin .adm-buscar-usuarios {
+    flex: 1;
+    max-width: 380px;
+}
+
+#portal-admin .adm-sin-resultados {
+    margin: 0;
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+#portal-admin .adm-sin-resultados[hidden] {
+    display: none;
+}
+
+#portal-admin .btn-action.delete:hover {
+    background: #dc2626;
+}
+
+/* ── 8. Finanzas: dos grupos ── */
+#portal-admin .fin-grupo {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#portal-admin .fin-grupo-titulo {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+
+#portal-admin .fin-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+}
+
+#portal-admin .fin-grid--3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+#portal-admin .fin-grid .stat-card {
+    align-items: stretch;
+}
+
+#portal-admin .fin-grid .stat-card-inner {
+    align-items: flex-start;
+}
+
+#portal-admin .fin-grid .stat-icon {
+    width: 40px;
+    height: 40px;
+    margin-left: auto;
+    font-size: 1.05rem;
+}
+
+#portal-admin .fin-grid .stat-label {
+    margin: 0 0 4px;
+}
+
+/* ── 9. Formularios (Ajustes, Asignaturas) ── */
+#portal-admin .form-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.86rem;
+}
+
+#portal-admin .form-input {
+    border-color: var(--line-2);
+    border-radius: var(--r-ctrl);
+}
+
+#portal-admin .btn-primary,
+#portal-admin .btn-secondary {
+    border-radius: var(--r-ctrl);
+}
+
+#portal-admin .adm-form-linea {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 22px;
+}
+
+#portal-admin .adm-form-linea .form-input {
+    width: auto;
+    min-width: 220px;
+    padding: 9px 12px;
+}
+
+#portal-admin .adm-form-linea--tabla {
+    padding: 0;
+}
+
+/* ── 10. Nosotros ── */
+#portal-admin .nos-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+#portal-admin .nos-bloque {
+    border-radius: var(--r-item);
+}
+
+#portal-admin .nos-bloque h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+#portal-admin .nos-bloque h3 i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    font-size: 0.9rem;
+}
+
+#portal-admin .nos-bloque--mision h3 i  { background: var(--primary-soft); color: var(--primary-light); }
+#portal-admin .nos-bloque--vision h3 i  { background: var(--warn-soft); color: var(--warn); }
+#portal-admin .nos-bloque--valores h3 i { background: var(--ok-soft); color: var(--ok); }
+#portal-admin .nos-bloque--datos h3 i   { background: rgba(59, 130, 246, 0.12); color: #2563eb; }
+
+#portal-admin .nos-bloque p,
+#portal-admin .nos-bloque ul {
+    font-size: 0.9rem;
+    line-height: 1.65;
+    color: var(--text-secondary);
+}
+
+#portal-admin .nos-bloque ul {
+    padding-left: 18px;
+}
+
+#portal-admin .nos-datos .stat-mini:last-child {
+    border-bottom: none;
+}

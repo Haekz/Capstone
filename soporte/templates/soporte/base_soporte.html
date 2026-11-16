@@ -5,6 +5,7 @@ La capa 07* y el JS cuelgan de #portal-soporte (id del <body>), asi que el porta
 
 {% block title %}Soporte — LBWUS{% endblock %}
 {% block body_attrs %} id="portal-soporte"{% endblock %}
+{% block capa_admin %}{% endblock %}{# la capa 06* es del portal admin (#portal-admin): aqui no se carga #}
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'admin_portal/css/admin_panel/07a_pulido_soporte_marco.css' %}">
 <link rel="stylesheet" href="{% static 'admin_portal/css/admin_panel/07b_pulido_soporte_tickets.css' %}">

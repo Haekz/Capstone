@@ -28,7 +28,7 @@ class MarcoDelPanelDocenteTests(BaseResenas):
 
     def test_admin_y_soporte_comparten_la_base_pero_no_cambian(self):
         html = self.pagina('resenas_moderacion', self.admin, ADMIN)
-        self.assertIn('<body class="light-mode">', html)
+        self.assertIn('<body id="portal-admin" class="light-mode">', html)  # el admin tiene su propio enganche (06*), no el del docente
         self.assertNotIn('portal-docente', html)
 
     def test_la_capa_carga_marco_tablas_y_cierre_en_ese_orden(self):

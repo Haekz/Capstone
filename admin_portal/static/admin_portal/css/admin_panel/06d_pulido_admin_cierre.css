@@ -1,0 +1,162 @@
+/* Portal de admin, capa de diseno (de la copia: 06_pulido_admin.css), parte «cierre»: buscador, dialogos y pantallas medianas/movil (va AL FINAL de la cascada).
+   Las partes cargan en este orden: 06a marco, 06b resumen, 06c pantallas, 06d cierre. Todo cuelga de #portal-admin. */
+
+/* ── 11. Buscador (Ctrl + K) y notificaciones ── */
+#portal-admin .search-modal {
+    border-radius: 16px;
+}
+
+#portal-admin .search-section-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+#portal-admin .search-result-item:focus-visible {
+    background: var(--bg-hover);
+}
+
+#portal-admin .search-sin-resultados {
+    padding: 16px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+#portal-admin .notifications-drawer {
+    border-radius: 16px 0 0 16px;
+}
+
+/* ── 12. Diálogos de confirmación (SweetAlert) ── */
+#portal-admin .swal2-popup {
+    width: min(440px, 92vw);
+    padding: 28px 24px 22px;
+    border-radius: 20px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-family: inherit;
+}
+
+#portal-admin .swal2-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+}
+
+#portal-admin .swal2-html-container {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+}
+
+#portal-admin .swal2-styled {
+    padding: 11px 22px;
+    border-radius: 10px;
+    font-weight: 600;
+    box-shadow: none !important;
+}
+
+/* Acción destructiva: rojo, a la derecha; el foco queda en "Cancelar" */
+#portal-admin .swal2-actions:has(.swal-peligro) {
+    flex-direction: row-reverse;
+}
+
+#portal-admin .swal2-styled.swal-peligro {
+    background: #dc2626 !important;
+    color: #ffffff;
+}
+
+#portal-admin .swal2-styled.swal2-cancel {
+    background: transparent !important;
+    border: 1px solid var(--line-2);
+    color: var(--text-primary);
+}
+
+/* ── 13. Pantallas medianas y móvil ── */
+@media (max-width: 1100px) {
+    #portal-admin .adm-hero {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    #portal-admin .adm-pendientes {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    #portal-admin .fin-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #portal-admin .middle-row > .panel:nth-child(3) {
+        grid-column: auto;
+    }
+}
+
+@media (max-width: 768px) {
+    #portal-admin .topbar-buscar span,
+    #portal-admin .topbar-buscar kbd {
+        display: none;
+    }
+
+    #portal-admin .topbar-buscar {
+        width: 40px;
+        padding: 0;
+        justify-content: center;
+    }
+
+    #portal-admin .adm-hero {
+        padding: 22px;
+    }
+
+    #portal-admin .adm-pendientes,
+    #portal-admin .soporte-cifras {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #portal-admin .nos-grid,
+    #portal-admin .fin-grid--3 {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    #portal-admin .panel-header {
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 480px) {
+    #portal-admin .stats-grid:not(.fin-grid) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    #portal-admin .fin-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    #portal-admin .stat-card {
+        padding: 14px;
+    }
+
+    #portal-admin .stat-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 1rem;
+    }
+
+    #portal-admin .stat-value {
+        font-size: 1.4rem;
+    }
+
+    #portal-admin .adm-form-linea .form-input {
+        min-width: 0;
+        width: 100%;
+    }
+}
+
+/* Quien pide menos movimiento, no lo ve */
+@media (prefers-reduced-motion: reduce) {
+    #portal-admin *,
+    #portal-admin *::before,
+    #portal-admin *::after {
+        animation: none !important;
+        transition: none !important;
+    }
+}
