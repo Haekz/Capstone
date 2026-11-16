@@ -81,8 +81,9 @@ class MarcoDeSoporteTests(TestCase):
                 self.assertIn('<body id="portal-soporte" class="light-mode">', html)
                 posiciones = [html.index(p) for p in PARTES]
                 self.assertEqual(posiciones, sorted(posiciones))  # 07d, con las pantallas medianas y el movil, va al final
-                self.assertIn('soporte/mejoras_soporte.js', html)
-                self.assertLess(html.index('sweetalert2'), html.index('mejoras_soporte.js'))  # usa Swal para confirmar el escalamiento
+                etiqueta = re.search(r'<script src="[^"]*soporte/mejoras_soporte\.js"></script>', html)
+                self.assertIsNotNone(etiqueta)
+                self.assertLess(html.index('sweetalert2'), etiqueta.start())  # usa Swal para confirmar el escalamiento
 
     def test_el_menu_va_en_grupos_y_el_agente_no_ve_privacidad_y_legal(self):
         html = self.pagina()
