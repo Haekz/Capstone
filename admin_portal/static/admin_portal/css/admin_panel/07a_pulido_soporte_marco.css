@@ -1,5 +1,5 @@
 /* Portal de soporte, capa de diseno (de la copia: 07_pulido_soporte.css), parte «marco»: tokens, menu lateral, barra superior y paneles.
-   Las partes cargan en este orden: 07a marco, 07b tickets, 07c detalle, 07d cierre. */
+   Las partes cargan en este orden: 07a marco, 07b tickets, 07c detalle, 07d lider, 07e cierre. */
 
 /* ==============================================================
    PORTAL DE SOPORTE — CAPA DE DISEÑO FINAL
@@ -63,6 +63,12 @@ body:not(.light-mode)#portal-soporte {
 #portal-soporte .page-content {
     max-width: 1320px;
     gap: 20px;
+}
+
+/* Ningún bloque estira la página: las tablas anchas se desplazan dentro de su panel */
+#portal-soporte .page-content > * {
+    min-width: 0;
+    max-width: 100%;
 }
 
 #portal-soporte .page-content:not([hidden]) {

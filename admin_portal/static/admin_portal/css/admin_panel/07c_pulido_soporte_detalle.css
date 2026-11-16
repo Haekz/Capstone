@@ -1,5 +1,5 @@
 /* Portal de soporte, capa de diseno (de la copia: 07_pulido_soporte.css), parte «detalle»: aviso de privacidad, detalle del ticket y escalamiento.
-   Las partes cargan en este orden: 07a marco, 07b tickets, 07c detalle, 07d cierre. */
+   Las partes cargan en este orden: 07a marco, 07b tickets, 07c detalle, 07d lider, 07e cierre. */
 
 /* ── 8. Aviso de privacidad (apoderados) ── */
 #portal-soporte .sop-aviso {
@@ -205,6 +205,10 @@
     margin: 18px 0 0 !important;
     padding-top: 0;
     border-top: none;
+}
+
+#portal-soporte .apod-form__campo {
+    align-content: start;
 }
 
 #portal-soporte .apod-form__campo > label {

@@ -1,4 +1,4 @@
-"""Portal de soporte: marco de la capa de diseno (07a-07d, mejoras_soporte.js, menu por grupos, boton Ir a...).
+"""Portal de soporte: marco de la capa de diseno (07a-07e, mejoras_soporte.js, menu por grupos, boton Ir a...).
 
 Todo cuelga de #portal-soporte (id del <body> que pone base_soporte): el portal admin comparte base_admin y no debe verlo. Datos ficticios.
 """
@@ -13,7 +13,8 @@ from tests.test_apoderados import crear_agente, entrar_soporte
 from tests.test_retiros import crear_admin, entrar_admin
 
 CSS = Path(__file__).resolve().parent.parent / 'admin_portal/static/admin_portal/css/admin_panel'
-PARTES = ['07a_pulido_soporte_marco.css', '07b_pulido_soporte_tickets.css', '07c_pulido_soporte_detalle.css', '07d_pulido_soporte_cierre.css']
+PARTES = ['07a_pulido_soporte_marco.css', '07b_pulido_soporte_tickets.css', '07c_pulido_soporte_detalle.css', '07d_pulido_soporte_lider.css',
+          '07e_pulido_soporte_cierre.css']
 PAGINAS = ('panel_soporte', 'apoderados_revision', 'titulos_adm')
 
 
@@ -80,7 +81,7 @@ class MarcoDeSoporteTests(TestCase):
                 html = self.client.get(reverse(nombre)).content.decode()
                 self.assertIn('<body id="portal-soporte" class="light-mode">', html)
                 posiciones = [html.index(p) for p in PARTES]
-                self.assertEqual(posiciones, sorted(posiciones))  # 07d, con las pantallas medianas y el movil, va al final
+                self.assertEqual(posiciones, sorted(posiciones))  # 07e, con las pantallas medianas y el movil, va al final
                 etiqueta = re.search(r'<script src="[^"]*soporte/mejoras_soporte\.js"></script>', html)
                 self.assertIsNotNone(etiqueta)
                 self.assertLess(html.index('sweetalert2'), etiqueta.start())  # usa Swal para confirmar el escalamiento

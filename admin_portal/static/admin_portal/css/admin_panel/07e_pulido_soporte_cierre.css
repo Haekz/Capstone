@@ -1,5 +1,5 @@
 /* Portal de soporte, capa de diseno (de la copia: 07_pulido_soporte.css), parte «cierre»: buscador, dialogos y pantallas medianas/movil (va AL FINAL de la cascada).
-   Las partes cargan en este orden: 07a marco, 07b tickets, 07c detalle, 07d cierre. */
+   Las partes cargan en este orden: 07a marco, 07b tickets, 07c detalle, 07d lider, 07e cierre. */
 
 /* ── 10. Buscador (Ctrl + K) y notificaciones ── */
 #portal-soporte .search-modal {
@@ -41,6 +41,11 @@
     text-align: center;
     color: var(--text-muted);
     font-size: 0.9rem;
+}
+
+/* El panel cerrado vive fuera de la pantalla: que no agregue desplazamiento lateral */
+#portal-soporte .admin-wrapper {
+    overflow-x: clip;
 }
 
 /* Cerrado, el panel no asoma su sombra por el borde derecho */
@@ -109,6 +114,14 @@
 @media (max-width: 1000px) {
     #portal-soporte .sop-detalle {
         grid-template-columns: minmax(0, 1fr);
+    }
+
+    #portal-soporte .sop-agente {
+        grid-template-columns: 40px minmax(0, 1fr) 140px;
+    }
+
+    #portal-soporte .sop-agente-cats {
+        grid-column: 2 / -1;
     }
 
     #portal-soporte .sop-detalle-aside {
@@ -186,8 +199,41 @@
         color: var(--text-muted);
     }
 
-    #portal-soporte .sop-tabla-tickets td[data-label="Categoría"] {
+    #portal-soporte .sop-tabla-tickets td[data-label="Categoría"],
+    #portal-soporte .sop-tabla-tickets td[data-label="Reasignar"] {
         grid-column: 1 / -1;
+    }
+
+    #portal-soporte .sop-reasignar select {
+        flex: 1;
+        height: 40px;
+    }
+
+    #portal-soporte .sop-reasignar .sop-btn {
+        height: 40px;
+    }
+
+    #portal-soporte .sop-filtro-agentes {
+        margin-left: 0;
+        flex-basis: 100%;
+    }
+
+    #portal-soporte .sop-agente {
+        grid-template-columns: 40px minmax(0, 1fr);
+        padding: 16px 18px;
+    }
+
+    #portal-soporte .sop-agente-carga,
+    #portal-soporte .sop-agente-cats {
+        grid-column: 2 / -1;
+    }
+
+    #portal-soporte .sop-form-dos {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    #portal-soporte .sop-aviso--pie {
+        margin: 18px 18px 0;
     }
 
     #portal-soporte .sop-acciones {
