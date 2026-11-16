@@ -55,6 +55,36 @@ class MarcoDeAdminTests(TestCase):
                 self.assertEqual(posiciones, sorted(posiciones))  # 06d, con las pantallas medianas y el movil, va al final de la capa
                 self.assertLess(html.index('05_rediseno_contenido.css'), posiciones[0])  # la capa pisa a las anteriores
 
+    def entrar_con_nombre(self, nombre):
+        admin, tutor = crear_admin()
+        self.ponerle_nombre(admin, nombre)
+        entrar_admin(self.client, admin, tutor)
+        return admin
+
+    @staticmethod
+    def ponerle_nombre(admin, nombre):
+        admin.first_name = nombre
+        admin.save(update_fields=['first_name'])
+
+    def test_el_menu_nombra_al_admin_en_todas_sus_paginas(self):
+        """Solo el dashboard pasa `admin` a la plantilla; en las demas el menu decia el generico \"Administrador\"."""
+        self.entrar_con_nombre('Zulema')
+        for nombre in PAGINAS_ADMIN:
+            with self.subTest(pagina=nombre):
+                html = self.pagina(nombre)
+                self.assertIn('<div class="sidebar-user-name">Zulema</div>', html)
+                self.assertRegex(html, r'<div class="sidebar-user-avatar">\s*Z\s*</div>')
+
+    def test_sin_nombre_el_menu_dice_administrador_y_escapa_lo_que_haya(self):
+        admin = self.entrar_con_nombre('')
+        html = self.pagina('planes_adm')
+        self.assertIn('<div class="sidebar-user-name">Administrador</div>', html)
+        self.assertRegex(html, r'<div class="sidebar-user-avatar">\s*A\s*</div>')
+        self.ponerle_nombre(admin, '<b>Z</b>')
+        html = self.pagina('planes_adm')
+        self.assertIn('<div class="sidebar-user-name">&lt;b&gt;Z&lt;/b&gt;</div>', html)
+        self.assertNotIn('<b>Z</b>', html)
+
     def test_soporte_no_carga_la_capa_ni_cambia_de_body(self):
         entrar_soporte(self.client, crear_agente('88888888-8', Ticket.APODERADOS, Ticket.TITULOS))
         html = self.pagina('panel_soporte')

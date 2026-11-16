@@ -49,11 +49,13 @@
         <!-- Mini ficha del perfil del administrador que tiene la sesión activa -->
         <div class="sidebar-user">
             {% block sidebar_usuario %}
+            {# Solo el dashboard pasa `admin`; en las demás páginas el nombre sale de la sesión (antes se mostraba el genérico "Administrador") #}
+            {% firstof admin.user.first_name request.user.first_name "Administrador" as nombre_admin %}
             <div class="sidebar-user-avatar">
-                {{ admin.user.first_name|slice:":1"|upper|default:"A" }}
+                {{ nombre_admin|slice:":1"|upper }}
             </div>
             <div class="sidebar-user-info">
-                <div class="sidebar-user-name">{{ admin.user.first_name|default:"Administrador" }}</div>
+                <div class="sidebar-user-name">{{ nombre_admin }}</div>
                 <div class="sidebar-user-role">Administrador</div>
             </div>
             {% endblock %}
