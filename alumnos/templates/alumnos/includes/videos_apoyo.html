@@ -3,41 +3,98 @@
 {# Recibe url_lista (JSON) y url_ver (con VIDEO_ID de marcador). Carga al hacerse visible: el panel no depende de Mongo. #}
 {# Opcional url_habilitar (apoderado): boton para habilitar cada video a su estudiante menor despues de revisarlo. #}
 {# Opcional url_reportar (formulario de tickets): "Reportar este video". No se pasa al menor: reporta su apoderado. #}
+{# Opcional diseno_alumno (solo el portal del alumno): buscador, filtros por ramo, contador y la cabecera nueva del #}
+{# reproductor. Sus estilos viven en alumn_1/13_pulido.css (#portal-alumno): el apoderado sigue viendo lo de antes. #}
 <link rel="stylesheet" href="{% static 'alumnos/css/videos_apoyo.css' %}?v=4">
-<section class="va" data-lista="{{ url_lista }}" data-ver="{{ url_ver }}"{% if url_habilitar %} data-habilitar="{{ url_habilitar }}" data-csrf="{{ csrf_token }}"{% endif %}>
-    <p class="va-nota">Los videos están disponibles mientras tu paquete esté vigente.</p>
+<section class="va"{% if diseno_alumno %} data-diseno="alumno"{% endif %} data-lista="{{ url_lista }}" data-ver="{{ url_ver }}"{% if url_habilitar %} data-habilitar="{{ url_habilitar }}" data-csrf="{{ csrf_token }}"{% endif %}>
+    <p class="va-nota">{% if diseno_alumno %}<i class="bi bi-info-circle" aria-hidden="true"></i> {% endif %}Los videos están disponibles mientras tu paquete esté vigente.</p>
+    {% if diseno_alumno %}
+    <div class="va-herramientas" hidden>{# el script los muestra si hay 2 o más videos #}
+        <div class="va-buscar">
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <input type="search" class="va-buscar-input" placeholder="Buscar por título, ramo o profesor" aria-label="Buscar videos">
+        </div>
+        <div class="va-filtros" role="group" aria-label="Filtrar por ramo"></div>
+    </div>
+    <p class="va-cuenta" aria-live="polite" hidden></p>
+    {% endif %}
     <p class="va-aviso" role="status" hidden></p>
     <div class="va-grid"></div>
 </section>
 <dialog class="va-dialogo" aria-label="Reproductor de video">
+    {% if diseno_alumno %}
+    <div class="va-dialogo-cabecera">
+        <div>
+            <p class="va-dialogo-titulo"></p>
+            <p class="va-dialogo-meta"></p>
+        </div>
+        <form method="dialog"><button class="va-cerrar" aria-label="Cerrar video"><i class="bi bi-x-lg" aria-hidden="true"></i></button></form>
+    </div>
+    {% else %}
     <form method="dialog"><button class="va-cerrar" aria-label="Cerrar video">&times;</button></form>
     <p class="va-dialogo-titulo"></p>
+    {% endif %}
     <video controls preload="metadata"></video>
-    {% if url_reportar %}<a class="va-reportar" href="{{ url_reportar }}?video=" data-base="{{ url_reportar }}?video=">¿No corresponde a la materia o tiene contenido inapropiado? Repórtalo</a>{% endif %}
+    {% if url_reportar %}<a class="va-reportar" href="{{ url_reportar }}?video=" data-base="{{ url_reportar }}?video=">{% if diseno_alumno %}<i class="bi bi-flag" aria-hidden="true"></i> {% endif %}¿No corresponde a la materia o tiene contenido inapropiado? Repórtalo</a>{% endif %}
 </dialog>
 <script>
     (() => {
         const raiz = document.querySelector('.va');
+        if (!raiz) return;
         const aviso = raiz.querySelector('.va-aviso');
         const grilla = raiz.querySelector('.va-grid');
+        const herramientas = raiz.querySelector('.va-herramientas');   // buscador + filtros (solo si hay 2 o más videos)
+        const buscador = raiz.querySelector('.va-buscar-input');
+        const filtros = raiz.querySelector('.va-filtros');
+        const cuenta = raiz.querySelector('.va-cuenta');
         const dialogo = document.querySelector('.va-dialogo');
         const video = dialogo.querySelector('video');
         const reportar = dialogo.querySelector('.va-reportar');
+        const metaDialogo = dialogo.querySelector('.va-dialogo-meta');
+        const disenoAlumno = raiz.dataset.diseno === 'alumno';  // el apoderado conserva su tarjeta: sus estilos no traen la miniatura
         let cargado = false, cargando = false;
+        let videos = [], ramoElegido = '';
 
-        const mostrar = (texto) => { aviso.textContent = texto || ''; aviso.hidden = !texto; };
+        // Aviso: si no hay videos se muestra como estado vacío (con ícono), si no, como nota.
+        const mostrar = (texto, vacio = false) => {
+            aviso.textContent = texto || '';
+            aviso.hidden = !texto;
+            aviso.classList.toggle('va-aviso--vacio', Boolean(texto) && vacio);
+        };
+
+        // Tono de la miniatura según el ramo: cada ramo de la lista con un color distinto, todos cerca del morado
+        // de la marca (grados que se suman a --hue: violeta, índigo, magenta, azul, fucsia, lila).
+        const PALETA = [0, -35, 35, -65, 60, 15];
+        let tonos = new Map();
+        const tonoDe = (ramo) => tonos.get(ramo) ?? 0;
+        const nodo = (etiqueta, clase, texto) => {
+            const n = document.createElement(etiqueta);
+            if (clase) n.className = clase;
+            if (texto !== undefined) n.textContent = texto;  // textContent: nada del servidor se interpreta como HTML
+            return n;
+        };
+        const sinTildes = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
         function tarjeta(v) {
-            const boton = document.createElement('button');
+            const boton = nodo('button', 'va-card');
             boton.type = 'button';
-            boton.className = 'va-card';
-            for (const [etiqueta, texto] of [['strong', v.titulo], ['span', v.asignatura], ['span', `${v.profesor} · ${v.duracion}`]]) {
-                const nodo = document.createElement(etiqueta);
-                nodo.textContent = texto;  // textContent: nada de lo que viene del servidor se interpreta como HTML
-                boton.appendChild(nodo);
+            if (disenoAlumno) {
+                boton.setAttribute('aria-label', `Ver video: ${v.titulo}, ${v.asignatura}, con ${v.profesor}`);
+                const mini = nodo('span', 'va-thumb');
+                mini.style.setProperty('--tono', tonoDe(v.asignatura));
+                mini.setAttribute('aria-hidden', 'true');
+                mini.append(nodo('span', 'va-thumb-ramo', v.asignatura), nodo('span', 'va-play'));
+                if (v.duracion) mini.append(nodo('span', 'va-duracion', v.duracion));
+                const cuerpo = nodo('span', 'va-cuerpo');
+                cuerpo.append(nodo('strong', 'va-titulo', v.titulo), nodo('span', 'va-profe', `Con ${v.profesor}`));
+                boton.append(mini, cuerpo);
+            } else {
+                boton.append(nodo('strong', '', v.titulo), nodo('span', '', v.asignatura), nodo('span', '', `${v.profesor} · ${v.duracion}`));
             }
+
             boton.addEventListener('click', () => {
                 dialogo.querySelector('.va-dialogo-titulo').textContent = v.titulo;
+                if (metaDialogo) metaDialogo.textContent = `${v.asignatura}, con ${v.profesor}${v.duracion ? ` (${v.duracion})` : ''}`;
                 video.src = raiz.dataset.ver.replace('VIDEO_ID', encodeURIComponent(v.id));
                 if (reportar) reportar.href = reportar.dataset.base + encodeURIComponent(v.id);
                 dialogo.showModal();
@@ -57,6 +114,7 @@
             boton.className = 'va-habilitar';
             const pintar = () => {
                 boton.textContent = v.habilitado ? 'Habilitado para tu estudiante · Quitar' : 'Habilitar para tu estudiante';
+                if (disenoAlumno) boton.classList.toggle('va-habilitar--activo', Boolean(v.habilitado));
             };
             pintar();
             boton.addEventListener('click', () => {
@@ -73,23 +131,78 @@
             return boton;
         }
 
+        // Pinta la grilla con lo que calza con la búsqueda y el ramo elegido.
+        function pintarGrilla() {
+            const q = sinTildes(buscador ? buscador.value.trim() : '');
+            const lista = videos.filter(v =>
+                (!ramoElegido || v.asignatura === ramoElegido) &&
+                (!q || sinTildes(`${v.titulo} ${v.asignatura} ${v.profesor}`).includes(q)));
+            grilla.replaceChildren(...lista.map(tarjeta));
+            if (cuenta && videos.length) {
+                cuenta.hidden = false;
+                cuenta.textContent = lista.length === videos.length
+                    ? `${videos.length} video${videos.length === 1 ? '' : 's'}`
+                    : `${lista.length} de ${videos.length} videos`;
+            }
+            if (videos.length && !lista.length) {
+                grilla.append(nodo('p', 'va-sin-resultados', 'Ningún video calza con tu búsqueda. Prueba con otra palabra o elige "Todos".'));
+            }
+        }
+
+        function armarHerramientas() {
+            if (!herramientas || videos.length < 2) return;
+            const ramos = [...new Set(videos.map(v => v.asignatura))].sort((x, y) => x.localeCompare(y, 'es'));
+            if (filtros) {
+                filtros.replaceChildren();
+                if (ramos.length > 1) {
+                    for (const ramo of ['', ...ramos]) {
+                        const chip = nodo('button', 'va-filtro', ramo || 'Todos');
+                        chip.type = 'button';
+                        chip.setAttribute('aria-pressed', String(ramo === ramoElegido));
+                        chip.addEventListener('click', () => {
+                            ramoElegido = ramo;
+                            filtros.querySelectorAll('.va-filtro').forEach(b => b.setAttribute('aria-pressed', String(b === chip)));
+                            pintarGrilla();
+                        });
+                        filtros.append(chip);
+                    }
+                }
+            }
+            if (buscador) buscador.addEventListener('input', pintarGrilla);
+            herramientas.hidden = false;
+        }
+
         dialogo.addEventListener('close', () => { video.pause(); video.removeAttribute('src'); video.load(); });
 
         function cargar() {
             if (cargado || cargando) return;
             cargando = true;
+            // Esqueletos mientras llega la lista: se ve que algo está cargando, sin saltos al aparecer
+            grilla.replaceChildren(...Array.from({length: 3}, () => nodo('span', 'va-esqueleto')));
+            grilla.setAttribute('aria-busy', 'true');
             fetch(raiz.dataset.lista, { credentials: 'same-origin' })
             .then(res => res.json())
             .then(data => {
-                if (!data.disponible) { mostrar(data.message); return; }
-                grilla.replaceChildren(...data.videos.map(tarjeta));
+                grilla.replaceChildren();
+                if (!data.disponible) { mostrar(data.message, true); return; }
+                videos = data.videos || [];
+                const ramos = [...new Set(videos.map(v => v.asignatura))].sort((x, y) => x.localeCompare(y, 'es'));
+                tonos = new Map(ramos.map((r, i) => [r, PALETA[i % PALETA.length]]));
+                armarHerramientas();
+                pintarGrilla();
                 const n = data.por_revisar || 0;  // menor: los que su apoderado aun no habilita
                 const espera = n ? `Tienes ${n} video${n === 1 ? '' : 's'} esperando que tu apoderado ${n === 1 ? 'lo' : 'los'} revise.` : '';
-                mostrar(espera || (data.videos.length ? '' : 'Todavía no tienes videos. Tu profesor te los irá compartiendo durante tu paquete.'));
+                if (espera) mostrar(espera);
+                else if (!videos.length) mostrar('Todavía no tienes videos. Tu profesor te los irá compartiendo durante tu paquete.', true);
+                else mostrar('');
                 cargado = true;
             })
-            .catch(() => mostrar('No pudimos cargar tus videos. Revisa tu conexión.'))
-            .finally(() => { cargando = false; });
+            .catch(() => {
+                if (!disenoAlumno) { mostrar('No pudimos cargar tus videos. Revisa tu conexión.'); return; }
+                grilla.replaceChildren();
+                mostrar('No pudimos cargar tus videos. Revisa tu conexión y vuelve a abrir esta sección.', true);
+            })
+            .finally(() => { cargando = false; grilla.removeAttribute('aria-busy'); });
         }
 
         new IntersectionObserver((entradas) => { if (entradas.some(e => e.isIntersecting)) cargar(); }).observe(raiz);

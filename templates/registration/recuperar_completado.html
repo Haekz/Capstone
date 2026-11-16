@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contraseña restablecida — LBWUS</title>
     <link rel="icon" href="{% static 'alumnos/img/Logo.png' %}">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{% static 'vendor/bootstrap-icons/bootstrap-icons.min.css' %}">
     <link rel="stylesheet" href="{% static 'recuperar.css' %}">
     <script>
         // Respeta el modo oscuro elegido en el sitio (antes de pintar, sin parpadeo)
@@ -31,7 +31,7 @@
                 <ul class="auth-points">
                     <li><i class="bi bi-envelope-check"></i> Enlace seguro enviado a tu correo</li>
                     <li><i class="bi bi-clock-history"></i> El enlace tiene una validez limitada</li>
-                    <li><i class="bi bi-headset"></i> ¿Dudas? Escríbenos a teachers@lbwus.cl</li>
+                    <li><i class="bi bi-headset"></i> ¿Dudas? Escríbenos a {{ legal.correo_contacto }}</li>
                 </ul>
             </div>
 
@@ -61,7 +61,7 @@
 
                 <div class="note">
                     <i class="bi bi-shield-check"></i>
-                    <span>Si tú no pediste este cambio, escríbenos de inmediato a <strong>teachers@lbwus.cl</strong>.</span>
+                    <span>Si tú no pediste este cambio, escríbenos de inmediato a <strong>{{ legal.correo_contacto }}</strong>.</span>
                 </div>
 
                 <a href="{% url 'login' %}" class="btn">Iniciar sesión <i class="bi bi-arrow-right"></i></a>

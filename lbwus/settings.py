@@ -53,6 +53,10 @@ OBSERVACIONES_MESES = 12
 # acepta comodines tipo '*.dominio'.
 ALLOWED_HOSTS = ['lbwus.xyz', '.up.railway.app', 'localhost', '127.0.0.1']
 
+# Direccion publica del sitio: canonical, Open Graph, robots.txt y sitemap.xml la usan (lbwus/seo.py), aunque se
+# entre por el dominio de Railway.
+SITIO_URL = os.environ.get('SITIO_URL', 'https://lbwus.xyz').rstrip('/')
+
 CSRF_TRUSTED_ORIGINS = [
     'https://lbwus.xyz',
     'https://capstone-production-eddd.up.railway.app'
@@ -71,6 +75,16 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
+
+# Aviso por correo de los errores 500 (lbwus/aviso_errores.py): correos separados por comas. Vacio = no se avisa.
+ERRORES_CORREOS = [c.strip() for c in os.environ.get('ERRORES_CORREOS', '').split(',') if c.strip()]
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {'aviso_errores': {'class': 'lbwus.aviso_errores.AvisoDeError', 'level': 'ERROR'}},
+    # propagate: Django sigue registrando el error como siempre (consola, registros de Railway).
+    'loggers': {'django.request': {'handlers': ['aviso_errores'], 'level': 'ERROR', 'propagate': True}},
+}
 
 
 # Application definition
@@ -156,6 +170,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                # SITIO_URL para canonical y Open Graph (lbwus/seo.py)
+                'lbwus.seo.sitio',
                 # Expone 'usuario_sesion' al menu global (alumnos/base.html)
                 'alumnos.context_processors.estado_sesion',
                 # Responsable de los datos y contacto, para el pie, Contacto, Terminos y Privacidad (settings.LEGAL)
@@ -222,16 +238,16 @@ CSP_OBLIGATORIA = os.environ.get('CSP_OBLIGATORIA', 'False').lower() in ('1', 't
 DEFAULT_EXCEPTION_REPORTER_FILTER = 'lbwus.reporte_errores.FiltroReporteErrores'
 
 # Quien responde por los datos personales y como contactarlo (pie de pagina, Contacto, Terminos y Privacidad).
-# VALORES DE EJEMPLO mientras LBWUS define los suyos (L-1 y L-4 de docs/PENDIENTES_LBWUS.md): hay que cambiarlos por
-# los reales con estas variables de entorno ANTES de abrir al publico. Un RUT o un correo inventados no son un
-# responsable de verdad: una solicitud de datos enviada a un correo que nadie lee no se responde.
+# El telefono y los correos son los reales (15-nov). El nombre, el RUT y el domicilio siguen siendo VALORES DE EJEMPLO
+# mientras LBWUS define los suyos (L-1 de docs/PENDIENTES_LBWUS.md): hay que cambiarlos por los reales con estas
+# variables de entorno ANTES de abrir al publico. Un RUT inventado no es un responsable de verdad.
 LEGAL = {
     'nombre': os.environ.get('LEGAL_NOMBRE', 'LBWUS SpA'),
     'rut': os.environ.get('LEGAL_RUT', '76.000.000-0'),
     'domicilio': os.environ.get('LEGAL_DOMICILIO', 'Pacifico Norte 123, Santiago, Chile'),
-    'telefono': os.environ.get('LEGAL_TELEFONO', '+56 2 2123 4567'),
-    'correo_datos': os.environ.get('LEGAL_CORREO_DATOS', 'privacidad@lbwus.cl'),
-    'correo_contacto': os.environ.get('LEGAL_CORREO_CONTACTO', 'teachers@lbwus.cl'),
+    'telefono': os.environ.get('LEGAL_TELEFONO', '+56 9 3906 2158'),
+    'correo_datos': os.environ.get('LEGAL_CORREO_DATOS', 'lbwus.proyecto@gmail.com'),
+    'correo_contacto': os.environ.get('LEGAL_CORREO_CONTACTO', 'lbwus.proyecto@gmail.com'),
 }
 
 

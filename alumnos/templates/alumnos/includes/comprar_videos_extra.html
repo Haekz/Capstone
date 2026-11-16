@@ -6,12 +6,11 @@
 {% ofertas_videos_extra estudiante as ofertas %}
 {% if con_mensajes %}
     {% if messages %}<div role="alert">{% for m in messages %}<p class="va-compra__error">{{ m }}</p>{% endfor %}</div>{% endif %}
-    {# Si la compra no procede, se vuelve con ?pestana=videos: se abre la pestaña donde esta el motivo. #}
+    {# Si la compra no procede, se vuelve con ?pestana=videos: se abre Mis videos (vista propia), donde esta el motivo. #}
     <script>
         window.addEventListener('load', function () {
             if (new URLSearchParams(window.location.search).get('pestana') !== 'videos') return;
-            var pestana = document.querySelector('.tab-btn[data-tab="tab-videos"]');
-            if (pestana) pestana.click();
+            if (window.switchView) window.switchView('view-videos');
         });
     </script>
 {% endif %}

@@ -11,6 +11,7 @@ Todas las lee `lbwus/settings.py`, salvo donde se indica.
 |---|---|---|---|
 | `SECRET_KEY` | Firma de sesiones, CSRF, tokens de recuperación y nombres de sala Jitsi | **Sí** | Con `DEBUG=False`, el sitio **no arranca** (`ImproperlyConfigured`). En desarrollo usa una clave insegura |
 | `DOCUMENTOS_CLAVE` | Clave Fernet de los documentos de apoderados (sección 3) | **Sí** | **El despliegue no arranca**: el `Procfile` corre `check --deploy`, que da el error `apoderados.E001` (o `E002` si la clave no es válida) |
+| `SUPRESIONES_CLAVE` | Clave de las huellas del registro de supresiones (`supresiones/registro.py`) | Recomendada | Se deriva de `SECRET_KEY`. Si la clave cambia, el registro y los archivos exportados **dejan de reconocer a las personas eliminadas**: definirla aparte y guardarla junto con los respaldos, nunca en la base de datos |
 | `DEBUG` | Modo depuración | Sí, `False` | En Railway queda en `False` (se detecta por `RAILWAY_ENVIRONMENT`) y exige `SECRET_KEY`; en local queda en `True` |
 | `DATABASE_URL` | PostgreSQL (la crea Railway al enlazar la base) | Sí | Sin ella (o con una URL que no sea PostgreSQL) el sitio no arranca |
 | `MEDIA_ROOT` | Carpeta de archivos subidos | Sí, `/data/media` (el volumen) | Usa `media/` dentro del contenedor, que se borra en cada despliegue |
@@ -20,16 +21,20 @@ Todas las lee `lbwus/settings.py`, salvo donde se indica.
 | `EMAIL_HOST`, `EMAIL_PORT` | Servidor SMTP | No (por omisión Gmail, 587) | — |
 | `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD` | Cuenta de correo | Sí | Fallan la recuperación de contraseña, el código de Google y los correos de apoderados |
 | `DEFAULT_FROM_EMAIL` | Remitente | No (usa `EMAIL_HOST_USER`) | — |
+| `ERRORES_CORREOS` | Correos, separados por comas, que reciben un aviso cuando hay un error 500 (`lbwus/aviso_errores.py`). El aviso **no lleva datos de las personas** ni el mensaje del error: solo la pantalla, el tipo de error, el id de la cuenta y por dónde pasó el código | Recomendada | No se avisa por correo; el error igual queda completo en los registros de Railway |
 | `MONGODB_URI` | MongoDB Atlas (app `comunidad`) | Sí, si se usa la comunidad | MongoDB queda desactivado y el sitio funciona igual |
 | `MONGODB_DB`, `MONGODB_TIMEOUT_MS` | Base de MongoDB y tiempo de espera | No (por omisión `lbwus_dev`, 5000) | **En producción debe ser `lbwus_prod`** |
 | `CSP_OBLIGATORIA` | `1` hace obligatoria la Content-Security-Policy (sección 7) | No | Queda en Report-Only: el navegador avisa, pero no bloquea |
+| `SITIO_URL` | Dirección pública del sitio: la usan la dirección canónica, la vista previa al compartir (WhatsApp, redes), `robots.txt` y `sitemap.xml` (`lbwus/seo.py`). Así, entrando por `*.up.railway.app` los buscadores siguen viendo `lbwus.xyz` | No | Usa `https://lbwus.xyz`. **Si el dominio cambia hay que definirla**: si no, Google tomaría la dirección vieja como la oficial |
 | `SITIO_CLAVE` | Puerta "Sitio en mantenimiento" (`lbwus/puerta.py`) | No | Sin puerta |
 | `SITIO_DOMINIOS_CORREO` | Puerta por dominio de correo (tiene prioridad sobre `SITIO_CLAVE`) | No | Sin puerta por correo |
-| `LEGAL_NOMBRE`, `LEGAL_RUT`, `LEGAL_DOMICILIO`, `LEGAL_TELEFONO`, `LEGAL_CORREO_DATOS`, `LEGAL_CORREO_CONTACTO` | Quién responde por los datos y cómo contactarlo: Términos, Privacidad, pie de página y Contacto (`settings.LEGAL`) | **Sí, antes de abrir al público** | Se muestran datos **de ejemplo** (`LBWUS SpA`, RUT `76.000.000-0`, `privacidad@lbwus.cl`…). Un RUT o un correo inventados no son un responsable real, y una solicitud enviada a un correo que nadie lee no se responde |
+| `LEGAL_NOMBRE`, `LEGAL_RUT`, `LEGAL_DOMICILIO`, `LEGAL_TELEFONO`, `LEGAL_CORREO_DATOS`, `LEGAL_CORREO_CONTACTO` | Quién responde por los datos y cómo contactarlo: Términos, Privacidad, pie de página y Contacto (`settings.LEGAL`) | **Sí, antes de abrir al público** | Se muestran de ejemplo el nombre y el RUT (`LBWUS SpA`, `76.000.000-0`) y el domicilio; el teléfono y los correos ya son los reales (hoy `lbwus.proyecto@gmail.com` para contacto y para datos). Un RUT inventado no es un responsable real, y una solicitud enviada a un correo que nadie lee no se responde |
 | `TRANSBANK_PRODUCCION_HABILITADA`, `TRANSBANK_ENVIRONMENT`, `TRANSBANK_COMMERCE_CODE`, `TRANSBANK_API_KEY` | Webpay real | No: sin ellas se usa el ambiente de integración (la simulación oficial de Transbank) | Sin cobros reales (es lo esperado hoy). **Para pasar a real: las cuatro a la vez** (`TRANSBANK_PRODUCCION_HABILITADA=True`, `TRANSBANK_ENVIRONMENT=LIVE`, código de comercio y llave). Si falta una, el sitio no arranca y dice cuál |
 | `MONGODB_INTEGRACION` | Solo pruebas | No | — |
 
 El inicio de sesión con Google no usa variables: el `client_id` y el secreto están en la base (Django admin → Social applications).
+
+**Salud del sitio.** `/salud/` responde `200` (`{"estado": "ok"}`) si el sitio y la base de datos funcionan y `503` si la base no responde. No pide sesión ni la clave de la puerta, y no muestra detalles. Para enterarse de una caída conviene un monitor externo gratuito (por ejemplo UptimeRobot) que consulte `https://lbwus.xyz/salud/` cada 5 minutos. **No uses el "Healthcheck Path" de Railway con esta dirección sin antes permitir el host `healthcheck.railway.app` en `ALLOWED_HOSTS`** (hoy no está, según la documentación de Railway la consulta sale desde ese host): cada despliegue fallaría con error 400.
 
 ## 2. Archivos privados
 

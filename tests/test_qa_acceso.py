@@ -31,6 +31,8 @@ from tests.test_especialidad import crear_profesor
 from tests.test_progreso_alumno import crear_alumno
 
 PUBLICAS = {
+    # Para buscadores, sin sesion (lbwus/seo.py).
+    'robots', 'sitemap',
     'home', 'contactos', 'nosotros', 'planes', 'servicios', 'opcion_user', 'regis_alum', 'alumnos_reg',
     'terminos', 'privacidad',
     'custom_login_alumno', 'sesiones_disponibles', 'home_adm', 'regis_prof', 'registro_apoderado',
@@ -42,6 +44,8 @@ PUBLICAS = {
     'socialaccount_login_cancelled',
     # Con SOCIALACCOUNT_LOGIN_ON_GET = False, el GET solo muestra el boton que hace POST (S-20).
     'google_login',
+    # Direccion de salud: la consulta un monitor, sin sesion (lbwus/salud.py).
+    'salud',
 }
 # Cualquier cuenta con sesion.
 COMUNES = {

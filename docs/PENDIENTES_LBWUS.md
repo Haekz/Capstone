@@ -1,6 +1,6 @@
 # LBWUS: pendientes
 
-Actualizado: 08-nov-2026. Aqui queda solo lo que falta. Todo lo que listaba la version anterior ya esta en `main`
+Actualizado: 15-nov-2026. Aqui queda solo lo que falta. Todo lo que listaba la version anterior ya esta en `main`
 (35 de sus 38 ramas; las otras 3 se cierran sin mergear, LBW-16). El historial de lo hecho sigue en git:
 `git show c8f3341:docs/PENDIENTES_LBWUS.md`. Las decisiones estan en DECISIONES_SOPORTE_Y_PAGOS.md.
 
@@ -12,10 +12,13 @@ Los codigos LBW-xx y Dx son los del backlog y las decisiones grupales del 08-nov
 - Habilitar al menos un agente en cada tema nuevo: `manage.py habilitar_soporte <RUT> --agregar especializaciones
   horario contacto privacidad` (LBW-07). Sin agente, esos tickets quedan sin asignar.
 - Definir `SUPRESIONES_CLAVE` aparte y guardarla junto a los respaldos, nunca en la base. Sin ella se deriva de
-  `SECRET_KEY`. Hoy no figura en CONFIGURACION_PRODUCCION.md.
+  `SECRET_KEY` (ver CONFIGURACION_PRODUCCION.md).
 - Programar `exportar_supresiones RUTA` a diario, con el archivo fuera de la base (LBW-13; falta decidir donde, D3).
   Tras restaurar cualquier respaldo: `reaplicar_supresiones --archivo RUTA` antes de reabrir el servicio.
 - Confirmar que Railway agrega la IP del cliente al final de `X-Forwarded-For` (S4-02, LBW-08).
+- Definir `ERRORES_CORREOS` (quien recibe el aviso de un error 500) y poner un monitor externo gratuito (por ejemplo
+  UptimeRobot) que consulte `https://lbwus.xyz/salud/` cada 5 minutos. No usar el Healthcheck Path de Railway con esa
+  direccion sin permitir antes `healthcheck.railway.app` en `ALLOWED_HOSTS`. Detalle en CONFIGURACION_PRODUCCION.md.
 - Respaldos automaticos y una restauracion probada (LBW-14). La politica de privacidad debe decir que los
   respaldos conservan los documentos durante su retencion.
 
@@ -24,10 +27,31 @@ Los codigos LBW-xx y Dx son los del backlog y las decisiones grupales del 08-nov
   Solo despues de correr `pasar_titulos_a_base` en produccion. Sin ticket todavia.
 
 ## Seguridad y calidad (detalle en el backlog)
-- LBW-03 DEBUG seguro en Railway, LBW-04 versiones fijas, LBW-05 gunicorn, LBW-06 CI, LBW-10 Dependabot,
-  LBW-11 y LBW-21 escape en el JS, LBW-12 suite en paralelo, LBW-22 a LBW-26 deuda tecnica.
+- LBW-11 y LBW-21 escape en el JS, LBW-12 suite en paralelo (la CI corre `manage.py test` sin `--parallel`),
+  LBW-22 a LBW-26 deuda tecnica. LBW-03 (DEBUG seguro en Railway), LBW-04 (versiones fijas en `requirements.txt`),
+  LBW-05 (gunicorn en el `Procfile`), LBW-06 (CI) y LBW-10 (Dependabot) ya estan hechos: se verificaron en el
+  codigo el 15-nov.
 - Revision visual en navegador de todos los flujos de apoderados (LBW-15).
 - Posible CSS muerto en `pago/01_pago.css` (paneles de resumen y Webpay). Sin revisar, sin ticket.
+
+## Antes de abrir al publico: lo que faltaba en esta lista (revision del 15-nov)
+- **Cerrar la CSP.** Sigue en Report-Only (`CSP_OBLIGATORIA`), permite `'unsafe-inline'` (hay scripts, `onclick=` y
+  `style=` en linea en las plantillas) y no tiene destino para reportes: hoy no bloquea nada. Es trabajo grande:
+  sacar lo que esta en linea, mirar los reportes y recien ahi hacerla obligatoria.
+- **SweetAlert2 sigue viniendo de internet.** Es el unico script externo (`cdn.jsdelivr.net/npm/sweetalert2@11`, la
+  version 11 sin fijar). Alojarlo en `static/vendor/` como los iconos y las letras, y quitar jsDelivr de `script-src`.
+  Tampoco es propia la letra del correo de recuperar clave: un correo no puede traer archivos.
+- **Probar Atlas.** Las 6 pruebas que exigen conexion real a MongoDB (`MONGODB_INTEGRACION=1`) no se corrieron en esta
+  revision. Correrlas con una base **de prueba**, nunca `lbwus_prod`: escriben datos.
+- **Cookies en la politica de privacidad.** No menciona que el sitio usa cookies esenciales (sesion y proteccion
+  CSRF), ni que no usa cookies de seguimiento. Para la abogada, junto con L-2, L-3 y L-5.
+- **Politica de privacidad: Google y las letras.** La lista de proveedores dice que Google entrega "fuentes de texto
+  de la pagina". Desde que las letras salen del propio sitio (`static/vendor`) ya no es asi: solo queda la letra del
+  correo de recuperar clave. Ajustar el texto cuando se mezcle ese cambio, con la abogada.
+- **Sin constancia en el repositorio (confirmar fuera de el):** auditoria de accesibilidad WCAG 2.2 AA; prueba de
+  carga con el `Procfile` actual (gunicorn, 4 hilos); un entorno de ensayo distinto de produccion; SPF, DKIM y DMARC
+  del dominio desde el que sale el correo (si faltan, la recuperacion de clave y los avisos pueden caer en spam); y
+  la carga de datos iniciales de produccion (generos, asignaturas, planes).
 
 ## Pagos
 - Transbank en produccion: checklist en CONCILIACION_Y_TRANSBANK_7_6.md, seccion 6 (LBW-09).
@@ -35,13 +59,15 @@ Los codigos LBW-xx y Dx son los del backlog y las decisiones grupales del 08-nov
 - Cuanto se guardan los registros de pago: contador y abogada (LBW-20, D2).
 
 ## Menores y legal
-- **No habilitar menores reales** hasta la revision juridica (LBW-02, D1): declaracion de facultad, revocacion,
-  transicion a los 18, aviso de documentos y declaraciones v2. Y definir quien verifica certificados y como.
+- **Menores habilitados (15-nov).** La revision juridica ya se hizo. Los certificados y documentos de los apoderados
+  los revisan los agentes de soporte: cada revision es un ticket (LBW-02, D1). Sin agente habilitado esos tickets
+  quedan sin asignar (ver Railway, mas arriba).
 - **Antes de abrir al público: reemplazar los datos de ejemplo del responsable** (B7, 15-nov). Las páginas
   `/terminos/` y `/privacidad/` y el pie ya existen, pero muestran un responsable inventado (`LBWUS SpA`, RUT
-  `76.000.000-0`, domicilio y correo de ejemplo). Se cambian con las variables `LEGAL_*` de Railway, sin tocar código
-  (ver CONFIGURACION_PRODUCCION.md). Hay que definir razón social o nombre, RUT, domicilio y un correo de derechos
-  que alguien lea de verdad (L-1 y L-4). Ambos textos son un borrador a revisar por la abogada; lo más delicado es
+  `76.000.000-0` y domicilio de ejemplo; el teléfono y los correos ya son los reales, hoy el mismo para contacto y para
+  datos: `lbwus.proyecto@gmail.com`). Se cambian con las variables `LEGAL_*` de Railway, sin tocar código
+  (ver CONFIGURACION_PRODUCCION.md). Hay que definir razón social o nombre, RUT y domicilio (L-1). El correo de derechos
+  es hoy el de contacto (L-4): alguien debe leerlo a diario. Ambos textos son un borrador a revisar por la abogada; lo más delicado es
   Terminos §9, "no se devuelve dinero por clases" (revisar contra la ley del consumidor y el retracto). En Privacidad faltan
   confirmar país y contratos de los proveedores (L-2), los respaldos (L-3) y los plazos contables (L-5).
 - **Aceptación de Términos y Privacidad (15-nov):** se pide al comprar un paquete (alumno y apoderado, un solo control
