@@ -96,13 +96,13 @@ class MarcoDeSoporteTests(TestCase):
         self.assertIn('<span>Cerrar sesión</span>', html)
         self.assertNotIn('Cerrar Sesión', html)
 
-    def test_el_admin_conserva_su_cerrar_sesion(self):
-        """base_admin.html lo comparten Admin y Soporte: el texto de Soporte es un bloque que el Admin no reemplaza."""
+    def test_el_admin_dice_cerrar_sesion_como_su_copia(self):
+        """base_admin.html lo comparten Admin, Soporte y Docente: las tres copias dicen 'Cerrar sesion' en minuscula."""
         admin, tutor = crear_admin()
         entrar_admin(self.client, admin, tutor)
         html = self.client.get(reverse('dashboard_admin')).content.decode()
-        self.assertIn('<span>Cerrar Sesión</span>', html)
-        self.assertNotIn('<span>Cerrar sesión</span>', html)
+        self.assertIn('<span>Cerrar sesión</span>', html)
+        self.assertNotIn('Cerrar Sesión', html)
 
     def test_el_menu_va_en_grupos_y_el_agente_no_ve_privacidad_y_legal(self):
         html = self.pagina()
@@ -142,4 +142,3 @@ class MarcoDeSoporteTests(TestCase):
         self.assertNotIn('portal-soporte', html)
         self.assertNotIn('07a_pulido_soporte', html)
         self.assertNotIn('mejoras_soporte.js', html)
-        self.assertNotIn('topbar-buscar', html)

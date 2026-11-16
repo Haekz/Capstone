@@ -42,7 +42,7 @@
             <img src="{% static 'alumnos/img/Logo.png' %}" alt="Logo LBWUS">
             <div class="sidebar-brand-text">
                 <span class="sidebar-brand-name">LBWUS</span>
-                <span class="sidebar-brand-role">{% block portal_nombre %}Admin Portal{% endblock %}</span>
+                <span class="sidebar-brand-role">{% block portal_nombre %}Portal admin{% endblock %}</span>
             </div>
         </a>
 
@@ -66,13 +66,13 @@
 
             <a id="nav-resumen" class="nav-item {% block nav_resumen %}{% endblock %}" href="{% url 'dashboard_admin' %}">
                 <i class="bi bi-grid-1x2-fill"></i>
-                Resumen General
+                Resumen
             </a>
 
             {# El dashboard resuelve "usuarios" como seccion interna y sobrescribe este destino. #}
             <a id="nav-usuarios" class="nav-item {% block nav_usuarios %}{% endblock %}" href="{% block nav_usuarios_href %}{% url 'crud' %}{% endblock %}">
                 <i class="bi bi-people-fill"></i>
-                Gestión de Alumnos
+                Usuarios
             </a>
 
             <a id="nav-resenas" class="nav-item {% block nav_resenas %}{% endblock %}" href="{% url 'resenas_moderacion' %}">
@@ -101,7 +101,7 @@
 
             <a id="nav-clases" class="nav-item {% block nav_clases %}{% endblock %}" href="{% url 'dashboard_admin' %}#clases">
                 <i class="bi bi-calendar3"></i>
-                Clases / Horarios
+                Clases
             </a>
 
             <a id="nav-asignaturas" class="nav-item {% block nav_asignaturas %}{% endblock %}" href="{% url 'asignaturas_adm' %}">
@@ -111,7 +111,7 @@
 
             <a id="nav-finanzas" class="nav-item {% block nav_finanzas %}{% endblock %}" href="{% url 'dashboard_admin' %}#finanzas">
                 <i class="bi bi-wallet2"></i>
-                Finanzas / Retiros
+                Finanzas
             </a>
 
             <a id="nav-ajustes" class="nav-item {% block nav_ajustes %}{% endblock %}" href="{% url 'dashboard_admin' %}#ajustes">
@@ -131,7 +131,7 @@
                 {% csrf_token %}
                 <button type="submit" class="sidebar-logout btn-sidebar-logout">
                     <i class="bi bi-box-arrow-left"></i>
-                    <span>{% block logout_texto %}Cerrar Sesión{% endblock %}</span>
+                    <span>Cerrar sesión</span>
                 </button>
             </form>
         </div>
@@ -154,9 +154,11 @@
             </div>
             <div class="topbar-right">
                 {% block topbar_acciones %}
-                <!-- Botón de búsqueda flotante (Ctrl + K) -->
-                <button class="theme-btn" onclick="openSearchModal()" title="Buscar (Ctrl + K)">
-                    <i class="bi bi-search"></i>
+                <!-- Botón para ir a una sección (Ctrl + K) -->
+                <button type="button" class="topbar-buscar" onclick="openSearchModal()" aria-label="Ir a una sección (Ctrl + K)" aria-keyshortcuts="Control+K">
+                    <i class="bi bi-search" aria-hidden="true"></i>
+                    <span>Ir a…</span>
+                    <kbd>Ctrl K</kbd>
                 </button>
                 {% include 'admin_portal/includes/boton_campana.html' %}
                 {% endblock %}

@@ -3,6 +3,7 @@
 Todo cuelga de #portal-admin (id del <body> que pone base_admin por defecto). Soporte y Docente comparten esa base y NO deben cargar la capa
 ni cambiar su <body>. Datos ficticios.
 """
+import re
 from pathlib import Path
 
 from django.test import SimpleTestCase, TestCase
@@ -61,6 +62,50 @@ class MarcoDeAdminTests(TestCase):
         self.assertNotIn('06a_pulido_admin', html)
 
 
+class MarcoDeAdminTitulosTests(TestCase):
+    """Etapa A2: la marca, el menu, la barra superior y los titulos con los nombres de la copia."""
+
+    def setUp(self):
+        admin, tutor = crear_admin()
+        entrar_admin(self.client, admin, tutor)
+
+    def pagina(self, nombre):
+        return self.client.get(reverse(nombre)).content.decode()
+
+    def test_la_marca_y_el_menu_usan_los_nombres_de_la_copia(self):
+        html = self.pagina('dashboard_admin')
+        self.assertIn('<span class="sidebar-brand-role">Portal admin</span>', html)
+        nombres = re.findall(r'<a id="nav-[a-z]+" class="nav-item[^"]*"[^>]*>\s*<i[^>]*></i>\s*([^<]+?)\s*</a>', html)
+        self.assertEqual(nombres, ['Resumen', 'Usuarios', 'Reseñas', 'Planes', 'Nosotros', 'Casos escalados', 'Clases', 'Asignaturas', 'Finanzas', 'Ajustes'])
+        self.assertEqual(re.findall(r'<span class="nav-label">([^<]+)</span>', html), ['Principal', 'Contenido', 'Herramientas'])
+
+    def test_la_barra_trae_el_boton_ir_a_antes_de_la_campana(self):
+        for nombre in PAGINAS_ADMIN:
+            with self.subTest(pagina=nombre):
+                html = self.pagina(nombre)
+                self.assertIn('<span>Ir a…</span>', html)
+                self.assertIn('<kbd>Ctrl K</kbd>', html)
+                self.assertLess(html.index('class="topbar-buscar"'), html.index('toggleNotifications()'))
+
+    def test_el_dashboard_titula_cada_seccion_como_la_copia(self):
+        html = self.pagina('dashboard_admin')
+        self.assertIn('<h1 id="section-title">Resumen</h1>', html)
+        for esperado in ("resumen: ['Resumen', 'Cómo está LBWUS hoy']", "usuarios: ['Usuarios', 'Alumnos, profesores y administradores']",
+                         "clases: ['Clases', 'Las clases que soporte asignó a cada profesor (solo lectura)']",
+                         "finanzas: ['Finanzas', 'Ingresos de la plataforma y retiros de los profesores']",
+                         "ajustes: ['Ajustes', 'Tus datos y la apariencia del panel']"):
+            with self.subTest(titulo=esperado):
+                self.assertIn(esperado, html)
+
+    def test_las_paginas_sueltas_titulan_como_la_copia(self):
+        esperados = {'planes_adm': 'Planes', 'nosotros_adm': 'Nosotros', 'casos_escalados': 'Casos escalados',
+                     'asignaturas_adm': 'Asignaturas', 'resenas_moderacion': 'Moderación de reseñas'}
+        for nombre, titulo in esperados.items():
+            with self.subTest(pagina=nombre):
+                self.assertIn(f'<h1 id="section-title">{titulo}</h1>', self.pagina(nombre))
+        self.assertIn('Vista interna de la sección "Nosotros" del sitio', self.pagina('nosotros_adm'))
+
+
 class MarcoDeAdminFrenteAlDocenteTests(BaseResenas):
 
     def test_el_docente_no_carga_la_capa_ni_cambia_de_body(self):
@@ -69,3 +114,4 @@ class MarcoDeAdminFrenteAlDocenteTests(BaseResenas):
         self.assertIn('<body id="portal-docente" class="light-mode">', html)
         self.assertNotIn('portal-admin', html)
         self.assertNotIn('06a_pulido_admin', html)
+        self.assertIn('<span>Cerrar sesión</span>', html)  # como la copia del docente (antes salia con S mayuscula, la de la base)
