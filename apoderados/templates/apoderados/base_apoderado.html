@@ -7,7 +7,8 @@
 
 {% block title %}Portal del apoderado | LBWUS{% endblock %}
 {% block body_extra %} class="portal-apoderado"{% endblock %}
-{% block css_final %}<link rel="stylesheet" href="{% static 'apoderados/16_portal_apoderado.css' %}">{% endblock %}
+{% block css_final %}<link rel="stylesheet" href="{% static 'apoderados/16_portal_apoderado.css' %}">
+<link rel="stylesheet" href="{% static 'apoderados/17_registrar_como_en_la_copia.css' %}">{% endblock %}
 {# Las páginas que sobrescriben cuerpo_extra deben llamar a {{ block.super }} para conservar este script #}
 {% block cuerpo_extra %}<script src="{% static 'apoderados/portal.js' %}"></script>{% endblock %}
 

@@ -74,14 +74,18 @@ def nuevo_ticket(request):
                                   f'{plazo:%d-%m-%Y} a las {plazo:%H:%M}.')
         return redirect('mis_tickets')
     marco = contexto_de_marco(request, seccion='ayuda')
+    rapidas = f"Pagos, clases{', horario' if Ticket.HORARIO in categorias else ''}, conducta y videos"
+    para_apoderado = marco.get('es_apoderado', False)  # su copia trae la lista de plazos y un subtitulo en la barra
     return render(request, 'apoderados/formulario.html', {
         'form': form, 'titulo': 'Abrir un ticket', 'subtitulo': 'Cuéntanos qué pasó', 'boton': 'Enviar',
         'volver_url': reverse('mis_tickets'),
         # El formulario generico toma el diseño de tickets solo si es este formulario y quien lo abre es un alumno
         'diseno_tickets': marco.get('titulo_en_barra', False),
         'plazos': {c: Ticket.DIAS_HABILES[c] for c in categorias},  # los lee el script: el plazo prometido es el real
-        'intro': (f"Pagos, clases{', horario' if Ticket.HORARIO in categorias else ''}, conducta y videos: respondemos "
-                  'en 2 días hábiles. Lo demás, en 5 días hábiles.'),
+        'plazos_filas': [(rapidas, Ticket.DIAS_HABILES[Ticket.PAGOS]),
+                         ('Problemas técnicos y otros', Ticket.DIAS_HABILES[Ticket.TECNICO])] if para_apoderado else None,
+        'subtitulo_barra': 'Cuéntanos qué pasó y te respondemos por escrito' if para_apoderado else None,
+        'intro': f'{rapidas}: respondemos en 2 días hábiles. Lo demás, en 5 días hábiles.',
         **marco,
     })
 

@@ -13,7 +13,8 @@
     <p style="margin: 0; font-size: 0.9rem; color: var(--text-light); line-height: 1.5; font-style: italic;">«{{ o.texto }}»</p>
 </article>
 {% empty %}
-<p>Aún no hay observaciones: tus profesores las dejan después de cada clase.</p>
+{# es_apoderado: solo lo trae el marco del portal del apoderado; el alumno sigue con el parrafo simple #}
+<p{% if es_apoderado %} class="apo-vacio"{% endif %}>{% if es_apoderado %}<i class="bi bi-pencil-square" aria-hidden="true"></i> {% endif %}Aún no hay observaciones: tus profesores las dejan después de cada clase.</p>
 {% endfor %}
 {% if observaciones %}
 {% meses_de_conservacion as meses %}

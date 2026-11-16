@@ -79,7 +79,13 @@
     <aside class="tk-ayuda" aria-label="Antes de enviar">
         <div class="tk-ayuda-bloque">
             <h3><i class="bi bi-clock-history" aria-hidden="true"></i> Cuándo te respondemos</h3>
-            <p class="tk-ayuda-texto">{{ intro }}</p>
+            {# plazos_filas: solo lo manda la vista al apoderado (14_soporte.css trae .tk-plazos); el resto sigue con la frase #}
+            {% if plazos_filas %}
+            <ul class="tk-plazos">
+                {% for etiqueta, dias in plazos_filas %}<li><span>{{ etiqueta }}</span><strong>{{ dias }} días hábiles</strong></li>
+                {% endfor %}
+            </ul>
+            {% else %}<p class="tk-ayuda-texto">{{ intro }}</p>{% endif %}
         </div>
         <div class="tk-ayuda-bloque">
             <h3><i class="bi bi-lightbulb" aria-hidden="true"></i> Para ayudarte más rápido</h3>
