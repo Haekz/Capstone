@@ -197,13 +197,14 @@
 
     <!-- Modal de Búsqueda Global (Ctrl + K) -->
     <div class="search-modal-backdrop" id="search-modal-backdrop" onclick="closeSearchModal()">
-        <div class="search-modal" onclick="event.stopPropagation()">
+        <div class="search-modal" onclick="event.stopPropagation()"{% block busqueda_dialogo %}{% endblock %}>
             <div class="search-modal-header">
                 <i class="bi bi-search"></i>
-                <input type="text" class="search-modal-input" id="search-modal-input" placeholder="Buscar alumnos, profesores, clases..." oninput="handleGlobalSearch()">
-                <span class="search-esc-badge">ESC</span>
+                <input type="text" class="search-modal-input" id="search-modal-input" placeholder="{% block busqueda_placeholder %}Buscar alumnos, profesores, clases...{% endblock %}" oninput="handleGlobalSearch()"{% block busqueda_campo %}{% endblock %}>
+                <span class="search-esc-badge">{% block busqueda_esc %}ESC{% endblock %}</span>
             </div>
             <div class="search-modal-results" id="search-modal-results">
+                {% block busqueda_resultados %}
                 <div class="search-section-label">Sugerencias rápidas</div>
                 <div class="search-result-item" onclick="navigateFromSearch('usuarios')">
                     <i class="bi bi-people"></i>
@@ -215,6 +216,7 @@
                     <span>Agenda de Clases</span>
                     <span class="search-result-type">Sección</span>
                 </div>
+                {% endblock %}
             </div>
         </div>
     </div>

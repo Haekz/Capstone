@@ -174,7 +174,7 @@ class RevisionVinculoTests(TestCase):
 
     def test_la_bandeja_muestra_el_vinculo_pendiente(self):
         respuesta = self.client.get(reverse('apoderados_revision'))
-        self.assertContains(respuesta, 'Vínculos por verificar (1)')
+        self.assertContains(respuesta, 'Vínculos por verificar <span class="sop-cuenta">1</span>')
         self.assertContains(respuesta, RUT_NINO)
 
 

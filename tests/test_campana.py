@@ -168,7 +168,9 @@ class CampanaAgenteTests(TestCase):
         respuesta = self.client.get(reverse('panel_soporte'))
         self.assertContains(respuesta, f'Ticket #{ticket.pk} atrasado')
         self.assertContains(respuesta, 'notif-badge-dot')
-        self.assertNotContains(respuesta, 'onclick="openSearchModal()"')  # el buscador es del admin
+        # El buscador es el de soporte (secciones y tickets), no el del admin (alumnos, profesores, clases)
+        self.assertContains(respuesta, 'placeholder="Ir a una sección o ticket…"')
+        self.assertNotContains(respuesta, 'Buscar alumnos, profesores, clases')
 
 
 class CampanaLiderTests(TestCase):

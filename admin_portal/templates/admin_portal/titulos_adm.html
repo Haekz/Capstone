@@ -2,7 +2,7 @@
 
 {% block title %}Documentos de profesores — Soporte LBWUS{% endblock %}
 {% block page_title %}Documentos de profesores{% endblock %}
-{% block page_subtitle %}Revisa títulos y especializaciones: sin título aprobado no pueden hacer clases{% endblock %}
+{% block page_subtitle %}Revisa títulos y especializaciones. Sin un título aprobado, el profesor no puede hacer clases.{% endblock %}
 {% block nav_titulos %}active{% endblock %}
 
 {% block content %}
@@ -15,12 +15,12 @@
 
 <div class="panel">
     <div class="panel-header">
-        <span class="panel-title"><i class="bi bi-hourglass-split"></i> Títulos pendientes de revisión ({{ en_revision|length }})</span>
+        <h2 class="panel-title"><i class="bi bi-hourglass-split" aria-hidden="true"></i> Títulos por revisar <span class="sop-cuenta">{{ en_revision|length }}</span></h2>
     </div>
-    <div style="overflow-x:auto;">
+    <div class="sop-tabla">
         <table class="user-table">
             <thead>
-                <tr><th>Profesor</th><th>Especialidad</th><th>Subido</th><th>Archivo</th><th>Decisión</th></tr>
+                <tr><th scope="col">Profesor</th><th scope="col">Especialidad</th><th scope="col">Subido</th><th scope="col">Archivo</th><th scope="col">Decisión</th></tr>
             </thead>
             <tbody>
                 {% for p in en_revision %}
@@ -49,14 +49,14 @@
     </div>
 </div>
 
-<div class="panel" style="margin-top:28px;">
+<div class="panel">
     <div class="panel-header">
-        <span class="panel-title"><i class="bi bi-award"></i> Especializaciones pendientes de revisión ({{ especializaciones|length }})</span>
+        <h2 class="panel-title"><i class="bi bi-award-fill" aria-hidden="true"></i> Especializaciones por revisar <span class="sop-cuenta">{{ especializaciones|length }}</span></h2>
     </div>
-    <div style="overflow-x:auto;">
+    <div class="sop-tabla">
         <table class="user-table">
             <thead>
-                <tr><th>Profesor</th><th>Especialización</th><th>Propone</th><th>Subida</th><th>Archivo</th><th>Decisión</th></tr>
+                <tr><th scope="col">Profesor</th><th scope="col">Especialización</th><th scope="col">Propone</th><th scope="col">Subida</th><th scope="col">Archivo</th><th scope="col">Decisión</th></tr>
             </thead>
             <tbody>
                 {% for e in especializaciones %}
