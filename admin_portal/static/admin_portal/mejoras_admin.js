@@ -5,12 +5,12 @@
    - El banner del Resumen (fecha y pendientes): lo arma el servidor (admin_portal/metricas.py: pendientes). La copia contaba reseñas y
      casos escalados leyendo las secciones Reseñas y Escalados, que aqui son paginas aparte: habria mostrado siempre cero.
    - El buscador Ctrl+K con las secciones: la lista completa ya viene en base_admin.html (la copia la armaba con el mapa `titles`,
-     que aqui solo tiene las 5 secciones del dashboard).
-   Las partes de Usuarios (busqueda sin tildes y confirmar eliminar) llegan con su etapa. */
+     que aqui solo tiene las 5 secciones del dashboard). */
 (function () {
     const $ = (sel, raiz = document) => raiz.querySelector(sel);
     const $$ = (sel, raiz = document) => Array.from(raiz.querySelectorAll(sel));
     const numero = (t) => { const n = parseInt(String(t).replace(/[^\d]/g, ''), 10); return Number.isNaN(n) ? 0 : n; };
+    const sinTildes = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
     // ── 1. Esc también cierra el panel de notificaciones (todas las páginas del portal) ──
     document.addEventListener('keydown', (e) => {
@@ -55,4 +55,54 @@
             det.appendChild(tablaSoporte);
         }
     }
+
+    // ── 5. Usuarios: aviso cuando la búsqueda no encuentra a nadie, y búsqueda que tampoco distingue tildes ──
+    const buscador = $('#user-search');
+    if (buscador) {
+        const sinResultados = document.createElement('p');
+        sinResultados.className = 'adm-sin-resultados';
+        sinResultados.hidden = true;
+        $('.users-toolbar')?.after(sinResultados);
+        const revisar = () => {
+            const tabla = $$('[id^="users-"]').find(d => d.style.display !== 'none');
+            const visibles = tabla ? $$('.user-row', tabla).filter(r => r.style.display !== 'none').length : 0;
+            const q = buscador.value.trim();
+            sinResultados.hidden = !q || visibles > 0;
+            sinResultados.textContent = `Nadie calza con "${q}". Busca por nombre, RUT o correo.`;
+        };
+        buscador.addEventListener('input', revisar);
+        const tabOriginal = window.showUserTab;
+        window.showUserTab = (tab) => { tabOriginal(tab); window.filterUsers(); revisar(); };
+        // La búsqueda no distinguía mayúsculas solo en el texto escrito: ahora tampoco tildes
+        window.filterUsers = () => {
+            const q = sinTildes(buscador.value);
+            const tabla = $$('[id^="users-"]').find(d => d.style.display !== 'none');
+            if (!tabla) return;
+            $$('.user-row', tabla).forEach(row => {
+                const texto = sinTildes(`${row.dataset.name} ${row.dataset.rut} ${row.dataset.correo}`);
+                row.style.display = texto.includes(q) ? '' : 'none';
+            });
+        };
+    }
+
+    // ── 6. Eliminar: ventana propia con el nombre (antes el confirm() del navegador, que queda de respaldo) ──
+    window.confirmarEliminar = (form, e) => {
+        if (!window.Swal || form.dataset.confirmado) return form.dataset.confirmado ? true : confirm(`¿Seguro que quieres eliminar a ${form.dataset.confirmar}?`);
+        e.preventDefault();
+        Swal.fire({
+            title: `¿Eliminar a ${form.dataset.confirmar}?`,
+            text: 'Esta acción no se puede deshacer.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Eliminar',
+            cancelButtonText: 'Cancelar',
+            customClass: {confirmButton: 'swal-peligro'},
+            focusCancel: true,
+        }).then(r => {
+            if (!r.isConfirmed) return;
+            form.dataset.confirmado = '1';
+            form.submit();
+        });
+        return false;
+    };
 })();
