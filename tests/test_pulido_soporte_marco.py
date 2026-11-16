@@ -14,7 +14,7 @@ from tests.test_retiros import crear_admin, entrar_admin
 
 CSS = Path(__file__).resolve().parent.parent / 'admin_portal/static/admin_portal/css/admin_panel'
 PARTES = ['07a_pulido_soporte_marco.css', '07b_pulido_soporte_tickets.css', '07c_pulido_soporte_detalle.css', '07d_pulido_soporte_lider.css',
-          '07e_pulido_soporte_cierre.css']
+          '07e_pulido_soporte_cierre.css', '07f_ajustes_soporte.css']
 PAGINAS = ('panel_soporte', 'apoderados_revision', 'titulos_adm')
 
 
@@ -58,6 +58,11 @@ class HojasDeSoporteTests(SimpleTestCase):
             with self.subTest(parte=parte):
                 self.assertLessEqual(len((CSS / parte).read_text(encoding='utf-8').splitlines()), 600)
 
+    def test_las_tablas_con_scroll_contienen_su_texto_solo_lector(self):
+        """Sin esto, en celular el texto oculto de una cabecera se escapaba del recorte y estiraba la pagina (456 px en 390)."""
+        css = (CSS / '07f_ajustes_soporte.css').read_text(encoding='utf-8')
+        self.assertRegex(css, r'#portal-soporte \.sop-tabla\s*\{\s*position:\s*relative;')
+
     def test_toda_regla_cuelga_de_portal_soporte(self):
         """Si una regla suelta se colara, el portal admin (que comparte base_admin) cambiaria de aspecto."""
         for parte in PARTES:
@@ -81,7 +86,7 @@ class MarcoDeSoporteTests(TestCase):
                 html = self.client.get(reverse(nombre)).content.decode()
                 self.assertIn('<body id="portal-soporte" class="light-mode">', html)
                 posiciones = [html.index(p) for p in PARTES]
-                self.assertEqual(posiciones, sorted(posiciones))  # 07e, con las pantallas medianas y el movil, va al final
+                self.assertEqual(posiciones, sorted(posiciones))  # 07e cierra la capa de la copia; 07f, los ajustes propios, va despues
                 etiqueta = re.search(r'<script src="[^"]*soporte/mejoras_soporte\.js"></script>', html)
                 self.assertIsNotNone(etiqueta)
                 self.assertLess(html.index('sweetalert2'), etiqueta.start())  # usa Swal para confirmar el escalamiento
