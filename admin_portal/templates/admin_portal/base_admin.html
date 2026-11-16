@@ -20,7 +20,7 @@
     {% include 'alumnos/includes/sin_copia_atras.html' %}
     {% block extra_css %}{% endblock %}
 </head>
-<body class="light-mode">
+<body{% block body_attrs %}{% endblock %} class="light-mode">
 {% avisos_campana as avisos %}{# plazos de quien abre la pagina, segun su rol (admin_portal/avisos.py) #}
 <script>
     // Aplica el tema guardado antes de pintar (evita el destello claro en modo oscuro)

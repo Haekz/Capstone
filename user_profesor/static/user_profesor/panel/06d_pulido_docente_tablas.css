@@ -1,0 +1,61 @@
+/* Panel docente, capa de diseno (de la copia: 06_pulido_docente.css), parte «tablas»: tablas (con desplazamiento propio).
+   Las partes cargan en este orden: 06a marco, 06b inicio, 06c formularios, 06d tablas, 06e agenda, 06f cuenta,
+   06g contenido, 06h cierre. */
+
+/* ── 8. Tablas ── */
+#portal-docente .prof-table-wrapper {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--r-item);
+}
+
+#portal-docente .prof-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+#portal-docente .prof-table th {
+    padding: 11px 16px;
+    background: var(--bg-main);
+    border-bottom: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-align: left;
+    white-space: nowrap;
+}
+
+#portal-docente .prof-table td {
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+#portal-docente .prof-table tr:last-child td {
+    border-bottom: none;
+}
+
+#portal-docente .prof-table tbody tr:hover td {
+    background: var(--bg-hover);
+}
+
+#portal-docente .prof-tabla-vacia {
+    padding: 30px 16px !important;
+    text-align: center;
+    color: var(--text-muted) !important;
+    font-size: 0.9rem;
+}
+
+#portal-docente .prof-tabla-vacia i {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 1.5rem;
+    color: var(--primary-light);
+    opacity: 0.6;
+}
+
+#portal-docente tbody tr:hover .prof-tabla-vacia {
+    background: transparent;
+}

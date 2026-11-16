@@ -13,7 +13,14 @@ para que tambien sirvan desde otras paginas del docente (Mis Resenas).{% endcomm
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'notificaciones/campanita.css' %}">
 <link rel="stylesheet" href="{% static 'user_profesor/portal_docente.css' %}?v=3">
+{% comment %}Capa de diseño del panel (06_pulido_docente), por partes y en su orden: todo cuelga de #portal-docente, así que gana sin
+importar el orden de las demás hojas. Las tablas (06d) van con el marco: el área de contenido ya no recorta y ellas se desplazan por dentro.{% endcomment %}
+<link rel="stylesheet" href="{% static 'user_profesor/panel/06a_pulido_docente_marco.css' %}">
+<link rel="stylesheet" href="{% static 'user_profesor/panel/06d_pulido_docente_tablas.css' %}">
+<link rel="stylesheet" href="{% static 'user_profesor/panel/06h_pulido_docente_cierre.css' %}">
 {% endblock %}
+{# El id del <body> es el enganche de la capa de diseño (y de su modo noche: body:not(.light-mode)#portal-docente). #}
+{% block body_attrs %} id="portal-docente"{% endblock %}
 
 {% block sidebar_usuario %}
 <div class="sidebar-user-avatar">
@@ -79,5 +86,5 @@ para que tambien sirvan desde otras paginas del docente (Mis Resenas).{% endcomm
 {% endblock %}
 
 {% block logout_url %}{% url 'logout_prof' %}{% endblock %}
-{# La busqueda global es del admin: el docente solo lleva su campanita #}
-{% block topbar_acciones %}{% include 'notificaciones/_campanita.html' with clase_boton='theme-btn' %}{% endblock %}
+{# El buscador Ctrl+K es del admin: solo el panel lo ofrece (con las secciones del profesor); las demás páginas llevan la campanita #}
+{% block topbar_acciones %}{% block topbar_buscar %}{% endblock %}{% include 'notificaciones/_campanita.html' with clase_boton='theme-btn' %}{% endblock %}

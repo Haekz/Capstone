@@ -167,6 +167,8 @@
                         </span>
                     </div>
 
+                    {# Se desplaza por dentro (como la tabla de retiros): el área de contenido ya no recorta lo que se sale #}
+                    <div style="overflow-x: auto;">
                     <table style="width: 100%; border-collapse: collapse; text-align: left;">
                         <thead>
                             <tr style="border-bottom: 2px solid rgba(0,0,0,0.08); font-size: 0.82rem; color: #6b7280; text-transform: uppercase;">
@@ -223,6 +225,7 @@
                             {% endfor %}
                         </tbody>
                     </table>
+                    </div>
                 </div>
             </div>
         </section>
