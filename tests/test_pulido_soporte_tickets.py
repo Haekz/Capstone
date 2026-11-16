@@ -27,9 +27,12 @@ class MisTicketsTests(TestCase):
     def test_el_banner_trae_los_elementos_que_rellena_el_js(self):
         html = self.pagina()
         for id_ in ('sop-hoy', 'sop-saludo', 'sop-resumen', 'sop-siguiente', 'sop-cifras', 'sop-n-abiertos', 'sop-n-pronto',
-                    'sop-n-vencidos', 'sop-c-pronto', 'sop-c-vencidos', 'sop-filtro', 'sop-sin-resultados'):
+                    'sop-n-vencidos', 'sop-c-pronto', 'sop-c-vencidos'):
             with self.subTest(id=id_):
                 self.assertIn(f'id="{id_}"', html)
+        # El buscador y el aviso de "sin resultados" se encuentran por clase (el lider tiene dos tablas: sin ids repetidos)
+        self.assertIn('class="search-bar sop-filtro"', html)
+        self.assertIn('class="sop-sin-resultados"', html)
         # Lo que el JS muestra al calcular va oculto de partida: sin JS no queda un banner a medias
         self.assertRegex(html, r'id="sop-siguiente"[^>]*\bhidden\b')
         self.assertRegex(html, r'id="sop-cifras"[^>]*\bhidden\b')
