@@ -124,7 +124,7 @@
                 {% csrf_token %}
                 <button type="submit" class="sidebar-logout btn-sidebar-logout">
                     <i class="bi bi-box-arrow-left"></i>
-                    <span>Cerrar Sesión</span>
+                    <span>{% block logout_texto %}Cerrar Sesión{% endblock %}</span>
                 </button>
             </form>
         </div>
