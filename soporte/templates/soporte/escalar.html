@@ -12,44 +12,52 @@
 </div>
 {% endif %}
 
+{# Solo los tickets de conversacion tienen pagina de detalle; los de verificacion de documentos vuelven al panel #}
+{% if ticket.es_conversacion %}
+<a class="sop-volver" href="{% url 'soporte_reporte' ticket.pk %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver al ticket #{{ ticket.pk }}</a>
+{% else %}
+<a class="sop-volver" href="{% url 'panel_soporte' %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a mis tickets</a>
+{% endif %}
+
+<div class="sop-detalle">
+<div class="sop-detalle-main">
 <div class="panel">
     <div class="panel-header">
-        <span class="panel-title"><i class="bi bi-clock-history" aria-hidden="true"></i> Historial de escalamientos</span>
+        <h2 class="panel-title"><i class="bi bi-exclamation-octagon-fill" aria-hidden="true"></i> {% if destino == 'un administrador' %}Escalar a un administrador{% else %}Escalar al líder de soporte{% endif %}</h2>
     </div>
-    <div style="padding:18px;">
-        {% for e in historial %}
-        <div style="padding:12px 0; border-bottom:1px solid var(--border);">
-            <p style="margin:0;"><strong>{{ e.get_destino_display }}</strong> · {{ e.fecha|date:"d-m-Y H:i" }} · {{ e.autor.first_name|default:"Cuenta eliminada" }}</p>
-            <p style="margin:6px 0 0;">{{ e.motivo|linebreaksbr }}</p>
-            {% if e.destino == 'admin' %}
-            {% if e.pendiente %}
-            <p style="margin:6px 0 0;"><span class="badge">Esperando indicación del administrador</span></p>
-            {% else %}
-            <p style="margin:6px 0 0;"><strong>Indicación de {{ e.indicado_por.first_name|default:"un administrador" }}</strong> ({{ e.indicado|date:"d-m-Y H:i" }}):<br>{{ e.indicacion|linebreaksbr }}</p>
-            {% endif %}
-            {% endif %}
-        </div>
-        {% empty %}
-        <p style="margin:0;">Este ticket no se ha escalado.</p>
-        {% endfor %}
-    </div>
-</div>
-
-<div class="panel" style="margin-top:28px;">
-    <div class="panel-header">
-        <span class="panel-title"><i class="bi bi-exclamation-octagon-fill" aria-hidden="true"></i> Escalar a {{ destino }}</span>
-    </div>
-    <div style="padding:0 18px 18px;">
+    <div class="panel-body">
         {% if form %}
-        <p style="margin-top:16px;">Solo para casos graves: legales, posibles delitos, riesgo para un menor.
-            {% if destino == 'un administrador' %}El ticket sigue en soporte: el administrador lee tu motivo (no los documentos ni la conversación) y deja una indicación para ejecutarla.
-            {% else %}El ticket pasa al líder de soporte y deja de aparecer en tu panel.{% endif %}
-            El plazo no cambia.</p>
+        <div class="sop-alerta">
+            <p><strong>Solo para casos graves:</strong> temas legales, posibles delitos o riesgo para un menor.</p>
+            <p>{% if destino == 'un administrador' %}El ticket sigue en soporte: el administrador lee tu motivo (no los documentos ni la conversación) y deja una indicación para ejecutarla.{% else %}El ticket pasa al líder de soporte y deja de aparecer en tu panel.{% endif %} El plazo no cambia.</p>
+        </div>
         {% include 'soporte/_formulario_mensaje.html' with clase_boton='btn-primary' texto_boton='Escalar' icono_boton='bi-arrow-up-circle-fill' %}
         {% else %}
-        <p style="margin-top:16px;">Ya está escalado a un administrador. Cuando deje su indicación aparecerá arriba y te llegará un correo.</p>
+        <p>Ya está escalado a un administrador. Cuando deje su indicación aparecerá en el historial y te llegará un correo.</p>
         {% endif %}
     </div>
 </div>
-<p style="margin-top:18px;"><a href="{% url 'panel_soporte' %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a mis tickets</a></p>
+</div>
+
+<aside class="sop-detalle-aside" aria-label="Historial">
+<div class="panel sop-ficha">
+    <h3 class="sop-ficha-titulo"><i class="bi bi-clock-history" aria-hidden="true"></i> Historial de escalamientos</h3>
+    {% for e in historial %}
+    <dl class="sop-datos">
+        <div><dt>{{ e.get_destino_display }} · {{ e.fecha|date:"d-m-Y H:i" }}</dt><dd>{{ e.autor.first_name|default:"Cuenta eliminada" }}</dd></div>
+        <div><dt>Motivo</dt><dd>{{ e.motivo|linebreaksbr }}</dd></div>
+        {% if e.destino == 'admin' %}
+        {% if e.pendiente %}
+        <div><dd><span class="badge">Esperando indicación del administrador</span></dd></div>
+        {% else %}
+        <div><dt>Indicación de {{ e.indicado_por.first_name|default:"un administrador" }} ({{ e.indicado|date:"d-m-Y H:i" }})</dt><dd>{{ e.indicacion|linebreaksbr }}</dd></div>
+        {% endif %}
+        {% endif %}
+    </dl>
+    {% empty %}
+    <p class="sop-ficha-vacio">Este ticket no se ha escalado.</p>
+    {% endfor %}
+</div>
+</aside>
+</div>
 {% endblock %}
