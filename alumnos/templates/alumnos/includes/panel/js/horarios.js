@@ -124,11 +124,11 @@
             const safeAsig = window.escaparHtml ? window.escaparHtml(nombreAsignatura) : nombreAsignatura;
             const safeFecha = window.escaparHtml ? window.escaparHtml(fechaHora) : fechaHora;
             Swal.fire({
-                title: 'Confirmar Reserva de Horario',
-                html: `¿Deseas reservar tu cupo para la sesión de <b>"${safeAsig}"</b>?<br><br><span style="color:var(--primary); font-weight:600;"><i class="bi bi-clock"></i> ${safeFecha}</span>`,
+                title: '¿Reservar este horario?',
+                html: `<b>${safeAsig}</b><br><span style="color:var(--primary-ink); font-weight:600;"><i class="bi bi-clock"></i> ${safeFecha}</span><br><small>Usa 1 clase de tu paquete. Si cancelas antes de que empiece, la clase vuelve a tu paquete.</small>`,
                 icon: 'question',
                 showCancelButton: true,
-                confirmButtonText: 'Sí, Reservar Cupo',
+                confirmButtonText: 'Reservar',
                 cancelButtonText: 'Cancelar',
                 confirmButtonColor: 'var(--primary)',
                 cancelButtonColor: '#6b7280'
@@ -146,7 +146,7 @@
                     .then(data => {
                         if (data.success) {
                             Swal.fire({
-                                title: '¡Reserva Confirmada!',
+                                title: 'Clase reservada',
                                 text: data.message,
                                 icon: 'success',
                                 confirmButtonColor: 'var(--primary)'

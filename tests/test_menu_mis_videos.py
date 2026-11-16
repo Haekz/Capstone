@@ -1,8 +1,8 @@
 """B5 (13-nov): "Cursos Premium" llevaba a una pantalla vacia; ahora el menu tiene "Mis videos" y abre la videoteca real.
 
-Los videos viven en la pestana "Mis videos" del Inicio (tab-videos). El boton del menu dice a que vista ir
-(data-view) y que pestana abrir (data-tab); fuera del panel lleva a alumno_pag1#tab-videos. Vale igual para el menor:
-no depende del script de ?pestana=videos, que solo se carga para quien compra extras.
+Los videos viven en su propia vista "Mis videos" (view-videos; antes era la pestana tab-videos del Inicio). El boton del
+menu dice a que vista ir (data-view); fuera del panel lleva a alumno_pag1#view-videos. Vale igual para el menor.
+Los enlaces viejos (?pestana=videos, #tab-videos) se siguen entendiendo: los resuelve el script del panel.
 """
 
 from django.urls import reverse
@@ -13,7 +13,7 @@ from tests.test_apoderados_vinculos import crear_menor_vinculado
 from tests.test_paquetes import RUT_ANA, Escenario
 from tests.test_ver_videos import RUT_APODERADO, RUT_MENOR
 
-BOTON = 'data-view="view-dashboard" data-tab="tab-videos"'
+BOTON = 'data-view="view-videos"'
 
 
 class MenuMisVideosTests(Escenario):
@@ -25,7 +25,7 @@ class MenuMisVideosTests(Escenario):
         self.entrar(RUT_ANA)
         respuesta = self.panel()
         self.assertContains(respuesta, BOTON)
-        self.assertContains(respuesta, 'id="tab-videos"')  # la pestana que abre existe
+        self.assertContains(respuesta, 'id="view-videos"')  # la vista que abre existe
 
     def test_ya_no_hay_cursos_premium(self):
         self.entrar(RUT_ANA)
@@ -39,10 +39,10 @@ class MenuMisVideosTests(Escenario):
         entrar(self.client, alumno.user, alumno_id=alumno.id_alumno)
         respuesta = self.panel()
         self.assertContains(respuesta, BOTON)
-        self.assertContains(respuesta, 'id="tab-videos"')
+        self.assertContains(respuesta, 'id="view-videos"')
 
-    def test_fuera_del_panel_el_boton_lleva_a_la_pestana(self):
-        """En otras paginas del portal (Planes) no hay vistas: el menu va a alumno_pag1#tab-videos."""
+    def test_fuera_del_panel_el_boton_lleva_a_la_vista(self):
+        """En otras paginas del portal (Planes) no hay vistas: el menu va a alumno_pag1#view-videos."""
         self.entrar(RUT_ANA)
         respuesta = self.client.get(reverse('planes'))
         self.assertContains(respuesta, BOTON)

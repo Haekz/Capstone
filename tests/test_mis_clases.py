@@ -94,10 +94,10 @@ class MisClasesTests(TestCase):
 
     def test_historial_muestra_las_sesiones_realizadas(self):
         r = self._portal()
-        self.assertContains(r, 'Historial de Clases Completadas')
+        self.assertContains(r, 'Clases completadas')
         self.assertContains(r, '>Completada</span>')
         self.assertContains(r, f'Sesión: {dia(self.realizada.sesion)}')
 
     def test_historial_vacio_lo_explica(self):
         Inscripcion.objects.filter(pk=self.realizada.pk).delete()
-        self.assertContains(self._portal(), 'Todavía no tienes clases completadas.')
+        self.assertContains(self._portal(), 'Cuando tomes tu primera clase, aparecerá aquí.')

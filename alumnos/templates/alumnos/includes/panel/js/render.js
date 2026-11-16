@@ -16,7 +16,7 @@
                 );
             }
 
-            if (countBadge) countBadge.innerText = `${filtered.length} encontrados`;
+            if (countBadge) countBadge.innerText = `${filtered.length} encontrado${filtered.length === 1 ? '' : 's'}`;
 
             if (filtered.length === 0) {
                 container.innerHTML = `
@@ -71,8 +71,15 @@
                     );
                 }
                 
+                // "Solo favoritos" (chip de la barra de filtros, js/mejoras.js)
+                if (window.soloFavoritos) {
+                    filteredTeachers = filteredTeachers.filter(t => isFavorite(t.id));
+                }
                 if (filteredTeachers.length === 0) {
-                    teachersContainer.innerHTML = `<div class="empty-teachers-state"><i class="bi bi-person-fill-exclamation"></i><p>No hay profesores que coincidan con tu búsqueda.</p></div>`;
+                    const motivo = window.soloFavoritos && !searchQuery
+                        ? 'Aún no marcas profesores favoritos. Toca la estrella de un profesor para guardarlo.'
+                        : 'Ningún profesor calza con tu búsqueda o tus filtros. Prueba quitando alguno.';
+                    teachersContainer.innerHTML = `<div class="empty-teachers-state"><i class="bi bi-person-fill-exclamation"></i><p>${motivo}</p></div>`;
                 } else {
                     filteredTeachers.forEach(t => {
                         const favClass = isFavorite(t.id) ? 'bi-star-fill' : 'bi-star';
@@ -90,7 +97,7 @@
                         ${enlacePerfil(t)}
                             </div>
                             <div class="teacher-distance-box">
-                                <button class="btn-contact-teacher" onclick="requestClassAccess(${t.id})">Ver Horarios</button>
+                                <button class="btn-contact-teacher" onclick="requestClassAccess(${t.id})">Ver horarios</button>
                             </div>
                             ${tiraHorarios(t)}
                         `;
@@ -172,7 +179,7 @@
                         ${enlacePerfil(t)}
                     </div>
                     <div class="teacher-distance-box">
-                        <button class="btn-contact-teacher" onclick="requestClassAccess(${t.id})">Ver Horarios</button>
+                        <button class="btn-contact-teacher" onclick="requestClassAccess(${t.id})">Ver horarios</button>
                     </div>
                 `;
                 container.appendChild(card);
@@ -210,13 +217,24 @@
         function filterChatContacts() {
             const query = document.getElementById('chat-search-input')?.value.toLowerCase() || '';
             const items = document.querySelectorAll('.chat-contact-item');
+            let visibles = 0;
             items.forEach(item => {
                 const name = item.querySelector('.contact-name')?.innerText.toLowerCase() || '';
                 const meta = item.querySelector('.contact-meta')?.innerText.toLowerCase() || '';
                 if (name.includes(query) || meta.includes(query)) {
                     item.style.display = 'flex';
+                    visibles++;
                 } else {
                     item.style.display = 'none';
                 }
             });
+            const lista = document.getElementById('chat-contacts-list');
+            let vacio = lista && lista.querySelector('.chat-sin-resultados');
+            if (lista && !vacio) {
+                vacio = document.createElement('p');
+                vacio.className = 'chat-sin-resultados';
+                vacio.textContent = 'Ningún profesor calza con tu búsqueda.';
+                lista.appendChild(vacio);
+            }
+            if (vacio) vacio.hidden = visibles > 0 || !items.length;
         }

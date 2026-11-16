@@ -1,0 +1,2591 @@
+/* ==============================================================
+   PORTAL ALUMNO — CAPA DE DISEÑO FINAL
+   - Va al final: solo sobrescribe, no borra nada de lo anterior.
+   - No cambia clases ni IDs que use el JS.
+   - Todo cuelga de #portal-alumno para ganar sin !important
+     (salvo el aviso del buzón, que trae estilos en línea).
+   - El color sigue saliendo de --hue (270 = morado de la marca).
+
+   Idea: una sola pieza protagonista (la tarjeta de clases del
+   banner); todo lo demás plano, con líneas finas y sin adornos.
+   Colores: los originales del portal (menú morado, banner oscuro).
+   Textos en minúscula inicial, como se escribe en español.
+   ============================================================== */
+
+/* ── 1. Tokens ── */
+#portal-alumno {
+    --tinta: #1a1233;                            /* fondo del banner (el mismo del diseño original) */
+    --ok: #0f8a60;
+    --ok-soft: rgba(15, 138, 96, 0.1);
+    --warn: #b45309;
+    --warn-soft: rgba(245, 158, 11, 0.14);
+    --line-2: rgba(26, 18, 51, 0.14);            /* línea un poco más marcada (controles) */
+    --ring: 0 0 0 3px hsl(var(--hue) 70% 55% / 0.35);
+    --r-panel: 16px;
+    --r-item: 12px;
+    --r-ctrl: 10px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "ss01";
+}
+
+body.dark-mode#portal-alumno {
+    --ok: #34d399;
+    --ok-soft: rgba(52, 211, 153, 0.12);
+    --warn: #fbbf24;
+    --line-2: rgba(255, 255, 255, 0.16);
+}
+
+/* ── 2. Base ── */
+#portal-alumno :is(button, input, select, textarea) {
+    font-family: inherit;
+}
+
+#portal-alumno :is(a, button, select, input, summary, [tabindex]):focus-visible {
+    outline: none;
+    box-shadow: var(--ring);
+}
+
+#portal-alumno .main-content a:not([class]) {
+    color: var(--primary-ink);
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+}
+
+#portal-alumno .main-content a:not([class]):hover {
+    text-decoration-thickness: 2px;
+}
+
+#portal-alumno :is(.stat-info h3, .stat-info h4, .pp-price, .classes-table td) {
+    font-variant-numeric: tabular-nums;
+}
+
+/* Fuera las MAYÚSCULAS forzadas en etiquetas: en español se lee mejor en minúscula inicial */
+#portal-alumno :is(.sb-brand-role, .sb-label, .welcome-eyebrow, .teacher-specialty, .class-badge,
+    .promo-badge, .profile-field label, .classes-table th, .video-specialty, .tx-badge,
+    .ticket-badge, .pp-features-title) {
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+/* Entrada suave al cambiar de vista (responde a la acción del usuario) */
+#portal-alumno .dashboard-view.active {
+    animation: ap-entrar 0.22s ease both;
+}
+
+@keyframes ap-entrar {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: none; }
+}
+
+/* ── 3. Menú lateral ── */
+#portal-alumno .sb-brand {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+#portal-alumno .sb-brand img {
+    border-radius: 10px;
+    object-fit: contain;
+}
+
+#portal-alumno .sb-brand-role {
+    font-size: 0.78rem;
+    font-weight: 500;
+}
+
+#portal-alumno .sb-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 20px 14px 6px;
+}
+
+#portal-alumno .dashboard-layout .sidebar-menu .sidebar-nav-item i {
+    width: 20px;
+    text-align: center;
+}
+
+#portal-alumno .sidebar-nav-item .sb-lock {
+    margin-left: auto;
+    font-size: 0.78rem;
+    opacity: 0.6;
+}
+
+/* ── 4. Barra superior ── */
+
+#portal-alumno .portal-topbar h1 {
+    font-size: 1.25rem;
+    letter-spacing: -0.02em;
+}
+
+#portal-alumno .portal-topbar .btn-theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-color: var(--line);
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+#portal-alumno .portal-topbar .btn-theme-toggle:hover {
+    transform: none;
+}
+
+/* ── 5. Área de contenido y paneles ── */
+#portal-alumno .main-content {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Paneles planos: línea fina y sin sombra. La única elevación es la de los modales. */
+#portal-alumno :is(.results-section, .profile-card, .support-form-card, .support-list-card,
+    .progress-details-card, .progress-stat-card, .class-item-card, .pp-card, .inbox-layout,
+    .teacher-card, .stats-grid, .progress-feedback-section, .agenda-libre),
+body.dark-mode#portal-alumno :is(.results-section, .profile-card, .support-form-card, .support-list-card,
+    .progress-details-card, .progress-stat-card, .class-item-card, .pp-card, .inbox-layout,
+    .teacher-card, .stats-grid, .progress-feedback-section, .agenda-libre) {
+    background-color: var(--white);
+    border: 1px solid var(--line);
+    box-shadow: none;
+}
+
+#portal-alumno :is(.results-section, .profile-card, .inbox-layout, .stats-grid,
+    .progress-feedback-section, .agenda-libre, .support-form-card, .support-list-card,
+    .progress-details-card) {
+    border-radius: var(--r-panel);
+}
+
+#portal-alumno .results-section {
+    padding: 28px;
+}
+
+/* Títulos de panel: tamaño fijo, ícono discreto en el color de la marca */
+#portal-alumno .results-section > h2,
+#portal-alumno .ap-mb-25 > h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+}
+
+#portal-alumno .results-section > h2 > i,
+#portal-alumno .ap-mb-25 > h2 > i {
+    color: var(--primary-ink);
+    font-size: 1.1rem;
+}
+
+#portal-alumno .ap-section-intro,
+#portal-alumno .ap-view-sub {
+    font-size: 0.95rem;
+    line-height: 1.55;
+    max-width: 64ch;
+    color: var(--text-light);
+}
+
+/* ── 6. Banner del Dashboard ── */
+#portal-alumno .welcome-banner,
+body.dark-mode#portal-alumno .welcome-banner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 32px;
+    padding: 36px 36px 36px 40px;
+    border-radius: 20px;
+    text-align: left;
+}
+
+#portal-alumno .welcome-banner .welcome-eyebrow {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #f5a524;
+    margin-bottom: 10px;
+}
+
+#portal-alumno .welcome-banner .welcome-text h1,
+body.dark-mode#portal-alumno .welcome-banner .welcome-text h1 {
+    font-size: clamp(1.9rem, 3.2vw, 2.6rem);
+    font-weight: 700;
+    line-height: 1.08;
+    letter-spacing: -0.035em;
+    margin-bottom: 12px;
+}
+
+#portal-alumno .welcome-banner .welcome-text p,
+body.dark-mode#portal-alumno .welcome-banner .welcome-text p {
+    font-size: 1.05rem;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.78);
+    max-width: 46ch;
+}
+
+#portal-alumno .welcome-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 18px;
+    margin-top: 24px;
+}
+
+/* Acción principal: blanca sobre el banner oscuro */
+#portal-alumno .welcome-banner .btn-hero {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 22px;
+    border: none;
+    border-radius: var(--r-ctrl);
+    background: #ffffff;
+    color: var(--tinta);
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.15s ease;
+}
+
+#portal-alumno .welcome-banner .btn-hero[hidden] {
+    display: none;
+}
+
+#portal-alumno .welcome-banner .btn-hero:hover {
+    background: hsl(var(--hue) 80% 94%);
+    color: var(--tinta);
+    transform: translateY(-1px);
+}
+
+/* Acción secundaria: solo texto */
+#portal-alumno .welcome-banner .ap-btn-setup {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 4px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: 600;
+    font-size: 0.92rem;
+}
+
+#portal-alumno .welcome-banner .ap-btn-setup:hover {
+    background: transparent;
+    color: #ffffff;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    box-shadow: none;
+}
+
+/* Tarjeta de clases: la pieza protagonista. Un boleto con perforación y un círculo por clase. */
+#portal-alumno .tarjeta-clases {
+    --hueco: var(--tinta);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 300px;
+    padding: 20px 22px 18px;
+    border: none;
+    border-radius: 16px;
+    background: #ffffff;
+    color: #1a1233;
+    text-align: left;
+    cursor: pointer;
+    transform: rotate(-1.5deg);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) inset, 0 18px 40px rgba(8, 3, 22, 0.45);
+    transition: transform 0.25s ease;
+    /* muescas a los lados, a la altura de la perforación */
+    -webkit-mask: radial-gradient(circle 9px at 0 52px, transparent 98%, #000) left / 51% 100% no-repeat,
+                  radial-gradient(circle 9px at 100% 52px, transparent 98%, #000) right / 51% 100% no-repeat;
+            mask: radial-gradient(circle 9px at 0 52px, transparent 98%, #000) left / 51% 100% no-repeat,
+                  radial-gradient(circle 9px at 100% 52px, transparent 98%, #000) right / 51% 100% no-repeat;
+}
+
+#portal-alumno .tarjeta-clases[hidden] {
+    display: none;
+}
+
+#portal-alumno .tarjeta-clases:hover {
+    transform: rotate(0deg) translateY(-2px);
+}
+
+#portal-alumno .tarjeta-clases:focus-visible {
+    box-shadow: 0 0 0 3px hsl(var(--hue) 80% 75%), 0 18px 40px rgba(8, 3, 22, 0.45);
+}
+
+#portal-alumno .tc-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding-bottom: 14px;
+    border-bottom: 2px dashed rgba(26, 18, 51, 0.14);
+}
+
+#portal-alumno .tc-plan {
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+#portal-alumno .tc-vence {
+    padding: 3px 9px;
+    border-radius: 99px;
+    background: rgba(15, 138, 96, 0.1);
+    color: #0f8a60;
+    font-size: 0.75rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+#portal-alumno .tc-vence--pronto {
+    background: rgba(245, 158, 11, 0.16);
+    color: #b45309;
+}
+
+#portal-alumno .tc-holes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+/* Disponible: círculo morado lleno. Usada: perforada (se ve el fondo del banner). */
+#portal-alumno .tc-hole {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, hsl(var(--hue) 85% 72%) 0%, var(--primary) 60%, var(--primary-dark) 100%);
+    box-shadow: 0 1px 2px hsl(var(--hue) 70% 25% / 0.4);
+    animation: tc-aparecer 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    animation-delay: calc(0.15s + var(--i) * 0.06s);
+}
+
+#portal-alumno .tc-hole--usada {
+    background: var(--hueco);
+    box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.45);
+}
+
+@keyframes tc-aparecer {
+    from { transform: scale(0.3); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+}
+
+#portal-alumno .tc-barra {
+    height: 10px;
+    border-radius: 99px;
+    background: rgba(26, 18, 51, 0.08);
+    overflow: hidden;
+}
+
+#portal-alumno .tc-barra > span {
+    display: block;
+    height: 100%;
+    background: var(--primary);
+}
+
+#portal-alumno .tc-cuenta {
+    font-size: 0.9rem;
+    color: #5b5470;
+}
+
+#portal-alumno .tc-cuenta strong {
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: #1a1233;
+    margin-right: 2px;
+}
+
+#portal-alumno .tc-pie {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 0.8rem;
+    color: #6b6580;
+}
+
+/* ── 7. Estadísticas: una sola franja con tres tramos ── */
+#portal-alumno .stats-grid {
+    gap: 0;
+    overflow: hidden;
+    margin-bottom: 28px;
+}
+
+#portal-alumno .stats-grid .stat-card,
+body.dark-mode#portal-alumno .stats-grid .stat-card {
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 22px;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    transition: background 0.15s ease;
+}
+
+#portal-alumno .stats-grid .stat-card + .stat-card {
+    border-left: 1px solid var(--line);
+}
+
+#portal-alumno .stats-grid .stat-card:hover {
+    transform: none;
+    background: var(--bg);
+}
+
+#portal-alumno .stats-grid .stat-card[data-ir] {
+    cursor: pointer;
+}
+
+#portal-alumno .stats-grid .stat-card:focus-visible {
+    box-shadow: inset var(--ring);
+}
+
+#portal-alumno .stats-grid .stat-icon,
+body.dark-mode#portal-alumno .stats-grid .stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--r-ctrl);
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+#portal-alumno .stats-grid .stat-icon { background: var(--primary-soft); color: var(--primary-ink); }
+
+#portal-alumno .stats-grid .stat-info {
+    flex-direction: column-reverse;
+    gap: 0;
+}
+
+#portal-alumno .stats-grid .stat-info h3 {
+    font-size: 1.6rem;
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+}
+
+#portal-alumno .stats-grid .stat-info p {
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* ── 8. Profesores: buscador, pestañas y tarjeta ── */
+#portal-alumno .search-input-wrapper,
+body.dark-mode#portal-alumno .search-input-wrapper {
+    border: 1px solid var(--line-2);
+    border-radius: var(--r-ctrl);
+    background: var(--white);
+    box-shadow: none;
+    padding: 0 14px;
+}
+
+#portal-alumno .search-input-wrapper:focus-within {
+    border-color: var(--primary);
+    box-shadow: var(--ring);
+}
+
+#portal-alumno .search-input-wrapper input {
+    padding: 12px 10px;
+}
+
+@media (hover: hover) and (min-width: 901px) {
+    #portal-alumno .search-input-wrapper::after {
+        content: "/";
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 22px;
+        height: 22px;
+        border: 1px solid var(--line-2);
+        border-radius: 6px;
+        color: var(--text-light);
+        font-size: 0.78rem;
+        font-weight: 600;
+        flex-shrink: 0;
+    }
+
+    #portal-alumno .search-input-wrapper:focus-within::after {
+        visibility: hidden;
+    }
+}
+
+#portal-alumno .dashboard-tabs {
+    display: flex;
+    gap: 24px;
+    padding: 0;
+    margin-bottom: 20px;
+    border: none;
+    border-bottom: 1px solid var(--line);
+    border-radius: 0;
+    background: transparent;
+    overflow-x: auto;
+}
+
+#portal-alumno .dashboard-tabs .tab-btn,
+body.dark-mode#portal-alumno .dashboard-tabs .tab-btn {
+    position: relative;
+    padding: 12px 0;
+    margin: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--text-light);
+    font-size: 0.95rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+#portal-alumno .dashboard-tabs .tab-btn::after {
+    content: "";
+    display: block;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 2px;
+    border-radius: 2px;
+    background: transparent;
+}
+
+#portal-alumno .dashboard-tabs .tab-btn:hover {
+    color: var(--text);
+}
+
+#portal-alumno .dashboard-tabs .tab-btn.active,
+body.dark-mode#portal-alumno .dashboard-tabs .tab-btn.active {
+    color: var(--text);
+    background: transparent;
+}
+
+#portal-alumno .dashboard-tabs .tab-btn.active::after {
+    background: var(--primary);
+}
+
+#portal-alumno .dashboard-tabs .tab-btn i {
+    font-size: 1rem;
+}
+
+#portal-alumno .dashboard-tabs .tab-btn.active i {
+    color: var(--primary-ink);
+}
+
+#portal-alumno #dashboard-teachers-container,
+#portal-alumno #dashboard-tutors-container,
+#portal-alumno #favorites-teachers-container {
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+    margin-bottom: 0;
+}
+
+#portal-alumno .teacher-card {
+    border-radius: var(--r-item);
+    padding: 20px 20px 18px;
+    transition: border-color 0.15s ease;
+}
+
+#portal-alumno .teacher-card:hover {
+    transform: none;
+    box-shadow: none;
+    border-color: var(--line-2);
+}
+
+#portal-alumno .teacher-avatar {
+    width: 56px;
+    height: 56px;
+    margin: 0;
+    border: none;
+    background: var(--primary-soft);
+    color: var(--primary-ink);
+    font-size: 1.3rem;
+}
+
+#portal-alumno .teacher-info h4 {
+    font-size: 1.05rem;
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+}
+
+#portal-alumno .teacher-specialty {
+    display: inline-block;
+    padding: 2px 10px;
+    margin-right: 6px;
+    border-radius: 99px;
+    background: var(--primary-soft);
+    color: var(--primary-ink);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+#portal-alumno .teacher-rating {
+    display: inline-block;
+    font-size: 0.8rem;
+}
+
+#portal-alumno .teacher-rating--nuevo {
+    padding: 2px 10px;
+    border-radius: 99px;
+    background: var(--ok-soft);
+    color: var(--ok);
+    font-weight: 600;
+}
+
+#portal-alumno .teacher-profile-link {
+    display: flex;
+    width: fit-content;
+    color: var(--text-light);
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-color: var(--line-2);
+    text-underline-offset: 3px;
+}
+
+#portal-alumno .teacher-profile-link:hover {
+    color: var(--primary-ink);
+    text-decoration-color: currentColor;
+}
+
+#portal-alumno .teacher-star-btn {
+    top: 8px;
+    left: auto;
+    right: 8px;
+}
+
+#portal-alumno .teacher-card .teacher-distance-box {
+    margin-right: 28px;
+}
+
+#portal-alumno .btn-contact-teacher {
+    border-radius: var(--r-ctrl);
+    padding: 10px 18px;
+    font-weight: 600;
+    background: var(--primary);
+    color: #ffffff;
+}
+
+#portal-alumno .btn-contact-teacher:hover {
+    background: var(--primary-dark);
+}
+
+#portal-alumno .tira-dia {
+    border-radius: var(--r-ctrl);
+}
+
+#portal-alumno .tira-hora {
+    border-radius: 99px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Filtros activos del Dashboard */
+#portal-alumno .filtros-activos {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: -8px 0 18px;
+}
+
+#portal-alumno .filtros-activos[hidden],
+#portal-alumno .dashboard-tabs[hidden] {
+    display: none;
+}
+
+#portal-alumno .filtro-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: 1px solid transparent;
+    border-radius: 99px;
+    background: var(--primary-soft);
+    color: var(--primary-ink);
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+#portal-alumno .filtro-chip:hover {
+    border-color: var(--primary);
+}
+
+#portal-alumno .filtro-chip .bi-x {
+    font-size: 1rem;
+    margin-right: -4px;
+}
+
+#portal-alumno .filtro-chip--fav {
+    border-color: var(--line-2);
+    background: transparent;
+    color: var(--text-light);
+}
+
+#portal-alumno .filtro-chip--fav i {
+    color: var(--accent);
+}
+
+#portal-alumno .filtro-chip--fav[aria-pressed="true"] {
+    border-color: var(--accent);
+    background: var(--warn-soft);
+    color: var(--text);
+}
+
+#portal-alumno .filtro-editar {
+    padding: 6px 4px;
+    border: none;
+    background: none;
+    color: var(--primary-ink);
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+#portal-alumno .filtro-editar:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+#portal-alumno .filtro-cuenta {
+    margin-left: auto;
+    font-size: 0.82rem;
+    color: var(--text-light);
+}
+
+/* Menú: número de conversaciones sin leer */
+#portal-alumno .sb-contador {
+    margin-left: auto;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 7px;
+    border-radius: 99px;
+    background: #ffffff;
+    color: var(--primary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 22px;
+    text-align: center;
+}
+
+#portal-alumno .sidebar-nav-item.active .sb-contador {
+    background: var(--primary);
+    color: #ffffff;
+}
+
+/* ── 9. Columna derecha: horarios libres + paquetes ── */
+#portal-alumno .dashboard-right-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    position: sticky;
+    top: calc(var(--header-height) + 24px);
+}
+
+#portal-alumno .agenda-libre {
+    padding: 20px;
+}
+
+#portal-alumno .agenda-libre h3 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--text);
+}
+
+#portal-alumno .agenda-sub {
+    margin: 2px 0 14px;
+    font-size: 0.82rem;
+    color: var(--text-light);
+}
+
+#portal-alumno .agenda-libre ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+#portal-alumno .ag-item {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 8px;
+    margin: 0 -8px;
+    width: calc(100% + 16px);
+    border: none;
+    border-radius: var(--r-ctrl);
+    background: transparent;
+    color: var(--text);
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+#portal-alumno .ag-item:hover {
+    background: var(--bg);
+}
+
+#portal-alumno .ag-fecha {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 4px 0;
+    border-radius: 8px;
+    background: var(--primary-soft);
+    color: var(--primary-ink);
+    line-height: 1.1;
+}
+
+#portal-alumno .ag-fecha span {
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+#portal-alumno .ag-fecha strong {
+    font-size: 1.1rem;
+    font-weight: 800;
+}
+
+#portal-alumno .ag-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+#portal-alumno .ag-info strong {
+    font-size: 0.9rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#portal-alumno .ag-info span {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#portal-alumno .ag-accion {
+    font-size: 1.1rem;
+    color: var(--text-light);
+    transition: color 0.15s ease;
+}
+
+#portal-alumno .ag-item:hover .ag-accion,
+#portal-alumno .ag-item:focus-visible .ag-accion {
+    color: var(--primary-ink);
+}
+
+#portal-alumno .agenda-mas {
+    margin-top: 10px;
+    padding: 6px 0;
+    border: none;
+    background: none;
+    color: var(--primary-ink);
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+#portal-alumno .agenda-vacia {
+    padding: 14px;
+    border: 1px dashed var(--line-2);
+    border-radius: var(--r-ctrl);
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--text-light);
+}
+
+/* Anuncio de paquetes: el degradado morado original, sin el latido */
+#portal-alumno .promo-ad-card {
+    position: static;
+    animation: none;
+    margin-top: 0;
+}
+
+#portal-alumno .promo-ad-card:hover {
+    filter: brightness(1.05);
+}
+
+#portal-alumno .btn-promo-cta {
+    text-decoration: none;
+}
+
+/* ── 10. Estados vacíos ── */
+#portal-alumno .empty-teachers-state,
+#portal-alumno .progress-subject-list > p,
+#portal-alumno .feedback-list-container > p {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 28px 20px;
+    border: 1px dashed var(--line-2);
+    border-radius: var(--r-item);
+    background: transparent;
+    color: var(--text-light);
+    font-size: 0.92rem;
+    line-height: 1.5;
+    text-align: center;
+}
+
+#portal-alumno .empty-teachers-state i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    margin: 0;
+    border-radius: 50%;
+    background: var(--primary-soft);
+    color: var(--primary-ink);
+    font-size: 1.25rem;
+    opacity: 1;
+}
+
+#portal-alumno .empty-teachers-state p {
+    max-width: 44ch;
+    margin: 0;
+}
+
+#portal-alumno .demo-notice {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--text-light);
+    border-radius: var(--r-ctrl);
+    padding: 10px 14px;
+}
+
+/* ── 11. Mis clases ── */
+#portal-alumno .subsection-title {
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    padding: 0;
+    margin-bottom: 12px;
+}
+
+#portal-alumno .subsection-title i {
+    color: var(--primary-ink);
+}
+
+#portal-alumno .classes-subsection.ap-mb-40 {
+    margin-bottom: 32px;
+}
+
+#portal-alumno .catalog-filters {
+    padding: 0 0 16px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--line);
+}
+
+#portal-alumno .catalog-filter label {
+    font-size: 0.82rem;
+}
+
+#portal-alumno .catalog-filter-input {
+    background-color: var(--white);
+    border-color: var(--line-2);
+    border-radius: var(--r-ctrl);
+}
+
+#portal-alumno .catalog-filter--check input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary);
+}
+
+#portal-alumno .class-item-card {
+    border-radius: var(--r-item);
+    padding: 20px;
+    gap: 12px;
+}
+
+#portal-alumno .class-item-card:hover {
+    transform: none;
+    box-shadow: none;
+    border-color: var(--line-2);
+}
+
+#portal-alumno .class-badge,
+#portal-alumno .class-status-badge {
+    border-radius: 99px;
+    padding: 3px 10px;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+#portal-alumno .class-card-body h4 {
+    font-size: 1.15rem;
+    letter-spacing: -0.02em;
+}
+
+#portal-alumno .class-teacher-type {
+    font-size: 0.85rem;
+    margin-bottom: 0;
+}
+
+#portal-alumno .ap-class-footer {
+    padding: 0;
+}
+
+#portal-alumno .btn-join-class {
+    width: 100%;
+    margin: 0;
+    border-radius: var(--r-ctrl);
+    font-weight: 600;
+    box-shadow: none;
+}
+
+#portal-alumno .btn-join-class:hover {
+    transform: none;
+}
+
+/* ── 12. Mis paquetes ── */
+#portal-alumno .pp-eyebrow {
+    display: none;  /* "Planes" sobre "Mis paquetes de clases" no agregaba nada */
+}
+
+#portal-alumno .pp-header {
+    text-align: left;
+    max-width: none;
+}
+
+#portal-alumno .pp-header h2 {
+    font-size: clamp(1.6rem, 2.6vw, 2rem);
+    letter-spacing: -0.03em;
+}
+
+#portal-alumno .pp-header p {
+    margin-left: 0;
+    max-width: 64ch;
+}
+
+#portal-alumno .pp-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    justify-content: start;
+}
+
+#portal-alumno .pp-card {
+    border-radius: var(--r-panel);
+    border-top: 1px solid var(--line);
+    padding: 24px;
+}
+
+#portal-alumno .pp-card:hover {
+    transform: none;
+    box-shadow: none;
+    border-color: var(--line-2);
+}
+
+#portal-alumno .pp-price {
+    color: var(--text);
+    letter-spacing: -0.04em;
+}
+
+#portal-alumno .pp-billing {
+    font-size: 0.85rem;
+}
+
+#portal-alumno .pp-meter {
+    height: 8px;
+    margin: 6px 0 14px;
+    border-radius: 99px;
+    background: var(--primary-soft);
+    overflow: hidden;
+}
+
+#portal-alumno .pp-meter > span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--primary);
+}
+
+#portal-alumno .pp-meter--bajo > span {
+    background: #dc2626;
+}
+
+#portal-alumno .pp-vence {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    align-self: flex-start;
+    width: fit-content;
+    margin: 6px 0 4px;
+    padding: 3px 10px;
+    border-radius: 99px;
+    background: var(--ok-soft);
+    color: var(--ok);
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+#portal-alumno .pp-vence--pronto {
+    background: var(--warn-soft);
+    color: var(--warn);
+}
+
+#portal-alumno .pp-card .pp-btn--ghost {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin-top: 16px;
+    padding: 10px 16px;
+    border: 1px solid var(--line-2);
+    border-radius: var(--r-ctrl);
+    color: var(--text);
+    text-align: center;
+    line-height: 1.3;
+}
+
+#portal-alumno .pp-card .pp-btn--ghost:hover {
+    border-color: var(--primary);
+    background: transparent;
+    color: var(--primary-ink);
+}
+
+#portal-alumno .pp-acciones {
+    display: flex;
+    justify-content: flex-start;
+    margin-top: 24px;
+}
+
+#portal-alumno .pp-btn--main {
+    border-radius: var(--r-ctrl);
+}
+
+/* ── 13. Buzón de dudas ── */
+/* Buzón sin tarjeta envolvente: la bandeja ES el contenido (el título ya está en la barra superior) */
+#portal-alumno #view-inbox .results-section,
+body.dark-mode#portal-alumno #view-inbox .results-section {
+    max-width: none;
+    padding: 0;
+    border: none;
+    background: transparent;
+}
+
+#portal-alumno #view-inbox .inbox-layout {
+    margin-top: 0;
+    height: clamp(520px, calc(100vh - var(--header-height) - 64px), 860px);
+}
+
+/* Cabecera de la lista: "Conversaciones" + botón "?" */
+#portal-alumno .chat-sidebar-titulo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 16px 14px 2px 18px;
+}
+
+#portal-alumno .chat-sidebar-titulo h2 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--text);
+}
+
+#portal-alumno .btn-ayuda-mensajes {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    padding: 0;
+    border: 1px solid var(--line-2);
+    border-radius: 50%;
+    background: var(--white);
+    color: var(--primary-ink);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+#portal-alumno .btn-ayuda-mensajes:hover {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: #ffffff;
+}
+
+/* Regla de seguridad, siempre visible al pie de la lista */
+#portal-alumno .chat-sidebar-nota {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 0;
+    padding: 12px 16px 14px;
+    border-top: 1px solid var(--line);
+    font-size: 0.78rem;
+    line-height: 1.45;
+    color: var(--text-light);
+}
+
+#portal-alumno .chat-sidebar-nota i {
+    margin-top: 1px;
+    color: var(--ok);
+    font-size: 0.9rem;
+}
+
+/* Ventana de información (se abre con showModal) */
+#portal-alumno .dialogo-info {
+    margin: auto;                     /* el reset global le quita el centrado del navegador */
+    width: min(760px, 94vw);
+    max-height: min(86vh, 760px);
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: var(--white);
+    color: var(--text);
+    box-shadow: 0 30px 80px rgba(10, 6, 30, 0.35);
+    overflow: hidden;
+}
+
+#portal-alumno .dialogo-info[open] {
+    display: flex;
+    flex-direction: column;
+    animation: di-entrar 0.22s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+#portal-alumno .dialogo-info::backdrop {
+    background: rgba(15, 8, 35, 0.55);
+    backdrop-filter: blur(4px);
+}
+
+@keyframes di-entrar {
+    from { opacity: 0; transform: translateY(10px) scale(0.98); }
+    to   { opacity: 1; transform: none; }
+}
+
+#portal-alumno .di-cabecera {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 22px 22px 18px 24px;
+    background:
+        radial-gradient(circle at 12% 0%, rgba(168, 85, 247, 0.45) 0%, transparent 55%),
+        #1a1233;
+    color: #ffffff;
+}
+
+#portal-alumno .di-cabecera > div {
+    flex: 1;
+    min-width: 0;
+}
+
+#portal-alumno .di-icono {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    flex-shrink: 0;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.12);
+    font-size: 1.35rem;
+}
+
+#portal-alumno .di-cabecera h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+#portal-alumno .di-cabecera p {
+    margin-top: 2px;
+    font-size: 0.88rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+#portal-alumno .di-cerrar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+#portal-alumno .di-cerrar:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+#portal-alumno .di-lista {
+    list-style: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 20px 24px;
+    overflow-y: auto;
+}
+
+#portal-alumno .di-lista li {
+    display: flex;
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--bg);
+}
+
+/* Los dos últimos (cuánto se guardan y tus derechos) van a todo el ancho: se leen mejor y no queda un hueco */
+#portal-alumno .di-lista li:nth-child(n+5) {
+    grid-column: 1 / -1;
+}
+
+#portal-alumno .di-item-icono {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    border-radius: 10px;
+    background: var(--primary-soft);
+    color: var(--primary-ink);
+    font-size: 1rem;
+}
+
+#portal-alumno .di-lista strong {
+    display: block;
+    margin-bottom: 3px;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+#portal-alumno .di-lista p {
+    font-size: 0.85rem;
+    line-height: 1.55;
+    color: var(--text-light);
+}
+
+#portal-alumno .di-lista a {
+    color: var(--primary-ink);
+    font-weight: 600;
+    text-underline-offset: 3px;
+}
+
+#portal-alumno .di-pie {
+    display: flex;
+    justify-content: flex-end;
+    padding: 14px 24px 18px;
+    border-top: 1px solid var(--line);
+}
+
+#portal-alumno .di-ok {
+    border-radius: var(--r-ctrl);
+    padding: 10px 26px;
+}
+
+@media (max-width: 720px) {
+    #portal-alumno .di-lista {
+        grid-template-columns: 1fr;
+        padding: 16px;
+    }
+
+    /* En celular la ventana sube desde abajo, como una hoja */
+    #portal-alumno .dialogo-info {
+        width: 100vw;
+        max-width: 100vw;
+        max-height: 88vh;
+        margin: auto 0 0;
+        border-radius: 20px 20px 0 0;
+    }
+
+    #portal-alumno .di-pie .di-ok {
+        width: 100%;
+    }
+}
+
+/* Bandeja: alto que aprovecha la pantalla, lista a la izquierda y conversación a la derecha */
+#portal-alumno .inbox-layout {
+    grid-template-columns: 300px minmax(0, 1fr);
+    height: clamp(520px, calc(100vh - 300px), 760px);
+    margin-top: 18px;
+}
+
+#portal-alumno .chat-sidebar {
+    background: var(--bg);
+    min-height: 0;
+}
+
+#portal-alumno .chat-sidebar-header {
+    padding: 10px 14px 12px;
+    border-bottom: none;
+}
+
+#portal-alumno .chat-sidebar-header input {
+    border-radius: var(--r-ctrl);
+    border-color: var(--line-2);
+    background: var(--white);
+}
+
+#portal-alumno .chat-contacts-list {
+    padding: 6px;
+}
+
+/* Fila de contacto: se puede apretar entera */
+#portal-alumno .chat-contact-item {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    margin-bottom: 2px;
+    border: none;
+    border-left: 0;
+    border-radius: var(--r-ctrl);
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+#portal-alumno .chat-contact-item:hover {
+    background: var(--white);
+}
+
+#portal-alumno .chat-contact-item.active {
+    background: var(--white);
+    border-left: 0;
+    box-shadow: inset 3px 0 0 var(--primary);
+}
+
+#portal-alumno .contact-avatar {
+    position: relative;
+    width: 42px;
+    height: 42px;
+    font-size: 0.95rem;
+    background: var(--primary-soft);
+    color: var(--primary-ink);
+}
+
+/* No leído: punto en el avatar y nombre más marcado */
+#portal-alumno .chat-contact-item.unread .contact-avatar::after {
+    content: "";
+    position: absolute;
+    top: -1px;
+    right: -1px;
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--bg);
+    border-radius: 50%;
+    background: var(--primary);
+}
+
+#portal-alumno .chat-contact-item.unread .contact-last-msg {
+    color: var(--text);
+    font-weight: 600;
+}
+
+#portal-alumno .contact-name {
+    font-size: 0.95rem;
+}
+
+#portal-alumno .contact-meta {
+    font-size: 0.78rem;
+    color: var(--primary-ink);
+}
+
+#portal-alumno .contact-last-msg {
+    font-size: 0.8rem;
+}
+
+/* "Escribir" pasa a ser una flecha: la fila entera ya abre la conversación (el aria-label "Escribir a …" se mantiene) */
+#portal-alumno .chat-contact-item .btn-principal {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    padding: 0 !important;
+    border: none;
+    border-radius: 50% !important;
+    background: transparent;
+    color: var(--text-light);
+    font-size: 0 !important;
+    box-shadow: none;
+}
+
+#portal-alumno .chat-contact-item .btn-principal::after {
+    content: "\F285";                 /* bi-chevron-right */
+    font-family: "bootstrap-icons";
+    font-size: 0.9rem;
+}
+
+#portal-alumno .chat-contact-item:hover .btn-principal,
+#portal-alumno .chat-contact-item .btn-principal:hover {
+    background: var(--primary-soft);
+    color: var(--primary-ink);
+    transform: none;
+}
+
+#portal-alumno .chat-sin-resultados {
+    padding: 24px 12px;
+    font-size: 0.85rem;
+    color: var(--text-light);
+    text-align: center;
+}
+
+#portal-alumno .chat-sin-resultados[hidden] {
+    display: none;
+}
+
+/* Sin conversación abierta */
+#portal-alumno .chat-vacio {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 32px 24px;
+    text-align: center;
+    background:
+        radial-gradient(circle at 50% 35%, var(--primary-soft) 0%, transparent 45%);
+}
+
+#portal-alumno .chat-vacio-icono {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    margin-bottom: 4px;
+    border-radius: 18px;
+    background: var(--primary);
+    color: #ffffff;
+    font-size: 1.7rem;
+    box-shadow: 0 10px 24px hsl(var(--hue) 70% 40% / 0.25);
+}
+
+#portal-alumno .chat-vacio h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+}
+
+#portal-alumno .chat-vacio > p {
+    max-width: 40ch;
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: var(--text-light);
+}
+
+#portal-alumno .chat-vacio-ideas {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin: 10px 0 6px;
+    max-width: 520px;
+}
+
+#portal-alumno .chat-vacio-ideas li {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 14px;
+    border: 1px solid var(--line);
+    border-radius: 99px;
+    background: var(--white);
+    font-size: 0.84rem;
+    color: var(--text);
+}
+
+#portal-alumno .chat-vacio-ideas i {
+    color: var(--primary-ink);
+}
+
+#portal-alumno .chat-vacio .chat-vacio-regla {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+#portal-alumno .chat-vacio-regla i {
+    color: var(--ok);
+}
+
+/* Respaldo: si la plantilla todavía trae el <p> simple */
+#portal-alumno .chat-main > p:only-child {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: var(--text-light);
+    text-align: center;
+}
+
+/* Conversación abierta */
+#portal-alumno .chat-main {
+    min-height: 0;
+}
+
+#portal-alumno .chat-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    background: var(--white);
+    border-bottom: 1px solid var(--line);
+}
+
+#portal-alumno .chat-volver {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border: 1px solid var(--line-2);
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+}
+
+#portal-alumno .chat-messages-container {
+    gap: 10px;
+    padding: 24px;
+    background: var(--bg);
+    min-height: 0;
+}
+
+#portal-alumno .message-bubble {
+    max-width: min(72%, 560px);
+    padding: 10px 14px;
+    border-radius: 16px;
+    box-shadow: none;
+}
+
+/* Enviados: morado sólido (antes el degradado terminaba en lila claro y el texto blanco casi no se leía) */
+#portal-alumno .message-row.sent .message-bubble {
+    background: var(--primary);
+    color: #ffffff;
+    border-bottom-right-radius: 4px;
+}
+
+#portal-alumno .message-row.received .message-bubble,
+body.dark-mode#portal-alumno .message-row.received .message-bubble {
+    background: var(--white);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-bottom-left-radius: 4px;
+}
+
+#portal-alumno .message-bubble p {
+    font-size: 0.92rem;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+#portal-alumno .msg-time {
+    font-size: 0.72rem;
+    opacity: 0.7;
+    font-variant-numeric: tabular-nums;
+}
+
+#portal-alumno .chat-input-area {
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--white);
+    border-top: 1px solid var(--line);
+}
+
+#portal-alumno .chat-input-area :is(input[type="text"], textarea) {
+    flex: 1;
+    min-height: 44px;
+    padding: 11px 16px;
+    border: 1px solid var(--line-2);
+    border-radius: 22px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 0.92rem;
+    resize: none;
+}
+
+#portal-alumno .chat-input-area :is(input[type="text"], textarea):focus {
+    outline: none;
+    border-color: var(--primary);
+    background: var(--white);
+    box-shadow: var(--ring);
+}
+
+#portal-alumno .btn-chat-send {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #ffffff;
+}
+
+#portal-alumno .btn-chat-send:hover {
+    background: var(--primary-dark);
+    transform: none;
+}
+
+@media (max-width: 900px) {
+    #portal-alumno .inbox-layout,
+    #portal-alumno #view-inbox .inbox-layout {
+        grid-template-columns: minmax(0, 1fr);
+        height: auto;
+    }
+
+    #portal-alumno .chat-sidebar {
+        border-right: none;
+        border-bottom: 1px solid var(--line);
+    }
+
+    #portal-alumno .chat-contacts-list {
+        max-height: 320px;
+    }
+
+    #portal-alumno .chat-vacio {
+        padding: 28px 16px;
+    }
+
+    /* Con una conversación abierta: solo el chat, a pantalla casi completa */
+    #portal-alumno .inbox-layout--conversacion .chat-sidebar {
+        display: none;
+    }
+
+    #portal-alumno .inbox-layout--conversacion .chat-main {
+        height: calc(100vh - 170px);
+    }
+
+    #portal-alumno .inbox-layout--conversacion.inbox-layout--lista .chat-sidebar {
+        display: flex;
+    }
+
+    #portal-alumno .inbox-layout--conversacion.inbox-layout--lista .chat-main {
+        display: none;
+    }
+
+    #portal-alumno .chat-volver {
+        display: inline-flex;
+    }
+
+    #portal-alumno .message-bubble {
+        max-width: 85%;
+    }
+}
+
+/* ── 13b. Mis videos ── */
+#portal-alumno .va-nota {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: -14px 0 20px;
+    font-size: 0.85rem;
+    color: var(--text-light);
+    opacity: 1;
+}
+
+#portal-alumno .va-nota i {
+    color: var(--primary-ink);
+}
+
+#portal-alumno .va-herramientas {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 16px;
+    margin-bottom: 14px;
+}
+
+#portal-alumno .va-herramientas[hidden] {
+    display: none;
+}
+
+#portal-alumno .va-buscar {
+    position: relative;
+    flex: 1 1 260px;
+    max-width: 380px;
+}
+
+#portal-alumno .va-buscar i {
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-light);
+    pointer-events: none;
+}
+
+#portal-alumno .va-buscar-input {
+    width: 100%;
+    padding: 10px 12px 10px 38px;
+    border: 1px solid var(--line-2);
+    border-radius: var(--r-ctrl);
+    background: var(--white);
+    color: var(--text);
+    font-size: 0.9rem;
+}
+
+#portal-alumno .va-buscar-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: var(--ring);
+}
+
+#portal-alumno .va-filtros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+#portal-alumno .va-filtro {
+    padding: 7px 14px;
+    border: 1px solid var(--line-2);
+    border-radius: 99px;
+    background: transparent;
+    color: var(--text-light);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+#portal-alumno .va-filtro:hover {
+    color: var(--text);
+    border-color: var(--primary);
+}
+
+#portal-alumno .va-filtro[aria-pressed="true"] {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #ffffff;
+}
+
+#portal-alumno .va-cuenta {
+    margin: 0 0 12px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-light);
+}
+
+#portal-alumno .va-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 20px;
+}
+
+/* Tarjeta: miniatura 16:9 + título y profesor */
+#portal-alumno .va-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: var(--r-item);
+    background: var(--white);
+    transition: border-color 0.15s ease, box-shadow 0.2s ease;
+}
+
+#portal-alumno .va-card:hover {
+    border-color: var(--line-2);
+    box-shadow: 0 10px 24px rgba(26, 18, 51, 0.08);
+}
+
+#portal-alumno .va-card:focus-visible {
+    outline: none;
+    box-shadow: var(--ring);
+}
+
+#portal-alumno .va-thumb {
+    --tono: 0;  /* valor base: el script de videos_apoyo.html lo cambia en cada miniatura según el ramo */
+    position: relative;
+    display: block;
+    aspect-ratio: 16 / 9;
+    background:
+        radial-gradient(circle at 85% 15%, rgba(255, 255, 255, 0.18) 0%, transparent 45%),
+        linear-gradient(135deg,
+            hsl(calc(var(--hue) + var(--tono)) 70% 52%) 0%,
+            hsl(calc(var(--hue) + var(--tono) + 15) 72% 30%) 100%);
+    opacity: 1;
+}
+
+/* Patrón suave de líneas, para que no sea un bloque plano */
+#portal-alumno .va-thumb::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0 2px, transparent 2px 14px);
+}
+
+#portal-alumno .va-card span.va-thumb-ramo {
+    position: absolute;
+    left: 12px;
+    top: 10px;
+    padding: 3px 9px;
+    border-radius: 99px;
+    background: rgba(0, 0, 0, 0.25);
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-weight: 600;
+    opacity: 1;
+    backdrop-filter: blur(4px);
+}
+
+#portal-alumno .va-play {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 52px;
+    height: 52px;
+    margin: -26px 0 0 -26px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+    transition: transform 0.2s ease;
+}
+
+#portal-alumno .va-play::after {
+    content: "\F4F4";                 /* bi-play-fill */
+    font-family: "bootstrap-icons";
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-left: 3px;
+    font-size: 1.6rem;
+    color: var(--primary);
+}
+
+#portal-alumno .va-card:hover .va-play {
+    transform: scale(1.08);
+}
+
+#portal-alumno .va-card span.va-duracion {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    padding: 2px 7px;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.65);
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    opacity: 1;
+}
+
+#portal-alumno .va-cuerpo {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px 16px 16px;
+    opacity: 1;
+}
+
+#portal-alumno .va-titulo {
+    font-size: 0.98rem;
+    font-weight: 700;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+    color: var(--text);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+#portal-alumno .va-card span.va-profe {
+    font-size: 0.84rem;
+    color: var(--text-light);
+    opacity: 1;
+}
+
+/* Cargando */
+#portal-alumno .va-esqueleto {
+    display: block;
+    height: 220px;
+    border-radius: var(--r-item);
+    background: linear-gradient(90deg, var(--bg) 0%, var(--primary-soft) 50%, var(--bg) 100%);
+    background-size: 200% 100%;
+    animation: va-brillo 1.2s ease-in-out infinite;
+}
+
+@keyframes va-brillo {
+    from { background-position: 100% 0; }
+    to   { background-position: -100% 0; }
+}
+
+/* Sin videos, sin conexión o sin resultados */
+#portal-alumno .va-aviso {
+    margin: 0 0 14px;
+    font-size: 0.9rem;
+    color: var(--text-light);
+    opacity: 1;
+}
+
+#portal-alumno .va-aviso--vacio,
+#portal-alumno .va-sin-resultados {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 36px 20px;
+    border: 1px dashed var(--line-2);
+    border-radius: var(--r-item);
+    text-align: center;
+    line-height: 1.5;
+}
+
+#portal-alumno .va-aviso--vacio::before {
+    content: "\F4F3";                 /* bi-play-circle */
+    font-family: "bootstrap-icons";
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--primary-soft);
+    color: var(--primary-ink);
+    font-size: 1.5rem;
+}
+
+#portal-alumno .va-aviso[hidden] {
+    display: none;
+}
+
+#portal-alumno .va-sin-resultados {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+/* Apoderado: botón para habilitar cada video */
+#portal-alumno .va-habilitar {
+    min-height: 40px;
+    border-radius: var(--r-ctrl);
+    border-color: var(--line-2);
+    font-weight: 600;
+}
+
+#portal-alumno .va-habilitar--activo {
+    border-color: var(--ok);
+    color: var(--ok);
+    background: var(--ok-soft);
+}
+
+/* Reproductor */
+#portal-alumno .va-dialogo {
+    margin: auto;                     /* el reset global (* { margin: 0 }) lo dejaba pegado arriba a la izquierda */
+    width: min(94vw, 900px);
+    padding: 18px 18px 14px;
+    border-radius: 18px;
+    background: #14101f;
+    color: #f3f0fa;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+}
+
+#portal-alumno .va-dialogo::backdrop {
+    background: rgba(10, 6, 22, 0.72);
+    backdrop-filter: blur(4px);
+}
+
+#portal-alumno .va-dialogo-cabecera {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 14px;
+}
+
+#portal-alumno .va-dialogo-titulo {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+#portal-alumno .va-dialogo-meta {
+    margin: 2px 0 0;
+    font-size: 0.85rem;
+    color: rgba(243, 240, 250, 0.65);
+}
+
+#portal-alumno .va-cerrar {
+    float: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    min-height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    font-size: 1rem;
+    transition: background 0.15s ease;
+}
+
+#portal-alumno .va-cerrar:hover {
+    background: rgba(255, 255, 255, 0.16);
+}
+
+#portal-alumno .va-dialogo video {
+    border-radius: 12px;
+    max-height: 72vh;
+}
+
+#portal-alumno .va-reportar {
+    gap: 8px;
+    min-height: 40px;
+    margin-top: 6px;
+    font-size: 0.82rem;
+    color: rgba(243, 240, 250, 0.6);
+    text-decoration: none;
+}
+
+#portal-alumno .va-reportar:hover {
+    color: #ffffff;
+    text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+    #portal-alumno .va-buscar {
+        max-width: none;
+    }
+
+    #portal-alumno .va-filtros {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        width: 100%;
+        padding-bottom: 2px;
+    }
+
+    #portal-alumno .va-filtro {
+        white-space: nowrap;
+    }
+
+    #portal-alumno .va-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Bloqueo premium: sin latido, mismo lenguaje que el resto */
+#portal-alumno .premium-lock-overlay {
+    background: var(--white);
+    border: 1px dashed var(--line-2);
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+#portal-alumno .lock-icon-wrapper {
+    width: 64px;
+    height: 64px;
+    font-size: 1.6rem;
+    animation: none;
+    box-shadow: none;
+}
+
+#portal-alumno .lock-card h2 {
+    font-size: 1.5rem;
+    letter-spacing: -0.02em;
+}
+
+/* ── 14. Informe de progreso ── */
+#portal-alumno .progress-stat-card {
+    border-radius: var(--r-item);
+}
+
+#portal-alumno .progress-details-card h3,
+#portal-alumno .progress-feedback-section h3 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-bottom: 4px;
+}
+
+#portal-alumno .progress-details-card .ap-view-sub {
+    font-size: 0.86rem;
+    margin-bottom: 16px;
+}
+
+#portal-alumno .progress-feedback-section {
+    padding: 24px;
+}
+
+#portal-alumno .progress-feedback-section h3 {
+    margin-bottom: 14px;
+}
+
+/* ── 15. Soporte ── */
+#portal-alumno .support-form-card {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+#portal-alumno .support-form-card h3,
+#portal-alumno .support-list-card h3 {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+    font-size: 1.05rem;
+}
+
+#portal-alumno .support-list-card h3 {
+    margin-bottom: 14px;
+}
+
+#portal-alumno .support-form-card > p:first-of-type {
+    color: var(--text-light);
+    font-size: 0.9rem;
+    line-height: 1.55;
+}
+
+#portal-alumno .support-form-card .ap-btn-block {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--r-ctrl);
+    padding: 12px 18px;
+}
+
+#portal-alumno .support-form-card > p:last-child {
+    margin: 0;
+    text-align: center;
+}
+
+/* ── 16. Perfil ── */
+#portal-alumno .profile-card {
+    max-width: 920px;
+}
+
+#portal-alumno .profile-header {
+    gap: 20px;
+    border-bottom-color: var(--line);
+}
+
+#portal-alumno .profile-avatar-large {
+    width: 72px;
+    height: 72px;
+    font-size: 1.8rem;
+    border: none;
+    background: var(--primary-light);
+    color: var(--primary);
+}
+
+#portal-alumno .profile-title-box h2 {
+    font-size: 1.5rem;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+}
+
+#portal-alumno .profile-title-box .plan-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#portal-alumno .profile-details-grid {
+    gap: 0;
+    border: 1px solid var(--line);
+    border-radius: var(--r-item);
+    overflow: hidden;
+}
+
+#portal-alumno .profile-field {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--line);
+}
+
+#portal-alumno .profile-field:nth-child(odd) {
+    border-right: 1px solid var(--line);
+}
+
+#portal-alumno .profile-field:nth-last-child(-n+2) {
+    border-bottom: none;
+}
+
+#portal-alumno .profile-field label {
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+#portal-alumno .profile-field p {
+    font-size: 1rem;
+    overflow-wrap: anywhere;
+}
+
+#portal-alumno .classes-table-container {
+    box-shadow: none;
+    border-color: var(--line);
+    border-radius: var(--r-item);
+}
+
+#portal-alumno .classes-table th,
+#portal-alumno .classes-table td {
+    padding: 13px 16px;
+    white-space: nowrap;
+}
+
+#portal-alumno .classes-table th {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-light);
+}
+
+#portal-alumno .classes-table code {
+    font-size: 0.82rem;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--text);
+}
+
+#portal-alumno .tx-badge {
+    border-radius: 99px;
+    padding: 3px 10px;
+}
+
+/* ── 17. Modales ── */
+#portal-alumno .topics-modal {
+    border-radius: 20px;
+    border-color: var(--line);
+}
+
+#portal-alumno .topic-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 99px;
+}
+
+#portal-alumno .topic-tag.selected::before {
+    content: "\F26E";                 /* bi-check-lg */
+    font-family: "bootstrap-icons";
+}
+
+#portal-alumno .ap-btn-accept {
+    border-radius: var(--r-ctrl);
+}
+
+#portal-alumno .custom-modal-card {
+    border-radius: 20px;
+}
+
+/* ── 18. Modo noche: la tarjeta de clases mantiene su papel blanco ── */
+body.dark-mode#portal-alumno .welcome-banner {
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+body.dark-mode#portal-alumno .stats-grid .stat-card:hover,
+body.dark-mode#portal-alumno .ag-item:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+/* ── 19. Pantallas medianas y móvil ── */
+@media (max-width: 1100px) {
+    #portal-alumno .dashboard-right-panel {
+        position: static;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    }
+
+    #portal-alumno .promo-ad-card {
+        margin-top: 0;
+    }
+}
+
+@media (max-width: 900px) {
+    #portal-alumno .welcome-banner,
+    body.dark-mode#portal-alumno .welcome-banner {
+        grid-template-columns: minmax(0, 1fr);
+        padding: 28px 24px;
+        gap: 24px;
+        text-align: left;
+        align-items: start;
+    }
+
+    #portal-alumno .tarjeta-clases {
+        width: 100%;
+        max-width: 360px;
+        transform: none;
+    }
+
+    #portal-alumno .profile-header {
+        flex-direction: row;
+        text-align: left;
+    }
+}
+
+@media (max-width: 600px) {
+    #portal-alumno .stats-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    #portal-alumno .stats-grid .stat-card,
+    body.dark-mode#portal-alumno .stats-grid .stat-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 14px 12px;
+    }
+
+    #portal-alumno .stats-grid .stat-icon,
+    body.dark-mode#portal-alumno .stats-grid .stat-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 0.95rem;
+    }
+
+    #portal-alumno .stats-grid .stat-info h3 {
+        font-size: 1.35rem;
+    }
+
+    #portal-alumno .stats-grid .stat-info p {
+        font-size: 0.75rem;
+        line-height: 1.3;
+    }
+
+    #portal-alumno .results-section {
+        padding: 20px 16px;
+    }
+
+    #portal-alumno .dashboard-tabs {
+        gap: 18px;
+    }
+
+    #portal-alumno .dashboard-tabs .tab-btn i {
+        display: none;
+    }
+
+    #portal-alumno .welcome-actions .btn-hero {
+        width: 100%;
+        justify-content: center;
+    }
+
+    #portal-alumno .catalog-filter-input {
+        min-width: 0;
+        width: 100%;
+    }
+
+    #portal-alumno .catalog-filter:first-child {
+        flex: 1 1 100%;
+    }
+
+    #portal-alumno .profile-details-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #portal-alumno .profile-field:nth-child(odd) {
+        border-right: none;
+    }
+
+    #portal-alumno .profile-field:nth-last-child(2) {
+        border-bottom: 1px solid var(--line);
+    }
+
+    #portal-alumno .teacher-card .teacher-distance-box {
+        margin-right: 0;
+    }
+}
+
+/* ── 20. Diálogos de confirmación (SweetAlert): mismo lenguaje del portal ── */
+#portal-alumno .swal2-popup {
+    width: min(440px, 92vw);
+    padding: 28px 24px 22px;
+    border-radius: 20px;
+    background: var(--white);
+    color: var(--text);
+    font-family: inherit;
+}
+
+#portal-alumno .swal2-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+}
+
+#portal-alumno .swal2-html-container {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--text-light);
+}
+
+#portal-alumno .swal2-html-container b {
+    color: var(--text);
+    font-size: 1.05rem;
+}
+
+#portal-alumno .swal2-html-container small {
+    display: block;
+    margin-top: 12px;
+    font-size: 0.82rem;
+}
+
+#portal-alumno .swal2-icon {
+    transform: scale(0.75);
+    margin: 0 auto -6px;
+}
+
+#portal-alumno .swal2-actions {
+    gap: 8px;
+    margin-top: 20px;
+}
+
+#portal-alumno .swal2-styled {
+    margin: 0;
+    padding: 11px 22px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    box-shadow: none !important;
+}
+
+#portal-alumno .swal2-styled.swal2-cancel {
+    background: transparent !important;
+    border: 1px solid var(--line-2);
+    color: var(--text);
+}
+
+/* Quien pide menos movimiento, no lo ve */
+@media (prefers-reduced-motion: reduce) {
+    #portal-alumno *,
+    #portal-alumno *::before,
+    #portal-alumno *::after {
+        animation: none !important;
+        transition: none !important;
+    }
+
+    #portal-alumno .tarjeta-clases {
+        transform: none;
+    }
+}
