@@ -11,7 +11,7 @@
 </div>
 {% endif %}
 
-<a class="sop-volver" href="{% url 'panel_soporte' %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a mis tickets</a>
+<a class="sop-volver" href="{% url 'panel_soporte' %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> {% if agente.es_lider %}Volver a los tickets{% else %}Volver a mis tickets{% endif %}</a>
 
 <div class="sop-detalle">
 <div class="sop-detalle-main">
@@ -46,7 +46,7 @@
     {% if form %}
     {% include 'soporte/_formulario_mensaje.html' with clase_boton='btn-primary' %}
     {% elif ticket.estado == 'abierto' %}
-    <p style="margin:18px 24px 0;"><small>Solo el agente asignado responde. Para responder, reasígnatelo desde el panel.</small></p>
+    <p class="sop-aviso sop-aviso--pie"><i class="bi bi-info-circle-fill" aria-hidden="true"></i> <span>Solo el agente asignado responde. Para responder, reasígnatelo desde el <a href="{% url 'panel_soporte' %}">panel</a>.</span></p>
     {% endif %}
 </div>
 </div>
@@ -69,7 +69,7 @@
 {% if ticket.estado == 'abierto' %}
 <div class="panel sop-ficha sop-ficha--escalar">
     <h3 class="sop-ficha-titulo"><i class="bi bi-exclamation-octagon" aria-hidden="true"></i> ¿Es un caso grave?</h3>
-    <p>Si hay un tema legal, un posible delito o un menor en riesgo, pásalo al líder de soporte.</p>
+    <p>Si hay un tema legal, un posible delito o un menor en riesgo, pásalo {% if agente.es_lider %}a un administrador{% else %}al líder de soporte{% endif %}.</p>
     <a class="sop-btn" href="{% url 'soporte_escalar' ticket.pk %}"><i class="bi bi-arrow-up-circle" aria-hidden="true"></i> Escalar o ver historial</a>
 </div>
 {% endif %}

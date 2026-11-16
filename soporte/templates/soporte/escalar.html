@@ -16,7 +16,7 @@
 {% if ticket.es_conversacion %}
 <a class="sop-volver" href="{% url 'soporte_reporte' ticket.pk %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver al ticket #{{ ticket.pk }}</a>
 {% else %}
-<a class="sop-volver" href="{% url 'panel_soporte' %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a mis tickets</a>
+<a class="sop-volver" href="{% url 'panel_soporte' %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> {% if agente.es_lider %}Volver a los tickets{% else %}Volver a mis tickets{% endif %}</a>
 {% endif %}
 
 <div class="sop-detalle">

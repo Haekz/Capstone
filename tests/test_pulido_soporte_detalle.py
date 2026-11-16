@@ -50,6 +50,33 @@ class DetalleComoLaCopiaTests(Escenario):
         self.assertNotIn('sop-ficha--escalar', self.pagina())
 
 
+class DetalleComoLiderTests(Escenario):
+    """El lider mira un ticket que no es suyo: lo suyo dice lider, no agente."""
+
+    def pagina(self, quien):
+        entrar_soporte(self.client, quien)
+        return self.client.get(reverse('soporte_reporte', args=[self.ticket.pk])).content.decode()
+
+    def test_el_lider_ve_el_aviso_de_reasignarselo_y_no_el_formulario(self):
+        html = self.pagina(self.lider)
+        self.assertIn('Volver a los tickets</a>', html)
+        self.assertIn('<p class="sop-aviso sop-aviso--pie">', html)
+        self.assertIn(f'reasígnatelo desde el <a href="{reverse("panel_soporte")}">panel</a>', html)
+        self.assertNotIn('name="texto"', html)
+
+    def test_el_lider_escala_a_un_administrador(self):
+        html = self.pagina(self.lider)
+        self.assertIn('pásalo a un administrador.', html)
+        self.assertNotIn('pásalo al líder de soporte', html)
+
+    def test_el_agente_sigue_leyendo_lo_suyo(self):
+        html = self.pagina(self.agente)
+        self.assertIn('Volver a mis tickets</a>', html)
+        self.assertIn('pásalo al líder de soporte.', html)
+        self.assertNotIn('sop-aviso', html)
+        self.assertIn('name="texto"', html)
+
+
 class ConversacionDelUsuarioSigueIgualTests(SimpleTestCase):
     """_conversacion.html lo comparte mi_ticket: la rama nueva es solo para soporte."""
 
