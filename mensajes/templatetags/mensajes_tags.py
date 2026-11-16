@@ -22,8 +22,9 @@ def aviso_mensajes(rol, conversacion_activa=None):
     return {**_plazos(), 'rol': rol, 'abierto': conversacion_activa is None}
 
 
-@register.inclusion_tag('mensajes/_dialogo_aviso_apoderado.html')
-def dialogo_aviso_apoderado():
-    """El mismo aviso, para el apoderado, en la ventana que abre el boton "?" de sus conversaciones. El texto legal debe
-    decir lo mismo que _aviso.html: tests/test_mensajes_aviso_dialogo.py lo comprueba."""
-    return _plazos()
+@register.inclusion_tag('mensajes/_dialogo_aviso.html')
+def dialogo_aviso_mensajes(rol):
+    """El mismo aviso, en la ventana que abre el boton "?" de las conversaciones del apoderado y del profesor (el alumno lo
+    lleva desplegado, con aviso_mensajes). El texto legal debe decir lo mismo que _aviso.html:
+    tests/test_mensajes_aviso_dialogo.py lo comprueba para cada rol."""
+    return {**_plazos(), 'rol': rol}

@@ -1,5 +1,5 @@
 """Aviso previo al chat (E5, respuesta legal 02-nov): finalidad, filtro, quien lee, conservacion y derechos, en las
-tres bandejas (el alumno y el profesor, desplegado; el apoderado, en la ventana de su boton "?"). El estudiante menor no
+tres bandejas (el alumno, desplegado; el apoderado y el profesor, en la ventana de su botón "?"). El estudiante menor no
 ve ningun aviso de mensajes: el chat lo maneja su apoderado. Datos ficticios."""
 
 from unittest import mock
@@ -73,21 +73,24 @@ class AvisoDelAlumnoTests(Escenario):
 
 
 class AvisoDelProfesorTests(Escenario):
+    """Su diseño lo lleva en una ventana que abre el botón "Cómo funcionan los mensajes" del Buzón, no desplegado."""
 
-    def test_el_profesor_lo_ve_antes_de_tener_conversaciones(self):
+    def test_el_profesor_lo_abre_con_el_boton_antes_de_tener_conversaciones(self):
         self.entrar(RUT_PROFE)
         r = self.client.get(reverse('panel_profesor'))
-        self.assertContains(r, TITULO, count=1)
-        self.assertContains(r, ABIERTO)
+        self.assertContains(r, 'aria-controls="dialogo-mensajes"')
+        self.assertContains(r, 'id="dialogo-mensajes"')
+        self.assertNotContains(r, CERRADO)  # sin el desplegable de antes
         self.assertContains(r, 'el alumno o su apoderado')
 
-    def test_dentro_de_una_conversacion_va_plegado(self):
+    def test_dentro_de_una_conversacion_tambien_esta_el_boton(self):
         dar_paquete(self.ana, self.profe)
         conversacion = servicio.abrir_conversacion(self.ana, self.profe)
         self.entrar(RUT_PROFE)
         r = self.client.get(reverse('panel_profesor'), {'c': conversacion.pk})
-        self.assertContains(r, TITULO, count=1)
-        self.assertNotContains(r, ABIERTO)
+        self.assertContains(r, 'aria-controls="dialogo-mensajes"')
+        self.assertContains(r, 'id="dialogo-mensajes"')
+        self.assertNotContains(r, CERRADO)
 
 
 class AvisoDelApoderadoTests(Escenario):

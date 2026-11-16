@@ -1,4 +1,4 @@
-{# Aviso legal (E5, respuesta legal 02-nov) del apoderado, en ventana: lo abre el boton "?" de Tus conversaciones. #}
+{# Aviso legal (E5, respuesta legal 02-nov) en ventana: lo abre el boton "?" de las conversaciones del apoderado y del profesor. #}
 {# Los plazos vienen de mensajes/templatetags/mensajes_tags.py. El texto debe coincidir con _aviso.html (hay una prueba). #}
 <dialog class="dialogo-info" id="dialogo-mensajes" aria-labelledby="dialogo-mensajes-titulo" aria-describedby="dialogo-mensajes-sub">
     <div class="di-cabecera">
@@ -20,7 +20,7 @@
         </li>
         <li>
             <span class="di-item-icono" aria-hidden="true"><i class="bi bi-eye"></i></span>
-            <div><strong>Quién los puede leer</strong><p>Tú y el profesor. El profesor ve si eres madre, padre o tutor legal, y el nombre de pila de tu estudiante, no tu nombre. El equipo de soporte de LBWUS solo puede leer una conversación si alguien la reporta, únicamente desde el ticket, y queda registrado quién la abrió y cuándo. El administrador no puede leerlas.</p></div>
+            <div><strong>Quién los puede leer</strong><p>{% if rol == 'apoderado' %}Tú y el profesor. El profesor ve si eres madre, padre o tutor legal, y el nombre de pila de tu estudiante, no tu nombre.{% elif rol == 'profesor' %}Tú y el alumno o su apoderado.{% else %}Tú y el profesor.{% endif %} El equipo de soporte de LBWUS solo puede leer una conversación si alguien la reporta, únicamente desde el ticket, y queda registrado quién la abrió y cuándo. El administrador no puede leerlas.</p></div>
         </li>
         <li>
             <span class="di-item-icono" aria-hidden="true"><i class="bi bi-bell"></i></span>
@@ -35,5 +35,5 @@
             <div><strong>Tus derechos</strong><p>Puedes pedir ver, corregir o eliminar tus datos escribiéndonos desde <a href="{% url 'mis_tickets' %}">Ayuda y soporte</a>, o pedir <a href="{% url 'eliminar_cuenta' %}">eliminar tu cuenta</a>.</p></div>
         </li>
     </ul>
-    <form method="dialog" class="di-pie"><button class="btn-principal di-ok">Entendido</button></form>
+    <form method="dialog" class="di-pie"><button class="{% if rol == 'profesor' %}prof-form-btn prof-btn-auto{% else %}btn-principal{% endif %} di-ok">Entendido</button></form>
 </dialog>

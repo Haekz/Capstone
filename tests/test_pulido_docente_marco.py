@@ -4,6 +4,8 @@ La capa de diseño cuelga de #portal-docente (id del <body>) y de body:not(.ligh
 El id lo pone base_docente a traves de un bloque de base_admin: admin y soporte comparten esa base y NO deben cambiar.
 """
 
+import re
+
 from django.urls import reverse
 
 from alumnos.roles import ADMIN, PROFESOR
@@ -55,9 +57,21 @@ class MarcoDelPanelDocenteTests(BaseResenas):
                 self.assertNotIn('{#', html)
                 self.assertNotIn('#}', html)
 
+    def test_el_menu_dice_lo_mismo_que_el_titulo_de_la_barra_superior(self):
+        # el JS escribe estos titulos arriba al cambiar de seccion: si el menu dijera otra cosa, el usuario veria dos nombres
+        panel = self.pagina('panel_profesor', self.profesor, PROFESOR)
+        esperado = {'menu-inicio': 'Inicio', 'menu-clases': 'Clases solicitadas', 'menu-agenda': 'Mi agenda', 'menu-buzon': 'Buzón de alumnos',
+                    'menu-grabaciones': 'Videos de apoyo', 'menu-streaming': 'Sala de streaming', 'menu-perfil': 'Mi perfil',
+                    'menu-saldo': 'Saldo y pagos', 'nav-resenas': 'Mis reseñas', 'nav-ayuda': 'Ayuda y soporte'}
+        for id_, texto in esperado.items():
+            with self.subTest(enlace=id_):
+                contenido = re.search(rf'<a [^>]*id="{id_}"[^>]*>(.*?)</a>', panel, re.S).group(1)
+                self.assertEqual(re.sub(r'\s+', ' ', re.sub(r'<[^>]+>', '', contenido)).strip(), texto)
+
     def test_las_mejoras_de_uso_cargan_solo_en_el_panel_y_despues_de_sus_funciones(self):
         panel = self.pagina('panel_profesor', self.profesor, PROFESOR)
-        self.assertIn('user_profesor/mejoras_docente.js', panel)
+        etiqueta = re.search(r'<script[^>]+mejoras_docente\.js', panel)  # la etiqueta, no cualquier mencion del nombre
+        self.assertIsNotNone(etiqueta)
         # usa window.switchSection y closeUploadModal: tienen que estar definidas antes
-        self.assertLess(panel.index('window.switchSection = switchSection'), panel.index('mejoras_docente.js'))
+        self.assertLess(panel.index('window.switchSection = switchSection'), etiqueta.start())
         self.assertNotIn('mejoras_docente.js', self.pagina('resenas_profesor', self.profesor, PROFESOR))
