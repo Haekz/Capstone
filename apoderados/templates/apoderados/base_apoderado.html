@@ -1,0 +1,97 @@
+{% extends 'alumnos/base_alumno.html' %}
+{% load static %}
+{# Marco del portal del apoderado: el mismo del alumno (barra superior, tema, menu en celular, CSS de capas) y solo cambia la #}
+{# barra lateral. 16_portal_apoderado.css va al final y cuelga de #portal-alumno.portal-apoderado: no toca al portal del alumno. #}
+{# La barra necesita 'apoderado' y 'vinculos' en el contexto (los pasa la vista de cada pagina). #}
+
+{% block title %}Portal del apoderado | LBWUS{% endblock %}
+{% block body_extra %} class="portal-apoderado"{% endblock %}
+{% block css_final %}<link rel="stylesheet" href="{% static 'apoderados/16_portal_apoderado.css' %}">{% endblock %}
+
+{% block barra_lateral %}
+        <aside class="sidebar-menu" id="sidebar-menu">
+            <a href="{% url 'portal_apoderado' %}" class="sb-brand">
+                <img src="{% static 'alumnos/img/Logo.png' %}" alt="LBWUS Logo">
+                <span class="sb-brand-text">
+                    <span class="sb-brand-name">LBWUS</span>
+                    <span class="sb-brand-role">Portal apoderado</span>
+                </span>
+            </a>
+
+            <a class="sb-user" href="{% url 'portal_apoderado' %}" title="Ir a mi cuenta">
+                <span class="sb-user-avatar">{{ apoderado.nombre|slice:":1"|upper }}</span>
+                <span class="sb-user-info">
+                    <span class="sb-user-name">{{ apoderado.nombre }}</span>
+                    <span class="sb-user-role">Apoderado</span>
+                </span>
+            </a>
+
+            <ul class="sidebar-nav" aria-label="Secciones del portal">
+                <li class="sb-label">Principal</li>
+                <li>
+                    <a class="sidebar-nav-item{% block nav_cuenta %} active{% endblock %}" href="{% url 'portal_apoderado' %}"{% block aria_cuenta %} aria-current="page"{% endblock %}>
+                        <i class="bi bi-grid-1x2-fill" aria-hidden="true"></i>
+                        <span>Mi cuenta</span>
+                    </a>
+                </li>
+                {% if apoderado.estado == 'verificado' %}{# igual que en la pagina: sin identidad verificada no hay mensajes ni clases #}
+                <li>
+                    <a class="sidebar-nav-item" href="{% url 'mensajes_apoderado' %}">
+                        <i class="bi bi-chat-dots-fill" aria-hidden="true"></i>
+                        <span>Mensajes</span>
+                    </a>
+                </li>
+
+                <li class="sb-label">Estudiantes</li>
+                {% for v in vinculos %}{% if v.estado == 'verificado' and not v.termino_por_edad %}
+                <li>
+                    <a class="sidebar-nav-item" href="{% url 'apoderado_clases_estudiante' v.pk %}">
+                        <span class="sb-estudiante" aria-hidden="true">{{ v.nombre_visible|slice:":1"|upper }}</span>
+                        <span>{{ v.nombre_visible }}</span>
+                    </a>
+                </li>
+                {% endif %}{% endfor %}
+                <li>
+                    <a class="sidebar-nav-item" href="{% url 'apoderado_registrar_estudiante' %}">
+                        <i class="bi bi-person-plus-fill" aria-hidden="true"></i>
+                        <span>Registrar estudiante</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="sidebar-nav-item" href="{% url 'apoderado_vincular_estudiante' %}">
+                        <i class="bi bi-person-lines-fill" aria-hidden="true"></i>
+                        <span>Vincular estudiante</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                <li class="sb-label">Ayuda y cuenta</li>
+                <li>
+                    <a class="sidebar-nav-item" href="{% url 'mis_tickets' %}">
+                        <i class="bi bi-life-preserver" aria-hidden="true"></i>
+                        <span>Ayuda y soporte</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="sidebar-nav-item" href="{% url 'password_change' %}">
+                        <i class="bi bi-key-fill" aria-hidden="true"></i>
+                        <span>Cambiar contraseña</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sb-footer">
+                <a href="{% url 'home' %}" class="sb-home">
+                    <i class="bi bi-house-door" aria-hidden="true"></i>
+                    Volver al inicio
+                </a>
+                <form method="post" action="{% url 'logout_apoderado' %}" class="form-sb-logout">
+                    {% csrf_token %}
+                    <button type="submit" class="sb-logout btn-sb-logout">
+                        <i class="bi bi-box-arrow-left" aria-hidden="true"></i>
+                        <span>Cerrar sesión</span>
+                    </button>
+                </form>
+            </div>
+        </aside>
+{% endblock %}

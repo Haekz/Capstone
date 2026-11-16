@@ -33,9 +33,10 @@
     {# Capa de diseño final: va después de todo (también del CSS propio de cada página) porque solo sobrescribe #}
     <link rel="stylesheet" href="{% static 'alumnos/css/alumn_1/13_pulido.css' %}">
     <link rel="stylesheet" href="{% static 'alumnos/css/alumn_1/14_soporte.css' %}">{# Ayuda y soporte (tickets): va después del pulido, solo sobrescribe #}
+    {% block css_final %}{% endblock %}{# lo que va después de todo: el portal del apoderado hereda este marco #}
     {% include 'alumnos/includes/sin_copia_atras.html' %}
 </head>
-<body id="portal-alumno">
+<body id="portal-alumno"{% block body_extra %}{% endblock %}>
     {% include 'alumnos/includes/tema_inicial.html' %}
 
 
@@ -45,6 +46,7 @@
     <!-- Main Dashboard Layout -->
     <div class="dashboard-layout">
         <!-- Left Sidebar Menu -->
+        {% block barra_lateral %}
         <aside class="sidebar-menu" id="sidebar-menu">
             <!-- Marca (mismo estilo que el portal admin) -->
             <!-- El logo vuelve al propio portal, no al sitio publico: salir al
@@ -153,6 +155,7 @@
                 </form>
             </div>
         </aside>
+        {% endblock %}
 
         <!-- Right Scrollable Views Container -->
         <div class="portal-main">
