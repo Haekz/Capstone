@@ -1,6 +1,6 @@
 # LBWUS: pendientes
 
-Actualizado: 15-nov-2026. Aqui queda solo lo que falta. Todo lo que listaba la version anterior ya esta en `main`
+Actualizado: 16-nov-2026. Aqui queda solo lo que falta. Todo lo que listaba la version anterior ya esta en `main`
 (35 de sus 38 ramas; las otras 3 se cierran sin mergear, LBW-16). El historial de lo hecho sigue en git:
 `git show c8f3341:docs/PENDIENTES_LBWUS.md`. Las decisiones estan en DECISIONES_SOPORTE_Y_PAGOS.md.
 
@@ -33,6 +33,26 @@ Los codigos LBW-xx y Dx son los del backlog y las decisiones grupales del 08-nov
   codigo el 15-nov.
 - Revision visual en navegador de todos los flujos de apoderados (LBW-15).
 - Posible CSS muerto en `pago/01_pago.css` (paneles de resumen y Webpay). Sin revisar, sin ticket.
+
+## Portal de admin: pulido visual, lo que quedó pendiente (16-nov)
+Las etapas A1 a A6 están hechas: las 10 pantallas del admin coinciden con la copia (0 px de diferencia, salvo datos de la
+demo). Quedan dos cosas que se vieron al comparar y que no se tocaron porque cambian comportamiento. **Hay que arreglarlas.**
+- **Ajustes no guarda nada.** En `includes/dashboard/perfil.html` el `onsubmit` hace `preventDefault()` y muestra
+  «Ajustes guardados» sin enviar ni persistir nada. Ya era así y la copia lo conserva, pero el botón ahora dice «Guardar
+  cambios». Decidir: (a) conectarlo de verdad (qué campos se editan: el RUT no debería cambiar; correo único; formato del
+  teléfono; vista, validación, pruebas, y que el nombre del menú se actualice), unas 1 a 2 h; o (b) quitar la promesa
+  (botón o aviso), unos 5 min. El color de acento sí funciona, pero solo en esa sesión.
+- **Hay un segundo «Usuarios» con el diseño anterior.** En `base_admin.html` el menú «Usuarios» apunta a `crud`
+  («Gestión de Alumnos») y solo el dashboard lo cambia a `#usuarios`. `alumnos_list.html`, `alumnos_add.html` y
+  `alumnos_edit.html` (unas 280 líneas) siguen con el diseño previo; la copia no los tiene. Plan: (1) que el menú
+  siempre vaya a la sección del dashboard, unos 15 min (revisar `test_boton_atras`, `test_control_acceso`,
+  `test_portales_por_rol` y `test_qa_acceso`, que tocan esas rutas); (2) rediseñar las 3 páginas con los componentes de
+  la capa 06, de 1 a 1,5 h. No hay copia de referencia: hay que aprobar el aspecto.
+- Para una demo mientras tanto: no usar «Guardar cambios» de Ajustes y entrar a «Usuarios» siempre desde el Resumen.
+  SweetAlert viene de internet (ver el pendiente de arriba): sin conexión, el aviso de Ajustes no aparece y «Eliminar»
+  usa el `confirm()` del navegador.
+- Los scripts de verificación (comparador con la copia, claro, oscuro y celular; Resumen; Usuarios; HTML de Soporte)
+  están en `puppy_workspace`, fuera del repositorio.
 
 ## Antes de abrir al publico: lo que faltaba en esta lista (revision del 15-nov)
 - **Cerrar la CSP.** Sigue en Report-Only (`CSP_OBLIGATORIA`), permite `'unsafe-inline'` (hay scripts, `onclick=` y
