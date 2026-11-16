@@ -61,4 +61,4 @@
 </div>
 {% endblock %}
 {# cuerpo_extra solo existe en base_alumno: las demas bases ignoran este bloque #}
-{% block cuerpo_extra %}{% if titulo_en_barra %}<script src="{% static 'alumnos/java/tickets.js' %}"></script>{% endif %}{% endblock %}
+{% block cuerpo_extra %}{{ block.super }}{% if titulo_en_barra %}<script src="{% static 'alumnos/java/tickets.js' %}"></script>{% endif %}{% endblock %}

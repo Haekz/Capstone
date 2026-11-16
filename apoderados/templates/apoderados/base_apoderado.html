@@ -2,11 +2,14 @@
 {% load static %}
 {# Marco del portal del apoderado: el mismo del alumno (barra superior, tema, menu en celular, CSS de capas) y solo cambia la #}
 {# barra lateral. 16_portal_apoderado.css va al final y cuelga de #portal-alumno.portal-apoderado: no toca al portal del alumno. #}
-{# La barra necesita 'apoderado' y 'vinculos' en el contexto (los pasa la vista de cada pagina). #}
+{# La barra necesita 'apoderado' y 'vinculos' (los da contexto_apoderado) y marca su item con 'seccion_menu'; en clases #}
+{# y planes, 'vinculo_activo' (pk) marca al estudiante. #}
 
 {% block title %}Portal del apoderado | LBWUS{% endblock %}
 {% block body_extra %} class="portal-apoderado"{% endblock %}
 {% block css_final %}<link rel="stylesheet" href="{% static 'apoderados/16_portal_apoderado.css' %}">{% endblock %}
+{# Las páginas que sobrescriben cuerpo_extra deben llamar a {{ block.super }} para conservar este script #}
+{% block cuerpo_extra %}<script src="{% static 'apoderados/portal.js' %}"></script>{% endblock %}
 
 {% block barra_lateral %}
         <aside class="sidebar-menu" id="sidebar-menu">
@@ -29,14 +32,14 @@
             <ul class="sidebar-nav" aria-label="Secciones del portal">
                 <li class="sb-label">Principal</li>
                 <li>
-                    <a class="sidebar-nav-item{% block nav_cuenta %} active{% endblock %}" href="{% url 'portal_apoderado' %}"{% block aria_cuenta %} aria-current="page"{% endblock %}>
+                    <a class="sidebar-nav-item{% if seccion_menu == 'cuenta' %} active{% endif %}" href="{% url 'portal_apoderado' %}"{% if seccion_menu == 'cuenta' %} aria-current="page"{% endif %}>
                         <i class="bi bi-grid-1x2-fill" aria-hidden="true"></i>
                         <span>Mi cuenta</span>
                     </a>
                 </li>
                 {% if apoderado.estado == 'verificado' %}{# igual que en la pagina: sin identidad verificada no hay mensajes ni clases #}
                 <li>
-                    <a class="sidebar-nav-item" href="{% url 'mensajes_apoderado' %}">
+                    <a class="sidebar-nav-item{% if seccion_menu == 'mensajes' %} active{% endif %}" href="{% url 'mensajes_apoderado' %}"{% if seccion_menu == 'mensajes' %} aria-current="page"{% endif %}>
                         <i class="bi bi-chat-dots-fill" aria-hidden="true"></i>
                         <span>Mensajes</span>
                     </a>
@@ -45,20 +48,20 @@
                 <li class="sb-label">Estudiantes</li>
                 {% for v in vinculos %}{% if v.estado == 'verificado' and not v.termino_por_edad %}
                 <li>
-                    <a class="sidebar-nav-item" href="{% url 'apoderado_clases_estudiante' v.pk %}">
+                    <a class="sidebar-nav-item{% if v.pk == vinculo_activo %} active{% endif %}" href="{% url 'apoderado_clases_estudiante' v.pk %}"{% if v.pk == vinculo_activo %} aria-current="page"{% endif %}>
                         <span class="sb-estudiante" aria-hidden="true">{{ v.nombre_visible|slice:":1"|upper }}</span>
                         <span>{{ v.nombre_visible }}</span>
                     </a>
                 </li>
                 {% endif %}{% endfor %}
                 <li>
-                    <a class="sidebar-nav-item" href="{% url 'apoderado_registrar_estudiante' %}">
+                    <a class="sidebar-nav-item{% if seccion_menu == 'registrar' %} active{% endif %}" href="{% url 'apoderado_registrar_estudiante' %}"{% if seccion_menu == 'registrar' %} aria-current="page"{% endif %}>
                         <i class="bi bi-person-plus-fill" aria-hidden="true"></i>
                         <span>Registrar estudiante</span>
                     </a>
                 </li>
                 <li>
-                    <a class="sidebar-nav-item" href="{% url 'apoderado_vincular_estudiante' %}">
+                    <a class="sidebar-nav-item{% if seccion_menu == 'vincular' %} active{% endif %}" href="{% url 'apoderado_vincular_estudiante' %}"{% if seccion_menu == 'vincular' %} aria-current="page"{% endif %}>
                         <i class="bi bi-person-lines-fill" aria-hidden="true"></i>
                         <span>Vincular estudiante</span>
                     </a>
@@ -67,7 +70,7 @@
 
                 <li class="sb-label">Ayuda y cuenta</li>
                 <li>
-                    <a class="sidebar-nav-item" href="{% url 'mis_tickets' %}">
+                    <a class="sidebar-nav-item{% if seccion_menu == 'ayuda' %} active{% endif %}" href="{% url 'mis_tickets' %}"{% if seccion_menu == 'ayuda' %} aria-current="page"{% endif %}>
                         <i class="bi bi-life-preserver" aria-hidden="true"></i>
                         <span>Ayuda y soporte</span>
                     </a>

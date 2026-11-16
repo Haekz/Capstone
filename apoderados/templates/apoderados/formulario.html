@@ -4,7 +4,7 @@
 
 {% block title %}{{ titulo }} | LBWUS{% endblock %}
 {% block page_title %}{% if titulo_en_barra %}{{ titulo }}{% else %}{{ block.super }}{% endif %}{% endblock %}
-{% block page_subtitle %}{% if not titulo_en_barra %}{{ block.super }}{% endif %}{% endblock %}{# el subtitulo ya encabeza el formulario #}
+{% block page_subtitle %}{% if subtitulo_barra %}{{ subtitulo_barra }}{% elif not titulo_en_barra %}{{ block.super }}{% endif %}{% endblock %}{# el subtitulo ya encabeza el formulario #}
 
 {% block extra_css %}
 {{ block.super }}
@@ -14,26 +14,27 @@
 
 {% block content %}
 {# diseno_tickets: solo lo pasa 'Abrir un ticket' y solo es verdadero para el alumno (14_soporte.css). Los demás formularios no cambian. #}
-<div class="perfil-prof{% if diseno_tickets %} tk-pagina tk-nuevo{% endif %}">
+{# pasos (y nota_pasos): lo pasan Registrar y Vincular estudiante en el portal del apoderado: tarjeta + panel "Cómo funciona" (16_portal_apoderado.css). #}
+<div class="perfil-prof{% if diseno_tickets %} tk-pagina tk-nuevo{% elif pasos %} apo apo-form-pagina{% endif %}">
     <a class="perfil-prof__volver" href="{{ volver_url }}">
-        <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver{% if diseno_tickets %} a mis tickets{% endif %}
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver{% if diseno_tickets %} a mis tickets{% elif pasos %} a mi cuenta{% endif %}
     </a>
 
-    {% if not diseno_tickets %}
+    {% if not diseno_tickets and not pasos %}
     <header class="perfil-prof__cabecera">
         <div>
             {% if not titulo_en_barra %}<h1>{{ titulo }}</h1>{% endif %}
             <p class="perfil-prof__vacio">{{ intro }}</p>
         </div>
     </header>
-    {% else %}<div class="tk-nuevo-grid">{% endif %}
+    {% else %}<div class="{% if diseno_tickets %}tk-nuevo-grid{% else %}apo-form-grid{% endif %}">{% endif %}
 
-    <section class="perfil-prof__bloque{% if diseno_tickets %} tk-form-card{% endif %}" aria-labelledby="formulario-titulo">
+    <section class="perfil-prof__bloque{% if diseno_tickets %} tk-form-card{% elif pasos %} apo-form-card{% endif %}" aria-labelledby="formulario-titulo">
         <h2 id="formulario-titulo">{{ subtitulo }}</h2>
         {% if diseno_tickets %}<p class="tk-form-intro">Mientras más detalles nos des, más rápido lo resolvemos.</p>{% endif %}
         {% for error in form.non_field_errors %}<p class="apod-form__error" role="alert">{{ error }}</p>{% endfor %}
 
-        <form method="post" class="apod-form" novalidate{% if form.is_multipart %} enctype="multipart/form-data"{% endif %}>
+        <form method="post" class="apod-form{% if pasos %} apo-form{% endif %}" novalidate{% if form.is_multipart %} enctype="multipart/form-data"{% endif %}>
             {% csrf_token %}
             {% for campo in form %}
             {% if campo.field.widget.input_type == 'checkbox' %}
@@ -62,6 +63,18 @@
         </form>
     </section>
 
+    {% if pasos %}
+    <aside class="apo-ayuda" aria-label="Cómo funciona">
+        <h3>Cómo funciona</h3>
+        <ol class="apo-pasos">
+            {% for paso, texto in pasos %}<li><strong>{{ paso }}</strong><span>{{ texto }}</span></li>
+            {% endfor %}
+        </ol>
+        {% if nota_pasos %}<p class="apo-ayuda-nota"><i class="bi bi-bell" aria-hidden="true"></i> {{ nota_pasos }}</p>{% endif %}
+    </aside>
+    </div>
+    {% endif %}
+
     {% if diseno_tickets %}
     <aside class="tk-ayuda" aria-label="Antes de enviar">
         <div class="tk-ayuda-bloque">
@@ -84,4 +97,4 @@
 </div>
 {% endblock %}
 {# cuerpo_extra solo existe en base_alumno: las demas bases ignoran este bloque #}
-{% block cuerpo_extra %}{% if diseno_tickets %}<script src="{% static 'alumnos/java/tickets.js' %}"></script>{% endif %}{% endblock %}
+{% block cuerpo_extra %}{{ block.super }}{% if diseno_tickets %}<script src="{% static 'alumnos/java/tickets.js' %}"></script>{% endif %}{% endblock %}
