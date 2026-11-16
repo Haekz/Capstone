@@ -13,20 +13,24 @@
 {% endblock %}
 
 {% block content %}
-<div class="perfil-prof">
+{# diseno_tickets: solo lo pasa 'Abrir un ticket' y solo es verdadero para el alumno (14_soporte.css). Los demás formularios no cambian. #}
+<div class="perfil-prof{% if diseno_tickets %} tk-pagina tk-nuevo{% endif %}">
     <a class="perfil-prof__volver" href="{{ volver_url }}">
-        <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver{% if diseno_tickets %} a mis tickets{% endif %}
     </a>
 
+    {% if not diseno_tickets %}
     <header class="perfil-prof__cabecera">
         <div>
             {% if not titulo_en_barra %}<h1>{{ titulo }}</h1>{% endif %}
             <p class="perfil-prof__vacio">{{ intro }}</p>
         </div>
     </header>
+    {% else %}<div class="tk-nuevo-grid">{% endif %}
 
-    <section class="perfil-prof__bloque" aria-labelledby="formulario-titulo">
+    <section class="perfil-prof__bloque{% if diseno_tickets %} tk-form-card{% endif %}" aria-labelledby="formulario-titulo">
         <h2 id="formulario-titulo">{{ subtitulo }}</h2>
+        {% if diseno_tickets %}<p class="tk-form-intro">Mientras más detalles nos des, más rápido lo resolvemos.</p>{% endif %}
         {% for error in form.non_field_errors %}<p class="apod-form__error" role="alert">{{ error }}</p>{% endfor %}
 
         <form method="post" class="apod-form" novalidate{% if form.is_multipart %} enctype="multipart/form-data"{% endif %}>
@@ -50,10 +54,34 @@
             </div>
             {% endif %}
             {% endfor %}
+            {% if diseno_tickets %}<div class="tk-form-pie"><p class="tk-plazo" id="tk-plazo" aria-live="polite"></p>{% endif %}
             <button type="submit" class="perfil-prof__reservar">
-                <i class="bi bi-check-lg" aria-hidden="true"></i> {{ boton }}
+                <i class="bi {% if diseno_tickets %}bi-send{% else %}bi-check-lg{% endif %}" aria-hidden="true"></i> {% if diseno_tickets %}Enviar ticket{% else %}{{ boton }}{% endif %}
             </button>
+            {% if diseno_tickets %}</div>{% endif %}
         </form>
     </section>
+
+    {% if diseno_tickets %}
+    <aside class="tk-ayuda" aria-label="Antes de enviar">
+        <div class="tk-ayuda-bloque">
+            <h3><i class="bi bi-clock-history" aria-hidden="true"></i> Cuándo te respondemos</h3>
+            <p class="tk-ayuda-texto">{{ intro }}</p>
+        </div>
+        <div class="tk-ayuda-bloque">
+            <h3><i class="bi bi-lightbulb" aria-hidden="true"></i> Para ayudarte más rápido</h3>
+            <ul class="tk-consejos">
+                <li>Indica la fecha y la hora de lo que pasó.</li>
+                <li>Si es sobre una clase, nombra al profesor y la materia.</li>
+                <li>Si es un pago, di el paquete y el monto.</li>
+            </ul>
+        </div>
+        <p class="tk-ayuda-nota"><i class="bi bi-envelope-check" aria-hidden="true"></i> Puedes ver el estado y las respuestas en <a href="{{ volver_url }}">Mis tickets</a>.</p>
+    </aside>
+    </div>
+    {% if plazos %}{{ plazos|json_script:"tk-plazos" }}{% endif %}
+    {% endif %}
 </div>
 {% endblock %}
+{# cuerpo_extra solo existe en base_alumno: las demas bases ignoran este bloque #}
+{% block cuerpo_extra %}{% if diseno_tickets %}<script src="{% static 'alumnos/java/tickets.js' %}"></script>{% endif %}{% endblock %}

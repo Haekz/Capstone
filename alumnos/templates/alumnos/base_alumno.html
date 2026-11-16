@@ -32,6 +32,7 @@
     {% block extra_css %}{% endblock %}
     {# Capa de diseño final: va después de todo (también del CSS propio de cada página) porque solo sobrescribe #}
     <link rel="stylesheet" href="{% static 'alumnos/css/alumn_1/13_pulido.css' %}">
+    <link rel="stylesheet" href="{% static 'alumnos/css/alumn_1/14_soporte.css' %}">{# Ayuda y soporte (tickets): va después del pulido, solo sobrescribe #}
     {% include 'alumnos/includes/sin_copia_atras.html' %}
 </head>
 <body id="portal-alumno">

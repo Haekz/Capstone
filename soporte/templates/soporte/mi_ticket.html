@@ -13,23 +13,44 @@
 {% endblock %}
 
 {% block content %}
-<div class="perfil-prof">
+<div class="perfil-prof tk-pagina tk-detalle">
     <a class="perfil-prof__volver" href="{% url 'mis_tickets' %}">
         <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a mis tickets
     </a>
 
-    <header class="perfil-prof__cabecera">
+    <header class="perfil-prof__cabecera tk-detalle-cabecera">
         <div>
-            {# En el portal del alumno el h1 es el de la barra (fija, 72px: no cabe un titulo de 120 caracteres) #}
-            {% if titulo_en_barra %}<h2>#{{ ticket.pk }} · {{ ticket.titulo }}</h2>{% else %}<h1>#{{ ticket.pk }} · {{ ticket.titulo }}</h1>{% endif %}
+            {% if titulo_en_barra %}
+            {# Alumno: el asunto y los datos como fichas. El h2 (no h1) porque el h1 es el de la barra (fija, 72px: no cabe un titulo de 120 caracteres) #}
+            <span class="tk-item-num">#{{ ticket.pk }}</span>
+            <h2>{{ ticket.titulo }}</h2>
+            <ul class="tk-detalle-meta" aria-label="Datos del ticket">
+                <li><span class="apod-estado tk-estado">{{ ticket.get_estado_display }}</span></li>
+                <li><span class="tk-chip tk-chip--cat">{{ ticket.get_categoria_display }}</span></li>
+                <li><i class="bi bi-calendar3" aria-hidden="true"></i> Abierto el {{ ticket.creado|date:"d-m-Y H:i" }}</li>
+                {% if ticket.estudiante %}<li><i class="bi bi-person" aria-hidden="true"></i> Sobre {{ ticket.estudiante.user.first_name }}</li>{% endif %}
+            </ul>
+            {% else %}
+            <h1>#{{ ticket.pk }} · {{ ticket.titulo }}</h1>
             <p class="perfil-prof__vacio">{{ ticket.get_categoria_display }} · {{ ticket.get_estado_display }} · abierto el {{ ticket.creado|date:"d-m-Y H:i" }}{% if ticket.estudiante %} · sobre {{ ticket.estudiante.user.first_name }}{% endif %}</p>
+            {% endif %}
         </div>
     </header>
 
-    <section class="perfil-prof__bloque" aria-labelledby="conversacion-titulo">
+    <section class="perfil-prof__bloque tk-hilo-card" aria-labelledby="conversacion-titulo">
         <h2 id="conversacion-titulo">Conversación</h2>
         {% include 'apoderados/_mensajes.html' %}
+        {% if titulo_en_barra %}
+        <article class="tk-mensaje tk-mensaje--tuyo">
+            <span class="tk-mensaje-avatar" aria-hidden="true">{{ ticket.autor.first_name|slice:":1"|upper }}</span>
+            <div class="tk-mensaje-cuerpo">
+                <p class="tk-mensaje-autor"><strong>Tú</strong> · lo que nos contaste</p>
+                <p class="tk-mensaje-texto">{{ ticket.descripcion }}</p>
+            </div>
+        </article>
+        {% else %}
         <p><strong>Lo que nos contaste:</strong><br>{{ ticket.descripcion|linebreaksbr }}</p>
+        {% endif %}
         {% include 'soporte/_conversacion.html' with soporte_ve=False %}
         {% if form %}
         {% include 'soporte/_formulario_mensaje.html' %}
@@ -39,3 +60,5 @@
     </section>
 </div>
 {% endblock %}
+{# cuerpo_extra solo existe en base_alumno: las demas bases ignoran este bloque #}
+{% block cuerpo_extra %}{% if titulo_en_barra %}<script src="{% static 'alumnos/java/tickets.js' %}"></script>{% endif %}{% endblock %}
