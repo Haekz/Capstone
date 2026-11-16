@@ -98,14 +98,42 @@
 </div>
 
 {% if agente.es_lider %}
-<div class="panel" style="margin-top:28px;">
+<div class="panel">
     <div class="panel-header">
-        <span class="panel-title"><i class="bi bi-clock-history"></i> Registro de decisiones (últimas 50)</span>
+        <h2 class="panel-title"><i class="bi bi-link-45deg" aria-hidden="true"></i> Vínculos verificados</h2>
     </div>
-    <div style="overflow-x:auto;">
+    <div class="sop-tabla">
         <table class="user-table">
             <thead>
-                <tr><th>Fecha</th><th>Apoderado</th><th>Decisión</th><th>Documento</th><th>Canal</th><th>Observación</th><th>Revisó</th></tr>
+                <tr><th scope="col">Estudiante</th><th scope="col">Apoderado</th><th scope="col">Estado</th><th scope="col"><span class="sop-solo-lector">Acción</span></th></tr>
+            </thead>
+            <tbody>
+                {% for v in vinculos_vigentes %}
+                <tr>
+                    <td><span class="sop-persona-texto"><strong>{{ v.alumno.user.first_name }}</strong><small>RUT {{ v.alumno.user.rut }}</small></span></td>
+                    <td><span class="sop-persona-texto"><strong>{{ v.apoderado.nombre }}</strong><small>{{ v.get_parentesco_display }}</small></span></td>
+                    <td>{% if v.termino_por_edad %}<span class="sop-chip">Terminó: cumplió 18</span>{% else %}<span class="sop-chip sop-chip--estado">Vigente</span>{% endif %}</td>
+                    <td class="sop-acciones"><a class="sop-btn sop-btn--peligro" href="{% url 'apoderados_revocar_vinculo' v.pk %}">Revocar</a></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4">No hay vínculos verificados.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<h2 class="sop-grupo-titulo">Registros</h2>
+
+<details class="panel sop-registro">
+    <summary class="panel-header">
+        <span class="panel-title"><i class="bi bi-clipboard-check" aria-hidden="true"></i> Decisiones sobre identidad <span class="sop-registro-nota">últimas 50</span></span>
+        <i class="bi bi-chevron-down sop-registro-flecha" aria-hidden="true"></i>
+    </summary>
+    <div class="sop-tabla">
+        <table class="user-table">
+            <thead>
+                <tr><th scope="col">Fecha</th><th scope="col">Apoderado</th><th scope="col">Decisión</th><th scope="col">Documento</th><th scope="col">Canal</th><th scope="col">Observación</th><th scope="col">Revisó</th></tr>
             </thead>
             <tbody>
                 {% for r in historial %}
@@ -124,16 +152,17 @@
             </tbody>
         </table>
     </div>
-</div>
+</details>
 
-<div class="panel" style="margin-top:28px;">
-    <div class="panel-header">
-        <span class="panel-title"><i class="bi bi-clock-history"></i> Registro de vínculos (últimos 50)</span>
-    </div>
-    <div style="overflow-x:auto;">
+<details class="panel sop-registro">
+    <summary class="panel-header">
+        <span class="panel-title"><i class="bi bi-diagram-2" aria-hidden="true"></i> Decisiones sobre vínculos <span class="sop-registro-nota">últimas 50</span></span>
+        <i class="bi bi-chevron-down sop-registro-flecha" aria-hidden="true"></i>
+    </summary>
+    <div class="sop-tabla">
         <table class="user-table">
             <thead>
-                <tr><th>Fecha</th><th>Estudiante</th><th>Apoderado</th><th>Decisión</th><th>Canal</th><th>Observación</th><th>Revisó</th></tr>
+                <tr><th scope="col">Fecha</th><th scope="col">Estudiante</th><th scope="col">Apoderado</th><th scope="col">Decisión</th><th scope="col">Canal</th><th scope="col">Observación</th><th scope="col">Revisó</th></tr>
             </thead>
             <tbody>
                 {% for r in historial_vinculos %}
@@ -152,41 +181,17 @@
             </tbody>
         </table>
     </div>
-</div>
+</details>
 
-<div class="panel" style="margin-top:28px;">
-    <div class="panel-header">
-        <span class="panel-title"><i class="bi bi-link-45deg"></i> Vínculos verificados</span>
-    </div>
-    <div style="overflow-x:auto;">
+<details class="panel sop-registro">
+    <summary class="panel-header">
+        <span class="panel-title"><i class="bi bi-x-octagon" aria-hidden="true"></i> Revocaciones <span class="sop-registro-nota">últimas 50</span></span>
+        <i class="bi bi-chevron-down sop-registro-flecha" aria-hidden="true"></i>
+    </summary>
+    <div class="sop-tabla">
         <table class="user-table">
             <thead>
-                <tr><th>Estudiante</th><th>Apoderado</th><th>Estado</th><th>Acción</th></tr>
-            </thead>
-            <tbody>
-                {% for v in vinculos_vigentes %}
-                <tr>
-                    <td>{{ v.alumno.user.first_name }} · RUT {{ v.alumno.user.rut }}</td>
-                    <td>{{ v.apoderado.nombre }} ({{ v.get_parentesco_display }})</td>
-                    <td>{% if v.termino_por_edad %}Terminó: cumplió 18{% else %}Vigente{% endif %}</td>
-                    <td><a href="{% url 'apoderados_revocar_vinculo' v.pk %}">Revocar</a></td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="4">No hay vínculos verificados.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<div class="panel" style="margin-top:28px;">
-    <div class="panel-header">
-        <span class="panel-title"><i class="bi bi-x-octagon"></i> Revocaciones (últimas 50)</span>
-    </div>
-    <div style="overflow-x:auto;">
-        <table class="user-table">
-            <thead>
-                <tr><th>Fecha</th><th>Estudiante</th><th>Apoderado</th><th>Motivo</th><th>Revocó</th></tr>
+                <tr><th scope="col">Fecha</th><th scope="col">Estudiante</th><th scope="col">Apoderado</th><th scope="col">Motivo</th><th scope="col">Revocó</th></tr>
             </thead>
             <tbody>
                 {% for r in revocaciones %}
@@ -203,16 +208,17 @@
             </tbody>
         </table>
     </div>
-</div>
+</details>
 
-<div class="panel" style="margin-top:28px;">
-    <div class="panel-header">
-        <span class="panel-title"><i class="bi bi-eye-fill"></i> Accesos a documentos (últimos 50)</span>
-    </div>
-    <div style="overflow-x:auto;">
+<details class="panel sop-registro">
+    <summary class="panel-header">
+        <span class="panel-title"><i class="bi bi-eye-fill" aria-hidden="true"></i> Accesos a documentos <span class="sop-registro-nota">últimos 50</span></span>
+        <i class="bi bi-chevron-down sop-registro-flecha" aria-hidden="true"></i>
+    </summary>
+    <div class="sop-tabla">
         <table class="user-table">
             <thead>
-                <tr><th>Fecha</th><th>Documento</th><th>Apoderado</th><th>Abrió</th></tr>
+                <tr><th scope="col">Fecha</th><th scope="col">Documento</th><th scope="col">Apoderado</th><th scope="col">Abrió</th></tr>
             </thead>
             <tbody>
                 {% for acceso in accesos %}
@@ -228,7 +234,7 @@
             </tbody>
         </table>
     </div>
-</div>
+</details>
 {% endif %}
 
 {% endblock %}

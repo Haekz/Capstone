@@ -266,7 +266,7 @@ class RevisionIdentidadTests(TestCase):
     def test_la_bandeja_muestra_pendientes_y_el_registro(self):
         respuesta = self.client.get(reverse('apoderados_revision'))
         self.assertContains(respuesta, RUT)
-        self.assertContains(respuesta, 'Registro de decisiones')
+        self.assertContains(respuesta, 'Decisiones sobre identidad')
 
 
 class RestriccionesDeAccesoTests(TestCase):
