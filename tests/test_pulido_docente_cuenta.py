@@ -105,11 +105,11 @@ class PanelDeCuentaTests(Escenario):
         self.assertIn('Mi agenda', _seccion(html, 'agenda'))
         self.assertIn('Observaciones de clases realizadas', _seccion(html, 'agenda'))
 
-    # --- Hojas ---
+    # --- Hojas: el orden completo de las ocho lo vigila test_pulido_docente_contenido ---
 
     def test_la_capa_carga_formularios_agenda_y_cuenta_en_su_orden(self):
         html = self.panel()
         orden = [f'panel/06{x}_pulido_docente_{n}.css' for x, n in
-                 (('a', 'marco'), ('b', 'inicio'), ('c', 'formularios'), ('d', 'tablas'), ('e', 'agenda'), ('f', 'cuenta'), ('h', 'cierre'))]
+                 (('a', 'marco'), ('b', 'inicio'), ('c', 'formularios'), ('d', 'tablas'), ('e', 'agenda'), ('f', 'cuenta'))]
         posiciones = [html.index(hoja) for hoja in orden]
         self.assertEqual(posiciones, sorted(posiciones))

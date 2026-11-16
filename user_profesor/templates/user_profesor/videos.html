@@ -42,8 +42,8 @@
 <div class="custom-modal-overlay" id="profe-upload-modal">
     <div class="custom-modal-card" style="max-width: 500px; padding: 25px;">
         <div class="custom-modal-header">
-            <h3 style="margin: 0; font-weight: 800; font-size: 1.3rem; color: var(--text);">Subir video de apoyo</h3>
-            <button class="close-modal-btn" onclick="closeUploadModal()">&times;</button>
+            <h3 class="upload-titulo">Subir video de apoyo</h3>
+            <button class="close-modal-btn" onclick="closeUploadModal()" aria-label="Cerrar"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
         </div>
         <div class="custom-modal-body" style="padding-top: 15px;">
             <form id="profe-video-upload-form" onsubmit="submitUploadedVideo(event)" class="prof-form">
@@ -59,6 +59,7 @@
                     <label class="prof-form-label" for="upload-file">Archivo de video (.mp4)</label>
                     <input class="prof-form-input" type="file" id="upload-file" name="archivo" accept="video/mp4" aria-describedby="upload-file-ayuda" required>
                     <small id="upload-file-ayuda">MP4 de máximo 30 minutos y 500 MB.</small>
+                    <p class="upload-archivo-info" id="upload-file-info" role="status" hidden></p>
                 </div>
                 <button type="submit" class="prof-form-btn">Publicar en mi biblioteca</button>
             </form>
