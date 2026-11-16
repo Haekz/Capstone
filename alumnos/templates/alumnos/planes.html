@@ -3,8 +3,8 @@
 
 {% block title %}LBWUS | Planes{% endblock %}
 {% block meta_seo %}{% include 'alumnos/includes/meta_seo.html' with descripcion='Compras un paquete de clases con el profesor que elijas. Mientras más clases, menor el precio de cada una.' %}{% endblock %}
-{% block page_title %}{% if titulo_en_barra %}Planes y precios{% else %}{{ block.super }}{% endif %}{% endblock %}
-{% block page_subtitle %}{% if titulo_en_barra %}Elige cuántas clases quieres{% else %}{{ block.super }}{% endif %}{% endblock %}
+{% block page_title %}{% if es_apoderado and estudiante %}Contratar clases para {{ estudiante.alumno.user.first_name }}{% elif titulo_en_barra %}Planes y precios{% else %}{{ block.super }}{% endif %}{% endblock %}
+{% block page_subtitle %}{% if es_apoderado and estudiante %}Elige el profesor y el paquete{% elif titulo_en_barra %}Elige cuántas clases quieres{% else %}{{ block.super }}{% endif %}{% endblock %}
 
 {% block extra_css %}
 {{ block.super }}
@@ -12,12 +12,14 @@
 {% endblock %}
 
 {% block content %}
+{# es_apoderado: dentro del portal del apoderado, 16_portal_apoderado.css ajusta esta página bajo .apo-planes #}
+{% if es_apoderado %}<div class="apo-planes">{% endif %}
 {# Todos los precios vienen del servidor (alumnos/paquetes.py): esta pagina no calcula nada. #}
-{# Fuera de un portal, el hero del sitio publico (styles.css); dentro, una cabecera compacta (planes.css) #}
-<section class="{% if en_portal %}pl-intro--portal{% else %}sv-intro{% endif %} pl-intro">
-    <div{% if not en_portal %} class="contenedor"{% endif %}>
-        {% if not en_portal %}<span class="sv-eyebrow">Planes</span>{% endif %}
-        {% if not titulo_en_barra %}<h1>Elige cuántas clases quieres</h1>{% endif %}
+{# Fuera de un portal, el hero del sitio publico (styles.css); en el del alumno, una cabecera compacta (planes.css); el apoderado conserva el hero oscuro de su diseño, con el titulo en h2 porque la barra ya trae el h1 #}
+<section class="{% if en_portal and not es_apoderado %}pl-intro--portal{% else %}sv-intro{% endif %} pl-intro">
+    <div{% if not en_portal or es_apoderado %} class="contenedor"{% endif %}>
+        {% if not en_portal or es_apoderado %}<span class="sv-eyebrow">Planes</span>{% endif %}
+        {% if es_apoderado %}<h2>Elige cuántas clases quieres</h2>{% elif not titulo_en_barra %}<h1>Elige cuántas clases quieres</h1>{% endif %}
         <p>Compras un paquete de clases con el profesor que elijas. Mientras más clases, menor el precio de cada una.</p>
         <div class="pl-intro-notes">
             <span><i class="bi bi-clock" aria-hidden="true"></i> Clases de {{ duracion_clase }} minutos</span>
@@ -214,4 +216,5 @@
         });
     });
 </script>
+{% if es_apoderado %}</div>{% endif %}
 {% endblock %}

@@ -105,6 +105,7 @@ def planes(request):
             'status': 'ok'
         })
 
+    estudiante = vinculo_contratable(request, request.GET.get('estudiante'))
     return render(request, 'alumnos/planes.html', {
         # Primero el marco: las claves propias de Planes (es_menor...) mandan sobre las suyas
         **contexto_de_marco(request, seccion='paquetes'),
@@ -120,7 +121,8 @@ def planes(request):
         # El menor ve que contrata su apoderado, en vez de botones que no harian nada.
         'es_menor': _alumno_en_sesion_es_menor(request),
         # Apoderado contratando para su estudiante (?estudiante=id del vinculo verificado).
-        'estudiante': vinculo_contratable(request, request.GET.get('estudiante')),
+        'estudiante': estudiante,
+        'vinculo_activo': estudiante.pk if estudiante else None,  # la barra del apoderado marca a ese estudiante
     })
 
 

@@ -26,6 +26,7 @@ def contexto_apoderado(request, seccion):
         return {}
     apoderado = perfil_de(request.user, APODERADO)
     return {'base': BASE_APODERADO, 'en_portal': True, 'seccion_menu': seccion, 'titulo_en_barra': True,
+            'es_apoderado': True,  # lo usan las paginas compartidas para sus ajustes propios (p. ej. .apo-planes)
             'apoderado': apoderado, 'vinculos': apoderado.vinculos.select_related('alumno__user')}
 
 

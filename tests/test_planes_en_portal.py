@@ -1,5 +1,5 @@
-"""Planes dentro de cada portal: el alumno y el docente la ven con su menu; el apoderado y quien no ha entrado, con el
-diseno publico. Datos ficticios.
+"""Planes dentro de cada portal: el alumno, el docente y el apoderado la ven con el menu del suyo; quien no ha entrado,
+con el diseno publico. Datos ficticios.
 """
 
 from django.test import SimpleTestCase
@@ -59,13 +59,26 @@ class PlanesEnElPortalTests(BaseResenas):
         self.assertContains(r, 'pl-intro--portal')
         self.assertNotContains(r, 'sv-eyebrow')
 
-    def test_el_apoderado_sigue_en_el_diseno_publico(self):
+    def test_el_apoderado_la_ve_en_su_portal_con_el_hero_oscuro(self):
         apoderado = crear_apoderado('44444444-4', Apoderado.VERIFICADO)
         entrar(self.client, apoderado, APODERADO)
         r = self.client.get(reverse('planes'))
-        self.assertTemplateNotUsed(r, 'alumnos/base_alumno.html')
+        self.assertTemplateUsed(r, 'apoderados/base_apoderado.html')
         self.assertTemplateNotUsed(r, 'user_profesor/base_docente.html')
-        self.assertContains(r, 'sv-eyebrow')
+        self.assertContains(r, 'Portal apoderado')
+        self.assertContains(r, 'class="apo-planes"')  # los ajustes de 16_portal_apoderado.css cuelgan de aqui
+        self.assertContains(r, 'sv-eyebrow')  # conserva el hero oscuro de su diseño
+        self.assertContains(r, '<h2>Elige cuántas clases quieres</h2>')  # h2: el h1 es el de la barra
+
+    def test_el_marco_del_apoderado_no_llega_a_otros_ni_a_visitantes(self):
+        for rol, quien in ((ALUMNO, self.ana), (PROFESOR, self.profesor), (None, None)):
+            with self.subTest(rol=rol):
+                if rol:
+                    entrar(self.client, quien, rol)
+                r = self.client.get(reverse('planes'))
+                self.assertTemplateNotUsed(r, 'apoderados/base_apoderado.html')
+                self.assertNotContains(r, 'apo-planes')
+                self.client.logout()
 
     def test_quien_no_ha_entrado_ve_el_diseno_publico(self):
         r = self.client.get(reverse('planes'))

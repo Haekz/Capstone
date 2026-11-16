@@ -46,7 +46,7 @@
             <div class="apod-form__campo">
                 <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
                 {{ campo }}
-                {% if campo.help_text %}<small id="{{ campo.auto_id }}_helptext">{{ campo.help_text }}</small>{% endif %}
+                {% if campo.help_text %}<small id="{{ campo.auto_id }}_helptext">{% if diseno_tickets %}<i class="bi bi-shield-lock" aria-hidden="true"></i> {% endif %}{{ campo.help_text }}</small>{% endif %}
             </div>
             {% endif %}
             {% if campo.errors %}

@@ -75,6 +75,8 @@
             {% endif %}
             {% endfor %}
         </ul>
+        {% elif es_apoderado %}
+        <p class="apo-vacio"><i class="bi bi-inbox" aria-hidden="true"></i> Todavía no abres tickets.</p>
         {% else %}
         <p class="perfil-prof__vacio">Todavía no abres tickets.</p>
         {% endif %}

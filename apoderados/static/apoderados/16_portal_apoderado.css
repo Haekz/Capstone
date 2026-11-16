@@ -787,7 +787,8 @@
     text-transform: none;
 }
 
-#portal-alumno.portal-apoderado .apo-planes .sv-intro h1 {
+#portal-alumno.portal-apoderado .apo-planes .sv-intro h1,
+#portal-alumno.portal-apoderado .apo-planes .sv-intro h2 {
     margin: 0 0 8px;
     color: #ffffff;
     font-size: clamp(1.6rem, 2.6vw, 2.1rem);
