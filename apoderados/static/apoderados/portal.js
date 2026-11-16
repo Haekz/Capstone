@@ -1,10 +1,18 @@
-/* Portal del apoderado: ayudas de formularios y bienvenida de planes.
+/* Portal del apoderado: dialogo de mensajes, ayudas de formularios y bienvenida de planes.
    Viene del bloque 5 de la copia del apoderado. Solo usa lo que el servidor ya pinto (sin llamadas nuevas) y cada parte
    revisa que su elemento exista. Todo es ayuda en el navegador: el servidor sigue validando todo. */
 (() => {
     'use strict';
     const $ = (sel, raiz = document) => raiz.querySelector(sel);
     const $$ = (sel, raiz = document) => [...raiz.querySelectorAll(sel)];
+
+    /* ── 5. Mensajes: el "?" abre la ventana; se cierra con Esc, la X, "Entendido" o haciendo clic fuera ── */
+    $$('.btn-ayuda-mensajes').forEach(b => {
+        const dlg = document.getElementById(b.getAttribute('aria-controls'));
+        if (!dlg || !dlg.showModal) return;
+        b.addEventListener('click', () => dlg.showModal());
+        dlg.addEventListener('click', ev => { if (ev.target === dlg) dlg.close(); });
+    });
 
     /* ── 6. Registrar y vincular: RUT, contraseña, documento y campos obligatorios ── */
     const MENSAJES = {

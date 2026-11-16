@@ -15,13 +15,14 @@
 <div class="perfil-prof apo">
     <p class="apo-nota apo-nota--arriba"><i class="bi bi-shield-check" aria-hidden="true"></i> <span>No compartas teléfonos, correos ni direcciones: todo se conversa aquí.</span></p>
 
-    {# El aviso legal (E5) sigue visible como antes: desplegado hasta abrir una conversación. #}
-    {% aviso_mensajes 'apoderado' bandeja_activa %}
     {% include 'apoderados/_mensajes.html' %}
 
     <section class="perfil-prof__bloque apo-conversaciones" aria-labelledby="conversaciones-titulo">
         <div class="apo-bloque-cabecera">
             <h2 id="conversaciones-titulo">Tus conversaciones</h2>
+            <button type="button" class="btn-ayuda-mensajes" aria-haspopup="dialog" aria-controls="dialogo-mensajes" aria-label="Cómo funcionan los mensajes y qué pasa con tus datos" title="Cómo funcionan los mensajes">
+                <i class="bi bi-question-lg" aria-hidden="true"></i>
+            </button>
         </div>
         {% if bandeja %}
         <ul class="apod-vinculos">
@@ -39,6 +40,9 @@
         <p class="apo-vacio"><i class="bi bi-chat-square-text" aria-hidden="true"></i> Todavía no tienes conversaciones.</p>
         {% endif %}
     </section>
+
+    {# "Cómo funcionan los mensajes" (aviso legal E5): se abre con el botón "?" de Tus conversaciones #}
+    {% dialogo_aviso_apoderado %}
 
     {% if bandeja_nuevos %}
     <section class="perfil-prof__bloque" aria-labelledby="nuevas-titulo">
