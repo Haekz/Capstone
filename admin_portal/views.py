@@ -53,6 +53,9 @@ def dashboard_admin(request):
     if periodo not in metricas.PERIODOS:
         periodo = 'mes'
 
+    cifras_soporte = metricas.soporte()  # cifras agregadas, sin contenido (P13); las usan el banner y el panel
+    pendientes = metricas.pendientes(cifras_soporte)  # lo que espera una decision del admin (banner del Resumen)
+
     context = {
         'admin': admin,
         'alumnos': alumnos,
@@ -73,7 +76,9 @@ def dashboard_admin(request):
         'periodo_nombre': metricas.PERIODOS[periodo],
         'periodos': metricas.PERIODOS,
         'ingresos_hoy': ingresos.de_hoy(),  # personas distintas que iniciaron sesion hoy (H8)
-        'soporte': metricas.soporte(),  # cifras agregadas, sin contenido (P13)
+        'soporte': cifras_soporte,
+        'pendientes': pendientes,
+        'total_pendientes': sum(p['n'] for p in pendientes),
     }
     return render(request, 'admin_portal/dashboard_admin.html', context)
 

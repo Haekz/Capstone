@@ -356,5 +356,7 @@
 </script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 {% block extra_js %}{% endblock %}
+{# Mejoras de uso del portal admin. Soporte y Docente lo dejan vacío: tienen las suyas. #}
+{% block mejoras_admin_js %}<script src="{% static 'admin_portal/mejoras_admin.js' %}"></script>{% endblock %}
 </body>
 </html>

@@ -27,6 +27,7 @@ importar el orden de las demás hojas. Las tablas (06d) van con el marco: el ár
 {# El id del <body> es el enganche de la capa de diseño (y de su modo noche: body:not(.light-mode)#portal-docente). #}
 {% block body_attrs %} id="portal-docente"{% endblock %}
 {% block capa_admin %}{% endblock %}{# la capa 06* es del portal admin (#portal-admin): aqui no se carga #}
+{% block mejoras_admin_js %}{% endblock %}{# ni su JS (mejoras_admin.js) #}
 
 {% block sidebar_usuario %}
 <div class="sidebar-user-avatar">

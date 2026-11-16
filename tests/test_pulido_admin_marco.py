@@ -50,6 +50,7 @@ class MarcoDeAdminTests(TestCase):
             with self.subTest(pagina=nombre):
                 html = self.pagina(nombre)
                 self.assertIn(CUERPO_ADMIN, html)
+                self.assertIn('admin_portal/mejoras_admin.js', html)
                 posiciones = [html.index(p) for p in PARTES]  # falla si alguna no esta
                 self.assertEqual(posiciones, sorted(posiciones))  # 06d, con las pantallas medianas y el movil, va al final de la capa
                 self.assertLess(html.index('05_rediseno_contenido.css'), posiciones[0])  # la capa pisa a las anteriores
@@ -60,6 +61,7 @@ class MarcoDeAdminTests(TestCase):
         self.assertIn('<body id="portal-soporte" class="light-mode">', html)
         self.assertNotIn('portal-admin', html)
         self.assertNotIn('06a_pulido_admin', html)
+        self.assertNotIn('mejoras_admin.js', html)
 
 
 class MarcoDeAdminTitulosTests(TestCase):
@@ -114,4 +116,5 @@ class MarcoDeAdminFrenteAlDocenteTests(BaseResenas):
         self.assertIn('<body id="portal-docente" class="light-mode">', html)
         self.assertNotIn('portal-admin', html)
         self.assertNotIn('06a_pulido_admin', html)
+        self.assertNotIn('mejoras_admin.js', html)
         self.assertIn('<span>Cerrar sesión</span>', html)  # como la copia del docente (antes salia con S mayuscula, la de la base)

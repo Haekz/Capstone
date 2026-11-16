@@ -7,13 +7,13 @@
         </span>
     </div>
     <div class="panel-body">
-        <p class="stat-sub">
-            {{ soporte.abiertos }} abierto{{ soporte.abiertos|pluralize }} ·
-            {{ soporte.atrasados }} atrasado{{ soporte.atrasados|pluralize }} ·
-            primera respuesta: {% if soporte.horas_respuesta %}{{ soporte.horas_respuesta }} h en promedio{% else %}sin datos{% endif %} ·
-            cierre: {% if soporte.dias_cierre %}{{ soporte.dias_cierre }} días en promedio{% else %}sin datos{% endif %}
-        </p>
-        <div style="overflow-x:auto;">
+        <ul class="soporte-cifras">
+            <li><strong>{{ soporte.abiertos }}</strong><span>abierto{{ soporte.abiertos|pluralize }}</span></li>
+            <li><strong>{{ soporte.atrasados }}</strong><span>atrasado{{ soporte.atrasados|pluralize }}</span></li>
+            <li><strong>{% if soporte.horas_respuesta %}{{ soporte.horas_respuesta }} h{% else %}sin datos{% endif %}</strong><span>primera respuesta{% if soporte.horas_respuesta %} (promedio){% endif %}</span></li>
+            <li><strong>{% if soporte.dias_cierre %}{{ soporte.dias_cierre }} días{% else %}sin datos{% endif %}</strong><span>cierre{% if soporte.dias_cierre %} (promedio){% endif %}</span></li>
+        </ul>
+        <div class="soporte-tabla" style="overflow-x:auto;">
             <table class="user-table">
                 <thead>
                     <tr>
