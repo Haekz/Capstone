@@ -119,7 +119,7 @@ class RegistrarTests(Base):
         r = self.client.get(reverse('requerimientos'))
         self.assertContains(r, 'ABIERTO-1')
         self.assertContains(r, 'Vencido', count=1)  # el rechazado ya no cuenta como vencido
-        self.assertContains(r, 'Abiertos (1)')
+        self.assertContains(r, 'Abiertos <span class="sop-cuenta">1</span>')
         self.assertContains(r, 'RESUELTO-1')
 
 

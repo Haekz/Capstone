@@ -1,22 +1,26 @@
 {% extends 'soporte/base_soporte.html' %}
 
 {% block page_title %}Registrar un requerimiento{% endblock %}
-{% block page_subtitle %}Una autoridad pidió datos de usuarios{% endblock %}
+{% block page_subtitle %}Una autoridad pidió datos de usuarios.{% endblock %}
 {% block nav_requerimientos %}active{% endblock %}
 
 {% block content %}
-<div class="panel">
+<a class="sop-volver" href="{% url 'requerimientos' %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a requerimientos</a>
+
+<div class="panel sop-panel-angosto">
     <div class="panel-header">
-        <span class="panel-title"><i class="bi bi-bank2" aria-hidden="true"></i> Datos del requerimiento</span>
+        <h2 class="panel-title"><i class="bi bi-bank2" aria-hidden="true"></i> Datos del requerimiento</h2>
     </div>
-    <div style="padding:18px;">
-        <p><small>Solo se registra el requerimiento. No se entrega nada hasta verificarlo. No copies datos personales ni adjuntes documentos aquí.</small></p>
-        <form method="post" class="apod-form" novalidate style="display:grid; gap:10px;">
+    <div class="panel-body">
+        <div class="sop-alerta">
+            <p><strong>Aquí solo se registra.</strong> No se entrega nada hasta verificarlo.</p>
+            <p>No copies datos personales ni adjuntes documentos.</p>
+        </div>
+        <form method="post" class="apod-form sop-form-dos" novalidate style="display:grid; gap:10px;">
             {% csrf_token %}
             {% include 'requerimientos/_campos.html' %}
-            <button type="submit" class="btn-primary"><i class="bi bi-check-lg" aria-hidden="true"></i> Registrar</button>
+            <button type="submit" class="btn-primary"><i class="bi bi-check-lg" aria-hidden="true"></i> Registrar requerimiento</button>
         </form>
     </div>
 </div>
-<p style="margin-top:18px;"><a href="{% url 'requerimientos' %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a requerimientos</a></p>
 {% endblock %}
