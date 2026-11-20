@@ -30,8 +30,8 @@
                 <h2>Aprende mejor con quien sabe enseñar.</h2>
                 <p>Un solo acceso para alumnos, profesores y administradores de LBWUS.</p>
                 <ul class="auth-points">
-                    <li><i class="bi bi-people-fill"></i> Más de 10.000 profesionales en todo Chile</li>
-                    <li><i class="bi bi-laptop"></i> Clases online o presenciales</li>
+                    <li><i class="bi bi-people-fill"></i> Profesionales verificados en todo Chile</li>
+                    <li><i class="bi bi-laptop"></i> Clases online</li>
                     <li><i class="bi bi-shield-check"></i> Pagos seguros con Webpay</li>
                 </ul>
             </div>
@@ -99,6 +99,7 @@
                 <!-- LOGIN CENTRALIZADO -->
                 <form method="post" action="{% url 'login' %}">
                     {% csrf_token %}
+                    {% if siguiente %}<input type="hidden" name="next" value="{{ siguiente }}">{% endif %}
 
                     {% if form.errors or error %}
                     <div class="error" role="alert">

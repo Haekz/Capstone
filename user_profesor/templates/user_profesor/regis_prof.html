@@ -103,7 +103,7 @@
                 
                 <div class="prof-form" style="text-align: center; padding: 2rem;">
                     <h3>Acceso unificado</h3>
-                    <p>Ahora puedes iniciar sesin de forma centralizada.</p>
+                    <p>Ahora puedes iniciar sesión de forma centralizada.</p>
                     <a href="{% url 'custom_login_alumno' %}" class="btn-prof-submit" style="display: inline-block; margin-top: 1rem; text-decoration: none;">Ir al Login Universal</a>
                 </div>
             </div>
@@ -167,48 +167,6 @@
             Swal.fire({
                 title: 'Error',
                 text: 'Hubo un problema al procesar el registro.',
-                icon: 'error',
-                confirmButtonColor: '#ef4444'
-            });
-        });
-    });
-
-    // esta parte es del envío del formulario de login rápido, busca al profe por RUT o correo
-    document.getElementById('form-login-prof').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const formData = new FormData(this);
-
-        fetch(this.action, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            }
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                Swal.fire({
-                    title: '¡Ingreso Exitoso!',
-                    text: data.message,
-                    icon: 'success',
-                    confirmButtonColor: '#a855f7'
-                }).then(() => {
-                    window.location.href = "{% url 'panel_profesor' %}";
-                });
-            } else {
-                Swal.fire({
-                    title: 'Acceso Denegado',
-                    text: data.message,
-                    icon: 'error',
-                    confirmButtonColor: '#a855f7'
-                });
-            }
-        })
-        .catch(err => {
-            Swal.fire({
-                title: 'Error',
-                text: 'Hubo un problema al procesar el acceso.',
                 icon: 'error',
                 confirmButtonColor: '#ef4444'
             });

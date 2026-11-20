@@ -4,7 +4,6 @@ Solo profesores habilitados. Se muestran datos profesionales; el telefono solo
 si el profesor lo autorizo. Nunca RUT, correo, direccion ni fecha de nacimiento.
 """
 
-from datetime import time
 
 from django.test import TestCase
 from django.urls import reverse
@@ -27,7 +26,7 @@ class PerfilProfesorTests(TestCase):
         cls.matematicas = Especialidad.objects.create(nombre='Matemáticas')
         cls.profe = crear_profesor(RUT_PROFE, 'profe@lbwus.cl', cls.matematicas)
         clase = Clase.objects.create(asignatura=Asignatura.objects.create(nombre='Álgebra'),
-                                     modalidad='online', horario=time(10, 0), profesor=cls.profe)
+                                     modalidad='online', profesor=cls.profe)
         cls.futura = crear_sesion(clase, dias=3)
         crear_sesion(clase, dias=-2)  # realizada: cuenta
         crear_sesion(clase, dias=-1, estado=SesionClase.ESTADO_CANCELADA)  # cancelada: no cuenta
@@ -49,13 +48,12 @@ class PerfilProfesorTests(TestCase):
 
     def test_nunca_expone_datos_personales(self):
         r = self._perfil()
-        for privado in (RUT_PROFE, 'profe@lbwus.cl', 'Calle 1', '911111111'):
+        for privado in (RUT_PROFE, 'profe@lbwus.cl', 'Calle 1', '911111111', 'tel:'):
             self.assertNotContains(r, privado)
-        self.assertContains(r, 'No publicado por el profesor')
 
-    def test_telefono_visible_solo_si_el_profesor_lo_autoriza(self):
-        Profesor.objects.filter(pk=self.profe.pk).update(telefono_publico=True)
-        self.assertContains(self._perfil(), 'href="tel:911111111"')
+    def test_el_profesor_no_puede_publicar_su_telefono(self):
+        """Decidido 02-nov: ni aunque quiera. Ya no existe la casilla 'hacer publico'."""
+        self.assertFalse(hasattr(Profesor, 'telefono_publico'))
 
     def test_profesor_sin_titulo_aprobado_no_tiene_perfil(self):
         self.assertEqual(self._perfil(self.en_revision).status_code, 404)

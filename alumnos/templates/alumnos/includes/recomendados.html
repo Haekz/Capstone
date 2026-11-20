@@ -1,0 +1,21 @@
+{# Los mejor calificados (resenas/consultas.py fija el minimo de resenas y el tope). Si nadie cumple, no se dibuja nada. #}
+{% if recomendados %}
+<section class="recomendados" aria-labelledby="recomendados-titulo">
+    <h3 id="recomendados-titulo" class="subsection-title"><i class="bi bi-trophy-fill" aria-hidden="true"></i> Recomendados</h3>
+    <ul class="recomendados-lista">
+        {% for r in recomendados %}
+        <li class="teacher-card">
+            <div class="teacher-avatar" aria-hidden="true">{{ r.profesor.nombre|slice:":1"|upper }}</div>
+            <div class="teacher-info">
+                <h4>{{ r.profesor.nombre }}</h4>
+                {% if r.profesor.especialidad %}<p class="teacher-specialty">{{ r.profesor.especialidad.nombre }}</p>{% endif %}
+                <p class="teacher-rating" aria-label="Calificación {{ r.rating.promedio }} de 5, basada en {{ r.rating.total }} reseña{{ r.rating.total|pluralize }}">
+                    <i class="bi bi-star-fill" aria-hidden="true"></i> {{ r.rating.promedio }} <span>({{ r.rating.total }})</span>
+                </p>
+                <a class="teacher-profile-link" href="{% url 'perfil_profesor' r.profesor.id_profesor %}">Ver perfil</a>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+</section>
+{% endif %}

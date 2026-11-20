@@ -12,7 +12,7 @@ Verifica:
 7. Test de Concurrencia Multihilo: Simular peticiones simultáneas superando el cupo para verificar
    que exactamente el número máximo de alumnos obtenga cupo y el resto sea rechazado limpiamente.
 """
-from datetime import time, timedelta
+from datetime import timedelta
 from decimal import Decimal
 from time import sleep
 from unittest.mock import patch
@@ -29,6 +29,7 @@ from alumnos.models import (
     Inscripcion, PaqueteClases, Profesor, SesionClase
 )
 from alumnos.services import InscripcionService
+from tests.test_apoderados import entrar
 from tests.test_paquetes import dar_paquete
 from alumnos.exceptions import (
     InscripcionError,
@@ -38,11 +39,6 @@ from alumnos.exceptions import (
 )
 
 User = get_user_model()
-
-# Produccion usa PostgreSQL: ahi select_for_update bloquea filas de verdad y el
-# resultado de una carrera debe ser exacto. SQLite bloquea la base entera y algunos
-# hilos fallan con 'database is locked', asi que en SQLite solo se exige no sobrepasar.
-ES_POSTGRES = connection.vendor == 'postgresql'
 
 
 def en_paralelo(tarea, argumentos):
@@ -101,7 +97,6 @@ class TestBlindajeTransaccionalInscripcion(TestCase):
             profesor=self.profesor,
             asignatura=self.asignatura,
             modalidad='online',
-            horario=time(10, 0)
         )
 
         # Alumnos de prueba
@@ -167,7 +162,7 @@ class TestBlindajeTransaccionalInscripcion(TestCase):
     def test_03_forzado_unique_constraint_en_base_de_datos(self):
         """
         Si se intenta eludir el servicio e insertar directamente vía ORM/SQL,
-        el UniqueConstraint en PostgreSQL/SQLite dispara IntegrityError.
+        el UniqueConstraint en PostgreSQL dispara IntegrityError.
         """
         Inscripcion.objects.create(
             alumno=self.alumnos[0],
@@ -257,7 +252,6 @@ class TestConcurrenciaMultihiloInscripcion(TransactionTestCase):
             profesor=self.profesor,
             asignatura=self.asignatura,
             modalidad='online',
-            horario=time(14, 0)
         )
 
         # Crear 6 alumnos competidores
@@ -310,10 +304,10 @@ class TestConcurrenciaMultihiloInscripcion(TransactionTestCase):
         )
         self.assertEqual(len(exitos), total_en_bd)
         self.assertEqual(len(exitos) + len(rechazos) + len(otros), 6)
-        if ES_POSTGRES:
-            self.assertEqual(otros, [])
-            self.assertEqual(len(exitos), 2)
-            self.assertEqual([type(exc) for exc in rechazos], [CupoAgotadoError] * 4)
+        # PostgreSQL: select_for_update bloquea filas de verdad y el resultado de la carrera es exacto.
+        self.assertEqual(otros, [])
+        self.assertEqual(len(exitos), 2)
+        self.assertEqual([type(exc) for exc in rechazos], [CupoAgotadoError] * 4)
 
     def test_ultima_clase_del_paquete_no_se_gasta_dos_veces(self):
         """Dos reservas simultaneas del mismo alumno, en sesiones distintas, por su ultima clase.
@@ -346,10 +340,9 @@ class TestConcurrenciaMultihiloInscripcion(TransactionTestCase):
 
         self.assertLessEqual(len(exitos), 1, 'Se gasto dos veces la misma clase del paquete')
         self.assertEqual(Inscripcion.objects.filter(alumno=alumno).count(), len(exitos))
-        if ES_POSTGRES:
-            self.assertEqual(otros, [])
-            self.assertEqual(len(exitos), 1)
-            self.assertEqual([type(exc) for exc in rechazos], [SinClasesDisponiblesError])
+        self.assertEqual(otros, [])
+        self.assertEqual(len(exitos), 1)
+        self.assertEqual([type(exc) for exc in rechazos], [SinClasesDisponiblesError])
 
 
 class TestFiltrosSesionClase(TestCase):
@@ -381,10 +374,10 @@ class TestFiltrosSesionClase(TestCase):
 
         # Clases
         self.clase1 = Clase.objects.create(
-            profesor=self.prof1, asignatura=self.asig1, modalidad='online', horario=time(9, 0)
+            profesor=self.prof1, asignatura=self.asig1, modalidad='online'
         )
         self.clase2 = Clase.objects.create(
-            profesor=self.prof2, asignatura=self.asig2, modalidad='presencial', horario=time(11, 0)
+            profesor=self.prof2, asignatura=self.asig2, modalidad='online'
         )
 
         # Alumno
@@ -469,6 +462,7 @@ class TestFiltrosSesionClase(TestCase):
 
     def test_04_api_listar_sesiones_con_filtro_clase_id(self):
         """El endpoint /alumnos/api/sesiones/?clase_id=X retorna solo sesiones disponibles de esa clase."""
+        entrar(self.client, self.alumno.user, alumno_id=self.alumno.pk)
         resp = self.client.get(reverse('sesiones_disponibles'), {'clase_id': self.clase1.pk})
         self.assertEqual(resp.status_code, 200)
         data = resp.json()
@@ -484,9 +478,7 @@ class TestFiltrosSesionClase(TestCase):
             alumno=self.alumno, clase=self.clase1, sesion=self.s1, estado=Inscripcion.ESTADO_CONFIRMADA
         )
 
-        session = self.client.session
-        session['alumno_id'] = self.alumno.pk
-        session.save()
+        entrar(self.client, self.alumno.user, alumno_id=self.alumno.pk)
 
         resp = self.client.get(reverse('sesiones_disponibles'))
         self.assertEqual(resp.status_code, 200)
@@ -520,10 +512,10 @@ class TestSeguridadReservasYControlAcceso(TestCase):
         self.asig = Asignatura.objects.create(nombre='Cálculo de Seguridad')
 
         self.clase_ok = Clase.objects.create(
-            profesor=self.prof_ok, asignatura=self.asig, modalidad='online', horario=time(10, 0)
+            profesor=self.prof_ok, asignatura=self.asig, modalidad='online'
         )
         self.clase_no = Clase.objects.create(
-            profesor=self.prof_no, asignatura=self.asig, modalidad='online', horario=time(10, 0)
+            profesor=self.prof_no, asignatura=self.asig, modalidad='online'
         )
 
         # Alumno 1 (Víctima)
@@ -559,27 +551,21 @@ class TestSeguridadReservasYControlAcceso(TestCase):
 
     def test_02_reserva_metodo_get_no_permitido_405(self):
         """Peticiones GET al endpoint de reserva reciben HTTP 405 Method Not Allowed."""
-        session = self.client.session
-        session['alumno_id'] = self.alumno1.pk
-        session.save()
+        entrar(self.client, self.u_alum1, alumno_id=self.alumno1.pk)
 
         resp = self.client.get(reverse('reservar_sesion'))
         self.assertEqual(resp.status_code, 405)
 
     def test_03_reserva_sin_id_retorna_400(self):
         """Petición POST sin id_sesion retorna HTTP 400 Bad Request."""
-        session = self.client.session
-        session['alumno_id'] = self.alumno1.pk
-        session.save()
+        entrar(self.client, self.u_alum1, alumno_id=self.alumno1.pk)
 
         resp = self.client.post(reverse('reservar_sesion'), data={})
         self.assertEqual(resp.status_code, 400)
 
     def test_04_reserva_sesion_inexistente_retorna_404(self):
         """Petición con id_sesion que no existe en BD retorna HTTP 404."""
-        session = self.client.session
-        session['alumno_id'] = self.alumno1.pk
-        session.save()
+        entrar(self.client, self.u_alum1, alumno_id=self.alumno1.pk)
 
         resp = self.client.post(reverse('reservar_sesion'), data={'id_sesion': 99999})
         self.assertEqual(resp.status_code, 404)
@@ -593,9 +579,7 @@ class TestSeguridadReservasYControlAcceso(TestCase):
             cupo_maximo=5, precio=Decimal('10000.00'), estado=SesionClase.ESTADO_PROGRAMADA
         )
 
-        session = self.client.session
-        session['alumno_id'] = self.alumno1.pk
-        session.save()
+        entrar(self.client, self.u_alum1, alumno_id=self.alumno1.pk)
 
         resp = self.client.post(
             reverse('reservar_sesion'),

@@ -51,13 +51,14 @@ class HorasEnPantallaTests(TestCase):
         profesor = crear_profesor('20000000-1', 'profe@lbwus.cl', None)
         dar_paquete(cls.ana, profesor)  # reservar consume una clase pagada
         clase = Clase.objects.create(asignatura=Asignatura.objects.create(nombre='Álgebra'),
-                                     modalidad='online', horario=time(10, 0), profesor=profesor)
+                                     modalidad='online', profesor=profesor)
         # "10:00" ingresado en Chile, como desde el admin o cargar_sesiones.
         inicio = timezone.make_aware(datetime.combine(timezone.localdate() + timedelta(days=3), time(10, 0)))
         cls.sesion = SesionClase.objects.create(clase=clase, fecha_hora_inicio=inicio,
                                                 fecha_hora_fin=inicio + timedelta(hours=1), cupo_maximo=5)
 
     def test_modal_de_horarios_en_hora_de_chile(self):
+        self.client.post(reverse('login'), {'username': RUT_ANA, 'password': CLAVE})
         sesion = self.client.get(reverse('sesiones_disponibles')).json()['sesiones'][0]
         self.assertEqual(sesion['hora_formateada'], '10:00 - 11:00 hrs')
 
@@ -94,7 +95,7 @@ class MigracionCambioDeHoraTests(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.clase = Clase.objects.create(asignatura=Asignatura.objects.create(nombre='Álgebra'),
-                                         modalidad='online', horario=time(10, 0),
+                                         modalidad='online',
                                          profesor=crear_profesor('20000000-1', 'profe@lbwus.cl', None))
 
     def migrar(self, reloj):

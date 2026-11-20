@@ -1,0 +1,167 @@
+/* Videos de apoyo que el profesor le comparte al alumno (includes/videos_apoyo.html): panel del alumno y del apoderado */
+.va { min-height: 1px; }
+
+.va-nota,
+.va-aviso {
+    margin: 0 0 12px;
+    font-size: 0.92rem;
+    opacity: 0.85;
+}
+
+.va-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+}
+
+.va-card {
+    display: grid;
+    gap: 4px;
+    padding: 14px 16px;
+    border: 1px solid rgba(168, 85, 247, 0.25);
+    border-radius: 14px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.va-card:hover {
+    border-color: var(--primary, #7c3aed);
+}
+
+.va-card:focus-visible,
+.va-cerrar:focus-visible,
+.va-habilitar:focus-visible,
+.va-reportar:focus-visible {
+    outline: 3px solid var(--primary, #7c3aed);
+    outline-offset: 2px;
+}
+
+/* Reclamo por el video abierto (fase 5b): enlace al formulario de tickets */
+.va-reportar {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    margin-top: 8px;
+    color: inherit;
+    font-size: 0.88rem;
+    text-decoration: underline;
+}
+
+/* Apoderado: cada video con su boton para habilitarlo al estudiante menor */
+.va-item {
+    display: grid;
+    gap: 6px;
+}
+
+.va-habilitar {
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 1px solid var(--primary, #7c3aed);
+    border-radius: 10px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 0.88rem;
+    cursor: pointer;
+}
+
+.va-habilitar:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.va-card span {
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
+.va-dialogo {
+    width: min(92vw, 820px);
+    padding: 16px;
+    border: none;
+    border-radius: 16px;
+    background: #111827;
+    color: #f3f4f6;
+}
+
+.va-dialogo::backdrop {
+    background: rgba(15, 23, 42, 0.65);
+}
+
+.va-dialogo video {
+    display: block;
+    width: 100%;
+    max-height: 70vh;
+    border-radius: 10px;
+    background: #000;
+}
+
+.va-dialogo-titulo {
+    margin: 0 0 10px;
+    font-weight: 700;
+}
+
+.va-cerrar {
+    float: right;
+    min-width: 44px;
+    min-height: 44px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: inherit;
+    font-size: 1.6rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+/* Comprar mas videos (fase 6c): un formulario por paquete, con el precio de cada cantidad */
+.va-compra {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(168, 85, 247, 0.25);
+}
+
+.va-compra__titulo {
+    margin: 0 0 6px;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.va-compra__form {
+    display: grid;
+    gap: 8px;
+    max-width: 420px;
+    margin-bottom: 14px;
+}
+
+.va-compra__select,
+.va-compra__boton {
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 1px solid var(--primary, #7c3aed);
+    border-radius: 10px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+}
+
+.va-compra__boton {
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.va-compra__select:focus-visible,
+.va-compra__boton:focus-visible {
+    outline: 3px solid var(--primary, #7c3aed);
+    outline-offset: 2px;
+}
+
+.va-compra__error {
+    margin: 0 0 12px;
+    padding: 10px 14px;
+    border: 1px solid #dc2626;
+    border-radius: 10px;
+}

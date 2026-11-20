@@ -1,0 +1,52 @@
+{# Soporte: tickets y reportes antiguos. #}
+            <!-- ── VIEW 5: SUPPORT / REPORTS ── -->
+            {% if not es_menor %}
+            <div class="dashboard-view" id="view-support">
+                <div class="results-section ap-section-narrow">
+                    <h2 class="ap-mb-10"><i class="bi bi-envelope-paper-fill ap-text-primary"></i> Soporte y Reportes</h2>
+                    <p class="ap-section-intro">¿Tienes algún problema con la plataforma, un pago o una clase? Abre un ticket: nuestro equipo de soporte te responde con un plazo y por escrito.</p>
+                    
+                    <div class="support-grid">
+                        <!-- Los reportes ahora son tickets de soporte (paso 6e) -->
+                        <div class="support-form-card">
+                            <h3>Abrir un ticket</h3>
+                            <p>Pagos, clases y conducta: respondemos en 2 días hábiles. Lo demás, en 5 días hábiles.</p>
+                            <a class="btn-principal ap-btn-block" href="{% url 'nuevo_ticket' %}">
+                                <i class="bi bi-send-fill ap-mr-8" aria-hidden="true"></i>Abrir un ticket
+                            </a>
+                            <p class="ap-mb-10"><a href="{% url 'mis_tickets' %}">Ver mis tickets y sus respuestas</a></p>
+                        </div>
+                        
+                        <!-- Historial del canal anterior: solo lectura -->
+                        <div class="support-list-card">
+                            <h3>Reportes anteriores</h3>
+                            <div class="tickets-list-container" id="tickets-list-container">
+                                {% if mis_reportes %}
+                                    {% for r in mis_reportes %}
+                                    <div class="ticket-item ap-ticket">
+                                        <div class="ticket-header ap-ticket-header">
+                                            <span class="ticket-id ap-ticket-id">TKT-{{ r.id_reporte }}</span>
+                                            <span class="ticket-badge {% if r.estado == 'pendiente' %}status-pending{% else %}status-resolved{% endif %}" style="padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; {% if r.estado == 'pendiente' %}background: #fffbeb; color: #d97706;{% else %}background: #ecfdf5; color: #059669;{% endif %}">
+                                                {{ r.estado|title }}
+                                            </span>
+                                        </div>
+                                        <div class="ticket-description ap-ticket-desc">
+                                            {{ r.descripcion|linebreaksbr }}
+                                        </div>
+                                        <div class="ticket-meta ap-ticket-meta">
+                                            Enviado el: {{ r.fecha_reporte|date:"d M Y" }}
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="empty-teachers-state ap-empty-tickets">
+                                        <i class="bi bi-chat-left-text ap-empty-icon"></i>
+                                        <p>No tienes reportes anteriores.</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        </div>
+            {% endif %}

@@ -1,0 +1,27 @@
+Hola {{ nombre }},
+
+Te damos la más cordial bienvenida a LBWUS. Para todo nuestro equipo es una
+alegría que formes parte de esta comunidad: aquí cada persona es importante,
+y tú también lo eres.
+
+Para que puedas comenzar a hacer clases, te pedimos completar estos pasos
+desde tu portal de profesor:
+
+1. Sube tu título profesional. Al entrar verás el aviso "Sube tu título
+   profesional". Mientras no esté aprobado, aún no podrás hacer clases.
+
+2. Sube también tus especializaciones: diplomados, postítulos, magíster o
+   cursos certificados. Nuestro equipo de soporte revisará cada documento y,
+   según lo que acredites, te asignará las asignaturas que podrás dictar.
+
+3. Elige tus horarios. Cuando tengas asignaturas asignadas, podrás definir
+   los días y horas de cada una desde tu portal.
+
+Si más adelante obtienes una nueva especialización, súbela de la misma forma
+y podremos sumar nuevas asignaturas a tu perfil.
+
+Si tienes cualquier duda, escríbenos desde la sección Soporte de tu portal.
+
+Te deseamos mucho éxito en esta nueva etapa.
+
+Equipo LBWUS

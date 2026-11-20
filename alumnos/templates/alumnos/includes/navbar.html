@@ -19,6 +19,9 @@
                 {% if usuario_sesion.url_panel %}
                     <li class="mobile-only"><a href="{{ usuario_sesion.url_panel }}">{{ usuario_sesion.texto_panel }}</a></li>
                 {% endif %}
+                {% if usuario_sesion.url_ayuda %}
+                    <li class="mobile-only"><a href="{{ usuario_sesion.url_ayuda }}">Ayuda y soporte</a></li>
+                {% endif %}
                 <li class="mobile-only"><a href="{{ usuario_sesion.url_cambiar_clave }}">Cambiar contraseña</a></li>
                 <li class="mobile-only">
                     <form method="post" action="{{ usuario_sesion.url_logout }}" class="form-logout-mobile">
@@ -39,6 +42,7 @@
             </button>
 
             {% if usuario_sesion.autenticado %}
+                {% include 'notificaciones/_campanita.html' with clase_boton='theme-btn' clase_icono='theme-icon' %}
                 <div class="cuenta desktop-only" id="cuenta">
                     <button type="button" class="cuenta-avatar" id="cuenta-btn"
                         aria-haspopup="true" aria-expanded="false" aria-controls="cuenta-menu"
@@ -57,6 +61,11 @@
                         {% if usuario_sesion.url_panel %}
                             <a href="{{ usuario_sesion.url_panel }}" class="cuenta-item">
                                 <i class="bi bi-grid"></i> {{ usuario_sesion.texto_panel }}
+                            </a>
+                        {% endif %}
+                        {% if usuario_sesion.url_ayuda %}
+                            <a href="{{ usuario_sesion.url_ayuda }}" class="cuenta-item">
+                                <i class="bi bi-life-preserver"></i> Ayuda y soporte
                             </a>
                         {% endif %}
                         <a href="{{ usuario_sesion.url_cambiar_clave }}" class="cuenta-item">

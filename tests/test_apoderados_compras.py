@@ -5,7 +5,6 @@ y sigue el mismo flujo de pago; CompraApoderado registra quien lo pago. El
 menor no lo usa por su cuenta: reserva su apoderado (1c-ii).
 """
 
-from datetime import time as hora
 from unittest import mock
 
 from django.db import IntegrityError
@@ -15,21 +14,23 @@ from django.urls import reverse
 from alumnos.models import Asignatura, Clase, PaqueteClases
 from alumnos.services import MENSAJE_MENOR
 from apoderados.models import Apoderado, CompraApoderado, Vinculo
+from tests.aceptacion import aceptar_terminos
 from tests.test_apoderados import RUT, crear_apoderado, entrar
 from tests.test_apoderados_vinculos import RUT_HERMANA, crear_menor_vinculado
 from tests.test_especialidad import crear_profesor
 from tests.test_filtros_clases import crear_sesion
 
-PRECIO_PROGRESO = 59000  # tarifa base de $15.000 (tests/test_paquetes.py)
+PRECIO_PROGRESO = 62990  # precio fijo de LBWUS (tests/test_paquetes.py)
 
 
-@mock.patch('alumnos.views._tx')
+@mock.patch('alumnos.webpay._tx')
 class CompraDelApoderadoTests(TestCase):
 
     @classmethod
     def setUpTestData(cls):
         cls.profesor = crear_profesor('44444444-4', 'profe@demo.cl', None)
         cls.apoderado = crear_apoderado(RUT, Apoderado.VERIFICADO)
+        aceptar_terminos(cls.apoderado.user)  # compra: esta clase no es de la aceptacion
         cls.vinculo = crear_menor_vinculado(cls.apoderado)
 
     def setUp(self):
@@ -51,6 +52,12 @@ class CompraDelApoderadoTests(TestCase):
                                                         'profesor': self.profesor.id_profesor})
         self.assertContains(respuesta, reverse('apoderado_comprar_paquete', args=[self.vinculo.pk]))
         self.assertContains(respuesta, f'Contratando para {self.vinculo.alumno.user.first_name}')
+
+    def test_el_apoderado_conserva_el_selector_de_profesor(self, tx):
+        """Es su unico camino para elegir profesor: no tiene buscador propio."""
+        respuesta = self.client.get(reverse('planes'), {'estudiante': self.vinculo.pk})
+        self.assertContains(respuesta, 'id="pl-profesor"')
+        self.assertContains(respuesta, 'Elige un profesor para comprar', count=3)
 
     def test_el_paquete_queda_a_nombre_del_estudiante_y_se_activa_con_webpay(self, tx):
         self.assertEqual(self.comprar(tx).status_code, 200)
@@ -106,7 +113,7 @@ class CompraDelApoderadoTests(TestCase):
         self.comprar(tx)
         self.confirmar(tx, PaqueteClases.objects.get())
         clase = Clase.objects.create(asignatura=Asignatura.objects.create(nombre='Álgebra'),
-                                     modalidad='online', horario=hora(10, 0), profesor=self.profesor)
+                                     modalidad='online', profesor=self.profesor)
         sesion = crear_sesion(clase, dias=2)
         menor = self.vinculo.alumno
         entrar(self.client, menor.user, alumno_id=menor.id_alumno)

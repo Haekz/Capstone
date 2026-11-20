@@ -1,0 +1,10 @@
+Hola {{ nombre }},
+
+Terminamos tu solicitud #{{ solicitud_pk }} ({{ ahora|date:"d-m-Y" }}). {% if borrada %}Eliminamos tu cuenta y todos sus datos.{% else %}Eliminamos tu cuenta: ya no puedes entrar y quitamos tus datos personales. Parte de la información se conserva, sin tus datos personales, como se explica abajo.{% endif %}
+
+Qué pasó con cada cosa:
+{% for c in evaluacion.categorias %}- {{ c.nombre }}: {% if c.accion == 'elimina' %}eliminado{% else %}se conserva{% endif %}. {{ c.detalle }}
+{% endfor %}
+Este es el último correo que recibirás de esta cuenta. Gracias por haber estado en LBWUS.
+
+Equipo LBWUS

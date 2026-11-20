@@ -1,0 +1,22 @@
+{% extends 'soporte/base_soporte.html' %}
+
+{% block page_title %}Registrar un requerimiento{% endblock %}
+{% block page_subtitle %}Una autoridad pidió datos de usuarios{% endblock %}
+{% block nav_requerimientos %}active{% endblock %}
+
+{% block content %}
+<div class="panel">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-bank2" aria-hidden="true"></i> Datos del requerimiento</span>
+    </div>
+    <div style="padding:18px;">
+        <p><small>Solo se registra el requerimiento. No se entrega nada hasta verificarlo. No copies datos personales ni adjuntes documentos aquí.</small></p>
+        <form method="post" class="apod-form" novalidate style="display:grid; gap:10px;">
+            {% csrf_token %}
+            {% include 'requerimientos/_campos.html' %}
+            <button type="submit" class="btn-primary"><i class="bi bi-check-lg" aria-hidden="true"></i> Registrar</button>
+        </form>
+    </div>
+</div>
+<p style="margin-top:18px;"><a href="{% url 'requerimientos' %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a requerimientos</a></p>
+{% endblock %}

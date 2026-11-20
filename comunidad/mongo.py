@@ -17,6 +17,7 @@ import time
 
 from django.conf import settings
 from pymongo import MongoClient
+from pymongo.errors import PyMongoError
 
 from . import esquemas
 
@@ -29,6 +30,9 @@ _candado = threading.Lock()
 
 class MongoNoConfigurado(Exception):
     """MONGODB_URI no esta definida: MongoDB esta desactivado."""
+
+
+ERRORES = (MongoNoConfigurado, PyMongoError)  # "Mongo no esta disponible": lo que hay que atrapar para no caerse
 
 
 def get_client():

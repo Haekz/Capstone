@@ -1,0 +1,11 @@
+Hola {{ nombre }},
+
+Pediste eliminar tu cuenta de LBWUS. Para confirmar que eres tú, abre este enlace con tu sesión iniciada:
+
+{{ enlace }}
+
+El enlace vale {{ horas }} horas. Al abrirlo te mostraremos qué se elimina y qué se conserva, y recién ahí confirmas.
+
+Si no pediste esto, ignora este correo: tu cuenta sigue igual. Si temes que alguien más entró a tu cuenta, cambia tu contraseña.
+
+Equipo LBWUS

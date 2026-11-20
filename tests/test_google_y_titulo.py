@@ -6,7 +6,7 @@ callback y llamando a complete_login, que es lo que corre en produccion.
 
 import re
 import time
-from datetime import date, time as hora
+from datetime import date
 
 from allauth.account.models import EmailAddress
 from allauth.core.context import request_context
@@ -26,9 +26,12 @@ from alumnos import codigo_google
 from alumnos.google_adapter import buscar_usuario_por_correo
 from alumnos.models import (Alumno, Asignatura, Clase, Especialidad, Genero, Inscripcion,
                             Profesor, Tutor)
+from soporte.models import Ticket
+from tests.test_apoderados import crear_agente, entrar_soporte
+from tests.test_apoderados_pdf import bytes_pdf
 
 User = get_user_model()
-PDF = b'%PDF-1.4 titulo de prueba'
+PDF = bytes_pdf()  # PDF real: se valida al subirlo (paso 9b)
 
 
 def google_login(correo, uid='g-1', verificado=True, nombre='Gabi Google'):
@@ -206,12 +209,13 @@ class TituloProfesorTests(TestCase):
                                        rut='11111111-1', direccion='C', fecha_nacimiento=date(2000, 1, 1),
                                        email='a@demo.cl', genero=g)
         cls.alumno = Alumno.objects.create(user=ual, nivel_educacion='media')
+        cls.revisor = crear_agente('34343434-3', Ticket.TITULOS)  # recibe el ticket al subir el titulo
 
     def setUp(self):
         import shutil
         import tempfile
         media = tempfile.mkdtemp()
-        self.addCleanup(shutil.rmtree, media, ignore_errors=True)
+        self.addCleanup(shutil.rmtree, media, ignore_errors=True)  # no dejar carpetas temporales sueltas
         self.media = override_settings(MEDIA_ROOT=media)
         self.media.enable()
         self.addCleanup(self.media.disable)
@@ -237,28 +241,23 @@ class TituloProfesorTests(TestCase):
         self.assertTrue(self.subir()['success'])
         self.profesor.refresh_from_db()
         self.assertEqual(self.profesor.titulo_estado, Profesor.TITULO_EN_REVISION)
-        self.assertTrue(self.profesor.titulo_archivo.name.startswith('titulos/'))
+        self.assertEqual(self.profesor.titulo_formato, 'PDF')
+        self.assertFalse(bytes(self.profesor.titulo_contenido).startswith(b'%PDF'), 'el titulo se guardo sin cifrar')
+        self.assertFalse(self.profesor.titulo_archivo, 'el titulo se guardo en disco')
 
     def test_rechaza_formato_o_contenido_falso(self):
         self.entrar('22222222-2')
-        self.assertFalse(self.subir(nombre='virus.exe')['success'])
+        self.assertFalse(self.subir(contenido=b'MZ\x90\x00 ejecutable', nombre='virus.exe')['success'])
         self.assertFalse(self.subir(contenido=b'no soy pdf', nombre='falso.pdf')['success'])
 
-    @override_settings(TITULO_MAX_MB=0)
     def test_rechaza_archivo_muy_grande(self):
         self.entrar('22222222-2')
-        self.assertIn('MB', self.subir()['message'])
+        self.assertIn('5 MB', self.subir(contenido=b'0' * (5 * 1024 * 1024 + 1))['message'])
 
-    def test_no_se_asigna_clase_ni_inscribe_sin_titulo_aprobado(self):
-        self.entrar('33333333-3')
-        r = self.client.post(reverse('crear_clase'), {
-            'nombre_curso': 'Algebra', 'modalidad': 'online', 'horario': '10:00',
-            'id_profesor': self.profesor.id_profesor}).json()
-        self.assertFalse(r['success'])
-
+    def test_no_se_inscribe_sin_titulo_aprobado(self):
+        # (El admin ya no crea clases: las asigna soporte al aprobar, ver test_asignar_asignaturas.)
         clase = Clase.objects.create(asignatura=Asignatura.objects.create(nombre='X'),
-                                     modalidad='online', horario=hora(9), profesor=self.profesor)
-        self.client.logout()
+                                     modalidad='online', profesor=self.profesor)
         self.entrar('11111111-1')
         r = self.client.post(reverse('inscribir_clase'), {'id_clase': clase.id_clase}).json()
         self.assertFalse(r['success'])
@@ -271,18 +270,18 @@ class TituloProfesorTests(TestCase):
         from tests.test_paquetes import dar_paquete
         dar_paquete(self.alumno, self.profesor)  # inscribirse consume una clase pagada
         clase = Clase.objects.create(asignatura=Asignatura.objects.create(nombre='X'),
-                                     modalidad='online', horario=hora(9), profesor=self.profesor)
+                                     modalidad='online', profesor=self.profesor)
         self.entrar('11111111-1')
         r = self.client.post(reverse('inscribir_clase'), {'id_clase': clase.id_clase}).json()
         self.assertTrue(r['success'], r['message'])
         self.assertTrue(Inscripcion.objects.filter(alumno=self.alumno, clase=clase).exists())
 
-    def test_admin_aprueba_y_el_profesor_queda_habilitado(self):
+    def test_soporte_aprueba_y_el_profesor_queda_habilitado(self):
         self.entrar('22222222-2')
         self.subir()
         self.client.logout()
 
-        self.entrar('33333333-3')
+        entrar_soporte(self.client, self.revisor)
         self.assertEqual(self.client.get(reverse('ver_titulo', args=[self.profesor.id_profesor])).status_code, 200)
         self.client.post(reverse('resolver_titulo', args=[self.profesor.id_profesor]), {'decision': 'aprobar'})
 
@@ -293,7 +292,7 @@ class TituloProfesorTests(TestCase):
         self.entrar('22222222-2')
         self.subir()
         self.client.logout()
-        self.entrar('33333333-3')
+        entrar_soporte(self.client, self.revisor)
         url = reverse('resolver_titulo', args=[self.profesor.id_profesor])
         self.client.post(url, {'decision': 'rechazar'})
         self.profesor.refresh_from_db()
@@ -308,7 +307,7 @@ class TituloProfesorTests(TestCase):
         self.assertContains(self.client.get(reverse('panel_profesor')), 'Ilegible')
         self.assertTrue(self.subir()['success'])
 
-    def test_archivo_del_titulo_solo_lo_ven_admins(self):
+    def test_archivo_del_titulo_solo_lo_ve_soporte(self):
         self.entrar('22222222-2')
         self.subir()
         url = reverse('ver_titulo', args=[self.profesor.id_profesor])

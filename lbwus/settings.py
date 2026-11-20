@@ -13,28 +13,41 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 from importlib.util import find_spec
 from pathlib import Path
 import os
-import sys
-import tempfile
+
+from django.core.exceptions import ImproperlyConfigured
+
+from lbwus.credenciales_transbank import validar_produccion
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Propaga el modo de pruebas a procesos hijos creados con `manage.py test --parallel` en Windows.
-if len(sys.argv) > 1 and sys.argv[1] == 'test':
-    os.environ.setdefault('LBWUS_TESTING', '1')
-
-TESTING = os.environ.get('LBWUS_TESTING') == '1'
-
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-lbwus-secret-key-for-local-development")
-
-# Clave Fernet de los documentos de apoderados (apoderados/documentos.py). Sin ella se
-# deriva de SECRET_KEY. Generarla con: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
-DOCUMENTOS_CLAVE = os.environ.get("DOCUMENTOS_CLAVE", "")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# En Railway se define DEBUG=False. Sin la variable queda en True.
-DEBUG = os.environ.get('DEBUG', 'True').lower() in ('1', 'true', 'si')
+# Sin la variable DEBUG: True en local, False en Railway (Railway define RAILWAY_ENVIRONMENT solo). LBW-03.
+_DEBUG_POR_DEFECTO = 'False' if os.environ.get('RAILWAY_ENVIRONMENT') else 'True'
+DEBUG = os.environ.get('DEBUG', _DEBUG_POR_DEFECTO).lower() in ('1', 'true', 'si')
+
+# SECURITY WARNING: keep the secret key used in production secret!
+# Con DEBUG=False es obligatoria: sin ella el sitio no arranca (SCRUM-93).
+# La clave insegura de abajo solo sirve en desarrollo.
+SECRET_KEY = os.environ.get('SECRET_KEY', '')
+if not SECRET_KEY:
+    if not DEBUG:
+        raise ImproperlyConfigured('Falta la variable SECRET_KEY: es obligatoria con DEBUG=False.')
+    SECRET_KEY = 'django-insecure-lbwus-secret-key-for-local-development'
+
+# Clave Fernet de los documentos de apoderados (apoderados/documentos.py). Obligatoria
+# con DEBUG=False: sin ella no se suben ni se ven documentos. Ver docs/CONFIGURACION_PRODUCCION.md.
+# Generarla con: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+DOCUMENTOS_CLAVE = os.environ.get("DOCUMENTOS_CLAVE", "")
+
+# Clave de las huellas del registro de supresiones (supresiones/registro.py). Sin ella se deriva de SECRET_KEY. Si
+# cambia, el registro y los archivos exportados dejan de reconocer a las personas eliminadas: definirla aparte y
+# guardarla junto con los respaldos, nunca en la base de datos.
+SUPRESIONES_CLAVE = os.environ.get("SUPRESIONES_CLAVE", "")
+
+# Meses que se guarda una observacion del profesor, contados desde la clase (observaciones/models.py). Pasado el plazo
+# las borra el comando diario borrar_observaciones_vencidas; el aviso de las pantallas lee este mismo numero.
+OBSERVACIONES_MESES = 12
 
 # '.up.railway.app' (con punto) acepta cualquier subdominio. Django no
 # acepta comodines tipo '*.dominio'.
@@ -80,14 +93,23 @@ INSTALLED_APPS = [
     'comunidad',
     'resenas',
     'apoderados',
+    'soporte',
+    'notificaciones',
+    'agenda',
+    'mensajes',
+    'supresiones',
+    'requerimientos',
+    'observaciones',
 ]
 
-# Herramienta exclusiva de desarrollo: no se instala ni se carga en producción.
+# Herramienta solo de desarrollo (requirements-dev.txt): produccion no la instala ni la carga.
 if DEBUG and find_spec('django_extensions') is not None:
     INSTALLED_APPS.append('django_extensions')
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # CSP (Report-Only) y Permissions-Policy; antes de la puerta y WhiteNoise para cubrir sus respuestas.
+    'lbwus.cabeceras.CabecerasSeguridadMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  
     'django.contrib.sessions.middleware.SessionMiddleware',
     # Puerta con clave para todo el sitio; necesita la sesion (lbwus/puerta.py).
@@ -136,8 +158,21 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 # Expone 'usuario_sesion' al menu global (alumnos/base.html)
                 'alumnos.context_processors.estado_sesion',
+                # Responsable de los datos y contacto, para el pie, Contacto, Terminos y Privacidad (settings.LEGAL)
+                'alumnos.context_processors.datos_legales',
+                # Contador de la campanita (notificaciones/context_processors.py)
+                'notificaciones.context_processors.sin_leer',
             ],
         },
+    },
+    # Correos de texto plano (alumnos/correo.py): sin autoescape, que solo sirve en HTML y en un .txt
+    # convertia "O'Higgins" en "O&#x27;Higgins". Mismas carpetas; las paginas usan el motor de arriba.
+    {
+        'NAME': 'correo',
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [BASE_DIR / "templates",],
+        'APP_DIRS': True,
+        'OPTIONS': {'autoescape': False},
     },
 ]
 LOGIN_REDIRECT_URL="menu"
@@ -146,33 +181,29 @@ WSGI_APPLICATION = 'lbwus.wsgi.application'
 
 
 # Database
+# Siempre PostgreSQL, la misma de Railway: reservas, bloqueos y concurrencia solo se validan de verdad ahi.
+# Sin DATABASE_URL no arranca (antes caia en un SQLite local sin avisar). Ver README.md.
 
 import dj_database_url
 
-if os.environ.get('DATABASE_URL'):
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=os.environ.get('DATABASE_URL'),
-            conn_max_age=600
-        )
-    }
-elif os.environ.get('EXIGIR_POSTGRES') == '1':
-    # Pruebas contra la base productiva: sin DATABASE_URL se detiene en vez de caer en SQLite.
-    from django.core.exceptions import ImproperlyConfigured
-    raise ImproperlyConfigured('EXIGIR_POSTGRES=1 requiere DATABASE_URL apuntando a PostgreSQL.')
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+DATABASE_URL = os.environ.get('DATABASE_URL', '')
+if not DATABASE_URL.startswith(('postgres://', 'postgresql://')):
+    raise ImproperlyConfigured(
+        'Falta DATABASE_URL con una URL de PostgreSQL (postgresql://usuario:clave@host:5432/base). '
+        'SQLite ya no se usa en este proyecto.'
+    )
+DATABASES = {
+    'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600)
+}
 
 # MongoDB Atlas (app comunidad). Sin MONGODB_URI, MongoDB queda desactivado
 # y el sitio funciona igual. Nunca escribir la URI en el codigo.
 MONGODB_URI = os.environ.get('MONGODB_URI')          # None = MongoDB desactivado
 MONGODB_DB = os.environ.get('MONGODB_DB', 'lbwus_dev')
 MONGODB_TIMEOUT_MS = int(os.environ.get('MONGODB_TIMEOUT_MS', '5000'))
+# Venta de videos (agregado y extras): solo con MongoDB configurado, donde viven los archivos (B2). Sin el no se
+# cobra lo que nadie podria entregar; el paquete de clases se sigue vendiendo (alumnos/videos_extra.py).
+VIDEOS_A_LA_VENTA = bool(MONGODB_URI)
 
 # Puerta con clave para todo el sitio (lbwus/puerta.py). Vacia = sin puerta.
 # La clave se define solo como variable de entorno, nunca en el codigo.
@@ -184,8 +215,24 @@ SITIO_DOMINIOS_CORREO = [
     for d in os.environ.get('SITIO_DOMINIOS_CORREO', '').split(',') if d.strip()
 ]
 
+# CSP (lbwus/cabeceras.py): Report-Only por omision; CSP_OBLIGATORIA=1 la hace bloquear.
+CSP_OBLIGATORIA = os.environ.get('CSP_OBLIGATORIA', 'False').lower() in ('1', 'true', 'si')
+
 # La pagina de error de Django oculta tambien MONGODB_URI y SITIO_CLAVE.
 DEFAULT_EXCEPTION_REPORTER_FILTER = 'lbwus.reporte_errores.FiltroReporteErrores'
+
+# Quien responde por los datos personales y como contactarlo (pie de pagina, Contacto, Terminos y Privacidad).
+# VALORES DE EJEMPLO mientras LBWUS define los suyos (L-1 y L-4 de docs/PENDIENTES_LBWUS.md): hay que cambiarlos por
+# los reales con estas variables de entorno ANTES de abrir al publico. Un RUT o un correo inventados no son un
+# responsable de verdad: una solicitud de datos enviada a un correo que nadie lee no se responde.
+LEGAL = {
+    'nombre': os.environ.get('LEGAL_NOMBRE', 'LBWUS SpA'),
+    'rut': os.environ.get('LEGAL_RUT', '76.000.000-0'),
+    'domicilio': os.environ.get('LEGAL_DOMICILIO', 'Pacifico Norte 123, Santiago, Chile'),
+    'telefono': os.environ.get('LEGAL_TELEFONO', '+56 2 2123 4567'),
+    'correo_datos': os.environ.get('LEGAL_CORREO_DATOS', 'privacidad@lbwus.cl'),
+    'correo_contacto': os.environ.get('LEGAL_CORREO_CONTACTO', 'teachers@lbwus.cl'),
+}
 
 
 
@@ -229,6 +276,8 @@ STATICFILES_DIRS = [
     BASE_DIR / 'lbwus' / 'static',
 ]
 STATIC_ROOT = BASE_DIR/'staticfiles'
+# En pruebas, lbwus/test_runner.py usa estaticos sin manifiesto (no hay collectstatic).
+TEST_RUNNER = 'lbwus.test_runner.RunnerLBWUS'
 STORAGES = {
     'default': {
         'BACKEND': 'django.core.files.storage.FileSystemStorage',
@@ -238,12 +287,11 @@ STORAGES = {
     },
 }
 
-# Archivos subidos (titulos de profesores). NO se publica MEDIA_URL en urls:
-# son documentos privados y solo los ve un admin por una vista protegida.
+# Archivos subidos (fotos de perfil; titulos antiguos hasta pasarlos a la base, paso 9b).
+# NO se publica MEDIA_URL en urls: se sirven por vistas protegidas.
 # En Railway el disco es efimero: montar un Volume en MEDIA_ROOT.
 MEDIA_ROOT = Path(os.environ.get('MEDIA_ROOT', BASE_DIR / 'media'))
 MEDIA_URL = '/media/'
-TITULO_MAX_MB = 5
 
 # Default primary key field type
 
@@ -311,9 +359,8 @@ TRANSBANK_PRODUCCION_HABILITADA = os.environ.get('TRANSBANK_PRODUCCION_HABILITAD
 TRANSBANK_COMMERCE_CODE = os.environ.get('TRANSBANK_COMMERCE_CODE', '').strip()
 TRANSBANK_API_KEY = os.environ.get('TRANSBANK_API_KEY', '').strip()
 TRANSBANK_ENVIRONMENT = os.environ.get('TRANSBANK_ENVIRONMENT', 'TEST').upper()
-
-WEBPAY_SIMULACION_ACTIVADA = os.environ.get('WEBPAY_SIMULACION', 'True').lower() in ('true', '1', 'yes')
-USUARIOS_SIMULACION_WEBPAY = ['*']
+# Con produccion habilitada y algun dato faltante, el sitio no arranca (antes cobraba con el ambiente de pruebas).
+validar_produccion(TRANSBANK_PRODUCCION_HABILITADA, TRANSBANK_ENVIRONMENT, TRANSBANK_COMMERCE_CODE, TRANSBANK_API_KEY)
 
 # ============================================================
 # CACHÉ PERSISTENTE Y COMPARTIDO
@@ -332,9 +379,3 @@ CACHES = {
         }
     }
 }
-
-# Aceleracion y aislamiento exclusivos de pruebas (sin afectar produccion).
-if TESTING:
-    PASSWORD_HASHERS = ['django.contrib.auth.hashers.MD5PasswordHasher']
-    if not os.environ.get('MEDIA_ROOT'):
-        MEDIA_ROOT = Path(tempfile.gettempdir()) / f'lbwus_test_media_{os.getpid()}'

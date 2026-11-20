@@ -2,30 +2,30 @@ from django.urls import path
 from django.views.generic import RedirectView
 
 from .views import (
-    sala_virtual,
-    iniciar_directo,
     contactos,
     nosotros,
     planes,
     servicios,
-    simulador,
     opcion_user,
     regis_alum,
     alumnos_reg,
     alumno_pag1,
     custom_login,
     logout_alumno,
-    enviar_reporte,
+)
+from .reservas import (
     inscribir_clase,
     cancelar_inscripcion,
     reprogramar_inscripcion,
     listar_sesiones_disponibles,
     reservar_sesion,
-    confirmacion,
-    iniciar_webpay,
-    comprar_paquete,
 )
+from .webpay import comprar_paquete, comprar_videos_extra, confirmacion
+from .views_clase_extra import horas_clase_extra, pedir_clase_extra
+from .sala_virtual import sala_virtual, iniciar_directo
 from .perfil_profesor import perfil_profesor
+from .views_videos import ver_video, videos_alumno
+from . import views_soporte_videos
 
 urlpatterns = [
     path('profesores/<int:id_profesor>/', perfil_profesor, name='perfil_profesor'),
@@ -39,7 +39,6 @@ urlpatterns = [
     path('nosotros', nosotros, name='nosotros'),
     path('planes', planes, name='planes'),
     path('servicios', servicios, name='servicios'),
-    path('simulador', simulador, name='simulador'),
     path('select', opcion_user, name='opcion_user'),
 
     # Alumno
@@ -50,10 +49,11 @@ urlpatterns = [
     path('logout_alumno/', logout_alumno, name='logout_alumno'),
 
     # Funcionalidades del alumno
-    path('enviar_reporte/', enviar_reporte, name='enviar_reporte'),
     path('inscribir_clase/', inscribir_clase, name='inscribir_clase'),
     path('sesiones-disponibles/', listar_sesiones_disponibles, name='sesiones_disponibles'),
     path('reservar-sesion/', reservar_sesion, name='reservar_sesion'),
+    path('clase-extra/horas/', horas_clase_extra, name='clase_extra_horas'),
+    path('clase-extra/pedir/', pedir_clase_extra, name='clase_extra_pedir'),
     path(
         'cancelar_inscripcion/<int:pk>/',
         cancelar_inscripcion,
@@ -63,6 +63,22 @@ urlpatterns = [
 
     # Pago / Transbank
     path('confirmacion', confirmacion, name='confirmacion'),
-    path('iniciar-webpay/', iniciar_webpay, name='iniciar_webpay'),
     path('comprar-paquete/', comprar_paquete, name='comprar_paquete'),
+    path('comprar-videos-extra/', comprar_videos_extra, name='comprar_videos_extra'),
+
+    # Videos que el profesor le compartió (agregado de videos)
+    path('mis-videos/', videos_alumno, name='videos_alumno'),
+    path('mis-videos/<str:video_id>/ver/', ver_video, name='ver_video'),
+    path('soporte/<int:id_ticket>/videos/<str:video_id>/ver/', views_soporte_videos.ver_video,
+         name='soporte_ver_video'),
+    path('soporte/<int:id_ticket>/videos/<str:video_id>/retirar/', views_soporte_videos.retirar_video,
+         name='soporte_retirar_video'),
+    path('soporte/<int:id_ticket>/videos/devolver/', views_soporte_videos.devolver_videos,
+         name='soporte_devolver_videos'),
+    path('soporte/<int:id_ticket>/videos/devoluciones/<int:id_devolucion>/hecha/', views_soporte_videos.devolucion_hecha,
+         name='soporte_devolucion_hecha'),
+    path('soporte/<int:id_ticket>/videos/devoluciones/<int:id_devolucion>/aprobacion/',
+         views_soporte_videos.pedir_aprobacion_devolucion, name='soporte_pedir_aprobacion'),
+    path('soporte/<int:id_ticket>/videos/devoluciones/<int:id_devolucion>/reintentar/',
+         views_soporte_videos.reintentar_reembolso, name='soporte_reintentar_reembolso'),
 ]

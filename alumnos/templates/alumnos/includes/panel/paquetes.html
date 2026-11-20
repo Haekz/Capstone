@@ -1,0 +1,35 @@
+{# Mis paquetes de clases. #}
+        <!-- ── VIEW 6: MIS PAQUETES ── -->
+            <div class="dashboard-view" id="view-plans">
+                <div class="pp-wrap">
+                    <div class="pp-header">
+                        <span class="pp-eyebrow">Planes</span>
+                        <h2>Mis paquetes de clases</h2>
+                        <p>Cada reserva usa 1 clase de un paquete con ese profesor. Si cancelas antes de que empiece la clase, o si el profesor cancela la sesión, la clase vuelve a tu paquete.</p>
+                    </div>
+
+                    {% if mis_paquetes %}
+                    <div class="pp-grid">
+                        {% for paquete in mis_paquetes %}
+                        <div class="pp-card">
+                            <h3 class="pp-title">{{ paquete.get_plan_display }}</h3>
+                            <div class="pp-price-box">
+                                <span class="pp-price">{{ paquete.clases_disponibles }}</span>
+                                <span class="pp-period">de {{ paquete.clases }} clase{{ paquete.clases|pluralize }} disponible{{ paquete.clases_disponibles|pluralize }}</span>
+                            </div>
+                            <p class="pp-billing">Con {{ paquete.profesor.nombre|default:"un profesor que ya no está disponible" }} · vence el {{ paquete.fecha_fin|date:"d-m-Y" }}</p>
+                            {% if paquete.profesor %}
+                            <a class="pp-btn pp-btn--ghost" href="{% url 'planes' %}?profesor={{ paquete.profesor.id_profesor }}">Comprar más clases con este profesor</a>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="pp-vacio">Aún no tienes paquetes vigentes. Compra uno para reservar tus clases.</p>
+                    {% endif %}
+
+                    <div class="pp-acciones">
+                        <a class="pp-btn pp-btn--main" href="{% url 'planes' %}">Ver planes y precios</a>
+                    </div>
+                </div>
+            </div>

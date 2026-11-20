@@ -1,0 +1,79 @@
+<!-- esta parte es del chat o buzon de consultas de alumnos: conversaciones reales (paso C1b) -->
+{% load mensajes_tags %}
+<section id="sec-buzon" class="prof-section">
+    <div class="prof-section-header">
+        <h1 class="prof-section-title">Buzón de Alumnos</h1>
+        <p class="prof-section-subtitle">Coordina las clases con tus estudiantes. No compartas teléfonos, correos ni direcciones: todo se conversa aquí.</p>
+        {% aviso_mensajes 'profesor' buzon_activa %}
+    </div>
+
+    {% if buzon %}
+    <div class="profe-chat-container">
+        <!-- Panel izquierdo: lista de chats -->
+        <div class="profe-chat-sidebar">
+            <div class="profe-chat-search">
+                <i class="bi bi-search" aria-hidden="true"></i>
+                <input type="text" id="profe-chat-search-input" placeholder="Buscar alumno..." aria-label="Buscar alumno" oninput="filterAlumnChats()">
+            </div>
+            <div class="profe-chat-list" id="profe-chat-list-el">
+                {% for c in buzon %}
+                <a href="?c={{ c.pk }}" class="profe-chat-item{% if c == buzon_activa %} active{% endif %}{% if c.sin_leer %} unread{% endif %}"
+                   style="text-decoration: none; color: inherit;"{% if c == buzon_activa %} aria-current="true"{% endif %}>
+                    <div class="profe-chat-avatar" aria-hidden="true">{{ c.nombre_para_profesor|slice:":1"|upper }}</div>
+                    <div class="profe-chat-info">
+                        <div class="profe-chat-title-row">
+                            <span class="profe-chat-student-name">{{ c.nombre_para_profesor }}{% if c.sin_leer %} <span class="visually-hidden">(mensajes sin leer)</span>{% endif %}</span>
+                            <span class="profe-chat-time">{{ c.actividad|date:"d/m H:i" }}</span>
+                        </div>
+                        <div class="profe-chat-last-msg">{{ c.ultimo_texto|default:"Sin mensajes todavía"|truncatechars:60 }}</div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Panel derecho: chat activo -->
+        <div class="profe-chat-main">
+            {% if buzon_activa %}
+            <div class="profe-chat-header" id="profe-chat-active-header">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div class="profe-chat-avatar" style="width: 40px; height: 40px; font-size: 0.9rem;" aria-hidden="true">{{ buzon_activa.nombre_para_profesor|slice:":1"|upper }}</div>
+                    <h2 style="margin: 0; font-size: 1rem; font-weight: 700; color: var(--text);">{{ buzon_activa.nombre_para_profesor }}</h2>
+                    <a href="{% url 'mensajes_reportar' buzon_activa.pk %}" style="margin-left: auto; font-size: 0.85rem;" aria-label="Reportar la conversación con {{ buzon_activa.nombre_para_profesor }}">Reportar</a>
+                </div>
+            </div>
+            <div class="profe-chat-history" id="profe-chat-messages-container" role="log" aria-live="polite" aria-label="Mensajes con {{ buzon_activa.nombre_para_profesor }}">
+                {% for m in buzon_mensajes %}
+                <div class="profe-chat-bubble-row {% if m.autor_id == profesor.user_id %}sent{% else %}received{% endif %}">
+                    <div class="profe-chat-bubble">
+                        <p>{{ m.texto }}</p>
+                        <span class="profe-chat-msg-time">{{ m.creado|date:"d/m H:i" }}</span>
+                    </div>
+                </div>
+                {% empty %}
+                <p style="padding: 20px; color: var(--text-light);">Aún no hay mensajes. Escribe el primero.</p>
+                {% endfor %}
+            </div>
+            {% if buzon_activa.solo_lectura %}
+            <p class="profe-chat-input-box" role="status" style="margin: 0;">Esta conversación quedó solo para lectura: el vínculo del apoderado con el estudiante ya no está activo.</p>
+            {% else %}
+            <form class="profe-chat-input-box" method="post" action="{% url 'mensajes_profesor_enviar' buzon_activa.pk %}">
+                {% csrf_token %}
+                <input type="text" name="texto" placeholder="Escribe tu respuesta al alumno..." aria-label="Tu mensaje" required maxlength="1000" autocomplete="off">
+                <button type="submit" class="profe-chat-send-btn" aria-label="Enviar mensaje"><i class="bi bi-send-fill" aria-hidden="true"></i></button>
+            </form>
+            {% endif %}
+            {% else %}
+            <p style="padding: 20px; color: var(--text-light);">Elige una conversación de la lista.</p>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <div class="prof-card">
+        <div class="prof-empty-card">
+            <i class="bi bi-chat-dots" aria-hidden="true"></i>
+            <p>Aún no tienes conversaciones. Aparecerán cuando un alumno te escriba, o cuando le escribas desde una reserva en Mi Agenda.</p>
+        </div>
+    </div>
+    {% endif %}
+</section>

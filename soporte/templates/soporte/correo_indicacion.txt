@@ -1,0 +1,9 @@
+Hola {{ nombre }},
+
+El administrador respondió el caso que soporte le escaló:
+
+- Ticket #{{ ticket.pk }}: {{ ticket.get_categoria_display }}
+
+Lee su indicación en el panel de soporte de LBWUS (Escalar / historial del ticket) y ejecútala. Por seguridad, los detalles solo se ven ahí.
+
+Equipo LBWUS

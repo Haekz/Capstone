@@ -1,9 +1,13 @@
-{% extends 'alumnos/base.html' %}
+{% extends base|default:'alumnos/base.html' %}
+{# Formulario generico. Quien no pasa 'base' (el apoderado) sigue en el diseno publico; Abrir un ticket la pasa por rol #}
 {% load static %}
 
 {% block title %}{{ titulo }} | LBWUS{% endblock %}
+{% block page_title %}{% if titulo_en_barra %}{{ titulo }}{% else %}{{ block.super }}{% endif %}{% endblock %}
+{% block page_subtitle %}{% if not titulo_en_barra %}{{ block.super }}{% endif %}{% endblock %}{# el subtitulo ya encabeza el formulario #}
 
 {% block extra_css %}
+{{ block.super }}
 <link rel="stylesheet" href="{% static 'alumnos/css/perfil_profesor.css' %}">
 <link rel="stylesheet" href="{% static 'apoderados/apoderados.css' %}">
 {% endblock %}
@@ -16,7 +20,7 @@
 
     <header class="perfil-prof__cabecera">
         <div>
-            <h1>{{ titulo }}</h1>
+            {% if not titulo_en_barra %}<h1>{{ titulo }}</h1>{% endif %}
             <p class="perfil-prof__vacio">{{ intro }}</p>
         </div>
     </header>

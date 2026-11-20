@@ -13,18 +13,18 @@
             ayudarte.</p>
 
         <div class="ct-quick">
-            <a href="tel:1234567890" class="ct-quick-item">
+            <a href="tel:{{ legal.telefono_enlace }}" class="ct-quick-item">
                 <i class="bi bi-telephone"></i>
                 <div>
                     <span>Llámanos</span>
-                    <strong>123-456-7890</strong>
+                    <strong>{{ legal.telefono }}</strong>
                 </div>
             </a>
-            <a href="mailto:teachers@lbwus.cl" class="ct-quick-item">
+            <a href="mailto:{{ legal.correo_contacto }}" class="ct-quick-item">
                 <i class="bi bi-envelope"></i>
                 <div>
                     <span>Escríbenos</span>
-                    <strong>teachers@lbwus.cl</strong>
+                    <strong>{{ legal.correo_contacto }}</strong>
                 </div>
             </a>
             <div class="ct-quick-item">
@@ -52,21 +52,21 @@
 
                 <div class="form-group">
                     <label for="nombre">Nombre completo</label>
-                    <input type="text" class="form-control" id="nombre" name="nombre"
+                    <input type="text" class="form-control" id="nombre" name="nombre" maxlength="120"
                         placeholder="Ingresa tu nombre completo" required>
                     <div class="invalid-feedback">Por favor, dinos tu nombre.</div>
                 </div>
 
                 <div class="form-group">
                     <label for="email-contact">Correo electrónico</label>
-                    <input type="email" class="form-control" id="email-contact" name="email"
+                    <input type="email" class="form-control" id="email-contact" name="correo"
                         placeholder="ejemplo@correo.com" required>
                     <div class="invalid-feedback">Por favor, ingresa un correo válido.</div>
                 </div>
 
                 <div class="form-group">
                     <label for="mensaje">Tu mensaje</label>
-                    <textarea class="form-control" id="mensaje" name="mensaje" rows="5"
+                    <textarea class="form-control" id="mensaje" name="mensaje" rows="5" maxlength="2000"
                         placeholder="¿En qué te podemos ayudar?" required></textarea>
                     <div class="invalid-feedback">Por favor, escribe tu mensaje.</div>
                 </div>
@@ -87,21 +87,21 @@
                     <i class="bi bi-telephone"></i>
                     <div>
                         <span>Teléfono</span>
-                        <a href="tel:1234567890">123-456-7890</a>
+                        <a href="tel:{{ legal.telefono_enlace }}">{{ legal.telefono }}</a>
                     </div>
                 </li>
                 <li>
                     <i class="bi bi-envelope"></i>
                     <div>
                         <span>Correo</span>
-                        <a href="mailto:teachers@lbwus.cl">teachers@lbwus.cl</a>
+                        <a href="mailto:{{ legal.correo_contacto }}">{{ legal.correo_contacto }}</a>
                     </div>
                 </li>
                 <li>
                     <i class="bi bi-geo-alt"></i>
                     <div>
                         <span>Ubicación</span>
-                        <p>Pacifico Norte 123, Santiago, Chile</p>
+                        <p>{{ legal.domicilio }}</p>
                     </div>
                 </li>
                 <li>
@@ -141,7 +141,7 @@
                     <img src="{% static 'alumnos/img/ilustracion1.png' %}" alt="Ilustración de dos estudiantes">
                 </div>
                 <h3>Soy estudiante</h3>
-                <p>Dudas sobre niveles, clases online o presenciales y cómo encontrar a tu profesor.</p>
+                <p>Dudas sobre niveles, clases online y cómo encontrar a tu profesor.</p>
             </article>
             <article class="ct-topic">
                 <div class="ct-topic-img">
@@ -179,15 +179,29 @@
                 event.stopPropagation();
             } else {
                 event.preventDefault();
-                Swal.fire({
-                    title: '¡Mensaje Enviado!',
-                    text: 'Gracias por contactarnos. Responderemos a tu consulta a la brevedad.',
-                    icon: 'success',
-                    confirmButtonColor: '#7c3aed'
-                }).then(() => {
-                    form.reset();
-                    form.classList.remove('was-validated');
-                });
+                // Se guarda en el servidor; el aviso de exito sale solo si de verdad llego.
+                fetch(window.location.pathname, { method: 'POST', body: new FormData(form) })
+                    .then(function (respuesta) { return respuesta.json(); })
+                    .then(function (datos) {
+                        if (!datos.success) throw { mensaje: datos.message };
+                        return Swal.fire({
+                            title: '¡Mensaje Enviado!',
+                            text: 'Gracias por contactarnos. Responderemos a tu consulta a la brevedad.',
+                            icon: 'success',
+                            confirmButtonColor: '#7c3aed'
+                        }).then(() => {
+                            form.reset();
+                            form.classList.remove('was-validated');
+                        });
+                    })
+                    .catch(function (error) {
+                        Swal.fire({
+                            title: 'No pudimos enviar tu mensaje',
+                            text: (error && error.mensaje) || 'Intenta de nuevo en unos minutos.',
+                            icon: 'error',
+                            confirmButtonColor: '#7c3aed'
+                        });
+                    });
             }
             form.classList.add('was-validated');
         }, false);

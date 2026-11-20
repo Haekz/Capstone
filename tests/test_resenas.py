@@ -6,17 +6,23 @@ paquete, reportes controlados que no ocultan, moderación exclusiva del admin
 con registro, protección de datos personales y retiro del contenido ficticio.
 """
 
-from datetime import time, timedelta
+from datetime import timedelta
 
 from django.contrib.auth import get_user_model
+from django.core import mail
 from django.db import IntegrityError, transaction
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
 from alumnos.models import Asignatura, Clase, Genero, Inscripcion, Tutor
 from alumnos.roles import ADMIN, ALUMNO, PROFESOR
+from apoderados.models import Apoderado
 from resenas.models import ModeracionResena, ReporteResena, Resena
+from tests.css_vars import leer
+from tests.test_apoderados import crear_apoderado
+from tests.test_apoderados_vinculos import crear_menor_vinculado
+from tests.test_campana import avisos_de
 from tests.test_especialidad import crear_profesor
 from tests.test_filtros_clases import crear_sesion
 from tests.test_paquetes import dar_paquete
@@ -58,7 +64,7 @@ class BaseResenas(TestCase):
     @staticmethod
     def crear_clase(profesor, asignatura):
         return Clase.objects.create(asignatura=Asignatura.objects.create(nombre=asignatura),
-                                    modalidad='online', horario=time(10, 0), profesor=profesor)
+                                    modalidad='online', profesor=profesor)
 
     @classmethod
     def inscribir(cls, alumno, dias, paquete=None, clase=None):
@@ -278,6 +284,15 @@ class ModeracionTests(BaseResenas):
         self.assertEqual(list(ModeracionResena.objects.order_by('fecha').values_list('accion', flat=True)),
                          ['ocultar', 'restaurar'])
 
+    def test_la_campana_del_admin_avisa_hasta_moderar(self):
+        ReporteResena.objects.create(resena=self.resena_reportada, remitente=self.ana.user, motivo='spam')
+        [aviso] = avisos_de(admin_id=self.admin.id_tutor)
+        self.assertEqual(aviso.titulo, '1 reseña reportada')  # dos reportes, una reseña
+        self.assertEqual(aviso.detalle, 'Por moderar. El reporte más antiguo llegó hoy.')
+        self.assertEqual(aviso.url, reverse('resenas_moderacion'))
+        self.moderar('mantener')
+        self.assertEqual(avisos_de(admin_id=self.admin.id_tutor), [])
+
 
 class ContenidoFicticioTests(BaseResenas):
 
@@ -297,6 +312,42 @@ class ContenidoFicticioTests(BaseResenas):
     def test_catalogo_de_cursos_sin_contenido_de_ejemplo(self):
         entrar(self.client, self.ana, ALUMNO)
         respuesta = self.client.get(reverse('alumno_pag1'))
-        self.assertContains(respuesta, 'Los cursos grabados estarán disponibles próximamente.')
+        # La vista vacia de cursos se quito (B5): los videos reales estan en Mis videos (tests/test_menu_mis_videos.py).
         for texto in ('Lo más vendido', 'Universidad Python', 'oldPrice', 'gtv-videos-bucket'):
             self.assertNotContains(respuesta, texto)
+
+
+class CalificacionBajaDeMenorTests(BaseResenas):
+    """D21: si un menor califica con 1 o 2, se avisa a su apoderado, sin el comentario."""
+
+    def setUp(self):
+        self.apoderado = crear_apoderado('17171717-1', Apoderado.VERIFICADO)
+        self.menor = crear_menor_vinculado(self.apoderado, rut='16161616-1').alumno
+        self.insc_menor = self.inscribir(self.menor, dias=-2)
+        entrar(self.client, self.menor, ALUMNO)
+
+    def test_nota_baja_avisa_al_apoderado_sin_el_comentario(self):
+        self.calificar(self.insc_menor, puntaje=Resena.PUNTAJE_BAJO, comentario='Me gritó')
+        correo, = mail.outbox
+        self.assertEqual(correo.to, [self.apoderado.user.email])
+        self.assertIn('Álgebra', correo.body)
+        self.assertNotIn('Me gritó', correo.body)
+
+    def test_nota_buena_no_avisa(self):
+        self.calificar(self.insc_menor, puntaje=Resena.PUNTAJE_BAJO + 1)
+        self.assertEqual(mail.outbox, [])
+
+    def test_adulto_con_nota_baja_no_avisa_a_nadie(self):
+        entrar(self.client, self.ana, ALUMNO)
+        self.calificar(self.insc_suelta, puntaje=1)
+        self.assertEqual(mail.outbox, [])
+
+
+class EstrellasDeLaListaTests(SimpleTestCase):
+    """Las estrellas de cada resena van doradas, no del gris del texto secundario."""
+
+    def test_la_regla_de_las_estrellas_le_gana_a_la_de_la_lista(self):
+        # perfil_profesor.css pinta '.perfil-prof__lista span' (0,1,1) con --text-light; la sola clase
+        # '.resena-estrellas' (0,1,0) perdia y las 5 estrellas de cada resena salian grises.
+        css = leer('resenas/static/resenas/resenas.css')
+        self.assertRegex(css, r'\.resena-lista \.resena-estrellas[^{]*\{[^}]*color:\s*#d97706')

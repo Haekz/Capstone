@@ -1,0 +1,487 @@
+/* =========================================================
+   HERO — texto alineado a la izquierda sobre el carrusel
+   ========================================================= */
+.hero {
+    min-height: 100vh;
+    position: relative;
+    display: flex;
+    align-items: center;
+    color: #ffffff;
+    padding-top: var(--header-height);
+    padding-bottom: 96px;
+    overflow: hidden;
+}
+
+body.dark-mode .hero,
+body.dark-mode .hero .btn-outline {
+    color: #ffffff;
+}
+
+body.dark-mode .hero .btn-accion {
+    color: var(--secondary);
+}
+
+body.dark-mode .hero .btn-outline {
+    border-color: rgba(255, 255, 255, 0.7);
+}
+
+.hero-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: min(100%, 100vw);
+    max-width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: -2;
+    opacity: 0;
+    animation: fadeCarousel 15s infinite;
+}
+
+.hero-carousel img:nth-child(1) { animation-delay: 0s; }
+.hero-carousel img:nth-child(2) { animation-delay: 5s; }
+.hero-carousel img:nth-child(3) { animation-delay: 10s; }
+
+@keyframes fadeCarousel {
+    0%      { opacity: 0; transform: scale(1.04); }
+    10%     { opacity: 1; }
+    33.33%  { opacity: 1; }
+    43.33%  { opacity: 0; }
+    100%    { opacity: 0; transform: scale(1.16); }
+}
+
+/* Degradado de izquierda (oscuro, donde va el texto) a derecha (foto visible) */
+.hero-overlay {
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(100deg, rgba(20, 12, 40, 0.88) 0%, rgba(20, 12, 40, 0.66) 48%, rgba(20, 12, 40, 0.28) 100%),
+        linear-gradient(to top, rgba(20, 12, 40, 0.6) 0%, transparent 40%);
+    z-index: -1;
+}
+
+.hero-content {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+.hero-content h1 {
+    font-size: clamp(2.5rem, 5.4vw, 4.2rem);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    max-width: 15ch;
+    margin-bottom: 22px;
+}
+
+.hero-content p {
+    font-size: clamp(1.05rem, 1.35vw, 1.2rem);
+    max-width: 52ch;
+    margin: 0 0 34px;
+    color: rgba(255, 255, 255, 0.86);
+    line-height: 1.6;
+}
+
+.hero-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    justify-content: flex-start;
+}
+
+/* Línea de confianza bajo los botones */
+.hero-trust {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 28px;
+    margin-top: 36px;
+    padding-top: 22px;
+    border-top: 1px solid rgba(255, 255, 255, 0.18);
+    max-width: 640px;
+    font-size: 0.92rem;
+    color: rgba(255, 255, 255, 0.82);
+}
+
+.hero-trust span {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.hero-trust i {
+    color: var(--accent);
+    font-size: 1.05rem;
+}
+
+/* Entrada del hero: una sola secuencia escalonada */
+@keyframes heroFadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.hero .fade-in {
+    animation: heroFadeUp 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.hero .fade-in:nth-child(1) { animation-delay: 0.05s; }
+.hero .fade-in:nth-child(2) { animation-delay: 0.17s; }
+.hero .fade-in:nth-child(3) { animation-delay: 0.29s; }
+.hero .fade-in:nth-child(4) { animation-delay: 0.41s; }
+
+/* Compatibilidad con markup anterior (eyebrow / palabra destacada) */
+.hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 18px;
+}
+
+.hero-eyebrow i {
+    color: var(--accent);
+}
+
+.hero-accent {
+    color: inherit;
+}
+
+/* Indicadores del carrusel: alineados con el texto, abajo a la izquierda */
+.hero-dots {
+    position: absolute;
+    bottom: 40px;
+    left: max(24px, calc((100% - 1200px) / 2 + 24px));
+    display: flex;
+    gap: 8px;
+    z-index: 3;
+}
+
+.hero-dots span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50px;
+    background: rgba(255, 255, 255, 0.4);
+    animation: heroDot 15s infinite;
+}
+
+.hero-dots span:nth-child(1) { animation-delay: 0s; }
+.hero-dots span:nth-child(2) { animation-delay: 5s; }
+.hero-dots span:nth-child(3) { animation-delay: 10s; }
+
+@keyframes heroDot {
+    0%   { background: #fff; width: 28px; }
+    30%  { background: #fff; width: 28px; }
+    40%  { background: rgba(255, 255, 255, 0.4); width: 8px; }
+    100% { background: rgba(255, 255, 255, 0.4); width: 8px; }
+}
+
+/* =========================================================
+   ABOUT — imagen con bloque de color desplazado + texto
+   ========================================================= */
+.about {
+    background: var(--surface);
+}
+
+body.dark-mode .about {
+    background: var(--surface);
+}
+
+.about-img {
+    position: relative;
+    isolation: isolate;
+}
+
+.about-img::before {
+    content: '';
+    position: absolute;
+    inset: 20px -20px -20px 20px;
+    background: var(--primary-soft);
+    border-radius: var(--r-md);
+    z-index: -1;
+}
+
+.about-img img {
+    width: 100%;
+    display: block;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow);
+}
+
+.badge {
+    background: var(--primary-soft);
+    color: var(--primary);
+    padding: 5px 12px;
+    border-radius: 50px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    display: inline-block;
+    margin-bottom: 14px;
+}
+
+body.dark-mode .badge {
+    color: #c4b5fd;
+}
+
+.about-text h2 {
+    font-size: clamp(1.9rem, 3.2vw, 2.6rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 18px;
+}
+
+.about-text > p {
+    color: var(--text-light);
+    font-size: 1.05rem;
+    max-width: 52ch;
+}
+
+.about-facts {
+    list-style: none;
+    margin: 26px 0 0;
+    display: grid;
+    gap: 12px;
+}
+
+.about-facts li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 1rem;
+}
+
+.about-facts i {
+    color: var(--primary);
+    font-size: 1.15rem;
+    line-height: 1.5;
+    flex-shrink: 0;
+}
+
+.btn-text {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 28px;
+    transition: var(--transition);
+}
+
+.btn-text:hover {
+    gap: 12px;
+    color: var(--primary-dark);
+}
+
+body.dark-mode .btn-text {
+    color: #c4b5fd;
+}
+
+/* =========================================================
+   SERVICIOS / PLANES — tres tarjetas, una destacada
+   ========================================================= */
+.services {
+    padding: var(--section-y) 0;
+}
+
+.section-header {
+    text-align: center;
+    max-width: 640px;
+    margin: 0 auto 48px;
+}
+
+.section-header h2 {
+    font-size: clamp(1.9rem, 3.2vw, 2.6rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+}
+
+.section-header p {
+    color: var(--text-light);
+    font-size: 1.05rem;
+}
+
+.services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    align-items: stretch;
+}
+
+.service-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    padding: 36px 32px;
+    border-radius: var(--r-md);
+    border: 1px solid var(--line);
+    text-align: left;
+    box-shadow: none;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.service-card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 10px 28px rgba(124, 58, 237, 0.10);
+}
+
+body.dark-mode .service-card {
+    background: var(--surface);
+    border-color: var(--line);
+}
+
+.card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: var(--primary-soft);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    margin-bottom: 22px;
+}
+
+.service-card h3 {
+    font-size: 1.35rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.card-note {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--primary);
+    font-weight: 500;
+    margin-bottom: 14px;
+}
+
+.service-card p {
+    color: var(--text-light);
+    flex: 1;
+}
+
+/* Plan destacado: tinta con acento ámbar */
+.service-card.featured {
+    background: var(--secondary);
+    color: #ffffff;
+    border-color: var(--secondary);
+}
+
+.service-card.featured:hover {
+    border-color: var(--primary);
+    box-shadow: 0 14px 34px rgba(26, 18, 51, 0.28);
+}
+
+.service-card.featured .card-icon {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--accent);
+}
+
+.service-card.featured .card-note {
+    color: var(--accent);
+}
+
+.service-card.featured p {
+    color: rgba(255, 255, 255, 0.78);
+}
+
+body.dark-mode .service-card.featured {
+    background: var(--primary-dark);
+    border-color: var(--primary-dark);
+}
+
+body.dark-mode .service-card.featured .card-note {
+    color: #fde68a;
+}
+
+.card-tag {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: var(--accent);
+    color: var(--secondary);
+    font-size: 0.74rem;
+    font-weight: 700;
+    padding: 5px 11px;
+    border-radius: 50px;
+}
+
+.services-cta {
+    text-align: center;
+    margin-top: 40px;
+}
+
+.btn-card {
+    margin-top: 25px;
+    padding: 10px 25px;
+    background: var(--accent);
+    border: none;
+    color: var(--secondary);
+    border-radius: 50px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* =========================================================
+   INFO — horario + mapa
+   ========================================================= */
+.info {
+    background: var(--bg);
+}
+
+body.dark-mode .info {
+    background: var(--bg);
+}
+
+.info-text h2 {
+    font-size: clamp(1.9rem, 3.2vw, 2.6rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 28px;
+}
+
+.info-item {
+    display: flex;
+    gap: 16px;
+    padding: 18px 0;
+    margin: 0;
+    border-top: 1px solid var(--line);
+}
+
+.info-item:last-child {
+    border-bottom: 1px solid var(--line);
+}
+
+.info-item i {
+    font-size: 1.2rem;
+    color: var(--primary);
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.info-item h4 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.info-item p {
+    color: var(--text-light);
+}
+
+.info-map iframe {
+    display: block;
+    width: 100%;
+    border-radius: var(--r-md);
+    border: 1px solid var(--line);
+    box-shadow: none;
+}
+

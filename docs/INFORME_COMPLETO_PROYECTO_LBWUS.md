@@ -18,7 +18,7 @@
    - 2.4 Ecosistema de Librerías y Dependencias Principales
 3. [Arquitectura de Datos y Bases de Datos Utilizadas](#3-arquitectura-de-datos-y-bases-de-datos-utilizadas)
    - 3.1 Enfoque Híbrido / Políglota
-   - 3.2 Base de Datos Relacional Principal: SQLite (Local) y PostgreSQL (Producción)
+   - 3.2 Base de Datos Relacional Principal: PostgreSQL
    - 3.3 Base de Datos No Relacional (NoSQL): MongoDB Atlas (App Comunidad)
    - 3.4 Persistencia de Caché Centralizada: DatabaseCache
 4. [Métodos y Arquitectura de Autenticación](#4-métodos-y-arquitectura-de-autenticación)
@@ -101,8 +101,7 @@ flowchart TD
     Client["Navegador Web / Cliente"] --> LBWUS["Django Application Server (Gunicorn)"]
     
     subgraph Persistencia Relacional ["Datos Transaccionales ACID (Relacional)"]
-        LBWUS -->|Local: SQLite3| DevDB[("db.sqlite3")]
-        LBWUS -->|Producción: PostgreSQL| ProdDB[("PostgreSQL Database\n(dj-database-url)")]
+        LBWUS -->|Local y Producción: PostgreSQL| ProdDB[("PostgreSQL Database\n(dj-database-url)")]
         ProdDB -.-> RelModels["Modelos: CustomUser, Alumno, Profesor,\nClase, SesionClase, Inscripcion,\nPago, DesgloseOperacion"]
     end
     
@@ -119,9 +118,9 @@ flowchart TD
 ### 3.1 Enfoque Híbrido / Políglota
 No existe un único motor de base de datos que resuelva de manera óptima las necesidades transaccionales críticas (donde la integridad financiera y de reservas es innegociable) y las necesidades de esquemas dinámicos (donde la flexibilidad en publicaciones de estudiantes es prioritaria). Por ello se combinan tres subsistemas de persistencia:
 
-### 3.2 Base de Datos Relacional Principal (SQLite y PostgreSQL)
-* **Entorno de Desarrollo:** **SQLite 3 (`db.sqlite3`)**.
-  - *¿Por qué funciona así?:* Permite ejecución rápida y portable de pruebas unitarias y desarrollo local sin requerir demonios externos o contenedores pesados.
+### 3.2 Base de Datos Relacional Principal (PostgreSQL)
+* **Entorno de Desarrollo y Pruebas:** **PostgreSQL**, indicado en `DATABASE_URL`. Sin esa variable el proyecto no arranca.
+  - *¿Por qué funciona así?:* Probar contra la misma base de producción valida de verdad los bloqueos de fila, la concurrencia y las restricciones de integridad.
 * **Entorno de Producción:** **PostgreSQL** inyectado a través de la variable `DATABASE_URL` con `conn_max_age=600` (reutilización de conexiones durante 10 minutos).
 * **Propósito:** Aloja todo el núcleo de negocio: usuarios, perfiles, asignaturas, clases, sesiones, inscripciones, auditoría de pagos y liquidaciones contables.
 * **Garantías y Restricciones a Nivel de Motor (Engine-level Constraints):**
@@ -283,8 +282,8 @@ Toda decisión técnica en LBWUS responde a razones fundamentadas de ingeniería
 
 1. **¿Por qué Vanilla CSS y no un Framework como Tailwind?:**
    - *Razón:* Las plataformas universitarias y proyectos Capstone requieren que futuros desarrolladores, diseñadores o evaluadores puedan inspeccionar y modificar estilos con conocimientos elementales de CSS. Tailwind genera clases utilitarias extensas y crípticas en el HTML que dificultan la auditoría manual de código y aumentan el acoplamiento a dependencias de Node.js en tiempo de compilación.
-2. **¿Por qué PostgreSQL en Producción y SQLite en Desarrollo?:**
-   - *Razón:* SQLite permite a cualquier integrante clonar el repositorio y ejecutar pruebas de inmediato sin instalar servicios externos. En producción, PostgreSQL es imprescindible porque implementa bloqueos a nivel de fila (`select_for_update`), concurrencia multihilo real, agrupación de conexiones (*connection pooling*) y restricciones avanzadas de integridad relacional que garantizan que jamás existan inscripciones duplicadas ni inconsistencias financieras.
+2. **¿Por qué PostgreSQL también en desarrollo y pruebas?:**
+   - *Razón:* PostgreSQL implementa bloqueos a nivel de fila (`select_for_update`), concurrencia multihilo real, agrupación de conexiones (*connection pooling*) y restricciones avanzadas de integridad relacional que garantizan que jamás existan inscripciones duplicadas ni inconsistencias financieras. Usar la misma base en todos los entornos evita que una prueba pase en local y falle en producción.
 3. **¿Por qué MongoDB aislado para la Comunidad?:**
    - *Razón:* Las publicaciones, comentarios, etiquetas e hilos de foros tienen estructuras heterogéneas que cambian con frecuencia. Forzar este contenido en tablas SQL requeriría continuas migraciones de esquema o múltiples uniones relacionales (*JOINs*) costosas. Además, al desacoplar MongoDB con tolerancia a fallos, una caída de la base de datos social no interrumpe el servicio central académico ni el procesamiento de pagos.
 4. **¿Por qué forzar POST en Cierres de Sesión y Social Login?:**

@@ -1,0 +1,492 @@
+/* ==============================================================
+   esta parte es de las nuevas secciones y componentes del alumno
+   ============================================================== */
+
+/* --- Barra de Búsqueda del Dashboard --- */
+.dashboard-search-container {
+    width: 100%;
+}
+
+.search-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background-color: var(--white);
+    border: 1.5px solid rgba(168, 85, 247, 0.15);
+    border-radius: 50px;
+    padding: 0 20px;
+    box-shadow: var(--shadow);
+    transition: all 0.3s ease;
+}
+
+body.dark-mode .search-input-wrapper {
+    border-color: rgba(255, 255, 255, 0.1);
+    background-color: #1f2937;
+}
+
+.search-input-wrapper:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.15);
+}
+
+.search-input-wrapper input {
+    width: 100%;
+    padding: 14px 10px;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.95rem;
+    color: var(--text);
+}
+
+.search-input-wrapper input::placeholder {
+    color: var(--text-light);
+}
+
+.search-input-wrapper .search-icon {
+    font-size: 1.25rem;
+    color: var(--text-light);
+}
+
+.search-input-wrapper:focus-within .search-icon {
+    color: var(--primary);
+}
+
+
+/* --- Sección de Mis Clases (Tarjetas e Historial) --- */
+.subsection-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.classes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+.class-item-card {
+    background-color: var(--white);
+    border: 1px solid rgba(168, 85, 247, 0.08);
+    border-radius: 16px;
+    padding: 22px;
+    box-shadow: var(--shadow);
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+body.dark-mode .class-item-card {
+    background-color: #111827;
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.class-item-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--primary);
+    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.08);
+}
+
+.class-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.class-badge {
+    background-color: var(--primary-light);
+    color: var(--primary);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.class-status-badge {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: var(--accent);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.class-card-body h4 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 3px;
+}
+
+.class-teacher-type {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+.class-info-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--text);
+    margin-bottom: 8px;
+}
+
+.class-info-item i {
+    color: var(--primary);
+    font-size: 1rem;
+}
+
+.btn-join-class {
+    background-color: #10b981;
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-decoration: none;
+    transition: background-color 0.2s, transform 0.2s;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.btn-join-class:hover {
+    background-color: #059669;
+    transform: translateY(-1px);
+}
+
+
+/* --- Tablas General de Clases e Historial --- */
+.classes-table-container {
+    overflow-x: auto;
+    border-radius: 16px;
+    border: 1px solid rgba(168, 85, 247, 0.1);
+    box-shadow: var(--shadow);
+    background-color: var(--white);
+}
+
+body.dark-mode .classes-table-container {
+    border-color: rgba(255, 255, 255, 0.06);
+    background-color: #111827;
+}
+
+.classes-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.9rem;
+}
+
+.classes-table th, 
+.classes-table td {
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(168, 85, 247, 0.06);
+}
+
+body.dark-mode .classes-table th, 
+body.dark-mode .classes-table td {
+    border-bottom-color: rgba(255, 255, 255, 0.04);
+}
+
+.classes-table th {
+    background-color: rgba(168, 85, 247, 0.03);
+    font-weight: 700;
+    color: var(--text);
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+}
+
+body.dark-mode .classes-table th {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+.classes-table tr:last-child td {
+    border-bottom: none;
+}
+
+.classes-table tr:hover {
+    background-color: rgba(168, 85, 247, 0.01);
+}
+
+body.dark-mode .classes-table tr:hover {
+    background-color: rgba(255, 255, 255, 0.01);
+}
+
+.status-badge-completed {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+
+/* --- Sección de Soporte y Reportes --- */
+.support-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1.8fr;
+    gap: 30px;
+    align-items: start;
+}
+
+.support-form-card, 
+.support-list-card {
+    background-color: var(--white);
+    border: 1px solid rgba(168, 85, 247, 0.08);
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: var(--shadow);
+}
+
+body.dark-mode .support-form-card, 
+body.dark-mode .support-list-card {
+    background-color: #111827;
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.support-form-card h3, 
+.support-list-card h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 20px;
+    border-bottom: 1.5px solid rgba(168, 85, 247, 0.08);
+    padding-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+body.dark-mode .support-form-card h3, 
+body.dark-mode .support-list-card h3 {
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+.form-group {
+    margin-bottom: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-light);
+}
+
+.form-group select, 
+.form-group input, 
+.form-group textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1.5px solid rgba(168, 85, 247, 0.12);
+    background-color: var(--bg);
+    color: var(--text);
+    border-radius: 10px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+body.dark-mode .form-group select, 
+body.dark-mode .form-group input, 
+body.dark-mode .form-group textarea {
+    border-color: rgba(255, 255, 255, 0.08);
+    background-color: #1f2937;
+}
+
+/* esta parte es de los estilos para evitar que los checkboxes y radio buttons dentro de form-groups se deformen o tomen 100% de ancho */
+.form-group input[type="checkbox"],
+.form-group input[type="radio"],
+body.dark-mode .form-group input[type="checkbox"],
+body.dark-mode .form-group input[type="radio"] {
+    width: 16px !important;
+    height: 16px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background-color: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    flex-shrink: 0 !important;
+    cursor: pointer !important;
+}
+
+
+.form-group select:focus, 
+.form-group input:focus, 
+.form-group textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.12);
+}
+
+.tickets-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-height: 480px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.ticket-item {
+    border: 1.5px solid rgba(168, 85, 247, 0.08);
+    border-radius: 14px;
+    padding: 18px;
+    background-color: rgba(168, 85, 247, 0.01);
+    transition: all 0.2s ease;
+}
+
+body.dark-mode .ticket-item {
+    border-color: rgba(255, 255, 255, 0.05);
+    background-color: rgba(255, 255, 255, 0.005);
+}
+
+.ticket-item:hover {
+    border-color: var(--primary);
+    transform: translateX(2px);
+}
+
+.ticket-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ticket-id {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-light);
+    background-color: rgba(168, 85, 247, 0.06);
+    padding: 2px 8px;
+    border-radius: 6px;
+}
+
+body.dark-mode .ticket-id {
+    background-color: rgba(255, 255, 255, 0.04);
+}
+
+.ticket-badge {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.ticket-badge.status-pending {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: var(--accent);
+}
+
+.ticket-badge.status-resolved {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.ticket-subject {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.ticket-description {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    line-height: 1.4;
+    background-color: rgba(168, 85, 247, 0.02);
+    padding: 10px 14px;
+    border-radius: 8px;
+}
+
+body.dark-mode .ticket-description {
+    background-color: rgba(255, 255, 255, 0.01);
+}
+
+.ticket-response {
+    font-size: 0.85rem;
+    color: var(--text);
+    line-height: 1.4;
+    background-color: rgba(16, 185, 129, 0.06);
+    border-left: 3px solid #10b981;
+    padding: 10px 14px;
+    border-radius: 0 8px 8px 0;
+}
+
+body.dark-mode .ticket-response {
+    background-color: rgba(16, 185, 129, 0.03);
+}
+
+
+/* --- Historial de Transacciones (Perfil) --- */
+.tx-badge {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.tx-badge.success {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.tx-badge.failed {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+/* --- Showcase de Planes en misma pestaña --- */
+.plan-card-display {
+    background-color: var(--white);
+    border: 1px solid rgba(168, 85, 247, 0.08);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: var(--shadow);
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+body.dark-mode .plan-card-display {
+    background-color: #111827;
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.plan-card-display:hover {
+    transform: translateY(-5px);
+    border-color: var(--primary);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
+}
+
+.plan-card-display.featured:hover {
+    transform: scale(1.04) translateY(-5px);
+}
+
+

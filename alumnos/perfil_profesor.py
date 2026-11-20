@@ -4,8 +4,8 @@ Privacidad:
 - Solo profesores habilitados (titulo aprobado); el resto responde 404.
 - Se muestran datos profesionales: nombre, especialidad, titulo verificado,
   clases y proximas sesiones.
-- El telefono solo si el profesor lo autorizo (Profesor.telefono_publico).
-- Nunca RUT, correo, direccion, fecha de nacimiento ni el archivo del titulo.
+- Nunca telefono, RUT, correo, direccion, fecha de nacimiento ni el titulo
+  (decidido 02-nov: sin datos personales del profesor, ni aunque el lo autorice).
 - Solo reseñas verificadas y visibles (resenas/consultas.py).
 """
 
@@ -17,6 +17,7 @@ from resenas.consultas import contexto_resenas
 
 from .decorators import alumno_required
 from .models import Clase, Profesor, SesionClase
+from .portales import contexto_de_marco
 
 MAX_PROXIMAS_SESIONES = 5
 
@@ -30,8 +31,8 @@ def perfil_profesor(request, id_profesor):
     )
     sesiones = SesionClase.objects.filter(clase__profesor=profesor)
     return render(request, 'alumnos/perfil_profesor.html', {
+        **contexto_de_marco(request),  # sin seccion: el perfil no es un item del menu
         'profesor': profesor,
-        'telefono': profesor.user.telefono if profesor.telefono_publico else '',
         'clases': (
             Clase.objects.filter(profesor=profesor)
             .select_related('asignatura').order_by('asignatura__nombre')

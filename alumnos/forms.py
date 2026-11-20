@@ -1,26 +1,25 @@
 from django import forms
-from .models import Alumno, Clase, Especialidad, Genero
+from .models import Alumno, Especialidad, Genero, Profesor
 from django.contrib.auth import get_user_model
 
 
 class FiltroClasesForm(forms.Form):
     """Filtros del catalogo del portal del alumno (GET).
 
-    Las opciones salen de la base (Especialidad) y del modelo (Clase.MODALIDADES),
-    no de valores fijos en el HTML. Un valor invalido no rompe la pagina: ese
-    campo queda fuera de cleaned_data y simplemente no filtra.
+    Las opciones salen de la base (Especialidad), no de valores fijos en el HTML. Un valor invalido no
+    rompe la pagina: ese campo queda fuera de cleaned_data y simplemente no filtra.
     """
     especialidad = forms.ModelChoiceField(
         queryset=Especialidad.objects.order_by('nombre'), required=False,
         empty_label='Todas', label='Especialidad',
         widget=forms.Select(attrs={'class': 'catalog-filter-input'}),
     )
-    modalidad = forms.ChoiceField(
-        choices=[('', 'Todas')] + Clase.MODALIDADES, required=False, label='Modalidad',
-        widget=forms.Select(attrs={'class': 'catalog-filter-input'}),
-    )
     disponible = forms.BooleanField(
         required=False, label='Solo con horarios y cupos disponibles',
+    )
+    # "Ver horarios" de un profesor: va oculto y solo acepta profesores con titulo aprobado (como el resto del catalogo).
+    profesor = forms.ModelChoiceField(
+        queryset=Profesor.objects.habilitados(), required=False, widget=forms.HiddenInput(),
     )
 
     def __init__(self, *args, **kwargs):
@@ -83,13 +82,6 @@ class AlumnoForm(forms.ModelForm):
                 raise forms.ValidationError("El RUT ingresado no es válido.")
         return rut
 
-    def clean_password(self):
-        password = self.cleaned_data.get('password')
-        if password:
-            from django.contrib.auth.password_validation import validate_password
-            validate_password(password)
-        return password
-
     def clean(self):
         cleaned_data = super().clean()
         password = cleaned_data.get("password")
@@ -100,6 +92,14 @@ class AlumnoForm(forms.ModelForm):
 
         rut = cleaned_data.get("rut")
         correo = cleaned_data.get("correo_electronico")
+
+        # Aqui y no en clean_password: hace falta el RUT y el correo (Seg-3).
+        if password:
+            from .utils import validar_clave_nueva
+            try:
+                validar_clave_nueva(password, rut, correo)
+            except forms.ValidationError as error:
+                self.add_error('password', error)
 
         if rut and correo:
             from .utils import usuario_existe

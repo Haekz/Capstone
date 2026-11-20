@@ -1,0 +1,41 @@
+{% extends base|default:'alumnos/base.html' %}
+{% load static %}
+
+{% block title %}Ticket #{{ ticket.pk }} | LBWUS{% endblock %}
+{# En el portal del alumno la barra dice la sección; el título del ticket queda en la página #}
+{% block page_title %}{% if titulo_en_barra %}Ayuda y soporte{% else %}{{ block.super }}{% endif %}{% endblock %}
+{% block page_subtitle %}{% if titulo_en_barra %}Ticket #{{ ticket.pk }}{% else %}{{ block.super }}{% endif %}{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'alumnos/css/perfil_profesor.css' %}">
+<link rel="stylesheet" href="{% static 'apoderados/apoderados.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="perfil-prof">
+    <a class="perfil-prof__volver" href="{% url 'mis_tickets' %}">
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a mis tickets
+    </a>
+
+    <header class="perfil-prof__cabecera">
+        <div>
+            {# En el portal del alumno el h1 es el de la barra (fija, 72px: no cabe un titulo de 120 caracteres) #}
+            {% if titulo_en_barra %}<h2>#{{ ticket.pk }} · {{ ticket.titulo }}</h2>{% else %}<h1>#{{ ticket.pk }} · {{ ticket.titulo }}</h1>{% endif %}
+            <p class="perfil-prof__vacio">{{ ticket.get_categoria_display }} · {{ ticket.get_estado_display }} · abierto el {{ ticket.creado|date:"d-m-Y H:i" }}{% if ticket.estudiante %} · sobre {{ ticket.estudiante.user.first_name }}{% endif %}</p>
+        </div>
+    </header>
+
+    <section class="perfil-prof__bloque" aria-labelledby="conversacion-titulo">
+        <h2 id="conversacion-titulo">Conversación</h2>
+        {% include 'apoderados/_mensajes.html' %}
+        <p><strong>Lo que nos contaste:</strong><br>{{ ticket.descripcion|linebreaksbr }}</p>
+        {% include 'soporte/_conversacion.html' with soporte_ve=False %}
+        {% if form %}
+        {% include 'soporte/_formulario_mensaje.html' %}
+        {% else %}
+        <p class="perfil-prof__vacio">Este ticket está cerrado. Si tienes otro problema, abre un ticket nuevo.</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

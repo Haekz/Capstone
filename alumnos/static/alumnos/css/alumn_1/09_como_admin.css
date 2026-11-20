@@ -1,0 +1,507 @@
+/* ==============================================================
+   LAYOUT TIPO PORTAL ADMIN
+   Menú lateral con degradado morado (marca, ficha del alumno,
+   secciones y cerrar sesión abajo) + barra superior blanca con
+   el título de la vista. Reemplaza al navbar superior anterior.
+   ============================================================== */
+:root {
+    --header-height: 72px;      /* alto de la barra superior */
+    --sb-width: 272px;
+    --side-grad: linear-gradient(180deg, #7c3aed 0%, #8e3ff0 50%, #9d4ff5 100%);
+}
+
+body.dark-mode {
+    --side-grad: linear-gradient(180deg, #241640 0%, #34215c 55%, #241640 100%);
+}
+
+/* ── Estructura ── */
+body .dashboard-layout {
+    grid-template-columns: var(--sb-width) minmax(0, 1fr);
+    margin-top: 0;
+    min-height: 100vh;
+}
+
+.portal-main {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.main-content {
+    padding: 32px;
+    overflow: visible;
+}
+
+/* ── Menú lateral ── */
+body .dashboard-layout .sidebar-menu {
+    background: var(--side-grad);
+    border-right: none;
+    box-shadow: none;
+    padding: 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    overflow-y: auto;
+    z-index: 20;
+}
+
+body .dashboard-layout .sidebar-menu::-webkit-scrollbar {
+    width: 4px;
+}
+
+body .dashboard-layout .sidebar-menu::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 10px;
+}
+
+.sb-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 22px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+    text-decoration: none;
+    flex-shrink: 0;
+}
+
+.sb-brand img {
+    width: 40px;
+    height: 40px;
+}
+
+.sb-brand-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.sb-brand-name {
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #ffffff;
+}
+
+.sb-brand-role {
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.sb-user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 14px 12px 4px;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s ease;
+}
+
+.sb-user:hover {
+    background: rgba(255, 255, 255, 0.18);
+}
+
+.sb-user-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #ffffff;
+    color: #6d28d9;
+    font-weight: 700;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.sb-user-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.sb-user-name {
+    font-size: 0.92rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sb-user-role {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+body .dashboard-layout .sidebar-menu .sidebar-nav {
+    flex: 1;
+    gap: 2px;
+    padding: 8px 12px 16px;
+}
+
+.sb-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+    padding: 16px 14px 6px;
+}
+
+body .dashboard-layout .sidebar-menu .sidebar-nav-item {
+    color: rgba(255, 255, 255, 0.88);
+    background: transparent;
+    font-size: 0.93rem;
+    font-weight: 500;
+    padding: 10px 14px;
+    gap: 12px;
+    border-radius: 10px;
+    box-shadow: none;
+}
+
+body .dashboard-layout .sidebar-menu .sidebar-nav-item i {
+    color: inherit;
+    font-size: 1.05rem;
+    opacity: 0.9;
+}
+
+body .dashboard-layout .sidebar-menu .sidebar-nav-item:hover {
+    background: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+}
+
+/* Activo: píldora blanca con texto morado (modo día) */
+body .dashboard-layout .sidebar-menu .sidebar-nav-item.active {
+    background: #ffffff;
+    color: #6d28d9;
+    font-weight: 600;
+    box-shadow: 0 4px 14px rgba(26, 18, 51, 0.15);
+}
+
+body .dashboard-layout .sidebar-menu .sidebar-nav-item.active i {
+    opacity: 1;
+}
+
+/* Activo en modo noche: resalte translúcido */
+body.dark-mode .dashboard-layout .sidebar-menu .sidebar-nav-item.active {
+    background: rgba(255, 255, 255, 0.16);
+    color: #ffffff;
+    box-shadow: none;
+}
+
+.sb-footer {
+    padding: 16px 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Botones del pie del menu: "Volver al inicio" (sutil) y "Cerrar sesion" */
+.sb-home,
+.sb-logout {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 50px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.sb-home {
+    background: transparent;
+    border-color: transparent;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.sb-home:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+}
+
+.sb-logout:hover {
+    background: #ffffff;
+    color: #b91c1c;
+}
+
+/* ── Barra superior ── */
+.portal-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 15;
+    height: var(--header-height);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 0 32px;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
+    transition: box-shadow 0.2s ease;
+}
+
+body.dark-mode .portal-topbar {
+    background: rgba(23, 17, 41, 0.92);
+}
+
+.portal-topbar.scrolled {
+    box-shadow: 0 6px 20px rgba(26, 18, 51, 0.06);
+}
+
+.portal-topbar .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+}
+
+.portal-topbar h1 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    color: var(--text);
+}
+
+.portal-topbar p {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    margin-top: 2px;
+}
+
+.portal-topbar .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Botones circulares con borde fino (como en el admin) */
+.portal-topbar .btn-theme-toggle,
+body.dark-mode .portal-topbar .btn-theme-toggle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--text-light);
+    font-size: 1.05rem;
+}
+
+.portal-topbar .btn-theme-toggle:hover,
+body.dark-mode .portal-topbar .btn-theme-toggle:hover {
+    background: var(--primary-soft);
+    border-color: transparent;
+    color: var(--primary-ink);
+}
+
+/* Hamburguesa con líneas del color del texto */
+.portal-topbar .hamburger-btn {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+}
+
+.portal-topbar .hamburger-btn:hover {
+    background: var(--primary-soft);
+}
+
+.portal-topbar .hamburger-line {
+    background-color: var(--text);
+}
+
+/* ── Móvil: el menú lateral se desliza desde la izquierda ── */
+@media (max-width: 900px) {
+    body .dashboard-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    body .dashboard-layout .sidebar-menu {
+        position: fixed;
+        top: 0;
+        left: calc(-1 * var(--sb-width) - 20px);
+        bottom: 0;
+        width: var(--sb-width);
+        height: 100vh;
+        z-index: 1000;
+        box-shadow: 10px 0 40px rgba(0, 0, 0, 0.25);
+    }
+
+    body .dashboard-layout .sidebar-menu.active {
+        left: 0;
+    }
+
+    .sidebar-overlay {
+        top: 0;
+        z-index: 999;
+    }
+
+    .portal-topbar {
+        padding: 0 16px;
+    }
+
+    .portal-topbar p {
+        display: none;
+    }
+
+    .main-content {
+        padding: 20px 16px 40px;
+    }
+}
+
+/* Evita que el contenido del dashboard se salga de la pantalla en móvil */
+.main-dashboard-grid {
+    grid-template-columns: minmax(0, 3.2fr) minmax(0, 1fr);
+}
+
+.main-dashboard-grid > * {
+    min-width: 0;
+}
+
+@media (max-width: 1100px) {
+    .main-dashboard-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* ==============================================================
+   IGUAL AL PORTAL ADMIN: medidas y componentes del contenido
+   ============================================================== */
+:root {
+    --sb-width: 260px;          /* mismo ancho de menú que el admin */
+}
+
+/* Tarjetas y paneles: mismo radio que el admin (16px) */
+.results-section, body.dark-mode .results-section,
+.profile-card, body.dark-mode .profile-card,
+.support-form-card, body.dark-mode .support-form-card,
+.support-list-card, body.dark-mode .support-list-card,
+.progress-details-card, body.dark-mode .progress-details-card,
+.inbox-layout, body.dark-mode .inbox-layout,
+.pp-card,
+.promo-ad-card {
+    border-radius: 16px;
+}
+
+/* Banner de bienvenida = bloque oscuro del Inicio del admin */
+.welcome-banner,
+body.dark-mode .welcome-banner {
+    background:
+        radial-gradient(circle at 12% 0%, rgba(168, 85, 247, 0.45) 0%, transparent 45%),
+        radial-gradient(circle at 95% 100%, rgba(124, 58, 237, 0.35) 0%, transparent 50%),
+        #1a1233;
+    border: none;
+    border-radius: 20px;
+    box-shadow: none;
+    padding: 32px;
+    color: #ffffff;
+}
+
+.welcome-eyebrow {
+    display: inline-block;
+    font-size: 0.76rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #f5a524;
+    margin-bottom: 8px;
+}
+
+.welcome-banner .welcome-text h1,
+body.dark-mode .welcome-banner .welcome-text h1 {
+    color: #ffffff;
+    font-size: clamp(1.6rem, 2.6vw, 2.1rem);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    margin-bottom: 6px;
+}
+
+.welcome-banner .welcome-text p,
+body.dark-mode .welcome-banner .welcome-text p {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+/* Botón del banner: contorno blanco, igual que "Ver sitio público" del admin */
+.welcome-banner .btn-principal,
+.welcome-banner button,
+.welcome-banner a {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+    box-shadow: none;
+}
+
+.welcome-banner .btn-principal:hover,
+.welcome-banner button:hover,
+.welcome-banner a:hover {
+    background: #ffffff;
+    color: #1a1233;
+    box-shadow: none;
+}
+
+/* Tarjetas de estadística = stat-card del admin
+   (texto a la izquierda con la etiqueta arriba, ícono a la derecha) */
+.stat-card,
+body.dark-mode .stat-card {
+    flex-direction: row-reverse;
+    justify-content: space-between;
+    border-radius: 16px;
+    padding: 22px;
+}
+
+.stat-info {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 4px;
+}
+
+.stat-info p {
+    font-size: 0.85rem;
+    color: var(--text-light);
+}
+
+.stat-info h3 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+}
+
+.stat-icon,
+body.dark-mode .stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+}
+
+/* Títulos de sección dentro de las tarjetas, como "panel-title" del admin */
+.results-section > h2,
+.results-section h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+

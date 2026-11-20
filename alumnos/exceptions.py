@@ -46,3 +46,9 @@ class SinClasesDisponiblesError(InscripcionError):
     """Se dispara cuando el alumno no tiene un paquete vigente con clases disponibles para ese profesor."""
     def __init__(self, message="No tienes clases disponibles con este profesor. Compra un paquete en Planes.", code="sin_clases", params=None):
         super().__init__(message=message, code=code, params=params)
+
+
+class SolicitudExtraError(InscripcionError):
+    """Se dispara cuando una solicitud de clase extra no se puede pedir, aceptar o rechazar."""
+    def __init__(self, message="No se puede procesar la solicitud de clase extra.", code="solicitud_extra", params=None):
+        super().__init__(message=message, code=code, params=params)

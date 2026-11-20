@@ -1,0 +1,22 @@
+/* Campanita de notificaciones (notificaciones/, pasos B2a y A3a).
+   La cargan base.html y el panel del alumno, que no usa styles.css. */
+.notif-btn {
+    position: relative;
+    text-decoration: none;
+}
+
+.notif-contador {
+    position: absolute;
+    top: 2px;
+    right: 0;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border-radius: 9px;
+    background: #c62828; /* blanco sobre este rojo: 5.6:1 (WCAG AA) */
+    color: #ffffff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+}

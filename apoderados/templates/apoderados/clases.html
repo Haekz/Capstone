@@ -47,10 +47,13 @@
             <li>
                 <strong>{{ r.clase.asignatura.nombre }}</strong> con {{ r.clase.profesor.nombre }}{% if r.sesion %} · {{ r.sesion.fecha_hora_inicio|date:"d-m-Y H:i" }}{% endif %}
                 {% if r.puede_cancelar %}
+                {% if not r.a_tiempo_para_cambiar %}<p><small>Faltan menos de 4 horas: si cancelas, la clase se descuenta del paquete y ya no se puede reprogramar.</small></p>{% endif %}
                 <form method="post" action="{% url 'apoderado_cancelar_clase' vinculo.pk r.pk %}" class="apod-form">
                     {% csrf_token %}
                     <button type="submit" class="btn-secondary">Cancelar clase</button>
                 </form>
+                {% endif %}
+                {% if r.puede_reprogramar %}
                 <form method="post" action="{% url 'apoderado_reprogramar_clase' vinculo.pk r.pk %}" class="apod-form">
                     {% csrf_token %}
                     <label for="mover-{{ r.pk }}">Mover a</label>
@@ -88,6 +91,20 @@
         {% else %}
         <p class="perfil-prof__vacio">No hay sesiones disponibles con los profesores de sus paquetes vigentes.</p>
         {% endif %}
+    </section>
+
+    <section class="perfil-prof__bloque" aria-labelledby="videos-titulo">
+    <h2 id="videos-titulo">Videos de apoyo</h2>
+    <p>Revisa cada video antes de habilitarlo: {{ vinculo.alumno.user.first_name }} solo ve los que tú habilitas.</p>
+    {% url 'apoderado_videos_estudiante' vinculo.pk as url_lista %}{% url 'apoderado_ver_video' vinculo.pk 'VIDEO_ID' as url_ver %}{% url 'apoderado_habilitar_video' vinculo.pk 'VIDEO_ID' as url_habilitar %}{% url 'nuevo_ticket' as url_reportar %}
+    {% include 'alumnos/includes/videos_apoyo.html' %}
+    {% url 'apoderado_comprar_videos_extra' vinculo.pk as url_comprar %}
+    {% include 'alumnos/includes/comprar_videos_extra.html' with estudiante=vinculo.alumno %}
+</section>
+
+<section class="perfil-prof__bloque" aria-labelledby="observaciones-titulo">
+        <h2 id="observaciones-titulo">Observaciones de los profesores</h2>
+        {% include 'observaciones/_lista.html' %}
     </section>
 </div>
 {% endblock %}

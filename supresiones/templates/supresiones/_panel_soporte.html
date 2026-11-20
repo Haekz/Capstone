@@ -1,0 +1,34 @@
+{# Panel del detalle de un ticket de soporte que es una solicitud de eliminar la cuenta. #}
+{% load supresiones_tags %}
+{% evaluacion_pendiente ticket as evaluacion %}
+{% if evaluacion %}
+<section aria-labelledby="supresion-titulo" style="margin-top:18px;">
+    <h2 id="supresion-titulo" style="font-size:1rem;">Solicitud de eliminar la cuenta ({{ ticket.solicitud_supresion.get_estado_display|lower }})</h2>
+    <p><small>Identidad confirmada con un enlace al correo registrado. No se pide carnet.</small></p>
+    {% include 'supresiones/_evaluacion.html' %}
+    <p><small>Proveedores (Transbank, Google, Railway) y respaldos: hoy no hay pasos automáticos; cuando se definan, se coordinan desde aquí.</small></p>
+    {% if form %}
+    <form method="post" action="{% url 'supresion_ejecutar' ticket.pk %}" class="apod-form" novalidate style="display:grid; gap:10px;">
+        {% csrf_token %}
+        <div class="apod-form__declaracion">
+            <input type="checkbox" name="confirmo" id="supresion-confirmo"{% if not evaluacion.puede %} disabled{% endif %}>
+            <label for="supresion-confirmo">Revisé la evaluación y corresponde eliminar esta cuenta. Entiendo que no se puede deshacer.</label>
+        </div>
+        <button type="submit" class="btn-primary"{% if not evaluacion.puede %} disabled{% endif %}>
+            <i class="bi bi-trash3" aria-hidden="true"></i> Eliminar la cuenta
+        </button>
+    </form>
+    <form method="post" action="{% url 'supresion_rechazar' ticket.pk %}" class="apod-form" novalidate style="display:grid; gap:10px; margin-top:16px;">
+        {% csrf_token %}
+        <div class="apod-form__campo" style="display:grid; gap:6px;">
+            <label for="supresion-motivo">Si no corresponde ahora: qué le respondes al usuario</label>
+            <textarea name="motivo" id="supresion-motivo" rows="3" maxlength="1000" aria-describedby="supresion-motivo-ayuda"></textarea>
+            <small id="supresion-motivo-ayuda">Lo lee en su ticket: dile qué impide eliminarla y qué puede hacer. Esto cierra la solicitud.</small>
+        </div>
+        <button type="submit">Responder y cerrar sin eliminar</button>
+    </form>
+    {% else %}
+    <p><small>Solo el agente asignado resuelve la solicitud. Para hacerlo, reasígnatela desde el panel.</small></p>
+    {% endif %}
+</section>
+{% endif %}

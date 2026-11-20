@@ -1,0 +1,162 @@
+"""Pagos de alumnos: suscripciones y paquetes de clases (Webpay)."""
+
+from datetime import timedelta
+from django.db import models
+from django.core.validators import MinValueValidator
+from django.utils import timezone
+
+from .. import paquetes
+from .usuarios import Alumno, Profesor
+
+
+class SuscripcionQuerySet(models.QuerySet):
+    def vigentes(self):
+        return self.filter(estado=Suscripcion.ESTADO_ACTIVA, fecha_fin__gt=timezone.now())
+
+
+def _activar_pendientes(modelo, buy_order, aprobado):
+    """Activa o rechaza los pagos pendientes de una orden de Webpay (Suscripcion o PaqueteClases).
+
+    Idempotente: si Webpay vuelve dos veces, la segunda no encuentra pendientes. Devuelve los pagos que ESTA llamada
+    activo (el UPDATE solo cuenta si seguia pendiente), para avisar una sola vez aunque dos retornos lleguen juntos.
+    """
+    pendientes = modelo.objects.filter(buy_order=buy_order, estado=modelo.ESTADO_PENDIENTE)
+    if not aprobado:
+        pendientes.update(estado=modelo.ESTADO_RECHAZADA)
+        return []
+    ahora = timezone.now()
+    activados = []
+    for pago in pendientes:
+        fecha_fin = ahora + timedelta(days=pago.dias)
+        if modelo.objects.filter(pk=pago.pk, estado=modelo.ESTADO_PENDIENTE).update(
+                estado=modelo.ESTADO_ACTIVA, fecha_fin=fecha_fin):
+            pago.estado, pago.fecha_fin = modelo.ESTADO_ACTIVA, fecha_fin
+            activados.append(pago)
+    return activados
+
+
+class Suscripcion(models.Model):
+    """Plan contratado por un alumno.
+
+    Nace pendiente al iniciar Webpay y solo se activa cuando Transbank aprueba
+    el pago (se busca por buy_order: la vuelta desde Webpay puede llegar sin la
+    cookie de sesion). Es la unica fuente de verdad del plan: nada de localStorage.
+    """
+    # Codigos de plan que envia el formulario de planes.html.
+    PLAN_BASICO = '1'
+    PLANES = [
+        (PLAN_BASICO, 'Plan Básico'),
+        ('2', 'Plan Medio'),
+        ('3', 'Plan Superior'),
+        ('5', 'Plan Personalizado'),
+    ]
+    ESTADO_PENDIENTE = 'pendiente'
+    ESTADO_ACTIVA = 'activa'
+    ESTADO_RECHAZADA = 'rechazada'
+    ESTADOS = [
+        (ESTADO_PENDIENTE, 'Pendiente'),
+        (ESTADO_ACTIVA, 'Aprobado'),
+        (ESTADO_RECHAZADA, 'Rechazado'),
+    ]
+
+    alumno = models.ForeignKey(Alumno, on_delete=models.CASCADE, related_name='suscripciones')
+    plan = models.CharField(max_length=2, choices=PLANES)
+    dias = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    monto = models.PositiveIntegerField()
+    buy_order = models.CharField(max_length=26, db_index=True)
+    estado = models.CharField(max_length=10, choices=ESTADOS, default=ESTADO_PENDIENTE)
+    creada = models.DateTimeField(auto_now_add=True)
+    fecha_fin = models.DateTimeField(null=True, blank=True)
+
+    objects = SuscripcionQuerySet.as_manager()
+
+    class Meta:
+        verbose_name = 'Suscripción'
+        verbose_name_plural = 'Suscripciones'
+        ordering = ['-creada']
+
+    def __str__(self):
+        return f'{self.get_plan_display()} - {self.alumno} ({self.get_estado_display()})'
+
+    @property
+    def es_premium(self):
+        return self.plan != self.PLAN_BASICO
+
+    @classmethod
+    def confirmar_pago(cls, buy_order, aprobado):
+        """Activa o rechaza las suscripciones pendientes de la orden."""
+        _activar_pendientes(cls, buy_order, aprobado)
+
+
+class PaqueteClasesQuerySet(models.QuerySet):
+    def vigentes(self):
+        return self.filter(estado=PaqueteClases.ESTADO_ACTIVA, fecha_fin__gt=timezone.now())
+
+
+class PaqueteClases(models.Model):
+    """Paquete Flexible, Progreso o Intensivo comprado a un profesor (ver alumnos/paquetes.py).
+
+    Nace pendiente al iniciar Webpay y solo se activa cuando Transbank aprueba.
+    Plan, clases, tarifa y monto quedan fijos al comprar: si cambian los precios
+    de LBWUS, lo ya vendido no cambia. Cada inscripcion activa consume una
+    clase; al cancelarla vuelve, porque las usadas se cuentan, no se restan.
+    """
+    ESTADO_PENDIENTE = Suscripcion.ESTADO_PENDIENTE
+    ESTADO_ACTIVA = Suscripcion.ESTADO_ACTIVA
+    ESTADO_RECHAZADA = Suscripcion.ESTADO_RECHAZADA
+
+    alumno = models.ForeignKey(Alumno, on_delete=models.CASCADE, related_name='paquetes')
+    # SET_NULL: si se borra el profesor, el pago queda en el historial.
+    profesor = models.ForeignKey(Profesor, on_delete=models.SET_NULL, null=True, related_name='paquetes_vendidos')
+    plan = models.CharField(max_length=10, choices=paquetes.CHOICES)
+    clases = models.PositiveSmallIntegerField(validators=[MinValueValidator(1)])
+    tarifa = models.PositiveIntegerField()
+    monto = models.PositiveIntegerField()
+    # Agregado de videos: se cobra junto con el paquete y aparte de `monto`, que es solo de las clases.
+    videos = models.PositiveSmallIntegerField(default=0)
+    monto_videos = models.PositiveIntegerField(default=0)
+    dias = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    buy_order = models.CharField(max_length=26, db_index=True)
+    # Token de Webpay: con el se le pregunta a Transbank por un pago que no volvio (revisar_pagos_pendientes).
+    token_ws = models.CharField(max_length=100, blank=True, db_index=True)
+    estado = models.CharField(max_length=10, choices=Suscripcion.ESTADOS, default=ESTADO_PENDIENTE)
+    creada = models.DateTimeField(auto_now_add=True)
+    fecha_fin = models.DateTimeField(null=True, blank=True)
+    # Del pago aprobado, para conciliar con Transbank y para soporte. Nada de la tarjeta.
+    codigo_autorizacion = models.CharField(max_length=20, blank=True)
+    fecha_pago = models.DateTimeField(null=True, blank=True)
+
+    objects = PaqueteClasesQuerySet.as_manager()
+
+    class Meta:
+        verbose_name = 'Paquete de clases'
+        verbose_name_plural = 'Paquetes de clases'
+        ordering = ['-creada']
+
+    def __str__(self):
+        return f'{self.get_plan_display()} - {self.alumno} ({self.get_estado_display()})'
+
+    @property
+    def clases_usadas(self):
+        return self.inscripciones.consumidas().count()
+
+    @property
+    def clases_disponibles(self):
+        return max(0, self.clases - self.clases_usadas)
+
+    @property
+    def precio_por_clase(self):
+        return self.monto // self.clases
+
+    @property
+    def total(self):
+        """Lo que se cobra en Webpay: las clases y el agregado de videos."""
+        return self.monto + self.monto_videos
+
+    @classmethod
+    def confirmar_pago(cls, buy_order, aprobado, codigo_autorizacion='', fecha_pago=None):
+        """Confirma o rechaza la orden. Devuelve los paquetes que esta llamada dejo activos."""
+        if aprobado:  # solo los pendientes: un retorno repetido no pisa los datos del primero
+            cls.objects.filter(buy_order=buy_order, estado=cls.ESTADO_PENDIENTE).update(
+                codigo_autorizacion=codigo_autorizacion, fecha_pago=fecha_pago or timezone.now())
+        return _activar_pendientes(cls, buy_order, aprobado)

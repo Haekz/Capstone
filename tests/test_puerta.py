@@ -105,7 +105,7 @@ class ConClaveTests(TestCase):
     def test_confirmacion_de_webpay_no_queda_bloqueada(self):
         url = reverse('confirmacion')
         self.assertFalse(es_redireccion_a_puerta(self.client.get(url)))
-        tx = patch('alumnos.views._tx').start()
+        tx = patch('alumnos.webpay._tx').start()
         self.addCleanup(patch.stopall)
         tx.return_value.commit.return_value = {'response_code': -1, 'status': 'FAILED'}
         r = self.client.post(url, {'token_ws': 'token-ficticio'})

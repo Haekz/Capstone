@@ -1,0 +1,11 @@
+Hola {{ nombre }},
+
+Nuestro equipo de soporte revocó tu vínculo con {{ estudiante }} en LBWUS.
+{% if motivo %}
+Motivo: {{ motivo }}
+{% endif %}
+Desde ahora no puedes reservar, contratar ni ver las clases de {{ estudiante }}.{% if canceladas %} Se cancelaron {{ canceladas }} clase{{ canceladas|pluralize }} futura{{ canceladas|pluralize }} pagada{{ canceladas|pluralize }} con tu vínculo; vuelven al paquete.{% endif %}
+
+Si crees que es un error, escríbenos desde la página de contacto de LBWUS.
+
+Equipo LBWUS

@@ -18,7 +18,7 @@
     font-size: 0.9rem;
 }
 
-body.dark-mode .prof-table th {
+body:not(.light-mode) .prof-table th {
     border-bottom-color: #334155;
 }
 
@@ -29,7 +29,7 @@ body.dark-mode .prof-table th {
     font-size: 0.95rem;
 }
 
-body.dark-mode .prof-table td {
+body:not(.light-mode) .prof-table td {
     border-bottom-color: #1e293b;
 }
 

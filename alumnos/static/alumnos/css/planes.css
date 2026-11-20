@@ -1,8 +1,6 @@
 /* =========================================================
    LBWUS — planes.css (solo página Planes)
    Usa los tokens de styles.css (--primary, --surface, etc.)
-   Ya no sobrescribe el carrito del navbar: se ve igual que en
-   el resto del sitio.
    ========================================================= */
 
 /* ---------- Intro ---------- */
@@ -29,8 +27,31 @@ body.dark-mode .pl-intro-notes i {
     color: #c4b5fd;
 }
 
+/* Dentro de un portal (alumno o docente): sin el hero del sitio publico, que vive en styles.css y se calcula bajo su
+   header fijo. Cabecera compacta alineada con el resto del contenido. */
+.pl-intro--portal {
+    width: 100%; /* el contenido del portal docente es flex en columna: con margin auto el bloque se encoge a su texto */
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 24px 0;
+}
+
+.pl-intro--portal h1 {
+    font-size: 1.8rem;
+    margin-bottom: 8px;
+}
+
+.pl-intro--portal p {
+    color: var(--text-light);
+}
+
+.pl-intro--portal + .planes-container {
+    padding-top: 32px;
+}
+
 /* ---------- Contenedor ---------- */
 .planes-container {
+    width: 100%; /* mismo motivo que .pl-intro--portal; en el sitio publico ya ocupaba todo, asi que no cambia nada */
     max-width: 1200px;
     margin: 0 auto;
     padding: 64px 24px var(--section-y);
@@ -514,4 +535,60 @@ body.dark-mode .plan-card.featured {
     .modal-info-content {
         padding: 32px 24px;
     }
+}
+
+/* Agregado de videos: ventana que aparece al comprar un paquete (planes.html) */
+.pl-videos {
+    width: calc(100% - 32px);
+    max-width: 440px;
+    padding: 28px;
+    border: none;
+    border-radius: 20px;
+    background: #ffffff;
+    color: inherit;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+.pl-videos::backdrop {
+    background: rgba(15, 23, 42, 0.55);
+}
+
+.pl-videos h2 {
+    margin: 0 0 10px;
+    font-size: 1.3rem;
+}
+
+.pl-videos-nota {
+    font-size: 0.9rem;
+}
+
+.pl-videos-acciones {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.pl-videos-acciones .plan-btn-action,
+body.dark-mode .pl-videos-acciones .plan-btn-action {
+    margin-bottom: 0;
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #ffffff;
+}
+
+.pl-videos-no {
+    padding: 11px 24px;
+    border: none;
+    border-radius: 50px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+body.dark-mode .pl-videos {
+    background: #1e1b2e;
+    color: #f3f4f6;
 }

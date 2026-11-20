@@ -1,0 +1,16 @@
+{# Que se elimina y que se conserva, por categoria. Lo usan el usuario y el panel de soporte. #}
+<ul class="apod-vinculos">
+    {% for c in evaluacion.categorias %}
+    <li>
+        <strong>{{ c.nombre }}</strong> ·
+        <span class="apod-estado">{% if c.accion == 'elimina' %}Se elimina{% else %}Se conserva{% endif %}</span><br>
+        <small>{{ c.detalle }}</small>
+    </li>
+    {% endfor %}
+</ul>
+{% if evaluacion.bloqueos %}
+<div role="alert">
+    <h3 style="font-size:1rem;">Hoy no se puede eliminar</h3>
+    <ul>{% for b in evaluacion.bloqueos %}<li>{{ b }}</li>{% endfor %}</ul>
+</div>
+{% endif %}

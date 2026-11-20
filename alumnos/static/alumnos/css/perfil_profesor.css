@@ -8,6 +8,8 @@
 
 .perfil-prof__volver {
     display: inline-flex;
+    align-items: center;
+    min-height: 24px; /* objetivo minimo de toque (WCAG 2.5.8) */
     gap: 6px;
     margin-bottom: 20px;
     color: var(--text-light);

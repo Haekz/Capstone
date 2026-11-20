@@ -34,6 +34,7 @@ class DebugDesdeEntornoTests(SimpleTestCase):
                 self.assertTrue(cargar_settings(DEBUG=valor).DEBUG)
 
     def test_valores_que_lo_desactivan(self):
+        # Con DEBUG apagado SECRET_KEY es obligatoria (SCRUM-93): se le da una de prueba.
         for valor in ('False', 'false', '0', 'no', ''):
             with self.subTest(valor=valor):
-                self.assertFalse(cargar_settings(DEBUG=valor).DEBUG)
+                self.assertFalse(cargar_settings(DEBUG=valor, SECRET_KEY='clave-de-prueba').DEBUG)

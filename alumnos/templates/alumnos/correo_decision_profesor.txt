@@ -1,0 +1,7 @@
+Hola {{ nombre }},
+
+{{ texto }}
+
+Entra a tu panel de profesor de LBWUS para ver el detalle.
+
+Equipo LBWUS

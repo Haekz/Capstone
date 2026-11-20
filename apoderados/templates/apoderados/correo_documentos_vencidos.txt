@@ -1,0 +1,7 @@
+Hola {{ nombre }},
+
+No alcanzamos a revisar a tiempo los documentos que subiste. Por tu seguridad, los borramos a los 30 días, como indica nuestra política de datos.
+
+Entra a tu cuenta de apoderado en LBWUS y vuelve a subirlos: nuestro equipo de soporte los revisará con un plazo nuevo. Disculpa las molestias.
+
+Equipo LBWUS

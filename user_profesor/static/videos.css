@@ -21,7 +21,7 @@
     box-shadow: var(--shadow);
 }
 
-body.dark-mode .profe-stat-box {
+body:not(.light-mode) .profe-stat-box {
     background: #111827;
     border-color: rgba(255, 255, 255, 0.05);
 }
@@ -64,7 +64,7 @@ body.dark-mode .profe-stat-box {
     transition: all 0.25s ease;
 }
 
-body.dark-mode .profe-cursos-card {
+body:not(.light-mode) .profe-cursos-card {
     background: #1f2937;
     border-color: rgba(255, 255, 255, 0.04);
 }
@@ -203,7 +203,7 @@ body.dark-mode .profe-cursos-card {
 }
 
 /* esta parte es de adaptar los colores de la tarjeta del modal cuando se activa el modo oscuro */
-body.dark-mode .custom-modal-card {
+body:not(.light-mode) .custom-modal-card {
     background-color: #111827;
     border-color: rgba(255, 255, 255, 0.08);
 }
@@ -224,7 +224,7 @@ body.dark-mode .custom-modal-card {
 }
 
 /* esta parte es de adaptar el borde del encabezado en el modo oscuro */
-body.dark-mode .custom-modal-header {
+body:not(.light-mode) .custom-modal-header {
     border-color: rgba(255, 255, 255, 0.08);
 }
 
@@ -249,3 +249,12 @@ body.dark-mode .custom-modal-header {
     overflow-y: auto;
     max-height: 75vh;
 }
+
+/* Agregado de videos: alumnos a quienes el profe les debe videos (videos.html) */
+.profe-entregas { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.profe-entrega { display: grid; gap: 6px; padding: 14px 16px; border-radius: 14px; border: 1px solid rgba(168, 85, 247, 0.15); }
+.profe-entrega.atrasada { border-color: #ef4444; }
+.profe-entrega-estado { font-size: 0.9rem; opacity: 0.85; }
+.profe-entrega.atrasada .profe-entrega-estado { color: #ef4444; opacity: 1; font-weight: 600; }
+.profe-entrega-acciones { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.profe-entrega-acciones select { flex: 1 1 220px; }

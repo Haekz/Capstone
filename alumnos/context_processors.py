@@ -14,11 +14,23 @@ sesion, y `alumnos.roles` para decidir QUE rol mostrar. Asi el menu, el
 login y los decoradores nunca discrepan sobre el rol de un usuario.
 """
 
+import re
+
+from django.conf import settings
 from django.urls import reverse
 
-from .roles import ROLES, perfil_de, rol_en_sesion
+from .roles import ROLES, abre_tickets, perfil_de, rol_en_sesion
 
 _ANONIMO = {'autenticado': False}
+
+
+def datos_legales(request):
+    """Responsable de los datos y contacto (settings.LEGAL), como `legal`, para todas las plantillas.
+
+    Pie de pagina, Contacto, Terminos y Privacidad leen de aqui: cambiar un dato es cambiar una variable de entorno.
+    """
+    legal = settings.LEGAL
+    return {'legal': {**legal, 'telefono_enlace': re.sub(r'[^\d+]', '', legal['telefono'])}}
 
 
 def _nombre_visible(user, perfil):
@@ -97,4 +109,5 @@ def estado_sesion(request):
         texto_panel=rol.texto_panel,
         url_panel=reverse(rol.ruta_portal),
         url_logout=reverse(rol.ruta_logout),
+        url_ayuda=reverse('mis_tickets') if abre_tickets(rol, user) else '',
     )

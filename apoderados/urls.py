@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views
+from . import views, views_revision, views_videos, views_vinculo
 
 urlpatterns = [
     path('registro/', views.registro, name='registro_apoderado'),
@@ -8,10 +8,16 @@ urlpatterns = [
     path('mi-cuenta/', views.portal, name='portal_apoderado'),
     path('mi-cuenta/reenviar/', views.reenviar, name='apoderado_reenviar_correo'),
     path('mi-cuenta/estudiantes/nuevo/', views.registrar_estudiante, name='apoderado_registrar_estudiante'),
+    path('mi-cuenta/estudiantes/vincular/', views_vinculo.vincular_estudiante, name='apoderado_vincular_estudiante'),
     path('mi-cuenta/estudiantes/<int:id_vinculo>/clave/', views.clave_estudiante, name='apoderado_clave_estudiante'),
+    path('mi-cuenta/carnet/', views.subir_carnet, name='apoderado_subir_carnet'),
+    path('mi-cuenta/estudiantes/<int:id_vinculo>/documento/', views.subir_documento_vinculo,
+         name='apoderado_subir_documento_vinculo'),
     path('mi-cuenta/estudiantes/<int:id_vinculo>/revocar/', views.revocar_vinculo, name='apoderado_revocar_vinculo'),
     path('estudiante/nueva-clave/', views.nueva_clave_estudiante, name='nueva_clave_estudiante'),
     path('mi-cuenta/estudiantes/<int:id_vinculo>/comprar/', views.comprar_paquete, name='apoderado_comprar_paquete'),
+    path('mi-cuenta/estudiantes/<int:id_vinculo>/comprar-videos-extra/', views.comprar_videos_extra,
+         name='apoderado_comprar_videos_extra'),
     path('mi-cuenta/estudiantes/<int:id_vinculo>/clases/', views.clases_estudiante, name='apoderado_clases_estudiante'),
     path('mi-cuenta/estudiantes/<int:id_vinculo>/clases/reservar/', views.reservar_clase,
          name='apoderado_reservar_clase'),
@@ -19,6 +25,12 @@ urlpatterns = [
          name='apoderado_cancelar_clase'),
     path('mi-cuenta/estudiantes/<int:id_vinculo>/clases/<int:id_inscripcion>/reprogramar/', views.reprogramar_clase,
          name='apoderado_reprogramar_clase'),
+    path('mi-cuenta/estudiantes/<int:id_vinculo>/videos/', views_videos.videos_estudiante,
+         name='apoderado_videos_estudiante'),
+    path('mi-cuenta/estudiantes/<int:id_vinculo>/videos/<str:video_id>/ver/', views_videos.ver_video_estudiante,
+         name='apoderado_ver_video'),
+    path('mi-cuenta/estudiantes/<int:id_vinculo>/videos/<str:video_id>/habilitar/',
+         views_videos.habilitar_video_estudiante, name='apoderado_habilitar_video'),
     path('invitacion/<str:token>/', views.invitacion, name='apoderado_invitacion'),
     # Adolescentes de 14 a 17: su cuenta es de alumno, restringida.
     path('estudiantes/registro/', views.registro_adolescente, name='adolescente_registro'),
@@ -28,9 +40,9 @@ urlpatterns = [
     path('estudiantes/mi-solicitud/reenviar/', views.reenviar_correo_adolescente, name='adolescente_reenviar_correo'),
     path('estudiantes/mi-solicitud/invitar/', views.invitar, name='adolescente_invitar'),
     path('salir/', views.logout_apoderado, name='logout_apoderado'),
-    path('revision/', views.revision, name='apoderados_revision'),
-    path('revision/documentos/<int:id_documento>/', views.ver_documento, name='apoderado_documento'),
+    path('revision/', views_revision.revision, name='apoderados_revision'),
+    path('revision/documentos/<int:id_documento>/', views_revision.ver_documento, name='apoderado_documento'),
     path('revision/vinculos/<int:id_vinculo>/revocar/', views.revocar_vinculo_admin, name='apoderados_revocar_vinculo'),
-    path('<int:id_apoderado>/revisar/', views.revisar, name='apoderado_revisar'),
-    path('vinculos/<int:id_vinculo>/revisar/', views.revisar_vinculo, name='apoderado_revisar_vinculo'),
+    path('<int:id_apoderado>/revisar/', views_revision.revisar, name='apoderado_revisar'),
+    path('vinculos/<int:id_vinculo>/revisar/', views_revision.revisar_vinculo, name='apoderado_revisar_vinculo'),
 ]

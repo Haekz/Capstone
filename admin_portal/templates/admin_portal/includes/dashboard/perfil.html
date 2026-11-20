@@ -1,0 +1,48 @@
+{# Perfil y ajustes del administrador. #}
+            <!-- ============ SECCIÓN: PERFIL Y AJUSTES ============ -->
+            <div class="admin-section" id="section-ajustes">
+                <div class="panel" style="max-width: 720px;">
+                    <div class="panel-header">
+                        <span class="panel-title"><i class="bi bi-gear-fill"></i> Configuración del Administrador</span>
+                    </div>
+                    <div class="panel-body">
+                        <form id="formAjustes" onsubmit="event.preventDefault(); Swal.fire('Ajustes Guardados', 'Tu perfil ha sido actualizado.', 'success');">
+                            <div class="form-grid">
+                                <div class="form-field">
+                                    <label class="form-label">Nombre del Administrador</label>
+                                    <input type="text" class="form-input" value="{{ admin.user.first_name }}" required>
+                                </div>
+                                <div class="form-field">
+                                    <label class="form-label">RUT</label>
+                                    <input type="text" class="form-input" value="{{ admin.user.rut }}" required>
+                                </div>
+                                <div class="form-field">
+                                    <label class="form-label">Correo Electrónico</label>
+                                    <input type="email" class="form-input" value="{{ admin.user.email }}" required>
+                                </div>
+                                <div class="form-field">
+                                    <label class="form-label">Teléfono</label>
+                                    <input type="text" class="form-input" value="{{ admin.user.telefono }}" required>
+                                </div>
+                                <div class="form-field">
+                                    <label class="form-label">Color de Acento del Panel</label>
+                                    <select class="form-input" id="accent-color-select" onchange="changeAccentColor()">
+                                        <option value="purple">Morado LBWUS (Defecto)</option>
+                                        <option value="blue">Azul Océano</option>
+                                        <option value="green">Verde Menta</option>
+                                    </select>
+                                </div>
+                                <div class="form-field">
+                                    <label class="form-label">Dirección</label>
+                                    <input type="text" class="form-input" value="{{ admin.user.direccion }}" required>
+                                </div>
+                            </div>
+                            <div style="margin-top:24px;">
+                                <button type="submit" class="btn-primary">
+                                    <i class="bi bi-save"></i> Guardar Configuración
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>

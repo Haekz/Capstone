@@ -1,108 +1,30 @@
 import datetime
 import logging
+from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
-from django.views.decorators.http import require_POST
-from django.db.models import Sum, Q
 from alumnos.models import (
-    Especialidad, Genero, Profesor, Clase, Inscripcion, Tutor,
-    SolicitudRetiro, Pago, PlanAlumno, DesgloseOperacion, Banco,
+    Especialidad, Genero, Profesor, Clase, Inscripcion, Tutor, CuentaBancaria, TIPOS_CUENTA, SolicitudRetiro, Banco,
 )
 from alumnos.decorators import profesor_required, profesor_required_json
 from alumnos.roles import ADMIN, PROFESOR, abrir_sesion_rol
-from alumnos.utils import formato_clp, validar_rut_chileno, usuario_existe, validar_imagen_perfil
+from alumnos.utils import formato_clp, validar_rut_chileno, usuario_existe
 from django.core.exceptions import ValidationError
 from django.http import FileResponse, Http404
-from . import foto
-from alumnos import paquetes
+from django.views.decorators.http import require_POST
+from . import cambio_cuenta, especializaciones, foto
+from . import inicio as inicio_panel
+from .saldos import calcular_saldos  # noqa: F401  (metricas, supresiones y pruebas lo importan desde aqui)
+from alumnos import avisos_profesor, catalogos, liquidacion
+from agenda import panel as agenda_panel
+from observaciones import panel as observaciones_panel
+from mensajes import panel as mensajes_panel
 
 logger = logging.getLogger(__name__)
 
-VALOR_INSCRIPCION = 15000
-COMISION_LBWUS = 2250
-PAGO_PROFESOR = 12750
 
-def _valor_clase(inscripcion):
-    """Lo que pago el alumno por esa clase."""
-    return inscripcion.paquete.precio_por_clase if getattr(inscripcion, 'paquete_id', None) else VALOR_INSCRIPCION
-
-
-def _ingresos_por_inscripciones(profesor):
-    """Suma lo ganado y el monto correspondiente al tutor por inscripciones consumidas."""
-    inscripciones_qs = Inscripcion.objects.filter(clase__profesor=profesor)
-    if hasattr(inscripciones_qs, 'consumidas'):
-        inscripciones_consumidas = inscripciones_qs.consumidas().select_related('paquete')
-    else:
-        inscripciones_consumidas = inscripciones_qs.filter(
-            estado=Inscripcion.ESTADO_CONFIRMADA
-        ).select_related('paquete')
-
-    valores = [_valor_clase(i) for i in inscripciones_consumidas]
-    total_ganado = sum(valores)
-    corresponde_tutor = sum(paquetes.pago_profesor(v) for v in valores)
-    return total_ganado, corresponde_tutor
-
-
-def _ingresos_por_planes(profesor):
-    """Calcula lo ganado y el prorrateo consumido/pendiente de PlanAlumno del profesor."""
-    planes = PlanAlumno.objects.filter(
-        profesor=profesor,
-        pago__estado=Pago.ESTADO_PAGADA,
-        estado__in=[PlanAlumno.ESTADO_ACTIVO, PlanAlumno.ESTADO_AGOTADO],
-    ).only('monto_total', 'monto_tutor', 'total_clases', 'clases_consumidas')
-
-    total_ganado = 0
-    corresponde_consumido = 0
-    tutor_pendiente = 0
-
-    for plan in planes:
-        total_ganado += plan.monto_total
-        if plan.total_clases > 0:
-            monto_por_clase_tutor = plan.monto_tutor / plan.total_clases
-            consumido = int(round(monto_por_clase_tutor * plan.clases_consumidas))
-            corresponde_consumido += consumido
-            tutor_pendiente += plan.monto_tutor - consumido
-        else:
-            corresponde_consumido += plan.monto_tutor
-
-    return total_ganado, corresponde_consumido, tutor_pendiente
-
-
-def _resumen_retiros(profesor, retiros_lista=None):
-    """Obtiene el total de retiros aprobados y pendientes del profesor."""
-    if retiros_lista is not None:
-        aprobados = sum(r.monto for r in retiros_lista if r.estado == 'aprobado')
-        pendientes = sum(r.monto for r in retiros_lista if r.estado == 'pendiente')
-        return aprobados, pendientes
-
-    agregados = SolicitudRetiro.objects.filter(profesor=profesor).aggregate(
-        aprobados=Sum('monto', filter=Q(estado='aprobado')),
-        pendientes=Sum('monto', filter=Q(estado='pendiente')),
-    )
-    return agregados['aprobados'] or 0, agregados['pendientes'] or 0
-
-
-def calcular_saldos(profesor, retiros_lista=None):
-    """Devuelve los saldos de un profesor a partir de sus inscripciones y planes vendidos (S4-03)."""
-    total_insc, tutor_insc = _ingresos_por_inscripciones(profesor)
-    total_planes, tutor_planes_consumido, tutor_planes_pendiente = _ingresos_por_planes(profesor)
-    aprobados, retiros_pendientes = _resumen_retiros(profesor, retiros_lista=retiros_lista)
-
-    total_ganado = total_insc + total_planes
-    bruto_tutor_acumulado = tutor_insc + tutor_planes_consumido
-    disponible = max(0, bruto_tutor_acumulado - aprobados - retiros_pendientes)
-
-    # Fondos pendientes: comisión retenida + saldo de clases no ejecutadas aún + retiros en trámite
-    comision_plataforma = total_ganado - (bruto_tutor_acumulado + tutor_planes_pendiente)
-    pendiente = comision_plataforma + tutor_planes_pendiente + retiros_pendientes
-
-    return {
-        'total_ganado': total_ganado,
-        'disponible': disponible,
-        'pendiente': pendiente,
-    }
 
 
 def buscar_especialidad(especialidad_id):
@@ -141,10 +63,10 @@ def regis_prof(request):
             if len(password) < 6:
                 return JsonResponse({"success": False, "message": "La contraseña debe tener al menos 6 caracteres."})
 
-            from django.contrib.auth.password_validation import validate_password
+            from alumnos.utils import validar_clave_nueva
             from django.core.exceptions import ValidationError as DjangoValidationError
             try:
-                validate_password(password)
+                validar_clave_nueva(password, rut, correo_electronico)
             except DjangoValidationError as e:
                 return JsonResponse({"success": False, "message": " | ".join(e.messages)})
 
@@ -187,6 +109,7 @@ def regis_prof(request):
                 user=user,
                 especialidad=especialidad
             )
+            avisos_profesor.bienvenida(user)
 
             from django.contrib.auth import login as auth_login
             auth_login(request, user, backend='alumnos.backends.RutOrEmailBackend')
@@ -208,58 +131,29 @@ def regis_prof(request):
     return render(request, 'user_profesor/regis_prof.html', context)
 
 
-def _agrupar_inscripciones_panel(inscripciones):
-    """Agrupa inscripciones por ID de clase y cuenta las solicitudes por mes."""
-    inscripciones_por_clase = {}
+def _rendimiento_mensual(inscripciones, mes_actual):
+    """Grafico de solicitudes de los ultimos 5 meses (el actual al final): [{mes, cantidad, porcentaje}].
+
+    Cuenta por numero de mes, sin mirar el año. Un mes sin inscripciones vale 0; el 100% son 40.
+    """
+    meses_nombres = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+    tope_grafico = 40
     conteo_por_mes = {}
     for insc in inscripciones:
-        inscripciones_por_clase.setdefault(insc.clase_id, []).append(insc)
         if insc.fecha_inscripcion:
             mes_num = insc.fecha_inscripcion.month
             conteo_por_mes[mes_num] = conteo_por_mes.get(mes_num, 0) + 1
-    return inscripciones_por_clase, conteo_por_mes
 
-
-def _construir_clases_hoy(clases_top6, inscripciones_por_clase):
-    """Formatea las hasta 6 clases del día con el primer alumno inscrito."""
-    clases_hoy = []
-    for clase in clases_top6:
-        insc_lista = inscripciones_por_clase.get(clase.id_clase, [])
-        primera_insc = insc_lista[0] if insc_lista else None
-        alumno_nombre = primera_insc.alumno.user.first_name if primera_insc else "Sin asignar"
-        modalidad = clase.get_modalidad_display() if hasattr(clase, 'get_modalidad_display') else clase.modalidad
-        clases_hoy.append({
-            'nombre_curso': clase.asignatura.nombre,
-            'horario': clase.horario,
-            'modalidad': modalidad,
-            'alumno': alumno_nombre,
+    grafico = []
+    for atras in range(4, -1, -1):
+        indice = (mes_actual - atras - 1) % 12
+        cantidad = conteo_por_mes.get(indice + 1, 0)
+        grafico.append({
+            'mes': meses_nombres[indice],
+            'cantidad': cantidad,
+            'porcentaje': min(100, int((cantidad / tope_grafico) * 100)),
         })
-    return clases_hoy
-
-
-def _calcular_dinero_hoy(clases_top6, inscripciones):
-    """Calcula y formatea el monto correspondiente al profesor para las clases del día."""
-    ids_hoy = {c.id_clase for c in clases_top6}
-    inscripciones_hoy = [i for i in inscripciones if i.clase_id in ids_hoy]
-    dinero_hoy_val = sum(paquetes.pago_profesor(_valor_clase(i)) for i in inscripciones_hoy)
-    return formato_clp(dinero_hoy_val)
-
-
-def _construir_rendimiento_mensual(conteo_por_mes):
-    """Genera la serie de solicitudes de los últimos 5 meses para el gráfico del panel."""
-    meses_nombres = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
-    current_month = timezone.localdate().month  # mes en Chile, no el del servidor
-    tope_grafico = 40
-    rendimiento_meses = []
-    for i in range(4, -1, -1):
-        month_idx = (current_month - i - 1) % 12
-        real_count = conteo_por_mes.get(month_idx + 1, 0)
-        rendimiento_meses.append({
-            'mes': meses_nombres[month_idx],
-            'cantidad': real_count,
-            'porcentaje': min(100, int((real_count / tope_grafico) * 100)),
-        })
-    return rendimiento_meses
+    return grafico
 
 
 @never_cache
@@ -284,44 +178,49 @@ def panel_profesor(request):
         Inscripcion.objects.filter(
             clase__profesor=profesor,
             estado__in=['confirmada', 'pendiente']
-        ).select_related('alumno', 'alumno__user', 'clase', 'clase__asignatura')
+        ).select_related('alumno', 'alumno__user', 'clase', 'clase__asignatura', 'paquete')
     )
 
-    inscripciones_por_clase, conteo_por_mes = _agrupar_inscripciones_panel(inscripciones)
-    clases_top6 = clases[:6]
-    clases_hoy_lista = _construir_clases_hoy(clases_top6, inscripciones_por_clase)
-
+    # 4. Saldo generado y gestión de retiros
     mis_retiros = list(
         SolicitudRetiro.objects.filter(profesor=profesor)
         .select_related('banco')
         .order_by('-fecha_solicitud')
     )
-    saldos = calcular_saldos(profesor, retiros_lista=mis_retiros)
+    saldos = calcular_saldos(profesor)
     saldo_disponible = saldos['disponible']
 
-    # S4-09: Desglose económico detallado de operaciones bajo comisión LBWUS 15%
-    desgloses_profesor = list(
-        DesgloseOperacion.objects.filter(profesor=profesor)
-        .select_related('alumno', 'alumno__user', 'inscripcion', 'inscripcion__clase', 'inscripcion__clase__asignatura', 'plan_alumno')
-        .order_by('-fecha_operacion')[:20]
-    )
+    saldo_total_fmt = formato_clp(saldos['total_ganado'])
+    saldo_disponible_fmt = formato_clp(saldo_disponible)
+    saldo_pendiente_fmt = formato_clp(saldos['pendiente'])
+
+    generos = list(Genero.objects.all())
 
     context = {
         'profesor': profesor,
         'clases': clases,
         'inscripciones': inscripciones,
-        'clases_hoy': clases_hoy_lista,
-        'dinero_hoy': _calcular_dinero_hoy(clases_top6, inscripciones),
-        'clases_disponibles': max(0, 8 - len(clases_hoy_lista)),
-        'rendimiento_meses': _construir_rendimiento_mensual(conteo_por_mes),
-        'saldo_total': formato_clp(saldos['total_ganado']),
-        'saldo_disponible': formato_clp(saldo_disponible),
+        **inicio_panel.contexto(profesor),  # Clases de Hoy, dinero y bloques libres de hoy (inicio.py)
+        'rendimiento_meses': _rendimiento_mensual(inscripciones, timezone.localdate().month),  # mes en Chile
+        'saldo_total': saldo_total_fmt,
+        'saldo_disponible': saldo_disponible_fmt,
         'saldo_disponible_raw': saldo_disponible,
-        'saldo_pendiente': formato_clp(saldos['pendiente']),
+        'saldo_pendiente': saldo_pendiente_fmt,
         'mis_retiros': mis_retiros,
-        'desgloses_profesor': desgloses_profesor,
-        'generos': list(Genero.objects.all()),
-        'especialidades': list(Especialidad.objects.order_by('nombre')),
+        'cuenta_bancaria': CuentaBancaria.objects.filter(profesor=profesor).first(),
+        'bancos': catalogos.BANCOS,
+        'tipos_cuenta': TIPOS_CUENTA,
+        'minimo_retiro': formato_clp(liquidacion.MINIMO),
+        'minimo_retiro_raw': liquidacion.MINIMO,
+        'proximo_pago': liquidacion.proximo_pago(profesor, timezone.localdate()),
+        'frecuencia_vigente': liquidacion.frecuencia_vigente(profesor, timezone.localdate()),
+        'frecuencias': liquidacion.FRECUENCIAS,
+        'generos': generos,
+        'especialidades': Especialidad.objects.order_by('nombre'),
+        **agenda_panel.contexto(profesor),  # seccion Mi Agenda (agenda/panel.py)
+        **observaciones_panel.contexto_profesor(profesor),  # sus clases realizadas, en la misma seccion
+        **mensajes_panel.contexto_profesor(profesor, request.GET.get('c')),  # Buzon (mensajes/panel.py)
+        **especializaciones.contexto_panel(profesor),  # Mis especializaciones, en Inicio
     }
     return render(request, 'user_profesor/panel_profesor.html', context)
 
@@ -339,7 +238,7 @@ def subir_titulo(request):
         return JsonResponse({"success": False, "message": e.messages[0]})
     return JsonResponse({
         "success": True,
-        "message": "Título recibido. Un administrador lo revisará y te habilitará para hacer clases.",
+        "message": "Título recibido. Nuestro equipo de soporte lo revisará y te habilitará para hacer clases.",
     })
 
 
@@ -403,20 +302,12 @@ def actualizar_perfil_prof(request):
             except ValidationError as e:
                 return JsonResponse({"success": False, "message": e.messages[0]}, status=400)
 
-            # Tarifa por clase: opcional; solo afecta a los paquetes que se vendan despues.
-            tarifa_txt = request.POST.get('tarifa', '').strip()
-            try:
-                tarifa = paquetes.validar_tarifa(tarifa_txt) if tarifa_txt else profesor.tarifa
-            except ValidationError as e:
-                return JsonResponse({"success": False, "message": e.messages[0]})
-
             profesor.user.first_name = nombre
             profesor.user.last_name = ''
             profesor.user.rut = rut
             profesor.user.username = rut
             profesor.especialidad = especialidad
             profesor.telefono_publico = request.POST.get('telefono_publico') in ('on', 'true', '1')
-            profesor.tarifa = tarifa
             profesor.user.direccion = direccion
             profesor.user.email = correo
             profesor.user.telefono = telefono
@@ -435,6 +326,65 @@ def actualizar_perfil_prof(request):
 
 
 @profesor_required_json
+@require_POST
+def guardar_cuenta_bancaria(request):
+    """Registra la cuenta donde se le paga al profesor (titular: su propio RUT).
+
+    La primera se guarda al tiro; cambiarla exige la contrasena y el enlace del correo.
+    """
+    profesor_id = request.session.get('profesor_id')
+    actual = CuentaBancaria.objects.select_related('profesor__user').filter(profesor_id=profesor_id).first()
+    cuenta = CuentaBancaria(profesor_id=profesor_id)
+    cuenta.banco = request.POST.get('banco', '')
+    cuenta.tipo_cuenta = request.POST.get('tipo_cuenta', '')
+    try:
+        cuenta.asignar_numero(request.POST.get('numero_cuenta'))
+        cuenta.full_clean(exclude=['profesor'])  # valida banco y tipo contra las listas cerradas
+    except ValidationError as e:
+        return JsonResponse({"success": False, "message": e.messages[0]})
+    if actual is None:
+        cuenta.save()
+        return JsonResponse({"success": True, "message": f"Cuenta guardada: {cuenta.banco} {cuenta.enmascarado}."})
+    if not request.user.check_password(request.POST.get('password', '')):
+        return JsonResponse({"success": False, "message": "La contraseña no es correcta."})
+    if not cambio_cuenta.pedir(request, actual, cuenta):
+        return JsonResponse({"success": False, "message": "No pudimos enviar el correo de confirmación. Intenta más tarde."})
+    return JsonResponse({"success": True, "message": "Te enviamos un enlace a tu correo para confirmar el cambio. Vence en 24 horas."})
+
+
+@profesor_required
+def confirmar_cambio_cuenta(request, token):
+    try:
+        cuenta = cambio_cuenta.confirmar(request.session.get('profesor_id'), token)
+    except ValidationError as e:
+        messages.error(request, e.messages[0])
+    else:
+        desde = timezone.localtime(cuenta.pagable_desde).strftime('%d/%m/%Y %H:%M')
+        messages.success(request, f'Cuenta cambiada a {cuenta.banco} {cuenta.enmascarado}. '
+                                  f'Por seguridad, los pagos a esta cuenta se habilitan el {desde}.')
+    return redirect('panel_profesor')
+
+
+# _json: el panel llama esta vista con fetch y espera {'success': ...};
+# un redirect le romperia el res.json().
+@profesor_required_json
+@require_POST
+def guardar_frecuencia_pago(request):
+    """Semanal o mensual; el cambio rige desde el ciclo siguiente (F4)."""
+    profesor = Profesor.objects.get(id_profesor=request.session.get('profesor_id'))
+    try:
+        desde = liquidacion.cambiar_frecuencia(profesor, request.POST.get('frecuencia', ''), timezone.localdate())
+    except ValidationError as e:
+        return JsonResponse({"success": False, "message": e.messages[0]})
+    if desde is None:
+        return JsonResponse({"success": True, "message": f"Sigues con pago {profesor.get_frecuencia_pago_display().lower()}."})
+    return JsonResponse({"success": True, "message": f"Desde el {desde:%d/%m/%Y} tu pago será "
+                                                    f"{profesor.get_frecuencia_nueva_display().lower()}. El ciclo en curso no cambia."})
+
+
+# _json: el panel llama esta vista con fetch y espera {'success': ...};
+# un redirect le romperia el res.json().
+@profesor_required_json
 def solicitar_retiro(request):
     profesor_id = request.session.get('profesor_id')
 
@@ -444,12 +394,13 @@ def solicitar_retiro(request):
         try:
             monto_str = request.POST.get('monto', '').replace('.', '').replace('$', '').strip()
             monto = int(monto_str)
-            banco = request.POST.get('banco', 'Banco Estado').strip()[:50]
-            tipo_cuenta = request.POST.get('tipo_cuenta', 'Cuenta Rut / Vista').strip()[:50]
-            numero_cuenta = request.POST.get('numero_cuenta', '').strip()[:30]
 
-            if monto <= 0:
-                return JsonResponse({"success": False, "message": "El monto a retirar debe ser mayor a cero."})
+            if monto < liquidacion.MINIMO:
+                return JsonResponse({"success": False, "message": f"El mínimo para retirar es {formato_clp(liquidacion.MINIMO)}. Tu saldo se acumula hasta alcanzarlo."})
+
+            cuenta = CuentaBancaria.objects.filter(profesor_id=profesor_id).first()
+            if cuenta is None:
+                return JsonResponse({"success": False, "message": "Registra tu cuenta bancaria antes de solicitar un retiro."})
 
             with transaction.atomic():
                 profesor = Profesor.objects.select_for_update().get(id_profesor=profesor_id)
@@ -463,15 +414,16 @@ def solicitar_retiro(request):
                 if monto > saldo_disponible:
                     return JsonResponse({"success": False, "message": f"El monto ingresado excede tu saldo disponible ({formato_clp(saldo_disponible)})."})
 
-                banco_obj, _ = Banco.objects.get_or_create(nombre=banco if banco else 'Banco Estado')
-                SolicitudRetiro.objects.create(
+                # Copia enmascarada: el numero completo solo vive cifrado en la cuenta.
+                retiro = SolicitudRetiro.objects.create(
                     profesor=profesor,
                     monto=monto,
-                    banco=banco_obj,
-                    tipo_cuenta=tipo_cuenta if tipo_cuenta else 'Cuenta Rut / Vista',
-                    numero_cuenta=numero_cuenta
+                    banco=Banco.objects.get_or_create(nombre=cuenta.banco)[0],
+                    tipo_cuenta=cuenta.tipo_cuenta,
+                    numero_cuenta=cuenta.enmascarado,
+                    pagar_el=liquidacion.proximo_pago(profesor, timezone.localdate()),
                 )
-            return JsonResponse({"success": True, "message": f"Solicitud de retiro por {formato_clp(monto)} registrada con éxito. Se procesará en 24 a 48 horas hábiles."})
+            return JsonResponse({"success": True, "message": f"Solicitud de retiro por {formato_clp(monto)} registrada. Se paga el {retiro.pagar_el:%d/%m/%Y}."})
         except ValueError:
             return JsonResponse({"success": False, "message": "Por favor ingresa un monto numérico válido."})
         except Exception:
@@ -489,67 +441,56 @@ def _es_admin(request):
     return bool(request.session.get(ADMIN.clave_sesion)) and request.user.is_active
 
 
-def _validar_datos_registro_tutor(post_data):
-    """Extrae y valida los datos del formulario de registro de administrador."""
-    campos = (
-        'nombre', 'rut', 'direccion', 'fecha_nacimiento',
-        'correo_electronico', 'telefono', 'genero', 'password', 'confirm_password',
-    )
-    datos = {campo: post_data.get(campo, '').strip() for campo in campos}
-    if not all(datos.values()):
-        return None, JsonResponse({"success": False, "message": "Todos los campos son obligatorios para registrarse."})
-
-    if datos['password'] != datos['confirm_password']:
-        return None, JsonResponse({"success": False, "message": "Las contraseñas no coinciden."})
-
-    if len(datos['password']) < 6:
-        return None, JsonResponse({"success": False, "message": "La contraseña debe tener al menos 6 caracteres."})
-
-    from django.contrib.auth.password_validation import validate_password
-    from django.core.exceptions import ValidationError as DjangoValidationError
-    try:
-        validate_password(datos['password'])
-    except DjangoValidationError as e:
-        return None, JsonResponse({"success": False, "message": " | ".join(e.messages)})
-
-    if not validar_rut_chileno(datos['rut']):
-        return None, JsonResponse({"success": False, "message": "El RUT ingresado no es válido."})
-
-    error_msg = usuario_existe(datos['rut'], datos['correo_electronico'])
-    if error_msg:
-        return None, JsonResponse({"success": False, "message": error_msg})
-
-    error_fecha = _validar_mayoria_edad_tutor(datos['fecha_nacimiento'])
-    if error_fecha:
-        return None, error_fecha
-
-    return datos, None
+_CAMPOS_REGISTRO_TUTOR = (
+    'nombre', 'rut', 'direccion', 'fecha_nacimiento', 'correo_electronico',
+    'telefono', 'genero', 'password', 'confirm_password',
+)
 
 
-def _validar_mayoria_edad_tutor(fecha_nacimiento):
-    """Verifica que la fecha tenga formato YYYY-MM-DD, sea pasada y corresponda a >= 18 años."""
+def _error(mensaje):
+    return JsonResponse({"success": False, "message": mensaje})
+
+
+def _validar_mayoria_edad(fecha_nacimiento):
+    """Mensaje de error si la fecha no es YYYY-MM-DD, no es pasada o la persona tiene menos de 18; si no, None."""
     try:
         fnac = datetime.datetime.strptime(fecha_nacimiento, '%Y-%m-%d').date()
     except ValueError:
-        return JsonResponse({"success": False, "message": "Formato de fecha inválido."})
-
-    today = datetime.date.today()
-    if fnac >= today:
-        return JsonResponse({"success": False, "message": "La fecha de nacimiento no puede ser actual ni futura."})
-
-    age = today.year - fnac.year - ((today.month, today.day) < (fnac.month, fnac.day))
-    if age < 18:
-        return JsonResponse({"success": False, "message": "Debes ser mayor o igual a 18 años para registrarte como administrador."})
+        return "Formato de fecha inválido."
+    hoy = datetime.date.today()
+    if fnac >= hoy:
+        return "La fecha de nacimiento no puede ser actual ni futura."
+    edad = hoy.year - fnac.year - ((hoy.month, hoy.day) < (fnac.month, fnac.day))
+    if edad < 18:
+        return "Debes ser mayor o igual a 18 años para registrarte como administrador."
     return None
 
 
-def _crear_tutor_y_autenticar(request, datos):
-    """Crea el usuario administrador con su perfil Tutor e inicia su sesión."""
+def _error_en_datos_de_registro(datos):
+    """Primer problema de los datos del formulario (mismo orden de siempre), o None si estan bien."""
+    if not all(datos.values()):
+        return "Todos los campos son obligatorios para registrarse."
+    if datos['password'] != datos['confirm_password']:
+        return "Las contraseñas no coinciden."
+    if len(datos['password']) < 6:
+        return "La contraseña debe tener al menos 6 caracteres."
+    from alumnos.utils import validar_clave_nueva
+    from django.core.exceptions import ValidationError as DjangoValidationError
+    try:
+        validar_clave_nueva(datos['password'], datos['rut'], datos['correo_electronico'])
+    except DjangoValidationError as e:
+        return " | ".join(e.messages)
+    if not validar_rut_chileno(datos['rut']):
+        return "El RUT ingresado no es válido."
+    return usuario_existe(datos['rut'], datos['correo_electronico']) or _validar_mayoria_edad(datos['fecha_nacimiento'])
+
+
+def _crear_administrador(request, datos):
+    """Crea el usuario con su perfil Tutor y abre su sesion de administrador."""
     genero = get_object_or_404(Genero, id_genero=datos['genero'])
 
     from django.contrib.auth import get_user_model, login as auth_login
-    User = get_user_model()
-    user = User.objects.create_user(
+    user = get_user_model().objects.create_user(
         username=datos['rut'],
         rut=datos['rut'],
         email=datos['correo_electronico'],
@@ -582,14 +523,14 @@ def regis_tutor(request):
         return render(request, 'user_profesor/regis_tutor.html', {'generos': Genero.objects.all()})
 
     try:
-        datos, error_resp = _validar_datos_registro_tutor(request.POST)
-        if error_resp is not None:
-            return error_resp
-
-        _crear_tutor_y_autenticar(request, datos)
+        datos = {campo: request.POST.get(campo, '').strip() for campo in _CAMPOS_REGISTRO_TUTOR}
+        mensaje = _error_en_datos_de_registro(datos)
+        if mensaje:
+            return _error(mensaje)
+        _crear_administrador(request, datos)
         return JsonResponse({
             "success": True,
-            "message": "Administrador registrado exitosamente. Ingresando al panel...",
+            "message": "Administrador registrado exitosamente. Ingresando al panel..."
         })
     except Exception:
         logger.exception("Error interno en regis_tutor")

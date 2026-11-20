@@ -3,7 +3,7 @@ Pruebas exhaustivas para el modelo SesionClase, constraints de base de datos,
 validaciones a nivel de modelo, QuerySets de disponibilidad, concurrencia y retrocompatibilidad.
 """
 
-from datetime import time, timedelta
+from datetime import timedelta
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
@@ -13,6 +13,7 @@ from django.test import TestCase, TransactionTestCase
 from django.utils import timezone
 
 from alumnos.models import Alumno, Asignatura, Clase, Genero, Inscripcion, Profesor, SesionClase
+from tests.test_apoderados import entrar
 from tests.test_paquetes import dar_paquete
 
 User = get_user_model()
@@ -62,7 +63,6 @@ def crear_fixture_base():
     clase = Clase.objects.create(
         asignatura=asignatura,
         modalidad='online',
-        horario=time(10, 0),
         profesor=profesor
     )
 
@@ -166,7 +166,7 @@ class SesionClaseValidacionesModelTests(TestCase):
 class SesionClaseCheckConstraintsDbTests(TestCase):
     """
     Pruebas que omiten la validación clean() para asegurar que la base de datos
-    (PostgreSQL/SQLite) aplica sus CheckConstraints nativos.
+    (PostgreSQL) aplica sus CheckConstraints nativos.
     """
 
     def setUp(self):
@@ -451,6 +451,7 @@ class VistasReservasSesionTests(TestCase):
 
     def test_listar_sesiones_disponibles_retorna_json(self):
         from django.urls import reverse
+        entrar(self.client, self.alumno1.user, alumno_id=self.alumno1.pk)
         resp = self.client.get(reverse('sesiones_disponibles'))
         self.assertEqual(resp.status_code, 200)
         data = resp.json()
@@ -470,9 +471,7 @@ class VistasReservasSesionTests(TestCase):
     def test_reservar_sesion_exitoso_y_bloqueo_por_cupo_lleno(self):
         from django.urls import reverse
         # Autenticar alumno 1 en sesión
-        session = self.client.session
-        session['alumno_id'] = self.alumno1.pk
-        session.save()
+        entrar(self.client, self.alumno1.user, alumno_id=self.alumno1.pk)
 
         # Reserva exitosa
         resp = self.client.post(
@@ -487,9 +486,7 @@ class VistasReservasSesionTests(TestCase):
         self.assertTrue(Inscripcion.objects.filter(alumno=self.alumno1, sesion=self.sesion).exists())
 
         # Alumno 2 intenta reservar cuando cupo_maximo ya se alcanzó
-        session = self.client.session
-        session['alumno_id'] = self.alumno2.pk
-        session.save()
+        entrar(self.client, self.alumno2.user, alumno_id=self.alumno2.pk)
 
         resp2 = self.client.post(
             reverse('reservar_sesion'),

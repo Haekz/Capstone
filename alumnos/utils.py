@@ -28,6 +28,14 @@ def edad(fecha):
     return hoy.year - fecha.year - ((hoy.month, hoy.day) < (fecha.month, fecha.day))
 
 
+def entero(valor):
+    """El numero que mando el navegador, o None si no lo es (lo que llega por POST nunca se da por bueno)."""
+    try:
+        return int(valor)
+    except (TypeError, ValueError):
+        return None
+
+
 def es_menor(user):
     """True si la cuenta es de un menor. Todos los registros exigen la fecha."""
     return bool(user.fecha_nacimiento) and edad(user.fecha_nacimiento) < EDAD_ADULTA
@@ -60,6 +68,15 @@ def usuario_existe(rut, correo, excluir_user=None):
     return None
 
 
+def validar_clave_nueva(password, rut, correo, nombre=''):
+    """validate_password contra el RUT, el correo y (si se da) el nombre de la cuenta que se crea.
+
+    Sin usuario, Django no tiene con que compararla: la clave igual al RUT o al
+    correo pasaba (Seg-3). Lanza ValidationError, como validate_password.
+    """
+    from django.contrib.auth import get_user_model
+    from django.contrib.auth.password_validation import validate_password
+    validate_password(password, get_user_model()(username=rut or '', email=correo or '', first_name=nombre or ''))
 def formato_clp(valor):
     """Formatea un monto numérico como peso chileno (ej: '$15.000')."""
     try:

@@ -1,0 +1,132 @@
+/* Pagina Notificaciones (notificaciones/lista.html). Solo tokens del sitio: se adapta al modo oscuro. */
+
+.notif-pagina {
+    max-width: 780px;
+    margin: calc(var(--header-height) + 32px) auto 64px;
+    padding: 0 20px;
+    color: var(--text);
+}
+
+.notif-pagina__volver {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 18px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-light);
+    text-decoration: none;
+}
+
+.notif-pagina__volver:hover,
+.notif-pagina__volver:focus-visible {
+    color: var(--text);
+    text-decoration: underline;
+}
+
+.notif-pagina__cabecera {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.notif-pagina__icono {
+    flex: none;
+    width: 52px;
+    height: 52px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--primary-soft);
+    color: var(--primary);
+    font-size: 1.5rem;
+}
+
+.notif-pagina__cabecera h1 {
+    margin: 0;
+    font-size: 1.8rem;
+}
+
+.notif-pagina__cabecera p {
+    margin: 2px 0 0;
+    color: var(--text-light);
+}
+
+.notif-lista {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.notif-item {
+    padding: 14px 18px;
+    border: 1px solid var(--line);
+    border-left: 4px solid transparent;
+    border-radius: var(--r-md);
+    background: var(--surface);
+}
+
+/* Lo nuevo se distingue por el borde y por la etiqueta con texto (no solo por color) */
+.notif-item--nueva {
+    border-left-color: var(--primary);
+    background: var(--primary-soft);
+}
+
+.notif-item__etiqueta {
+    display: inline-block;
+    margin-right: 8px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: var(--primary);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+.notif-item a {
+    color: var(--text);
+    font-weight: 600;
+    text-decoration: underline;
+}
+
+.notif-item a:hover,
+.notif-item a:focus-visible {
+    color: var(--primary);
+}
+
+.notif-item time {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.85rem;
+    color: var(--text-light);
+}
+
+.notif-vacio {
+    padding: 48px 24px;
+    text-align: center;
+    border: 1px dashed var(--line);
+    border-radius: var(--r-md);
+    background: var(--surface);
+    color: var(--text-light);
+}
+
+.notif-vacio i {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 2.4rem;
+    color: var(--primary);
+}
+
+.notif-vacio strong {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 1.15rem;
+    color: var(--text);
+}

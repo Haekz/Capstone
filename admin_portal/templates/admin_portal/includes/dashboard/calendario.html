@@ -1,0 +1,55 @@
+{# Clases de los profesores: solo lectura. Las crea soporte al aprobar un titulo o una especializacion (fase 3). #}
+            <!-- ============ SECCIÓN: CLASES ============ -->
+            <div class="admin-section" id="section-clases">
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title"><i class="bi bi-calendar3"></i> Clases de los profesores</span>
+                    </div>
+                    <p style="margin: 0 20px 15px; color: var(--text-secondary); font-size: 0.9rem;">
+                        Las asigna soporte al aprobar el título o una especialización de cada profesor.
+                    </p>
+
+                    <div class="panel-body" style="overflow-x: auto;">
+                        <table class="user-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Curso / Materia</th>
+                                    <th>Profesor</th>
+                                    <th>Modalidad</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for c in clases %}
+                                <tr>
+                                    <td style="color:var(--text-muted); font-size:0.8rem;">#{{ c.id_clase }}</td>
+                                    <td><strong>{{ c.asignatura.nombre }}</strong></td>
+                                    <td>
+                                        <div class="user-cell">
+                                            <div class="report-icon profesor" style="width:28px; height:28px; font-size:0.8rem;">
+                                                <i class="bi bi-person-workspace"></i>
+                                            </div>
+                                            <div>{{ c.profesor.user.first_name }}</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-{{ c.modalidad }}">
+                                            {{ c.get_modalidad_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4">
+                                        <div class="empty-state" style="text-align: center; padding: 40px 20px;">
+                                            <i class="bi bi-calendar-x" style="font-size: 2.5rem; display: block; margin-bottom: 10px; color: var(--text-muted);"></i>
+                                            <p style="color: var(--text-secondary);">Todavía no hay clases. Aparecen cuando soporte aprueba el título o una especialización de un profesor.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>

@@ -1,14 +1,13 @@
 """Paquetes de clases Flexible / Progreso / Intensivo (analisis de mercado 2.13-2.14, F-11).
 
-Con la tarifa base de $15.000 por clase: $15.000 / $59.000 / $116.000, con una
+Precios fijos de LBWUS, iguales con todos los profesores: $15.990 / $62.990 / $123.990, con una
 comision de LBWUS del 15% (IVA incluido). Cubre precio, cantidad de clases,
 compra, reserva, cancelacion, reprogramacion y permisos. Webpay va con mock.
 """
 
-from datetime import time, timedelta
+from datetime import timedelta
 from unittest.mock import patch
 
-from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -22,6 +21,7 @@ from alumnos.models import (
     Asignatura, Clase, Especialidad, Genero, Inscripcion, PaqueteClases, Profesor, SesionClase,
 )
 from alumnos.services import InscripcionService
+from tests.aceptacion import aceptar_terminos
 from tests.test_especialidad import CLAVE, crear_profesor
 from tests.test_filtros_clases import crear_sesion
 from tests.test_progreso_alumno import crear_alumno
@@ -35,50 +35,46 @@ def dar_paquete(alumno, profesor, plan='progreso', dias=30, estado=PaqueteClases
     """Paquete ya pagado, como lo deja Webpay al aprobar."""
     p = paquetes.POR_CODIGO[plan]
     return PaqueteClases.objects.create(
-        alumno=alumno, profesor=profesor, plan=plan, clases=p.clases, tarifa=profesor.tarifa,
-        monto=paquetes.precio(p, profesor.tarifa), dias=p.vigencia_dias, buy_order='LB1234567',
+        alumno=alumno, profesor=profesor, plan=plan, clases=p.clases, tarifa=paquetes.TARIFA,
+        monto=paquetes.precio(p), dias=p.vigencia_dias, buy_order='LB1234567',
         estado=estado, fecha_fin=timezone.now() + timedelta(days=dias),
     )
 
 
 class CalculoTests(SimpleTestCase):
 
-    def precios(self, tarifa):
-        return [c.precio for c in paquetes.cotizar(tarifa)]
+    def precios(self):
+        return [c.precio for c in paquetes.cotizar()]
 
-    def test_tarifa_base_da_los_precios_de_referencia(self):
-        self.assertEqual(self.precios(15000), [15000, 59000, 116000])
+    def test_precios_fijos_de_lbwus(self):
+        self.assertEqual(paquetes.TARIFA, 15990)
+        self.assertEqual(self.precios(), [15990, 62990, 123990])
 
-    def test_otra_tarifa_escala_con_el_mismo_descuento(self):
-        self.assertEqual(self.precios(20000), [20000, 79000, 155000])
-        self.assertEqual(self.precios(10000), [10000, 39000, 77000])
+    def test_todo_precio_termina_en_990(self):
+        for precio in self.precios():
+            self.assertEqual(precio % 1000, 990, precio)
 
-    def test_descuento_por_clase_con_tarifa_base(self):
-        flexible, progreso, intensivo = paquetes.cotizar(15000)
+    def test_descuento_por_clase(self):
+        flexible, progreso, intensivo = paquetes.cotizar()
         self.assertEqual([flexible.descuento_por_clase, progreso.descuento_por_clase,
-                          intensivo.descuento_por_clase], [0, 250, 500])
-        self.assertEqual([progreso.precio_por_clase, intensivo.precio_por_clase], [14750, 14500])
-        self.assertEqual([progreso.descuento_pct, intensivo.descuento_pct], ['1,7', '3,3'])
-        self.assertEqual([progreso.ahorro_total, intensivo.ahorro_total], [1000, 4000])
+                          intensivo.descuento_por_clase], [0, 243, 492])
+        # Hacia abajo: $62.990 / 4 = $15.747,5 y $123.990 / 8 = $15.498,75
+        self.assertEqual([progreso.precio_por_clase, intensivo.precio_por_clase], [15747, 15498])
+        self.assertEqual([progreso.descuento_pct, intensivo.descuento_pct], ['1,5', '3,1'])
+        self.assertEqual([progreso.ahorro_total, intensivo.ahorro_total], [970, 3930])
 
     def test_cantidad_de_clases_y_vigencia(self):
         self.assertEqual([(p.nombre, p.clases, p.vigencia_dias) for p in paquetes.PLANES],
-                         [('Flexible', 1, 30), ('Progreso', 4, 60), ('Intensivo', 8, 90)])
+                         [('Flexible', 1, 30), ('Progreso', 4, 30), ('Intensivo', 8, 60)])  # decidido 14-nov
 
     def test_comision_15_por_ciento_con_iva_incluido(self):
-        flexible, progreso, intensivo = paquetes.cotizar(15000)
-        self.assertEqual((flexible.comision, flexible.pago_profesor), (2250, 12750))
-        self.assertEqual((progreso.comision, progreso.pago_profesor), (8850, 50150))
-        self.assertEqual((intensivo.comision, intensivo.pago_profesor), (17400, 98600))
-        self.assertEqual(flexible.iva_comision, 359)  # 2.250 x 19/119
-        for c in paquetes.cotizar(15000):
+        flexible, progreso, intensivo = paquetes.cotizar()
+        self.assertEqual((flexible.comision, flexible.pago_profesor), (2399, 13591))
+        self.assertEqual((progreso.comision, progreso.pago_profesor), (9449, 53541))
+        self.assertEqual((intensivo.comision, intensivo.pago_profesor), (18599, 105391))
+        self.assertEqual(flexible.iva_comision, 383)  # 2.399 x 19/119
+        for c in paquetes.cotizar():
             self.assertEqual(c.comision + c.pago_profesor, c.precio)
-
-    def test_validar_tarifa(self):
-        self.assertEqual(paquetes.validar_tarifa(' 20000 '), 20000)
-        for malo in ('', 'abc', '9000', '50001', '15500', '-15000', None):
-            with self.subTest(tarifa=malo), self.assertRaises(ValidationError):
-                paquetes.validar_tarifa(malo)
 
 
 class Escenario(TestCase):
@@ -89,6 +85,8 @@ class Escenario(TestCase):
         genero = Genero.objects.create(descripcion='Otro')
         cls.ana = crear_alumno(RUT_ANA, 'Ana', genero)
         cls.beto = crear_alumno(RUT_BETO, 'Beto', genero)
+        for alumno in (cls.ana, cls.beto):
+            aceptar_terminos(alumno.user)  # estas pruebas son de compra, no de la aceptacion
         mate = Especialidad.objects.create(nombre='Matematicas')
         cls.profe = crear_profesor(RUT_PROFE, 'profe@lbwus.cl', mate)
         cls.otro = crear_profesor(RUT_OTRO, 'otro@lbwus.cl', mate)
@@ -96,9 +94,9 @@ class Escenario(TestCase):
                                         titulo_estado=Profesor.TITULO_EN_REVISION)
         asignatura = Asignatura.objects.create(nombre='Algebra')
         cls.clase = Clase.objects.create(asignatura=asignatura, modalidad='online',
-                                         horario=time(10, 0), profesor=cls.profe)
+                                         profesor=cls.profe)
         cls.clase_otro = Clase.objects.create(asignatura=asignatura, modalidad='online',
-                                              horario=time(11, 0), profesor=cls.otro)
+                                              profesor=cls.otro)
 
     def entrar(self, rut):
         self.client.logout()
@@ -109,11 +107,11 @@ class PaginaPlanesTests(Escenario):
 
     def test_muestra_los_tres_paquetes_con_precios_de_referencia(self):
         r = self.client.get(reverse('planes'))
-        for texto in ('Flexible', 'Progreso', 'Intensivo', '$15.000', '$59.000', '$116.000',
+        for texto in ('Flexible', 'Progreso', 'Intensivo', '$15.990', '$62.990', '$123.990',
                       '1 clase de 60 min', '4 clases de 60 min', '8 clases de 60 min',
-                      '$14.750 por clase', '$14.500 por clase',
-                      'Descuento de $250 por clase (1,7%)', 'Descuento de $500 por clase (3,3%)',
-                      'comisión LBWUS de 15%', 'IVA incluido', 'Vigencia de 90 días'):
+                      '$15.747 por clase', '$15.498 por clase',
+                      'Descuento de $243 por clase (1,5%)', 'Descuento de $492 por clase (3,1%)',
+                      'comisión LBWUS de 15%', 'IVA incluido', 'Vigencia de 30 días', 'Vigencia de 60 días'):
             self.assertContains(r, texto)
 
     def test_ya_no_ofrece_los_planes_antiguos_ni_funciones_simuladas(self):
@@ -121,24 +119,38 @@ class PaginaPlanesTests(Escenario):
         for texto in ('Plan Básico', '$89.990', 'Plan Personalizado', 'Material Específico', 'carrito'):
             self.assertNotContains(r, texto)
 
-    def test_precios_del_profesor_elegido(self):
-        self.profe.tarifa = 20000
-        self.profe.save()
-        r = self.client.get(reverse('planes'), {'profesor': self.profe.id_profesor})
-        for texto in ('$20.000', '$79.000', '$155.000', 'Precios con Profe'):
-            self.assertContains(r, texto)
-        self.assertNotContains(r, '$116.000')
+    def test_mismos_precios_con_cualquier_profesor(self):
+        for profesor in (self.profe, self.otro):
+            r = self.client.get(reverse('planes'), {'profesor': profesor.id_profesor})
+            for texto in ('$15.990', '$62.990', '$123.990', f'Precios con {profesor.nombre}',
+                          'el mismo precio con todos los profesores'):
+                self.assertContains(r, texto)
 
     def test_profesor_sin_titulo_o_inexistente_usa_la_referencia(self):
         for pk in (self.sin_titulo.id_profesor, 9999, 'x'):
             r = self.client.get(reverse('planes'), {'profesor': pk})
-            self.assertContains(r, '$116.000')
+            self.assertContains(r, '$123.990')
             self.assertIsNone(r.context['profesor'])
 
     def test_anonimo_no_ve_boton_de_compra(self):
         r = self.client.get(reverse('planes'), {'profesor': self.profe.id_profesor})
         self.assertContains(r, 'Inicia sesión como alumno para comprar')
         self.assertNotContains(r, reverse('comprar_paquete'))
+
+    def test_sin_profesor_elegido_no_hay_selector_ni_boton_que_no_haga_nada(self):
+        r = self.client.get(reverse('planes'))
+        self.assertNotContains(r, 'id="pl-profesor"')
+        self.assertNotContains(r, 'Elige un profesor para comprar')
+
+    def test_anonimo_sin_profesor_va_al_login_y_de_ahi_al_buscador(self):
+        r = self.client.get(reverse('planes'))
+        self.assertContains(r, f'{reverse("login")}?next={reverse("alumno_pag1")}', count=3)
+
+    def test_alumno_sin_profesor_va_al_buscador_de_su_portal(self):
+        self.entrar(RUT_ANA)
+        r = self.client.get(reverse('planes'))
+        self.assertContains(r, f'{reverse("alumno_pag1")}#dashboard-search-input', count=3)
+        self.assertContains(r, 'Buscar un profesor', count=3)
 
     def test_alumno_ve_un_formulario_de_compra_por_paquete(self):
         self.entrar(RUT_ANA)
@@ -151,7 +163,7 @@ class PaginaPlanesTests(Escenario):
         self.assertContains(self.client.get(reverse('home')), f'href="{reverse("planes")}"')
 
 
-@patch('alumnos.views._tx')
+@patch('alumnos.webpay._tx')
 class CompraTests(Escenario):
 
     def comprar(self, mock_tx, plan='progreso', profesor=None, **extra):
@@ -161,27 +173,27 @@ class CompraTests(Escenario):
 
     def test_cobra_el_precio_del_servidor_para_cada_paquete(self, mock_tx):
         self.entrar(RUT_ANA)
-        for plan, monto, clases in (('flexible', 15000, 1), ('progreso', 59000, 4), ('intensivo', 116000, 8)):
+        for plan, monto, clases in (('flexible', 15990, 1), ('progreso', 62990, 4), ('intensivo', 123990, 8)):
             with self.subTest(plan=plan):
                 r = self.comprar(mock_tx, plan)
                 self.assertEqual(r.status_code, 200)
                 self.assertEqual(mock_tx.return_value.create.call_args[0][2], monto)
                 paquete = PaqueteClases.objects.filter(plan=plan).get()
                 self.assertEqual((paquete.monto, paquete.clases, paquete.tarifa, paquete.estado),
-                                 (monto, clases, 15000, PaqueteClases.ESTADO_PENDIENTE))
+                                 (monto, clases, 15990, PaqueteClases.ESTADO_PENDIENTE))
 
     def test_el_precio_enviado_por_el_cliente_se_ignora(self, mock_tx):
         self.entrar(RUT_ANA)
         self.comprar(mock_tx, 'intensivo', monto='1', amount='1', precio='1', clases='99')
-        self.assertEqual(mock_tx.return_value.create.call_args[0][2], 116000)
+        self.assertEqual(mock_tx.return_value.create.call_args[0][2], 123990)
         self.assertEqual(PaqueteClases.objects.get().clases, 8)
 
-    def test_usa_la_tarifa_del_profesor(self, mock_tx):
-        self.profe.tarifa = 20000
-        self.profe.save()
+    def test_cobra_lo_mismo_con_cualquier_profesor(self, mock_tx):
         self.entrar(RUT_ANA)
-        self.comprar(mock_tx, 'progreso')
-        self.assertEqual(mock_tx.return_value.create.call_args[0][2], 79000)
+        for profesor in (self.profe, self.otro):
+            with self.subTest(profesor=profesor.nombre):
+                self.comprar(mock_tx, 'progreso', profesor=profesor)
+                self.assertEqual(mock_tx.return_value.create.call_args[0][2], 62990)
 
     def test_sin_sesion_de_alumno_no_cobra(self, mock_tx):
         r = self.comprar(mock_tx)
@@ -219,7 +231,7 @@ class CompraTests(Escenario):
         self.assertEqual(len(set(ordenes)), 3)
         self.assertTrue(all(len(o) <= 26 for o in ordenes))  # limite de Transbank
         mock_tx.return_value.commit.return_value = {'response_code': 0, 'status': 'AUTHORIZED',
-                                                    'amount': 59000, 'buy_order': ordenes[0]}
+                                                    'amount': 62990, 'buy_order': ordenes[0]}
         self.client.post(reverse('confirmacion'), {'token_ws': 'tok'})
         self.assertEqual(PaqueteClases.objects.filter(estado=PaqueteClases.ESTADO_ACTIVA).count(), 1)
 
@@ -240,7 +252,7 @@ class CompraTests(Escenario):
 
     def test_monto_autorizado_distinto_al_del_paquete_se_rechaza(self, mock_tx):
         self.entrar(RUT_ANA)
-        self.comprar(mock_tx, 'progreso')  # $59.000
+        self.comprar(mock_tx, 'progreso')  # $62.990
         mock_tx.return_value.commit.return_value = {
             'response_code': 0, 'status': 'AUTHORIZED', 'amount': 1000,
             'buy_order': PaqueteClases.objects.get().buy_order}
@@ -251,7 +263,7 @@ class CompraTests(Escenario):
     def confirmar(self, mock_tx, aprobado):
         mock_tx.return_value.commit.return_value = {
             'response_code': 0 if aprobado else -1, 'status': 'AUTHORIZED' if aprobado else 'FAILED',
-            'amount': 59000, 'buy_order': PaqueteClases.objects.get().buy_order,
+            'amount': 62990, 'buy_order': PaqueteClases.objects.get().buy_order,
         }
         return self.client.post(reverse('confirmacion'), {'token_ws': 'tok'})
 
@@ -262,7 +274,9 @@ class CompraTests(Escenario):
         self.assertContains(r, 'Progreso: 4 clase(s) con Profe')
         paquete = PaqueteClases.objects.get()
         self.assertEqual(paquete.estado, PaqueteClases.ESTADO_ACTIVA)
-        self.assertAlmostEqual((paquete.fecha_fin - timezone.now()).days, 59, delta=1)
+        vigencia = paquetes.POR_CODIGO['progreso'].vigencia_dias
+        self.assertEqual(paquete.dias, vigencia)
+        self.assertAlmostEqual((paquete.fecha_fin - timezone.now()).days, vigencia - 1, delta=1)
         self.assertEqual(paquete.clases_disponibles, 4)
 
     def test_pago_rechazado_no_da_clases_y_repetir_el_token_no_duplica(self, mock_tx):
@@ -275,7 +289,7 @@ class CompraTests(Escenario):
         nuevo = PaqueteClases.objects.exclude(estado=PaqueteClases.ESTADO_RECHAZADA).get()
         for _ in range(2):  # replay del mismo commit
             mock_tx.return_value.commit.return_value = {'response_code': 0, 'status': 'AUTHORIZED',
-                                                        'amount': 59000, 'buy_order': nuevo.buy_order}
+                                                        'amount': 62990, 'buy_order': nuevo.buy_order}
             self.client.post(reverse('confirmacion'), {'token_ws': 'tok'})
         self.assertEqual(self.ana.paquetes.vigentes().count(), 1)
 
@@ -514,39 +528,130 @@ class PortalYSaldoTests(Escenario):
         self.assertContains(r, 'Aún no tienes paquetes vigentes')
 
     def test_el_profesor_recibe_el_85_por_ciento_de_cada_clase_tomada(self):
-        dar_paquete(self.ana, self.profe, 'intensivo')
-        for dias in (1, 2):
-            InscripcionService.inscribir_alumno_en_sesion(self.ana, crear_sesion(self.clase, dias=dias).pk)
+        paquete = dar_paquete(self.ana, self.profe, 'intensivo')
+        for dias in (-1, -2):
+            Inscripcion.objects.create(alumno=self.ana, clase=self.clase, paquete=paquete,
+                                       sesion=crear_sesion(self.clase, dias=dias))
         saldos = calcular_saldos(self.profe)
-        self.assertEqual(saldos['total_ganado'], 2 * 14500)
-        self.assertEqual(saldos['disponible'], 2 * paquetes.pago_profesor(14500))
-        self.assertEqual(saldos['pendiente'], 2 * (14500 - paquetes.pago_profesor(14500)))
+        self.assertEqual(saldos['total_ganado'], 2 * 15498)  # $123.990 / 8, hacia abajo
+        self.assertEqual(saldos['disponible'], 2 * paquetes.pago_profesor(15498))
+        self.assertEqual(saldos['pendiente'], 2 * (15498 - paquetes.pago_profesor(15498)))
+
+    def test_reserva_futura_no_suma_saldo_hasta_dictarse(self):
+        dar_paquete(self.ana, self.profe, 'intensivo')
+        InscripcionService.inscribir_alumno_en_sesion(self.ana, crear_sesion(self.clase, dias=1).pk)
+        saldos = calcular_saldos(self.profe)
+        self.assertEqual(saldos['total_ganado'], 0)
+        self.assertEqual(saldos['disponible'], 0)
 
     def test_clase_cancelada_no_le_paga_al_profesor(self):
-        dar_paquete(self.ana, self.profe, 'flexible')
-        insc = InscripcionService.inscribir_alumno_en_sesion(self.ana, crear_sesion(self.clase, dias=1).pk)
-        InscripcionService.cancelar_inscripcion(self.ana, insc.pk)
+        paquete = dar_paquete(self.ana, self.profe, 'flexible')
+        Inscripcion.objects.create(alumno=self.ana, clase=self.clase, paquete=paquete,
+                                   sesion=crear_sesion(self.clase, dias=-1),
+                                   estado=Inscripcion.ESTADO_CANCELADA)
         self.assertEqual(calcular_saldos(self.profe)['total_ganado'], 0)
 
-    def test_el_profesor_cambia_su_tarifa_desde_el_panel_con_validacion(self):
+    def test_el_profesor_ya_no_elige_el_precio(self):
         self.entrar(RUT_PROFE)
+        self.assertNotContains(self.client.get(reverse('panel_profesor')), 'name="tarifa"')
         base = {'nombre': 'Profe', 'rut': RUT_PROFE, 'especialidad': self.profe.especialidad_id,
                 'direccion': 'Calle 1', 'correo_electronico': 'profe@lbwus.cl',
                 'telefono': '911111111', 'genero': self.profe.user.genero.id_genero}
-        url = reverse('actualizar_perfil_prof')
-        self.assertTrue(self.client.post(url, {**base, 'tarifa': '20000'}).json()['success'])
-        self.profe.refresh_from_db()
-        self.assertEqual(self.profe.tarifa, 20000)
-        for malo in ('100', '99999', 'abc', '15500'):
-            r = self.client.post(url, {**base, 'tarifa': malo}).json()
-            self.assertFalse(r['success'], malo)
-        self.assertTrue(self.client.post(url, base).json()['success'])  # sin tarifa: no cambia
-        self.profe.refresh_from_db()
-        self.assertEqual(self.profe.tarifa, 20000)
+        # Un formulario viejo que aun mande 'tarifa' guarda el resto y el precio no cambia.
+        r = self.client.post(reverse('actualizar_perfil_prof'), {**base, 'tarifa': '50000'})
+        self.assertTrue(r.json()['success'])
+        self.assertEqual([c.precio for c in paquetes.cotizar()], [15990, 62990, 123990])
 
-    def test_lo_ya_vendido_no_cambia_si_el_profesor_sube_su_tarifa(self):
+    def test_lo_ya_vendido_no_cambia_con_los_precios_nuevos(self):
+        """Un paquete pagado con los precios antiguos conserva su monto y su valor por clase."""
         paquete = dar_paquete(self.ana, self.profe, 'progreso')
-        self.profe.tarifa = 30000
-        self.profe.save()
+        PaqueteClases.objects.filter(pk=paquete.pk).update(monto=59000, tarifa=15000)
         paquete.refresh_from_db()
-        self.assertEqual((paquete.monto, paquete.tarifa), (59000, 15000))
+        self.assertEqual((paquete.monto, paquete.tarifa, paquete.precio_por_clase), (59000, 15000, 14750))
+
+
+class CriteriosSaldosScrum85Tests(Escenario):
+    """SCRUM-85 (S4-05): brechas de la matriz de saldos que no cubrian las clases de arriba.
+
+    Saldo = clases del paquete - inscripciones.consumidas(): no se resta ni se suma,
+    se cuenta. Por eso cancelar devuelve la clase y reprogramar no gasta otra.
+    """
+
+    def reservar(self, alumno, sesion):
+        return InscripcionService.inscribir_alumno_en_sesion(alumno, sesion.pk)
+
+    @patch('alumnos.webpay._tx')
+    def test_compra_aprobada_de_cada_plan_deja_su_saldo(self, mock_tx):
+        self.entrar(RUT_ANA)
+        mock_tx.return_value.create.return_value = {'url': 'https://webpay.test/', 'token': 'tok'}
+        for plan, monto, clases in (('flexible', 15990, 1), ('progreso', 62990, 4), ('intensivo', 123990, 8)):
+            with self.subTest(plan=plan):
+                self.client.post(reverse('comprar_paquete'), {'plan': plan, 'profesor': self.profe.id_profesor})
+                paquete = PaqueteClases.objects.get(plan=plan)
+                mock_tx.return_value.commit.return_value = {
+                    'response_code': 0, 'status': 'AUTHORIZED', 'amount': monto, 'buy_order': paquete.buy_order}
+                self.client.post(reverse('confirmacion'), {'token_ws': 'tok'})
+                paquete.refresh_from_db()
+                self.assertEqual((paquete.estado, paquete.clases_disponibles), (PaqueteClases.ESTADO_ACTIVA, clases))
+
+    @patch('alumnos.webpay._tx')
+    def test_orden_desconocida_no_activa_ningun_paquete(self, mock_tx):
+        """Reemplaza a test_03 de test_seguridad_webpay_honorarios (buy_order cruzada, flujo antiguo)."""
+        dar_paquete(self.ana, self.profe, estado=PaqueteClases.ESTADO_PENDIENTE)
+        mock_tx.return_value.commit.return_value = {
+            'response_code': 0, 'status': 'AUTHORIZED', 'amount': 62990, 'buy_order': 'PQ-ORDEN-AJENA'}
+        self.client.post(reverse('confirmacion'), {'token_ws': 'tok'})
+        self.assertEqual(PaqueteClases.objects.get().estado, PaqueteClases.ESTADO_PENDIENTE)
+        self.assertEqual(self.ana.paquetes.vigentes().count(), 0)
+
+    @patch('alumnos.webpay._tx')
+    def test_compra_anulada_deja_el_paquete_pendiente_y_sin_uso(self, mock_tx):
+        """TBK_TOKEN (el alumno anula en Webpay): no se activa ni se llama a commit()."""
+        self.entrar(RUT_ANA)
+        mock_tx.return_value.create.return_value = {'url': 'https://webpay.test/', 'token': 'tok'}
+        self.client.post(reverse('comprar_paquete'), {'plan': 'progreso', 'profesor': self.profe.id_profesor})
+        r = self.client.post(reverse('confirmacion'), {'TBK_TOKEN': 'tok'})
+        self.assertTrue(r.context['anulado'])
+        mock_tx.return_value.commit.assert_not_called()
+        self.assertEqual(PaqueteClases.objects.get().estado, PaqueteClases.ESTADO_PENDIENTE)
+        with self.assertRaises(SinClasesDisponiblesError):
+            self.reservar(self.ana, crear_sesion(self.clase, dias=1))
+
+    def test_paquete_rechazado_no_se_usa(self):
+        dar_paquete(self.ana, self.profe, estado=PaqueteClases.ESTADO_RECHAZADA)
+        with self.assertRaises(SinClasesDisponiblesError):
+            self.reservar(self.ana, crear_sesion(self.clase, dias=1))
+
+    def test_reservar_descuenta_exactamente_una_clase(self):
+        paquete = dar_paquete(self.ana, self.profe)
+        self.reservar(self.ana, crear_sesion(self.clase, dias=1))
+        self.assertEqual((paquete.clases_usadas, paquete.clases_disponibles), (1, 3))
+
+    def test_misma_sesion_dos_veces_se_rechaza_y_descuenta_una(self):
+        paquete = dar_paquete(self.ana, self.profe)
+        sesion = crear_sesion(self.clase, dias=1)
+        self.reservar(self.ana, sesion)
+        with self.assertRaises(InscripcionDuplicadaError):
+            self.reservar(self.ana, sesion)
+        self.assertEqual(paquete.clases_disponibles, 3)
+
+    def test_cancelar_devuelve_la_clase_y_libera_el_cupo(self):
+        paquete = dar_paquete(self.ana, self.profe, 'flexible')
+        dar_paquete(self.beto, self.profe, 'flexible')
+        sesion = crear_sesion(self.clase, dias=1, cupo=1)
+        insc = self.reservar(self.ana, sesion)
+        with self.assertRaises(CupoAgotadoError):
+            self.reservar(self.beto, sesion)
+        InscripcionService.cancelar_inscripcion(self.ana, insc.pk)
+        self.assertEqual(paquete.clases_disponibles, 1)
+        self.assertEqual(self.reservar(self.beto, sesion).estado, Inscripcion.ESTADO_CONFIRMADA)
+
+    def test_reprogramar_y_cancelar_deja_el_saldo_completo(self):
+        paquete = dar_paquete(self.ana, self.profe)
+        s1, s2, s3 = (crear_sesion(self.clase, dias=d) for d in (1, 2, 3))
+        insc = self.reservar(self.ana, s1)
+        InscripcionService.reprogramar_inscripcion(self.ana, insc.pk, s2.pk)
+        InscripcionService.reprogramar_inscripcion(self.ana, insc.pk, s3.pk)
+        self.assertEqual((paquete.clases_usadas, paquete.clases_disponibles), (1, 3))
+        InscripcionService.cancelar_inscripcion(self.ana, insc.pk)
+        self.assertEqual(paquete.clases_disponibles, 4)

@@ -1,0 +1,9 @@
+# LBW-10: cada semana revisa requirements.txt y abre un PR si hay una version nueva.
+# Las alertas y los PR de seguridad se activan aparte en GitHub: Settings > Code security > Dependabot.
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5

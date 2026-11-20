@@ -1,0 +1,33 @@
+{# Modal de temas de interes. #}
+    <!-- Modal / Pestaña Emergente: Temas de Interés -->
+    <div class="modal-overlay" id="interests-modal">
+        <div class="topics-modal">
+            <button type="button" class="modal-close-btn" id="close-modal-btn" aria-label="Cerrar"><i class="bi bi-x-lg"></i></button>
+            
+            <h2>Temas de Interés</h2>
+            <p class="subtitle">Selecciona tus áreas académicas favoritas. Filtraremos el panel general al aceptar.</p>
+            
+            <!-- Grid of Tags -->
+            <div class="topic-tag-grid" id="topic-tags-container">
+                {% for e in especialidades %}
+                <button class="topic-tag" data-topic="{{ e.nombre }}">{{ e.nombre }}</button>
+                {% endfor %}
+            </div>
+
+            <!-- Preview Section -->
+            <div class="teachers-container-title">
+                <span>Vista Previa de Profesores</span>
+                <span class="count-badge" id="teachers-count">0 encontrados</span>
+            </div>
+
+            <!-- Scrollable list of teachers (modal preview) -->
+            <div class="teachers-list" id="teachers-list-container">
+                <!-- Dynamically populated via JS -->
+            </div>
+
+            <!-- Accept Button (Filtra todo) -->
+            <button class="btn-principal ap-btn-accept" id="modal-accept-btn">
+                Aceptar y Filtrar Contenido
+            </button>
+        </div>
+    </div>

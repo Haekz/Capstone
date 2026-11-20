@@ -1,0 +1,298 @@
+/* ==============================================================
+   alumn_1.css — Estilos para el Portal del Alumno (LBWUS)
+   Totalmente modificable, clases con nombres sencillos.
+   ============================================================== */
+
+:root {
+    --hue: 270;                           /* ← Cambia este número (0-360) para ajustar el color base */
+    --primary: hsl(var(--hue), 70%, 42%); /* Color primario oscuro y cómodo */
+    --primary-dark: hsl(var(--hue), 75%, 30%);  /* Tono aún más oscuro para hover */
+    --primary-light: hsl(var(--hue), 50%, 92%); /* Fondo sutil muy claro */
+    --accent: #f59e0b;            /* Amarillo/Naranja */
+    --bg: #f8fafc;                /* Fondo claro */
+    --text: #111827;              /* Texto principal */
+    --text-light: #6b7280;        /* Texto secundario */
+    --white: #ffffff;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    --transition: all 0.3s ease;
+    --header-height: 58px;
+}
+
+body.dark-mode {
+    --bg: #030204;                /* Fondo oscuro */
+    --text: #f3f4f6;
+    --text-light: #9ca3af;
+    --white: #111827;
+    --primary-light: hsl(var(--hue), 40%, 18%); /* Más oscuro en modo noche */
+    --shadow: 0 10px 35px rgba(0, 0, 0, 0.3);
+}
+
+/* ── Botón Principal (standalone, no hereda base.html) ── */
+.btn-principal {
+    padding: 10px 24px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: none;
+    display: inline-block;
+    background-color: var(--primary);
+    color: #ffffff;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.btn-principal:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+/* ── Reset Mínimo ── */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Outfit', sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ── Custom Navbar (Standalone) ── */
+.custom-navbar {
+    height: var(--header-height);
+    background-color: var(--primary);
+    color: #ffffff;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 40px;
+    z-index: 100;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    transition: background-color 0.3s ease;
+}
+
+.custom-navbar .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: #ffffff;
+}
+
+.custom-navbar .logo img {
+    height: 32px;
+}
+
+.custom-navbar .logo-text {
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    transition: color 0.2s ease;
+}
+
+.custom-navbar .logo:hover .logo-text {
+    color: #000000;
+}
+
+.custom-nav-links {
+    display: flex;
+    list-style: none;
+    gap: 10px;
+}
+
+.custom-nav-links button {
+    text-decoration: none;
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 0.82rem;
+    padding: 6px 14px;
+    border-radius: 50px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+}
+
+.custom-nav-links button:hover, 
+.custom-nav-links button.active {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.custom-nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.btn-theme-toggle {
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 5px;
+    transition: transform 0.2s ease;
+}
+
+.btn-theme-toggle:hover {
+    transform: scale(1.1);
+}
+
+.btn-logout {
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 8px 16px;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.15);
+    transition: all 0.3s ease;
+}
+
+.btn-logout:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+}
+
+/* ── Contenedor General ── */
+.dashboard-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    min-height: calc(100vh - var(--header-height));
+    margin-top: var(--header-height);
+}
+
+/* ── Menú Lateral Izquierdo (Sidebar) ── */
+.sidebar-menu {
+    background-color: var(--white);
+    border-right: 1px solid rgba(168, 85, 247, 0.12);
+    padding: 30px 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: sticky;
+    top: var(--header-height);
+    height: calc(100vh - var(--header-height));
+    box-shadow: var(--shadow);
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+body.dark-mode .sidebar-menu {
+    border-right-color: rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-nav {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.sidebar-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 14px 20px;
+    border-radius: 12px;
+    color: var(--text);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    width: 100%;
+    text-align: left;
+}
+
+.sidebar-nav-item i {
+    font-size: 1.2rem;
+    color: var(--text-light);
+    transition: color 0.3s ease;
+}
+
+.sidebar-nav-item:hover, 
+.sidebar-nav-item.active {
+    background-color: rgba(168, 85, 247, 0.08);
+    color: var(--primary);
+}
+
+.sidebar-nav-item:hover i, 
+.sidebar-nav-item.active i {
+    color: var(--primary);
+}
+
+body.dark-mode .sidebar-nav-item:hover, 
+body.dark-mode .sidebar-nav-item.active {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* ── Caja del Deslizador de Colores (Hue Slider) ── */
+.sidebar-slider-box {
+    background-color: rgba(168, 85, 247, 0.04);
+    border: 1px solid rgba(168, 85, 247, 0.08);
+    border-radius: 16px;
+    padding: 20px 15px;
+    margin-top: auto;
+}
+
+body.dark-mode .sidebar-slider-box {
+    background-color: rgba(255, 255, 255, 0.02);
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.sidebar-slider-box h4 {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-light);
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Text primary class connected to dynamic hue */
+.text-primary-hue {
+    color: var(--primary) !important;
+}
+
+.hue-slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 5px;
+    background: linear-gradient(to right, #ff0000 0%, #ffff00 17%, #00ff00 33%, #00ffff 50%, #0000ff 67%, #ff00ff 83%, #ff0000 100%);
+    outline: none;
+    cursor: pointer;
+}
+
+.hue-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--white);
+    border: 2px solid var(--primary);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    transition: transform 0.1s;
+}
+
+.hue-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+

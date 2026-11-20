@@ -9,6 +9,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.db import transaction
 
+from . import avisos_profesor
 from .models import Alumno, Especialidad, Genero, Profesor
 from .utils import error_fecha_nacimiento, usuario_existe, validar_rut_chileno
 
@@ -95,4 +96,5 @@ class CompletarRegistroGoogleForm(forms.Form):
             Alumno.objects.create(user=user, nivel_educacion=d['nivel_educacion'])
         else:
             Profesor.objects.create(user=user, especialidad=d['especialidad'])
+            avisos_profesor.bienvenida(user)
         return user

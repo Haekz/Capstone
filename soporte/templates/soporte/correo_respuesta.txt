@@ -1,0 +1,7 @@
+Hola {{ nombre }},
+
+{% if ticket.estado == 'cerrado' %}Respondimos y cerramos tu ticket #{{ ticket.pk }} ({{ ticket.get_categoria_display }}).{% else %}Respondimos tu ticket #{{ ticket.pk }} ({{ ticket.get_categoria_display }}).{% endif %}
+
+Lee la respuesta en LBWUS, en "Ayuda y soporte". Por seguridad, el detalle solo se ve ahí.
+
+Equipo LBWUS

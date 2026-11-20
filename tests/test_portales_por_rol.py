@@ -11,7 +11,7 @@ portales, mas los casos que mezclaban portales antes del arreglo:
   al login o al registro, en vez de volver a su propio portal.
 """
 
-from datetime import date, time
+from datetime import date
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -67,7 +67,7 @@ class PortalesPorRolTests(TestCase):
         )
         cls.tutor = Tutor.objects.create(user=u_ad)
         Clase.objects.create(asignatura=Asignatura.objects.create(nombre='Algebra'),
-                             modalidad='online', horario=time(10, 0), profesor=cls.profesor)
+                             modalidad='online', profesor=cls.profesor)
 
         cls.ruts = {'alumno': '11111111-1', 'profesor': '22222222-2', 'admin': '33333333-3'}
 

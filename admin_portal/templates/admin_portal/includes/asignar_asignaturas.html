@@ -1,0 +1,13 @@
+{# Asignaturas que soporte le asigna al aprobar un titulo o una especializacion (fase 3). #}
+{# Recibe: quien (para el texto) y marcadas (las propuestas del profesor: van premarcadas y el bloque abierto). #}
+<details style="flex-basis:100%;"{% if marcadas %} open{% endif %}>
+    <summary style="cursor:pointer;">Asignaturas que podrá dictar{% if marcadas %} ({{ marcadas|length }} propuesta{{ marcadas|length|pluralize }}){% else %} (opcional){% endif %}</summary>
+    <fieldset style="border:none; margin:8px 0 0; padding:0; display:flex; flex-wrap:wrap; gap:6px 14px;">
+        <legend style="font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Asignaturas para {{ quien }}: se asignan solo si apruebas.</legend>
+        {% for a in asignaturas_catalogo %}
+        <label style="display:inline-flex; gap:6px; align-items:center;">
+            <input type="checkbox" name="asignaturas" value="{{ a.pk }}"{% if a in marcadas %} checked{% endif %}> {{ a.nombre }}
+        </label>
+        {% endfor %}
+    </fieldset>
+</details>

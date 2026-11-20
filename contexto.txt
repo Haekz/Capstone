@@ -13,7 +13,7 @@ filosofía de trabajo.
 * Tipo: Plataforma web universitaria de auto-aprendizaje colaborativo para alumnos,
   profesores y tutores.
 * Framework: Django (Python).
-* Base de datos: SQLite para desarrollo local (db.sqlite3) y PostgreSQL en producción.
+* Base de datos: PostgreSQL (local y producción; se configura con DATABASE_URL).
 
 --------------------------------------------------------------------------
 2. FILOSOFÍA DE DESARROLLO (LIMITACIONES Y REGLAS DE DISEÑO)
@@ -33,7 +33,7 @@ filosofía de trabajo.
   de HTML y CSS pueda modificar márgenes, colores, tipografías y tamaños de fuente sin esfuerzo.
 
 * SISTEMA DE COLORES Y MODO OSCURO:
-  El diseño utiliza variables CSS declaradas en `:root` (dentro de alumnos/static/alumnos/css/styles.css).
+  El diseño utiliza variables CSS declaradas en `:root` (dentro de alumnos/static/alumnos/css/styles/01_base.css).
   Variables principales:
     * `--primary`: #a855f7 (Morado corporativo)
     * `--primary-dark`: #9333ea
@@ -48,7 +48,7 @@ filosofía de trabajo.
 3. ESTRUCTURA DE APLICACIONES (APPS)
 --------------------------------------------------------------------------
 * alumnos:
-  Páginas públicas (Home, Nosotros, Planes, Servicios, Contactos, Simulador, Selección de tipo de usuario) e inicio de sesión y registro de alumnos.
+  Páginas públicas (Home, Nosotros, Planes, Servicios, Contactos, Selección de tipo de usuario) e inicio de sesión y registro de alumnos.
 * admin_portal:
   Panel de administración central (`dashboard_admin`), CRUD de alumnos (`crud`, `alumnos_Add`, `alumnos_del`, `alumnos_findEdit`, `alumnos_Update`), gestión de contenidos de páginas administrativas y resolución de reportes (`resolver_reporte`). Protegido por sesión de administrador (`admin_id`).
 * user_profesor:
@@ -75,7 +75,7 @@ filosofía de trabajo.
 --------------------------------------------------------------------------
 5. DESPLIEGUE Y ENTORNO
 --------------------------------------------------------------------------
-* Entorno Local: Utiliza SQLite (`db.sqlite3`) para el desarrollo local rápido.
+* Entorno Local: Usa PostgreSQL, igual que producción, indicado en `DATABASE_URL` (sin esa variable el proyecto no arranca).
 * Entorno de Producción: Desplegado en Railway (`capstone-production-eddd.up.railway.app`). Configurado para usar PostgreSQL dinámicamente mediante la variable `DATABASE_URL` y WhiteNoise para servir archivos estáticos de forma eficiente.
 ==========================================================================
 

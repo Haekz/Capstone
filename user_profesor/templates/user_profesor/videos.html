@@ -3,41 +3,35 @@
 <section id="sec-grabaciones" class="prof-section">
     <div class="prof-section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
         <div>
-            <h1 class="prof-section-title">Clases Grabadas</h1>
-            <p class="prof-section-subtitle">Administra tus cursos en video y revisa las estadísticas de reproducción.</p>
+            <h1 class="prof-section-title">Videos de apoyo</h1>
+            <p class="prof-section-subtitle">Sube videos MP4 de hasta 30 minutos por cada materia que enseñas. Pronto podrás compartirlos con los alumnos que contraten el agregado de videos.</p>
         </div>
         <button class="prof-form-btn prof-form-btn-accent" onclick="openUploadModal()" style="width: auto; padding: 10px 20px;">
-            <i class="bi bi-plus-lg"></i> Subir Nueva Clase
+            <i class="bi bi-plus-lg"></i> Subir video
         </button>
     </div>
 
-    <!-- esta parte es de las tarjetas que muestran el resumen de estadísticas de reproducción del profe -->
+    <!-- esta parte es de la tarjeta con el total de videos del profe -->
     <div class="profe-cursos-stats">
         <div class="profe-stat-box">
             <div class="profe-stat-icon" style="background: rgba(168,85,247,0.1); color: var(--primary);"><i class="bi bi-play-btn-fill"></i></div>
             <div>
-                <h4 id="profe-stat-videos-count">6 Lecciones</h4>
-                <p>Total de videos cargados</p>
-            </div>
-        </div>
-        <div class="profe-stat-box">
-            <div class="profe-stat-icon" style="background: rgba(16,185,129,0.1); color: #10b981;"><i class="bi bi-eye-fill"></i></div>
-            <div>
-                <h4>1.428 vistas</h4>
-                <p>Visualizaciones totales</p>
-            </div>
-        </div>
-        <div class="profe-stat-box">
-            <div class="profe-stat-icon" style="background: rgba(245,158,11,0.1); color: var(--accent);"><i class="bi bi-clock-history"></i></div>
-            <div>
-                <h4>84.2 hrs</h4>
-                <p>Tiempo total reproducido</p>
+                <h4 id="profe-stat-videos-count">0 videos</h4>
+                <p>En tu biblioteca</p>
             </div>
         </div>
     </div>
 
+    <!-- esta parte es de los alumnos que contrataron el agregado y a quienes el profe les debe videos -->
+    <div class="prof-card" id="profe-entregas-card" hidden>
+        <h2 class="prof-card-title">Videos que debes compartir</h2>
+        <p class="prof-section-subtitle">Cada alumno que contrató el agregado recibe sus videos de ti, en las fechas indicadas. Un mismo video puede ir a varios alumnos, pero no se repite al mismo alumno.</p>
+        <ul class="profe-entregas" id="profe-entregas-lista"></ul>
+    </div>
+
     <div class="prof-card">
-        <h2 class="prof-card-title">Listado de Lecciones Publicadas</h2>
+        <h2 class="prof-card-title">Tu biblioteca</h2>
+        <p id="profe-videos-aviso" class="prof-section-subtitle" role="status" hidden></p>
         <div class="profe-cursos-grid" id="profe-cursos-grid-el">
             <!-- esta parte es del contenedor vacío donde se van a inyectar las tarjetas de videos usando javascript -->
         </div>
@@ -48,34 +42,25 @@
 <div class="custom-modal-overlay" id="profe-upload-modal">
     <div class="custom-modal-card" style="max-width: 500px; padding: 25px;">
         <div class="custom-modal-header">
-            <h3 style="margin: 0; font-weight: 800; font-size: 1.3rem; color: var(--text);">Subir Nueva Clase Grabada</h3>
+            <h3 style="margin: 0; font-weight: 800; font-size: 1.3rem; color: var(--text);">Subir video de apoyo</h3>
             <button class="close-modal-btn" onclick="closeUploadModal()">&times;</button>
         </div>
         <div class="custom-modal-body" style="padding-top: 15px;">
             <form id="profe-video-upload-form" onsubmit="submitUploadedVideo(event)" class="prof-form">
                 <div class="prof-form-group">
-                    <label class="prof-form-label" for="upload-title">Título de la Lección</label>
-                    <input class="prof-form-input" type="text" id="upload-title" placeholder="Ej. Clase 6: Despliegue con Docker" required>
-                </div>
-                <div class="prof-form-row">
-                    <div class="prof-form-group">
-                        <label class="prof-form-label" for="upload-duration">Duración</label>
-                        <input class="prof-form-input" type="text" id="upload-duration" placeholder="Ej. 18:20" required>
-                    </div>
-                    <div class="prof-form-group">
-                        <label class="prof-form-label" for="upload-course">Curso de Referencia</label>
-                        <select class="prof-form-select" id="upload-course" required>
-                            <option value="py-1">Universidad Python</option>
-                            <option value="py-2">Python Django Web</option>
-                            <option value="tr-1">Automatizaciones n8n + MCP</option>
-                        </select>
-                    </div>
+                    <label class="prof-form-label" for="upload-title">Título del video</label>
+                    <input class="prof-form-input" type="text" id="upload-title" name="titulo" minlength="3" maxlength="100" placeholder="Ej. Factorización paso a paso" required>
                 </div>
                 <div class="prof-form-group">
-                    <label class="prof-form-label" for="upload-file">Archivo de Video (.mp4)</label>
-                    <input class="prof-form-input" type="file" id="upload-file" accept="video/mp4" required>
+                    <label class="prof-form-label" for="upload-course">Materia</label>
+                    <select class="prof-form-select" id="upload-course" name="asignatura" required></select>
                 </div>
-                <button type="submit" class="prof-form-btn">Publicar en Videoteca</button>
+                <div class="prof-form-group">
+                    <label class="prof-form-label" for="upload-file">Archivo de video (.mp4)</label>
+                    <input class="prof-form-input" type="file" id="upload-file" name="archivo" accept="video/mp4" aria-describedby="upload-file-ayuda" required>
+                    <small id="upload-file-ayuda">MP4 de máximo 30 minutos y 500 MB.</small>
+                </div>
+                <button type="submit" class="prof-form-btn">Publicar en mi biblioteca</button>
             </form>
         </div>
     </div>

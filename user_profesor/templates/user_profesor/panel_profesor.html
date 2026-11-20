@@ -1,14 +1,19 @@
-{% extends 'alumnos/base.html' %}
+{% extends 'user_profesor/base_docente.html' %}
 {% load static %}
 
 {% block title %}LBWUS | Panel Profesor{% endblock %}
+{% block nav_inicio %}active{% endblock %}
 
 {% block extra_css %}
-<!-- esta parte es de los estilos del panel del profe, cámbialos en panel.css si quieres retocar algo visual -->
-<link rel="stylesheet" href="{% static 'panel.css' %}">
+{{ block.super }}
+<!-- esta parte es de los estilos del panel del profe, cámbialos en user_profesor/panel/ si quieres retocar algo visual -->
+{# Antes panel.css: capas en orden, cada una pisa a la anterior. #}
+<link rel="stylesheet" href="{% static 'user_profesor/panel/01_base.css' %}">
+<link rel="stylesheet" href="{% static 'user_profesor/panel/02_secciones.css' %}">
 <link rel="stylesheet" href="{% static 'clases_solicitadas.css' %}">
 <link rel="stylesheet" href="{% static 'videos.css' %}">
 <link rel="stylesheet" href="{% static 'clases_en_vivo.css' %}">
+<link rel="stylesheet" href="{% static 'agenda/agenda.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -56,480 +61,27 @@ input:checked + .slider:before {
 }
 </style>
 
+{% if messages %}
+<div class="prof-card" role="status" style="margin: 20px; padding: 14px 18px;">
+    {% for m in messages %}<div>{{ m }}</div>{% endfor %}
+</div>
+{% endif %}
+
 <div class="prof-dashboard-layout">
-    
-    <!-- esta parte es del menú lateral del panel, aquí están los botones para navegar entre secciones -->
-    <aside class="prof-sidebar">
-        <div class="prof-sidebar-header">
-            <div class="prof-avatar">
-                <i class="bi bi-person-workspace"></i>
-            </div>
-            <h3 class="prof-sidebar-title">Docente</h3>
-            <span class="prof-sidebar-tag">{{ profesor.especialidad }}</span>
-        </div>
-        
-        <!-- esta parte es de la lista de opciones del menú lateral -->
-        <ul class="prof-sidebar-menu">
-            <li class="prof-menu-item active" id="menu-inicio" onclick="switchSection('inicio')">
-                <i class="bi bi-grid-1x2"></i> Inicio
-            </li>
-            <li class="prof-menu-item" id="menu-clases" onclick="switchSection('clases')">
-                <i class="bi bi-file-earmark-text"></i> Clases Solicitadas
-            </li>
-            <li class="prof-menu-item" id="menu-buzon" onclick="switchSection('buzon')">
-                <i class="bi bi-chat-dots-fill"></i> Buzón de Alumnos
-            </li>
-            <li class="prof-menu-item" id="menu-grabaciones" onclick="switchSection('grabaciones')">
-                <i class="bi bi-play-circle-fill"></i> Clases Grabadas
-            </li>
-            <li class="prof-menu-item" id="menu-streaming" onclick="switchSection('streaming')">
-                <i class="bi bi-camera-video-fill"></i> Sala de Streaming
-            </li>
-            <li class="prof-menu-item" id="menu-perfil" onclick="switchSection('perfil')">
-                <i class="bi bi-person-gear"></i> Personalizar Perfil
-            </li>
-            <li class="prof-menu-item" id="menu-saldo" onclick="switchSection('saldo')">
-                <i class="bi bi-cash-stack"></i> Saldo Generado
-            </li>
-            {# Página aparte: un enlace real, usable con teclado. #}
-            <li class="prof-menu-item">
-                <a href="{% url 'resenas_profesor' %}" style="color:inherit; text-decoration:none; display:flex; align-items:center; gap:inherit;">
-                    <i class="bi bi-star-half"></i> Mis Reseñas
-                </a>
-            </li>
-        </ul>
-        
-        <!-- esta parte es del botón de cerrar sesión abajo del menú lateral -->
-        <div class="prof-sidebar-footer">
-            <form method="post" action="{% url 'logout_prof' %}" class="form-prof-logout">
-                {% csrf_token %}
-                <button type="submit" class="prof-logout-btn btn-prof-logout">
-                    <i class="bi bi-box-arrow-left"></i> Cerrar Sesión
-                </button>
-            </form>
-        </div>
-    </aside>
-
     <!-- esta parte es del área donde aparece el contenido según la sección que elijas en el menú -->
-    <main class="prof-content-area">
+    <div class="prof-content-area">
         
-        <!-- esta parte es de la sección de inicio, la pantalla principal cuando entras al panel -->
-        <section id="sec-inicio" class="prof-section active">
-            <div class="prof-section-header">
-                <h1 class="prof-section-title">¡Bienvenido de vuelta, Prof. {{ profesor.user.first_name }}!</h1>
-                <p class="prof-section-subtitle">Este es el resumen de tus actividades del día de hoy.</p>
-            </div>
-
-            {% include 'user_profesor/titulo_aviso.html' %}
-
-            <!-- esta parte es de las tarjetas de métricas arriba del inicio, muestran el dinero del día y clases disponibles -->
-            <div class="prof-metrics-grid">
-                <div class="prof-metric-card">
-                    <div class="prof-metric-icon" style="color: var(--accent); background: rgba(245, 158, 11, 0.1);">
-                        <i class="bi bi-currency-dollar"></i>
-                    </div>
-                    <div class="prof-metric-info">
-                        <h3 class="prof-metric-val">{{ dinero_hoy }}</h3>
-                        <p class="prof-metric-label">Dinero Generado Hoy</p>
-                    </div>
-                </div>
-                
-                <div class="prof-metric-card">
-                    <div class="prof-metric-icon" style="color: var(--primary); background: rgba(168, 85, 247, 0.1);">
-                        <i class="bi bi-calendar-check"></i>
-                    </div>
-                    <div class="prof-metric-info">
-                        <h3 class="prof-metric-val">{{ clases_disponibles }}</h3>
-                        <p class="prof-metric-label">Clases Disponibles Restantes</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- esta parte es del grid del centro con la agenda del día y el gráfico -->
-            <div class="prof-dashboard-grid">
-                
-                <!-- esta parte es de la agenda de clases del día, muestra máximo 6 clases -->
-                <div class="prof-card">
-                    <h2 class="prof-card-title">Clases de Hoy <span class="prof-card-title-badge">Max. 6</span></h2>
-                    {% if clases_hoy %}
-                        <div class="prof-schedule-list">
-                            {% for ch in clases_hoy %}
-                            <div class="prof-schedule-item">
-                                <div class="prof-schedule-time">
-                                    <i class="bi bi-clock"></i> {{ ch.horario }}
-                                </div>
-                                <div class="prof-schedule-details">
-                                    <h4>{{ ch.nombre_curso }}</h4>
-                                    <p>Alumno: <strong>{{ ch.alumno }}</strong></p>
-                                </div>
-                                <div class="prof-schedule-status">
-                                    <span class="prof-badge prof-badge-{% if ch.modalidad == 'Online' or ch.modalidad == 'online' %}online{% else %}presencial{% endif %}">
-                                        {{ ch.modalidad }}
-                                    </span>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <div class="prof-empty-card">
-                            <i class="bi bi-calendar-x"></i>
-                            <p>No tienes clases programadas para el día de hoy.</p>
-                        </div>
-                    {% endif %}
-                </div>
-
-                <!-- esta parte es del gráfico de barras que muestra cuántas solicitudes tuvo el profe por mes -->
-                <div class="prof-card">
-                    <h2 class="prof-card-title">Rendimiento Mensual (Solicitudes)</h2>
-                    <p class="prof-card-subtitle">Cantidad de solicitudes recibidas en los últimos 5 meses.</p>
-                    
-                    <!-- esta parte es del contenedor del gráfico, las barras se dibujan solo con CSS -->
-                    <div class="prof-chart-container">
-                        <div class="prof-chart">
-                            {% for m in rendimiento_meses %}
-                            <div class="prof-chart-column">
-                                <div class="prof-chart-bar-wrapper">
-                                    <div class="prof-chart-bar" style="height: {{ m.porcentaje }}%;">
-                                        <span class="prof-chart-tooltip">{{ m.cantidad }} solic.</span>
-                                    </div>
-                                </div>
-                                <span class="prof-chart-label">{{ m.mes }}</span>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </section>
+{% include 'user_profesor/includes/panel/inicio.html' %}
 
         <!-- esta parte es de la sección de clases solicitadas, muestra todos los alumnos inscritos -->
         {% include 'user_profesor/clases_solicitadas.html' %}
+        {% include 'agenda/panel_agenda.html' %}
 
-        <!-- esta parte es de la sección para que el profe edite su propio perfil -->
-        <section id="sec-perfil" class="prof-section">
-            <div class="prof-section-header">
-                <h1 class="prof-section-title">Personalizar Perfil Profesor</h1>
-                <p class="prof-section-subtitle">Actualiza tus datos de contacto y tu especialidad docente.</p>
-            </div>
+{% include 'user_profesor/includes/panel/perfil.html' %}
 
-            <div class="prof-card">
-                <h2 class="prof-card-title">Editar Información de Perfil</h2>
-                
-                <!-- esta parte es del formulario de edición de perfil, viene precargado con los datos actuales del profe -->
-                <form id="form-update-profile" action="{% url 'actualizar_perfil_prof' %}" method="POST" class="prof-form" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    <div class="prof-form-group" style="text-align: center; margin-bottom: 25px;">
-                        {% if profesor.user.foto_perfil %}
-                            <img src="{% url 'foto_profesor' profesor.id_profesor %}" alt="Tu foto de perfil" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; margin-bottom: 15px; border: 3px solid var(--primary);">
-                        {% else %}
-                            <div style="width: 120px; height: 120px; border-radius: 50%; background: var(--bg-card); display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto; border: 3px dashed var(--border);">
-                                <i class="bi bi-person" style="font-size: 3rem; color: var(--text-muted);"></i>
-                            </div>
-                        {% endif %}
-                        <label for="prof-foto" class="prof-form-label" style="display: block;">Subir Foto de Perfil (Pública)</label>
-                        <input type="file" id="prof-foto" name="foto_perfil" class="prof-form-input" accept="image/jpeg,image/png,image/webp" style="border: none; padding: 0;">
-                    </div>
+{% include 'user_profesor/includes/panel/saldo.html' %}
 
-                    
-                    <div class="prof-form-group">
-                        <label for="prof-nombre" class="prof-form-label">Nombre Completo</label>
-                        <input type="text" id="prof-nombre" name="nombre" class="prof-form-input" value="{{ profesor.nombre }}" required>
-                    </div>
-
-                    <div class="prof-form-row">
-                        <div class="prof-form-group">
-                            <label for="prof-rut" class="prof-form-label">RUT <span style="color:var(--text-muted); font-size:0.8rem;">(Solo visible para ti)</span></label>
-                            <input type="text" id="prof-rut" name="rut" class="prof-form-input" value="{{ profesor.user.rut }}" required>
-                        </div>
-                        <div class="prof-form-group">
-                            <label for="prof-especialidad" class="prof-form-label">Especialidad</label>
-                            <select id="prof-especialidad" name="especialidad" class="prof-form-select" required>
-                                <option value="" disabled {% if not profesor.especialidad_id %}selected{% endif %}>Seleccione...</option>
-                                {% for e in especialidades %}
-                                <option value="{{ e.pk }}" {% if e.pk == profesor.especialidad_id %}selected{% endif %}>{{ e.nombre }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="prof-form-group">
-                        <label for="prof-direccion" class="prof-form-label">Dirección <span style="color:var(--text-muted); font-size:0.8rem;">(Solo visible para ti)</span></label>
-                        <input type="text" id="prof-direccion" name="direccion" class="prof-form-input" value="{{ profesor.user.direccion }}" required>
-                    </div>
-
-                    <div class="prof-form-row">
-                        <div class="prof-form-group">
-                            <label for="prof-correo" class="prof-form-label">Correo Electrónico</label>
-                            <input type="email" id="prof-correo" name="correo_electronico" class="prof-form-input" value="{{ profesor.user.email }}" required>
-                        </div>
-                        <div class="prof-form-group">
-                            <label for="prof-tarifa" class="prof-form-label">Tarifa por clase de 60 min (CLP)</label>
-                            <input type="number" id="prof-tarifa" name="tarifa" class="prof-form-input" value="{{ profesor.tarifa }}" min="10000" max="50000" step="1000" required>
-                            <small>Entre $10.000 y $50.000. Define el precio de tus paquetes; lo ya vendido no cambia. Incluye la comisión de LBWUS (15%, IVA incluido).</small>
-                        </div>
-                        <div class="prof-form-group">
-                            <label for="prof-telefono" class="prof-form-label">Teléfono de Contacto</label>
-                            <input type="tel" id="prof-telefono" name="telefono" class="prof-form-input" value="{{ profesor.user.telefono }}" required>
-                        <div style="margin-top: 10px; display: flex; align-items: center; gap: 12px;">
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="prof-tel-publico" name="telefono_publico" {% if profesor.telefono_publico %}checked{% endif %}>
-                                <span class="slider"></span>
-                            </label>
-                            <label for="prof-tel-publico" style="font-size: 0.85rem; color: var(--text-muted); cursor: pointer;">Hacer público para los alumnos</label>
-                        </div>
-
-                        </div>
-                    </div>
-
-                    <div class="prof-form-group">
-                        <label for="prof-genero" class="prof-form-label">Género</label>
-                        <select id="prof-genero" name="genero" class="prof-form-select" required>
-                            {% for g in generos %}
-                            <option value="{{ g.id_genero }}" {% if g.id_genero == profesor.user.genero.id_genero %}selected{% endif %}>
-                                {{ g.descripcion }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <button type="submit" class="prof-form-btn">Guardar Cambios de Perfil</button>
-                </form>
-            </div>
-        </section>
-
-        <!-- esta parte es de la sección de saldo, muestra cuánto dinero ha generado el profe -->
-        <section id="sec-saldo" class="prof-section">
-            <div class="prof-section-header">
-                <h1 class="prof-section-title">Saldo Generado</h1>
-                <p class="prof-section-subtitle">Visualiza y gestiona las ganancias de tus clases en LBWUS.</p>
-            </div>
-
-            <!-- esta parte es de las 3 tarjetas de balance: total, disponible y pendiente -->
-            <div class="prof-balance-grid">
-                <div class="prof-balance-card prof-balance-card-primary">
-                    <h4>Saldo Total Acumulado</h4>
-                    <h2>{{ saldo_total }}</h2>
-                    <p>Ganancias brutas generadas en la plataforma</p>
-                </div>
-                
-                <div class="prof-balance-card">
-                    <h4>Saldo Disponible</h4>
-                    <h2>{{ saldo_disponible }}</h2>
-                    <p>Monto listo para ser retirado a tu cuenta bancaria</p>
-                </div>
-
-                <div class="prof-balance-card">
-                    <h4>Comisiones y Pendientes</h4>
-                    <h2>{{ saldo_pendiente }}</h2>
-                    <p>Pendiente de validación o comisiones operativas</p>
-                </div>
-            </div>
-
-            <!-- esta parte es del formulario para solicitar la transferencia de los fondos disponibles -->
-            <div class="prof-card" style="margin-top: 30px;">
-                <h2 class="prof-card-title"><i class="bi bi-bank"></i> Solicitar Transferencia de Fondos</h2>
-                <p class="prof-card-subtitle">Solicita el depósito de tu saldo disponible. Las transferencias tardan de 24 a 48 horas hábiles en procesarse.</p>
-                
-                {% if saldo_disponible_raw > 0 %}
-                <form id="formSolicitarRetiro" onsubmit="submitRetiroForm(event)" style="margin-top: 20px;">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px;">
-                        <div>
-                            <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px;">Monto a Retirar ($)</label>
-                            <input type="number" name="monto" id="retiro_monto" value="{{ saldo_disponible_raw }}" max="{{ saldo_disponible_raw }}" min="1000" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.15);">
-                            <small style="color: var(--primary); font-size: 0.78rem;">Máximo disponible: ${{ saldo_disponible_raw }}</small>
-                        </div>
-                        <div>
-                            <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px;">Banco de Destino</label>
-                            <select name="banco" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.15);">
-                                <option value="Banco Estado">Banco Estado (Cuenta Rut)</option>
-                                <option value="Banco de Chile">Banco de Chile / Edwards</option>
-                                <option value="Banco Santander">Banco Santander</option>
-                                <option value="BCI">BCI</option>
-                                <option value="Scotiabank">Scotiabank</option>
-                                <option value="Banco Falabella">Banco Falabella</option>
-                                <option value="Tenpo / Mach / Prepago">Tenpo / Mach / Prepago</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px;">Tipo de Cuenta</label>
-                            <select name="tipo_cuenta" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.15);">
-                                <option value="Cuenta Rut / Vista">Cuenta Rut / Vista</option>
-                                <option value="Cuenta Corriente">Cuenta Corriente</option>
-                                <option value="Cuenta de Ahorro">Cuenta de Ahorro</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px;">Número de Cuenta</label>
-                            <input type="text" name="numero_cuenta" placeholder="Ej. 12345678" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.15);">
-                        </div>
-                    </div>
-                    <div style="display: flex; justify-content: flex-end;">
-                        <button type="submit" class="prof-form-btn prof-form-btn-accent" style="padding: 10px 24px;">
-                            <i class="bi bi-send-check"></i> Enviar Solicitud de Retiro
-                        </button>
-                    </div>
-                </form>
-                {% else %}
-                <div style="padding: 20px; background: rgba(245, 158, 11, 0.08); border-radius: 8px; border-left: 4px solid #f59e0b; margin-top: 15px;">
-                    <p style="margin: 0; color: #92400e; font-size: 0.92rem;"><i class="bi bi-info-circle-fill"></i> No cuentas con saldo disponible suficiente para solicitar un retiro en este momento. Las clases impartidas acreditarán tu saldo automáticamente.</p>
-                </div>
-                {% endif %}
-            </div>
-
-            <!-- Tabla de historial de solicitudes de retiro -->
-            <div class="prof-card" style="margin-top: 30px;">
-                <h2 class="prof-card-title"><i class="bi bi-clock-history"></i> Historial de Mis Retiros</h2>
-                <div style="overflow-x: auto; margin-top: 15px;">
-                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                        <thead>
-                            <tr style="border-bottom: 2px solid rgba(0,0,0,0.08); font-size: 0.85rem; color: #6b7280;">
-                                <th style="padding: 10px;">ID</th>
-                                <th style="padding: 10px;">Fecha Solicitud</th>
-                                <th style="padding: 10px;">Monto</th>
-                                <th style="padding: 10px;">Banco / Cuenta</th>
-                                <th style="padding: 10px;">Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for ret in mis_retiros %}
-                            <tr style="border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 0.9rem;">
-                                <td style="padding: 12px 10px; color: #9ca3af; font-family: monospace;">#RET-{{ ret.id_solicitud }}</td>
-                                <td style="padding: 12px 10px;">{{ ret.fecha_solicitud|date:"d/m/Y H:i" }}</td>
-                                <td style="padding: 12px 10px; font-weight: 700; color: #10b981;">${{ ret.monto }}</td>
-                                <td style="padding: 12px 10px;">{{ ret.banco }} ({{ ret.numero_cuenta }})</td>
-                                <td style="padding: 12px 10px;">
-                                    {% if ret.estado == 'pendiente' %}
-                                    <span style="background: rgba(245, 158, 11, 0.15); color: #b45309; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.8rem;"><i class="bi bi-clock"></i> Pendiente</span>
-                                    {% elif ret.estado == 'aprobado' %}
-                                    <span style="background: rgba(16, 185, 129, 0.15); color: #047857; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.8rem;"><i class="bi bi-check-circle-fill"></i> Aprobado / Transferido</span>
-                                    {% else %}
-                                    <span style="background: rgba(239, 68, 68, 0.15); color: #b91c1c; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.8rem;"><i class="bi bi-x-circle-fill"></i> Rechazado</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="5" style="text-align: center; padding: 30px; color: #9ca3af;">
-                                    <i class="bi bi-inbox" style="font-size: 1.8rem; display: block; margin-bottom: 6px;"></i>
-                                    Aún no has solicitado retiros de fondos.
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- S4-09: Desglose económico de operaciones y liquidaciones -->
-                <div style="margin-top: 35px; border-top: 2px dashed rgba(0,0,0,0.08); padding-top: 25px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <div>
-                            <h3 style="font-size: 1.15rem; font-weight: 700; margin: 0; color: #1f2937;">
-                                <i class="bi bi-receipt" style="color: #6366f1;"></i> Desglose Económico de Liquidaciones (15% Comisión LBWUS)
-                            </h3>
-                            <p style="font-size: 0.82rem; color: #6b7280; margin: 4px 0 0 0;">
-                                Detalle de ingresos brutos, comisión retenida por la plataforma (15% IVA incluido) y abonos disponibles.
-                            </p>
-                        </div>
-                        <span style="font-size: 0.8rem; background: #e0e7ff; color: #3730a3; padding: 4px 10px; border-radius: 999px; font-weight: 600;">
-                            Regla S4-09
-                        </span>
-                    </div>
-
-                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                        <thead>
-                            <tr style="border-bottom: 2px solid rgba(0,0,0,0.08); font-size: 0.82rem; color: #6b7280; text-transform: uppercase;">
-                                <th style="padding: 10px;">ID</th>
-                                <th style="padding: 10px;">Fecha</th>
-                                <th style="padding: 10px;">Alumno</th>
-                                <th style="padding: 10px;">Concepto</th>
-                                <th style="padding: 10px;">Bruto Operación</th>
-                                <th style="padding: 10px;">Comisión LBWUS (15%)</th>
-                                <th style="padding: 10px;">Abono Tutor (85%)</th>
-                                <th style="padding: 10px;">Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for d in desgloses_profesor %}
-                            <tr style="border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 0.88rem;">
-                                <td style="padding: 10px; color: #9ca3af; font-family: monospace;">#DES-{{ d.id_desglose }}</td>
-                                <td style="padding: 10px;">{{ d.fecha_operacion|date:"d/m/Y H:i" }}</td>
-                                <td style="padding: 10px; font-weight: 600;">{{ d.alumno.user.first_name }} {{ d.alumno.user.last_name }}</td>
-                                <td style="padding: 10px;">
-                                    <span style="font-size: 0.8rem; background: #f3f4f6; color: #374151; padding: 2px 8px; border-radius: 4px;">
-                                        {{ d.get_tipo_operacion_display }}
-                                    </span>
-                                </td>
-                                <td style="padding: 10px; font-weight: 600;">${{ d.monto_bruto }}</td>
-                                <td style="padding: 10px; color: #dc2626; font-weight: 600;">-${{ d.comision_lbwus }}</td>
-                                <td style="padding: 10px; color: #059669; font-weight: 700;">+${{ d.monto_tutor }}</td>
-                                <td style="padding: 10px;">
-                                    {% if d.estado == 'disponible' %}
-                                    <span style="background: rgba(16, 185, 129, 0.15); color: #047857; padding: 3px 8px; border-radius: 6px; font-weight: 600; font-size: 0.78rem;">
-                                        <i class="bi bi-check-circle"></i> Disponible
-                                    </span>
-                                    {% elif d.estado == 'pendiente' %}
-                                    <span style="background: rgba(245, 158, 11, 0.15); color: #b45309; padding: 3px 8px; border-radius: 6px; font-weight: 600; font-size: 0.78rem;">
-                                        <i class="bi bi-shield-lock"></i> En Custodia
-                                    </span>
-                                    {% elif d.estado == 'liquidado' %}
-                                    <span style="background: rgba(59, 130, 246, 0.15); color: #1d4ed8; padding: 3px 8px; border-radius: 6px; font-weight: 600; font-size: 0.78rem;">
-                                        <i class="bi bi-cash-stack"></i> Liquidado
-                                    </span>
-                                    {% else %}
-                                    <span style="background: rgba(239, 68, 68, 0.15); color: #b91c1c; padding: 3px 8px; border-radius: 6px; font-weight: 600; font-size: 0.78rem;">
-                                        <i class="bi bi-arrow-counterclockwise"></i> Reembolsado
-                                    </span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="8" style="text-align: center; padding: 25px; color: #9ca3af; font-size: 0.88rem;">
-                                    Aún no hay operaciones financieras registradas para tu cuenta.
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- esta parte es del chat o buzon de consultas de alumnos -->
-        <section id="sec-buzon" class="prof-section">
-            <div class="prof-section-header">
-                <h1 class="prof-section-title">Buzón de Alumnos</h1>
-                <p class="prof-section-subtitle">Resuelve las dudas académicas y mantén contacto directo con tus estudiantes.</p>
-            </div>
-            
-            <div class="profe-chat-container">
-                <!-- Panel izquierdo: lista de chats -->
-                <div class="profe-chat-sidebar">
-                    <div class="profe-chat-search">
-                        <i class="bi bi-search"></i>
-                        <input type="text" id="profe-chat-search-input" placeholder="Buscar alumno..." oninput="filterAlumnChats()">
-                    </div>
-                    <div class="profe-chat-list" id="profe-chat-list-el">
-                        <!-- Se rellena con JS -->
-                    </div>
-                </div>
-                
-                <!-- Panel derecho: chat activo -->
-                <div class="profe-chat-main">
-                    <div class="profe-chat-header" id="profe-chat-active-header">
-                        <!-- Se rellena con JS -->
-                    </div>
-                    <div class="profe-chat-history" id="profe-chat-messages-container">
-                        <!-- Se rellena con JS -->
-                    </div>
-                    <form class="profe-chat-input-box" onsubmit="sendTeacherMessage(event)">
-                        <input type="text" id="profe-chat-input-el" placeholder="Escribe tu respuesta al alumno..." required autocomplete="off">
-                        <button type="submit" class="profe-chat-send-btn"><i class="bi bi-send-fill"></i></button>
-                    </form>
-                </div>
-            </div>
-        </section>
+        {% include 'mensajes/buzon_profesor.html' %}
 
         <!-- esta parte es de la videoteca y gestion de clases grabadas -->
         {% include 'user_profesor/videos.html' %}
@@ -539,65 +91,16 @@ input:checked + .slider:before {
 
 
 
-    </main>
+    </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<!-- esta parte es de SweetAlert2, la librería de alertas animadas -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+{# SweetAlert2 ya lo carga base_admin, justo antes de este bloque #}
 <script>
-    // esta parte es de la simulacion de datos del chat docente
-    let studentChats = [
-        {
-            studentId: 10,
-            studentName: "Juan Pérez",
-            courseName: "Universidad Python",
-            initials: "JP",
-            unread: true,
-            messages: [
-                { sender: "student", text: "Hola Profesor, tengo una duda con la Clase 3 de variables.", time: "21:10" }
-            ]
-        },
-        {
-            studentId: 11,
-            studentName: "Sofía Rojas",
-            courseName: "Python Django Web",
-            initials: "SR",
-            unread: false,
-            messages: [
-                { sender: "teacher", text: "Hola Sofía. Sí, el ORM de Django maneja la sincronización automáticamente.", time: "Ayer" },
-                { sender: "student", text: "¡Buenísimo! Me quedó clarísimo, gracias.", time: "Ayer" }
-            ]
-        },
-        {
-            studentId: 12,
-            studentName: "Lucas Altamirano",
-            courseName: "Automatizaciones n8n + MCP",
-            initials: "LA",
-            unread: false,
-            messages: [
-                { sender: "student", text: "Profesor, ¿puedo conectar más de un servidor MCP local a n8n?", time: "Hace 2 días" },
-                { sender: "teacher", text: "Sí, Lucas. Solo debes configurar las variables de entorno de cada contenedor.", time: "Hace 2 días" }
-            ]
-        }
-    ];
-
-    let currentStudentChatId = 10;
-
-    // esta parte es de los videos grabados por el docente
-    let teacherVideos = [
-        { id: 1, title: "Clase 1: Introducción a la Universidad Python", duration: "12:15", course: "Universidad Python", courseId: "py-1", views: 420, date: "15 May 2026" },
-        { id: 2, title: "Clase 2: Configuración del Entorno en Windows", duration: "10:45", course: "Universidad Python", courseId: "py-1", views: 310, date: "16 May 2026" },
-        { id: 3, title: "Clase 3: Hola Mundo y Variables Básicas", duration: "08:30", course: "Universidad Python", courseId: "py-1", views: 250, date: "18 May 2026" },
-        { id: 4, title: "Clase 1: Bienvenidos a Python y Django", duration: "15:10", course: "Python Django Web", courseId: "py-2", views: 180, date: "20 May 2026" },
-        { id: 5, title: "Clase 1: Introducción a n8n y MCP", duration: "18:25", course: "Automatizaciones n8n + MCP", courseId: "tr-1", views: 158, date: "22 May 2026" },
-        { id: 6, title: "Clase 2: Conectando Nodos y Flujos Simples", duration: "22:15", course: "Automatizaciones n8n + MCP", courseId: "tr-1", views: 110, date: "24 May 2026" }
-    ];
-
     // esta parte es de la función que cambia qué sección se ve en el panel según el menú que elegiste
     function switchSection(sectionId) {
-        document.querySelectorAll('.prof-menu-item').forEach(item => item.classList.remove('active'));
+        document.querySelectorAll('.nav-item[data-seccion]').forEach(item => item.classList.remove('active'));
         document.querySelectorAll('.prof-section').forEach(sec => sec.classList.remove('active'));
 
         document.getElementById('menu-' + sectionId).classList.add('active');
@@ -607,18 +110,30 @@ input:checked + .slider:before {
         localStorage.setItem('prof_active_tab', sectionId);
 
         // esta parte es de la inicializacion de sub-vistas
-        if (sectionId === 'buzon') {
-            renderTeacherInbox();
-        } else if (sectionId === 'grabaciones') {
+        if (sectionId === 'grabaciones') {
             renderTeacherVideos();
         }
     }
 
     // esta parte es para restaurar la última sección que el profe estaba viendo al recargar
     document.addEventListener('DOMContentLoaded', () => {
-        const savedTab = localStorage.getItem('prof_active_tab');
+        // los enlaces del menu son reales (#clases...): aqui cambian de seccion sin recargar la pagina
+        document.querySelectorAll('.nav-item[data-seccion]').forEach(enlace => {
+            enlace.addEventListener('click', (e) => {
+                e.preventDefault();
+                history.replaceState(null, '', '#' + enlace.dataset.seccion);
+                switchSection(enlace.dataset.seccion);
+            });
+        });
+        // un enlace con #seccion (por ejemplo desde Mis Reseñas) gana sobre la última sección recordada
+        const deEnlace = window.location.hash.slice(1);
+        const savedTab = document.getElementById('menu-' + deEnlace) ? deEnlace : localStorage.getItem('prof_active_tab');
         if (savedTab && document.getElementById('menu-' + savedTab)) {
             switchSection(savedTab);
+        }
+        // esta parte es para abrir el Buzón cuando llegas a una conversación (?c=), por ejemplo desde la campanita
+        if (new URLSearchParams(window.location.search).has('c')) {
+            switchSection('buzon');
         }
     });
 
@@ -717,100 +232,20 @@ input:checked + .slider:before {
         });
     }
 
-    // esta parte es del renderizado de la bandeja de mensajes docente
-    function renderTeacherInbox() {
-        const chatListEl = document.getElementById('profe-chat-list-el');
-        if (!chatListEl) return;
-        chatListEl.innerHTML = '';
-        
-        studentChats.forEach(chat => {
-            const lastMsg = chat.messages[chat.messages.length - 1];
-            const isActive = chat.studentId === currentStudentChatId;
-            
-            const item = document.createElement('div');
-            item.className = `profe-chat-item ${isActive ? 'active' : ''} ${chat.unread ? 'unread' : ''}`;
-            item.onclick = () => {
-                chat.unread = false;
-                currentStudentChatId = chat.studentId;
-                renderTeacherInbox();
-            };
-            
-            const escHtml = (str) => String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-            const safeInitials = escHtml(chat.initials);
-            const safeStudentName = escHtml(chat.studentName);
-            const safeCourseName = escHtml(chat.courseName);
-            const safeLastTime = escHtml(lastMsg ? lastMsg.time : '');
-            const safeLastText = escHtml(lastMsg ? lastMsg.text : '');
-            item.innerHTML = `
-                <div class="profe-chat-avatar">${safeInitials}</div>
-                <div class="profe-chat-info">
-                    <div class="profe-chat-title-row">
-                        <span class="profe-chat-student-name">${safeStudentName}</span>
-                        <span class="profe-chat-time">${safeLastTime}</span>
-                    </div>
-                    <div class="profe-chat-course-label">${safeCourseName}</div>
-                    <div class="profe-chat-last-msg">${safeLastText}</div>
-                </div>
-            `;
-            chatListEl.appendChild(item);
-        });
-        
-        const activeChat = studentChats.find(c => c.studentId === currentStudentChatId);
-        const headerEl = document.getElementById('profe-chat-active-header');
-        const msgsEl = document.getElementById('profe-chat-messages-container');
-        
-        if (activeChat && headerEl && msgsEl) {
-            const safeActiveInitials = escHtml(activeChat.initials);
-            const safeActiveStudent = escHtml(activeChat.studentName);
-            const safeActiveCourse = escHtml(activeChat.courseName);
-            headerEl.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <div class="profe-chat-avatar" style="width: 40px; height: 40px; font-size: 0.9rem;">${safeActiveInitials}</div>
-                    <div>
-                        <h4 style="margin: 0; font-size: 1rem; font-weight: 700; color: var(--text);">${safeActiveStudent}</h4>
-                        <span style="font-size: 0.75rem; color: var(--text-light);">${safeActiveCourse}</span>
-                    </div>
-                </div>
-            `;
-            
-            msgsEl.innerHTML = '';
-            const escHtml = (str) => String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-            activeChat.messages.forEach(msg => {
-                const bubble = document.createElement('div');
-                bubble.className = `profe-chat-bubble-row ${msg.sender === 'teacher' ? 'sent' : 'received'}`;
-                bubble.innerHTML = `
-                    <div class="profe-chat-bubble">
-                        <p>${escHtml(msg.text)}</p>
-                        <span class="profe-chat-msg-time">${escHtml(msg.time)}</span>
-                    </div>
-                `;
-                msgsEl.appendChild(bubble);
-            });
-            msgsEl.scrollTop = msgsEl.scrollHeight;
-        }
-    }
-
-    // esta parte es del envio de mensaje del docente
-    function sendTeacherMessage(event) {
+    function submitFormJson(event) {
         event.preventDefault();
-        const inputEl = document.getElementById('profe-chat-input-el');
-        if (!inputEl) return;
-        const text = inputEl.value.trim();
-        if (!text) return;
-        
-        const activeChat = studentChats.find(c => c.studentId === currentStudentChatId);
-        if (!activeChat) return;
-        
-        const nowTime = new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
-        
-        activeChat.messages.push({
-            sender: "teacher",
-            text: text,
-            time: nowTime
-        });
-        
-        inputEl.value = '';
-        renderTeacherInbox();
+        fetch(event.target.action, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+            body: new FormData(event.target)
+        })
+        .then(res => res.json())
+        .then(data => Swal.fire({
+            title: data.success ? 'Listo' : 'Atención',
+            text: data.message,
+            icon: data.success ? 'success' : 'warning'
+        }).then(() => { if (data.success) window.location.reload(); }))
+        .catch(() => Swal.fire('Error', 'Hubo un error de conexión al guardar.', 'error'));
     }
 
     // esta parte es para filtrar los chats de alumnos
@@ -828,42 +263,95 @@ input:checked + .slider:before {
         });
     }
 
-    // esta parte es del renderizado del catalogo de videos docente
+    // esta parte es de la biblioteca de videos del profe: los trae del servidor (se guardan en MongoDB)
+    const escVideo = (str) => String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+
+    function avisoVideos(texto) {
+        const aviso = document.getElementById('profe-videos-aviso');
+        if (aviso) { aviso.textContent = texto || ''; aviso.hidden = !texto; }
+    }
+
     function renderTeacherVideos() {
         const gridEl = document.getElementById('profe-cursos-grid-el');
         if (!gridEl) return;
-        gridEl.innerHTML = '';
-        
-        // esta parte es de actualizar el número de lecciones totales que se muestran en el indicador superior de estadísticas
-        const counterEl = document.getElementById('profe-stat-videos-count');
-        if (counterEl) counterEl.innerText = `${teacherVideos.length} Lecciones`;
-
-        const escVideo = (str) => String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-        teacherVideos.forEach(video => {
-            const card = document.createElement('div');
-            card.className = 'profe-cursos-card';
-            const safeTitle = escVideo(video.title);
-            const safeDuration = escVideo(video.duration);
-            const safeCourse = escVideo(video.course);
-            card.innerHTML = `
-                <div class="profe-cursos-thumb">
-                    <i class="bi bi-play-circle-fill"></i>
-                    <span class="profe-cursos-badge-duration">${safeDuration}</span>
-                </div>
-                <div class="profe-cursos-body">
-                    <h4 class="profe-cursos-title" title="${safeTitle}">${safeTitle}</h4>
-                    <span class="profe-cursos-category">${safeCourse}</span>
-                    <div class="profe-cursos-meta">
-                        <span><i class="bi bi-eye"></i> ${escVideo(video.views)} vistas</span>
-                        <span><i class="bi bi-calendar"></i> ${escVideo(video.date)}</span>
+        fetch("{% url 'videos_profesor' %}")
+        .then(res => res.json())
+        .then(data => {
+            gridEl.innerHTML = '';
+            if (!data.disponible) { avisoVideos(data.message); return; }
+            document.getElementById('upload-course').innerHTML = data.asignaturas
+                .map(a => `<option value="${Number(a.id)}">${escVideo(a.nombre)}</option>`).join('');
+            avisoVideos(!data.asignaturas.length ? 'Para subir videos necesitas tener al menos una materia en tus clases.'
+                        : (data.videos.length ? '' : 'Todavía no has subido videos.'));
+            const counterEl = document.getElementById('profe-stat-videos-count');
+            if (counterEl) counterEl.innerText = `${data.videos.length} ${data.videos.length === 1 ? 'video' : 'videos'}`;
+            data.videos.forEach(video => {
+                const card = document.createElement('div');
+                card.className = 'profe-cursos-card';
+                const safeTitle = escVideo(video.titulo);
+                card.innerHTML = `
+                    <div class="profe-cursos-thumb">
+                        <i class="bi bi-play-circle-fill"></i>
+                        <span class="profe-cursos-badge-duration">${escVideo(video.duracion)}</span>
                     </div>
-                    <button class="profe-cursos-delete-btn" onclick="deleteTeacherVideo(${Number(video.id) || 0})">
-                        <i class="bi bi-trash3-fill"></i> Eliminar Clase
-                    </button>
-                </div>
-            `;
-            gridEl.appendChild(card);
-        });
+                    <div class="profe-cursos-body">
+                        <h4 class="profe-cursos-title" title="${safeTitle}">${safeTitle}</h4>
+                        <span class="profe-cursos-category">${escVideo(video.asignatura)}</span>
+                        <div class="profe-cursos-meta">
+                            <span><i class="bi bi-calendar"></i> ${escVideo(video.subido)}</span>
+                        </div>
+                        <button class="profe-cursos-delete-btn" data-id="${escVideo(video.id)}" onclick="deleteTeacherVideo(this.dataset.id)">
+                            <i class="bi bi-trash3-fill"></i> Eliminar video
+                        </button>
+                    </div>
+                `;
+                gridEl.appendChild(card);
+            });
+            renderEntregas(data);
+        })
+        .catch(() => avisoVideos('No pudimos cargar tus videos. Revisa tu conexión.'));
+    }
+
+    // esta parte es de la lista de alumnos que contrataron videos: fecha límite y el botón para compartir
+    function renderEntregas(data) {
+        const card = document.getElementById('profe-entregas-card');
+        const lista = document.getElementById('profe-entregas-lista');
+        card.hidden = !data.entregas.length;
+        const opciones = data.videos.map(v => `<option value="${escVideo(v.id)}">${escVideo(v.titulo)} (${escVideo(v.asignatura)})</option>`).join('');
+        lista.innerHTML = data.entregas.map(e => {
+            const estado = !e.falta ? 'Entrega completa'
+                : `${e.atrasada ? 'Atrasado: debías haber entregado hasta' : 'Próxima entrega'} el ${escVideo(e.proxima)} (faltan ${Number(e.falta)})`;
+            const acciones = e.compartidos >= e.videos ? '' : (opciones ? `
+                <div class="profe-entrega-acciones">
+                    <select class="prof-form-select" aria-label="Video para ${escVideo(e.alumno)}">${opciones}</select>
+                    <button class="prof-form-btn" style="width:auto;padding:10px 20px" data-paquete="${Number(e.paquete)}" onclick="shareVideo(this)">Compartir</button>
+                </div>` : '<p class="profe-entrega-estado">Sube un video a tu biblioteca para poder compartirlo.</p>');
+            return `<li class="profe-entrega${e.atrasada ? ' atrasada' : ''}">
+                <strong>${escVideo(e.alumno)}</strong>
+                <span>Plan ${escVideo(e.plan)} · ${Number(e.compartidos)} de ${Number(e.videos)} compartidos</span>
+                <span class="profe-entrega-estado">${estado}</span>${acciones}
+            </li>`;
+        }).join('');
+    }
+
+    // esta parte es de compartir un video de la biblioteca con un alumno
+    function shareVideo(boton) {
+        const datos = new FormData();
+        datos.append('paquete', boton.dataset.paquete);
+        datos.append('video', boton.parentElement.querySelector('select').value);
+        boton.disabled = true;
+        fetch("{% url 'compartir_video' %}", { method: 'POST', headers: { 'X-CSRFToken': '{{ csrf_token }}' }, body: datos })
+        .then(res => res.json())
+        .then(data => {
+            Swal.fire({
+                title: data.success ? '¡Video compartido!' : 'Atención',
+                text: data.message,
+                icon: data.success ? 'success' : 'warning',
+                confirmButtonColor: '#a855f7'
+            });
+            renderTeacherVideos();
+        })
+        .catch(() => { boton.disabled = false; Swal.fire('Error', 'Hubo un error de conexión al compartir el video.', 'error'); });
     }
 
     // esta parte es para abrir y cerrar el modal de carga de videos
@@ -877,57 +365,44 @@ input:checked + .slider:before {
         if (modal) modal.classList.remove('open');
     }
 
-    // esta parte es para simular la carga y publicacion de un video
+    // esta parte es de subir el video al servidor: valida materia, MP4 y 30 minutos
     function submitUploadedVideo(event) {
         event.preventDefault();
-        const title = document.getElementById('upload-title').value.trim();
-        const duration = document.getElementById('upload-duration').value.trim();
-        const courseSelect = document.getElementById('upload-course');
-        const courseText = courseSelect.options[courseSelect.selectedIndex].text;
-        const courseId = courseSelect.value;
-        
+        const form = event.target;
         Swal.fire({
-            title: 'Subiendo Clase',
-            text: 'Subiendo archivo de video e indexando lección...',
-            icon: 'info',
+            title: 'Subiendo video',
+            text: 'Puede tardar unos minutos según el tamaño del archivo.',
             allowOutsideClick: false,
             showConfirmButton: false,
-            timer: 2000,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        }).then(() => {
-            const newVideo = {
-                id: Date.now(),
-                title: title,
-                duration: duration,
-                course: courseText,
-                courseId: courseId,
-                views: 0,
-                date: new Date().toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' })
-            };
-            
-            teacherVideos.unshift(newVideo);
-            closeUploadModal();
-            renderTeacherVideos();
-            
-            // esta parte es de resetear y limpiar los campos del formulario de subida de video
-            document.getElementById('profe-video-upload-form').reset();
-            
+            didOpen: () => Swal.showLoading()
+        });
+        fetch("{% url 'subir_video' %}", {
+            method: 'POST',
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+            body: new FormData(form)
+        })
+        .then(res => res.json())
+        .then(data => {
             Swal.fire({
-                title: '¡Clase Publicada!',
-                text: 'La lección ya se encuentra disponible para los alumnos inscritos.',
-                icon: 'success',
+                title: data.success ? '¡Video publicado!' : 'Atención',
+                text: data.message,
+                icon: data.success ? 'success' : 'warning',
                 confirmButtonColor: '#a855f7'
             });
-        });
+            if (data.success) {
+                form.reset();
+                closeUploadModal();
+                renderTeacherVideos();
+            }
+        })
+        .catch(() => Swal.fire('Error', 'Hubo un error de conexión al subir el video.', 'error'));
     }
 
-    // esta parte es de eliminar una clase grabada
+    // esta parte es de eliminar un video de la biblioteca
     function deleteTeacherVideo(videoId) {
         Swal.fire({
-            title: '¿Eliminar lección?',
-            text: "Esta acción no se puede deshacer y los alumnos perderán acceso al video.",
+            title: '¿Eliminar video?',
+            text: 'Esta acción no se puede deshacer.',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#ef4444',
@@ -935,232 +410,34 @@ input:checked + .slider:before {
             confirmButtonText: 'Sí, eliminar',
             cancelButtonText: 'Cancelar'
         }).then((result) => {
-            if (result.isConfirmed) {
-                teacherVideos = teacherVideos.filter(v => v.id !== videoId);
-                renderTeacherVideos();
+            if (!result.isConfirmed) return;
+            fetch("{% url 'eliminar_video' 'VIDEO_ID' %}".replace('VIDEO_ID', encodeURIComponent(videoId)), {
+                method: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+            })
+            .then(res => res.json())
+            .then(data => {
                 Swal.fire({
-                    title: 'Eliminado',
-                    text: 'La lección ha sido retirada del catálogo.',
-                    icon: 'success',
+                    title: data.success ? 'Eliminado' : 'Atención',
+                    text: data.message,
+                    icon: data.success ? 'success' : 'warning',
                     confirmButtonColor: '#a855f7'
                 });
-            }
+                if (data.success) renderTeacherVideos();
+            })
+            .catch(() => Swal.fire('Error', 'Hubo un error de conexión al eliminar el video.', 'error'));
         });
-    }
-
-    // esta parte es de la simulacion del streaming en vivo
-    let isStreaming = false;
-    let webcamMediaStream = null;
-    let mockChatInterval = null;
-
-    function toggleStreamingSession() {
-        const btnStream = document.getElementById('btn-toggle-stream');
-        const liveBadge = document.getElementById('profe-live-badge');
-        const cameraPlaceholder = document.getElementById('profe-camera-placeholder');
-        const videoEl = document.getElementById('profe-webcam-stream');
-        const sysMsg = document.getElementById('profe-studio-sys-msg');
-        
-        const btnMic = document.getElementById('btn-toggle-mic');
-        const btnVideo = document.getElementById('btn-toggle-video');
-        const btnShare = document.getElementById('btn-toggle-share');
-
-        if (!isStreaming) {
-            // esta parte es de iniciar la transmisión y conectar la señal en vivo del profesor
-            Swal.fire({
-                title: 'Iniciando Transmisión',
-                text: 'Estableciendo conexión y solicitando acceso a dispositivos multimedia...',
-                icon: 'info',
-                allowOutsideClick: false,
-                showConfirmButton: false,
-                timer: 1500,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            }).then(() => {
-                isStreaming = true;
-                btnStream.innerHTML = '<i class="bi bi-stop-fill" style="margin-right: 6px;"></i> Finalizar Directo';
-                btnStream.style.background = '#ef4444';
-                liveBadge.style.display = 'flex';
-                cameraPlaceholder.style.display = 'none';
-                
-                // esta parte es de habilitar los botones de los controles del dispositivo (micrófono, cámara, compartir pantalla)
-                btnMic.removeAttribute('disabled');
-                btnVideo.removeAttribute('disabled');
-                btnShare.removeAttribute('disabled');
-                
-                if (sysMsg) sysMsg.style.display = 'none';
-
-                // esta parte es de pedir permisos al navegador para capturar el video y audio de la cámara web del profesor
-                navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-                    .then(stream => {
-                        webcamMediaStream = stream;
-                        videoEl.srcObject = stream;
-                    })
-                    .catch(err => {
-                        console.warn("No se pudo acceder a la camara web:", err);
-                        // esta parte es para reproducir un video de respaldo animado en bucle si no se concede acceso a la cámara física
-                        videoEl.poster = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerBlazes.jpg";
-                        videoEl.src = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4";
-                        videoEl.loop = true;
-                        videoEl.srcObject = null;
-                        videoEl.play();
-                    });
-                
-                // esta parte es de arrancar el chat simulado de los alumnos saludando en vivo
-                startMockStudentLiveChat();
-                
-                Swal.fire({
-                    title: '¡Al Aire!',
-                    text: 'La transmisión ha comenzado con éxito. Tus alumnos ya se están uniendo.',
-                    icon: 'success',
-                    confirmButtonColor: '#10b981'
-                });
-            });
-        } else {
-            // esta parte es de finalizar y detener la transmisión en vivo del profesor
-            isStreaming = false;
-            btnStream.innerHTML = '<i class="bi bi-play-fill" style="margin-right: 6px;"></i> Iniciar Transmisión';
-            btnStream.style.background = '#10b981';
-            liveBadge.style.display = 'none';
-            cameraPlaceholder.style.display = 'flex';
-            
-            // esta parte es de bloquear e inhabilitar los controles de los dispositivos multimedia
-            btnMic.setAttribute('disabled', 'true');
-            btnVideo.setAttribute('disabled', 'true');
-            btnShare.setAttribute('disabled', 'true');
-            
-            // esta parte es de apagar la cámara web liberando los canales de audio y video
-            if (webcamMediaStream) {
-                webcamMediaStream.getTracks().forEach(track => track.stop());
-                webcamMediaStream = null;
-            }
-            videoEl.srcObject = null;
-            videoEl.src = '';
-            videoEl.pause();
-            
-            // esta parte es de detener el intervalo del chat simulado de los alumnos en vivo
-            clearInterval(mockChatInterval);
-            const chatContainer = document.getElementById('profe-studio-chat-container');
-            if (chatContainer) {
-                chatContainer.innerHTML = '<div class="profe-studio-sys-msg" id="profe-studio-sys-msg">Conexión inactiva. Inicia la transmisión para habilitar el chat de alumnos.</div>';
-            }
-            
-            Swal.fire({
-                title: 'Transmisión Finalizada',
-                text: 'La señal ha sido desconectada y se ha guardado el informe de asistencia.',
-                icon: 'info',
-                confirmButtonColor: '#a855f7'
-            });
-        }
-    }
-
-    // esta parte es de los botones de alternar dispositivos
-    let isStudioMicActive = true;
-    let isStudioVideoActive = true;
-    let isStudioShareActive = false;
-
-    function toggleStudioMic() {
-        isStudioMicActive = !isStudioMicActive;
-        const icon = document.getElementById('icon-studio-mic');
-        const btn = document.getElementById('btn-toggle-mic');
-        if (isStudioMicActive) {
-            icon.className = 'bi bi-mic-fill';
-            btn.style.background = '';
-        } else {
-            icon.className = 'bi bi-mic-mute-fill';
-            btn.style.background = '#ef4444';
-        }
-        if (webcamMediaStream) {
-            webcamMediaStream.getAudioTracks().forEach(track => track.enabled = isStudioMicActive);
-        }
-    }
-
-    function toggleStudioVideo() {
-        isStudioVideoActive = !isStudioVideoActive;
-        const icon = document.getElementById('icon-studio-video');
-        const btn = document.getElementById('btn-toggle-video');
-        const placeholder = document.getElementById('profe-camera-placeholder');
-        if (isStudioVideoActive) {
-            icon.className = 'bi bi-camera-video-fill';
-            btn.style.background = '';
-            if (isStreaming && !webcamMediaStream) {
-                document.getElementById('profe-webcam-stream').play();
-            }
-        } else {
-            icon.className = 'bi bi-camera-video-off-fill';
-            btn.style.background = '#ef4444';
-            if (isStreaming && !webcamMediaStream) {
-                document.getElementById('profe-webcam-stream').pause();
-            }
-        }
-        if (webcamMediaStream) {
-            webcamMediaStream.getVideoTracks().forEach(track => track.enabled = isStudioVideoActive);
-        }
-    }
-
-    function toggleStudioShare() {
-        isStudioShareActive = !isStudioShareActive;
-        const icon = document.getElementById('icon-studio-share');
-        const btn = document.getElementById('btn-toggle-share');
-        if (isStudioShareActive) {
-            icon.className = 'bi bi-display-fill';
-            btn.style.background = '#3b82f6';
-            Swal.fire({
-                title: 'Compartiendo Pantalla',
-                text: 'La ventana seleccionada está siendo transmitida a la sala.',
-                icon: 'info',
-                timer: 1500,
-                showConfirmButton: false
-            });
-        } else {
-            icon.className = 'bi bi-display';
-            btn.style.background = '';
-        }
-    }
-
-    // esta parte es de la simulacion del chat de los alumnos en vivo
-    function startMockStudentLiveChat() {
-        const chatContainer = document.getElementById('profe-studio-chat-container');
-        if (!chatContainer) return;
-        
-        const mockMessages = [
-            { name: "Juan Pérez", text: "¡Hola profesor! Qué bueno que comenzó el directo." },
-            { name: "Sofía Rojas", text: "Buenas noches, se escucha y se ve súper bien." },
-            { name: "Lucas Altamirano", text: "Buenas. ¿Vamos a ver el despliegue hoy?" },
-            { name: "Sofía Rojas", text: "Tengo una duda con los servicios REST." },
-            { name: "Juan Pérez", text: "Profesor, ¿dejará la clase grabada al terminar?" },
-            { name: "Lucas Altamirano", text: "Excelente clase, muchas gracias." }
-        ];
-        
-        let index = 0;
-        mockChatInterval = setInterval(() => {
-            if (index < mockMessages.length) {
-                const msg = mockMessages[index];
-                const msgEl = document.createElement('div');
-                msgEl.className = 'profe-studio-chat-msg';
-                const escFn = window.escaparHtml;
-                msgEl.innerHTML = `<strong>${escFn(msg.name)}:</strong> <span>${escFn(msg.text)}</span>`;
-                chatContainer.appendChild(msgEl);
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-                index++;
-            }
-        }, 4000);
     }
 
     // esta parte es de exponer todas nuestras funciones interactivas al ámbito global window para que funcionen con los eventos onclick
     window.switchSection = switchSection;
     window.submitRetiroForm = submitRetiroForm;
-    window.renderTeacherInbox = renderTeacherInbox;
-    window.sendTeacherMessage = sendTeacherMessage;
     window.filterAlumnChats = filterAlumnChats;
     window.renderTeacherVideos = renderTeacherVideos;
     window.openUploadModal = openUploadModal;
     window.closeUploadModal = closeUploadModal;
     window.submitUploadedVideo = submitUploadedVideo;
     window.deleteTeacherVideo = deleteTeacherVideo;
-    window.toggleStreamingSession = toggleStreamingSession;
-    window.toggleStudioMic = toggleStudioMic;
-    window.toggleStudioVideo = toggleStudioVideo;
-    window.toggleStudioShare = toggleStudioShare;
+    window.shareVideo = shareVideo;
 </script>
 {% endblock %}

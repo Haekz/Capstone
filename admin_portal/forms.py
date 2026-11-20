@@ -1,9 +1,28 @@
 from django import forms
 from alumnos.models import Alumno, Genero
+from alumnos.utils import validar_clave_nueva
 from django.contrib.auth import get_user_model
-from django.contrib.auth.password_validation import validate_password
+
+from .models import MensajeContacto
 
 User = get_user_model()
+
+
+class MensajeContactoForm(forms.ModelForm):
+    """Formulario publico de contacto. La pagina lo dibuja a mano; aqui solo se valida.
+    Los mensajes son los mismos que muestra la pagina: el servidor y el navegador dicen lo mismo."""
+
+    class Meta:
+        model = MensajeContacto
+        fields = ['nombre', 'correo', 'mensaje']
+        error_messages = {
+            'nombre': {'required': 'Por favor, dinos tu nombre.',
+                       'max_length': 'Tu nombre puede tener hasta %(limit_value)d caracteres.'},
+            'correo': {'required': 'Por favor, ingresa un correo válido.',
+                       'invalid': 'Por favor, ingresa un correo válido.'},
+            'mensaje': {'required': 'Por favor, escribe tu mensaje.',
+                        'max_length': 'Tu mensaje puede tener hasta %(limit_value)d caracteres.'},
+        }
 
 
 class AdminAlumnoForm(forms.ModelForm):
@@ -140,10 +159,9 @@ class AdminAlumnoForm(forms.ModelForm):
             if correo and password.strip().lower() == correo.strip().lower():
                 self.add_error('password', 'Por seguridad, la contrase\u00f1a no puede ser igual al correo electr\u00f3nico.')
 
-            # Validaci\u00f3n de robustez de contrase\u00f1a nativa de Django
-            dummy_user = User(username=rut or '', email=correo or '')
+            # Robustez de Django contra el RUT y el correo de la cuenta (mismo helper que los registros, Seg-3)
             try:
-                validate_password(password, user=dummy_user)
+                validar_clave_nueva(password, rut, correo)
             except forms.ValidationError as e:
                 self.add_error('password', e)
 

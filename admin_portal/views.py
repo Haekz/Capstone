@@ -1,15 +1,17 @@
 import logging
+from django.contrib import messages
+from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
-from django.db.models import Sum, Q
-from alumnos.models import (
-    Alumno, Asignatura, Genero, Profesor, Tutor, Clase,
-    Reporte, SolicitudRetiro, Inscripcion, DesgloseOperacion,
-)
+from alumnos import paquetes
+from alumnos.models import Alumno, Profesor, Tutor, Clase
 from alumnos.decorators import admin_required
-from alumnos.utils import formato_clp
+from supresiones import registro
+
+from . import ingresos, metricas
 
 logger = logging.getLogger(__name__)
 
@@ -29,73 +31,51 @@ def dashboard_admin(request):
     admin_id = request.session.get('admin_id')
     admin = get_object_or_404(Tutor.objects.select_related('user'), id_tutor=admin_id)
 
-    # Carga optimizada con select_related en listas en memoria para evitar N+1 y COUNTs redundantes
-    alumnos = list(
-        Alumno.objects.select_related('user', 'user__genero').order_by('-id_alumno')
-    )
-    profesores = list(
-        Profesor.objects.select_related('user', 'user__genero', 'especialidad').order_by('-id_profesor')
-    )
-    admins = list(Tutor.objects.select_related('user', 'user__genero').all())
-    clases = list(Clase.objects.select_related('asignatura', 'profesor', 'profesor__user').all())
-    todos_reportes = list(Reporte.objects.select_related('remitente').order_by('-fecha_reporte'))
+    # Consulta a la base de datos de los contadores del sistema. Los reportes de
+    # usuarios los atiende soporte (paso 6e): el admin no ve su contenido.
+    # select_related: la plantilla muestra nombre, correo y especialidad de cada fila (sin N+1).
+    # Sin order_by, PostgreSQL devuelve las filas en cualquier orden: "ultimos" no lo eran y las tablas saltaban.
+    alumnos = Alumno.objects.select_related('user').order_by('pk')
+    profesores = Profesor.objects.select_related('user', 'especialidad').order_by('pk')
+    admins = Tutor.objects.select_related('user').order_by('pk')
+    clases = Clase.objects.select_related('asignatura', 'profesor__user').order_by('pk')
 
-    reportes_recientes = todos_reportes[:5]
-    reportes_pendientes = sum(1 for r in todos_reportes if r.estado == 'pendiente')
+    ultimos_alumnos = alumnos.order_by('-pk')[:3]
+    ultimos_profesores = profesores.order_by('-pk')[:3]
 
-    ultimos_alumnos = alumnos[:3]
-    ultimos_profesores = profesores[:3]
+    from alumnos.models import SolicitudRetiro
 
-    todas_solicitudes_retiro = list(
-        SolicitudRetiro.objects.select_related('profesor', 'profesor__user', 'banco').order_by('-fecha_solicitud')
-    )
-    total_inscripciones_global = Inscripcion.objects.count()
-    ingresos_totales = max(total_inscripciones_global * 15000, 180000)
+    todas_solicitudes_retiro = SolicitudRetiro.objects.select_related(
+        'banco', 'profesor__user', 'profesor__cuenta_bancaria').order_by('-fecha_solicitud')
 
-    retiros_pagados = sum(r.monto for r in todas_solicitudes_retiro if r.estado == 'aprobado')
-    retiros_pendientes = sum(r.monto for r in todas_solicitudes_retiro if r.estado == 'pendiente')
-
-    # S4-09: Auditoría consolidada de comisiones de plataforma e importes en custodia en 1 sola consulta
-    agregados_desglose = DesgloseOperacion.objects.aggregate(
-        comisiones=Sum('comision_lbwus', filter=~Q(estado='reembolsado')),
-        custodia=Sum('monto_tutor', filter=Q(estado='pendiente')),
-    )
-    comisiones_lbwus_totales = agregados_desglose['comisiones'] or 0
-    fondos_en_custodia = agregados_desglose['custodia'] or 0
+    # Corte del grafico de registros (H9); cualquier otro valor vuelve a meses.
+    periodo = request.GET.get('periodo')
+    if periodo not in metricas.PERIODOS:
+        periodo = 'mes'
 
     context = {
         'admin': admin,
         'alumnos': alumnos,
         'profesores': profesores,
         'admins': admins,
-        'clases': clases,
-        'total_alumnos': len(alumnos),
-        'total_profesores': len(profesores),
-        'total_admins': len(admins),
-        'total_clases': len(clases),
-        'todos_reportes': todos_reportes,
-        'reportes_recientes': reportes_recientes,
-        'reportes_pendientes': reportes_pendientes,
+        'clases': clases,  # tabla "Clases" del panel (se habia perdido del contexto)
+        'total_alumnos': alumnos.count(),
+        'total_profesores': profesores.count(),
+        'total_admins': admins.count(),
+        'total_clases': clases.count(),
         'ultimos_alumnos': ultimos_alumnos,
         'ultimos_profesores': ultimos_profesores,
         'todas_solicitudes_retiro': todas_solicitudes_retiro,
-        'ingresos_totales': formato_clp(ingresos_totales),
-        'retiros_pagados': formato_clp(retiros_pagados),
-        'retiros_pendientes': formato_clp(retiros_pendientes),
-        'comisiones_lbwus_totales': formato_clp(comisiones_lbwus_totales),
-        'fondos_en_custodia': formato_clp(fondos_en_custodia),
+        'finanzas': metricas.finanzas(),  # montos reales (paso 8); el template les da formato
+        'grafico_registros': metricas.grafico(metricas.registros(periodo)),
+        'grafico_personas': metricas.grafico(metricas.personas(periodo)),  # mismo periodo (H8 + H9)
+        'periodo': periodo,
+        'periodo_nombre': metricas.PERIODOS[periodo],
+        'periodos': metricas.PERIODOS,
+        'ingresos_hoy': ingresos.de_hoy(),  # personas distintas que iniciaron sesion hoy (H8)
+        'soporte': metricas.soporte(),  # cifras agregadas, sin contenido (P13)
     }
     return render(request, 'admin_portal/dashboard_admin.html', context)
-
-
-# Controlador para cambiar el estado de un reporte a 'resuelto'
-@admin_required
-@require_POST
-def resolver_reporte(request, pk):
-    reporte = get_object_or_404(Reporte, id_reporte=pk)
-    reporte.estado = 'resuelto'
-    reporte.save()
-    return redirect('dashboard_admin')
 
 
 def home_adm(request):
@@ -111,8 +91,10 @@ def reporte_alumnos(request):
 @never_cache
 @admin_required
 def planes_adm(request):
-    context = {}
-    return render(request, 'admin_portal/planes_adm.html', context)
+    return render(request, 'admin_portal/planes_adm.html', {
+        'planes': metricas.planes(),
+        'tarifa': paquetes.TARIFA,
+    })
 
 
 @never_cache
@@ -120,13 +102,6 @@ def planes_adm(request):
 def nosotros_adm(request):
     context = {}
     return render(request, 'admin_portal/nosotros_adm.html', context)
-
-
-@never_cache
-@admin_required
-def contactos_adm(request):
-    context = {}
-    return render(request, 'admin_portal/contactos_adm.html', context)
 
 # --- Vistas CRUD ---
 @never_cache
@@ -176,16 +151,21 @@ def alumnos_findEdit(request, pk):
 @admin_required
 @require_POST
 def alumnos_del(request, pk):
-    alumno = get_object_or_404(Alumno.objects.select_related('user'), id_alumno=pk)
-
-    # Se borra también la cuenta (CustomUser); el perfil de alumno cae en cascada.
-    if alumno.user:
-        alumno.user.delete()
-    if Alumno.objects.filter(id_alumno=pk).exists():
+    
+    alumno = get_object_or_404(Alumno, id_alumno=pk)
+    
+    # Se borra tambien la cuenta (CustomUser); el perfil de alumno cae en cascada. Si la cuenta tiene
+    # conversaciones reportadas o historial de pagos y clases no se borra: se seudonimiza (mensajes/supresion.py).
+    # Pasa por el registro de supresiones, igual que la solicitud del usuario.
+    borrada = registro.eliminar(alumno.user)
+    if borrada and Alumno.objects.filter(id_alumno=pk).exists():
         alumno.delete()
 
-    alumnos = Alumno.objects.select_related('user', 'user__genero').all()
-    context = {'alumnos': alumnos, 'mensaje': "Bien, datos eliminados..."}
+    alumnos = Alumno.objects.all()
+    mensaje = ('Bien, datos eliminados...' if borrada else
+               'La cuenta se seudonimizó: se conservan, sin sus datos personales, sus pagos y clases y sus '
+               'conversaciones reportadas (estas, solo para soporte).')
+    context = {'alumnos': alumnos, 'mensaje': mensaje}
     return render(request, 'admin_portal/alumnos_list.html', context)
 
 
@@ -222,55 +202,40 @@ def logout_admin(request):
     return redirect('home')
 
 
-@admin_required
-def crear_clase(request):
-    if request.method == 'POST':
-        nombre_curso = request.POST.get('nombre_curso', '').strip()
-        modalidad = request.POST.get('modalidad', 'online')
-        horario = request.POST.get('horario', '').strip()
-        id_profesor = request.POST.get('id_profesor')
-
-        if not (nombre_curso and horario and id_profesor):
-            return JsonResponse({'success': False, 'message': 'Todos los campos son requeridos.'})
-
-        profesor = get_object_or_404(Profesor.objects.select_related('user'), id_profesor=id_profesor)
-        if not profesor.puede_hacer_clases:
-            return JsonResponse({'success': False, 'message': f'{profesor.nombre} aún no tiene su título profesional aprobado.'})
-        clase = Clase.objects.create(
-            asignatura=Asignatura.objects.get_or_create(nombre=nombre_curso)[0],
-            modalidad=modalidad,
-            horario=horario,
-            profesor=profesor
-        )
-        return JsonResponse({'success': True, 'message': f'Clase "{clase.asignatura.nombre}" creada exitosamente.'})
-    return JsonResponse({'success': False, 'message': 'Método no permitido.'})
-
-
-@admin_required
-@require_POST
-def eliminar_clase(request, pk):
-    clase = get_object_or_404(Clase, id_clase=pk)
-    clase.delete()
+def _avanzar_retiro(request, pk, accion, exito):
+    """Aplica un paso al retiro con la fila bloqueada: un doble clic o dos admins no lo repiten."""
+    from alumnos.models import SolicitudRetiro
+    with transaction.atomic():
+        retiro = get_object_or_404(SolicitudRetiro.objects.select_for_update(), id_solicitud=pk)
+        try:
+            accion(retiro)
+        except ValidationError as e:
+            messages.error(request, e.messages[0])
+        else:
+            messages.success(request, f'Retiro #{pk} {exito}.')
     return redirect('dashboard_admin')
 
 
 @admin_required
 @require_POST
 def aprobar_retiro(request, pk):
-    from django.utils import timezone
-    retiro = get_object_or_404(SolicitudRetiro, id_solicitud=pk)
-    retiro.estado = 'aprobado'
-    retiro.fecha_resolucion = timezone.now()
-    retiro.save()
-    return redirect('dashboard_admin')
+    return _avanzar_retiro(request, pk, lambda r: r.aprobar(request.user),
+                           'aprobado. Transfiere y luego registra el número de operación')
 
 
 @admin_required
 @require_POST
 def rechazar_retiro(request, pk):
-    from django.utils import timezone
-    retiro = get_object_or_404(SolicitudRetiro, id_solicitud=pk)
-    retiro.estado = 'rechazado'
-    retiro.fecha_resolucion = timezone.now()
-    retiro.save()
-    return redirect('dashboard_admin')
+    return _avanzar_retiro(request, pk, lambda r: r.rechazar(request.user, request.POST.get('motivo', '')),
+                           'rechazado')
+
+
+@admin_required
+@require_POST
+def marcar_pagado_retiro(request, pk):
+    return _avanzar_retiro(request, pk,
+                           lambda r: r.marcar_pagado(request.user, request.POST.get('numero_operacion', '')),
+                           'registrado como pagado')
+
+
+

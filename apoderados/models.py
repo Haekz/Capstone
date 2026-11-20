@@ -5,26 +5,29 @@
   nacimiento (madre o padre) o la resolucion del tribunal (tutor legal). Lo inicia
   el apoderado o un adolescente de 14 a 17 que lo invita por correo.
 - El apoderado contrata y reserva por su estudiante (Vinculo.autoriza).
-- El vinculo se revoca (apoderado o administrador) o termina solo cuando el
+- El vinculo se revoca (apoderado o lider de soporte) o termina solo cuando el
   estudiante cumple 18.
 - Documentos: carnet del apoderado y documento del vinculo. Minimizacion de datos: se
   guardan cifrados solo mientras se revisan y se borran al decidir; no se guarda la
-  IP. Queda la evidencia de que un administrador reviso y que version de cada
-  declaracion se acepto.
+  IP. Queda la evidencia de quien reviso y que version de cada declaracion se acepto.
+- Cada revision es un ticket de soporte (app soporte): solo el agente asignado la ve.
 """
 
 from datetime import timedelta
 
 from django.conf import settings
 from django.db import models, transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from alumnos.models import Inscripcion
 from alumnos.utils import es_menor
+from soporte.models import Ticket
+from soporte.tickets import abrir_ticket, cerrar_tickets
 
 
 class Revision(models.Model):
-    """Evidencia de una revision hecha por un administrador. Nunca guarda el documento."""
+    """Evidencia de una revision hecha por un agente de soporte. Nunca guarda el documento."""
     APROBAR = 'aprobar'
     RECHAZAR = 'rechazar'
     DECISIONES = [(APROBAR, 'Aprobar'), (RECHAZAR, 'Rechazar')]
@@ -33,7 +36,8 @@ class Revision(models.Model):
     # revisiones registradas antes de existir los documentos.
     CANALES = [(DOCUMENTO_SUBIDO, 'Documento subido'), ('presencial', 'Presencial'), ('videollamada', 'Videollamada')]
 
-    # SET_NULL: si se borra la cuenta del admin, la evidencia sigue registrada.
+    # SET_NULL: si se borra la cuenta de quien reviso, la evidencia sigue registrada.
+    # El nombre del campo se conserva por compatibilidad: guarda al agente de soporte.
     administrador = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
                                       null=True, related_name='+')
     decision = models.CharField(max_length=10, choices=DECISIONES)
@@ -48,13 +52,28 @@ class Revision(models.Model):
 
 def _registrar_decision(revisado, revision, administrador):
     """Guarda la evidencia y el nuevo estado juntos: o quedan ambos o ninguno.
-    Al decidir (aprobar o rechazar) se borran los documentos."""
+    Al decidir (aprobar o rechazar) se borran los documentos y se cierra el ticket."""
     revision.administrador = administrador
     revisado.estado = revisado.VERIFICADO if revision.decision == Revision.APROBAR else revisado.RECHAZADO
     with transaction.atomic():
         revision.save()
         revisado.save(update_fields=['estado'])
         revisado.documentos.all().delete()
+        cerrar_tickets(revisado.tickets)
+
+
+def vencer_documentos():
+    """Borra los documentos con mas de Documento.VIGENCIA sin revisar y cierra sus
+    tickets: sin documentos no hay nada que revisar. Devuelve los apoderados a quienes
+    pedirles que los suban de nuevo; al subirlos se abre un ticket con plazo nuevo."""
+    vencidos = Documento.objects.filter(subido__lt=timezone.now() - Documento.VIGENCIA)
+    de_ellos = Q(documentos__in=vencidos) | Q(vinculos__documentos__in=vencidos)
+    apoderados = list(Apoderado.objects.filter(de_ellos).distinct().select_related('user'))
+    with transaction.atomic():
+        cerrar_tickets(Ticket.objects.filter(Q(apoderado__documentos__in=vencidos)
+                                             | Q(vinculo__documentos__in=vencidos)))
+        vencidos.delete()
+    return apoderados
 
 
 class Apoderado(models.Model):
@@ -97,17 +116,40 @@ class Apoderado(models.Model):
         """Subio su carnet por ambos lados: sin eso no se puede aprobar."""
         return set(Documento.CARNET) <= set(self.documentos.values_list('tipo', flat=True))
 
+    @property
+    def puede_subir_carnet(self):
+        """En revision sin carnet (nunca lo subio o vencio) o rechazado: decidido 03-nov, puede intentarlo de nuevo."""
+        return self.estado in (self.REVISION_PENDIENTE, self.RECHAZADO) and not self.documentos_completos
+
+    def volver_a_revision(self):
+        """El rechazado que sube otro carnet vuelve a la cola de soporte (su correo ya estaba confirmado). El rechazo
+        queda en su historial de revisiones."""
+        if self.estado == self.RECHAZADO:
+            self.estado = self.REVISION_PENDIENTE
+            self.save(update_fields=['estado'])
+
     def confirmar_correo(self):
         """Marca el correo como propio. El token deja de servir (un solo uso)."""
         if self.estado != self.CORREO_PENDIENTE:
             return
         self.correo_verificado = timezone.now()
         self.estado = self.REVISION_PENDIENTE
-        self.save(update_fields=['correo_verificado', 'estado'])
+        with transaction.atomic():
+            self.save(update_fields=['correo_verificado', 'estado'])
+            self.abrir_ticket_si_revisable()
+
+    def abrir_ticket_si_revisable(self):
+        """Con el correo confirmado y el carnet subido. Si el carnet vencio sin revisar,
+        el ticket se abre cuando lo vuelve a subir (ver vencer_documentos)."""
+        if self.estado == self.REVISION_PENDIENTE and self.documentos_completos:
+            abrir_ticket(Ticket.APODERADOS, apoderado=self)
 
     def aplicar_revision(self, revision, administrador):
         revision.apoderado = self
         _registrar_decision(self, revision, administrador)
+        # Con la identidad verificada, sus vinculos pendientes ya se pueden revisar.
+        for vinculo in self.vinculos.filter(estado=Vinculo.PENDIENTE):
+            vinculo.abrir_ticket_si_revisable()
 
 
 class RevisionIdentidad(Revision):
@@ -142,6 +184,10 @@ class Vinculo(models.Model):
     estado = models.CharField(max_length=12, choices=ESTADOS, default=PENDIENTE)
     version_declaracion = models.CharField(max_length=10)
     declaracion_aceptada = models.DateTimeField()
+    por_rut = models.BooleanField(
+        'pedido con el RUT del estudiante', default=False,
+        help_text='Un segundo apoderado identifico al estudiante, que ya estaba registrado, solo con su RUT: '
+                  'no se le muestra su nombre hasta que soporte verifique el vinculo.')
     creado = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -153,13 +199,42 @@ class Vinculo(models.Model):
         return f'{self.apoderado.nombre} - {self.alumno.user.first_name} ({self.get_estado_display()})'
 
     @property
+    def nombre_visible(self):
+        """Como se nombra al estudiante ante su apoderado: quien lo pidio solo con el RUT no ve su nombre
+        hasta que soporte verifique el vinculo (si no, escribir un RUT bastaria para conocer el nombre)."""
+        if self.por_rut and self.estado != self.VERIFICADO:
+            return 'Estudiante'
+        return self.alumno.user.first_name
+
+    @property
     def ultima_revision(self):
         return self.revisiones.first()
 
     @property
+    def revocacion(self):
+        """La ultima revocacion: un vinculo se puede volver a pedir y, despues, revocar otra vez."""
+        return self.revocaciones.order_by('-fecha', '-pk').first()
+
+    @property
+    def puede_volver_a_pedir(self):
+        """Decidido 02-nov: si se rechazo, o si el propio apoderado se desvinculo. Si lo revoco soporte, no:
+        tiene que escribir a soporte."""
+        if self.estado == self.RECHAZADO:
+            return True
+        revocacion = self.revocacion if self.estado == self.REVOCADO else None
+        return revocacion is not None and revocacion.autor_id == self.apoderado.user_id
+
+    @property
     def apoderado_define_clave(self):
-        """Solo si el apoderado creo la cuenta: el adolescente que lo invito maneja la suya."""
-        return not SolicitudAdolescente.objects.filter(alumno_id=self.alumno_id).exists()
+        """Solo el apoderado que creo la cuenta, que es el de su primer vinculo: el adolescente que invito
+        a su apoderado maneja la suya, y un segundo apoderado, que pidio vincularse despues, no puede
+        cambiarle la contrasena al estudiante (aunque su vinculo se verifique). Tampoco quien vuelve a
+        pedir el vinculo con el RUT (por_rut): si el primer vinculo se revoco, la clave la maneja soporte."""
+        if self.por_rut:
+            return False
+        vinculos = Vinculo.objects.filter(alumno_id=self.alumno_id).order_by('creado', 'pk')
+        primero = vinculos.values_list('pk', flat=True).first()
+        return primero == self.pk and not SolicitudAdolescente.objects.filter(alumno_id=self.alumno_id).exists()
 
     @property
     def documento_requerido(self):
@@ -168,6 +243,17 @@ class Vinculo(models.Model):
     @property
     def documentos_completos(self):
         return self.documentos.filter(tipo=self.documento_requerido).exists()
+
+    @property
+    def puede_subir_documento(self):
+        """Pendiente sin documento (nunca lo subio o vencio) o rechazado: decidido 03-nov, puede intentarlo de nuevo."""
+        return self.estado in (self.PENDIENTE, self.RECHAZADO) and not self.documentos_completos
+
+    def volver_a_revision(self):
+        """El rechazado que sube otro documento vuelve a pendiente; el rechazo queda en su historial de revisiones."""
+        if self.estado == self.RECHAZADO:
+            self.estado = self.PENDIENTE
+            self.save(update_fields=['estado'])
 
     def autoriza(self, alumno):
         """Puede actuar por ``alumno``: vinculo verificado de ese estudiante, apoderado
@@ -179,6 +265,13 @@ class Vinculo(models.Model):
     def termino_por_edad(self):
         return self.estado == self.VERIFICADO and not es_menor(self.alumno.user)
 
+    def abrir_ticket_si_revisable(self):
+        """El ticket se abre cuando el vinculo ya se puede revisar: con la identidad
+        del apoderado verificada y su documento subido. Antes no hay nada que decidir."""
+        if (self.estado == self.PENDIENTE and self.apoderado.estado == Apoderado.VERIFICADO
+                and self.documentos_completos):
+            abrir_ticket(Ticket.APODERADOS, vinculo=self)
+
     def revocar(self, autor, motivo=''):
         """Revoca y cancela las clases futuras de paquetes pagados con este vinculo
         (la clase vuelve al paquete). Devuelve cuantas reservas se cancelaron."""
@@ -186,6 +279,7 @@ class Vinculo(models.Model):
             Vinculo.objects.select_for_update().filter(pk=self.pk).update(estado=self.REVOCADO)
             self.estado = self.REVOCADO
             Revocacion.objects.create(vinculo=self, autor=autor, motivo=motivo)
+            cerrar_tickets(self.tickets)  # si seguia pendiente, ya no hay nada que revisar
             return Inscripcion.objects.filter(
                 paquete__compra_apoderado__vinculo=self, estado__in=Inscripcion.ESTADOS_ACTIVOS,
                 sesion__fecha_hora_inicio__gt=timezone.now(),
@@ -274,12 +368,13 @@ class Invitacion(models.Model):
                 and self.solicitud.ultima_invitacion == self)
 
     def aceptar(self, apoderado, parentesco, version_declaracion):
-        """Crea el vinculo pendiente: lo verifica un admin con el certificado de nacimiento."""
+        """Crea el vinculo pendiente: lo verifica soporte con el certificado de nacimiento."""
         with transaction.atomic():
             self.vinculo = Vinculo.objects.create(
                 apoderado=apoderado, alumno=self.solicitud.alumno, parentesco=parentesco,
                 version_declaracion=version_declaracion, declaracion_aceptada=timezone.now(),
             )
+            self.vinculo.abrir_ticket_si_revisable()
             self.usada = timezone.now()
             self.save(update_fields=['vinculo', 'usada'])
         return self.vinculo
@@ -305,8 +400,9 @@ class CompraApoderado(models.Model):
 
 
 class Revocacion(models.Model):
-    """Evidencia de una revocacion: quien, cuando y por que."""
-    vinculo = models.OneToOneField(Vinculo, on_delete=models.CASCADE, related_name='revocacion')
+    """Evidencia de una revocacion: quien, cuando y por que. Un vinculo puede tener varias: si el propio
+    apoderado se desvinculo, puede volver a pedirlo y, despues, revocarse otra vez (decidido 02-nov)."""
+    vinculo = models.ForeignKey(Vinculo, on_delete=models.CASCADE, related_name='revocaciones')
     # SET_NULL: si se borra la cuenta del autor, la evidencia sigue registrada.
     autor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='+')
     motivo = models.CharField(max_length=300, blank=True)
@@ -342,15 +438,17 @@ class Documento(models.Model):
              (CERTIFICADO, 'Certificado de nacimiento'), (RESOLUCION, 'Resolución del tribunal')]
     CARNET = (CARNET_FRENTE, CARNET_REVERSO)
     VIGENCIA = timedelta(days=30)
+    AVISO_ANTES = timedelta(days=5)  # se avisa al agente del ticket antes de borrarlos
 
     apoderado = models.ForeignKey(Apoderado, on_delete=models.CASCADE, null=True, blank=True,
                                   related_name='documentos')
     vinculo = models.ForeignKey(Vinculo, on_delete=models.CASCADE, null=True, blank=True,
                                 related_name='documentos')
     tipo = models.CharField(max_length=15, choices=TIPOS)
-    formato = models.CharField(max_length=4)  # JPEG o PNG
-    contenido = models.BinaryField()  # cifrado: nunca la imagen en claro
+    formato = models.CharField(max_length=4)  # JPEG, PNG o PDF (el original; se ve como imagen)
+    contenido = models.BinaryField()  # cifrado: nunca el documento en claro
     subido = models.DateTimeField(auto_now_add=True)
+    avisado = models.BooleanField(default=False)  # ya se aviso al agente que se borra pronto
 
     class Meta:
         ordering = ['subido']
@@ -366,7 +464,7 @@ class Documento(models.Model):
 
 
 class AccesoDocumento(models.Model):
-    """Cada vez que un administrador abre un documento. Queda aunque el documento se borre."""
+    """Cada vez que un agente de soporte abre un documento. Queda aunque el documento se borre."""
     administrador = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
                                       null=True, related_name='+')
     apoderado = models.ForeignKey(Apoderado, on_delete=models.CASCADE, related_name='accesos_a_documentos')

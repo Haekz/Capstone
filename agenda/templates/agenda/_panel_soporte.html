@@ -1,0 +1,50 @@
+{# Panel del detalle de un ticket de Horario (fase 7): el horario del profesor que lo abrio. #}
+{% load agenda_tags %}
+{% horario_del_ticket ticket as horario %}
+{% if horario %}
+<section aria-labelledby="horario-titulo" style="margin-top:18px;">
+    <h2 id="horario-titulo" style="font-size:1rem;">Horario del profesor</h2>
+    <p><small>Mismas reglas que en su Mi Agenda: horas en punto, sin cruces y solo sus materias. Al quitar una franja se mantienen las clases ya reservadas. Cada cambio queda como mensaje en este ticket y le avisa al profesor.</small></p>
+    {% if horario.franjas %}
+    <table style="width:100%; border-collapse:collapse;">
+        <thead><tr><th scope="col" style="text-align:left;">Día</th><th scope="col" style="text-align:left;">Desde</th><th scope="col" style="text-align:left;">Hasta</th><th scope="col" style="text-align:left;">Materia</th>{% if form %}<th scope="col"><span class="visually-hidden">Acción</span></th>{% endif %}</tr></thead>
+        <tbody>
+            {% for f in horario.franjas %}
+            <tr>
+                <td>{{ f.get_dia_semana_display }}</td>
+                <td>{{ f.hora_inicio|time:"H:i" }}</td>
+                <td>{{ f.hora_fin|time:"H:i" }}</td>
+                <td>{{ f.clase.asignatura.nombre|default:"Todas sus materias" }}</td>
+                {% if form %}
+                <td>
+                    <form method="post" action="{% url 'soporte_quitar_franja' ticket.pk f.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" aria-label="Quitar la franja del {{ f.get_dia_semana_display }} de {{ f.hora_inicio|time:'H:i' }} a {{ f.hora_fin|time:'H:i' }}">Quitar</button>
+                    </form>
+                </td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>Todavía no tiene franjas en su horario.</p>
+    {% endif %}
+    {% if form %}
+    <form method="post" action="{% url 'soporte_agregar_franja' ticket.pk %}" class="apod-form" style="display:flex; flex-wrap:wrap; gap:10px; align-items:end; margin-top:12px;">
+        {% csrf_token %}
+        <div style="display:grid; gap:4px;"><label for="horario-dia">Día</label>
+            <select id="horario-dia" name="dia_semana" required>{% for valor, nombre in horario.dias %}<option value="{{ valor }}">{{ nombre }}</option>{% endfor %}</select></div>
+        <div style="display:grid; gap:4px;"><label for="horario-desde">Desde</label>
+            <select id="horario-desde" name="hora_inicio" required>{% for h in horario.horas %}<option value="{{ h|time:'H:i' }}">{{ h|time:"H:i" }}</option>{% endfor %}</select></div>
+        <div style="display:grid; gap:4px;"><label for="horario-hasta">Hasta</label>
+            <select id="horario-hasta" name="hora_fin" required>{% for h in horario.horas %}<option value="{{ h|time:'H:i' }}">{{ h|time:"H:i" }}</option>{% endfor %}</select></div>
+        <div style="display:grid; gap:4px;"><label for="horario-materia">Materia</label>
+            <select id="horario-materia" name="clase"><option value="">Todas sus materias</option>{% for c in horario.clases %}<option value="{{ c.pk }}">{{ c.asignatura.nombre }}</option>{% endfor %}</select></div>
+        <button type="submit" class="btn-primary"><i class="bi bi-plus-circle" aria-hidden="true"></i> Agregar franja</button>
+    </form>
+    {% else %}
+    <p><small>Solo el agente asignado cambia el horario. Para hacerlo, reasígnatelo desde el panel.</small></p>
+    {% endif %}
+</section>
+{% endif %}

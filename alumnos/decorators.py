@@ -16,7 +16,7 @@ from django.shortcuts import redirect
 
 from apoderados.permisos import debe_renovar_clave
 
-from .roles import ADMIN, ALUMNO, APODERADO, PROFESOR, redirigir_a_portal, rol_en_sesion
+from .roles import ADMIN, ALUMNO, APODERADO, PROFESOR, SOPORTE, redirigir_a_portal, rol_en_sesion
 
 
 def _rol_requerido(rol, anonimo, json=False):
@@ -50,8 +50,26 @@ def _sesion_invalida_json(_request):
     return JsonResponse({"success": False, "message": "Sesión inválida."})
 
 
+def sesion_iniciada_required(vista):
+    """Solo exige una cuenta activa con sesion iniciada (anonimo -> login).
+
+    Para vistas que comparten varios roles y deciden el permiso por la
+    identidad del usuario, no por la clave de sesion (la sala virtual: entran
+    el profesor de la clase y sus alumnos; los demas reciben 403).
+    """
+    @wraps(vista)
+    def envoltura(request, *args, **kwargs):
+        user = getattr(request, 'user', None)
+        if user is None or not user.is_authenticated or not user.is_active:
+            return _al_login(request)
+        return vista(request, *args, **kwargs)
+
+    return envoltura
+
+
 admin_required = _rol_requerido(ADMIN, _al_login)
 apoderado_required = _rol_requerido(APODERADO, _al_login)
+soporte_required = _rol_requerido(SOPORTE, _al_login)
 
 # Solo el rol, sin la regla de abajo: para la pantalla donde se cumple esa regla.
 alumno_sesion_required = _rol_requerido(ALUMNO, _al_login)
@@ -78,4 +96,13 @@ profesor_required_json = _rol_requerido(
 
 admin_required_json = _rol_requerido(
     ADMIN, _sesion_invalida_json, json=True
+)
+
+# Solo el rol, como alumno_sesion_required: la regla de la clave propia ya la aplica el portal
+# (alumno_required), que es la unica pagina desde donde se llaman estos endpoints.
+# 401 y un mensaje claro: el portal muestra data.message y lee el JSON sin mirar el estado.
+alumno_required_json = _rol_requerido(
+    ALUMNO,
+    lambda _r: JsonResponse({"success": False, "message": "Debes iniciar sesión como alumno."}, status=401),
+    json=True,
 )

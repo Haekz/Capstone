@@ -1,0 +1,134 @@
+/* Tira de horarios en la tarjeta del profesor (lista del panel): dias de la semana y las horas del dia elegido.
+   Los colores salen de los tokens de 01_base.css (modo oscuro incluido). */
+
+.teacher-card .tira-horarios,
+.teacher-card .tira-vacia {
+    grid-column: 1 / -1;
+}
+
+.tira-horarios {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(168, 85, 247, 0.12);
+}
+
+.tira-vacia {
+    margin: 0;
+    padding-top: 10px;
+    border-top: 1px solid rgba(168, 85, 247, 0.12);
+    font-size: 0.85rem;
+    color: var(--text-light);
+}
+
+/* Siete dias: en pantallas angostas se desliza en vez de apretar los botones. */
+.tira-dias {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+}
+
+.tira-dia {
+    flex: 1 0 48px;
+    min-height: 52px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    padding: 4px 2px;
+    background: var(--primary-light);
+    border: 1px solid transparent;
+    border-radius: 10px;
+    color: var(--text);
+    font: inherit;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.tira-dia span {
+    font-size: 0.75rem;
+    text-transform: capitalize;
+    color: var(--text-light);
+}
+
+.tira-dia strong {
+    font-size: 1.05rem;
+}
+
+.tira-dia:hover:not(:disabled) {
+    border-color: var(--primary);
+}
+
+.tira-dia[aria-pressed="true"] {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+}
+
+.tira-dia[aria-pressed="true"] span {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.tira-dia:disabled {
+    background: transparent;
+    border-style: dashed;
+    border-color: rgba(107, 114, 128, 0.35);
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.tira-horas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.tira-hora {
+    min-height: 40px;
+    min-width: 72px;
+    padding: 6px 14px;
+    background: transparent;
+    border: 1px solid var(--primary);
+    border-radius: 999px;
+    color: var(--primary);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.tira-hora:hover {
+    background: var(--primary);
+    color: #fff;
+}
+
+.tira-dia:focus-visible,
+.tira-hora:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* Sobre fondo oscuro el morado primario pierde contraste: se aclara para el texto y el borde. */
+body.dark-mode .tira-hora {
+    color: hsl(var(--hue), 80%, 80%);
+    border-color: hsl(var(--hue), 60%, 60%);
+}
+
+body.dark-mode .tira-hora:hover {
+    background: hsl(var(--hue), 60%, 45%);
+    color: #fff;
+}
+
+/* Los dias sin horarios siguen apagados, pero sobre fondo oscuro se tienen que alcanzar a ver como parte de la semana. */
+body.dark-mode .tira-dia:disabled {
+    border-color: rgba(156, 163, 175, 0.5);
+    opacity: 0.75;
+}
+
+body.dark-mode .tira-dia[aria-pressed="true"] {
+    background: hsl(var(--hue), 60%, 45%);
+    border-color: hsl(var(--hue), 60%, 60%);
+}

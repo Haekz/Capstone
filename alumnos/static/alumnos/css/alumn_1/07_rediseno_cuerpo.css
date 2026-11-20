@@ -1,0 +1,562 @@
+/* ==============================================================
+   REDISEÑO DEL CUERPO DEL PORTAL (capa de ajuste)
+   - Va al final, así que manda sobre lo anterior sin borrarlo.
+   - NO toca el navbar (.custom-navbar, links, logout, hamburguesa):
+     el navbar solo usa --primary y --header-height, que no cambian.
+   - Respeta el deslizador de color: todo el acento sale de --hue.
+   ============================================================== */
+
+/* ── Tokens (neutros y apoyo; el primario sigue saliendo de --hue) ── */
+:root {
+    --bg: #f6f5fa;                                   /* fondo de la página */
+    --white: #ffffff;                                /* fondo de tarjetas */
+    --text: #1a1233;
+    --text-light: #6b6580;
+    --line: rgba(26, 18, 51, 0.09);
+    --primary-soft: hsl(var(--hue) 70% 50% / 0.10);
+    --primary-ink: var(--primary);                   /* acento para texto */
+    --shadow: 0 1px 2px rgba(26, 18, 51, 0.04), 0 8px 24px rgba(26, 18, 51, 0.05);
+    --r-sm: 10px;
+    --r-md: 16px;
+    --r-lg: 20px;
+}
+
+body.dark-mode {
+    --bg: #0f0b1a;
+    --white: #171129;
+    --text: #f3f0fa;
+    --text-light: #a9a3bd;
+    --line: rgba(255, 255, 255, 0.09);
+    --primary-soft: hsl(var(--hue) 70% 60% / 0.16);
+    --primary-ink: hsl(var(--hue) 85% 78%);          /* más legible sobre oscuro */
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+/* ── Botón principal: sin salto ni sombra pesada ── */
+.btn-principal {
+    font-weight: 600;
+    box-shadow: none;
+}
+
+.btn-principal:hover {
+    transform: none;
+    box-shadow: 0 6px 16px hsl(var(--hue) 70% 40% / 0.25);
+}
+
+/* ── Layout y área principal ── */
+.main-content {
+    padding: 32px 40px 48px;
+}
+
+/* ── Sidebar ── */
+.sidebar-menu,
+body.dark-mode .sidebar-menu {
+    background-color: var(--white);
+    border-right: 1px solid var(--line);
+    box-shadow: none;
+    padding: 24px 16px;
+}
+
+.sidebar-nav {
+    gap: 4px;
+}
+
+.sidebar-nav-item {
+    padding: 11px 14px;
+    border-radius: var(--r-sm);
+    font-weight: 500;
+    font-size: 0.93rem;
+    gap: 12px;
+    color: var(--text);
+}
+
+.sidebar-nav-item i {
+    font-size: 1.05rem;
+}
+
+.sidebar-nav-item:hover,
+body.dark-mode .sidebar-nav-item:hover {
+    background-color: var(--bg);
+    color: var(--text);
+}
+
+.sidebar-nav-item:hover i {
+    color: var(--text);
+}
+
+.sidebar-nav-item.active,
+body.dark-mode .sidebar-nav-item.active {
+    background-color: var(--primary-soft);
+    color: var(--primary-ink);
+    font-weight: 600;
+}
+
+.sidebar-nav-item.active i {
+    color: var(--primary-ink);
+}
+
+.sidebar-slider-box,
+body.dark-mode .sidebar-slider-box {
+    background-color: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+}
+
+/* ── Tarjetas contenedoras: mismo fondo, borde y radio en todo el portal ── */
+.stat-card, body.dark-mode .stat-card,
+.results-section, body.dark-mode .results-section,
+.profile-card, body.dark-mode .profile-card,
+.class-item-card, body.dark-mode .class-item-card,
+.classes-table-container, body.dark-mode .classes-table-container,
+.support-form-card, body.dark-mode .support-form-card,
+.support-list-card, body.dark-mode .support-list-card,
+.plan-card-display, body.dark-mode .plan-card-display,
+.progress-stat-card, body.dark-mode .progress-stat-card,
+.progress-details-card, body.dark-mode .progress-details-card,
+.inbox-layout, body.dark-mode .inbox-layout {
+    background-color: var(--white);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow);
+}
+
+.results-section,
+.profile-card,
+.support-form-card,
+.support-list-card,
+.progress-details-card,
+.inbox-layout {
+    border-radius: var(--r-lg);
+}
+
+.stat-card,
+.class-item-card,
+.classes-table-container,
+.plan-card-display,
+.progress-stat-card {
+    border-radius: var(--r-md);
+}
+
+/* Títulos de sección */
+.results-section h2 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.support-form-card h3,
+.support-list-card h3,
+.progress-details-card h3,
+body.dark-mode .support-form-card h3,
+body.dark-mode .support-list-card h3 {
+    letter-spacing: -0.01em;
+    border-color: var(--line);
+}
+
+/* ── Tarjetas internas (listas de profesores, videos, cursos, tickets) ── */
+.teacher-card, body.dark-mode .teacher-card,
+.video-card, body.dark-mode .video-card,
+.ticket-item, body.dark-mode .ticket-item,
+.feedback-card-item, body.dark-mode .feedback-card-item {
+    background-color: var(--white);
+    border: 1px solid var(--line);
+    box-shadow: none;
+}
+
+.teacher-card,
+.video-card {
+    border-radius: var(--r-md);
+}
+
+.ticket-item,
+.feedback-card-item {
+    border-radius: var(--r-sm);
+}
+
+/* Hover sobrio: solo borde de color, sin saltos */
+.stat-card:hover,
+.teacher-card:hover,
+.video-card:hover,
+.class-item-card:hover,
+.ticket-item:hover {
+    transform: none;
+    border-color: var(--primary);
+    box-shadow: 0 8px 22px hsl(var(--hue) 70% 40% / 0.08);
+}
+
+.plan-card-display:hover {
+    border-color: var(--primary);
+}
+
+/* ── Banner de bienvenida ── */
+.welcome-banner,
+body.dark-mode .welcome-banner {
+    background:
+        radial-gradient(circle at 100% 0%, var(--primary-soft) 0%, transparent 55%),
+        var(--white);
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow);
+    padding: 32px 36px;
+    gap: 24px;
+}
+
+.welcome-text h1 {
+    font-size: clamp(1.6rem, 2.4vw, 2rem);
+    letter-spacing: -0.025em;
+    line-height: 1.15;
+}
+
+.welcome-text p {
+    font-size: 1rem;
+    max-width: 52ch;
+}
+
+/* ── Estadísticas ── */
+.stat-card {
+    padding: 20px;
+}
+
+.stat-icon,
+body.dark-mode .stat-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    background-color: var(--primary-soft);
+    color: var(--primary-ink);
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.stat-info h3 {
+    font-size: 1.35rem;
+    letter-spacing: -0.02em;
+}
+
+.stat-info p {
+    font-weight: 500;
+}
+
+/* ── Anuncio lateral: sin pulso, colores fijos legibles ── */
+.promo-ad-card {
+    animation: none;
+    color: #ffffff;
+    border-radius: var(--r-lg);
+    padding: 30px 24px;
+    box-shadow: 0 16px 36px hsl(var(--hue) 70% 30% / 0.25);
+    transition: box-shadow 0.25s ease;
+}
+
+.promo-ad-card:hover {
+    filter: none;
+    box-shadow: 0 20px 44px hsl(var(--hue) 70% 30% / 0.35);
+}
+
+.promo-badge {
+    color: #1a1233;
+    font-weight: 700;
+    border-radius: 50px;
+    box-shadow: none;
+}
+
+.promo-ad-card h3 {
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.btn-promo-cta {
+    background-color: #ffffff;
+    color: hsl(var(--hue) 75% 30%);
+    font-weight: 600;
+    box-shadow: none;
+}
+
+.promo-ad-card:hover .btn-promo-cta {
+    transform: none;
+}
+
+/* ── Pestañas (estilo subrayado) ── */
+.dashboard-tabs {
+    gap: 4px;
+    padding-bottom: 0;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 24px;
+    overflow-x: auto;
+}
+
+.tab-btn {
+    border-radius: 0;
+    padding: 12px 16px;
+    font-weight: 600;
+    font-size: 0.93rem;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    white-space: nowrap;
+}
+
+.tab-btn:hover {
+    color: var(--text);
+}
+
+.tab-btn.active,
+body.dark-mode .tab-btn.active {
+    background-color: transparent;
+    color: var(--primary-ink);
+    border-bottom-color: var(--primary);
+}
+
+/* ── Buscador ── */
+.search-input-wrapper,
+body.dark-mode .search-input-wrapper {
+    background-color: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 50px;
+    box-shadow: none;
+}
+
+.search-input-wrapper:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px var(--primary-soft);
+    background-color: var(--white);
+}
+
+/* ── Tablas ── */
+.classes-table-container {
+    overflow-x: auto;
+}
+
+.classes-table th,
+body.dark-mode .classes-table th {
+    background-color: var(--bg);
+    color: var(--text-light);
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.classes-table th,
+.classes-table td,
+body.dark-mode .classes-table th,
+body.dark-mode .classes-table td {
+    border-color: var(--line);
+}
+
+.classes-table tr:hover,
+body.dark-mode .classes-table tr:hover {
+    background-color: var(--bg);
+}
+
+/* ── Formularios ── */
+.form-group label {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.form-group select,
+.form-group input,
+.form-group textarea,
+body.dark-mode .form-group select,
+body.dark-mode .form-group input,
+body.dark-mode .form-group textarea,
+.builder-text-input,
+.builder-select,
+body.dark-mode .builder-text-input,
+body.dark-mode .builder-select,
+.chat-input-area input,
+body.dark-mode .chat-input-area input,
+.chat-sidebar-header input,
+body.dark-mode .chat-sidebar-header input {
+    background-color: var(--bg);
+    border: 1px solid var(--line);
+    color: var(--text);
+    border-radius: var(--r-sm);
+    font-family: inherit;
+}
+
+.chat-input-area input,
+.chat-sidebar-header input {
+    border-radius: 50px;
+}
+
+.form-group select:focus,
+.form-group input:focus,
+.form-group textarea:focus,
+.builder-text-input:focus,
+.builder-select:focus,
+.chat-input-area input:focus,
+.chat-sidebar-header input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background-color: var(--white);
+    box-shadow: 0 0 0 4px var(--primary-soft);
+}
+
+/* Los checkbox y radio mantienen su tamaño (regla original) */
+.form-group input[type="checkbox"],
+.form-group input[type="radio"],
+body.dark-mode .form-group input[type="checkbox"],
+body.dark-mode .form-group input[type="radio"] {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* ── Buzón de dudas (chat) ── */
+.chat-main,
+body.dark-mode .chat-main,
+.chat-input-area,
+body.dark-mode .chat-input-area {
+    background: var(--white);
+}
+
+.chat-sidebar,
+.chat-header,
+.chat-input-area,
+.chat-sidebar-header {
+    border-color: var(--line) !important;
+}
+
+.chat-contact-item.active {
+    background-color: var(--primary-soft);
+}
+
+.message-row.received .message-bubble,
+body.dark-mode .message-row.received .message-bubble {
+    background: var(--bg);
+    border: 1px solid var(--line);
+}
+
+/* ── Planes dentro del portal ── */
+.plan-card-display {
+    border-radius: var(--r-lg);
+}
+
+/* ── Modales ── */
+.modal-overlay,
+.custom-modal-overlay {
+    background-color: rgba(20, 12, 40, 0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+.topics-modal,
+.custom-modal-card,
+body.dark-mode .custom-modal-card {
+    background-color: var(--white);
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    box-shadow: 0 24px 60px rgba(20, 12, 40, 0.35);
+}
+
+.custom-modal-header,
+body.dark-mode .custom-modal-header {
+    border-color: var(--line);
+}
+
+.topic-tag {
+    border-radius: 50px;
+}
+
+.topic-tag.selected {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: #ffffff;
+}
+
+/* ── Constructor de plan (modal) ── */
+.builder-summary,
+body.dark-mode .builder-summary {
+    background-color: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+}
+
+.radio-toggle,
+body.dark-mode .radio-toggle {
+    background-color: var(--bg);
+    border-color: var(--line);
+}
+
+.radio-toggle input[type="radio"]:checked + label {
+    background-color: var(--primary);
+    box-shadow: 0 4px 12px hsl(var(--hue) 70% 40% / 0.3);
+}
+
+.chip-item label,
+body.dark-mode .chip-item label {
+    background-color: var(--white);
+    border-color: var(--line);
+}
+
+.chip-item input[type="checkbox"]:checked + label,
+body.dark-mode .chip-item input[type="checkbox"]:checked + label {
+    background-color: var(--primary-soft);
+    border-color: var(--primary);
+    color: var(--primary-ink);
+}
+
+.slider-dias,
+.slider-horas,
+body.dark-mode .slider-dias,
+body.dark-mode .slider-horas {
+    background: var(--primary-soft);
+}
+
+.slider-dias::-webkit-slider-thumb,
+.slider-horas::-webkit-slider-thumb {
+    background: var(--primary);
+}
+
+.summary-details li::before {
+    color: var(--primary);
+}
+
+.summary-details,
+body.dark-mode .summary-details {
+    border-top-color: var(--line);
+}
+
+
+/* ── Barras de progreso ── */
+.progress-bar-container {
+    background-color: var(--bg);
+    border-radius: 50px;
+}
+
+.progress-bar-fill {
+    border-radius: 50px;
+}
+
+/* ── Texto blanco fijo sobre fondos de color primario
+   (antes usaban var(--white) y en modo oscuro quedaban ilegibles) ── */
+.video-play-btn,
+.btn-contact-teacher,
+.lock-icon-wrapper,
+.message-row.sent .message-bubble,
+.btn-chat-send {
+    color: #ffffff;
+}
+
+/* ── Menos movimiento si el usuario lo pide ── */
+@media (prefers-reduced-motion: reduce) {
+    .promo-ad-card,
+    .lock-icon-wrapper,
+    .chart-line-path {
+        animation: none !important;
+    }
+}
+
+/* ── Responsive del cuerpo ── */
+@media (max-width: 900px) {
+    .main-content {
+        padding: 20px 16px 40px;
+    }
+
+    .welcome-banner {
+        padding: 24px;
+        text-align: left;
+        align-items: flex-start;
+    }
+}
+
+

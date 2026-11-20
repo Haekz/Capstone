@@ -1,8 +1,8 @@
-Django==5.2.17
+Django==5.2.18
 gunicorn==26.2.0
 setuptools==68.0.0
 whitenoise==6.12.0
-psycopg2-binary==2.9.12
+psycopg2-binary==2.9.13
 asgiref==3.8.1
 certifi==2026.5.20
 cffi==2.0.0
@@ -13,8 +13,8 @@ django-allauth==65.18.0
 dnspython==2.8.0
 idna==3.18
 packaging==26.2
-pycparser==3.0
-pymongo==4.17.0
+pycparser==3.12
+pymongo==4.19.0
 PyJWT==2.13.0
 requests==2.34.2
 sqlparse==0.5.0
@@ -22,6 +22,12 @@ transbank-sdk==6.1.0
 urllib3==2.7.0
 oauthlib==3.2.2
 requests-oauthlib==2.0.0
-Pillow==12.2.0
+Pillow==13.0.0
+# PDF de documentos a imagen con marca de agua (apoderados/documentos.py). Licencia Apache-2.0/BSD (no AGPL).
+pypdfium2==5.14.0
 # Zonas horarias (TIME_ZONE = 'America/Santiago') aunque el servidor no traiga la base del sistema.
-tzdata==2026.4
+tzdata==2026.6
+# Feriados de Chile para los plazos de soporte en dias habiles (soporte/plazos.py).
+holidays==0.108
+python-dateutil==2.9.0.post0
+six==1.17.0

@@ -281,3 +281,52 @@ body.dark-mode .swal2-popup.swal2-toast {
         width: 100%;
     }
 }
+
+/* ── Cuadro de calificacion: aparece al entrar si quedo una clase completada sin calificar ── */
+.dialogo-calificar {
+    width: min(92vw, 420px);
+    margin: auto; /* el reinicio global deja margin:0 y el dialogo se iba a la esquina superior izquierda */
+    padding: 28px;
+    border: 1px solid rgba(26, 18, 51, 0.08);
+    border-radius: 14px;
+    background: #ffffff;
+    color: #1a1233;
+    font-family: 'Outfit', system-ui, sans-serif;
+    box-shadow: 0 12px 32px rgba(26, 18, 51, 0.16);
+}
+
+.dialogo-calificar::backdrop {
+    background: rgba(26, 18, 51, 0.55);
+}
+
+body.dark-mode .dialogo-calificar {
+    background: #171129;
+    color: #f3f0fa;
+    border-color: rgba(255, 255, 255, 0.10);
+}
+
+.dialogo-calificar h2 {
+    margin: 0 0 6px;
+    font-size: 1.25rem;
+}
+
+/* Las estrellas son las de resenas/_elegir_estrellas.html (estilos en resenas.css). */
+.dialogo-calificar .resena-form__puntaje {
+    margin: 18px 0 20px;
+}
+
+.dialogo-calificar__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.dialogo-calificar__luego {
+    border: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+}

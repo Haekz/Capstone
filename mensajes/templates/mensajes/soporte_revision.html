@@ -1,0 +1,67 @@
+{% extends 'soporte/base_soporte.html' %}
+
+{% block page_title %}Conversaciones reportadas{% endblock %}
+{% block page_subtitle %}Qué se hace con ellas cuando se cierra el ticket{% endblock %}
+{% block nav_revision %}active{% endblock %}
+
+{% block content %}
+{% if messages %}
+<div class="panel" role="status" style="margin-bottom:20px; padding:14px 18px;">
+    {% for m in messages %}<div>{{ m }}</div>{% endfor %}
+</div>
+{% endif %}
+
+<div class="panel">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-hourglass-split" aria-hidden="true"></i> Esperan tu decisión ({{ pendientes|length }})</span>
+    </div>
+    <div style="padding:18px;">
+        <p><small>Mientras esperan se siguen conservando. Libérala para que vuelva a la regla de borrado a los 90 días sin mensajes, o conserva solo lo que tenga una necesidad concreta, dejando registrado por qué.</small></p>
+        {% if pendientes %}
+        <table class="user-table">
+            <thead>
+                <tr><th scope="col">Conversación</th><th scope="col">Esperando desde</th><th scope="col">Acción</th></tr>
+            </thead>
+            <tbody>
+                {% for c in pendientes %}
+                <tr>
+                    <td>{{ c.nombre_para_profesor }} y {{ c.profesor.user.first_name }} (profesor)</td>
+                    <td>{{ c.desde|date:"d-m-Y" }}{% if c.ultima %} <span class="badge">Vuelve a revisión</span>{% endif %}</td>
+                    <td><a href="{% url 'mensajes_revision_detalle' c.pk %}" aria-label="Decidir sobre la conversación de {{ c.nombre_para_profesor }} y {{ c.profesor.user.first_name }}">Decidir</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>No hay conversaciones esperando una decisión.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="panel" style="margin-top:20px;">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-archive-fill" aria-hidden="true"></i> Conservadas como retención excepcional ({{ conservadas|length }})</span>
+    </div>
+    <div style="padding:18px;">
+        {% if conservadas %}
+        <table class="user-table">
+            <thead>
+                <tr><th scope="col">Conversación</th><th scope="col">Motivo</th><th scope="col">Próxima revisión</th><th scope="col">Detalle</th></tr>
+            </thead>
+            <tbody>
+                {% for c in conservadas %}
+                <tr>
+                    <td>{{ c.nombre_para_profesor }} y {{ c.profesor.user.first_name }} (profesor)</td>
+                    <td>{{ c.motivo }}</td>
+                    <td>{{ c.ultima_hasta|date:"d-m-Y" }}</td>
+                    <td><a href="{% url 'mensajes_revision_detalle' c.pk %}" aria-label="Ver la retención de la conversación de {{ c.nombre_para_profesor }} y {{ c.profesor.user.first_name }}">Ver</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>No hay conversaciones conservadas.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

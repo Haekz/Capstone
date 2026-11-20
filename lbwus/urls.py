@@ -2,11 +2,19 @@ from django.conf import settings
 from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
+from django.http import Http404
 from django.views.decorators.cache import never_cache
 from django.views.generic import TemplateView
 from alumnos.views import home, custom_login
+from alumnos.views_legal import privacidad, terminos
 from alumnos import google_views
 from lbwus.puerta import puerta
+
+
+def cerrada(request, *args, **kwargs):
+    """Pagina de allauth que el proyecto no usa: 404."""
+    raise Http404
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -17,12 +25,21 @@ urlpatterns = [
     # duplicados sin avisar y el ultimo registrado gana el reverse().
     path('', home, name='home'),
     path('puerta/', puerta, name='puerta'),
+    path('terminos/', terminos, name='terminos'),
     path('alumnos/', include('alumnos.urls')),
     path('admin_portal/', include('admin_portal.urls')),
     path('profesor/', include('user_profesor.urls')),
     path('comunidad/', include('comunidad.urls')),
     path('resenas/', include('resenas.urls')),
     path('apoderados/', include('apoderados.urls')),
+    path('soporte/', include('soporte.urls')),
+    path('notificaciones/', include('notificaciones.urls')),
+    path('agenda/', include('agenda.urls')),
+    path('mensajes/', include('mensajes.urls')),
+    path('privacidad/', privacidad, name='privacidad'),
+    path('privacidad/', include('supresiones.urls')),
+    path('requerimientos/', include('requerimientos.urls')),
+    path('observaciones/', include('observaciones.urls')),
     path('accounts/login/', custom_login, name='login'),
     path(
         'accounts/password_reset/',
@@ -47,6 +64,7 @@ urlpatterns = [
     path('accounts/google/verificar/', google_views.google_verificar, name='google_verificar'),
     path('accounts/google/reenviar/', google_views.google_reenviar, name='google_reenviar'),
     path('accounts/google/completar/', google_views.google_completar, name='google_completar'),
+    path('accounts/email/', cerrada),  # BUG-QA-03: el correo cambia solo por los flujos del proyecto
     path("accounts/", include("allauth.urls")),
 ]
 

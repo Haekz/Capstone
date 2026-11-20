@@ -1,0 +1,23 @@
+{% comment %}
+Elegir de 1 a 5 estrellas: página de calificar (campo = form.puntaje) y diálogo del panel (sin campo).
+Son radios reales (teclado y lector de pantalla); resenas.css los dibuja como estrellas.
+{% endcomment %}
+<fieldset class="resena-form__puntaje">
+    <legend>{{ leyenda }}</legend>
+    <div class="resena-form__estrellas">
+        {% if campo %}
+        {% for opcion in campo %}<label class="resena-form__opcion">{{ opcion.tag }}<i class="bi bi-star-fill" aria-hidden="true"></i><span class="resenas-sr">{{ opcion.choice_label }}</span></label>{% endfor %}
+        {% else %}
+        {% for n in "12345"|make_list %}<label class="resena-form__opcion"><input type="radio" name="puntaje" value="{{ n }}" required><i class="bi bi-star-fill" aria-hidden="true"></i><span class="resenas-sr">{{ n }} estrella{{ n|pluralize }}</span></label>{% endfor %}
+        {% endif %}
+    </div>
+    <p class="resena-form__valor" aria-hidden="true">
+        <span data-valor="0">Elige de 1 a 5 estrellas</span>
+        <span data-valor="1">1 de 5 · Muy mala</span>
+        <span data-valor="2">2 de 5 · Mala</span>
+        <span data-valor="3">3 de 5 · Regular</span>
+        <span data-valor="4">4 de 5 · Buena</span>
+        <span data-valor="5">5 de 5 · Excelente</span>
+    </p>
+    {% for error in campo.errors %}<p class="resena-form__error" role="alert">{{ error }}</p>{% endfor %}
+</fieldset>

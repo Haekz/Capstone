@@ -13,3 +13,8 @@ media/
 usab.sqlite3
 # Capturas: solo se versionan las que usa el registro (git add -f)
 usabilidad/capturas/
+# QA (docs/PRUEBAS.md): salidas locales de pytest, cobertura y ruff
+cobertura_html/
+.coverage
+.pytest_cache/
+.ruff_cache/

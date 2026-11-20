@@ -1,0 +1,26 @@
+{# Panel del detalle de un ticket de Videos de apoyo (fase 5e): el video reportado, para verlo y retirarlo. #}
+{% load videos_tags %}
+{% videos_del_ticket ticket as videos %}
+{% if videos %}
+<section aria-labelledby="video-reclamo-titulo" style="margin-top:18px;">
+    <h2 id="video-reclamo-titulo" style="font-size:1rem;">Video reportado</h2>
+    <p><small>Rev&iacute;salo antes de decidir. Si no corresponde a la materia o es inapropiado, ret&iacute;ralo: el estudiante deja de verlo, al profesor ya no se le paga y puede compartir otro. Queda como mensaje en este ticket.</small></p>
+    <ul>
+        {% for v in videos %}
+        <li style="margin-bottom:8px;">
+            Profesor: {{ v.paquete.profesor.nombre|default:"(ya no est&aacute;)" }} &middot; Estudiante: {{ v.paquete.alumno.user.first_name }} &middot; compartido el {{ v.compartido|date:"d-m-Y" }}
+            &middot; <a href="{% url 'soporte_ver_video' ticket.pk v.video_id %}" target="_blank" rel="noopener" aria-label="Ver el video (se abre en otra pesta&ntilde;a)">Ver video</a>
+            {% if v.retirado %}
+            <span class="badge">Retirado el {{ v.retirado|date:"d-m-Y" }}</span>
+            {% elif form %}
+            <form method="post" action="{% url 'soporte_retirar_video' ticket.pk v.video_id %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit">Retirar video</button>
+            </form>
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+    {% if not form %}<p><small>Solo el agente asignado retira el video. Para hacerlo, reas&iacute;gnatelo desde el panel.</small></p>{% endif %}
+</section>
+{% endif %}

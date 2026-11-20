@@ -1,0 +1,71 @@
+{% extends 'soporte/base_soporte.html' %}
+
+{% block page_title %}Requerimientos de autoridad{% endblock %}
+{% block page_subtitle %}Lo que piden tribunales, fiscalías y otras autoridades{% endblock %}
+{% block nav_requerimientos %}active{% endblock %}
+
+{% block content %}
+{% if messages %}
+<div class="panel" role="status" style="margin-bottom:20px; padding:14px 18px;">
+    {% for m in messages %}<div>{{ m }}</div>{% endfor %}
+</div>
+{% endif %}
+
+<div class="panel">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-bank2" aria-hidden="true"></i> Abiertos ({{ abiertos|length }})</span>
+        <a href="{% url 'requerimiento_nuevo' %}">Registrar uno nuevo</a>
+    </div>
+    <div style="padding:18px;">
+        <p><small>Antes de entregar cualquier dato hay que verificar el requerimiento. Aquí queda registrado qué se recibió, cómo se verificó y qué se entregó, sin copiar datos personales.</small></p>
+        {% if abiertos %}
+        <table class="user-table">
+            <thead>
+                <tr><th scope="col">Autoridad</th><th scope="col">Referencia</th><th scope="col">Estado</th><th scope="col">Plazo</th><th scope="col">Detalle</th></tr>
+            </thead>
+            <tbody>
+                {% for r in abiertos %}
+                <tr>
+                    <td>{{ r.autoridad }}</td>
+                    <td>{{ r.referencia }}</td>
+                    <td>{{ r.get_estado_display }}</td>
+                    <td>{% if r.vence %}{{ r.vence|date:"d-m-Y" }}{% if r.atrasado %} <span class="badge">Vencido</span>{% endif %}{% else %}Sin plazo{% endif %}</td>
+                    <td><a href="{% url 'requerimiento_detalle' r.pk %}" aria-label="Abrir el requerimiento {{ r.referencia }} de {{ r.autoridad }}">Abrir</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>No hay requerimientos abiertos.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="panel" style="margin-top:20px;">
+    <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-archive-fill" aria-hidden="true"></i> Resueltos</span>
+    </div>
+    <div style="padding:18px;">
+        {% if resueltos %}
+        <table class="user-table">
+            <thead>
+                <tr><th scope="col">Autoridad</th><th scope="col">Referencia</th><th scope="col">Resultado</th><th scope="col">Resuelto el</th><th scope="col">Detalle</th></tr>
+            </thead>
+            <tbody>
+                {% for r in resueltos %}
+                <tr>
+                    <td>{{ r.autoridad }}</td>
+                    <td>{{ r.referencia }}</td>
+                    <td>{{ r.get_estado_display }}</td>
+                    <td>{{ r.resuelto|date:"d-m-Y" }}</td>
+                    <td><a href="{% url 'requerimiento_detalle' r.pk %}" aria-label="Ver el requerimiento {{ r.referencia }} de {{ r.autoridad }}">Ver</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>Todavía no hay requerimientos resueltos.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

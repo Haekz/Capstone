@@ -1,0 +1,37 @@
+{% load static videos_tags dinero %}
+{# Comprar mas videos de apoyo (fase 6c): un formulario por paquete que lo permita. El precio que se muestra es solo #}
+{# informativo: el servidor lo vuelve a calcular. Recibe estudiante (el alumno), url_comprar y, solo en el panel del #}
+{# alumno, con_mensajes (el del apoderado ya muestra los suyos). #}
+<link rel="stylesheet" href="{% static 'alumnos/css/videos_apoyo.css' %}?v=4">
+{% ofertas_videos_extra estudiante as ofertas %}
+{% if con_mensajes %}
+    {% if messages %}<div role="alert">{% for m in messages %}<p class="va-compra__error">{{ m }}</p>{% endfor %}</div>{% endif %}
+    {# Si la compra no procede, se vuelve con ?pestana=videos: se abre la pestaña donde esta el motivo. #}
+    <script>
+        window.addEventListener('load', function () {
+            if (new URLSearchParams(window.location.search).get('pestana') !== 'videos') return;
+            var pestana = document.querySelector('.tab-btn[data-tab="tab-videos"]');
+            if (pestana) pestana.click();
+        });
+    </script>
+{% endif %}
+{% if ofertas %}
+<section class="va-compra" aria-labelledby="va-compra-titulo">
+    <h3 class="va-compra__titulo" id="va-compra-titulo">Comprar más videos</h3>
+    <p class="va-nota">Elige cuántos quieres: el precio de cada opción está al lado.</p>
+    {% for oferta in ofertas %}
+    <form method="post" action="{{ url_comprar }}" class="va-compra__form">
+        {% csrf_token %}
+        <input type="hidden" name="paquete" value="{{ oferta.paquete.pk }}">
+        <label for="va-cantidad-{{ oferta.paquete.pk }}">{{ oferta.paquete.get_plan_display }}{% if oferta.paquete.profesor %} con {{ oferta.paquete.profesor.nombre }}{% endif %}, vigente hasta el {{ oferta.paquete.fecha_fin|date:"d/m/Y" }}</label>
+        <select class="va-compra__select" id="va-cantidad-{{ oferta.paquete.pk }}" name="cantidad">
+            {% for cantidad, precio in oferta.opciones %}
+            <option value="{{ cantidad }}">{{ cantidad }} video{{ cantidad|pluralize }} · {{ precio|clp }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="va-compra__boton">Pagar con Webpay</button>
+        <p class="va-nota">Tu profesor los comparte dentro de {{ oferta.dias_entrega }} días desde el pago.</p>
+    </form>
+    {% endfor %}
+</section>
+{% endif %}

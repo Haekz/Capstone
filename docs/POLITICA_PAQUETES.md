@@ -6,59 +6,51 @@ Las cifras salen de `alumnos/paquetes.py`, que es la única fuente de precios (p
 > **Cómo leerlo.** Las secciones 1 a 5 describen el sistema **tal como está hoy**. La sección 6 recoge las **decisiones del equipo (26-oct-2026)** y lo que falta construir para cumplirlas. La sección 7 es el flujo de caja con esas decisiones.
 > La sección 6 sigue la **versión consolidada del 26-oct-2026**, propuesta integral que espera la aprobación del equipo. Nada de este documento certifica cumplimiento legal ni autoriza a recibir pagos reales: antes hay que completar las validaciones de la sección 8.
 
-## 1. Precio según tutor
+## 1. Precio fijo de LBWUS
 
-- Cada profesor define su **tarifa por clase** desde su panel: entre $10.000 y $50.000, en múltiplos de $1.000. Si no define una, es $15.000 (`validar_tarifa`, `Profesor.tarifa`).
-- Precio del paquete = `clases × tarifa × (1 − descuento)`, redondeado al $1.000 más cercano (las mitades suben).
-- La tarifa, el monto y las clases **quedan fijos al comprar**. Si el profesor cambia su tarifa, solo afecta a ventas futuras (`PaqueteClases`).
+> **Decisión del 14-nov-2026:** el precio lo fija LBWUS, igual con todos los profesores. El profesor ya no define tarifa (se quitó `Profesor.tarifa`, migración `0038`). Las tablas de las secciones 7 en adelante que usan $15.000 / $59.000 / $116.000 son el análisis hecho con los precios anteriores.
 
-| Plan | Clases | Descuento | Vigencia | Precio con tarifa base ($15.000) |
-|---|---|---|---|---|
-| Flexible | 1 | 0 | 30 días | $15.000 |
-| Progreso | 4 | 1/60 | 60 días | $59.000 |
-| Intensivo | 8 | 1/30 | 90 días | $116.000 |
+- Una clase suelta cuesta **$15.990** (`paquetes.TARIFA`), con cualquier profesor.
+- Precio del paquete = `clases × TARIFA × (1 − descuento)`, llevado al número terminado en **$990** más cercano (`paquetes.precio`).
+- El precio por clase de un paquete se redondea hacia abajo (`monto // clases`): sobran $2 del Progreso y $6 del Intensivo, que no se asignan a ninguna clase.
+- La tarifa, el monto y las clases **quedan fijos al comprar**. Si cambian los precios, solo afecta a ventas futuras (`PaqueteClases`).
+
+| Plan | Clases | Descuento | Vigencia | Precio | Por clase |
+|---|---|---|---|---|---|
+| Flexible | 1 | 0 | 30 días | $15.990 | $15.990 |
+| Progreso | 4 | 1/60 | 30 días | $62.990 | $15.747 (1,5%) |
+| Intensivo | 8 | 1/30 | 60 días | $123.990 | $15.498 (3,1%) |
 
 ## 2. Descuentos
 
-- El descuento lo fija el **plan**, no el profesor, y hoy se aplica a todos los profesores. No existen cupones.
+- El descuento lo fija el **plan**, no el profesor, y se aplica a todos los profesores. No existen cupones.
 - Es voluntario para el alumno: lo obtiene solo si elige un paquete mayor.
-- **Observación:** el "1,7% / 3,3%" es exacto solo con la tarifa base. Como el precio se redondea a $1.000, el descuento real cambia con la tarifa:
-
-| Tarifa | Progreso | Intensivo |
-|---|---|---|
-| $10.000 | 2,5% | 3,8% |
-| $15.000 | 1,7% | 3,3% |
-| $20.000 | 1,2% | 3,1% |
-| $50.000 | 1,5% | 3,2% |
+- Por el redondeo a $990, el descuento real es **1,5%** (Progreso) y **3,1%** (Intensivo), no el 1/60 y 1/30 exactos.
 
 ## 3. Vigencia
 
 - El paquete se activa **solo cuando Webpay aprueba el pago**. La vigencia se cuenta desde ese momento (`_activar_pendientes`).
 - Reenviar el mismo pago no lo activa dos veces ni extiende la vigencia (prueba de replay en `test_flujos_funcionales.py`).
 - La clase debe comenzar **antes del vencimiento**. Con el paquete vencido no se puede reservar (`test_paquete_vencido_o_sesion_fuera_de_la_vigencia`).
+- **Desde el 14-nov-2026** (antes, Progreso 60 y Intensivo 90 días): 1 y 4 clases, **30 días**; 8 clases, **60 días**. **Lo ya vendido no cambia**: cada paquete guarda su duración (`PaqueteClases.dias`) y con ella su calendario de videos (`ENTREGAS_ANTERIORES` en `alumnos/paquetes.py`), así que no se mueve ninguna fecha límite del profesor.
 - Hoy las clases sin usar al vencer **se pierden**: no hay prórroga ni devolución. La decisión del equipo cambia esto (sección 6).
 
 ## 4. Reprogramación y cancelación
 
-- **Reprogramar** (`reprogramar_inscripcion`): la reserva debe estar activa y no haber empezado. La nueva sesión debe ser del **mismo profesor**, futura, con cupo, no reservada ya por el alumno y dentro de la vigencia. No gasta otra clase. **Hoy no hay límite de veces ni plazo de aviso.**
-- **Cancelar** (`cancelar_inscripcion`): se puede mientras la clase no haya empezado. La clase **vuelve al paquete**, porque las usadas se cuentan, no se restan. Si el profesor cancela la sesión, la clase también vuelve al alumno. **Hoy no se exige aviso de 24 horas.**
+- **Reprogramar** (`reprogramar_inscripcion`): la reserva debe estar activa y no haber empezado. La nueva sesión debe ser del **mismo profesor**, futura, con cupo, no reservada ya por el alumno y dentro de la vigencia. No gasta otra clase. **Hoy solo se puede con 4 h o más de anticipación; no hay límite de veces.**
+- **Cancelar** (`cancelar_inscripcion`): se puede mientras la clase no haya empezado. La clase **vuelve al paquete**, porque las usadas se cuentan, no se restan. Si el profesor cancela la sesión, la clase también vuelve al alumno. **La regla vigente es de 4 horas, no de 24: con menos de 4 h se pierde la clase y el profesor cobra.**
+- Las reglas de saldo, reserva, duplicados y concurrencia, con sus pruebas, están en la sección 11.
 
 ## 5. Devoluciones y renovación automática (estado actual)
 
-**Devoluciones en dinero: no están implementadas.** Cancelar devuelve la clase al paquete, no el dinero. No hay flujo de reembolso ni reversa en Webpay en el código.
+**Devoluciones en dinero de clases: no están implementadas, y se decidió (13-nov) que por ahora no se hacen.** Los paquetes son una compra: la clase se puede reagendar o cancelar con la anticipación permitida y vuelve al paquete como crédito, pero no se devuelve dinero. Esto choca con los puntos 1 y 3 de la sección 6 (devolución total o proporcional de lo no usado) y con un posible derecho de retracto: queda para la **revisión jurídica** (Ley N.º 19.496) antes de cobrar con tarjetas reales. **Sí existe** la devolución de dinero por **videos no entregados** (sección de videos más abajo), con reembolso automático por Webpay (`Transaction.refund`).
 
 **Sin renovación automática: se cumple.** Evidencia:
 - Cada compra es un pago Webpay Plus explícito. No se guarda la tarjeta ni se usa inscripción OneClick.
 - El `Procfile` define solo el proceso `web`: no hay tareas programadas ni colas.
 - `requirements.txt` no incluye librerías de planificación.
 
-**Los Términos y Condiciones (`terminos_y_condiciones.txt`) contradicen el sistema:**
-
-| Dice | El sistema hace |
-|---|---|
-| "La suscripción se realiza de manera mensual" (§4) | Compra única por paquete, sin cobro recurrente |
-| Planes Básico, Medio y Superior (§4) | Flexible, Progreso e Intensivo (los anteriores quedan solo como historial en el modelo `Suscripcion`) |
-| Sin aviso de 24 h la sesión "no será reembolsable ni reprogramable" (§5) | Se puede cancelar y reprogramar hasta que empiece |
+**Resuelto (15-nov): los Términos y Condiciones ya no contradicen el sistema.** El archivo `terminos_y_condiciones.txt` (suscripción mensual, planes Básico/Medio/Superior, precios y plazos viejos) se eliminó y lo reemplaza la página `/terminos/` (`alumnos/views_legal.py`), que lee los precios, vigencias y plazos del mismo código que los aplica: no puede volver a quedar atrás. Su texto sigue pendiente de revisión jurídica (ver `PENDIENTES_LBWUS.md`).
 
 ## 6. Política consolidada (26-oct-2026) y lo que falta construir
 
@@ -67,15 +59,15 @@ Sigue los puntos 1 a 11 de la versión consolidada del equipo. Los puntos 12 a 1
 | # | Política consolidada | Sistema hoy | Falta construir |
 |---|---|---|---|
 | 1 | **Devoluciones y retracto.** Devolución total si no usó ninguna clase; proporcional al precio pagado (con su descuento) si usó parte. No se descuentan multas ni costos de Transbank. Retracto de 10 días cuando sea aplicable, antes de la prestación. Si Webpay no permite devolver directamente, un procedimiento alternativo autorizado y documentado | No existe | Solicitudes de devolución total y parcial, su estado y la trazabilidad de los montos devueltos |
-| 2 | **Cancelaciones.** Gratis con 24 h de anticipación, recuperando el crédito. Con menos de 24 h: **una excepción gratuita por paquete**. Cancelaciones tardías injustificadas reiteradas: registro de incidencias y posible revisión administrativa de reservas futuras, con criterios objetivos. **Sin multas, retenciones ni pérdida automática de créditos.** Las clases canceladas no cuentan como realizadas ni generan pago al profesor ni comisión | Se cancela hasta el inicio, sin plazo. La clase cancelada no se consume (`consumidas()`) | Regla de 24 h, contador de la excepción por paquete y registro de incidencias |
-| 3 | **Vigencia.** Clases de 60 min. Vigencia de 30, 60 y 90 días desde la confirmación de la compra. **Prórroga gratuita única de 15 días** en Progreso e Intensivo, pedida antes del vencimiento. Vencido el paquete no se reserva, pero lo no realizado **no pasa a ser ingreso** de LBWUS y se puede pedir su devolución proporcional. Si el vencimiento se debe al profesor o a la plataforma, LBWUS ofrece una solución | Duración y vigencias **implementadas** (`DURACION_CLASE_MIN`, `vigencia_dias`). Las clases vencidas se pierden | Prórroga única y tratamiento de lo vencido como obligación |
+| 2 | **Cancelaciones.** Gratis con 4 h de anticipación (decidido 07-nov; antes 24 h), recuperando el crédito. Con menos de 4 h: **una excepción gratuita por paquete**. Cancelaciones tardías injustificadas reiteradas: registro de incidencias y posible revisión administrativa de reservas futuras, con criterios objetivos. **Sin multas, retenciones ni pérdida automática de créditos.** Las clases canceladas no cuentan como realizadas ni generan pago al profesor ni comisión | Con 4 h o más se cancela y la clase vuelve al paquete. Con menos queda "cancelada con menos de 4 h": se pierde la clase y el profesor cobra (`ANTICIPACION_SIN_COSTO`) | Contador de la excepción por paquete (no existe) y registro de incidencias. **Por decidir:** esta fila dice "sin pérdida automática de créditos" y el sistema la pierde con menos de 4 h |
+| 3 | **Vigencia.** Clases de 60 min. Vigencia de 30 y 60 días desde la confirmación de la compra. **Prórroga gratuita única de 15 días** en Progreso e Intensivo, pedida antes del vencimiento. Vencido el paquete no se reserva, pero lo no realizado **no pasa a ser ingreso** de LBWUS y se puede pedir su devolución proporcional. Si el vencimiento se debe al profesor o a la plataforma, LBWUS ofrece una solución | Duración y vigencias **implementadas** (`DURACION_CLASE_MIN`, `vigencia_dias`). Las clases vencidas se pierden | Prórroga única y tratamiento de lo vencido como obligación |
 | 4 | **Términos y Condiciones** reescritos: precios, descuentos, vigencias, cancelaciones, reprogramaciones, devoluciones, retracto, responsabilidades de profesores, reclamos, datos personales, menores y apoderados. Revisión jurídica antes de pagos reales y **aceptación expresa al contratar** | Desactualizados (sección 5). La compra **no muestra ni pide aceptar** los Términos; el pie de página los marca como "próximamente" | Redacción, revisión jurídica, publicación y aceptación en el flujo de compra |
 | 5 | **Tarifas y descuentos voluntarios.** Tarifa del profesor desde su panel. Cada profesor decide **por paquete** si ofrece Progreso e Intensivo; si no, ese paquete no se puede contratar y queda Flexible. Descuentos de ≈1,67% y ≈3,33% sobre la tarifa, redondeo a $1.000. Precios de referencia: $15.000, $59.000 y $116.000. Los cambios solo afectan compras futuras | Tarifa, descuentos, redondeo, precios y condiciones fijas al comprar: **implementado**. Todos los profesores ofrecen los tres paquetes | Opción del profesor por paquete y ocultar el paquete no ofrecido |
 | 6 | **Comisión** de 15% IVA incluido sobre el precio final; 85% bruto para el profesor. LBWUS asume sus costos de procesamiento sin cambiar la comisión del profesor. El 15% **no es ingreso neto** | **Implementado** (`COMISION`) | Nada en el cálculo |
-| 7 | **Reprogramación:** **máximo 2 por clase contratada**, dentro de la vigencia y normalmente con el mismo profesor. **Cancelar y volver a reservar con el mismo crédito cuenta como reprogramación.** Lo causado por el profesor, por LBWUS o por circunstancias justificadas no cuenta. El límite no puede impedir devoluciones | Sin límite ni plazo. Ya impide reservar dos veces la misma sesión | Contador por clase, historial de cada cambio y registro de su causa. **Ojo:** los créditos no tienen identidad propia (se cuentan, no se registran uno a uno), así que seguir "el mismo crédito" entre una cancelación y una nueva reserva requiere diseñarlo |
+| 7 | **Reprogramación:** **máximo 2 por clase contratada**, dentro de la vigencia y normalmente con el mismo profesor. **Cancelar y volver a reservar con el mismo crédito cuenta como reprogramación.** Lo causado por el profesor, por LBWUS o por circunstancias justificadas no cuenta. El límite no puede impedir devoluciones | Sin límite de veces; solo con 4 h o más de anticipación. Ya impide reservar dos veces la misma sesión | Contador por clase, historial de cada cambio y registro de su causa. **Ojo:** los créditos no tienen identidad propia (se cuentan, no se registran uno a uno), así que seguir "el mismo crédito" entre una cancelación y una nueva reserva requiere diseñarlo |
 | 8 | **Planes antiguos** (Básico, Medio, Superior y suscripciones) se dejan de vender. Solo Flexible, Progreso e Intensivo, sin suscripciones obligatorias ni renovación automática. Se conserva el historial | `planes.html` ya no los muestra por nombre. El modelo `Suscripcion` conserva el historial. No hay renovación automática (sección 5) | Verificar que ninguna ruta permita contratarlos |
 | 9 | **Transbank:** 2,29% y 1,49% + IVA como referencia, con mínimos y sujeto a contrato. LBWUS absorbe los costos de procesamiento y anulación sin descontarlos de las devoluciones. Registrar operaciones aprobadas, rechazadas, anuladas y reembolsadas, y conciliarlas | Solo registra pagos aprobados y rechazados (`_activar_pendientes`) | Estados de anulación y reembolso, conciliación y registro del costo del proveedor |
-| 10 | **Pagos a profesores:** liquidación semanal propuesta de las clases realizadas y conciliadas. Lo pendiente, cancelado, no realizado o en reclamo no se liquida. Separar lo cobrado, las obligaciones pendientes y lo devengado. Confirmar que el proveedor permite administrar y transferir fondos a los profesores | El profesor solicita retiro y el admin lo aprueba (`solicitar_retiro`, `aprobar_retiro`) | Liquidación semanal, conciliación y reporte de lo cobrado, pendiente y devengado (ejemplo en la sección 7) |
+| 10 | **Pagos a profesores:** solo clases realizadas y conciliadas. Lo pendiente, cancelado, no realizado o en reclamo no se liquida. **El profesor elige cobro semanal (corte el viernes) o mensual (corte el último viernes del mes)** y pide el pago; se paga el lunes siguiente al corte, o el siguiente día hábil si es feriado. **Mínimo $10.000 por retiro**; bajo eso el saldo se acumula. Un cambio de frecuencia rige desde el ciclo siguiente; un profesor nuevo parte en semanal. Separar lo cobrado, las obligaciones pendientes y lo devengado. Confirmar que el proveedor permite administrar y transferir fondos a los profesores | El profesor pide el retiro y el admin lo aprueba, transfiere y registra el n.º de operación (`solicitar_retiro`, `aprobar_retiro`, `marcar_pagado_retiro`). Ciclo, día de pago y mínimo en `alumnos/liquidacion.py`. Cuenta propia y cifrada (`CuentaBancaria`) | Conciliación y reporte de lo cobrado, pendiente y devengado (ejemplo en la sección 7). Revisión contable antes de pagar con dinero real |
 | 11 | **Proyección:** 300 clases el primer año (132 / 26 / 8) y 50% crédito / 50% débito o prepago. **Son supuestos**, no datos observados; se reemplazan con ventas reales | No aplica | Nada: los escenarios de medios de pago (todo crédito, 50/50, todo débito) ya están en la sección 7 |
 
 ## 7. Cambio del precio promedio y flujo de caja
@@ -130,7 +122,7 @@ El 50/50 es un supuesto financiero, no un comportamiento observado. Se reemplaza
 
 ### Cómo se registra el dinero cobrado por adelantado
 
-El alumno paga todo el paquete al comprar, pero las clases se dictan durante 60 o 90 días. Hay que separar tres cosas. Ejemplo con un **Intensivo ($116.000) tras 2 de 8 clases realizadas**:
+El alumno paga todo el paquete al comprar, pero las clases se dictan durante 30 o 60 días. Hay que separar tres cosas. Ejemplo con un **Intensivo ($116.000) tras 2 de 8 clases realizadas**:
 
 | Concepto | Monto |
 |---|---|
@@ -176,3 +168,61 @@ La aprobación del equipo **no reemplaza** las revisiones jurídica, contable, t
 ## 10. Cómo reproducir las cifras
 
 Las funciones de `alumnos/paquetes.py` (`cotizar`, `precio`, `comision`, `pago_profesor`, `iva_incluido`) devuelven los valores de las secciones 1, 2 y 7. Las pruebas están en `tests/test_paquetes.py`. La comisión de Transbank es `monto × tasa × 1,19`, sin mínimos.
+
+## 11. Control de saldos y reservas (S4-05 / SCRUM-85, verificado el 31-oct-2026)
+
+**Modelo que se usa.** La compra y la reserva usan solo `PaqueteClases`:
+- Compra: `comprar_paquete` → `iniciar_compra_paquete` crea el paquete `pendiente` con el monto del servidor → `confirmacion` → `PaqueteClases.confirmar_pago` lo activa (o lo rechaza) y fija la vigencia.
+- Reserva: `InscripcionService.inscribir_alumno_en_sesion` → `_paquete_con_clases`, que bloquea los paquetes del alumno con ese profesor (`select_for_update`).
+- `PlanAlumno` (`PlanesService.crear_plan_desde_pago` y `consumir_clase_de_plan`) **no se usa en el flujo de compra ni de reserva**: ninguna vista lo crea ni lo consume. Pero `calcular_saldos` sí suma los `PlanAlumno` con pago confirmado, y el admin de Django permite crearlos y editarlos: un registro histórico o creado a mano cambia el saldo del profesor. Si se retira o se conecta, lo decide el equipo; ver el reporte del sprint.
+- Si el alumno anula en Webpay (`TBK_TOKEN`), el paquete queda `pendiente`: no se puede usar, pero tampoco pasa a rechazado. Si Transbank reenvía el retorno, `confirmacion` vuelve a llamar a `commit()`; Transbank lo rechaza y no se activa nada dos veces.
+
+**Reglas** (todas en `alumnos/services.py` y en `alumnos/models/`, archivos `clases.py` y `pagos.py`):
+
+| Regla | Dónde | Prueba |
+|---|---|---|
+| Saldo = `clases − inscripciones.consumidas()`; las consumidas son las activas (confirmada o pendiente) de sesiones no canceladas | `PaqueteClases.clases_disponibles`, `InscripcionQuerySet.consumidas` | `test_cada_paquete_permite_exactamente_sus_clases`, `test_compra_aprobada_de_cada_plan_deja_su_saldo` |
+| Reservar gasta 1 clase; sin saldo, `SinClasesDisponiblesError` | `_paquete_con_clases` | `test_reservar_descuenta_exactamente_una_clase`, `test_sin_paquete_no_se_puede_reservar` |
+| Solo sirve un paquete `activa` del mismo profesor, con la clase dentro de su vigencia | `_paquete_con_clases` | `test_paquete_de_otro_profesor_pendiente_o_ajeno_no_sirve`, `test_paquete_rechazado_no_se_usa`, `test_paquete_vencido_o_sesion_fuera_de_la_vigencia` |
+| Se gasta primero el paquete que vence antes | `order_by('fecha_fin', 'pk')` | `test_se_gasta_el_paquete_que_vence_primero` |
+| Cancelar antes del inicio devuelve la clase y libera el cupo; después del inicio no se puede | `Inscripcion.puede_cancelar` | `test_cancelar_devuelve_la_clase_y_libera_el_cupo`, `test_no_se_cancela_una_clase_que_ya_empezo` |
+| Si el profesor cancela la sesión, la clase vuelve | `consumidas()` excluye sesiones canceladas | `test_si_el_profesor_cancela_la_sesion_la_clase_vuelve` |
+| La misma sesión no se reserva dos veces: lo frena el servicio y, si dos llegan juntas, la restricción única | `InscripcionDuplicadaError`, `UniqueConstraint` | `test_misma_sesion_dos_veces_se_rechaza_y_descuenta_una`, `test_03_forzado_unique_constraint_en_base_de_datos` |
+| Reprogramar mueve la reserva sin gastar otra clase | `reprogramar_inscripcion` | `test_mueve_la_reserva_sin_gastar_otra_clase`, `test_reprogramar_y_cancelar_deja_el_saldo_completo` |
+| Una orden de Webpay que no es de un paquete no activa nada | `PaqueteClases.confirmar_pago` | `test_orden_desconocida_no_activa_ningun_paquete` |
+| Dos reservas simultáneas por la última clase o el último cupo: gana una | `select_for_update` sobre sesión, inscripciones y paquetes | `TestConcurrenciaMultihiloInscripcion` (ver abajo) |
+
+**Concurrencia.** Las pruebas con hilos de `tests/test_concurrencia_inscripcion.py` corren siempre, contra PostgreSQL, y exigen el resultado exacto (gana una y la otra recibe `CupoAgotadoError` o `SinClasesDisponiblesError`). Para correrlas: `DATABASE_URL=<PostgreSQL de pruebas> python manage.py test tests.test_concurrencia_inscripcion`. **Nunca con la base de producción**: Django crea y borra una base `test_…` en ese servidor.
+
+## 12. Agregado de videos (decidido 08-nov-2026)
+
+Reglas en `alumnos/paquetes.py` y `alumnos/videos_extra.py`; pruebas en `tests/test_paquetes_videos.py` y `tests/test_*videos_extra*.py`. Ya funciona: venta junto con el paquete, biblioteca del profesor, entrega y visualización, aviso al profesor, pago, atrasos, reclamos y la compra de videos extra (pantalla del alumno adulto y del apoderado del menor, con registro de quién pagó) y la devolución de videos no entregados (la registra soporte desde el ticket). Falta: la reversa automática en Webpay de las devoluciones (hoy se devuelve a mano).
+
+| Plan | Videos del agregado | Precio | Entrega obligatoria del profesor |
+|---|---|---|---|
+| Flexible | 1 | $5.000 | 1 video a más tardar el día 14 |
+| Progreso | 4 | $20.000 | 2 videos el día 15 y 2 más a más tardar el día 23 |
+| Intensivo | 6 | $30.000 | 2 videos el día 20, 2 el día 40 y 2 a más tardar el día 53 |
+
+- **Precio fijo**: $5.000 por video, igual con todos los profesores. Se ofrece en una ventana al agregar el paquete y se paga junto con él.
+- **Videos extra** (después de contratar): $5.000 cada uno, o la promoción de **3 por $13.500**. Máximo **6 por paquete**, solo si al paquete le quedan 14 días o más; el profesor los comparte dentro de 14 días.
+  Pueden comprarlos paquetes con o sin el agregado inicial (09-nov). Los 14 días corren desde cada compra con el pago confirmado; una compra pendiente cuenta para el tope pero no para el plazo, el cupo ni el saldo. El profesor recibe aviso al confirmarse. El valor por video es el promedio de lo pagado (agregado + extra); como todo video, se paga al compartirlo.
+- **Reparto**: **25% LBWUS** (aloja los videos) y 75% el profesor, que gana cada vez que comparte un video, aunque sea el mismo.
+- **Videos**: el profesor los sube por cada materia que enseña, de **máximo 30 minutos**, y se los va compartiendo al alumno. Se guardan en MongoDB; la compra y el saldo, en PostgreSQL. El alumno solo ve los de su profesor y su materia, **mientras el paquete esté vigente**. Si renueva, el profesor comparte contenido nuevo.
+- **Pago**: se suma al saldo del profesor (`user_profesor/saldos.py`) cuando comparte el video; lo ya entregado se paga aunque después venza el paquete. Un video compartido con un paquete vigente **no se puede borrar** hasta que el paquete venza (el alumno lo pagó).
+- **Sin revisión previa**. El alumno reclama con un ticket: si **no corresponde a la materia**, soporte lo deriva al profesor, que tiene **2 días hábiles** para compartir el correcto; si es **inapropiado**, lo revisa soporte y toma las medidas.
+- **Atrasos**: aviso al profesor 3 días antes de cada fecha; si pasa la fecha, se abre un ticket automático para soporte y ese video no se paga hasta que lo comparta. La última fecha es 7 días antes del vencimiento del paquete, para que un atraso alcance a corregirse (09-nov).
+- **Reclamos** (09-nov): el alumno o su apoderado reporta el video desde el reproductor (el menor no abre tickets). Soporte lo ve desde el ticket y, si corresponde, lo **retira**: el alumno deja de verlo, al profesor **se le descuenta** y se libera el cupo para que comparta el correcto (nunca el mismo). Si ya lo había cobrado, se descuenta de lo próximo que gane.
+- **Menores**: el agregado lo compra el apoderado, igual que el paquete. El apoderado **revisa cada video y lo habilita** antes de que su estudiante lo vea, y puede quitar la habilitación (decidido 09-nov). Se le avisa cuando el profesor comparte uno.
+- **Devolución por videos no entregados** (decidido 09-nov; reembolso automático y aprobación, 13-nov): soporte la registra desde el ticket de Videos (solo el agente asignado). El sistema intenta devolver **por Webpay, por el mismo medio de pago** (reversa dentro de las 3 horas y por el total; después, anulación, hasta 90 días desde la venta; el parcial en crédito solo vale sin cuotas o con cuotas emisor). El agregado va dentro de la transacción del paquete y cada extra en la suya: el monto se reparte entre ellas sin pasarse de lo pagado en cada una, y cada reembolso queda registrado **antes** de llamar a Transbank para no devolver dos veces. Si Transbank rechaza, soporte ve el motivo y puede reintentar; si no se puede, **soporte pide la aprobación del administrador** para transferir a mano (opción A: el segundo control es solo para la transferencia manual) y recién entonces la marca "devuelta", una sola vez. Se devuelve lo pagado por cada video (el promedio entre el agregado y los extra) por los que faltan: lo contratado, menos lo compartido y lo ya devuelto. El monto lo calcula el servidor. Lo devuelto sale de lo que el profesor debe entregar (no puede compartirlo y cobrarlo dos veces ni cuenta como atraso) y no cambia lo que cobra por lo que sí entregó. Se le cuenta al alumno en el ticket y se avisa al profesor. **Requisito externo:** Transbank debe habilitar la anulación por API para el comercio.
+- **Pendiente**: plan de MongoDB Atlas para producción (en modo prueba basta el actual) y la devolución por clases en vivo (decidido 13-nov: no por ahora, ver sección 5).
+
+## 13. Clase extra y plazos del paquete (decidido 14-nov-2026)
+
+Reglas en `alumnos/clase_extra.py` y `alumnos/models/clase_extra.py`; pruebas en `tests/test_clase_extra.py`. Se construye por tramos, cada uno con su PR: primero el servidor (pedir, aceptar, rechazar, vencer), luego el asistente de 3 pasos del alumno, la bandeja del profesor y, al final, el pago cuando no hay paquete.
+
+- **Qué es**: el alumno propone un día y una hora **fuera del horario del profesor** (no dentro de una franja semanal suya, aunque todavía no tenga bloques, ni sobre un bloque libre). El profesor decide. Si acepta, se crea la sesión de 60 minutos y se reserva con el mismo servicio de siempre, así que la sala virtual funciona igual que en cualquier clase.
+- **Cómo se paga**: se descuenta del paquete que el alumno tiene con ese profesor. **Sin paquete**, paga el valor de la clase (la clase suelta, $15.990). Ese cobro **todavía no existe**: hoy, sin paquete, no se puede pedir la clase extra.
+- **Plazo para responder**: 24 horas, o hasta 4 horas antes de la clase si eso llega antes. Pasado el plazo, la solicitud queda **vencida**. Se pide con 4 horas de anticipación como mínimo.
+- **Si el paquete ya no sirve cuando el profesor acepta** (se agotó o venció): la solicitud queda **vencida**, no pendiente.
+- **Los paquetes no duran para siempre**. Ya funciona: la vigencia es de **30 días** (Flexible y Progreso) y **60 días** (Intensivo) desde que Webpay aprueba el pago; el alumno y su apoderado ven «vence el …»; la clase debe **empezar antes del vencimiento** (también la clase extra, con prueba); y lo no usado al vencer se pierde. **Falta, y queda anotado**: un **aviso al alumno cuando a su paquete le queda poco** (no existe); la prórroga gratuita única de 15 días y la devolución proporcional de lo no usado, que ya están decididas en la sección 6.

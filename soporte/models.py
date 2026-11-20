@@ -1,0 +1,263 @@
+"""Equipo de soporte y tickets.
+
+- Cada verificacion con documentos (identidad o vinculo de un apoderado, titulo de
+  un profesor) es un ticket. Se abre cuando queda lista para revisar y se cierra
+  cuando alguien decide (o el vinculo se revoca).
+- Alumnos, profesores y apoderados abren sus propios tickets (D10): pagos, clases,
+  tecnicos u otros. Esos tienen autor, titulo y descripcion.
+- Cada mensaje del formulario publico Contactanos es un ticket (H14, D5: el admin no
+  atiende casos). El visitante no tiene cuenta: soporte le responde por correo.
+- El ticket se asigna solo al agente habilitado en su categoria con menos tickets
+  abiertos; el lider de soporte puede reasignarlo.
+- Solo el agente asignado ve los documentos y decide. El administrador no.
+- Cada asignacion queda registrada: quien tuvo el ticket, desde cuando y quien lo asigno.
+- Plazo en dias habiles por categoria (soporte/plazos.py). Reasignar no lo reinicia:
+  el plazo es para quien espera la respuesta.
+- Un caso grave (legal, etc.) se escala con un motivo obligatorio: el agente al lider, que
+  lo toma; el lider a un administrador, que decide y soporte ejecuta (D5, revisada 05-nov).
+"""
+
+from django.conf import settings
+from django.db import models
+from django.db.models import Q
+from django.utils import timezone
+
+
+class AgenteSoporte(models.Model):
+    """Perfil del rol soporte (ver alumnos/roles.SOPORTE)."""
+    id_agente = models.AutoField(primary_key=True)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+                                related_name='perfil_soporte')
+    es_lider = models.BooleanField('líder de soporte', default=False)
+
+    class Meta:
+        verbose_name = 'agente de soporte'
+        verbose_name_plural = 'agentes de soporte'
+        ordering = ['user__first_name']
+
+    def __str__(self):
+        return f'{self.nombre} ({self.cargo})'
+
+    @property
+    def nombre(self):
+        return self.user.first_name
+
+    @property
+    def cargo(self):
+        return 'Líder de soporte' if self.es_lider else 'Agente de soporte'
+
+    @property
+    def categorias(self):
+        return set(self.habilitaciones.values_list('categoria', flat=True))
+
+
+class Ticket(models.Model):
+    APODERADOS = 'apoderados'
+    TITULOS = 'titulos'
+    # Certificados de especializacion del profesor: un ticket aparte del titulo, para que el titulo
+    # (lo que lo habilita a hacer clases) no espere a las especializaciones.
+    ESPECIALIZACIONES = 'especializaciones'
+    PAGOS = 'pagos'
+    CLASES = 'clases'
+    # El profesor pide ayuda con su horario semanal (fase 7, decidido 07-nov): solo el la abre (DE_PROFESORES).
+    HORARIO = 'horario'
+    CONDUCTA = 'conducta'
+    TECNICO = 'tecnico'
+    OTRO = 'otro'
+    # Solicitud de eliminar la cuenta (app supresiones). La abre el flujo de privacidad, no el formulario
+    # de tickets: por eso no esta en DE_USUARIOS.
+    PRIVACIDAD = 'privacidad'
+    # Formulario publico Contactanos (H14). Lo abre un visitante sin cuenta: tampoco esta en DE_USUARIOS.
+    CONTACTO = 'contacto'
+    # Agregado de videos (09-nov): entregas atrasadas del profesor (ticket automatico) y reclamos por un video.
+    VIDEOS = 'videos'
+    CATEGORIAS = [(APODERADOS, 'Apoderados y menores'), (TITULOS, 'Títulos de profesores'),
+                  (ESPECIALIZACIONES, 'Especializaciones de profesores'),
+                  (PAGOS, 'Pagos y retiros'), (CLASES, 'Clases'), (HORARIO, 'Horario de clases'),
+                  (CONDUCTA, 'Conducta en una clase'),
+                  (TECNICO, 'Problemas técnicos'), (OTRO, 'Otro'), (PRIVACIDAD, 'Privacidad y datos'),
+                  (CONTACTO, 'Contacto del sitio'), (VIDEOS, 'Videos de apoyo')]
+    DE_USUARIOS = (PAGOS, CLASES, CONDUCTA, VIDEOS, TECNICO, OTRO)  # las que abre el propio usuario (D10)
+    DE_PROFESORES = DE_USUARIOS + (HORARIO,)
+    # D4, D16, D17. Privacidad: 10 dias habiles (~14 corridos), decision por defecto a validar con la abogada.
+    # Contacto: 5, como Tecnico y Otro (decidido 05-nov). Horario: 2, como Clases (toca sus reservas).
+    # Videos: 2, el plazo del profesor para corregir un video que no corresponde (politica, seccion 12).
+    DIAS_HABILES = {APODERADOS: 5, TITULOS: 5, ESPECIALIZACIONES: 5, PAGOS: 2, CLASES: 2, HORARIO: 2, CONDUCTA: 2,
+                    TECNICO: 5, OTRO: 5, PRIVACIDAD: 10, CONTACTO: 5, VIDEOS: 2}
+    AVISO_CADA = 3  # dias habiles entre avisos de atraso (al equipo en casos normales, y al usuario siempre;
+    #                 conducta avisa al equipo cada dia: D17)
+    ABIERTO = 'abierto'
+    CERRADO = 'cerrado'
+    ESTADOS = [(ABIERTO, 'Abierto'), (CERRADO, 'Cerrado')]
+
+    categoria = models.CharField(max_length=20, choices=CATEGORIAS)
+    estado = models.CharField(max_length=8, choices=ESTADOS, default=ABIERTO)
+    # SET_NULL: si se borra la cuenta del agente, el ticket queda sin asignar.
+    asignado = models.ForeignKey(AgenteSoporte, on_delete=models.SET_NULL, null=True, blank=True,
+                                 related_name='tickets')
+    # Lo que se revisa: exactamente uno de los tres, o un autor si lo abrio un usuario, o el
+    # mensaje de Contactanos de un visitante.
+    apoderado = models.ForeignKey('apoderados.Apoderado', on_delete=models.CASCADE, null=True, blank=True,
+                                  related_name='tickets')
+    vinculo = models.ForeignKey('apoderados.Vinculo', on_delete=models.CASCADE, null=True, blank=True,
+                                related_name='tickets')
+    profesor = models.ForeignKey('alumnos.Profesor', on_delete=models.CASCADE, null=True, blank=True,
+                                 related_name='tickets')
+    autor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True,
+                              related_name='tickets_soporte')
+    # Uno a uno: cada mensaje es su propio ticket.
+    contacto = models.OneToOneField('admin_portal.MensajeContacto', on_delete=models.CASCADE, null=True,
+                                    blank=True, related_name='ticket')
+    titulo = models.CharField(max_length=120, blank=True)
+    descripcion = models.TextField(max_length=2000, blank=True)
+    creado = models.DateTimeField(auto_now_add=True)
+    vence = models.DateTimeField()
+    # Primera respuesta de soporte en un ticket de usuario: cumple el plazo (31-oct).
+    respondido = models.DateTimeField(null=True, blank=True)
+    # El apoderado reporta por su estudiante (D18): de quien se trata, si lo indico.
+    estudiante = models.ForeignKey('alumnos.Alumno', on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name='+')
+    cerrado = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['creado', 'id']
+        constraints = [
+            models.CheckConstraint(
+                name='ticket_de_un_solo_objeto',
+                condition=(Q(apoderado__isnull=False, vinculo__isnull=True, profesor__isnull=True,
+                             contacto__isnull=True)
+                           | Q(apoderado__isnull=True, vinculo__isnull=False, profesor__isnull=True,
+                               contacto__isnull=True)
+                           | Q(apoderado__isnull=True, vinculo__isnull=True, profesor__isnull=False,
+                               contacto__isnull=True)
+                           | Q(apoderado__isnull=True, vinculo__isnull=True, profesor__isnull=True,
+                               autor__isnull=False, contacto__isnull=True)
+                           | Q(apoderado__isnull=True, vinculo__isnull=True, profesor__isnull=True,
+                               autor__isnull=True, contacto__isnull=False)),
+            ),
+            # Un solo ticket abierto por cosa revisada. El profesor tiene dos cosas: su titulo y sus
+            # especializaciones, cada una con su ticket.
+            models.UniqueConstraint(fields=['apoderado'], condition=Q(estado='abierto'),
+                                    name='un_ticket_abierto_por_apoderado'),
+            models.UniqueConstraint(fields=['vinculo'], condition=Q(estado='abierto'),
+                                    name='un_ticket_abierto_por_vinculo'),
+            models.UniqueConstraint(fields=['profesor', 'categoria'], condition=Q(estado='abierto'),
+                                    name='un_ticket_abierto_por_profesor_y_tema'),
+        ]
+
+    def __str__(self):
+        return f'#{self.pk} {self.asunto} ({self.get_estado_display()})'
+
+    @property
+    def es_conversacion(self):
+        """Se atiende respondiendo en soporte_reporte (lo abrio un usuario o un visitante),
+        no revisando documentos en la pantalla de su categoria."""
+        return bool(self.autor_id or self.contacto_id)
+
+    @property
+    def asunto(self):
+        if self.autor_id:
+            return self.titulo
+        if self.contacto_id:
+            return f'Mensaje de {self.contacto.nombre}'
+        if self.apoderado_id:
+            return f'Identidad de {self.apoderado.nombre}'
+        if self.vinculo_id:
+            return f'Vínculo {self.vinculo.apoderado.nombre} - {self.vinculo.alumno.user.first_name}'
+        if self.categoria == self.ESPECIALIZACIONES:
+            return f'Especializaciones de {self.profesor.nombre}'
+        return f'Título de {self.profesor.nombre}'
+
+    @property
+    def solicitante(self):
+        """Quien espera la respuesta: el autor, o el apoderado o profesor que se verifica.
+        None si es un visitante de Contactanos: no tiene cuenta."""
+        if self.autor_id:
+            return self.autor
+        if self.contacto_id:
+            return None
+        if self.apoderado_id:
+            return self.apoderado.user
+        if self.vinculo_id:
+            return self.vinculo.apoderado.user
+        return self.profesor.user
+
+    @property
+    def aviso_cada(self):
+        """Dias habiles entre avisos de atraso: conducta es urgente (D17)."""
+        return 1 if self.categoria == self.CONDUCTA else self.AVISO_CADA
+
+    @property
+    def atrasado(self):
+        """Misma regla que la consulta de soporte.correo.avisar_atrasados."""
+        return self.estado == self.ABIERTO and self.respondido is None and timezone.now() > self.vence
+
+
+class Habilitacion(models.Model):
+    """Categoria en la que un agente recibe tickets."""
+    agente = models.ForeignKey(AgenteSoporte, on_delete=models.CASCADE, related_name='habilitaciones')
+    categoria = models.CharField(max_length=20, choices=Ticket.CATEGORIAS)
+
+    class Meta:
+        verbose_name = 'habilitación'
+        verbose_name_plural = 'habilitaciones'
+        constraints = [models.UniqueConstraint(fields=['agente', 'categoria'], name='habilitacion_unica')]
+
+
+class Asignacion(models.Model):
+    """Quien tuvo cada ticket y desde cuando. ``autor`` vacio: la asigno el sistema."""
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='asignaciones')
+    agente = models.ForeignKey(AgenteSoporte, on_delete=models.SET_NULL, null=True, related_name='+')
+    autor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                              related_name='+')
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'asignación'
+        verbose_name_plural = 'asignaciones'
+        ordering = ['-fecha', '-id']
+
+
+class Mensaje(models.Model):
+    """Conversacion de un ticket de usuario: respuestas del agente y del usuario."""
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='mensajes')
+    autor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='+')
+    de_soporte = models.BooleanField()  # quien escribio, aunque la cuenta ya no exista
+    texto = models.TextField(max_length=2000)
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['fecha', 'id']
+
+
+class Escalamiento(models.Model):
+    """Un caso grave que sube un nivel, con su motivo. Al lider: el ticket pasa a ser suyo.
+    Al administrador: el ticket sigue en soporte; el admin ve solo el asunto y los motivos (no
+    documentos ni conversaciones), y deja una indicacion que soporte ejecuta."""
+    AL_LIDER = 'lider'
+    AL_ADMIN = 'admin'
+    DESTINOS = [(AL_LIDER, 'Al líder de soporte'), (AL_ADMIN, 'A un administrador')]
+
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='escalamientos')
+    destino = models.CharField(max_length=5, choices=DESTINOS)
+    autor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='+')
+    motivo = models.TextField(max_length=1000)
+    # Pedido de una asignatura nueva al admin (fase 4): el nombre que debe crear. Vacio en los demas casos.
+    asignatura_pedida = models.CharField(max_length=60, blank=True)
+    fecha = models.DateTimeField(auto_now_add=True)
+    indicacion = models.TextField(max_length=1000, blank=True)
+    indicado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                     related_name='+')
+    indicado = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['fecha', 'id']
+        constraints = [
+            # Hasta que el admin responda, no se le vuelve a escalar el mismo ticket.
+            models.UniqueConstraint(fields=['ticket'], condition=Q(destino='admin', indicado__isnull=True),
+                                    name='un_escalamiento_al_admin_pendiente'),
+        ]
+
+    @property
+    def pendiente(self):
+        return self.destino == self.AL_ADMIN and self.indicado is None

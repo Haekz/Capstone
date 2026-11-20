@@ -1,0 +1,8 @@
+Hola {{ nombre }},
+
+Tu cuenta para recibir pagos en LBWUS cambió a: {{ banco }} {{ enmascarado }}.
+Por seguridad, los pagos a esta cuenta se habilitan el {{ pagable_desde|date:"d/m/Y H:i" }}.
+
+Si no fuiste tú, cambia tu contraseña y escríbenos a soporte de inmediato.
+
+Equipo LBWUS

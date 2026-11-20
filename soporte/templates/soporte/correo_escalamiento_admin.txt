@@ -1,0 +1,10 @@
+Hola {{ nombre }},
+
+El equipo de soporte de LBWUS te escaló un caso grave y espera tu indicación:
+
+- Ticket #{{ ticket.pk }}: {{ ticket.get_categoria_display }}
+- Vence: {{ ticket.vence|date:"d-m-Y H:i" }} (hora de Chile)
+
+Lee el motivo y responde en el portal de administración, en "Casos escalados". Por seguridad, los detalles solo se ven ahí.
+
+Equipo LBWUS

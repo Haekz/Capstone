@@ -1,18 +1,24 @@
-{% extends 'alumnos/base.html' %}
+{% extends base|default:'alumnos/base.html' %}
 {% load static %}
 
 {% block title %}{{ profesor.nombre }} | Perfil profesional | LBWUS{% endblock %}
+{% block page_title %}{% if titulo_en_barra %}Perfil del profesor{% else %}{{ block.super }}{% endif %}{% endblock %}
+{% block page_subtitle %}{% if titulo_en_barra %}Datos profesionales y reseñas{% else %}{{ block.super }}{% endif %}{% endblock %}
 
 {% block extra_css %}
+{{ block.super }}
 <link rel="stylesheet" href="{% static 'alumnos/css/perfil_profesor.css' %}">
 <link rel="stylesheet" href="{% static 'resenas/resenas.css' %}">
+<link rel="stylesheet" href="{% static 'alumnos/css/reservas.css' %}">
 {% endblock %}
 
 {% block content %}
 <div class="perfil-prof">
+    {% if not en_portal %}
     <a class="perfil-prof__volver" href="{% url 'alumno_pag1' %}">
         <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a mi portal
     </a>
+    {% endif %}
 
     <header class="perfil-prof__cabecera">
         {% if profesor.user.foto_perfil %}
@@ -21,7 +27,8 @@
         <div class="perfil-prof__avatar" aria-hidden="true">{{ profesor.nombre|slice:":1"|upper }}</div>
         {% endif %}
         <div>
-            <h1>{{ profesor.nombre }}</h1>
+            {# La barra del portal es el h1; el nombre del profesor baja a h2 con el tamano del h1 #}
+            {% if titulo_en_barra %}<h2>{{ profesor.nombre }}</h2>{% else %}<h1>{{ profesor.nombre }}</h1>{% endif %}
             <p class="perfil-prof__especialidad">{{ profesor.especialidad.nombre|default:"Especialidad no informada" }}</p>
             <p class="perfil-prof__verificado">
                 <i class="bi bi-patch-check-fill" aria-hidden="true"></i> Título profesional verificado por LBWUS
@@ -34,10 +41,6 @@
         <dl class="perfil-prof__datos">
             <div><dt>Clases que ofrece</dt><dd>{{ clases|length }}</dd></div>
             <div><dt>Sesiones realizadas</dt><dd>{{ sesiones_realizadas }}</dd></div>
-            <div>
-                <dt>Teléfono</dt>
-                <dd>{% if telefono %}<a href="tel:{{ telefono }}">{{ telefono }}</a>{% else %}No publicado por el profesor{% endif %}</dd>
-            </div>
         </dl>
     </section>
 
@@ -48,7 +51,7 @@
             {% for clase in clases %}
             <li>
                 <strong>{{ clase.asignatura.nombre }}</strong>
-                <span>{{ clase.get_modalidad_display }} · {{ clase.horario|time:"H:i" }} hrs</span>
+                <span>{{ clase.get_modalidad_display }}</span>
             </li>
             {% endfor %}
         </ul>
@@ -60,11 +63,22 @@
     <section class="perfil-prof__bloque" aria-labelledby="perfil-sesiones">
         <h2 id="perfil-sesiones">Próximos horarios disponibles</h2>
         {% if proximas_sesiones %}
-        <ul class="perfil-prof__lista">
+        <ul class="horarios-lista">
             {% for sesion in proximas_sesiones %}
-            <li>
-                <strong>{{ sesion.clase.asignatura.nombre }}</strong>
-                <span>{{ sesion.fecha_hora_inicio|date:"d/m/Y" }} · {{ sesion.fecha_hora_inicio|time:"H:i" }} - {{ sesion.fecha_hora_fin|time:"H:i" }} hrs · {{ sesion.cupos_disponibles }} cupo{{ sesion.cupos_disponibles|pluralize }}</span>
+            <li class="horario horario--solo-info">
+                <div class="reserva-fecha" aria-hidden="true">
+                    <span class="reserva-fecha__dia">{{ sesion.fecha_hora_inicio|date:"D" }}</span>
+                    <span class="reserva-fecha__num">{{ sesion.fecha_hora_inicio|date:"j" }}</span>
+                    <span class="reserva-fecha__mes">{{ sesion.fecha_hora_inicio|date:"M" }}</span>
+                </div>
+                <div>
+                    <p class="horario__titulo">{{ sesion.fecha_hora_inicio|date:"l"|capfirst }} · {{ sesion.fecha_hora_inicio|date:"d/m/Y" }}</p>
+                    <p class="horario__meta">
+                        <span><i class="bi bi-clock" aria-hidden="true"></i> {{ sesion.fecha_hora_inicio|time:"H:i" }} - {{ sesion.fecha_hora_fin|time:"H:i" }} hrs</span>
+                        <span class="horario__cupos{% if sesion.cupos_disponibles <= 2 %} horario__cupos--pocos{% endif %}"><i class="bi bi-people-fill" aria-hidden="true"></i> {{ sesion.cupos_disponibles }} cupo{{ sesion.cupos_disponibles|pluralize }}</span>
+                        <span><i class="bi bi-journal-text" aria-hidden="true"></i> {{ sesion.clase.asignatura.nombre }}</span>
+                    </p>
+                </div>
             </li>
             {% endfor %}
         </ul>
