@@ -12,6 +12,18 @@
 
 {% block content %}
 
+{% if tareas_atrasadas %}
+{# SCRUM-100: el Cron no completo tareas_diarias en las ultimas 26 h (lbwus/salud.py). #}
+<div class="aviso-tareas" role="alert">
+    <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+    <div>
+        <strong>Las tareas diarias están atrasadas.</strong>
+        No hay una corrida completa de <code>tareas_diarias</code> en las últimas 26 horas: pagos pendientes,
+        avisos y limpiezas pueden estar sin hacer. Revisa el servicio Cron y sus logs en Railway.
+    </div>
+</div>
+{% endif %}
+
 {% if messages %}
 <div class="panel" role="status" style="margin-bottom:20px; padding:14px 18px;">
     {% for m in messages %}<div>{{ m }}</div>{% endfor %}

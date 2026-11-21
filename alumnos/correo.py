@@ -18,6 +18,8 @@ def enviar(asunto, plantilla, contexto, destinatario):
         send_mail(f'{asunto} - LBWUS', render_to_string(plantilla, contexto, using='correo'),
                   settings.DEFAULT_FROM_EMAIL, [destinatario])
     except Exception:  # SMTP caido, timeout, credenciales: se puede reenviar
-        logger.exception('No se pudo enviar el correo "%s"', asunto)
+        # La plantilla y no el asunto: el asunto puede llevar el nombre de un estudiante (SCRUM-100).
+        # El correo del destinatario que trae el error SMTP lo enmascara FormatoSeguro (lbwus/registro.py).
+        logger.exception('evento=correo_no_enviado plantilla=%s', plantilla)
         return False
     return True
