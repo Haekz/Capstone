@@ -63,6 +63,9 @@ Los codigos LBW-xx y Dx son los del backlog y las decisiones grupales del 08-nov
   `var(--ok, #0f8a60)` de `16_portal_apoderado.css`, que nunca se usaban (ese portal siempre carga `13_pulido.css`).
   Pruebas: `test_contraste_ok.py` (contraste en cada portal, las cuatro copias iguales y la tarjeta con el mismo verde);
   volver a `#0f8a60` la hace fallar.
+- ~~Admin, Nosotros: «Fundación», «Sede» y «Contacto» casi no se leían.~~ **Hecho (21-nov), visto en las capturas de `--ok`.**
+  Usaban `--text-muted`: 2,75:1 en claro (4,56:1 en oscuro). Ahora `--text-secondary`, como el placeholder: 5,1:1 y 8,0:1,
+  medido en el navegador. `.stat-mini` solo existe en esa pantalla. Prueba en `test_pulido_admin_paginas.py`.
 
 ## Arreglos acordados (20-nov): orden de trabajo, en `fran-pulido-apoderado`
 Decididos con Fran el 20-nov. Van en este orden (bugs primero) y cada uno con sus pruebas, su commit y esta lista al día.

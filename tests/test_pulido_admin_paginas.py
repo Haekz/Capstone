@@ -103,6 +103,11 @@ class PaginasDelAdminTests(BaseResenas):
             with self.subTest(estilo=estilo):
                 self.assertNotIn(estilo, html)
 
+    def test_las_etiquetas_de_datos_del_equipo_usan_el_color_legible(self):
+        # --text-muted daba 2,75:1 en claro (medido en el navegador el 21-nov); --text-secondary, 5,1:1 y 8,0:1.
+        css = (STATIC / 'css/admin_panel/06c_pulido_admin_pantallas.css').read_text(encoding='utf-8')
+        self.assertRegex(css, r'#portal-admin \.nos-datos \.stat-mini span \{\s*color: var\(--text-secondary\);')
+
     # ── Reseñas ──
     def test_resenas_con_una_reportada_sigue_ofreciendo_mantener_u_ocultar(self):
         resena = self.resena(self.insc_paquete, comentario='Texto reportado')

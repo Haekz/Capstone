@@ -227,3 +227,8 @@
 #portal-admin .nos-datos .stat-mini:last-child {
     border-bottom: none;
 }
+
+/* Fundacion, Sede y Contacto son texto: --text-muted daba 2,75:1 en claro (como el placeholder); este, 5,1:1 y 8,0:1. */
+#portal-admin .nos-datos .stat-mini span {
+    color: var(--text-secondary);
+}
