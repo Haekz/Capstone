@@ -353,3 +353,33 @@ body:not(.light-mode) .alert-ok {
     cursor: pointer;
     font-family: inherit;
 }
+
+/* ── Aviso de tareas diarias atrasadas (SCRUM-100) ── */
+:root {
+    --aviso-tareas-fondo: rgba(245, 165, 36, 0.14);
+    --aviso-tareas-borde: rgba(245, 165, 36, 0.45);
+    --aviso-tareas-texto: #fcd9a0;
+}
+body.light-mode {
+    --aviso-tareas-fondo: #fff7e6;
+    --aviso-tareas-borde: #f5a524;
+    --aviso-tareas-texto: #7a4a03;
+}
+.aviso-tareas {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    padding: 14px 18px;
+    border: 1px solid var(--aviso-tareas-borde);
+    border-radius: var(--radius-md);
+    background: var(--aviso-tareas-fondo);
+    color: var(--aviso-tareas-texto);
+}
+.aviso-tareas .bi {
+    font-size: 1.25rem;
+    color: var(--accent);
+}
+body.light-mode .aviso-tareas .bi {
+    color: var(--accent-dark);
+}

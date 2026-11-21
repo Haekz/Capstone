@@ -42,6 +42,8 @@ PUBLICAS = {
     'socialaccount_login_cancelled',
     # Con SOCIALACCOUNT_LOGIN_ON_GET = False, el GET solo muestra el boton que hace POST (S-20).
     'google_login',
+    # Monitor externo (SCRUM-100): 200 solo si tareas_diarias corrio en las ultimas 26 h; si no, 503.
+    'salud',
 }
 # Cualquier cuenta con sesion.
 COMUNES = {
@@ -68,7 +70,7 @@ SOLO_REDIRIGEN = {
     'google_login',  # POST: lleva a accounts.google.com (S-20)
     None,  # /accounts/social/signup/ -> /accounts/3rdparty/signup/ (ruta antigua de allauth, sin nombre)
 }
-CON_BUG_O_503 = {'comunidad_salud'}
+CON_BUG_O_503 = {'comunidad_salud', 'salud'}  # salud: 503 = tareas diarias atrasadas (esperado sin Cron)
 # Lo que responden al anonimo los endpoints JSON privados (decoradores *_json y las vistas que lo validan a mano).
 RECHAZOS_DE_SESION = {
     'Sesión inválida.',

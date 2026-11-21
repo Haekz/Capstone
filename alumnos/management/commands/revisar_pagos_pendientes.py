@@ -33,7 +33,8 @@ class Command(BaseCommand):
         for paquete in pendientes:
             try:
                 respuesta = webpay._tx().status(paquete.token_ws)
-            except Exception:  # Transbank caido o token vencido: se vuelve a intentar en la proxima corrida
+            except Exception as error:  # Transbank caido o token vencido: se vuelve a intentar en la proxima corrida
+                webpay._log_error_transbank('status', paquete.buy_order, error)
                 sin_respuesta += 1
                 continue
             if respuesta.get('buy_order') != paquete.buy_order:  # no es la orden que se pregunto: no se decide nada

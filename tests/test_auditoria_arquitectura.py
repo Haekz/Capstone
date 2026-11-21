@@ -245,7 +245,9 @@ class AuditoriaSeguridadYArquitecturaTests(TestCase):
         # 38: las finanzas cuentan los videos (B1, 13-nov) con 2 consultas fijas: lo devuelto y los videos compartidos
         # (valorados con user_profesor.saldos.valores_videos, la misma cuenta del saldo). Agregado y extras van en la
         # consulta de paquetes que ya existia (videos_extra.anotar).
-        self.assertLessEqual(despues_adm, 38)
+        # 39 (SCRUM-100): 1 lectura fija de la DatabaseCache (lbwus.salud.tareas_atrasadas) para el aviso de tareas
+        # diarias atrasadas. Es una sola fila por clave, no crece con los datos: no es N+1.
+        self.assertLessEqual(despues_adm, 39)
         # Antes 20 (con 1 de holgura): el inicio con datos reales de hoy (user_profesor/inicio.py) suma 3 consultas
         # fijas (reservas de hoy, lo ya dictado con pagables() y bloques libres). Juntarlas obligaria a copiar la
         # regla del saldo. Sigue siendo O(1): lo que importa es la igualdad de arriba.

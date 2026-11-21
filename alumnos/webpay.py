@@ -120,8 +120,10 @@ def iniciar_compra_paquete(request, alumno_id, al_crear=None, vinculo=None):
     session_id = f'S{secrets.token_hex(8)}'
     try:
         response = _tx().create(buy_order, session_id, monto + monto_videos, request.build_absolute_uri(reverse('confirmacion')))
-    except Exception:  # Transbank caido o rechazo la orden: no se cobra ni se crea el paquete
+    except Exception as error:  # Transbank caido o rechazo la orden: no se cobra ni se crea el paquete
+        _log_error_transbank('create', buy_order, error, monto + monto_videos)
         return render(request, 'alumnos/confirmacion.html', {'aprobado': False, 'items': []})
+    logger.info('evento=pago_iniciado tipo=paquete buy_order=%s monto=%s', buy_order, monto + monto_videos)
 
     with transaction.atomic():  # paquete y registro del apoderado: ambos o ninguno
         paquete = PaqueteClases.objects.create(
@@ -169,8 +171,10 @@ def iniciar_compra_videos_extra(request, alumno_id, al_crear=None, vinculo=None,
     session_id = f'S{secrets.token_hex(8)}'
     try:
         response = _tx().create(buy_order, session_id, monto, request.build_absolute_uri(reverse('confirmacion')))
-    except Exception:  # Transbank caido o rechazo la orden: no se cobra ni se crea la compra
+    except Exception as error:  # Transbank caido o rechazo la orden: no se cobra ni se crea la compra
+        _log_error_transbank('create', buy_order, error, monto)
         return render(request, 'alumnos/confirmacion.html', {'aprobado': False, 'items': []})
+    logger.info('evento=pago_iniciado tipo=videos_extra buy_order=%s monto=%s', buy_order, monto)
     try:
         with transaction.atomic():
             PaqueteClases.objects.select_for_update().get(pk=paquete.pk)
@@ -183,6 +187,26 @@ def iniciar_compra_videos_extra(request, alumno_id, al_crear=None, vinculo=None,
         messages.error(request, error.messages[0])
         return redirect(volver)
     return render(request, 'alumnos/redirect_webpay.html', {'url': response['url'], 'token': response['token']})
+
+
+def _log_error_transbank(etapa, buy_order, error, monto=None):
+    """Una linea por fallo de Transbank (red, credenciales o rechazo de la orden).
+
+    Solo el tipo del error: su texto puede traer la URL con el token. Nunca el token ni datos de tarjeta.
+    """
+    logger.error('evento=pago_error_transbank etapa=%s buy_order=%s monto=%s error=%s',
+                 etapa, buy_order or '-', '-' if monto is None else monto, type(error).__name__)
+
+
+def _orden_del_token(token):
+    """La orden de compra de un token que creamos nosotros, o '-' (no se registra lo que manda el navegador)."""
+    if not token:
+        return '-'
+    for modelo in (PaqueteClases, CompraVideosExtra):
+        orden = modelo.objects.filter(token_ws=token).values_list('buy_order', flat=True).first()
+        if orden:
+            return orden
+    return '-'
 
 
 def _avisar_profesor(aviso, pago):
@@ -207,12 +231,21 @@ def registrar_respuesta(resp):
     paquete = PaqueteClases.objects.filter(buy_order=buy_order).first() if buy_order else None
     compra = CompraVideosExtra.objects.filter(buy_order=buy_order).first() if buy_order else None
     esperado = paquete.total if paquete else compra.monto if compra else None
-    if esperado is not None and int(resp.get('amount') or 0) != esperado:
+    monto_distinto = esperado is not None and int(resp.get('amount') or 0) != esperado
+    if monto_distinto:
         aprobado = False
     Suscripcion.confirmar_pago(buy_order, aprobado)
     autorizacion, fecha = resp.get('authorization_code') or '', parse_datetime(resp.get('transaction_date') or '')
     activados = PaqueteClases.confirmar_pago(buy_order, aprobado, autorizacion, fecha)
     extras_activados = CompraVideosExtra.confirmar_pago(buy_order, aprobado, autorizacion, fecha)
+    # Despues de guardar: si la confirmacion local falla, no queda un "aprobado" que nunca se activo.
+    if buy_order:  # sin orden (commit caido) ya quedo el pago_error_transbank
+        motivo = ' motivo=monto_distinto' if monto_distinto else ' motivo=orden_desconocida' if esperado is None else ''
+        (logger.warning if motivo else logger.info)(
+            'evento=%s buy_order=%s monto=%s esperado=%s estado=%s codigo=%s activados=%s%s',
+            'pago_aprobado' if aprobado else 'pago_rechazado', buy_order, resp.get('amount'),
+            '-' if esperado is None else esperado, resp.get('status') or '-', resp.get('response_code'),
+            len(activados) + len(extras_activados), motivo)
     # Solo lo que ESTA llamada activo: el aviso al profesor sale una vez por compra, aunque el retorno llegue dos veces.
     for paquete in activados:
         if paquete.videos:
@@ -245,7 +278,8 @@ def confirmacion(request):
 
         try:
             resp = _tx().commit(token)
-        except Exception:
+        except Exception as error:
+            _log_error_transbank('commit', _orden_del_token(token), error)
             resp = {}
 
         card = resp.get('card_detail') or {}
@@ -273,6 +307,8 @@ def confirmacion(request):
             'fecha': resp.get('transaction_date', ''),
         })
     elif tbk_token:
+        # El alumno anulo en Webpay (o volvio con los dos tokens, BUG-QA-02): no se cobra.
+        logger.info('evento=pago_anulado buy_order=%s', _orden_del_token(tbk_token))
         ctx.update({
             'aprobado': False,
             'anulado': True

@@ -9,6 +9,7 @@ from django.views.decorators.http import require_POST
 from alumnos import paquetes
 from alumnos.models import Alumno, Profesor, Tutor, Clase
 from alumnos.decorators import admin_required
+from lbwus import salud
 from supresiones import registro
 
 from . import ingresos, metricas
@@ -74,6 +75,7 @@ def dashboard_admin(request):
         'periodos': metricas.PERIODOS,
         'ingresos_hoy': ingresos.de_hoy(),  # personas distintas que iniciaron sesion hoy (H8)
         'soporte': metricas.soporte(),  # cifras agregadas, sin contenido (P13)
+        'tareas_atrasadas': salud.tareas_atrasadas(),  # el Cron no completo tareas_diarias en 26 h (SCRUM-100)
     }
     return render(request, 'admin_portal/dashboard_admin.html', context)
 
