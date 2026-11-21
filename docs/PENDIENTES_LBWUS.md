@@ -76,6 +76,17 @@ Los codigos LBW-xx y Dx son los del backlog y las decisiones grupales del 08-nov
   solo existe `online`) y los respaldos `var(--warn, …)` del apoderado. `.pp-vence--pronto` no sale con los datos de la
   demo: es el mismo `var(--warn)` sobre `--warn-soft` que mide la sonda (5,69:1 y 8,48:1). Pruebas: `test_contraste_tokens.py`
   (los dos tokens, y que cada copia fija coincida con su token); volver al color viejo, o separar una copia, la hace fallar.
+- ~~Token `--bad` (soporte) no llegaba a 4,5:1 en claro.~~ **Hecho (21-nov), visto en las capturas de `--warn`.** El chip
+  «Vencido» (`.sop-plazo--vencido`, su único uso) daba 4,44:1 y 3,78:1 en la tarjeta de la revisión. Ahora `#a8380a`
+  (mismo tono que `#c2410c`): antes 6 fallas, ahora 0, el peor 4,73:1; el oscuro no cambia. Prueba en
+  `test_contraste_tokens.py`.
+- **`--text-muted` se usa como color de texto y no llega a 4,5:1 ni en claro ni en oscuro (visto el 21-nov, sin resolver).**
+  Medido en el navegador: etiquetas del detalle de ticket de soporte (`dt`: «Abierto por», «Vence»…) 2,99:1 en claro y
+  4,30:1 en oscuro; antes ya se arreglaron, una a una, el placeholder y «Fundación / Sede / Contacto» (2,75:1). Es un token
+  global de los portales admin, docente y soporte (`04_rediseno_marco.css`: `#9892ab` claro, `#7d7794` oscuro; y
+  `01_base.css`), con 53 usos en 17 hojas y 16 estilos en línea en plantillas (p. ej. banco y cuenta en Finanzas). Decidir
+  antes de tocar: oscurecer el token (arregla todo, pero acerca «muted» a `--text-secondary` y se pierde un nivel de
+  jerarquía) o pasar los usos que son texto a `--text-secondary` y dejar `--text-muted` solo para lo decorativo.
 
 ## Arreglos acordados (20-nov): orden de trabajo, en `fran-pulido-apoderado`
 Decididos con Fran el 20-nov. Van en este orden (bugs primero) y cada uno con sus pruebas, su commit y esta lista al día.

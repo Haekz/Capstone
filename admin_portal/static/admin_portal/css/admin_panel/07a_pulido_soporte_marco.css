@@ -20,7 +20,7 @@
     --ok-soft: rgba(15, 138, 96, 0.1);
     --warn: #9c4708;  /* 4,5:1 tambien sobre --warn-soft y fondos lila (#b45309 daba 3,9:1) */
     --warn-soft: rgba(245, 158, 11, 0.14);
-    --bad: #c2410c;
+    --bad: #a8380a;  /* 4,5:1 tambien sobre --bad-soft y fondos lila (#c2410c daba 3,8:1) */
     --bad-soft: rgba(220, 38, 38, 0.1);
     --r-panel: 16px;
     --r-item: 12px;
