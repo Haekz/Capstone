@@ -33,7 +33,7 @@ PORTAL = {
 INTERNAS = {
     'alumno': ['alumno_pag1'],
     'profesor': ['panel_profesor'],
-    'admin': ['dashboard_admin', 'crud', 'alumnos_Add', 'planes_adm'],
+    'admin': ['dashboard_admin', 'planes_adm'],
 }
 
 

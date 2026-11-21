@@ -144,7 +144,7 @@ class SuprimirCuentaTests(Escenario):
     def borrar_desde_el_admin(self):
         admin, tutor = crear_admin()
         entrar_admin(self.client, admin, tutor)
-        return self.client.post(reverse('alumnos_del', args=[self.ana.id_alumno]))
+        return self.client.post(reverse('alumnos_del', args=[self.ana.id_alumno]), follow=True)  # el aviso sale en Usuarios
 
     def test_el_admin_elimina_un_alumno_sin_reportes_ni_pagos_como_antes(self):
         PaqueteClases.objects.filter(alumno=self.ana).delete()

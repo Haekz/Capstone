@@ -238,24 +238,6 @@ body.light-mode .badge-admin { color: #b45309; }
     box-shadow: 0 0 0 4px var(--primary-soft);
 }
 
-/* Mensaje de éxito sobre la tabla */
-.alert-ok {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin: 16px 24px 0;
-    padding: 12px 16px;
-    border-radius: var(--radius-sm);
-    background: rgba(16, 185, 129, 0.12);
-    border: 1px solid rgba(16, 185, 129, 0.25);
-    color: #047857;
-    font-size: 0.9rem;
-}
-
-body:not(.light-mode) .alert-ok {
-    color: #6ee7b7;
-}
-
 /* Estado vacío */
 .empty-state i {
     color: var(--primary-light);

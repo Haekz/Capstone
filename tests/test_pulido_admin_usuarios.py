@@ -24,11 +24,13 @@ class UsuariosDelAdminTests(BaseResenas):
     def pagina(self):
         return self.client.get(reverse('dashboard_admin')).content.decode()
 
-    def test_el_boton_dice_agregar_alumno_y_lleva_a_agregar_un_alumno(self):
+    def test_el_admin_no_crea_ni_edita_alumnos_solo_los_ve_y_los_elimina(self):
+        """Decidido 21-nov: crear y editar alumnos desde el admin dejaba al admin con la clave y el correo ajenos."""
         html = self.pagina()
-        self.assertRegex(html, rf'<a href="{reverse("alumnos_Add")}" class="btn-primary" id="add-user-btn">\s*'
-                               r'<i class="bi bi-person-plus-fill"></i>\s*Agregar alumno\s*</a>')
-        self.assertNotIn('Agregar Usuario', html)
+        for viejo in ('Agregar alumno', 'Agregar Usuario', 'add-user-btn', 'title="Editar"', 'alumnos_findEdit'):
+            with self.subTest(viejo=viejo):
+                self.assertNotIn(viejo, html)
+        self.assertIn('title="Eliminar"', html)
 
     def test_el_buscador_usa_la_clase_de_la_capa_y_se_anuncia_a_los_lectores(self):
         html = self.pagina()
@@ -46,6 +48,13 @@ class UsuariosDelAdminTests(BaseResenas):
             with self.subTest(alumno=nombre):
                 self.assertEqual(nombre, en_el_confirm)
                 self.assertTrue(accion.startswith('/admin_portal/alumnos_del/'))
+
+    def test_cada_boton_de_eliminar_dice_a_quien_elimina(self):
+        """Solo con title="Eliminar", un lector de pantalla leia lo mismo en cada fila (WCAG 2.4.6 / 4.1.2)."""
+        crear_alumno('44444444-4', 'Zoe"><i>', Genero.objects.first())
+        html = self.pagina()
+        etiquetas = re.findall(r'<button type="submit" class="btn-action delete" title="Eliminar" aria-label="([^"]*)">', html)
+        self.assertEqual(sorted(etiquetas), ['Eliminar a Ana', 'Eliminar a Bea', 'Eliminar a Zoe&quot;&gt;&lt;i&gt;'])
 
     def test_un_nombre_con_comillas_o_etiquetas_no_rompe_el_boton_de_eliminar(self):
         crear_alumno('44444444-4', 'Zoe"><i>', Genero.objects.first())

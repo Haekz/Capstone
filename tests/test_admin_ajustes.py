@@ -5,6 +5,7 @@ Nombre y correo obligatorios; telefono y direccion opcionales (crear_admin no lo
 identidad de la cuenta y el registro de supresiones guarda su huella. Datos ficticios.
 """
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
@@ -13,6 +14,17 @@ from alumnos.utils import normalizar_telefono
 from tests.test_retiros import RUT_ADMIN, crear_admin, entrar_admin
 
 VALIDOS = {'nombre': 'Tamara', 'correo': 'tamara@lbwus.cl', 'telefono': '+56 9 1234 5678', 'direccion': 'Av. Siempre Viva 742'}
+CSS_PANTALLAS = settings.BASE_DIR / 'admin_portal/static/admin_portal/css/admin_panel/06c_pulido_admin_pantallas.css'
+
+
+class LegibilidadDeLosCamposTests(SimpleTestCase):
+    """Medido en el navegador (21-nov): con --text-muted el texto de ejemplo daba 2,75:1 en claro y el RUT de solo lectura
+    tambien. Con --text-secondary dan 5,1:1 en claro y 8,0:1 en oscuro (minimo 4,5:1, WCAG 1.4.3)."""
+
+    def test_el_texto_de_ejemplo_y_el_campo_de_solo_lectura_usan_el_color_legible(self):
+        css = CSS_PANTALLAS.read_text(encoding='utf-8')
+        self.assertRegex(css, r'#portal-admin \.form-input::placeholder \{\s*color: var\(--text-secondary\);\s*opacity: 1;')
+        self.assertRegex(css, r'#portal-admin \.form-input\[readonly\] \{\s*color: var\(--text-secondary\);')
 
 
 class NormalizarTelefonoTests(SimpleTestCase):

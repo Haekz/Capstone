@@ -21,9 +21,8 @@ from django.core.cache import cache
 from django.core.management.sql import emit_post_migrate_signal
 from django.db import connection
 from django.test import RequestFactory, TestCase, override_settings
-from django.urls import reverse
+from django.urls import NoReverseMatch, reverse
 
-from admin_portal.forms import AdminAlumnoForm
 from alumnos.forms import AlumnoForm
 from alumnos.google_adapter import entrar_al_portal
 from alumnos.models import Alumno, Especialidad, Genero, Tutor
@@ -90,26 +89,16 @@ class LoginTests(BaseIdentidad):
 
 
 class S03ClaveInicialTests(TestCase):
+    """S-03: el admin ponia la clave de los alumnos que creaba (y podia dejarla igual a su RUT). Desde el 21-nov el admin
+    ya no crea ni edita alumnos: no queda ninguna ruta donde fijar la clave de otra persona."""
 
-    def test_alumno_creado_por_admin_no_entra_con_su_rut(self):
-        datos = {
-            'nombre': 'Creada por admin', 'rut': '12345678-5', 'direccion': 'C',
-            'fecha_nacimiento': '2000-01-01', 'correo_electronico': 'nueva@demo.cl',
-            'nivel_educacion': 'media',
-        }
-        # Sin clave, o con el RUT como clave, el admin no puede crear la cuenta (S4-02).
-        for clave in ('', '12345678-5'):
-            with self.subTest(clave=clave):
-                form = AdminAlumnoForm(data={**datos, 'password': clave, 'confirm_password': clave})
-                self.assertFalse(form.is_valid())
-        form = AdminAlumnoForm(data={**datos, 'password': CLAVE_SEGURA, 'confirm_password': CLAVE_SEGURA})
-        self.assertTrue(form.is_valid(), form.errors)
-        form.save()
-
-        self.client.post(reverse('login'), {'username': '12345678-5', 'password': '12345678-5'})
-
-        self.assertNotIn('alumno_id', self.client.session,
-                         'S-03: el alumno creado por el admin entra con su RUT como contraseña')
+    def test_el_admin_no_tiene_donde_fijarle_la_clave_a_un_alumno(self):
+        for nombre in ('alumnos_Add', 'alumnos_findEdit', 'alumnos_Update'):
+            with self.subTest(ruta=nombre), self.assertRaises(NoReverseMatch):
+                reverse(nombre, args=[1] if nombre == 'alumnos_findEdit' else [])
+        for ruta in ('alumnos_Add', 'alumnos_Update'):
+            with self.subTest(url=ruta):
+                self.assertEqual(self.client.post(f'/admin_portal/{ruta}', {'password': 'x'}).status_code, 404)
 
 
 class Seg3ClaveIgualAlRutTests(BaseIdentidad):

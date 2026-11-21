@@ -1,10 +1,8 @@
-import logging
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
-from django.http import JsonResponse, HttpResponse
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 from alumnos import paquetes
@@ -14,8 +12,6 @@ from supresiones import registro
 
 from . import ingresos, metricas
 from .forms import AjustesAdminForm
-
-logger = logging.getLogger(__name__)
 
 
 # Solo redirige al panel: regis_tutor.html envía aquí tras registrarse.
@@ -115,11 +111,6 @@ def home_adm(request):
     return render(request, 'admin_portal/home_adm.html', context)
 
 
-def reporte_alumnos(request):
-    """Ruta antigua del listado de alumnos; redirige a crud()."""
-    return redirect('crud')
-
-
 @never_cache
 @admin_required
 def planes_adm(request):
@@ -135,57 +126,24 @@ def nosotros_adm(request):
     context = {}
     return render(request, 'admin_portal/nosotros_adm.html', context)
 
-# --- Vistas CRUD ---
+# --- Usuarios: el admin solo ve el listado y elimina; no crea ni edita alumnos (decidido 21-nov) ---
+def _a_usuarios():
+    """El unico listado de usuarios es la seccion Usuarios del dashboard."""
+    return redirect(reverse('dashboard_admin') + '#usuarios')
+
+
 @never_cache
 @admin_required
 def crud(request):
-    alumnos = Alumno.objects.select_related('user', 'user__genero').all()
-    context = {'alumnos': alumnos}
-    return render(request, 'admin_portal/alumnos_list.html', context)
-
-
-@never_cache
-@admin_required
-def alumnos_Add(request):
-    from .forms import AdminAlumnoForm
-    if request.method == 'POST':
-        form = AdminAlumnoForm(request.POST)
-        if form.is_valid():
-            try:
-                form.save()
-                return JsonResponse({"success": True, "message": "Alumno registrado exitosamente."})
-            except Exception:
-                logger.exception("Error interno al registrar alumno desde admin_portal")
-                return JsonResponse(
-                    {"success": False, "message": "Error interno al guardar los datos del alumno."},
-                    status=500,
-                )
-        else:
-            errores = dict(form.errors.items())
-            mensaje_error = "\n".join([f"{k}: {v[0]}" for k, v in errores.items()])
-            return JsonResponse({"success": False, "message": mensaje_error})
-    else:
-        form = AdminAlumnoForm()
-
-    return render(request, 'admin_portal/alumnos_add.html', {'form': form})
-
-
-@never_cache
-@admin_required
-def alumnos_findEdit(request, pk):
-    alumno = get_object_or_404(Alumno.objects.select_related('user', 'user__genero'), id_alumno=pk)
-    from .forms import AdminAlumnoForm
-    form = AdminAlumnoForm(instance=alumno)
-    context = {'alumno': alumno, 'form': form}
-    return render(request, 'admin_portal/alumnos_edit.html', context)
+    """Ruta antigua del listado de alumnos (tambien reporte_alumnos): se mantiene para no romper enlaces guardados."""
+    return _a_usuarios()
 
 
 @admin_required
 @require_POST
 def alumnos_del(request, pk):
-    
     alumno = get_object_or_404(Alumno, id_alumno=pk)
-    
+
     # Se borra tambien la cuenta (CustomUser); el perfil de alumno cae en cascada. Si la cuenta tiene
     # conversaciones reportadas o historial de pagos y clases no se borra: se seudonimiza (mensajes/supresion.py).
     # Pasa por el registro de supresiones, igual que la solicitud del usuario.
@@ -193,36 +151,12 @@ def alumnos_del(request, pk):
     if borrada and Alumno.objects.filter(id_alumno=pk).exists():
         alumno.delete()
 
-    alumnos = Alumno.objects.all()
-    mensaje = ('Bien, datos eliminados...' if borrada else
-               'La cuenta se seudonimizó: se conservan, sin sus datos personales, sus pagos y clases y sus '
-               'conversaciones reportadas (estas, solo para soporte).')
-    context = {'alumnos': alumnos, 'mensaje': mensaje}
-    return render(request, 'admin_portal/alumnos_list.html', context)
-
-
-@admin_required
-def alumnos_Update(request):
-    if request.method == 'POST':
-        id_alumno = request.POST.get('id_alumno')
-        alumno = get_object_or_404(Alumno.objects.select_related('user'), id_alumno=id_alumno)
-
-        from .forms import AdminAlumnoForm
-        form = AdminAlumnoForm(request.POST, instance=alumno)
-
-        if form.is_valid():
-            try:
-                form.save()
-                return HttpResponse("OK, datos actualizados.")
-            except Exception:
-                logger.exception("Error interno al actualizar alumno id=%s", id_alumno)
-                return HttpResponse("Error interno al actualizar los datos del alumno.", status=400)
-        else:
-            errores = dict(form.errors.items())
-            mensaje_error = "\n".join([f"{k}: {v[0]}" for k, v in errores.items()])
-            return HttpResponse(f"Error de validación: {mensaje_error}", status=400)
+    if borrada:
+        messages.success(request, 'Bien, datos eliminados...')
     else:
-        return HttpResponse("Solicitud inválida.", status=400)
+        messages.info(request, 'La cuenta se seudonimizó: se conservan, sin sus datos personales, sus pagos y clases y '
+                               'sus conversaciones reportadas (estas, solo para soporte).')
+    return _a_usuarios()
 
 
 @never_cache

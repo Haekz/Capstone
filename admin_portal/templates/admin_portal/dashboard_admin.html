@@ -7,9 +7,6 @@
 {# Al entrar sin hash la seccion visible es el resumen. #}
 {% block nav_resumen %}active{% endblock %}
 
-{# El dashboard resuelve "usuarios" como seccion interna, no como pagina aparte. #}
-{% block nav_usuarios_href %}{% url 'dashboard_admin' %}#usuarios{% endblock %}
-
 {% block content %}
 
 {% if messages %}

@@ -62,16 +62,28 @@ de la demo); los puntos 3 y 4 son lo que se vio al comparar y no se tocó porque
    formulario de alumnos del admin comparaban el texto tal cual: con `12.345.678-5` se creaba una segunda cuenta de
    quien ya era `12345678-5`. Ahora todos usan `rut_en_uso` y `correo_en_uso` (`alumnos/utils.py`; `crear_admin`
    también). Pruebas: `test_rut_en_otro_formato.py`.
-4. **Admin: un solo «Usuarios» (decidido).** Hoy hay dos listados de alumnos: el del dashboard (`#usuarios`, diseño
-   nuevo) y `crud` (`alumnos_list.html`, diseño viejo). El menú de `base_admin.html` apunta a `crud` en todas las
-   páginas menos el dashboard. Además, desde el listado nuevo: «Agregar» y «Editar» abren `alumnos_add.html` y
-   `alumnos_edit.html` (diseño viejo) y «Eliminar» (`alumnos_del`) termina en `alumnos_list.html`. Hacer:
-   (a) `crud` redirige a `dashboard_admin#usuarios` (la ruta se mantiene para no romper enlaces) y se borra
-   `alumnos_list.html`; (b) `alumnos_del` redirige al mismo lugar con su mensaje («datos eliminados» o «se
-   seudonimizó») por `messages`; (c) el menú siempre va al dashboard; (d) rediseñar agregar y editar con la capa 06:
-   no hay copia de referencia, **Fran aprueba con capturas** antes del commit. Revisar `test_boton_atras`,
-   `test_control_acceso`, `test_portales_por_rol`, `test_qa_acceso`, `test_apoderados` y `usabilidad/recorrido.py`,
-   que nombran `crud`. Unos 20 min (a-c) y 1 a 1,5 h (d).
+4. ~~Admin: un solo «Usuarios».~~ **Hecho (21-nov).**
+   - (a) `crud` y `reporte_alumnos` (misma vista) solo redirigen a `dashboard_admin#usuarios`, con `@admin_required`; se
+     borró `alumnos_list.html` y el `.alert-ok` que solo él usaba. (b) `alumnos_del` redirige a Usuarios con su aviso
+     por `messages` (eliminado o seudonimizado). (c) El menú de `base_admin.html` siempre va a Usuarios del dashboard
+     (se quitó el bloque `nav_usuarios_href`). Pruebas: `test_admin_un_solo_usuarios.py`; ajustadas las que nombraban
+     `crud` (`test_control_acceso`, `test_boton_atras`, `test_portales_por_rol`, `test_qa_acceso`,
+     `test_mensajes_supresion`). `usabilidad/recorrido.py`: el paso 24 ahora abre `dashboard/#usuarios`; los resultados
+     guardados (`resultados_antes/despues.json`) son del listado viejo.
+   - (d) **Cambió por una decisión (21-nov): el admin ya no agrega ni edita alumnos; solo ve el listado y elimina.** Crear y
+     editar dejaba al admin con la clave, el correo y el RUT de otra persona, y la cuenta nacía sin que el titular
+     aceptara Términos ni Privacidad. Se borraron las vistas `alumnos_Add`, `alumnos_findEdit` y `alumnos_Update`, sus
+     rutas, `alumnos_add.html`, `alumnos_edit.html`, el formulario `AdminAlumnoForm`, el botón «Agregar alumno» y el lápiz
+     «Editar» del listado. Adultos: se registran solos; menores: los registra su apoderado (que ya les pone y renueva la
+     clave); un dato mal escrito, por ahora, lo corrige un superusuario en `/admin/`. S-03 (clave igual al RUT) queda
+     cerrado porque ya no hay dónde fijarle la clave a un alumno (`MATRIZ_IDENTIDAD.md`). Pruebas: `test_admin_un_solo_usuarios.py`,
+     `S03ClaveInicialTests`; se retiraron las que probaban ese formulario. Quedó de esa pasada el placeholder y el campo de
+     solo lectura legibles en todo `.form-input` del panel (5,1:1 y 8,0:1; antes 2,75:1 en claro).
+   - **Idea, no hacer ahora (YAGNI):** una herramienta de soporte para corregir un dato o crear la cuenta de un alumno cuando
+     algo falle (el caso real sería el de apoderados). Condiciones si se hace: atada a un ticket, con registro de quién
+     cambió qué, sin tocar RUT ni correo, con clave temporal que el alumno (o su apoderado) cambia al entrar y
+     aceptando Términos. Hoy los agentes no pueden crear ni editar cuentas. Tampoco hay pantalla donde un alumno adulto
+     edite su nombre, teléfono o dirección (los profesores sí la tienen): si se vuelve frecuente, es la mejor opción.
 5. **Soporte: el menú de Verificaciones según quién entra (decidido, opción a).** Hoy «Apoderados» y «Documentos de
    profesores» (`soporte/templates/soporte/base_soporte.html`) salen a todo el soporte sin mirar sus categorías: un
    agente de Pagos ve dos pantallas que siempre estarán vacías. Hacer: el agente ve cada una solo si atiende ese tema
@@ -93,9 +105,8 @@ de la demo); los puntos 3 y 4 son lo que se vio al comparar y no se tocó porque
    - Revisar en claro, oscuro y celular. El recuadro «Portal del alumno · Ana, alumna» del video no es de la app: lo
      pone `video_demo/guion.py`.
 
-- Para una demo mientras se hace el 4: entrar a «Usuarios» siempre desde el Resumen.
-  SweetAlert viene de internet (ver el pendiente de arriba): sin conexión, «Eliminar»
-  usa el `confirm()` del navegador.
+- Para una demo sin conexión: SweetAlert viene de internet (ver el pendiente de abajo); sin él, «Eliminar» usa el
+  `confirm()` del navegador.
 - Los scripts de verificación (comparador con la copia, claro, oscuro y celular; Resumen; Usuarios; HTML de Soporte)
   están en `puppy_workspace`, fuera del repositorio.
 

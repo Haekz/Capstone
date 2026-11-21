@@ -56,8 +56,8 @@ COMUNES = {
 PROPIAS = {
     'alumno': {'alumno_pag1', 'mis_tickets', 'nuevo_ticket', 'eliminar_cuenta'},
     'profesor': {'panel_profesor', 'resenas_profesor', 'mis_tickets', 'nuevo_ticket', 'eliminar_cuenta'},
-    'admin': {'dashboard_admin', 'planes_adm', 'nosotros_adm', 'casos_escalados', 'asignaturas_adm', 'crud',
-              'alumnos_Add', 'regis_tutor', 'resenas_moderacion'},
+    'admin': {'dashboard_admin', 'planes_adm', 'nosotros_adm', 'casos_escalados', 'asignaturas_adm',
+              'regis_tutor', 'resenas_moderacion'},
     'soporte': {'titulos_adm', 'apoderados_revision', 'panel_soporte', 'mensajes_revision', 'requerimientos',
                 'requerimiento_nuevo'},
     'apoderado': {'portal_apoderado', 'apoderado_registrar_estudiante', 'apoderado_vincular_estudiante',
@@ -69,7 +69,7 @@ ACCIONES_PROPIAS = {'admin': {'ajustes_admin'}}
 
 # Redirigen siempre, sin hacer nada (o inician Google): su destino no es el login.
 SOLO_REDIRIGEN = {
-    'puerta', 'alumnos_index', 'reporte_alumnos',  # a la portada o a crud, que exige admin
+    'puerta', 'alumnos_index', 'reporte_alumnos', 'crud',  # a la portada o al dashboard, que exige admin
     'confirmacion',  # sin token_ws ni TBK_TOKEN vuelve a planes
     'google_login',  # POST: lleva a accounts.google.com (S-20)
     None,  # /accounts/social/signup/ -> /accounts/3rdparty/signup/ (ruta antigua de allauth, sin nombre)
@@ -198,11 +198,6 @@ class AccesoPorRolTests(Escenario):
 
 
 class IdNoNumericoTests(Escenario):
-
-    def test_un_id_no_numerico_en_alumnos_findedit_es_404(self):
-        self.como('admin')
-        self.client.raise_request_exception = False
-        self.assertEqual(self.client.get('/admin_portal/alumnos_findEdit/x/').status_code, 404)
 
     def test_un_id_no_numerico_en_alumnos_del_es_404(self):
         self.como('admin')

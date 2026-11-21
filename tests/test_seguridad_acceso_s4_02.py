@@ -11,8 +11,7 @@ from allauth.socialaccount.models import SocialAccount, SocialLogin
 from allauth.account.models import EmailAddress
 from allauth.core.exceptions import ImmediateHttpResponse
 
-from alumnos.models import Genero, Alumno, Tutor
-from admin_portal.forms import AdminAlumnoForm
+from alumnos.models import Alumno, Tutor
 from alumnos.backends import normalizar_rut_canonico, obtener_identificador_rate_limit
 from alumnos.google_adapter import LbwusSocialAdapter, LbwusAccountAdapter
 
@@ -24,7 +23,6 @@ class SeguridadAccesoS402Tests(TestCase):
         cache.clear()
         self.client = Client()
         self.factory = RequestFactory()
-        self.genero = Genero.objects.create(descripcion='Femenino')
 
         # Usuario alumno activo
         self.alumno_user = User.objects.create_user(
@@ -83,85 +81,6 @@ class SeguridadAccesoS402Tests(TestCase):
 
     # =========================================================================
     # SUBTAREA 1: Creación de alumnos con contraseña segura (S-03 / S-06)
-    # =========================================================================
-
-    def test_creacion_alumno_rechaza_password_igual_a_rut(self):
-        data = {
-            'nombre': 'Carlos Tapia',
-            'rut': '12.345.678-5',
-            'direccion': 'Alameda 100',
-            'fecha_nacimiento': '2002-05-10',
-            'correo_electronico': 'carlos@test.com',
-            'telefono': '912345678',
-            'genero': self.genero.id_genero,
-            'nivel_educacion': 'superior',
-            'password': '12.345.678-5',
-            'confirm_password': '12.345.678-5',
-        }
-        form = AdminAlumnoForm(data=data)
-        self.assertFalse(form.is_valid())
-        self.assertIn('password', form.errors)
-        self.assertTrue(any('RUT' in err for err in form.errors['password']))
-
-    def test_creacion_alumno_rechaza_password_igual_a_rut_sin_puntos(self):
-        data = {
-            'nombre': 'Carlos Tapia',
-            'rut': '12.345.678-5',
-            'direccion': 'Alameda 100',
-            'fecha_nacimiento': '2002-05-10',
-            'correo_electronico': 'carlos@test.com',
-            'telefono': '912345678',
-            'genero': self.genero.id_genero,
-            'nivel_educacion': 'superior',
-            'password': '123456785',
-            'confirm_password': '123456785',
-        }
-        form = AdminAlumnoForm(data=data)
-        self.assertFalse(form.is_valid())
-        self.assertIn('password', form.errors)
-
-    def test_creacion_alumno_rechaza_password_mismatched(self):
-        data = {
-            'nombre': 'Carlos Tapia',
-            'rut': '12.345.678-5',
-            'direccion': 'Alameda 100',
-            'fecha_nacimiento': '2002-05-10',
-            'correo_electronico': 'carlos@test.com',
-            'telefono': '912345678',
-            'genero': self.genero.id_genero,
-            'nivel_educacion': 'superior',
-            'password': 'ClaveSegura_2026!#',
-            'confirm_password': 'OtraPasswordDiferente1#',
-        }
-        form = AdminAlumnoForm(data=data)
-        self.assertFalse(form.is_valid())
-        self.assertIn('confirm_password', form.errors)
-
-    def test_creacion_alumno_password_segura_exitosa(self):
-        data = {
-            'nombre': 'Carlos Tapia',
-            'rut': '12.345.678-5',
-            'direccion': 'Alameda 100',
-            'fecha_nacimiento': '2002-05-10',
-            'correo_electronico': 'carlos.tapia@test.com',
-            'telefono': '912345678',
-            'genero': self.genero.id_genero,
-            'nivel_educacion': 'superior',
-            'password': 'SuperClaveSegura_2026!#',
-            'confirm_password': 'SuperClaveSegura_2026!#',
-        }
-        form = AdminAlumnoForm(data=data)
-        self.assertTrue(form.is_valid(), form.errors)
-        alumno_creado = form.save()
-        user_creado = alumno_creado.user
-
-        self.assertFalse(user_creado.check_password('12.345.678-5'))
-        self.assertFalse(user_creado.check_password('12345678-5'))
-        self.assertFalse(user_creado.check_password('123456785'))
-        self.assertTrue(user_creado.check_password('SuperClaveSegura_2026!#'))
-
-    # =========================================================================
-    # SUBTAREA 2: Auditoría y Saneamiento de Cuentas Antiguas (S-03)
     # =========================================================================
 
     def test_auditar_cuentas_antiguas_detecta_y_resetea(self):

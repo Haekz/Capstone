@@ -30,7 +30,7 @@ VER_HALLAZGOS=1 python manage.py test tests.test_matriz_identidad -v 2 # muestra
 | ID-05 | Alumno | 5 fallos con `12.345.678-5` y luego entra con `12345678-5` | Sigue bloqueado: es el mismo RUT | Sigue bloqueado | **CERRADO (S4-02)** | S-05 | `S05LimiteDeIntentosTests.test_escribir_el_rut_de_otra_forma_no_reinicia_el_contador` |
 | ID-06 | Anónimo | 15 fallos y luego cambia `X-Forwarded-For` | Sigue bloqueado | Sigue bloqueado | **CERRADO (S4-02)** | S-05 | `S05LimiteDeIntentosTests.test_cambiar_x_forwarded_for_no_reinicia_el_contador_por_ip` |
 | ID-06b | Anónimo | Detrás del proxy (Railway): 15 fallos y luego cambia el inicio de `X-Forwarded-For` | Sigue bloqueado: cuenta solo la IP que agrega el proxy | Sigue bloqueado | OK | S-05 | `S05LimiteDeIntentosTests.test_detras_del_proxy_solo_cuenta_la_ip_que_agrega_el_proxy` |
-| ID-07 | Alumno | Alumno creado por el admin entra usando su RUT como clave | No entra | No entra: el admin debe dar una clave segura, distinta del RUT | **CERRADO (S4-02)** | S-03 | `S03ClaveInicialTests.test_alumno_creado_por_admin_no_entra_con_su_rut` |
+| ID-07 | Alumno | Alumno creado por el admin entra usando su RUT como clave | No entra | No hay dónde: el admin ya no crea ni edita alumnos (21-nov); antes debía dar una clave segura, distinta del RUT (S4-02) | **CERRADO (S4-02; ruta retirada 21-nov)** | S-03 | `S03ClaveInicialTests.test_el_admin_no_tiene_donde_fijarle_la_clave_a_un_alumno` |
 
 ### Usuarios desactivados
 
@@ -68,7 +68,7 @@ VER_HALLAZGOS=1 python manage.py test tests.test_matriz_identidad -v 2 # muestra
 
 | Hallazgo | Gravedad (informe) | Estado | Filas | Dónde está hoy |
 |---|---|---|---|---|
-| **S-03** Alumnos creados por el admin entran con su RUT como clave | Crítica | **Cerrado (S4-02)**: el admin debe dar una clave segura y distinta del RUT; `auditar_cuentas_rut` detecta las cuentas antiguas | ID-07 | `admin_portal/forms.py` (`clean`), `alumnos/management/commands/auditar_cuentas_rut.py` |
+| **S-03** Alumnos creados por el admin entran con su RUT como clave | Crítica | **Cerrado (S4-02; ruta retirada 21-nov)**: el admin ya no crea ni edita alumnos, así que no fija la clave de nadie; `auditar_cuentas_rut` detecta las cuentas antiguas | ID-07 | `admin_portal/urls.py` (sin `alumnos_Add`, `alumnos_findEdit` ni `alumnos_Update`), `alumnos/management/commands/auditar_cuentas_rut.py` |
 | **S-05** El límite de intentos se puede saltar | Alta | **Cerrado (S4-02)**: contador por RUT normalizado, IP confiable y caché compartida en base de datos | ID-05, ID-06, ID-06b | `alumnos/backends.py` (`obtener_identificador_rate_limit`), `alumnos/views.py` (`_obtener_ip`), `CACHES` en `lbwus/settings.py` |
 | **S-06** Registro de allauth abierto y reutilización de cuentas huérfanas | Alta | **Cerrado**: registro de allauth cerrado (S4-02) y, al completar una cuenta huérfana con Google, su clave previa se anula | ID-12, ID-13 | `alumnos/google_adapter.py` (`LbwusAccountAdapter`), `alumnos/google_forms.py` (`save`) |
 | **S-07** Cuentas desactivadas siguen operando por la sesión o por Google | Alta | **Cerrado en lo probado**: Google las rechaza (S4-02) y crear administradores exige la cuenta activa. Quedan las vistas sin decorador (abajo) | ID-10, ID-11 | `alumnos/google_adapter.py`, `user_profesor/views.py` (`_es_admin`) |

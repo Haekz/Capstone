@@ -72,7 +72,7 @@
             </a>
 
             {# El dashboard resuelve "usuarios" como seccion interna y sobrescribe este destino. #}
-            <a id="nav-usuarios" class="nav-item {% block nav_usuarios %}{% endblock %}" href="{% block nav_usuarios_href %}{% url 'crud' %}{% endblock %}">
+            <a id="nav-usuarios" class="nav-item {% block nav_usuarios %}{% endblock %}" href="{% url 'dashboard_admin' %}#usuarios">
                 <i class="bi bi-people-fill"></i>
                 Usuarios
             </a>
