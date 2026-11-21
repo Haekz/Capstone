@@ -33,17 +33,18 @@ Los codigos LBW-xx y Dx son los del backlog y las decisiones grupales del 08-nov
   codigo el 15-nov.
 - Revision visual en navegador de todos los flujos de apoderados (LBW-15).
 - Posible CSS muerto en `pago/01_pago.css` (paneles de resumen y Webpay). Sin revisar, sin ticket.
+- Porcentajes escritos a mano (visto el 20-nov): «15 %», «85 %» y «25 %» en `user_profesor/.../panel/saldo.html`
+  y `admin_portal/.../dashboard/finanzas.html`. Hoy coinciden con `paquetes.COMISION` y `COMISION_VIDEOS`, pero si
+  cambian quedan desfasados, igual que pasó con las vigencias de Planes. Pasarlos por el contexto. Sin ticket.
 
 ## Arreglos acordados (20-nov): orden de trabajo, en `fran-pulido-apoderado`
 Decididos con Fran el 20-nov. Van en este orden (bugs primero) y cada uno con sus pruebas, su commit y esta lista al día.
 Antes (16-nov) las etapas A1 a A6 dejaron las 10 pantallas del admin iguales a la copia (0 px de diferencia, salvo datos
 de la demo); los puntos 3 y 4 son lo que se vio al comparar y no se tocó porque cambia comportamiento.
 
-1. **Planes: las vigencias de «Condiciones» están mal.** `alumnos/templates/alumnos/planes.html` dice a mano «30 días
-   (Flexible), 60 días (Progreso) o 90 días (Intensivo)», pero desde el 14-nov son 30, 30 y 60 (`alumnos/paquetes.py`,
-   `PLANES`). Las tarjetas sí muestran lo real: la pantalla se contradice y le promete al alumno algo que no es. Leerlas
-   de `PLANES` (nada escrito a mano) y una prueba que compare el texto con `PLANES`. Revisar el resto de «Condiciones» y
-   de los textos legales por otras cifras escritas a mano.
+1. ~~Planes: las vigencias de «Condiciones» están mal.~~ **Hecho (20-nov).** Se leen de `PLANES`; la prueba
+   `test_condiciones_dicen_las_vigencias_de_planes` compara la sección con `PLANES`. Términos y Privacidad ya usaban
+   variables: no había otras cifras escritas a mano.
 2. **Planes: no se leen los enlaces de Términos y Privacidad en la tarjeta oscura** (Intensivo, `.featured`).
    `.pl-acepta a` (`styles/10_legal.css`) usa `var(--primary)`: morado sobre fondo oscuro, no cumple el contraste de
    WCAG 2.2 AA (4,5:1). Color propio dentro de `.featured`, también la casilla y su foco.
