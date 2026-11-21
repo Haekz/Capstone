@@ -141,7 +141,7 @@ body:not(.light-mode)#portal-admin .adm-hero {
     margin-top: 4px;
     font-size: 0.78rem;
     line-height: 1.4;
-    color: var(--text-muted);
+    color: var(--text-secondary);
 }
 
 /* Gráficos en dos columnas; soporte a todo el ancho */

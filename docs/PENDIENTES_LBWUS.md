@@ -65,7 +65,7 @@ Los codigos LBW-xx y Dx son los del backlog y las decisiones grupales del 08-nov
   volver a `#0f8a60` la hace fallar.
 - ~~Admin, Nosotros: «Fundación», «Sede» y «Contacto» casi no se leían.~~ **Hecho (21-nov), visto en las capturas de `--ok`.**
   Usaban `--text-muted`: 2,75:1 en claro (4,56:1 en oscuro). Ahora `--text-secondary`, como el placeholder: 5,1:1 y 8,0:1,
-  medido en el navegador. `.stat-mini` solo existe en esa pantalla. Prueba en `test_pulido_admin_paginas.py`.
+  medido en el navegador. Desde el arreglo de `--text-muted` (abajo) lo hace la regla base `.stat-mini span`.
 - ~~Token `--warn` (`#b45309`): mismo problema que tenía `--ok`.~~ **Hecho (21-nov).** Medido en el navegador como `--ok`
   (5 portales, claro y oscuro, tema puesto como lo pone la app; los usos que dependen de datos, como contadores casi llenos
   o plazos por vencer, con su marcado real insertado junto a un ancla y quitado después): antes 7 fallas (ícono de Visión
@@ -80,13 +80,15 @@ Los codigos LBW-xx y Dx son los del backlog y las decisiones grupales del 08-nov
   «Vencido» (`.sop-plazo--vencido`, su único uso) daba 4,44:1 y 3,78:1 en la tarjeta de la revisión. Ahora `#a8380a`
   (mismo tono que `#c2410c`): antes 6 fallas, ahora 0, el peor 4,73:1; el oscuro no cambia. Prueba en
   `test_contraste_tokens.py`.
-- **`--text-muted` se usa como color de texto y no llega a 4,5:1 ni en claro ni en oscuro (visto el 21-nov, sin resolver).**
-  Medido en el navegador: etiquetas del detalle de ticket de soporte (`dt`: «Abierto por», «Vence»…) 2,99:1 en claro y
-  4,30:1 en oscuro; antes ya se arreglaron, una a una, el placeholder y «Fundación / Sede / Contacto» (2,75:1). Es un token
-  global de los portales admin, docente y soporte (`04_rediseno_marco.css`: `#9892ab` claro, `#7d7794` oscuro; y
-  `01_base.css`), con 53 usos en 17 hojas y 16 estilos en línea en plantillas (p. ej. banco y cuenta en Finanzas). Decidir
-  antes de tocar: oscurecer el token (arregla todo, pero acerca «muted» a `--text-secondary` y se pierde un nivel de
-  jerarquía) o pasar los usos que son texto a `--text-secondary` y dejar `--text-muted` solo para lo decorativo.
+- ~~`--text-muted` se usaba como color de texto y no llegaba a 4,5:1 ni en claro ni en oscuro.~~ **Hecho (21-nov).**
+  Decidido: los usos que son texto, control o indicador de estado pasan a `--text-secondary`; `--text-muted` queda solo
+  para tres iconos decorativos (las lupas del buscador y del modal, y el icono del calendario vacío). Eran 59 usos en la
+  familia admin, docente y soporte: 51 en 17 hojas y 8 estilos en línea (ejes del gráfico, Finanzas, calendario…); los 7
+  de `sala_virtual.html` no cuentan: tiene su propio `--text-muted`, sobre fondo siempre oscuro (~6,9:1). Inventario en el
+  navegador de todo texto pintado con ese color: antes 40 bajo 4,5:1 en claro (peor 2,75:1) y 30 en oscuro (4,30:1);
+  ahora 0 en los dos (solo quedan las lupas). Las etiquetas siguen distinguiéndose de los valores por tamaño y peso. El
+  override de Nosotros quedó repetido y se quitó. Pruebas en `test_contraste_tokens.py`: muted solo en esos iconos, y
+  `--text-secondary` con 4,5:1 sobre página y tarjeta en los dos temas.
 
 ## Arreglos acordados (20-nov): orden de trabajo, en `fran-pulido-apoderado`
 Decididos con Fran el 20-nov. Van en este orden (bugs primero) y cada uno con sus pruebas, su commit y esta lista al día.

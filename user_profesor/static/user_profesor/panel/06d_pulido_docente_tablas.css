@@ -44,7 +44,7 @@
 #portal-docente .prof-tabla-vacia {
     padding: 30px 16px !important;
     text-align: center;
-    color: var(--text-muted) !important;
+    color: var(--text-secondary) !important;
     font-size: 0.9rem;
 }
 

@@ -23,7 +23,7 @@
 
 #portal-soporte .search-result-item .sop-buscar-num {
     flex: none;
-    color: var(--text-muted);
+    color: var(--text-secondary);
     font-weight: 600;
 }
 
@@ -39,7 +39,7 @@
 #portal-soporte .search-sin-resultados {
     padding: 16px;
     text-align: center;
-    color: var(--text-muted);
+    color: var(--text-secondary);
     font-size: 0.9rem;
 }
 
@@ -196,7 +196,7 @@
         margin-bottom: 2px;
         font-size: 0.75rem;
         font-weight: 500;
-        color: var(--text-muted);
+        color: var(--text-secondary);
     }
 
     #portal-soporte .sop-tabla-tickets td[data-label="Categoría"],

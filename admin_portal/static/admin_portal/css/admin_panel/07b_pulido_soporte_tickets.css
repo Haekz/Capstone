@@ -172,7 +172,7 @@ body:not(.light-mode)#portal-soporte .sop-hero {
 #portal-soporte .user-table td[colspan] {
     padding: 28px 16px;
     text-align: center;
-    color: var(--text-muted);
+    color: var(--text-secondary);
     font-size: 0.92rem;
 }
 
@@ -195,7 +195,7 @@ body:not(.light-mode)#portal-soporte .sop-hero {
     padding: 22px;
     text-align: center;
     font-size: 0.92rem;
-    color: var(--text-muted);
+    color: var(--text-secondary);
 }
 
 /* Fila de ticket: número + asunto como un solo enlace; la fila entera se puede apretar */
@@ -215,7 +215,7 @@ body:not(.light-mode)#portal-soporte .sop-hero {
 #portal-soporte .sop-ticket-num {
     font-size: 0.8rem;
     font-weight: 600;
-    color: var(--text-muted);
+    color: var(--text-secondary);
 }
 
 #portal-soporte .sop-ticket-asunto {

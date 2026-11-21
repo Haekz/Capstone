@@ -111,7 +111,7 @@
                                             </div>
                                             <div>
                                                 <div class="user-cell-name">{{ r.profesor.user.first_name }}</div>
-                                                <small style="color: var(--text-muted); font-size: 0.75rem;">{{ r.banco }} · {{ r.numero_cuenta }}{% if r.pagar_el %} · Pagar el {{ r.pagar_el|date:"d/m/Y" }}{% endif %}</small>
+                                                <small style="color: var(--text-secondary); font-size: 0.75rem;">{{ r.banco }} · {{ r.numero_cuenta }}{% if r.pagar_el %} · Pagar el {{ r.pagar_el|date:"d/m/Y" }}{% endif %}</small>
                                             </div>
                                         </div>
                                     </td>
@@ -155,9 +155,9 @@
                                             <button type="submit" class="btn-action edit" style="border:none; background:rgba(16,185,129,0.12); color:#10b981; cursor:pointer; height:32px; padding:0 10px; border-radius:6px;">Registrar pago</button>
                                         </form>
                                         {% elif r.estado == 'pagado' %}
-                                        <span style="color:var(--text-muted); font-size:0.8rem;">Pagado el {{ r.fecha_pago|date:"d/m/Y" }} · Op. {{ r.numero_operacion }}</span>
+                                        <span style="color:var(--text-secondary); font-size:0.8rem;">Pagado el {{ r.fecha_pago|date:"d/m/Y" }} · Op. {{ r.numero_operacion }}</span>
                                         {% else %}
-                                        <span style="color:var(--text-muted); font-size:0.8rem;">Rechazado el {% if r.fecha_resolucion %}{{ r.fecha_resolucion|date:"d/m/Y" }}{% else %}-{% endif %}{% if r.motivo_rechazo %}: {{ r.motivo_rechazo }}{% endif %}</span>
+                                        <span style="color:var(--text-secondary); font-size:0.8rem;">Rechazado el {% if r.fecha_resolucion %}{{ r.fecha_resolucion|date:"d/m/Y" }}{% else %}-{% endif %}{% if r.motivo_rechazo %}: {{ r.motivo_rechazo }}{% endif %}</span>
                                         {% endif %}
                                     </td>
                                 </tr>

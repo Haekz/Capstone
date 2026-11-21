@@ -165,7 +165,7 @@
 }
 
 #portal-soporte .sop-mensaje-autor span {
-    color: var(--text-muted);
+    color: var(--text-secondary);
 }
 
 #portal-soporte .sop-respuestas {
@@ -190,7 +190,7 @@
     border-color: var(--line-2);
     text-align: center;
     font-size: 0.9rem;
-    color: var(--text-muted);
+    color: var(--text-secondary);
 }
 
 /* Formularios (respuesta y escalamiento): mismos campos, mejor forma */
@@ -244,7 +244,7 @@
 #portal-soporte .apod-form small {
     font-size: 0.8rem;
     line-height: 1.45;
-    color: var(--text-muted);
+    color: var(--text-secondary);
 }
 
 #portal-soporte .sop-campo-pie {
@@ -257,7 +257,7 @@
 #portal-soporte .sop-contador {
     flex-shrink: 0;
     font-size: 0.78rem;
-    color: var(--text-muted);
+    color: var(--text-secondary);
     font-variant-numeric: tabular-nums;
 }
 
@@ -357,7 +357,7 @@ body:not(.light-mode)#portal-soporte .sop-error {
 #portal-soporte .sop-datos dt {
     font-size: 0.78rem;
     font-weight: 500;
-    color: var(--text-muted);
+    color: var(--text-secondary);
 }
 
 #portal-soporte .sop-datos dd {
@@ -403,7 +403,7 @@ body:not(.light-mode)#portal-soporte .sop-error {
     border: 1px dashed var(--line-2);
     border-radius: var(--r-item);
     text-align: center;
-    color: var(--text-muted) !important;
+    color: var(--text-secondary) !important;
 }
 
 /* Escalar: advertencia en ámbar antes del formulario */

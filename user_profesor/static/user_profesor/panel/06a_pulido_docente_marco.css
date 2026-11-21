@@ -95,7 +95,7 @@ body:not(.light-mode)#portal-docente {
     font-family: inherit;
     font-size: 0.72rem;
     font-weight: 600;
-    color: var(--text-muted);
+    color: var(--text-secondary);
 }
 
 /* ── 4. Área de contenido: un solo margen (antes 32 + 40 px) ── */

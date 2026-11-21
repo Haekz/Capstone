@@ -105,7 +105,7 @@ body:not(.light-mode)#portal-admin {
     font-family: inherit;
     font-size: 0.72rem;
     font-weight: 600;
-    color: var(--text-muted);
+    color: var(--text-secondary);
 }
 
 /* ── 4. Paneles: planos, línea fina, sin sombra ── */
@@ -151,7 +151,7 @@ body:not(.light-mode)#portal-admin {
 #portal-admin .adm-nota {
     font-size: 0.8rem;
     font-weight: 500;
-    color: var(--text-muted);
+    color: var(--text-secondary);
 }
 
 #portal-admin .adm-vacio {
@@ -160,7 +160,7 @@ body:not(.light-mode)#portal-admin {
     border-radius: var(--r-item);
     text-align: center;
     font-size: 0.9rem;
-    color: var(--text-muted);
+    color: var(--text-secondary);
 }
 
 #portal-admin .adm-panel-angosto {

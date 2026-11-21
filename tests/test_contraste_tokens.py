@@ -3,10 +3,15 @@ y en su chip -soft sobre el fondo lila de la pagina (WCAG 1.4.3). Antes, en esos
 y #c2410c 3,8:1; medido en el navegador el 21-nov (ok_medir_contraste.py, fuera del repo). Cada token esta repetido en cada
 portal y algunos usos lo llevan fijo (fondos que no cambian con el tema): estas pruebas tambien impiden que las copias se
 separen.
+
+En admin, docente y soporte, --text-muted (2,99:1 en claro y 4,30:1 en oscuro) queda solo para iconos decorativos: todo lo
+que es texto, control o indicador de estado va con --text-secondary.
 """
 
 import re
+from pathlib import Path
 
+from django.conf import settings
 from django.test import SimpleTestCase
 
 from tests.test_planes_en_portal import _contraste, _leer
@@ -61,3 +66,38 @@ class ContrasteDeLosColoresDeEstadoTests(SimpleTestCase):
             with self.subTest(regla=regla):
                 cuerpo = re.search(rf'(?m)^{regla} \{{([^}}]*)\}}', _leer(hoja)).group(1)
                 self.assertEqual(_claro(cuerpo, 'color'), _claro(_leer(HOJAS['alumno y apoderado']), token))
+
+
+MARCO_ADMIN = 'admin_portal/static/admin_portal/css/admin_panel/04_rediseno_marco.css'  # tokens de texto y fondo
+FAMILIA_ADMIN = [('admin_portal/static/admin_portal/css/admin_panel', '*.css'), ('admin_portal/templates', '**/*.html'),
+                 ('user_profesor/static/user_profesor/panel', '*.css')]  # lo que hereda base_admin
+MUTED_DECORATIVOS = {'.search-bar i', '.search-modal-header i', 'bi-calendar-x'}  # iconos que no informan nada nuevo
+
+
+def _usos_de_muted():
+    """Regla (CSS) o clase del icono (plantilla) de cada var(--text-muted) de la familia admin."""
+    usos = set()
+    for carpeta, patron in FAMILIA_ADMIN:
+        for ruta in Path(settings.BASE_DIR, carpeta).glob(patron):
+            texto = _leer(ruta.relative_to(settings.BASE_DIR).as_posix())
+            if ruta.suffix == '.css':
+                usos |= {s.strip() for s, cuerpo in re.findall(r'([^{}]+)\{([^}]*)\}', texto) if 'var(--text-muted' in cuerpo}
+            else:
+                usos |= {(re.findall(r'bi-[\w-]+', linea) or [linea.strip()[:60]])[0]
+                         for linea in texto.splitlines() if 'var(--text-muted' in linea}
+    return usos
+
+
+class TextoSecundarioEnLugarDeMutedTests(SimpleTestCase):
+
+    def test_muted_queda_solo_en_iconos_decorativos(self):
+        self.assertEqual(_usos_de_muted(), MUTED_DECORATIVOS)
+
+    def test_el_texto_secundario_se_lee_en_claro_y_en_oscuro(self):
+        css = _leer(MARCO_ADMIN)
+        temas = {'oscuro': re.search(r':root \{([^}]*)\}', css).group(1),
+                 'claro': re.search(r'body\.light-mode \{([^}]*)\}', css).group(1)}
+        for tema, bloque in temas.items():
+            for fondo in ('--bg-main', '--bg-card'):
+                with self.subTest(tema=tema, fondo=fondo):
+                    self.assertGreaterEqual(_contraste(_claro(bloque, '--text-secondary'), _claro(bloque, fondo)), 4.5)

@@ -18,7 +18,7 @@
 #portal-admin .search-sin-resultados {
     padding: 16px;
     text-align: center;
-    color: var(--text-muted);
+    color: var(--text-secondary);
     font-size: 0.9rem;
 }
 

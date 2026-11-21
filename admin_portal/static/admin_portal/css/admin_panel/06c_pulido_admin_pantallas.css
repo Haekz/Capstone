@@ -22,7 +22,7 @@
 #portal-admin .user-table td[colspan] {
     padding: 26px 16px;
     text-align: center;
-    color: var(--text-muted);
+    color: var(--text-secondary);
     font-size: 0.9rem;
 }
 
@@ -57,7 +57,7 @@
     padding: 18px 22px;
     border-bottom: 1px solid var(--border);
     font-size: 0.9rem;
-    color: var(--text-muted);
+    color: var(--text-secondary);
 }
 
 #portal-admin .adm-sin-resultados[hidden] {
@@ -226,9 +226,4 @@
 
 #portal-admin .nos-datos .stat-mini:last-child {
     border-bottom: none;
-}
-
-/* Fundacion, Sede y Contacto son texto: --text-muted daba 2,75:1 en claro (como el placeholder); este, 5,1:1 y 8,0:1. */
-#portal-admin .nos-datos .stat-mini span {
-    color: var(--text-secondary);
 }

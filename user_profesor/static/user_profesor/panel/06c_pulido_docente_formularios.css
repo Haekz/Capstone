@@ -36,7 +36,7 @@ body:not(.light-mode)#portal-docente .prof-form-select {
 
 #portal-docente .prof-form-group small {
     font-size: 0.8rem;
-    color: var(--text-muted);
+    color: var(--text-secondary);
 }
 
 #portal-docente .prof-form-btn {
@@ -86,7 +86,7 @@ body:not(.light-mode)#portal-docente .prof-form-select {
     border-radius: 99px;
     background: var(--bg-main);
     border: 1px solid var(--border);
-    color: var(--text-muted);
+    color: var(--text-secondary);
     font-size: 0.72rem;
     font-weight: 600;
 }
