@@ -180,6 +180,8 @@ Si el Cron no arranca (servicio borrado, horario mal puesto, despliegue roto), n
 
 No pide login, no pasa por la puerta del sitio (`SITIO_CLAVE`), no tiene límite de intentos, acepta GET y HEAD, no se guarda en caché y no devuelve ningún otro dato. La hora de la última corrida se guarda en la caché compartida (`DatabaseCache`, en PostgreSQL), así que sobrevive a despliegues y reinicios sin migraciones. Si esa caché se limpia, `/salud/` dice `atrasado` hasta la próxima corrida completa: una falsa alarma, nunca un falso `ok`.
 
+**Decisión: un Transbank que no responde no hace fallar la corrida.** Si `revisar_pagos_pendientes` no obtiene respuesta de Transbank (red, caída o token vencido), esa tarea termina bien: cada pago sin respuesta queda como `pago_error_transbank etapa=status` (ERROR) en los logs del Cron, sigue pendiente y se vuelve a consultar en la corrida siguiente. Por eso ese fallo, por sí solo, no envía alerta por correo ni cambia `/salud/`: la corrida cuenta como completa si las demás tareas también terminan bien. Se decidió así porque un corte breve de Transbank no es una falla de LBWUS, y alertar por cada uno haría ignorar las alertas reales. Si los logs muestran `etapa=status` varios días seguidos para la misma `buy_order`, revisa ese pago a mano con Transbank.
+
 Además, el **portal admin** (Resumen General) muestra el aviso "Las tareas diarias están atrasadas" con el mismo criterio. En local, sin Cron, el aviso aparece siempre: es lo esperado.
 
 ### Conectar un monitor externo gratuito (UptimeRobot)
