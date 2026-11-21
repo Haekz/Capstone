@@ -156,10 +156,9 @@ body:not(.light-mode) .stat-card.purple { --stat-color: #c4b5fd; }
 }
 
 body.light-mode .badge-alumno { color: #1d4ed8; background: rgba(59, 130, 246, 0.12); }
-body.light-mode .badge-pendiente { color: #b45309; background: rgba(245, 158, 11, 0.14); }
+body.light-mode .badge-pendiente { color: #9c4708; background: rgba(245, 158, 11, 0.14); }  /* = --warn claro */
 body.light-mode .badge-resuelto,
 body.light-mode .badge-activo { color: #047857; background: rgba(16, 185, 129, 0.12); }
-body.light-mode .badge-admin { color: #b45309; }
 
 /* Botones */
 .btn-primary {

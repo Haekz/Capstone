@@ -534,7 +534,7 @@ html.dark-mode .auth-icon--ok {
 
 .auth-icon--warn {
     background: rgba(245, 165, 36, 0.14);
-    color: #b45309;
+    color: #9c4708;  /* = --warn claro de los portales */
 }
 
 html.dark-mode .auth-icon--warn {

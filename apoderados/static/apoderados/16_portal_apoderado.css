@@ -349,8 +349,8 @@
 }
 
 #portal-alumno.portal-apoderado .apo-vinculo--espera {
-    background: var(--warn-soft, rgba(245, 158, 11, 0.14));
-    color: var(--warn, #b45309);
+    background: var(--warn-soft);
+    color: var(--warn);
 }
 
 #portal-alumno.portal-apoderado .apo-vinculo--mal {

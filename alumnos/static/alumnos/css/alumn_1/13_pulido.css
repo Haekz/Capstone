@@ -17,7 +17,7 @@
     --tinta: #1a1233;                            /* fondo del banner (el mismo del diseño original) */
     --ok: #066b4c;                               /* 4,5:1 tambien sobre --ok-soft y fondos lila (#0f8a60 daba 3,8:1) */
     --ok-soft: rgba(15, 138, 96, 0.1);
-    --warn: #b45309;
+    --warn: #9c4708;                             /* 4,5:1 tambien sobre --warn-soft (#b45309 daba 4,2 a 4,5:1) */
     --warn-soft: rgba(245, 158, 11, 0.14);
     --line-2: rgba(26, 18, 51, 0.14);            /* línea un poco más marcada (controles) */
     --ring: 0 0 0 3px hsl(var(--hue) 70% 55% / 0.35);
@@ -342,7 +342,7 @@ body.dark-mode#portal-alumno .welcome-banner .welcome-text p {
 
 #portal-alumno .tc-vence--pronto {
     background: rgba(245, 158, 11, 0.16);
-    color: #b45309;
+    color: #9c4708;                              /* = --warn claro, fijo: la tarjeta es blanca tambien en oscuro */
 }
 
 #portal-alumno .tc-holes {

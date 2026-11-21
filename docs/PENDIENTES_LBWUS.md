@@ -61,18 +61,21 @@ Los codigos LBW-xx y Dx son los del backlog y las decisiones grupales del 08-nov
   blanca también en oscuro) llevaba `#0f8a60` fijo y fallaba en los dos temas: va con el verde nuevo, fijo a propósito;
   el abono del Detalle de liquidaciones ya no necesita su verde propio (usa `--ok`); y se quitaron los respaldos
   `var(--ok, #0f8a60)` de `16_portal_apoderado.css`, que nunca se usaban (ese portal siempre carga `13_pulido.css`).
-  Pruebas: `test_contraste_ok.py` (contraste en cada portal, las cuatro copias iguales y la tarjeta con el mismo verde);
+  Pruebas: `test_contraste_tokens.py` (contraste en cada portal, las cuatro copias iguales y la tarjeta con el mismo verde);
   volver a `#0f8a60` la hace fallar.
 - ~~Admin, Nosotros: «Fundación», «Sede» y «Contacto» casi no se leían.~~ **Hecho (21-nov), visto en las capturas de `--ok`.**
   Usaban `--text-muted`: 2,75:1 en claro (4,56:1 en oscuro). Ahora `--text-secondary`, como el placeholder: 5,1:1 y 8,0:1,
   medido en el navegador. `.stat-mini` solo existe en esa pantalla. Prueba en `test_pulido_admin_paginas.py`.
-- **Token `--warn` (`#b45309`): mismo problema que tenia `--ok` (visto el 21-nov, sin resolver).** Sobre blanco da 5,0:1,
-  pero en sus chips sobre `--warn-soft` y el fondo lila de la página da ~4,2:1 (calculado, falta medirlo en el
-  navegador), y `.tc-vence--pronto` (tarjeta blanca del banner, ambar al 16 %) ~4,44:1. Se define en los mismos cuatro
-  archivos que `--ok` y aparece fijo en `13_pulido.css` (`.tc-vence--pronto`), `reservas.css`, `recuperar.css`,
-  `05_rediseno_contenido.css` (`.badge-pendiente`, `.badge-admin`) y como respaldo en `16_portal_apoderado.css`. Hacerlo
-  como `--ok`: medir cada uso con `puppy_workspace/ok_medir_contraste.py` (sumarle la lista de `--warn`), oscurecer
-  manteniendo el tono y una guardia como `test_contraste_ok.py`.
+- ~~Token `--warn` (`#b45309`): mismo problema que tenía `--ok`.~~ **Hecho (21-nov).** Medido en el navegador como `--ok`
+  (5 portales, claro y oscuro, tema puesto como lo pone la app; los usos que dependen de datos, como contadores casi llenos
+  o plazos por vencer, con su marcado real insertado junto a un ancla y quitado después): antes 7 fallas (ícono de Visión
+  4,2:1, `.tc-vence--pronto` 4,44:1 en los dos temas, chips 3,9:1) y cuatro usos en 4,51:1 justo; ahora 0, el peor 4,88:1.
+  Ahora `--warn` claro es `#9c4708` (mismo tono) en los cuatro archivos; el oscuro (`#fbbf24`) no cambia. Las copias fijas
+  (`.tc-vence--pronto`, `.badge-pendiente`, `.horario__cupos--pocos`, `.auth-icon--warn`) usan ese mismo color: solo
+  aplican en claro o sobre fondo blanco también en oscuro. Fuera `.badge-admin` (sin uso: la clase sale de la modalidad, y
+  solo existe `online`) y los respaldos `var(--warn, …)` del apoderado. `.pp-vence--pronto` no sale con los datos de la
+  demo: es el mismo `var(--warn)` sobre `--warn-soft` que mide la sonda (5,69:1 y 8,48:1). Pruebas: `test_contraste_tokens.py`
+  (los dos tokens, y que cada copia fija coincida con su token); volver al color viejo, o separar una copia, la hace fallar.
 
 ## Arreglos acordados (20-nov): orden de trabajo, en `fran-pulido-apoderado`
 Decididos con Fran el 20-nov. Van en este orden (bugs primero) y cada uno con sus pruebas, su commit y esta lista al día.

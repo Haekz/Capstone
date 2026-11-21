@@ -18,7 +18,7 @@
     --ring: 0 0 0 3px rgba(124, 58, 237, 0.35);
     --ok: #066b4c;  /* 4,5:1 tambien sobre --ok-soft y fondos lila (#0f8a60 daba 3,3:1) */
     --ok-soft: rgba(15, 138, 96, 0.1);
-    --warn: #b45309;
+    --warn: #9c4708;  /* 4,5:1 tambien sobre --warn-soft y fondos lila (#b45309 daba 3,9:1) */
     --warn-soft: rgba(245, 158, 11, 0.14);
     --bad: #c2410c;
     --bad-soft: rgba(220, 38, 38, 0.1);
