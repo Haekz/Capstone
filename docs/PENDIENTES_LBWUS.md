@@ -84,14 +84,13 @@ de la demo); los puntos 3 y 4 son lo que se vio al comparar y no se tocó porque
      cambió qué, sin tocar RUT ni correo, con clave temporal que el alumno (o su apoderado) cambia al entrar y
      aceptando Términos. Hoy los agentes no pueden crear ni editar cuentas. Tampoco hay pantalla donde un alumno adulto
      edite su nombre, teléfono o dirección (los profesores sí la tienen): si se vuelve frecuente, es la mejor opción.
-5. **Soporte: el menú de Verificaciones según quién entra (decidido, opción a).** Hoy «Apoderados» y «Documentos de
-   profesores» (`soporte/templates/soporte/base_soporte.html`) salen a todo el soporte sin mirar sus categorías: un
-   agente de Pagos ve dos pantallas que siempre estarán vacías. Hacer: el agente ve cada una solo si atiende ese tema
-   (Apoderados: `apoderados`; Documentos de profesores: `titulos` o `especializaciones`); el líder las ve siempre, pero
-   bajo **«Supervisión»** en vez de «Verificaciones», porque para él es control (historial, vínculos vigentes con
-   «Revocar», revocaciones y registros de quién abrió cada documento), no trabajo pendiente. No quitárselas al líder:
-   perdería «Revocar» y la auditoría. Las vistas ya filtran por ticket: esto es solo el menú (y el buscador Ctrl+K,
-   que lista las secciones del menú). Pruebas: un agente sin el tema no ve el enlace; el líder sí, bajo «Supervisión».
+5. ~~Soporte: el menú de Verificaciones según quién entra.~~ **Hecho (21-nov).** `AgenteSoporte.ve_apoderados` y
+   `ve_documentos` (una consulta por página) mandan en `base_soporte.html`: el agente ve **Apoderados** solo si atiende
+   `apoderados` y **Documentos de profesores** solo si atiende `titulos` o `especializaciones`, bajo **«Verificaciones»**
+   (sin ningún tema, el grupo no sale). El líder las ve siempre, bajo **«Supervisión»**, porque para él es control
+   (historial, vínculos con «Revocar», quien abrió cada documento). El buscador Ctrl+K lee los enlaces del menú, así que
+   se ajusta solo. Es solo el menú: las pantallas siguen abiertas por URL (vacías) y filtran por ticket como antes.
+   Pruebas: `VerificacionesDelMenuTests` en `test_menu_soporte.py`; `test_pulido_soporte_marco.py` ajustada.
 6. **Planes: diseño más profesional.** Lo que se ve en el video de presentación:
    - La casilla de Términos **se queda en cada tarjeta** (decidido), pero con mejor diseño y aire: hoy queda pegada
      al botón de comprar. Causa (vista el 20-nov): `.pl-acepta` está en `styles/10_legal.css`, que solo carga la base

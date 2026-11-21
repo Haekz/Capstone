@@ -108,9 +108,9 @@ class MarcoDeSoporteTests(TestCase):
         html = self.pagina()
         self.assertEqual(re.findall(r'<span class="nav-label">([^<]+)</span>', html), ['Tickets', 'Verificaciones'])
 
-    def test_el_lider_suma_privacidad_y_legal(self):
+    def test_el_lider_suma_privacidad_y_legal_y_ve_las_verificaciones_como_supervision(self):
         html = self.pagina(lider=True)
-        self.assertEqual(re.findall(r'<span class="nav-label">([^<]+)</span>', html), ['Tickets', 'Verificaciones', 'Privacidad y legal'])
+        self.assertEqual(re.findall(r'<span class="nav-label">([^<]+)</span>', html), ['Tickets', 'Supervisión', 'Privacidad y legal'])
 
     def test_la_barra_trae_el_boton_ir_a_antes_de_la_campana(self):
         html = self.pagina()

@@ -21,6 +21,7 @@ from django.conf import settings
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
+from django.utils.functional import cached_property
 
 
 class AgenteSoporte(models.Model):
@@ -49,6 +50,22 @@ class AgenteSoporte(models.Model):
     @property
     def categorias(self):
         return set(self.habilitaciones.values_list('categoria', flat=True))
+
+    @cached_property
+    def _atendidas(self):
+        """``categorias`` leidas una sola vez por pagina (el menu pregunta varias veces)."""
+        return self.categorias
+
+    @cached_property
+    def ve_apoderados(self):
+        """Menu: la pantalla Apoderados. El lider la ve siempre (para el es supervision: historial, vinculos con
+        «Revocar»); el agente, solo si atiende ese tema (si no, estaria siempre vacia)."""
+        return self.es_lider or Ticket.APODERADOS in self._atendidas
+
+    @cached_property
+    def ve_documentos(self):
+        """Menu: Documentos de profesores. Igual que ``ve_apoderados``, para titulos o especializaciones."""
+        return self.es_lider or bool({Ticket.TITULOS, Ticket.ESPECIALIZACIONES} & self._atendidas)
 
 
 class Ticket(models.Model):
