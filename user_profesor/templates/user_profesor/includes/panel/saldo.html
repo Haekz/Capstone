@@ -1,3 +1,4 @@
+{% load dinero %}
 {# Saldo: balance, cobro (cuenta bancaria, frecuencia y retiro), historial de retiros y detalle de liquidaciones. #}
         <!-- esta parte es de la sección de saldo, muestra cuánto dinero ha generado el profe -->
         <section id="sec-saldo" class="prof-section">
@@ -165,65 +166,45 @@
             {# S4-09: desglose económico de operaciones y liquidaciones. La etiqueta interna que antes se mostraba ya no sale en pantalla. #}
             <div class="prof-card">
                 <h2 class="prof-card-title"><i class="bi bi-receipt" aria-hidden="true"></i> Detalle de liquidaciones</h2>
-                <p class="prof-card-subtitle">Por cada operación: el monto bruto, la comisión de LBWUS ({{ comision_pct }} %, IVA incluido) y lo que recibes tú ({{ pago_profesor_pct }} %).</p>
+                <p class="prof-card-subtitle">Cada clase dictada y cada video compartido que suma a tu saldo: lo que pagó el alumno, la comisión de LBWUS ({{ comision_pct }} % en clases y {{ comision_videos_pct }} % en videos, IVA incluido) y lo que recibes tú. Los retiros están en el historial de arriba.</p>
+                {% if liquidaciones %}
+                <p class="prof-nota-tabla prof-solo-celular">Desliza la tabla hacia los lados para ver los importes.</p>
+                {% endif %}
                 <div class="prof-table-wrapper">
-                    <table class="prof-table">
+                    <table class="prof-table" id="tabla-liquidaciones">
                         <thead>
                             <tr>
-                                <th>N.º</th>
                                 <th>Fecha</th>
                                 <th>Alumno</th>
                                 <th>Concepto</th>
-                                <th>Monto bruto</th>
-                                <th>Comisión LBWUS ({{ comision_pct }} %)</th>
-                                <th>Tu abono ({{ pago_profesor_pct }} %)</th>
-                                <th>Estado</th>
+                                <th>Pagó el alumno</th>
+                                <th>Comisión LBWUS</th>
+                                <th>Tu abono</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for d in desgloses_profesor %}
+                            {% for o in liquidaciones %}
                             <tr>
-                                <td style="color: #9ca3af; font-family: monospace;">#DES-{{ d.id_desglose }}</td>
-                                <td>{{ d.fecha_operacion|date:"d/m/Y H:i" }}</td>
-                                <td style="font-weight: 600;">{{ d.alumno.user.first_name }} {{ d.alumno.user.last_name }}</td>
-                                <td>
-                                    <span style="font-size: 0.8rem; background: #f3f4f6; color: #374151; padding: 2px 8px; border-radius: 4px;">
-                                        {{ d.get_tipo_operacion_display }}
-                                    </span>
-                                </td>
-                                <td style="font-weight: 600;">${{ d.monto_bruto }}</td>
-                                <td style="color: #dc2626; font-weight: 600;">-${{ d.comision_lbwus }}</td>
-                                <td style="color: #059669; font-weight: 700;">+${{ d.monto_tutor }}</td>
-                                <td>
-                                    {% if d.estado == 'disponible' %}
-                                    <span style="background: rgba(16, 185, 129, 0.15); color: #047857; padding: 3px 8px; border-radius: 6px; font-weight: 600; font-size: 0.78rem;">
-                                        <i class="bi bi-check-circle"></i> Disponible
-                                    </span>
-                                    {% elif d.estado == 'pendiente' %}
-                                    <span style="background: rgba(245, 158, 11, 0.15); color: #b45309; padding: 3px 8px; border-radius: 6px; font-weight: 600; font-size: 0.78rem;">
-                                        <i class="bi bi-shield-lock"></i> En Custodia
-                                    </span>
-                                    {% elif d.estado == 'liquidado' %}
-                                    <span style="background: rgba(59, 130, 246, 0.15); color: #1d4ed8; padding: 3px 8px; border-radius: 6px; font-weight: 600; font-size: 0.78rem;">
-                                        <i class="bi bi-cash-stack"></i> Liquidado
-                                    </span>
-                                    {% else %}
-                                    <span style="background: rgba(239, 68, 68, 0.15); color: #b91c1c; padding: 3px 8px; border-radius: 6px; font-weight: 600; font-size: 0.78rem;">
-                                        <i class="bi bi-arrow-counterclockwise"></i> Reembolsado
-                                    </span>
-                                    {% endif %}
-                                </td>
+                                <td>{{ o.fecha|date:"d/m/Y H:i" }}</td>
+                                <td>{{ o.alumno }}</td>
+                                <td>{{ o.concepto }}</td>
+                                <td class="prof-importe">{{ o.bruto|clp }}</td>
+                                <td class="prof-importe prof-importe--resta">&minus;{{ o.comision|clp }}</td>
+                                <td class="prof-importe prof-importe--suma">+{{ o.abono|clp }}</td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="8" class="prof-tabla-vacia">
+                                <td colspan="6" class="prof-tabla-vacia">
                                     <i class="bi bi-receipt-cutoff" aria-hidden="true"></i>
-                                    Aún no hay operaciones registradas en tu cuenta.
+                                    Aún no has dictado clases ni compartido videos que sumen a tu saldo.
                                 </td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
+                {% if liquidaciones_total > liquidaciones|length %}
+                <p class="prof-nota-tabla">Se muestran las {{ liquidaciones|length }} más recientes de {{ liquidaciones_total }}.</p>
+                {% endif %}
             </div>
         </section>

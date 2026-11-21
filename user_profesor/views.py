@@ -14,7 +14,7 @@ from alumnos.utils import formato_clp, validar_rut_chileno, usuario_existe
 from django.core.exceptions import ValidationError
 from django.http import FileResponse, Http404
 from django.views.decorators.http import require_POST
-from . import cambio_cuenta, especializaciones, foto
+from . import cambio_cuenta, detalle_liquidaciones, especializaciones, foto
 from . import inicio as inicio_panel
 from .saldos import calcular_saldos  # noqa: F401  (metricas, supresiones y pruebas lo importan desde aqui)
 from alumnos import avisos_profesor, catalogos, liquidacion, paquetes
@@ -195,6 +195,7 @@ def panel_profesor(request):
     saldo_pendiente_fmt = formato_clp(saldos['pendiente'])
 
     generos = list(Genero.objects.all())
+    liquidaciones, liquidaciones_total = detalle_liquidaciones.detalle(profesor)  # Detalle de liquidaciones, en Saldo
 
     context = {
         'profesor': profesor,
@@ -204,6 +205,8 @@ def panel_profesor(request):
         'rendimiento_meses': _rendimiento_mensual(inscripciones, timezone.localdate().month),  # mes en Chile
         'saldo_total': saldo_total_fmt,
         **paquetes.porcentajes(),  # las tasas de Detalle de liquidaciones: salen de paquetes.py, no de la plantilla
+        'liquidaciones': liquidaciones,
+        'liquidaciones_total': liquidaciones_total,
         'saldo_disponible': saldo_disponible_fmt,
         'saldo_disponible_raw': saldo_disponible,
         'saldo_pendiente': saldo_pendiente_fmt,

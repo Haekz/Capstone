@@ -41,12 +41,20 @@ Los codigos LBW-xx y Dx son los del backlog y las decisiones grupales del 08-nov
   decimales (`int(COMISION * 100)` mostraba 12,5 como 12; lo usan también Planes y Términos). Pruebas:
   `test_porcentajes_en_pantalla.py`, que cambia la tasa y mira la pantalla, y una guardia que falla si cualquier plantilla
   vuelve a escribir uno de esos números.
-- **«Detalle de liquidaciones» del docente siempre sale vacía (visto el 21-nov, sin resolver).** La tabla recorre
-  `desgloses_profesor`, que ninguna vista pasa desde que la migración `0024` quitó `DesgloseOperacion` (el carrito antiguo;
-  ver CONCILIACION_Y_TRANSBANK_7_6.md, «no hay tabla de desglose»). Todo docente lee «Aún no hay operaciones registradas
-  en tu cuenta», tenga o no cobros. Opciones: quitar la tarjeta, o armarla de verdad con lo que ya se calcula en
-  `paquetes.py` (monto, comisión y abono por paquete o clase). Una prueba de `test_pulido_docente_cuenta.py` fija hoy que
-  la tarjeta exista.
+- ~~«Detalle de liquidaciones» del docente siempre salía vacía.~~ **Hecho (21-nov).** La tabla recorría `desgloses_profesor`,
+  que ninguna vista pasaba desde que la migración `0024` quitó `DesgloseOperacion`. Ahora la arma
+  `user_profesor/detalle_liquidaciones.py` con la misma cuenta que el saldo: una fila por cada clase dictada (o cancelada
+  con menos de 4 h, que también se paga) y por cada video compartido, con lo que pagó el alumno, la comisión (15 % en
+  clases, 25 % en videos) y el abono; las 50 más recientes y un aviso con el total. Para no duplicar la cuenta de videos,
+  `saldos.valores_videos` pasa a apoyarse en `saldos.videos_con_valor`. Una prueba exige que la suma de las filas sea
+  exactamente `calcular_saldos` (total, disponible y pendiente), y una mutación (cobrar a los videos la comisión de
+  clases) la hace fallar. Se quitaron las columnas N.º y Estado: venían del modelo borrado, y los retiros no son por
+  operación (están en el historial). En celular los importes quedaban fuera de pantalla: celdas más apretadas y un aviso
+  sobre la tabla («Desliza la tabla…»). Contraste medido en el navegador con datos reales (24 casos, claro y oscuro,
+  escritorio y celular): peor 5,1:1.
+- **Token `--ok` (`#0f8a60`) no llega a 4,5:1 sobre blanco en claro (4,35:1).** Visto el 21-nov al medir el abono del
+  detalle (ahí se usó un verde más oscuro solo para esa columna). El token está repetido en cinco portales (admin, soporte,
+  alumno, apoderado y docente) y lo usan chips y textos sin medir: medir cada uso antes de oscurecerlo. Sin ticket.
 
 ## Arreglos acordados (20-nov): orden de trabajo, en `fran-pulido-apoderado`
 Decididos con Fran el 20-nov. Van en este orden (bugs primero) y cada uno con sus pruebas, su commit y esta lista al día.

@@ -252,7 +252,9 @@ class AuditoriaSeguridadYArquitecturaTests(TestCase):
         # fijas (reservas de hoy, lo ya dictado con pagables() y bloques libres). Juntarlas obligaria a copiar la
         # regla del saldo. Sigue siendo O(1): lo que importa es la igualdad de arriba.
         # 23: el saldo suma 1 consulta fija por los videos compartidos (agregado de videos, fase 4a).
-        self.assertLessEqual(despues_prof, 23)
+        # 25: Detalle de liquidaciones suma 2 consultas fijas (clases pagables y videos compartidos, con select_related:
+        # user_profesor/detalle_liquidaciones.py); siguen siendo O(1), lo comprueba la igualdad de arriba.
+        self.assertLessEqual(despues_prof, 25)
         self.assertContains(r_prof, "Cálculo Vectorial")
 
     def test_formato_clp_y_alumnos_reg_dry(self):

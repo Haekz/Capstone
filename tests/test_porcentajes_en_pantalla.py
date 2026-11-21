@@ -79,14 +79,11 @@ class DetalleDeLiquidacionesDelDocenteTests(Escenario):
         return _seccion(self.client.get(reverse('panel_profesor')).content.decode(), 'saldo')
 
     def test_el_detalle_dice_las_tasas_vigentes(self):
-        saldo = self.saldo()
-        self.assertIn('la comisión de LBWUS (15 %, IVA incluido) y lo que recibes tú (85 %)', saldo)
-        self.assertIn('<th>Comisión LBWUS (15 %)</th>', saldo)
-        self.assertIn('<th>Tu abono (85 %)</th>', saldo)
+        self.assertIn('la comisión de LBWUS (15 % en clases y 25 % en videos, IVA incluido)', self.saldo())
 
     def test_si_cambia_la_tasa_cambia_el_detalle(self):
-        with mock.patch.object(paquetes, 'COMISION', Fraction(20, 100)):
+        with mock.patch.object(paquetes, 'COMISION', Fraction(20, 100)), \
+                mock.patch.object(paquetes, 'COMISION_VIDEOS', Fraction(30, 100)):
             saldo = self.saldo()
-        self.assertIn('la comisión de LBWUS (20 %, IVA incluido) y lo que recibes tú (80 %)', saldo)
-        self.assertIn('<th>Comisión LBWUS (20 %)</th>', saldo)
-        self.assertIn('<th>Tu abono (80 %)</th>', saldo)
+        self.assertIn('la comisión de LBWUS (20 % en clases y 30 % en videos, IVA incluido)', saldo)
+        self.assertNotIn('15 %', saldo)

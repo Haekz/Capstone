@@ -25,13 +25,19 @@ def _saldos(valores, videos, aprobados, pendientes):
     }
 
 
-def valores_videos(compartidos):
-    """[(id_profesor, valor)] de cada video de ``compartidos``, en una consulta: el promedio de lo pagado por videos
-    del paquete (agregado + extra activos). La misma cuenta para el saldo del profesor y las finanzas del admin."""
+def videos_con_valor(compartidos, *campos):
+    """[(valor, *campos)] de cada video de ``compartidos``, en una consulta: el valor es el promedio de lo pagado por videos
+    del paquete (agregado + extra activos). La misma cuenta para el saldo del profesor, las finanzas del admin y el detalle
+    de liquidaciones; ``campos`` son los datos de cada video que quien llama quiere de vuelta."""
     filas = compartidos.annotate(**videos_extra.anotar('paquete_id')).values_list(
-        'paquete__profesor_id', 'paquete__monto_videos', 'paquete__videos', 'extra_monto', 'extra_videos')
-    return [(profesor_id, paquetes.valor_video(monto + extra_monto, cantidad + extra_cantidad))
-            for profesor_id, monto, cantidad, extra_monto, extra_cantidad in filas]
+        'paquete__monto_videos', 'paquete__videos', 'extra_monto', 'extra_videos', *campos)
+    return [(paquetes.valor_video(monto + extra_monto, cantidad + extra_cantidad), *resto)
+            for monto, cantidad, extra_monto, extra_cantidad, *resto in filas]
+
+
+def valores_videos(compartidos):
+    """[(id_profesor, valor)] de cada video de ``compartidos``."""
+    return [(profesor_id, valor) for valor, profesor_id in videos_con_valor(compartidos, 'paquete__profesor_id')]
 
 
 def saldos_de(profesores):
