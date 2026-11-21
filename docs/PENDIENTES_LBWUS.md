@@ -1,6 +1,6 @@
 # LBWUS: pendientes
 
-Actualizado: 16-nov-2026. Aqui queda solo lo que falta. Todo lo que listaba la version anterior ya esta en `main`
+Actualizado: 20-nov-2026. Aqui queda solo lo que falta. Todo lo que listaba la version anterior ya esta en `main`
 (35 de sus 38 ramas; las otras 3 se cierran sin mergear, LBW-16). El historial de lo hecho sigue en git:
 `git show c8f3341:docs/PENDIENTES_LBWUS.md`. Las decisiones estan en DECISIONES_SOPORTE_Y_PAGOS.md.
 
@@ -34,21 +34,56 @@ Los codigos LBW-xx y Dx son los del backlog y las decisiones grupales del 08-nov
 - Revision visual en navegador de todos los flujos de apoderados (LBW-15).
 - Posible CSS muerto en `pago/01_pago.css` (paneles de resumen y Webpay). Sin revisar, sin ticket.
 
-## Portal de admin: pulido visual, lo que quedó pendiente (16-nov)
-Las etapas A1 a A6 están hechas: las 10 pantallas del admin coinciden con la copia (0 px de diferencia, salvo datos de la
-demo). Quedan dos cosas que se vieron al comparar y que no se tocaron porque cambian comportamiento. **Hay que arreglarlas.**
-- **Ajustes no guarda nada.** En `includes/dashboard/perfil.html` el `onsubmit` hace `preventDefault()` y muestra
-  «Ajustes guardados» sin enviar ni persistir nada. Ya era así y la copia lo conserva, pero el botón ahora dice «Guardar
-  cambios». Decidir: (a) conectarlo de verdad (qué campos se editan: el RUT no debería cambiar; correo único; formato del
-  teléfono; vista, validación, pruebas, y que el nombre del menú se actualice), unas 1 a 2 h; o (b) quitar la promesa
-  (botón o aviso), unos 5 min. El color de acento sí funciona, pero solo en esa sesión.
-- **Hay un segundo «Usuarios» con el diseño anterior.** En `base_admin.html` el menú «Usuarios» apunta a `crud`
-  («Gestión de Alumnos») y solo el dashboard lo cambia a `#usuarios`. `alumnos_list.html`, `alumnos_add.html` y
-  `alumnos_edit.html` (unas 280 líneas) siguen con el diseño previo; la copia no los tiene. Plan: (1) que el menú
-  siempre vaya a la sección del dashboard, unos 15 min (revisar `test_boton_atras`, `test_control_acceso`,
-  `test_portales_por_rol` y `test_qa_acceso`, que tocan esas rutas); (2) rediseñar las 3 páginas con los componentes de
-  la capa 06, de 1 a 1,5 h. No hay copia de referencia: hay que aprobar el aspecto.
-- Para una demo mientras tanto: no usar «Guardar cambios» de Ajustes y entrar a «Usuarios» siempre desde el Resumen.
+## Arreglos acordados (20-nov): orden de trabajo, en `fran-pulido-apoderado`
+Decididos con Fran el 20-nov. Van en este orden (bugs primero) y cada uno con sus pruebas, su commit y esta lista al día.
+Antes (16-nov) las etapas A1 a A6 dejaron las 10 pantallas del admin iguales a la copia (0 px de diferencia, salvo datos
+de la demo); los puntos 3 y 4 son lo que se vio al comparar y no se tocó porque cambia comportamiento.
+
+1. **Planes: las vigencias de «Condiciones» están mal.** `alumnos/templates/alumnos/planes.html` dice a mano «30 días
+   (Flexible), 60 días (Progreso) o 90 días (Intensivo)», pero desde el 14-nov son 30, 30 y 60 (`alumnos/paquetes.py`,
+   `PLANES`). Las tarjetas sí muestran lo real: la pantalla se contradice y le promete al alumno algo que no es. Leerlas
+   de `PLANES` (nada escrito a mano) y una prueba que compare el texto con `PLANES`. Revisar el resto de «Condiciones» y
+   de los textos legales por otras cifras escritas a mano.
+2. **Planes: no se leen los enlaces de Términos y Privacidad en la tarjeta oscura** (Intensivo, `.featured`).
+   `.pl-acepta a` (`styles/10_legal.css`) usa `var(--primary)`: morado sobre fondo oscuro, no cumple el contraste de
+   WCAG 2.2 AA (4,5:1). Color propio dentro de `.featured`, también la casilla y su foco.
+3. **Admin: Ajustes no guarda nada. Se conecta de verdad (decidido).** En `includes/dashboard/perfil.html` el
+   `onsubmit` hace `preventDefault()` y muestra «Ajustes guardados» sin enviar nada; los campos ni siquiera tienen
+   `name`. Hacer: vista POST con `@admin_required`, form con validación, nombre, correo, teléfono y dirección editables;
+   **RUT de solo lectura** (es la identidad; el registro de supresiones guarda su huella); correo único; formato del
+   teléfono; mensajes de error junto a cada campo; el nombre del menú se actualiza; pruebas. El color de acento
+   sigue siendo solo de la sesión (decir eso en la pantalla, como hoy). Unas 1 a 2 h.
+4. **Admin: un solo «Usuarios» (decidido).** Hoy hay dos listados de alumnos: el del dashboard (`#usuarios`, diseño
+   nuevo) y `crud` (`alumnos_list.html`, diseño viejo). El menú de `base_admin.html` apunta a `crud` en todas las
+   páginas menos el dashboard. Además, desde el listado nuevo: «Agregar» y «Editar» abren `alumnos_add.html` y
+   `alumnos_edit.html` (diseño viejo) y «Eliminar» (`alumnos_del`) termina en `alumnos_list.html`. Hacer:
+   (a) `crud` redirige a `dashboard_admin#usuarios` (la ruta se mantiene para no romper enlaces) y se borra
+   `alumnos_list.html`; (b) `alumnos_del` redirige al mismo lugar con su mensaje («datos eliminados» o «se
+   seudonimizó») por `messages`; (c) el menú siempre va al dashboard; (d) rediseñar agregar y editar con la capa 06:
+   no hay copia de referencia, **Fran aprueba con capturas** antes del commit. Revisar `test_boton_atras`,
+   `test_control_acceso`, `test_portales_por_rol`, `test_qa_acceso`, `test_apoderados` y `usabilidad/recorrido.py`,
+   que nombran `crud`. Unos 20 min (a-c) y 1 a 1,5 h (d).
+5. **Soporte: el menú de Verificaciones según quién entra (decidido, opción a).** Hoy «Apoderados» y «Documentos de
+   profesores» (`soporte/templates/soporte/base_soporte.html`) salen a todo el soporte sin mirar sus categorías: un
+   agente de Pagos ve dos pantallas que siempre estarán vacías. Hacer: el agente ve cada una solo si atiende ese tema
+   (Apoderados: `apoderados`; Documentos de profesores: `titulos` o `especializaciones`); el líder las ve siempre, pero
+   bajo **«Supervisión»** en vez de «Verificaciones», porque para él es control (historial, vínculos vigentes con
+   «Revocar», revocaciones y registros de quién abrió cada documento), no trabajo pendiente. No quitárselas al líder:
+   perdería «Revocar» y la auditoría. Las vistas ya filtran por ticket: esto es solo el menú (y el buscador Ctrl+K,
+   que lista las secciones del menú). Pruebas: un agente sin el tema no ve el enlace; el líder sí, bajo «Supervisión».
+6. **Planes: diseño más profesional.** Lo que se ve en el video de presentación:
+   - La casilla de Términos **se queda en cada tarjeta** (decidido), pero con mejor diseño y aire: hoy queda pegada
+     al botón de comprar.
+   - El desglose de cada tarjeta («Incluye comisión LBWUS de 15%: $X (IVA incluido: $Y)» y «El profesor recibe $Z»)
+     pasa a un **plegable «Ver desglose»** (decidido): sigue siendo transparente, pero no compite con el precio.
+   - Coherencia de nombres: el menú dice «Mis paquetes» y el título «Planes y precios».
+   - «Ver perfil del profesor» no debe partirse en dos líneas.
+   - Jerarquía de precios (precio del paquete y precio por clase), una etiqueta mejor que «Mayor descuento» e íconos
+     parejos en la lista de beneficios.
+   - Revisar en claro, oscuro y celular. El recuadro «Portal del alumno · Ana, alumna» del video no es de la app: lo
+     pone `video_demo/guion.py`.
+
+- Para una demo mientras se hacen 3 y 4: no usar «Guardar cambios» de Ajustes y entrar a «Usuarios» siempre desde el Resumen.
   SweetAlert viene de internet (ver el pendiente de arriba): sin conexión, el aviso de Ajustes no aparece y «Eliminar»
   usa el `confirm()` del navegador.
 - Los scripts de verificación (comparador con la copia, claro, oscuro y celular; Resumen; Usuarios; HTML de Soporte)
