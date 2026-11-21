@@ -32,7 +32,10 @@ Los codigos LBW-xx y Dx son los del backlog y las decisiones grupales del 08-nov
   LBW-05 (gunicorn en el `Procfile`), LBW-06 (CI) y LBW-10 (Dependabot) ya estan hechos: se verificaron en el
   codigo el 15-nov.
 - Revision visual en navegador de todos los flujos de apoderados (LBW-15).
-- Posible CSS muerto en `pago/01_pago.css` (paneles de resumen y Webpay). Sin revisar, sin ticket.
+- ~~Posible CSS muerto en `pago/01_pago.css`.~~ **Hecho (21-nov).** Ese archivo ya se había borrado (`cfc420f`); lo que
+  quedaba muerto era `pago/02_confirmacion.css`: 19 de sus 40 clases (los paneles de resumen y Webpay, el «stepper» y
+  sus variantes en oscuro) no las usa ninguna plantilla, JS, vista ni prueba. Se quitaron 33 selectores (180 líneas) y se
+  recortaron dos reglas mixtas; comparado contra `HEAD`: ninguna clase viva perdida ni alterada.
 - ~~Porcentajes escritos a mano~~ **Hecho (21-nov).** «15 %», «85 %» y «25 %» de `finanzas.html` (admin) y `saldo.html`
   (docente) salen ahora de `paquetes.porcentajes()` (`COMISION`, `1 - COMISION`, `COMISION_VIDEOS`); `porcentaje()` no corta
   decimales (`int(COMISION * 100)` mostraba 12,5 como 12; lo usan también Planes y Términos). Pruebas:
