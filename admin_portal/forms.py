@@ -1,6 +1,6 @@
 from django import forms
 from alumnos.models import Alumno, Genero
-from alumnos.utils import validar_clave_nueva
+from alumnos.utils import CORREO_YA_REGISTRADO, correo_en_uso, normalizar_telefono, rut_en_uso, validar_clave_nueva
 from django.contrib.auth import get_user_model
 
 from .models import MensajeContacto
@@ -23,6 +23,43 @@ class MensajeContactoForm(forms.ModelForm):
             'mensaje': {'required': 'Por favor, escribe tu mensaje.',
                         'max_length': 'Tu mensaje puede tener hasta %(limit_value)d caracteres.'},
         }
+
+
+class AjustesAdminForm(forms.Form):
+    """Los datos del propio admin (Ajustes del dashboard). El RUT no esta: es la identidad de la cuenta y el registro
+    de supresiones guarda su huella, asi que se muestra de solo lectura. Telefono y direccion son opcionales porque
+    crear_admin no los pide. Lo dibuja a mano includes/dashboard/perfil.html."""
+
+    nombre = forms.CharField(label='Nombre', max_length=150)
+    correo = forms.EmailField(label='Correo electrónico', max_length=254)
+    telefono = forms.CharField(label='Teléfono', max_length=20, required=False)
+    direccion = forms.CharField(label='Dirección', max_length=100, required=False)
+
+    CAMPOS_DEL_USUARIO = {'nombre': 'first_name', 'correo': 'email', 'telefono': 'telefono', 'direccion': 'direccion'}
+
+    def __init__(self, *args, user, **kwargs):
+        self.user = user
+        kwargs.setdefault('auto_id', 'ajustes-%s')  # el dashboard tiene otros formularios: ids propios
+        kwargs.setdefault('initial', {campo: getattr(user, atributo) for campo, atributo in self.CAMPOS_DEL_USUARIO.items()})
+        super().__init__(*args, **kwargs)
+
+    def clean_correo(self):
+        correo = self.cleaned_data['correo']
+        if correo_en_uso(correo, excluir_user=self.user):
+            raise forms.ValidationError(CORREO_YA_REGISTRADO)
+        return correo
+
+    def clean_telefono(self):
+        telefono = normalizar_telefono(self.cleaned_data['telefono'])
+        if telefono is None:
+            raise forms.ValidationError('Ingresa un teléfono chileno de 9 dígitos, por ejemplo 912345678 o +56 9 1234 5678.')
+        return telefono
+
+    def save(self):
+        for campo, atributo in self.CAMPOS_DEL_USUARIO.items():
+            setattr(self.user, atributo, self.cleaned_data[campo])
+        self.user.save(update_fields=list(self.CAMPOS_DEL_USUARIO.values()))
+        return self.user
 
 
 class AdminAlumnoForm(forms.ModelForm):
@@ -115,23 +152,21 @@ class AdminAlumnoForm(forms.ModelForm):
             if not validar_rut_chileno(rut):
                 raise forms.ValidationError('El RUT ingresado no es v\u00e1lido.')
 
-            # Verificar si existe otro usuario con este RUT
-            user_qs = User.objects.filter(rut=rut)
-            if self.instance and hasattr(self.instance, 'user') and self.instance.user:
-                user_qs = user_qs.exclude(pk=self.instance.user.pk)
-            if user_qs.exists():
+            # Otro usuario con este RUT, escrito en cualquier formato (antes: texto exacto, '12.345.678-5' pasaba)
+            if rut_en_uso(rut, excluir_user=self._usuario_editado()):
                 raise forms.ValidationError('Ya existe un usuario con este RUT.')
         return rut
 
     def clean_correo_electronico(self):
         correo = self.cleaned_data.get('correo_electronico')
-        if correo:
-            user_qs = User.objects.filter(email=correo)
-            if self.instance and hasattr(self.instance, 'user') and self.instance.user:
-                user_qs = user_qs.exclude(pk=self.instance.user.pk)
-            if user_qs.exists():
-                raise forms.ValidationError('Ya existe un usuario con este correo electr\u00f3nico.')
+        # Sin distinguir mayusculas, como el login (antes 'Ana@x.cl' pasaba si existia 'ana@x.cl')
+        if correo_en_uso(correo, excluir_user=self._usuario_editado()):
+            raise forms.ValidationError('Ya existe un usuario con este correo electr\u00f3nico.')
         return correo
+
+    def _usuario_editado(self):
+        """La cuenta del alumno que se edita (no choca consigo misma); None al crear uno nuevo."""
+        return self.instance.user if self.instance and hasattr(self.instance, 'user') and self.instance.user else None
 
     def clean(self):
         cleaned_data = super().clean()

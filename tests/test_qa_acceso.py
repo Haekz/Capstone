@@ -63,6 +63,8 @@ PROPIAS = {
     'apoderado': {'portal_apoderado', 'apoderado_registrar_estudiante', 'apoderado_vincular_estudiante',
                   'mensajes_apoderado', 'mis_tickets', 'nuevo_ticket', 'eliminar_cuenta'},
 }
+# Acciones solo POST de un rol que dan 200 al volver a mostrar su formulario con errores (por GET: 405, no son paginas).
+ACCIONES_PROPIAS = {'admin': {'ajustes_admin'}}
 
 
 # Redirigen siempre, sin hacer nada (o inician Google): su destino no es el login.
@@ -168,7 +170,7 @@ class AccesoPorRolTests(Escenario):
         """Riesgo: una accion con @require_POST pierde su decorador; por GET sigue dando 405 y no se nota."""
         for rol, propias in {'anonimo': set(), **PROPIAS}.items():
             with self.subTest(rol=rol):
-                permitidas = PUBLICAS if rol == 'anonimo' else PUBLICAS | COMUNES | propias
+                permitidas = PUBLICAS if rol == 'anonimo' else PUBLICAS | COMUNES | propias | ACCIONES_PROPIAS.get(rol, set())
                 vistas = {nombre for (url, nombre), r in self.recorrer(rol, 'post').items() if es_acceso(r)}
                 self.assertEqual(vistas - permitidas, set())
 

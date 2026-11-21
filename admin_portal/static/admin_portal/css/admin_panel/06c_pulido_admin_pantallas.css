@@ -122,6 +122,32 @@
     border-radius: var(--r-ctrl);
 }
 
+/* Errores de Ajustes junto a su campo (AjustesAdminForm). Rojo con 4,5:1 o mas sobre la tarjeta de cada tema. */
+#portal-admin {
+    --adm-error: #fca5a5;
+}
+
+#portal-admin.light-mode {
+    --adm-error: #b91c1c;
+}
+
+#portal-admin .form-input[aria-invalid="true"] {
+    border-color: var(--adm-error);
+}
+
+#portal-admin .adm-error {
+    margin: 6px 0 0;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--adm-error);
+}
+
+/* Solo lectura (el RUT): se distingue por el gris, pero sigue siendo texto legible (4,5:1; --text-muted no llegaba). */
+#portal-admin .form-input[readonly] {
+    color: var(--text-secondary);
+    cursor: default;
+}
+
 #portal-admin .btn-primary,
 #portal-admin .btn-secondary {
     border-radius: var(--r-ctrl);

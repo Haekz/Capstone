@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
@@ -12,6 +13,7 @@ from alumnos.decorators import admin_required
 from supresiones import registro
 
 from . import ingresos, metricas
+from .forms import AjustesAdminForm
 
 logger = logging.getLogger(__name__)
 
@@ -28,9 +30,32 @@ def menu(request):
 @never_cache
 @admin_required
 def dashboard_admin(request):
-    admin_id = request.session.get('admin_id')
-    admin = get_object_or_404(Tutor.objects.select_related('user'), id_tutor=admin_id)
+    return render(request, 'admin_portal/dashboard_admin.html', _contexto_dashboard(request, _admin_en_sesion(request)))
 
+
+@never_cache
+@admin_required
+@require_POST
+def ajustes_admin(request):
+    """Guarda los datos del propio admin (seccion Ajustes). Con errores vuelve a mostrar el dashboard en Ajustes, con
+    lo escrito y cada error junto a su campo; el menu sigue con lo guardado hasta que se guarde."""
+    admin = _admin_en_sesion(request)
+    form = AjustesAdminForm(request.POST, user=admin.user)
+    if form.is_valid():
+        form.save()
+        messages.success(request, 'Guardamos tus datos.')
+        return redirect(reverse('dashboard_admin') + '#ajustes')
+    messages.error(request, 'Revisa los campos marcados en Ajustes.')
+    return render(request, 'admin_portal/dashboard_admin.html',
+                  _contexto_dashboard(request, admin, form_ajustes=form, seccion_inicial='ajustes'))
+
+
+def _admin_en_sesion(request):
+    return get_object_or_404(Tutor.objects.select_related('user'), id_tutor=request.session.get('admin_id'))
+
+
+def _contexto_dashboard(request, admin, form_ajustes=None, seccion_inicial='resumen'):
+    """Todo lo que muestra el dashboard. seccion_inicial: la que se abre si la direccion no trae #seccion."""
     # Consulta a la base de datos de los contadores del sistema. Los reportes de
     # usuarios los atiende soporte (paso 6e): el admin no ve su contenido.
     # select_related: la plantilla muestra nombre, correo y especialidad de cada fila (sin N+1).
@@ -79,8 +104,10 @@ def dashboard_admin(request):
         'soporte': cifras_soporte,
         'pendientes': pendientes,
         'total_pendientes': sum(p['n'] for p in pendientes),
+        'form_ajustes': form_ajustes or AjustesAdminForm(user=admin.user),
+        'seccion_inicial': seccion_inicial,
     }
-    return render(request, 'admin_portal/dashboard_admin.html', context)
+    return context
 
 
 def home_adm(request):

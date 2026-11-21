@@ -77,9 +77,13 @@ class PantallasDelAdminTests(BaseResenas):
         html = self.pagina()
         self.assertIn('<div class="panel adm-panel-angosto">', html)
         self.assertIn('<i class="bi bi-gear-fill"></i> Tus datos</span>', html)
-        for etiqueta in ('Nombre', 'RUT', 'Correo electrónico', 'Teléfono', 'Dirección'):
+        # Los textos de la copia, cada etiqueta asociada a su campo (20-nov: antes no tenian for ni el campo id)
+        for campo, etiqueta in (('nombre', 'Nombre'), ('correo', 'Correo electrónico'), ('telefono', 'Teléfono'),
+                                ('direccion', 'Dirección')):
             with self.subTest(etiqueta=etiqueta):
-                self.assertIn(f'<label class="form-label">{etiqueta}</label>', html)
+                self.assertIn(f'<label class="form-label" for="ajustes-{campo}">{etiqueta}</label>', html)
+        self.assertIn('<label class="form-label" for="ajustes-rut">RUT <span class="adm-nota">(no se puede cambiar)</span>'
+                      '</label>', html)
         self.assertIn('<label class="form-label" for="accent-color-select">Color de acento del panel '
                       '<span class="adm-nota">(solo esta sesión)</span></label>', html)
         for opcion in ('Morado LBWUS (por defecto)', 'Azul océano', 'Verde menta'):

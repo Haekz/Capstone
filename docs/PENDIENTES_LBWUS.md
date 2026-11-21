@@ -50,12 +50,18 @@ de la demo); los puntos 3 y 4 son lo que se vio al comparar y no se tocó porque
    con `--accent`, y una variante con `#portal-alumno` que le gana a `13_pulido.css`. Pruebas en
    `test_planes_en_portal.py` (leen los colores de los CSS). Medido en el navegador en los marcos público, alumno y
    apoderado, claro y oscuro: 6/6 (`puppy_workspace/verificar_contraste_planes.py`).
-3. **Admin: Ajustes no guarda nada. Se conecta de verdad (decidido).** En `includes/dashboard/perfil.html` el
-   `onsubmit` hace `preventDefault()` y muestra «Ajustes guardados» sin enviar nada; los campos ni siquiera tienen
-   `name`. Hacer: vista POST con `@admin_required`, form con validación, nombre, correo, teléfono y dirección editables;
-   **RUT de solo lectura** (es la identidad; el registro de supresiones guarda su huella); correo único; formato del
-   teléfono; mensajes de error junto a cada campo; el nombre del menú se actualiza; pruebas. El color de acento
-   sigue siendo solo de la sesión (decir eso en la pantalla, como hoy). Unas 1 a 2 h.
+3. ~~Admin: Ajustes no guarda nada.~~ **Hecho (21-nov).** `POST /admin_portal/ajustes/` (`ajustes_admin`, solo admin) con
+   `AjustesAdminForm`: nombre y correo obligatorios, teléfono y dirección opcionales (`crear_admin` no los pide). El
+   **RUT es de solo lectura** y no viaja en el formulario. Correo único sin distinguir mayúsculas; teléfono chileno de
+   9 dígitos, guardado normalizado (`normalizar_telefono`, acepta `+56 9 1234 5678`). Con errores vuelve a Ajustes con
+   lo escrito, cada mensaje junto a su campo (`aria-invalid` y `aria-describedby`) y el foco en el primero; el menú
+   conserva el nombre guardado. El color de acento sigue siendo solo de la sesión. Pruebas: `test_admin_ajustes.py`.
+   Medido en el navegador, claro y oscuro: error 6,5:1 y 9,6:1; RUT 5,1:1 y 8,0:1
+   (`puppy_workspace/verificar_ajustes_admin.py`, solo envía datos inválidos).
+   **Arreglado de paso:** un RUT es el mismo con o sin puntos y guion, con k o K, pero `usuario_existe` y el
+   formulario de alumnos del admin comparaban el texto tal cual: con `12.345.678-5` se creaba una segunda cuenta de
+   quien ya era `12345678-5`. Ahora todos usan `rut_en_uso` y `correo_en_uso` (`alumnos/utils.py`; `crear_admin`
+   también). Pruebas: `test_rut_en_otro_formato.py`.
 4. **Admin: un solo «Usuarios» (decidido).** Hoy hay dos listados de alumnos: el del dashboard (`#usuarios`, diseño
    nuevo) y `crud` (`alumnos_list.html`, diseño viejo). El menú de `base_admin.html` apunta a `crud` en todas las
    páginas menos el dashboard. Además, desde el listado nuevo: «Agregar» y «Editar» abren `alumnos_add.html` y
@@ -87,8 +93,8 @@ de la demo); los puntos 3 y 4 son lo que se vio al comparar y no se tocó porque
    - Revisar en claro, oscuro y celular. El recuadro «Portal del alumno · Ana, alumna» del video no es de la app: lo
      pone `video_demo/guion.py`.
 
-- Para una demo mientras se hacen 3 y 4: no usar «Guardar cambios» de Ajustes y entrar a «Usuarios» siempre desde el Resumen.
-  SweetAlert viene de internet (ver el pendiente de arriba): sin conexión, el aviso de Ajustes no aparece y «Eliminar»
+- Para una demo mientras se hace el 4: entrar a «Usuarios» siempre desde el Resumen.
+  SweetAlert viene de internet (ver el pendiente de arriba): sin conexión, «Eliminar»
   usa el `confirm()` del navegador.
 - Los scripts de verificación (comparador con la copia, claro, oscuro y celular; Resumen; Usuarios; HTML de Soporte)
   están en `puppy_workspace`, fuera del repositorio.

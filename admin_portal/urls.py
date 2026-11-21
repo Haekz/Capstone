@@ -2,7 +2,7 @@ from django.urls import path
 from .views import (
     menu, reporte_alumnos, home_adm, planes_adm, nosotros_adm,
     crud, alumnos_Add, alumnos_del, alumnos_findEdit, alumnos_Update,
-    dashboard_admin, logout_admin,
+    dashboard_admin, ajustes_admin, logout_admin,
     aprobar_retiro, rechazar_retiro, marcar_pagado_retiro
 )
 from .asignaturas import asignaturas_adm, crear_asignatura, eliminar_asignatura, renombrar_asignatura
@@ -14,6 +14,7 @@ urlpatterns = [
     # esta parte es de las rutas del portal del administrador
     path('menu', menu, name='menu'),
     path('dashboard/', dashboard_admin, name='dashboard_admin'),
+    path('ajustes/', ajustes_admin, name='ajustes_admin'),
     path('reporte_alumnos', reporte_alumnos, name='reporte_alumnos'),
     path('home_adm', home_adm, name='home_adm'),
     path('planes_adm', planes_adm, name='planes_adm'),

@@ -1,0 +1,6 @@
+{# Un campo de Ajustes (AjustesAdminForm): etiqueta asociada, lo escrito y su error junto al campo (WCAG 3.3.1). #}
+<div class="form-field">
+    <label class="form-label" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+    <input type="{{ tipo|default:'text' }}" class="form-input" id="{{ campo.id_for_label }}" name="{{ campo.html_name }}" value="{{ campo.value|default_if_none:'' }}" maxlength="{{ campo.field.max_length }}" autocomplete="{{ autocompletar }}"{% if campo.field.required %} required{% endif %}{% if campo.errors %} aria-invalid="true" aria-describedby="{{ campo.id_for_label }}-error"{% endif %}>
+    {% if campo.errors %}<p class="adm-error" id="{{ campo.id_for_label }}-error">{{ campo.errors.0 }}</p>{% endif %}
+</div>
