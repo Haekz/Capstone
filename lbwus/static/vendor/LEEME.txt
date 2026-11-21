@@ -2,7 +2,7 @@ Recursos de terceros alojados en el propio sitio
 ================================================
 
 Antes se pedian a servidores de internet (jsDelivr, Google Fonts) en cada visita. Eso mandaba la IP de cada
-persona a un tercero, dejaba el sitio sin iconos ni letras cuando la conexion fallaba y obligaba a permitir esos
+persona a un tercero, dejaba el sitio sin iconos, letras ni avisos cuando la conexion fallaba y obligaba a permitir esos
 dominios en la politica de seguridad de contenido (lbwus/cabeceras.py). Ahora se sirven desde /static/vendor/.
 
 Que hay y de donde salio
@@ -14,13 +14,17 @@ fuentes/           Outfit e Inter 5.3.0, licencia SIL OFL 1.1 (LICENSE-outfit.tx
                    Archivos .woff2 de https://cdn.jsdelivr.net/npm/@fontsource-variable/outfit@5.3.0/files/ y de
                    .../inter@5.3.0/files/ (solo latin y latin-ext). fuentes.css lo escribimos nosotros: usa los
                    nombres 'Outfit' e 'Inter' que ya piden las hojas de estilo y los rangos de caracteres originales.
+sweetalert2/       SweetAlert2 11.26.25 (los avisos y confirmaciones), licencia MIT (LICENSE.txt). Un solo archivo,
+                   sweetalert2.all.min.js, de https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25/dist/ ; ya trae su CSS
+                   dentro y no pide nada a internet. SHA-256: 4E86F0E22E4771B5B8AAC24C613C661806A678B1AFA284D03CF6AD03D3E21A0A
 
 Para actualizar una version
 ---------------------------
 1. Bajar los archivos nuevos de la misma ruta (cambiando el numero de version) y reemplazarlos.
-2. Cambiar la version en este archivo y en el encabezado de fuentes.css.
+2. Cambiar la version en este archivo (y el SHA-256 de SweetAlert2) y en el encabezado de fuentes.css.
 3. Correr las pruebas: tests/test_recursos_locales.py revisa que ninguna plantilla ni hoja de estilo vuelva a pedir
-   iconos o letras a internet, y que cada url() de estos CSS apunte a un archivo que existe.
+   iconos, letras o SweetAlert2 a internet, que cada url() de los CSS apunte a un archivo que existe y que las
+   plantillas carguen el SweetAlert2 de aqui.
 
 Font Awesome
 ------------
@@ -28,5 +32,6 @@ Se cargaba en base.html y base_alumno.html, pero ninguna pantalla usa sus iconos
 
 Lo que sigue viniendo de internet
 ---------------------------------
-- SweetAlert2 (script, cdn.jsdelivr.net/npm/sweetalert2@11): no es un icono ni una letra; queda pendiente alojarlo.
 - correo_recuperacion_clave.html: la letra del correo de recuperar clave. Un correo no puede traer archivos propios.
+- Jitsi (meet.jit.si): la sala virtual es un servicio externo por naturaleza; es el unico script que la CSP permite
+  fuera del sitio.

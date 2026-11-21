@@ -34,7 +34,7 @@
 {% include 'alumnos/includes/panel/modal_intereses.html' %}
 
     <!-- SweetAlert2 CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="{% static 'vendor/sweetalert2/sweetalert2.all.min.js' %}"></script>
     {{ profesores_js|json_script:"profesores-data" }}
 
     <!-- App Logic -->

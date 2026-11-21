@@ -146,9 +146,11 @@ de la demo); los puntos 3 y 4 son lo que se vio al comparar y no se tocó porque
 - **Cerrar la CSP.** Sigue en Report-Only (`CSP_OBLIGATORIA`), permite `'unsafe-inline'` (hay scripts, `onclick=` y
   `style=` en linea en las plantillas) y no tiene destino para reportes: hoy no bloquea nada. Es trabajo grande:
   sacar lo que esta en linea, mirar los reportes y recien ahi hacerla obligatoria.
-- **SweetAlert2 sigue viniendo de internet.** Es el unico script externo (`cdn.jsdelivr.net/npm/sweetalert2@11`, la
-  version 11 sin fijar). Alojarlo en `static/vendor/` como los iconos y las letras, y quitar jsDelivr de `script-src`.
-  Tampoco es propia la letra del correo de recuperar clave: un correo no puede traer archivos.
+- ~~SweetAlert2 sigue viniendo de internet.~~ **Hecho (21-nov).** Alojado en `lbwus/static/vendor/sweetalert2/` (v11.26.25,
+  fija, con su licencia MIT y su SHA-256 en `LEEME.txt`); las 6 plantillas lo cargan con `{% static %}` y se quitó
+  `https://cdn.jsdelivr.net` de `script-src` (ahora solo queda Jitsi). Medido en el navegador con jsDelivr bloqueado:
+  las 6 pantallas que lo usan abren su aviso, sin peticiones a internet ni avisos de CSP; `collectstatic` como en Railway
+  lo recoge con hash. Tampoco es propia la letra del correo de recuperar clave: un correo no puede traer archivos.
 - **Probar Atlas.** Las 6 pruebas que exigen conexion real a MongoDB (`MONGODB_INTEGRACION=1`) no se corrieron en esta
   revision. Correrlas con una base **de prueba**, nunca `lbwus_prod`: escriben datos.
 - **Cookies en la politica de privacidad.** No menciona que el sitio usa cookies esenciales (sesion y proteccion
