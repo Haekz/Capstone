@@ -66,6 +66,13 @@ Los codigos LBW-xx y Dx son los del backlog y las decisiones grupales del 08-nov
 - ~~Admin, Nosotros: «Fundación», «Sede» y «Contacto» casi no se leían.~~ **Hecho (21-nov), visto en las capturas de `--ok`.**
   Usaban `--text-muted`: 2,75:1 en claro (4,56:1 en oscuro). Ahora `--text-secondary`, como el placeholder: 5,1:1 y 8,0:1,
   medido en el navegador. `.stat-mini` solo existe en esa pantalla. Prueba en `test_pulido_admin_paginas.py`.
+- **Token `--warn` (`#b45309`): mismo problema que tenia `--ok` (visto el 21-nov, sin resolver).** Sobre blanco da 5,0:1,
+  pero en sus chips sobre `--warn-soft` y el fondo lila de la página da ~4,2:1 (calculado, falta medirlo en el
+  navegador), y `.tc-vence--pronto` (tarjeta blanca del banner, ambar al 16 %) ~4,44:1. Se define en los mismos cuatro
+  archivos que `--ok` y aparece fijo en `13_pulido.css` (`.tc-vence--pronto`), `reservas.css`, `recuperar.css`,
+  `05_rediseno_contenido.css` (`.badge-pendiente`, `.badge-admin`) y como respaldo en `16_portal_apoderado.css`. Hacerlo
+  como `--ok`: medir cada uso con `puppy_workspace/ok_medir_contraste.py` (sumarle la lista de `--warn`), oscurecer
+  manteniendo el tono y una guardia como `test_contraste_ok.py`.
 
 ## Arreglos acordados (20-nov): orden de trabajo, en `fran-pulido-apoderado`
 Decididos con Fran el 20-nov. Van en este orden (bugs primero) y cada uno con sus pruebas, su commit y esta lista al día.
