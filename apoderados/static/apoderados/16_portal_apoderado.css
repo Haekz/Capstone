@@ -874,39 +874,20 @@
     border-radius: var(--r-ctrl, 10px);
 }
 
-#portal-alumno.portal-apoderado .apo-planes .planes-header {
-    max-width: none;
-    margin: 0 0 20px;
-    padding: 14px 18px;
-    border-radius: var(--r-item, 12px);
-    background: var(--primary-soft);
-    text-align: left;
+/* planes.css apila la fila en pantallas chicas: ahi el flex-basis de 260px del select pasaba a ser su ALTO (una caja de
+   cientos de pixeles para una sola opcion). En columna no debe crecer. */
+@media (max-width: 768px) {
+    #portal-alumno.portal-apoderado .apo-planes .pl-selector select {
+        flex: 0 0 auto;
+    }
 }
 
-#portal-alumno.portal-apoderado .apo-planes .planes-header p {
-    margin: 0;
-    color: var(--text);
-    font-size: 0.92rem;
-}
-
-#portal-alumno.portal-apoderado .apo-planes .planes-header p + p {
-    margin-top: 4px;
-    color: var(--text-light);
-}
-
-#portal-alumno.portal-apoderado .apo-planes .pl-condiciones,
 #portal-alumno.portal-apoderado .apo-planes .pl-faq {
     max-width: none;
     margin: 20px 0 0;
     text-align: left;
 }
 
-#portal-alumno.portal-apoderado .apo-planes .pl-condiciones {
-    padding: 22px 26px;
-    border-radius: 16px;
-}
-
-#portal-alumno.portal-apoderado .apo-planes .pl-condiciones h2,
 #portal-alumno.portal-apoderado .apo-planes .pl-faq .planes-header--extra h2 {
     margin: 0 0 12px;
     font-size: 1.15rem;
@@ -923,9 +904,11 @@
 }
 
 #portal-alumno.portal-apoderado .apo-planes .pl-faq .planes-header--extra {
+    max-width: none;
     margin: 0;
     padding: 0;
     background: none;
+    text-align: left;
 }
 
 #portal-alumno.portal-apoderado .apo-planes .pl-faq-item:last-child {

@@ -91,18 +91,43 @@ de la demo); los puntos 3 y 4 son lo que se vio al comparar y no se tocó porque
    (historial, vínculos con «Revocar», quien abrió cada documento). El buscador Ctrl+K lee los enlaces del menú, así que
    se ajusta solo. Es solo el menú: las pantallas siguen abiertas por URL (vacías) y filtran por ticket como antes.
    Pruebas: `VerificacionesDelMenuTests` en `test_menu_soporte.py`; `test_pulido_soporte_marco.py` ajustada.
-6. **Planes: diseño más profesional.** Lo que se ve en el video de presentación:
-   - La casilla de Términos **se queda en cada tarjeta** (decidido), pero con mejor diseño y aire: hoy queda pegada
-     al botón de comprar. Causa (vista el 20-nov): `.pl-acepta` está en `styles/10_legal.css`, que solo carga la base
-     pública; en los portales del alumno y del apoderado, que es donde se compra, la casilla no tiene ningún estilo.
-   - El desglose de cada tarjeta («Incluye comisión LBWUS de 15%: $X (IVA incluido: $Y)» y «El profesor recibe $Z»)
-     pasa a un **plegable «Ver desglose»** (decidido): sigue siendo transparente, pero no compite con el precio.
-   - Coherencia de nombres: el menú dice «Mis paquetes» y el título «Planes y precios».
-   - «Ver perfil del profesor» no debe partirse en dos líneas.
-   - Jerarquía de precios (precio del paquete y precio por clase), una etiqueta mejor que «Mayor descuento» e íconos
-     parejos en la lista de beneficios.
-   - Revisar en claro, oscuro y celular. El recuadro «Portal del alumno · Ana, alumna» del video no es de la app: lo
-     pone `video_demo/guion.py`.
+6. ~~Planes: diseño más profesional.~~ **Hecho (21-nov), salvo el nombre del menú (ver abajo).** En `planes.html` y `planes.css`:
+   - **Casilla de Términos** (se queda en cada tarjeta): ahora es una cajita con aire, antes del botón, con su propio
+     estilo en `planes.css`, que carga en todos los marcos (el estilo estaba solo en `styles/10_legal.css`, que
+     únicamente carga el sitio público). En la tarjeta oscura su texto va en blanco: el primer intento lo dejaba oscuro
+     sobre oscuro («Acepto los» no se veía).
+   - **Desglose** (comisión con IVA y «El profesor recibe») en un `<details>` «Ver desglose», plegado: sigue en la
+     página, sin competir con el precio, y funciona con teclado y lector de pantalla sin JS.
+   - **Jerarquía del precio:** precio del paquete, luego el precio por clase en su propia línea y de color, y la letra
+     chica solo con las clases, los minutos y «Sin renovación obligatoria». Beneficios con el mismo ícono (check).
+   - **Etiqueta «Mejor precio por clase»** (antes «Mayor descuento», que no decía de qué), sobre el borde de la tarjeta:
+     antes ocupaba sitio dentro y el título «Plan Intensivo» se partía en dos líneas, empujando el precio y el botón
+     de esa tarjeta más abajo que en las otras dos.
+   - **«Ver perfil del profesor»** en su propio enlace, con ícono y sin partirse.
+   - **Arreglado de paso:** en el portal del apoderado, en celular, el selector de profesor meduía cientos de píxeles de
+     alto (`flex: 1 1 260px` de `16_portal_apoderado.css` pasaba a ser su alto cuando `planes.css` apila la fila).
+   - **Condiciones, explicación y caja del apoderado (pedido de Fran, 21-nov):** «Condiciones» dejó de ser una caja grande y es
+     un control «(?) Condiciones» **bajo las tarjetas** (portales y sitio público): la ventanita se abre al pasar el mouse
+     y también con clic, teclado o toque (es un `<details>` con un poco de JS en la página); Esc o un clic afuera la
+     cierran, y se puede llegar a ella con el mouse (WCAG 1.4.13). La explicación («Compras un paquete…» y los datos de 60
+     minutos, comisión y Webpay) pasa **bajo las tarjetas** en el portal del alumno y del docente (en el sitio público y en
+     el del apoderado sigue en el hero); es el fragmento `includes/planes_resumen.html`. En el portal del apoderado se
+     **quitó la caja lila** («Contratando para Nico…» / «Precios con …»): repetía la barra, el selector y cada botón. El
+     alumno conserva su encabezado con el profesor y el enlace al perfil. De paso se borraron los estilos que quedaron sin
+     uso (`.pl-intro--portal` y las reglas de esa caja en `16_portal_apoderado.css`).
+   - Un comentario `{# #}` de Django partido en dos líneas salió como texto crudo en la página (lo mostraron las
+     capturas): solo vale en una línea. Hay una prueba que impide que algún comentario salga en esta página.
+   - Contraste medido en el navegador: 106 casos (visitante, alumno, docente y apoderado, en claro y oscuro), todos ≥ 4,5:1
+     (peor: 5,1:1). La medición encontró «Ver perfil del profesor» en 2,3:1 en oscuro: en el portal el `body` ES
+     `#portal-alumno`, así que se escribe `body.dark-mode#portal-alumno` (pegado), no con espacio.
+   - Pruebas: `test_planes_diseno.py`. Capturas del antes y el después en `puppy_workspace/capturas_punto6`.
+   - **A decidir (no se cambió):** el menú dice «Mis paquetes» (lo que ya compró) y la barra, en esta página, «Planes y
+     precios» (lo que puede comprar): son dos pantallas distintas, unidas por los botones «Ver planes y precios» /
+     «Comprar más clases», y la vista deja marcado «Mis paquetes» a propósito (hay una prueba que lo fija). Si se quiere
+     otro nombre, hay que cambiar a la vez el título, esos botones y esa prueba.
+   - Quedan como estaban: los botones «Inicia sesión para buscar un profesor» del
+     visitante se parten en dos líneas; el recuadro «Portal del alumno · Ana, alumna» del video lo pone
+     `video_demo/guion.py`, no la app.
 
 - Para una demo sin conexión: SweetAlert viene de internet (ver el pendiente de abajo); sin él, «Eliminar» usa el
   `confirm()` del navegador.

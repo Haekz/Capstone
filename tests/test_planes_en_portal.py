@@ -124,7 +124,8 @@ class PlanesEnElPortalTests(BaseResenas):
         r = self.client.get(reverse('planes'))
         self.assertTemplateUsed(r, 'user_profesor/base_docente.html')
         self.assertContains(r, 'portal_docente.css')
-        self.assertContains(r, 'pl-intro--portal')
+        self.assertContains(r, 'planes-container--portal')  # sin hero arriba: las tarjetas arrancan bajo la barra
+        self.assertContains(r, 'pl-pie-resumen')  # y la explicacion va debajo
         self.assertNotContains(r, 'sv-eyebrow')
 
     def test_el_apoderado_la_ve_en_su_portal_con_el_hero_oscuro(self):

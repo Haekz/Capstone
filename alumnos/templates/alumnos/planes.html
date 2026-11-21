@@ -8,28 +8,25 @@
 
 {% block extra_css %}
 {{ block.super }}
-<link rel="stylesheet" href="{% static 'alumnos/css/planes.css' %}?v=5">
+<link rel="stylesheet" href="{% static 'alumnos/css/planes.css' %}?v=7">
 {% endblock %}
 
 {% block content %}
 {# es_apoderado: dentro del portal del apoderado, 16_portal_apoderado.css ajusta esta página bajo .apo-planes #}
 {% if es_apoderado %}<div class="apo-planes">{% endif %}
 {# Todos los precios vienen del servidor (alumnos/paquetes.py): esta pagina no calcula nada. #}
-{# Fuera de un portal, el hero del sitio publico (styles.css); en el del alumno, una cabecera compacta (planes.css); el apoderado conserva el hero oscuro de su diseño, con el titulo en h2 porque la barra ya trae el h1 #}
-<section class="{% if en_portal and not es_apoderado %}pl-intro--portal{% else %}sv-intro{% endif %} pl-intro">
-    <div{% if not en_portal or es_apoderado %} class="contenedor"{% endif %}>
-        {% if not en_portal or es_apoderado %}<span class="sv-eyebrow">Planes</span>{% endif %}
+{# Hero arriba solo en el sitio publico (styles.css) y en el portal del apoderado (conserva su hero oscuro, con el titulo en h2 porque la barra ya trae el h1). En el portal del alumno y del docente el contenido va directo a las tarjetas y la explicacion queda debajo. #}
+{% if not en_portal or es_apoderado %}
+<section class="sv-intro pl-intro">
+    <div class="contenedor">
+        <span class="sv-eyebrow">Planes</span>
         {% if es_apoderado %}<h2>Elige cuántas clases quieres</h2>{% elif not titulo_en_barra %}<h1>Elige cuántas clases quieres</h1>{% endif %}
-        <p>Compras un paquete de clases con el profesor que elijas. Mientras más clases, menor el precio de cada una.</p>
-        <div class="pl-intro-notes">
-            <span><i class="bi bi-clock" aria-hidden="true"></i> Clases de {{ duracion_clase }} minutos</span>
-            <span><i class="bi bi-receipt" aria-hidden="true"></i> Comisión LBWUS de {{ comision_pct }}% incluida (IVA incluido)</span>
-            <span><i class="bi bi-credit-card" aria-hidden="true"></i> Pago con Webpay</span>
-        </div>
+        {% include 'alumnos/includes/planes_resumen.html' %}
     </div>
 </section>
+{% endif %}
 
-<div class="planes-container">
+<div class="planes-container{% if en_portal and not es_apoderado %} planes-container--portal{% endif %}">
     {% include 'apoderados/_mensajes.html' %}{# p. ej. si los videos no estan a la venta (B2) #}
 
     {# Solo el apoderado elige profesor aqui: es su unico camino. El alumno busca profesores en su portal. #}
@@ -52,26 +49,30 @@
     </form>
     {% endif %}
 
+    {# El apoderado no ve este encabezado: la barra ya dice para quien contrata, el selector con quien y cada boton lo repite. #}
+    {% if not estudiante %}
     <div class="planes-header">
-        {% if estudiante %}<p role="status"><strong>Contratando para {{ estudiante.alumno.user.first_name }}.</strong> El paquete quedará a su nombre y lo pagas tú con Webpay.</p>{% endif %}
         {% if profesor %}
         <h2>Precios con {{ profesor.nombre }}</h2>
-        <p>Clase suelta a {{ tarifa|clp }}: el mismo precio con todos los profesores.{% if es_alumno %} <a href="{% url 'perfil_profesor' profesor.id_profesor %}">Ver perfil del profesor</a>{% endif %}</p>
+        <p>Clase suelta a {{ tarifa|clp }}: el mismo precio con todos los profesores.</p>
+        {% if es_alumno %}<a class="pl-ver-perfil" href="{% url 'perfil_profesor' profesor.id_profesor %}"><i class="bi bi-person-circle" aria-hidden="true"></i> Ver perfil del profesor</a>{% endif %}
         {% else %}
         <p>El mismo precio con todos los profesores: la clase suelta cuesta {{ tarifa|clp }} y los paquetes traen descuento.</p>
         {% endif %}
     </div>
+    {% endif %}
 
     <div class="planes-grid">
         {% for c in cotizaciones %}
         <article class="plan-card card{% if forloop.last %} featured{% endif %}" aria-labelledby="plan-{{ c.plan.codigo }}">
             <div class="plan-card-body">
-                {% if forloop.last %}<div class="plan-badge">Mayor descuento</div>{% endif %}
+                {% if forloop.last %}<div class="plan-badge">Mejor precio por clase</div>{% endif %}
                 <h3 class="plan-title" id="plan-{{ c.plan.codigo }}">Plan {{ c.plan.nombre }}</h3>
                 <div class="plan-price-box">
                     <span class="plan-price">{{ c.precio|clp }}</span>
                 </div>
-                <p class="plan-billing-info">{{ c.plan.clases }} clase{{ c.plan.clases|pluralize }} de {{ duracion_clase }} min · {{ c.precio_por_clase|clp }} por clase · Sin renovación obligatoria</p>
+                <p class="plan-por-clase">{{ c.precio_por_clase|clp }} por clase</p>
+                <p class="plan-billing-info">{{ c.plan.clases }} clase{{ c.plan.clases|pluralize }} de {{ duracion_clase }} min · Sin renovación obligatoria</p>
 
                 {% if profesor and estudiante %}
                 <form method="post" action="{% url 'apoderado_comprar_paquete' estudiante.pk %}" class="pl-compra" data-videos="{{ c.plan.videos }}" data-precio-videos="{{ c.precio_videos|clp }}">
@@ -108,32 +109,46 @@
                 <div class="plan-divider"></div>
 
                 <ul class="plan-features-list">
-                    <li><i class="bi bi-tag check-icon" aria-hidden="true"></i>
+                    <li><i class="bi bi-check-lg check-icon" aria-hidden="true"></i>
                         {% if c.descuento_por_clase %}Descuento de {{ c.descuento_por_clase|clp }} por clase ({{ c.descuento_pct }}%){% else %}Precio de una clase suelta, sin descuento{% endif %}</li>
                     {% if c.ahorro_total %}
-                    <li><i class="bi bi-piggy-bank check-icon" aria-hidden="true"></i> Ahorras {{ c.ahorro_total|clp }} frente a {{ c.plan.clases }} clases sueltas</li>
+                    <li><i class="bi bi-check-lg check-icon" aria-hidden="true"></i> Ahorras {{ c.ahorro_total|clp }} frente a {{ c.plan.clases }} clases sueltas</li>
                     {% endif %}
-                    <li><i class="bi bi-calendar-check check-icon" aria-hidden="true"></i> Vigencia de {{ c.plan.vigencia_dias }} días desde el pago</li>
-                    <li><i class="bi bi-receipt check-icon" aria-hidden="true"></i> Incluye comisión LBWUS de {{ comision_pct }}%: {{ c.comision|clp }} (IVA incluido: {{ c.iva_comision|clp }})</li>
-                    <li><i class="bi bi-person-check check-icon" aria-hidden="true"></i> El profesor recibe {{ c.pago_profesor|clp }}</li>
+                    <li><i class="bi bi-check-lg check-icon" aria-hidden="true"></i> Vigencia de {{ c.plan.vigencia_dias }} días desde el pago</li>
                 </ul>
+
+                {# El desglose sigue siendo transparente, pero no compite con el precio (decidido). Es un details: teclado y lector de pantalla sin JS. #}
+                <details class="plan-desglose">
+                    <summary>Ver desglose</summary>
+                    <ul>
+                        <li>Incluye comisión LBWUS de {{ comision_pct }}%: {{ c.comision|clp }} (IVA incluido: {{ c.iva_comision|clp }})</li>
+                        <li>El profesor recibe {{ c.pago_profesor|clp }}</li>
+                    </ul>
+                </details>
             </div>
         </article>
         {% endfor %}
     </div>
 
-    <section class="pl-condiciones" aria-labelledby="pl-condiciones-titulo">
-        <h2 id="pl-condiciones-titulo">Condiciones</h2>
-        <ul>
-            <li>El paquete es con el profesor que elijas y se activa cuando Webpay aprueba el pago.</li>
-            <li>Cada reserva usa 1 clase del paquete. Puedes reservar sesiones que sean dentro de la vigencia: {% for c in cotizaciones %}{% if not forloop.first %}{% if forloop.last %} o {% else %}, {% endif %}{% endif %}{{ c.plan.vigencia_dias }} días ({{ c.plan.nombre }}){% endfor %}.</li>
-            <li>Si cancelas una reserva antes de que empiece la clase, la clase vuelve a tu paquete. Una vez iniciada, ya no se puede cancelar.</li>
-            <li>Si el profesor cancela la sesión, la clase vuelve a tu paquete.</li>
-            <li>Las clases que no uses dentro de la vigencia vencen.</li>
-            <li>El precio queda fijo al comprar: si después cambian los precios, tu paquete no cambia.</li>
-            <li>Precios en pesos chilenos. Incluyen la comisión de servicio de LBWUS ({{ comision_pct }}%, IVA incluido); el resto es para el profesor.</li>
-        </ul>
-    </section>
+    {# Bajo las tarjetas: la explicacion (solo portales del alumno y del docente; en los demas va en el hero) y las condiciones, en un control con "?" que se abre al pasar el mouse. Es un details: tambien con clic, teclado y toque, y sin JavaScript. #}
+    <div class="pl-pie">
+        {% if en_portal and not es_apoderado %}<div class="pl-pie-resumen">{% include 'alumnos/includes/planes_resumen.html' %}</div>{% endif %}
+        <details class="pl-ayuda">
+            <summary class="pl-ayuda-btn"><i class="bi bi-question-circle" aria-hidden="true"></i> Condiciones</summary>
+            <section class="pl-condiciones" aria-labelledby="pl-condiciones-titulo">
+                <h2 id="pl-condiciones-titulo">Condiciones del paquete</h2>
+                <ul>
+                <li>El paquete es con el profesor que elijas y se activa cuando Webpay aprueba el pago.</li>
+                <li>Cada reserva usa 1 clase del paquete. Puedes reservar sesiones que sean dentro de la vigencia: {% for c in cotizaciones %}{% if not forloop.first %}{% if forloop.last %} o {% else %}, {% endif %}{% endif %}{{ c.plan.vigencia_dias }} días ({{ c.plan.nombre }}){% endfor %}.</li>
+                <li>Si cancelas una reserva antes de que empiece la clase, la clase vuelve a tu paquete. Una vez iniciada, ya no se puede cancelar.</li>
+                <li>Si el profesor cancela la sesión, la clase vuelve a tu paquete.</li>
+                <li>Las clases que no uses dentro de la vigencia vencen.</li>
+                <li>El precio queda fijo al comprar: si después cambian los precios, tu paquete no cambia.</li>
+                <li>Precios en pesos chilenos. Incluyen la comisión de servicio de LBWUS ({{ comision_pct }}%, IVA incluido); el resto es para el profesor.</li>
+                </ul>
+            </section>
+        </details>
+    </div>
 
     <!-- esta parte es de las preguntas frecuentes sobre los planes -->
     <div class="pl-faq">
@@ -192,6 +207,28 @@
             closeBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 modal.style.display = 'none';
+            });
+        }
+
+        // «Condiciones»: se abre al pasar el mouse y tambien con clic, teclado o toque (es un details). Si lo abrió el mouse, se cierra
+        // al salir; un clic mientras esta abierto por el mouse lo deja fijo. Esc y un clic afuera lo cierran (WCAG 1.4.13).
+        const ayuda = document.querySelector('.pl-ayuda');
+        if (ayuda) {
+            const resumen = ayuda.querySelector('summary');
+            ayuda.addEventListener('mouseenter', () => {
+                if (!ayuda.open) { ayuda.open = true; ayuda.dataset.porMouse = '1'; }
+            });
+            ayuda.addEventListener('mouseleave', () => {
+                if (ayuda.dataset.porMouse) { ayuda.open = false; delete ayuda.dataset.porMouse; }
+            });
+            resumen.addEventListener('click', (e) => {
+                if (ayuda.dataset.porMouse) { e.preventDefault(); delete ayuda.dataset.porMouse; }
+            });
+            ayuda.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && ayuda.open) { ayuda.open = false; resumen.focus(); }
+            });
+            document.addEventListener('click', (e) => {
+                if (ayuda.open && !ayuda.contains(e.target)) ayuda.open = false;
             });
         }
 
