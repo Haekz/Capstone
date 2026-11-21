@@ -91,6 +91,7 @@ def _contexto_dashboard(request, admin, form_ajustes=None, seccion_inicial='resu
         'ultimos_profesores': ultimos_profesores,
         'todas_solicitudes_retiro': todas_solicitudes_retiro,
         'finanzas': metricas.finanzas(),  # montos reales (paso 8); el template les da formato
+        **paquetes.porcentajes(),  # las tasas de las leyendas de Finanzas: salen de paquetes.py, no de la plantilla
         'grafico_registros': metricas.grafico(metricas.registros(periodo)),
         'grafico_personas': metricas.grafico(metricas.personas(periodo)),  # mismo periodo (H8 + H9)
         'periodo': periodo,

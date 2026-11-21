@@ -31,7 +31,7 @@
                                 <div class="stat-info">
                                     <div class="stat-label">Comisión estimada</div>
                                     <div class="stat-value">{{ finanzas.comision_estimada|clp }}</div>
-                                    <div class="stat-sub">15 % de clases y 25 % de videos, si se entrega todo</div>
+                                    <div class="stat-sub">{{ comision_pct }} % de clases y {{ comision_videos_pct }} % de videos, si se entrega todo</div>
                                 </div>
                                 <div class="stat-icon"><i class="bi bi-calculator" aria-hidden="true"></i></div>
                             </div>
@@ -41,7 +41,7 @@
                                 <div class="stat-info">
                                     <div class="stat-label">Ganancia LBWUS</div>
                                     <div class="stat-value">{{ finanzas.ganancia|clp }}</div>
-                                    <div class="stat-sub">15 % de clases dictadas y 25 % de videos compartidos</div>
+                                    <div class="stat-sub">{{ comision_pct }} % de clases dictadas y {{ comision_videos_pct }} % de videos compartidos</div>
                                 </div>
                                 <div class="stat-icon"><i class="bi bi-graph-up-arrow" aria-hidden="true"></i></div>
                             </div>

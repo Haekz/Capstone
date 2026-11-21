@@ -165,7 +165,7 @@
             {# S4-09: desglose económico de operaciones y liquidaciones. La etiqueta interna que antes se mostraba ya no sale en pantalla. #}
             <div class="prof-card">
                 <h2 class="prof-card-title"><i class="bi bi-receipt" aria-hidden="true"></i> Detalle de liquidaciones</h2>
-                <p class="prof-card-subtitle">Por cada operación: el monto bruto, la comisión de LBWUS (15 %, IVA incluido) y lo que recibes tú (85 %).</p>
+                <p class="prof-card-subtitle">Por cada operación: el monto bruto, la comisión de LBWUS ({{ comision_pct }} %, IVA incluido) y lo que recibes tú ({{ pago_profesor_pct }} %).</p>
                 <div class="prof-table-wrapper">
                     <table class="prof-table">
                         <thead>
@@ -175,8 +175,8 @@
                                 <th>Alumno</th>
                                 <th>Concepto</th>
                                 <th>Monto bruto</th>
-                                <th>Comisión LBWUS (15 %)</th>
-                                <th>Tu abono (85 %)</th>
+                                <th>Comisión LBWUS ({{ comision_pct }} %)</th>
+                                <th>Tu abono ({{ pago_profesor_pct }} %)</th>
                                 <th>Estado</th>
                             </tr>
                         </thead>

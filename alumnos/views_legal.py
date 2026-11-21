@@ -26,7 +26,7 @@ def terminos(request):
     contexto = {
         'actualizado': VERSION,
         'cotizaciones': paquetes.cotizar(),
-        'comision_pct': int(paquetes.COMISION * 100),
+        'comision_pct': paquetes.porcentaje(paquetes.COMISION),
         'precio_video': paquetes.PRECIO_VIDEO,
         'max_videos_extra': paquetes.MAX_VIDEOS_EXTRA,
         'dias_entrega_extra': paquetes.DIAS_ENTREGA_EXTRA,

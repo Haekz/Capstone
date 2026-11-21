@@ -115,7 +115,7 @@ def planes(request):
         'tarifa': tarifa,
         'cotizaciones': paquetes.cotizar(),
         'duracion_clase': paquetes.DURACION_CLASE_MIN,
-        'comision_pct': int(paquetes.COMISION * 100),
+        'comision_pct': paquetes.porcentaje(paquetes.COMISION),
         'videos_a_la_venta': settings.VIDEOS_A_LA_VENTA,  # sin MongoDB no se pregunta por el agregado (B2)
         'es_alumno': bool(request.session.get('alumno_id')),
         # El menor ve que contrata su apoderado, en vez de botones que no harian nada.

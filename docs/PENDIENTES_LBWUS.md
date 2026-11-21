@@ -33,9 +33,17 @@ Los codigos LBW-xx y Dx son los del backlog y las decisiones grupales del 08-nov
   codigo el 15-nov.
 - Revision visual en navegador de todos los flujos de apoderados (LBW-15).
 - Posible CSS muerto en `pago/01_pago.css` (paneles de resumen y Webpay). Sin revisar, sin ticket.
-- Porcentajes escritos a mano (visto el 20-nov): «15 %», «85 %» y «25 %» en `user_profesor/.../panel/saldo.html`
-  y `admin_portal/.../dashboard/finanzas.html`. Hoy coinciden con `paquetes.COMISION` y `COMISION_VIDEOS`, pero si
-  cambian quedan desfasados, igual que pasó con las vigencias de Planes. Pasarlos por el contexto. Sin ticket.
+- ~~Porcentajes escritos a mano~~ **Hecho (21-nov).** «15 %», «85 %» y «25 %» de `finanzas.html` (admin) y `saldo.html`
+  (docente) salen ahora de `paquetes.porcentajes()` (`COMISION`, `1 - COMISION`, `COMISION_VIDEOS`); `porcentaje()` no corta
+  decimales (`int(COMISION * 100)` mostraba 12,5 como 12; lo usan también Planes y Términos). Pruebas:
+  `test_porcentajes_en_pantalla.py`, que cambia la tasa y mira la pantalla, y una guardia que falla si cualquier plantilla
+  vuelve a escribir uno de esos números.
+- **«Detalle de liquidaciones» del docente siempre sale vacía (visto el 21-nov, sin resolver).** La tabla recorre
+  `desgloses_profesor`, que ninguna vista pasa desde que la migración `0024` quitó `DesgloseOperacion` (el carrito antiguo;
+  ver CONCILIACION_Y_TRANSBANK_7_6.md, «no hay tabla de desglose»). Todo docente lee «Aún no hay operaciones registradas
+  en tu cuenta», tenga o no cobros. Opciones: quitar la tarjeta, o armarla de verdad con lo que ya se calcula en
+  `paquetes.py` (monto, comisión y abono por paquete o clase). Una prueba de `test_pulido_docente_cuenta.py` fija hoy que
+  la tarjeta exista.
 
 ## Arreglos acordados (20-nov): orden de trabajo, en `fran-pulido-apoderado`
 Decididos con Fran el 20-nov. Van en este orden (bugs primero) y cada uno con sus pruebas, su commit y esta lista al día.

@@ -17,7 +17,7 @@ from django.views.decorators.http import require_POST
 from . import cambio_cuenta, especializaciones, foto
 from . import inicio as inicio_panel
 from .saldos import calcular_saldos  # noqa: F401  (metricas, supresiones y pruebas lo importan desde aqui)
-from alumnos import avisos_profesor, catalogos, liquidacion
+from alumnos import avisos_profesor, catalogos, liquidacion, paquetes
 from agenda import panel as agenda_panel
 from observaciones import panel as observaciones_panel
 from mensajes import panel as mensajes_panel
@@ -203,6 +203,7 @@ def panel_profesor(request):
         **inicio_panel.contexto(profesor),  # Clases de Hoy, dinero y bloques libres de hoy (inicio.py)
         'rendimiento_meses': _rendimiento_mensual(inscripciones, timezone.localdate().month),  # mes en Chile
         'saldo_total': saldo_total_fmt,
+        **paquetes.porcentajes(),  # las tasas de Detalle de liquidaciones: salen de paquetes.py, no de la plantilla
         'saldo_disponible': saldo_disponible_fmt,
         'saldo_disponible_raw': saldo_disponible,
         'saldo_pendiente': saldo_pendiente_fmt,
