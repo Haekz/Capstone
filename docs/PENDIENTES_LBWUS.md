@@ -45,9 +45,11 @@ de la demo); los puntos 3 y 4 son lo que se vio al comparar y no se tocó porque
 1. ~~Planes: las vigencias de «Condiciones» están mal.~~ **Hecho (20-nov).** Se leen de `PLANES`; la prueba
    `test_condiciones_dicen_las_vigencias_de_planes` compara la sección con `PLANES`. Términos y Privacidad ya usaban
    variables: no había otras cifras escritas a mano.
-2. **Planes: no se leen los enlaces de Términos y Privacidad en la tarjeta oscura** (Intensivo, `.featured`).
-   `.pl-acepta a` (`styles/10_legal.css`) usa `var(--primary)`: morado sobre fondo oscuro, no cumple el contraste de
-   WCAG 2.2 AA (4,5:1). Color propio dentro de `.featured`, también la casilla y su foco.
+2. ~~Planes: no se leen los enlaces de Términos y Privacidad en la tarjeta oscura.~~ **Hecho (20-nov).** En `planes.css`
+   (el único CSS que carga Planes en todos sus marcos): enlaces en lila `#c4b5fd` (9,7:1; 8,2:1 en oscuro), foco y check
+   con `--accent`, y una variante con `#portal-alumno` que le gana a `13_pulido.css`. Pruebas en
+   `test_planes_en_portal.py` (leen los colores de los CSS). Medido en el navegador en los marcos público, alumno y
+   apoderado, claro y oscuro: 6/6 (`puppy_workspace/verificar_contraste_planes.py`).
 3. **Admin: Ajustes no guarda nada. Se conecta de verdad (decidido).** En `includes/dashboard/perfil.html` el
    `onsubmit` hace `preventDefault()` y muestra «Ajustes guardados» sin enviar nada; los campos ni siquiera tienen
    `name`. Hacer: vista POST con `@admin_required`, form con validación, nombre, correo, teléfono y dirección editables;
@@ -74,7 +76,8 @@ de la demo); los puntos 3 y 4 son lo que se vio al comparar y no se tocó porque
    que lista las secciones del menú). Pruebas: un agente sin el tema no ve el enlace; el líder sí, bajo «Supervisión».
 6. **Planes: diseño más profesional.** Lo que se ve en el video de presentación:
    - La casilla de Términos **se queda en cada tarjeta** (decidido), pero con mejor diseño y aire: hoy queda pegada
-     al botón de comprar.
+     al botón de comprar. Causa (vista el 20-nov): `.pl-acepta` está en `styles/10_legal.css`, que solo carga la base
+     pública; en los portales del alumno y del apoderado, que es donde se compra, la casilla no tiene ningún estilo.
    - El desglose de cada tarjeta («Incluye comisión LBWUS de 15%: $X (IVA incluido: $Y)» y «El profesor recibe $Z»)
      pasa a un **plegable «Ver desglose»** (decidido): sigue siendo transparente, pero no compite con el precio.
    - Coherencia de nombres: el menú dice «Mis paquetes» y el título «Planes y precios».
