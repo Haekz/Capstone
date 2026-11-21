@@ -52,9 +52,17 @@ Los codigos LBW-xx y Dx son los del backlog y las decisiones grupales del 08-nov
   operación (están en el historial). En celular los importes quedaban fuera de pantalla: celdas más apretadas y un aviso
   sobre la tabla («Desliza la tabla…»). Contraste medido en el navegador con datos reales (24 casos, claro y oscuro,
   escritorio y celular): peor 5,1:1.
-- **Token `--ok` (`#0f8a60`) no llega a 4,5:1 sobre blanco en claro (4,35:1).** Visto el 21-nov al medir el abono del
-  detalle (ahí se usó un verde más oscuro solo para esa columna). El token está repetido en cinco portales (admin, soporte,
-  alumno, apoderado y docente) y lo usan chips y textos sin medir: medir cada uso antes de oscurecerlo. Sin ticket.
+- ~~Token `--ok` no llegaba a 4,5:1 en claro.~~ **Hecho (21-nov).** Era peor que lo anotado: 4,35:1 es sobre blanco, pero
+  casi todos los usos son chips sobre `--ok-soft` y fondos lila, donde daba 3,55 a 3,83:1. Ahora `--ok` claro es
+  `#066b4c` (mismo tono) en los cuatro archivos que lo definen (alumno y apoderado, docente, admin y soporte); el oscuro
+  (`#34d399`) no cambia. Medido en el navegador con datos de la demo, 5 portales en claro y oscuro, con el tema puesto como
+  lo pone la app (`theme` y `admin-theme`): antes 27 fallas, ahora 0; peor uso real 5,33:1 (modalidad y Valores) y 4,9:1
+  en el peor chip de prueba (`puppy_workspace/ok_medir_contraste.py`). De paso: `.tc-vence` (tarjeta de clases del banner,
+  blanca también en oscuro) llevaba `#0f8a60` fijo y fallaba en los dos temas: va con el verde nuevo, fijo a propósito;
+  el abono del Detalle de liquidaciones ya no necesita su verde propio (usa `--ok`); y se quitaron los respaldos
+  `var(--ok, #0f8a60)` de `16_portal_apoderado.css`, que nunca se usaban (ese portal siempre carga `13_pulido.css`).
+  Pruebas: `test_contraste_ok.py` (contraste en cada portal, las cuatro copias iguales y la tarjeta con el mismo verde);
+  volver a `#0f8a60` la hace fallar.
 
 ## Arreglos acordados (20-nov): orden de trabajo, en `fran-pulido-apoderado`
 Decididos con Fran el 20-nov. Van en este orden (bugs primero) y cada uno con sus pruebas, su commit y esta lista al día.

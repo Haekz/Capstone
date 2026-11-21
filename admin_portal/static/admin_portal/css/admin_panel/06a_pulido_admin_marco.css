@@ -16,7 +16,7 @@
 #portal-admin {
     --line-2: rgba(26, 18, 51, 0.16);
     --ring: 0 0 0 3px rgba(124, 58, 237, 0.35);
-    --ok: #0f8a60;
+    --ok: #066b4c;  /* 4,5:1 tambien sobre --ok-soft y fondos lila (#0f8a60 daba 3,6:1) */
     --ok-soft: rgba(15, 138, 96, 0.1);
     --warn: #b45309;
     --warn-soft: rgba(245, 158, 11, 0.14);

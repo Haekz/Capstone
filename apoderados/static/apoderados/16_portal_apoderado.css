@@ -344,8 +344,8 @@
 }
 
 #portal-alumno.portal-apoderado .apo-vinculo--ok {
-    background: var(--ok-soft, rgba(15, 138, 96, 0.1));
-    color: var(--ok, #0f8a60);
+    background: var(--ok-soft);
+    color: var(--ok);
 }
 
 #portal-alumno.portal-apoderado .apo-vinculo--espera {
@@ -531,7 +531,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    color: var(--ok, #0f8a60);
+    color: var(--ok);
     font-size: 0.86rem;
     font-weight: 600;
 }
@@ -608,7 +608,7 @@
 }
 
 #portal-alumno.portal-apoderado .apo-reglas li.ok {
-    color: var(--ok, #0f8a60);
+    color: var(--ok);
 }
 
 /* Cómo funciona: pasos numerados */

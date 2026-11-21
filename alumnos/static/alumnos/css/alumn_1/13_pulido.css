@@ -15,7 +15,7 @@
 /* ── 1. Tokens ── */
 #portal-alumno {
     --tinta: #1a1233;                            /* fondo del banner (el mismo del diseño original) */
-    --ok: #0f8a60;
+    --ok: #066b4c;                               /* 4,5:1 tambien sobre --ok-soft y fondos lila (#0f8a60 daba 3,8:1) */
     --ok-soft: rgba(15, 138, 96, 0.1);
     --warn: #b45309;
     --warn-soft: rgba(245, 158, 11, 0.14);
@@ -334,7 +334,7 @@ body.dark-mode#portal-alumno .welcome-banner .welcome-text p {
     padding: 3px 9px;
     border-radius: 99px;
     background: rgba(15, 138, 96, 0.1);
-    color: #0f8a60;
+    color: #066b4c;                              /* = --ok claro, fijo: la tarjeta es blanca tambien en oscuro */
     font-size: 0.75rem;
     font-weight: 700;
     white-space: nowrap;

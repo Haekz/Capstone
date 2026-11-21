@@ -60,9 +60,8 @@
     background: transparent;
 }
 
-/* Importes de Detalle de liquidaciones: la comision en el color secundario y con signo menos, solo el abono en verde;
-   antes iban con rojo y verde fijos en linea. En claro, --ok (#0f8a60) da 4,35:1 sobre blanco y no alcanza el minimo de
-   4,5:1: aqui va un verde mas oscuro (5,4:1); en oscuro --ok ya se aclara. */
+/* Importes de Detalle de liquidaciones: la comision en el color secundario y con signo menos, solo el abono en verde
+   (--ok, que da 4,5:1 en claro y en oscuro); antes iban con rojo y verde fijos en linea. */
 #portal-docente .prof-table .prof-importe {
     font-weight: 600;
     white-space: nowrap;
@@ -73,12 +72,8 @@
 }
 
 #portal-docente .prof-table .prof-importe--suma {
-    color: #0a7a52;
-    font-weight: 700;
-}
-
-body:not(.light-mode)#portal-docente .prof-table .prof-importe--suma {
     color: var(--ok);
+    font-weight: 700;
 }
 
 #portal-docente .prof-nota-tabla {
