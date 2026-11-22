@@ -77,14 +77,8 @@ if not DEBUG:
     SECURE_HSTS_PRELOAD = True
 
 # Aviso por correo de los errores 500 (lbwus/aviso_errores.py): correos separados por comas. Vacio = no se avisa.
+# Su manejador va en LOGGING (mas abajo, junto al registro en consola): un solo LOGGING, o el ultimo pisa al otro.
 ERRORES_CORREOS = [c.strip() for c in os.environ.get('ERRORES_CORREOS', '').split(',') if c.strip()]
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {'aviso_errores': {'class': 'lbwus.aviso_errores.AvisoDeError', 'level': 'ERROR'}},
-    # propagate: Django sigue registrando el error como siempre (consola, registros de Railway).
-    'loggers': {'django.request': {'handlers': ['aviso_errores'], 'level': 'ERROR', 'propagate': True}},
-}
 
 
 # Application definition
@@ -349,6 +343,9 @@ DEFAULT_FROM_EMAIL = os.environ.get(
     EMAIL_HOST_USER
 )
 
+# SCRUM-100: a quien avisar si falla tareas_diarias (lbwus/alertas.py). Separados por comas; vacia = sin aviso.
+ALERTAS_CORREOS = [c.strip() for c in os.environ.get('ALERTAS_CORREOS', '').split(',') if c.strip()]
+
 # El enlace de recuperación expira después de 1 hora
 PASSWORD_RESET_TIMEOUT = 3600
 
@@ -394,4 +391,40 @@ CACHES = {
             'CULL_FREQUENCY': 3,
         }
     }
+}
+
+# ============================================================
+# LOGGING (SCRUM-100)
+# ============================================================
+# Todo a la consola: Railway guarda stdout/stderr de cada servicio (web y Cron) en su pestana de logs.
+# Una linea por evento: "fecha nivel logger mensaje". FormatoSeguro enmascara correos, RUT y tokens de
+# Webpay en todo lo que sale, trazas incluidas (lbwus/registro.py). Nunca registrar contrasenas.
+APPS_PROPIAS = (
+    'lbwus', 'alumnos', 'user_profesor', 'admin_portal', 'apoderados', 'comunidad', 'resenas', 'soporte',
+    'notificaciones', 'agenda', 'mensajes', 'supresiones', 'requerimientos', 'observaciones',
+)
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'seguro': {
+            '()': 'lbwus.registro.FormatoSeguro',
+            'format': '%(asctime)s %(levelname)s %(name)s %(message)s',
+            'datefmt': '%Y-%m-%dT%H:%M:%S%z',
+        },
+    },
+    'handlers': {
+        'consola': {'class': 'logging.StreamHandler', 'formatter': 'seguro'},
+        # Correo a ERRORES_CORREOS por cada 500, sin datos de las personas (lbwus/aviso_errores.py).
+        'aviso_errores': {'class': 'lbwus.aviso_errores.AvisoDeError', 'level': 'ERROR'},
+    },
+    'root': {'handlers': ['consola'], 'level': 'WARNING'},
+    'loggers': {
+        # propagate False: sin esto cada linea de Django saldria dos veces (su logger y la raiz).
+        'django': {'handlers': ['consola'], 'level': 'WARNING', 'propagate': False},
+        # Los 500 (con su traza) a la consola y por correo. Los 404 y 403 son WARNING y no se registran: serian ruido.
+        'django.request': {'handlers': ['consola', 'aviso_errores'], 'level': 'ERROR', 'propagate': False},
+        # Las apps propias en INFO: llegan a la consola por la raiz.
+        **{app: {'level': 'INFO'} for app in APPS_PROPIAS},
+    },
 }

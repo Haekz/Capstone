@@ -16,9 +16,11 @@ Los codigos LBW-xx y Dx son los del backlog y las decisiones grupales del 08-nov
 - Programar `exportar_supresiones RUTA` a diario, con el archivo fuera de la base (LBW-13; falta decidir donde, D3).
   Tras restaurar cualquier respaldo: `reaplicar_supresiones --archivo RUTA` antes de reabrir el servicio.
 - Confirmar que Railway agrega la IP del cliente al final de `X-Forwarded-For` (S4-02, LBW-08).
-- Definir `ERRORES_CORREOS` (quien recibe el aviso de un error 500) y poner un monitor externo gratuito (por ejemplo
-  UptimeRobot) que consulte `https://lbwus.xyz/salud/` cada 5 minutos. No usar el Healthcheck Path de Railway con esa
-  direccion sin permitir antes `healthcheck.railway.app` en `ALLOWED_HOSTS`. Detalle en CONFIGURACION_PRODUCCION.md.
+- Definir `ERRORES_CORREOS` en el servicio web (quien recibe el aviso de un error 500) y `ALERTAS_CORREOS` en el Cron
+  (quien recibe el aviso de una tarea diaria fallida), y poner un monitor externo gratuito (por ejemplo UptimeRobot) que
+  consulte `https://lbwus.xyz/salud/` cada 5 minutos: da 503 si `tareas_diarias` no terminó en 26 h o si la base no
+  responde (SCRUM-100). **Nunca** usar esa dirección como Healthcheck Path de Railway: da 503 hasta la primera corrida
+  del Cron y bloquearía los despliegues. Detalle en CONFIGURACION_PRODUCCION.md.
 - Respaldos automaticos y una restauracion probada (LBW-14). La politica de privacidad debe decir que los
   respaldos conservan los documentos durante su retencion.
 

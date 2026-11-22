@@ -1,3 +1,4 @@
+import logging
 import os
 
 from django.conf import settings
@@ -28,6 +29,7 @@ from resenas.consultas import (
 )
 from apoderados.permisos import vinculo_contratable
 from lbwus.puerta import destino_seguro
+from lbwus.registro import enmascarar_usuario, referencia
 from .forms import AlumnoForm, FiltroClasesForm
 from admin_portal.forms import MensajeContactoForm
 from soporte.tickets import abrir_contacto
@@ -43,6 +45,8 @@ from .roles import (
     rol_en_sesion,
 )
 from .backends import obtener_identificador_rate_limit
+
+logger = logging.getLogger(__name__)
 
 
 def _plan_para_js(alumno):
@@ -444,7 +448,11 @@ def custom_login(request):
         intentos_ip = cache.get(clave_cache_ip, 0)
         intentos_user = cache.get(clave_cache_user, 0)
 
+        # SCRUM-100: usuario enmascarado, huella para correlacionar formatos del mismo RUT, e IP. Nunca la clave.
+        quien = f'usuario={enmascarar_usuario(username)} ref={referencia(canon_user)} ip={ip}'
+
         if intentos_ip >= LIMITE_INTENTOS_IP or intentos_user >= LIMITE_INTENTOS_USUARIO:
+            logger.warning('evento=login_bloqueado %s intentos_ip=%s intentos_usuario=%s', quien, intentos_ip, intentos_user)
             return render(request, 'registration/login.html', {'error': MENSAJE_LOGIN_BLOQUEADO})
 
         if not username or not password:
@@ -461,6 +469,10 @@ def custom_login(request):
                 cache.set(clave_cache_ip, intentos_ip + 1, BLOQUEO_LOGIN_SEGUNDOS)
                 if canon_user:
                     cache.set(clave_cache_user, intentos_user + 1, BLOQUEO_LOGIN_SEGUNDOS)
+                logger.warning('evento=login_fallido %s intentos_ip=%s intentos_usuario=%s',
+                               quien, intentos_ip + 1, intentos_user + 1 if canon_user else 0)
+                if intentos_ip + 1 >= LIMITE_INTENTOS_IP or (canon_user and intentos_user + 1 >= LIMITE_INTENTOS_USUARIO):
+                    logger.warning('evento=login_bloqueo_activado %s segundos=%s', quien, BLOQUEO_LOGIN_SEGUNDOS)
                 error = "RUT/Correo o contraseña incorrectos. Inténtalo de nuevo."
 
     return render(request, 'registration/login.html', {'error': error, 'siguiente': siguiente})

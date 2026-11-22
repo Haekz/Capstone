@@ -21,7 +21,8 @@ Todas las lee `lbwus/settings.py`, salvo donde se indica.
 | `EMAIL_HOST`, `EMAIL_PORT` | Servidor SMTP | No (por omisión Gmail, 587) | — |
 | `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD` | Cuenta de correo | Sí | Fallan la recuperación de contraseña, el código de Google y los correos de apoderados |
 | `DEFAULT_FROM_EMAIL` | Remitente | No (usa `EMAIL_HOST_USER`) | — |
-| `ERRORES_CORREOS` | Correos, separados por comas, que reciben un aviso cuando hay un error 500 (`lbwus/aviso_errores.py`). El aviso **no lleva datos de las personas** ni el mensaje del error: solo la pantalla, el tipo de error, el id de la cuenta y por dónde pasó el código | Recomendada | No se avisa por correo; el error igual queda completo en los registros de Railway |
+| `ERRORES_CORREOS` | Correos, separados por comas, que reciben un aviso cuando hay un error 500 (`lbwus/aviso_errores.py`). El aviso **no lleva datos de las personas** ni el mensaje del error: solo la pantalla, el tipo de error, el id de la cuenta y por dónde pasó el código. **Va en el servicio web** | Recomendada | No se avisa por correo; el error igual queda completo en los registros de Railway |
+| `ALERTAS_CORREOS` | A quién avisar por correo si falla alguna tarea de `tareas_diarias` (sección 8). Varios correos separados por comas. **Va en el servicio Cron**, que es el que envía el aviso | Recomendada | No se envía ningún aviso: la falla queda solo en los logs del Cron y en `/salud/` |
 | `MONGODB_URI` | MongoDB Atlas (app `comunidad`) | Sí, si se usa la comunidad | MongoDB queda desactivado y el sitio funciona igual |
 | `MONGODB_DB`, `MONGODB_TIMEOUT_MS` | Base de MongoDB y tiempo de espera | No (por omisión `lbwus_dev`, 5000) | **En producción debe ser `lbwus_prod`** |
 | `CSP_OBLIGATORIA` | `1` hace obligatoria la Content-Security-Policy (sección 7) | No | Queda en Report-Only: el navegador avisa, pero no bloquea |
@@ -34,7 +35,7 @@ Todas las lee `lbwus/settings.py`, salvo donde se indica.
 
 El inicio de sesión con Google no usa variables: el `client_id` y el secreto están en la base (Django admin → Social applications).
 
-**Salud del sitio.** `/salud/` responde `200` (`{"estado": "ok"}`) si el sitio y la base de datos funcionan y `503` si la base no responde. No pide sesión ni la clave de la puerta, y no muestra detalles. Para enterarse de una caída conviene un monitor externo gratuito (por ejemplo UptimeRobot) que consulte `https://lbwus.xyz/salud/` cada 5 minutos. **No uses el "Healthcheck Path" de Railway con esta dirección sin antes permitir el host `healthcheck.railway.app` en `ALLOWED_HOSTS`** (hoy no está, según la documentación de Railway la consulta sale desde ese host): cada despliegue fallaría con error 400.
+**Salud del sitio.** `/salud/` responde `200` solo si `tareas_diarias` terminó completa en las últimas 26 horas, y `503` (`atrasado`) si no; detalle y monitor externo en la sección 8 («Detectar que `tareas_diarias` no corrió»). Si la base de datos no responde también da `503 atrasado`, porque esa hora se guarda en PostgreSQL: ante una alerta, revisa primero si el resto del sitio abre. **No uses `/salud/` como "Healthcheck Path" de Railway**: da 503 hasta la primera corrida del Cron y cada vez que se atrasa, así que bloquearía los despliegues (además, esa consulta sale desde `healthcheck.railway.app`, que no está en `ALLOWED_HOSTS`: daría 400).
 
 ## 2. Archivos privados
 
@@ -80,11 +81,11 @@ El inicio de sesión con Google no usa variables: el `client_id` y el secreto es
 
 Con `DEBUG=False`, `CompressedManifestStaticFilesStorage` da error 500 si una plantilla pide un estático que no existe. Las pruebas no usan el manifiesto (`lbwus/test_runner.py`), así que no necesitan `collectstatic`; a cambio, `tests/test_configuracion_produccion.py::EstaticosTests` corre `collectstatic` con el almacenamiento de producción en una carpeta temporal (falla si un CSS apunta a un archivo inexistente) y revisa que cada `{% static '...' %}` literal de las plantillas esté en el manifiesto. Las rutas armadas con variables no se revisan.
 
-**Tareas diarias (un solo cron).** `python manage.py tareas_diarias` corre todas las tareas diarias en orden (lista en `TAREAS`, `alumnos/management/commands/tareas_diarias.py`): agenda (`generar_bloques`), pagos que no volvieron, borrado de documentos de más de 30 días, observaciones y conversaciones vencidas, y avisos a líderes y agentes. Si una falla, corren las demás y la corrida termina con error nombrándola (se ve en los logs del servicio). Una tarea nueva se suma en `TAREAS`; Railway no se toca.
+**Tareas diarias (un solo cron).** `python manage.py tareas_diarias` corre todas las tareas diarias en orden (lista en `TAREAS`, `alumnos/management/commands/tareas_diarias.py`): agenda (`generar_bloques`), pagos que no volvieron, borrado de documentos de más de 30 días, observaciones y conversaciones vencidas, y avisos a líderes y agentes. Si una falla, corren las demás y la corrida termina con error nombrándola (se ve en los logs del servicio), y se avisa por correo a `ALERTAS_CORREOS`. Si todas terminan bien, guarda la hora de la corrida para `/salud/` (sección 8). Una tarea nueva se suma en `TAREAS`; Railway no se toca.
 
 No está en el `Procfile` (ese arranca solo la web). Se crea **una vez** en Railway:
 1. Proyecto → **+ New → GitHub Repo** → el mismo repositorio.
-2. **Variables:** las mismas del servicio web (al menos `DATABASE_URL`, `SECRET_KEY`, `DOCUMENTOS_CLAVE` y las de correo y Transbank); conviene usar referencias a las del servicio web.
+2. **Variables:** las mismas del servicio web (al menos `DATABASE_URL`, `SECRET_KEY`, `DOCUMENTOS_CLAVE` y las de correo y Transbank); conviene usar referencias a las del servicio web. Además, `ALERTAS_CORREOS` (sección 8).
 3. **Settings → Custom Start Command:** `python manage.py tareas_diarias`. Sin esto arrancaría gunicorn por el `Procfile`.
 4. **Settings → Cron Schedule:** `0 9 * * *` (todos los días 9:00 UTC, 6:00 en Chile).
 
@@ -143,3 +144,62 @@ Hoy `script-src` y `style-src` permiten `'unsafe-inline'`, porque las plantillas
 2. Mover los `<script>` en línea a archivos `.js`, o darles un *nonce* por respuesta (el middleware tendría que generarlo y las plantillas usarlo).
 3. Quitar `'unsafe-inline'` de `script-src` primero (es el que protege del XSS) y, más adelante, de `style-src`.
 
+## 8. Logging, monitoreo y alertas (SCRUM-100)
+
+### Dónde ver los logs
+
+Todo se escribe en la consola (stdout/stderr) y Railway lo guarda por servicio:
+- **Servicio web** → pestaña **Deployments** → el despliegue activo → **View Logs** (o la pestaña **Logs** del proyecto, filtrando por servicio). Ahí están los errores 500, los logins fallidos y los pagos.
+- **Servicio Cron** (`tareas_diarias`) → **Deployments** → cada ejecución tiene sus propios logs. Una corrida con error aparece como fallida.
+
+Cada línea es un evento: `fecha nivel logger mensaje`, con los datos del evento como `clave=valor`. Para buscar, filtra por el nombre del evento:
+
+| Evento | Nivel | Qué registra |
+|---|---|---|
+| `login_fallido` | WARNING | Usuario enmascarado (`***678-5` o `j***@gmail.com`), `ref` (huella del usuario: la misma para todas las formas de escribir el RUT), IP e intentos |
+| `login_bloqueo_activado` / `login_bloqueado` | WARNING | El intento que activó el bloqueo de 5 minutos / un intento que llegó bloqueado |
+| `pago_iniciado` | INFO | `tipo` (paquete o videos_extra), `buy_order` y `monto` |
+| `pago_aprobado` / `pago_rechazado` | INFO (WARNING con `motivo=monto_distinto` u `orden_desconocida`) | `buy_order`, `monto` recibido, monto `esperado`, `estado` y `codigo` de Transbank, y `activados` (compras que esta respuesta activó). Se registra después de guardar. Lo registran el retorno del alumno y `revisar_pagos_pendientes` |
+| `pago_anulado` | INFO | El alumno anuló en Webpay (`buy_order`) |
+| `pago_error_transbank` | ERROR | `etapa` (`create`, `commit` o `status`), `buy_order` y el tipo del error |
+| `Internal Server Error: /ruta` | ERROR (`django.request`) | Cada error 500, con su traza |
+| `tarea_diaria_fallida` / `tareas_diarias_con_error` | ERROR | La tarea que falló (con traza) y el resumen de la corrida |
+| `tareas_diarias_completas` | INFO | La corrida terminó bien |
+| `alerta_enviada` / `alerta_omitida` / `alerta_no_enviada` | INFO / WARNING / ERROR | El aviso por correo salió, no había `ALERTAS_CORREOS`, o el SMTP falló |
+
+Niveles: la raíz y `django` en WARNING; `django.request` solo ERROR (los 404 y 403 no se registran); las apps del proyecto en INFO. La configuración está en `LOGGING` (`lbwus/settings.py`).
+
+**Datos sensibles.** Nunca se registran contraseñas, tokens de Webpay completos, datos de tarjeta, RUT completos ni correos completos. Cada evento enmascara lo suyo y, además, el formateador de la consola (`FormatoSeguro`, `lbwus/registro.py`) enmascara la clave de las cadenas de conexión (`usuario:***@host`), correos, RUT con guion y tokens de Webpay en todas las líneas, trazas incluidas (por ejemplo, el RUT repetido que trae un error de PostgreSQL o el correo que trae un error SMTP). **Solo reconoce esos patrones:** un secreto con otra forma (un RUT sin guion, una contraseña dentro del texto de un error) no se detecta. Por eso, si agregas un log, no le pases la contraseña ni el objeto completo de un usuario o de una respuesta de Transbank: usa ids, `buy_order` y `type(error).__name__`.
+
+### Alerta cuando falla `tareas_diarias`
+
+En el **servicio Cron**, define `ALERTAS_CORREOS` con uno o más correos del equipo separados por comas (por ejemplo `persona1@dominio,persona2@dominio`). Si alguna tarea falla, al final de la corrida se envía **un** correo con el SMTP ya configurado (`EMAIL_HOST_USER` y `EMAIL_HOST_PASSWORD`, que el Cron también necesita) con las tareas que fallaron y la hora. El correo no lleva trazas ni datos personales: el detalle está en los logs de esa ejecución. El comando igual termina con error, para que Railway marque la corrida como fallida, aunque el correo no salga.
+
+Sin `ALERTAS_CORREOS` no se envía nada (queda `alerta_omitida` en el log).
+
+### Detectar que `tareas_diarias` no corrió: `/salud/`
+
+Si el Cron no arranca (servicio borrado, horario mal puesto, despliegue roto), no hay corrida que falle ni correo que salga. Para eso está `https://lbwus.xyz/salud/`:
+- **200** `{"estado": "ok"}`: la última corrida **completa** (todas las tareas sin error) fue hace menos de 26 horas.
+- **503** `{"estado": "atrasado"}`: no hubo corrida completa en 26 horas, o nunca hubo una.
+
+No pide login, no pasa por la puerta del sitio (`SITIO_CLAVE`), no tiene límite de intentos, acepta GET y HEAD, no se guarda en caché y no devuelve ningún otro dato. La hora de la última corrida se guarda en la caché compartida (`DatabaseCache`, en PostgreSQL), así que sobrevive a despliegues y reinicios sin migraciones. Si esa caché se limpia, `/salud/` dice `atrasado` hasta la próxima corrida completa: una falsa alarma, nunca un falso `ok`.
+
+**Decisión: un Transbank que no responde no hace fallar la corrida.** Si `revisar_pagos_pendientes` no obtiene respuesta de Transbank (red, caída o token vencido), esa tarea termina bien: cada pago sin respuesta queda como `pago_error_transbank etapa=status` (ERROR) en los logs del Cron, sigue pendiente y se vuelve a consultar en la corrida siguiente. Por eso ese fallo, por sí solo, no envía alerta por correo ni cambia `/salud/`: la corrida cuenta como completa si las demás tareas también terminan bien. Se decidió así porque un corte breve de Transbank no es una falla de LBWUS, y alertar por cada uno haría ignorar las alertas reales. Si los logs muestran `etapa=status` varios días seguidos para la misma `buy_order`, revisa ese pago a mano con Transbank.
+
+Además, el **portal admin** (Resumen General) muestra el aviso "Las tareas diarias están atrasadas" con el mismo criterio. En local, sin Cron, el aviso aparece siempre: es lo esperado.
+
+### Conectar un monitor externo gratuito (UptimeRobot)
+
+1. Crear una cuenta gratuita en UptimeRobot (con un correo del equipo).
+2. **Add New Monitor** → tipo **HTTP(s)** → URL `https://lbwus.xyz/salud/` → intervalo de 5 minutos (el mínimo del plan gratuito).
+3. En **Alert Contacts**, marcar los correos del equipo.
+4. Guardar. Desde ahí, UptimeRobot avisa por correo cuando la respuesta no es 2xx o no hay respuesta.
+
+Con un solo monitor se cubren los dos casos:
+- **El sitio está caído** (no responde, o responde 502 desde Railway) → alerta.
+- **El Cron no corrió o falló** (503 `atrasado`) → alerta. Para distinguir los casos, abre `/salud/` en el navegador: si muestra `{"estado": "atrasado"}`, el sitio funciona y el problema es el Cron; revisa sus ejecuciones en Railway.
+
+Después de una falla del Cron, la alerta se cierra sola con la próxima corrida completa.
+
+**Pruebas:** `tests/test_logging_alertas.py`. Nunca probar `/salud/` ni las alertas con escaneos o cargas contra producción: basta abrir la URL una vez.

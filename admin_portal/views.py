@@ -8,6 +8,7 @@ from django.views.decorators.http import require_POST
 from alumnos import paquetes
 from alumnos.models import Alumno, Profesor, Tutor, Clase
 from alumnos.decorators import admin_required
+from lbwus import salud
 from supresiones import registro
 
 from . import ingresos, metricas
@@ -103,6 +104,7 @@ def _contexto_dashboard(request, admin, form_ajustes=None, seccion_inicial='resu
         'total_pendientes': sum(p['n'] for p in pendientes),
         'form_ajustes': form_ajustes or AjustesAdminForm(user=admin.user),
         'seccion_inicial': seccion_inicial,
+        'tareas_atrasadas': salud.tareas_atrasadas(),  # el Cron no completo tareas_diarias en 26 h (SCRUM-100)
     }
     return context
 

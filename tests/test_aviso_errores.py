@@ -1,4 +1,4 @@
-"""Aviso de errores 500 por correo y direccion de salud. Datos ficticios.
+"""Aviso de errores 500 por correo. Datos ficticios. (La direccion de salud se prueba en test_logging_alertas.py.)
 
 El correo no debe llevar datos de las personas: ni el mensaje del error (los de base de datos traen datos reales),
 ni parametros, ni lo enviado, ni nombre o correo de quien navegaba, ni la direccion real (puede llevar un token).
@@ -6,9 +6,8 @@ ni parametros, ni lo enviado, ni nombre o correo de quien navegaba, ni la direcc
 from unittest import mock
 
 from django.core import mail
-from django.db import OperationalError
 from django.test import TestCase, override_settings
-from django.urls import path, reverse
+from django.urls import path
 
 from lbwus import aviso_errores
 from lbwus.urls import urlpatterns as urls_del_sitio
@@ -27,30 +26,6 @@ def explota_distinto(request):
 
 
 urlpatterns = urls_del_sitio + [path('explota/<int:numero>/', explota), path('otro-error/', explota_distinto)]
-
-
-class SaludTests(TestCase):
-
-    def test_responde_ok_sin_iniciar_sesion(self):
-        respuesta = self.client.get(reverse('salud'))
-        self.assertEqual((respuesta.status_code, respuesta.json()), (200, {'estado': 'ok'}))
-        self.assertIn('no-store', respuesta['Cache-Control'])
-
-    @override_settings(SITIO_CLAVE='clave-de-prueba')
-    def test_responde_aunque_la_puerta_con_clave_este_activa(self):
-        self.assertEqual(self.client.get(reverse('salud')).status_code, 200)
-        self.assertEqual(self.client.get(reverse('login')).status_code, 302)  # el resto del sitio si pide la clave
-
-    def test_sin_base_de_datos_dice_503_y_no_cuenta_por_que(self):
-        with mock.patch('lbwus.salud.connection') as conexion, self.assertLogs('lbwus.salud', 'WARNING'):
-            conexion.cursor.side_effect = OperationalError('password authentication failed for user "secreto"')
-            respuesta = self.client.get(reverse('salud'))
-        self.assertEqual((respuesta.status_code, respuesta.json()), (503, {'estado': 'sin base de datos'}))
-        self.assertNotIn('secreto', respuesta.content.decode())
-
-    def test_solo_se_puede_consultar(self):
-        self.assertEqual(self.client.head(reverse('salud')).status_code, 200)
-        self.assertEqual(self.client.post(reverse('salud')).status_code, 405)
 
 
 @override_settings(ROOT_URLCONF=__name__, ERRORES_CORREOS=DESTINOS)
