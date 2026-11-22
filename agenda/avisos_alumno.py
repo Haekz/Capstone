@@ -27,13 +27,13 @@ def _cuando(momento):
     return timezone.localtime(momento).strftime('%d/%m/%Y a las %H:%M')
 
 
-def _avisar(alumno, asunto, texto):
+def _avisar(alumno, asunto, texto, ruta=None, boton='Ver mis clases'):
     """Campanita y correo a quien corresponda. `texto(de_quien)` dice lo mismo para todos: de_quien es '' para
-    el alumno y ' de Ana' para el apoderado de un menor."""
+    el alumno y ' de Ana' para el apoderado de un menor. Con `ruta` el aviso lleva ahi, en vez de a su lista de clases."""
     for user, enlace, de_quien in _destinatarios(alumno):
         mensaje = texto(de_quien)
-        notificar(user, mensaje, enlace)
-        enviar_aviso_clase(user, asunto, asunto, [mensaje], 'Ver mis clases', enlace)
+        notificar(user, mensaje, ruta or enlace)
+        enviar_aviso_clase(user, asunto, asunto, [mensaje], boton, ruta or enlace)
 
 
 def reserva(inscripcion, vinculo=None):
@@ -49,7 +49,7 @@ def reserva(inscripcion, vinculo=None):
         sujeto = f'La clase{de_quien}' if de_quien else 'Tu clase'
         return (f'{sujeto} ({asignatura}) con {profesor} quedó reservada para el {cuando}.'
                 f'{autor if de_quien else ""}')
-    _avisar(inscripcion.alumno, 'Clase reservada', texto)
+    _avisar(inscripcion.alumno, 'Clase reservada', texto, reverse('detalle_clase', args=[inscripcion.pk]), 'Ver la clase')
 
 
 def cancelacion_del_profesor(inscripcion):

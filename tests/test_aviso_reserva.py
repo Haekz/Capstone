@@ -6,6 +6,8 @@ mas (ni RUT, ni correo, ni telefono). El apoderado de un menor esta en test_apod
 
 from unittest import mock
 
+import re
+
 from django.conf import settings
 from django.core import mail
 from django.urls import reverse
@@ -15,7 +17,7 @@ from alumnos.services import InscripcionService
 from notificaciones.models import Notificacion
 from tests.test_cancelar_4_horas import EN_5_HORAS
 from tests.test_filtros_clases import crear_sesion
-from tests.test_paquetes import Escenario, dar_paquete
+from tests.test_paquetes import RUT_ANA, RUT_PROFE, Escenario, dar_paquete
 
 
 class AvisoDeReservaTests(Escenario):
@@ -38,17 +40,29 @@ class AvisoDeReservaTests(Escenario):
         return correo
 
     def test_la_alumna_recibe_campanita_y_correo_con_boton(self):
-        self.reservar()
+        inscripcion = self.reservar()
         [aviso] = Notificacion.objects.filter(usuario=self.ana.user)
         self.assertIn('Tu clase (Algebra) con Profe Rojas quedó reservada para el', aviso.texto)
         correo = self.correo_a(self.ana.user)
         html = correo.alternatives[0][0]
-        enlace = f"{settings.SITIO_URL}{reverse('alumno_pag1')}"
+        ruta = reverse('detalle_clase', args=[inscripcion.pk])
+        enlace = f'{settings.SITIO_URL}{ruta}'
         self.assertEqual(correo.subject, 'Clase reservada - LBWUS')
         self.assertIn(aviso.texto, correo.body)  # el texto sirve sin el diseno
         self.assertIn(aviso.texto, html)
-        self.assertIn(f'href="{enlace}"', html)  # el boton lleva a un enlace completo, no a una ruta suelta
+        self.assertIn(f'href="{enlace}"', html)  # el boton lleva a la pagina de la clase, con enlace completo
         self.assertIn(enlace, correo.body)
+        self.assertEqual(aviso.enlace, ruta)  # y la campanita, al mismo lugar
+
+    def test_el_boton_del_correo_abre_la_pagina_de_la_clase_de_cada_uno(self):
+        inscripcion = self.reservar()
+        for persona, rut in ((self.ana, RUT_ANA), (self.profe, RUT_PROFE)):
+            html = self.correo_a(persona.user).alternatives[0][0]
+            [ruta] = re.findall(rf'href="{re.escape(settings.SITIO_URL)}(/[^"]+)"', html)
+            with self.subTest(persona=persona.user.first_name):
+                self.assertEqual(ruta, reverse('detalle_clase', args=[inscripcion.pk]))
+                self.entrar(rut)
+                self.assertEqual(self.client.get(ruta).status_code, 200)
 
     def test_el_profesor_ve_nombre_y_apellido_de_la_alumna(self):
         self.reservar()

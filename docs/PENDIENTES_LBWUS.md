@@ -215,11 +215,15 @@ La reserva avisa con campanita y correo con diseno (texto de respaldo + HTML, `a
 `templates/correos/aviso_clase.*`) al **alumno adulto**, a **cada apoderado verificado** si es menor (el menor no recibe
 nada propio) y al **profesor**. Cada uno ve **nombre y apellido** del otro y nada mas: ni RUT, ni correo, ni telefono
 (prueba: `test_aviso_reserva.py`). Antes el profesor veia solo el nombre de pila (decision del 02-nov, cambiada el 21-nov).
-- **Etapa 1 (hecha):** aviso al reservar. El boton lleva hoy al panel de clases; en la etapa 2 pasa a la pagina de la clase.
-- **Etapa 2:** pagina de la clase (alumno, profesor y apoderado): fecha y hora de Chile, boton «Ir a la clase», el nombre
-  del otro y «Necesito cambiar el horario». Para el alumno y el apoderado lleva a reprogramar o cancelar; para el profesor,
-  a la **cancelacion que ya existe** (el alumno recibe el aviso y la clase vuelve a su paquete; «pedir otro horario» queda
-  para cuando el sitio crezca). La pagina dice la **regla de las 4 horas** antes del clic: con menos, el cambio se cobra.
+- **Etapa 1 (hecha):** aviso al reservar. El boton y la campanita llevan a la pagina de la clase (etapa 2).
+- **Etapa 2 (hecha):** pagina de la clase en `alumnos/clase/<id>/` (`alumnos/detalle_clase.py`), de **solo lectura**, para el
+  alumno, el apoderado y el profesor: fecha y hora de Chile, el nombre del otro y «Necesito cambiar el horario», que
+  envia a la pantalla que ya tiene ese flujo (alumno: sus clases; apoderado: clases del estudiante; profesor: su panel).
+  Quien no tiene relacion con la clase recibe 404; el anonimo entra y vuelve (`login?next=`). Reglas que muestra: alumno y
+  apoderado cambian o cancelan sin costo hasta **4 horas** antes (con menos solo se cancela y la clase se cobra); el
+  profesor cancela hasta **12 horas** antes (con menos, conversa con el alumno). «Ir a la clase» sale solo cuando la
+  sala deja entrar: **el apoderado no entra a la sala** (SCRUM-87), el estudiante lo hace desde su cuenta. Lo que ya no
+  se puede tocar (empezo o cancelada) no ofrece cambiar. «Pedir otro horario» al alumno queda para cuando el sitio crezca.
 - **Etapa 3:** recordatorios **1 dia antes** y **2 horas antes**, a los tres. Una reserva hecha con menos de 24 horas no
   recibe el de un dia antes. Pide una tarea que corra cada 15 o 30 minutos (el Cron actual corre una vez al dia): un
   **segundo servicio Cron en Railway**, marcas de «ya avisado» por reserva (se reinician si se reprograma) y sumarla al

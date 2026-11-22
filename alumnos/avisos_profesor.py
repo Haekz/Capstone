@@ -136,13 +136,14 @@ def videos_extra_comprados(compra):
               f'{timezone.localtime(compra.fecha_limite):%d/%m/%Y}, desde la pestaña Videos de tu panel.')
 
 
-def _avisar(inscripcion, asunto, texto):
-    _avisar_a(inscripcion.clase.profesor.user, asunto, texto)
+def _avisar(inscripcion, asunto, texto, ruta=None, boton='Ver mi agenda'):
+    _avisar_a(inscripcion.clase.profesor.user, asunto, texto, ruta, boton)
 
 
-def _avisar_a(user, asunto, texto):
-    notificar(user, texto, reverse('panel_profesor'))
-    enviar_aviso_clase(user, asunto, asunto, [texto], 'Ver mi agenda', reverse('panel_profesor'))
+def _avisar_a(user, asunto, texto, ruta=None, boton='Ver mi agenda'):
+    destino = ruta or reverse('panel_profesor')
+    notificar(user, texto, destino)
+    enviar_aviso_clase(user, asunto, asunto, [texto], boton, destino)
 
 
 def _quien_y_que(inscripcion):
@@ -151,7 +152,8 @@ def _quien_y_que(inscripcion):
 
 def reserva(inscripcion):
     alumno, asignatura = _quien_y_que(inscripcion)
-    _avisar(inscripcion, 'Nueva reserva', f'{alumno} reservó {asignatura} para el {_fecha(inscripcion.sesion)}.')
+    _avisar(inscripcion, 'Nueva reserva', f'{alumno} reservó {asignatura} para el {_fecha(inscripcion.sesion)}.',
+            reverse('detalle_clase', args=[inscripcion.pk]), 'Ver la clase')
 
 
 def cancelacion(inscripcion):

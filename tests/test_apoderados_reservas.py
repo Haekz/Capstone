@@ -79,7 +79,8 @@ class ReservasDelApoderadoTests(TestCase):
         self.assertFalse(Notificacion.objects.filter(usuario=self.menor.user).exists())
         self.assertNotIn(self.menor.user.email, [destino for m in mail.outbox for destino in m.to])
         for apoderado in (self.madre, self.padre):
-            self.assertEqual(Notificacion.objects.filter(usuario=apoderado.user).count(), 1)
+            [aviso] = Notificacion.objects.filter(usuario=apoderado.user)
+            self.assertEqual(aviso.enlace, reverse('detalle_clase', args=[self.reserva().pk]))  # a la pagina de la clase
 
     def test_reprograma_y_cancela(self):
         self.reservar()
