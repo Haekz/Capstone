@@ -342,6 +342,10 @@ class Inscripcion(models.Model):
         blank=True,
         related_name='inscripciones',
     )
+    # Recordatorios (alumnos/recordatorios.py): cuando se avisaron, o se dieron por innecesarios porque se reservo
+    # ya dentro de esa ventana. Reagendar los reinicia.
+    recordatorio_1d = models.DateTimeField(null=True, blank=True, editable=False)
+    recordatorio_2h = models.DateTimeField(null=True, blank=True, editable=False)
 
     objects = InscripcionQuerySet.as_manager()
 

@@ -23,6 +23,7 @@ Todas las lee `lbwus/settings.py`, salvo donde se indica.
 | `DEFAULT_FROM_EMAIL` | Remitente | No (usa `EMAIL_HOST_USER`) | — |
 | `ERRORES_CORREOS` | Correos, separados por comas, que reciben un aviso cuando hay un error 500 (`lbwus/aviso_errores.py`). El aviso **no lleva datos de las personas** ni el mensaje del error: solo la pantalla, el tipo de error, el id de la cuenta y por dónde pasó el código. **Va en el servicio web** | Recomendada | No se avisa por correo; el error igual queda completo en los registros de Railway |
 | `ALERTAS_CORREOS` | A quién avisar por correo si falla alguna tarea de `tareas_diarias` (sección 8). Varios correos separados por comas. **Va en el servicio Cron**, que es el que envía el aviso | Recomendada | No se envía ningún aviso: la falla queda solo en los logs del Cron y en `/salud/` |
+| `SALUD_RECORDATORIOS` | `1` hace que `/salud/` vigile también el cron de recordatorios de clase (sección 4). **Va en el servicio web, y solo cuando ese cron ya existe** | No | `/salud/` solo vigila `tareas_diarias` |
 | `MONGODB_URI` | MongoDB Atlas (app `comunidad`) | Sí, si se usa la comunidad | MongoDB queda desactivado y el sitio funciona igual |
 | `MONGODB_DB`, `MONGODB_TIMEOUT_MS` | Base de MongoDB y tiempo de espera | No (por omisión `lbwus_dev`, 5000) | **En producción debe ser `lbwus_prod`** |
 | `CSP_OBLIGATORIA` | `1` hace obligatoria la Content-Security-Policy (sección 7) | No | Queda en Report-Only: el navegador avisa, pero no bloquea |
@@ -90,6 +91,15 @@ No está en el `Procfile` (ese arranca solo la web). Se crea **una vez** en Rail
 4. **Settings → Cron Schedule:** `0 9 * * *` (todos los días 9:00 UTC, 6:00 en Chile).
 
 **Verificar que exista y que no queden crons sueltos** de alguna de esas tareas: correrían dos veces. Sin este cron la agenda deja de ofrecer horas unas 4 semanas después de que el profesor editó su horario por última vez, y los documentos pendientes no se borran solos. `exportar_supresiones RUTA.json` no está en `tareas_diarias`: necesita una ruta de salida fuera de la base.
+
+**Recordatorios de clase (segundo cron, cada 15 minutos).** `python manage.py enviar_recordatorios_clases` avisa 24 y 2 horas antes de cada clase al alumno (o a sus apoderados, si es menor) y al profesor, con campanita y correo (`alumnos/recordatorios.py`). **No va en `tareas_diarias`**: esa corre una vez al día y un aviso de 2 horas no puede esperar hasta mañana. Se crea **una vez** en Railway, como el cron de arriba pero con otro comando y otro horario:
+1. Proyecto → **+ New → GitHub Repo** → el mismo repositorio.
+2. **Variables:** las mismas del servicio web. Necesita sobre todo `DATABASE_URL`, `SECRET_KEY`, `SITIO_URL` (los botones de los correos llevan un enlace completo) y las de correo (`EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`).
+3. **Settings → Custom Start Command:** `python manage.py enviar_recordatorios_clases`.
+4. **Settings → Cron Schedule:** `*/15 * * * *` (cada 15 minutos).
+5. **Cuando ya haya corrido una vez bien**, en el servicio **web** define `SALUD_RECORDATORIOS=1`: desde ahí `/salud/` también da `503` (`atrasado`) si pasa más de 1 hora sin una corrida completa. **No lo enciendas antes**: sin este cron, `/salud/` daría 503 desde el primer minuto.
+
+Cada reserva lleva sus marcas de «ya avisado» (`recordatorio_1d`, `recordatorio_2h`): un recordatorio no se repite, y reagendar las reinicia. Una reserva hecha con menos de 24 horas no recibe el de un día (llegaría minutos después de la confirmación), y una con menos de 2 horas no recibe ninguno. Si una reserva falla, la corrida termina con error (Railway la marca como fallida), las demás siguen y la que falló se reintenta en la próxima corrida. Un correo que Gmail rechaza se registra (`evento=correo_no_enviado`) y **no se reintenta**.
 
 ## 5. Respaldos (manual)
 

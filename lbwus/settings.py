@@ -346,6 +346,10 @@ DEFAULT_FROM_EMAIL = os.environ.get(
 # SCRUM-100: a quien avisar si falla tareas_diarias (lbwus/alertas.py). Separados por comas; vacia = sin aviso.
 ALERTAS_CORREOS = [c.strip() for c in os.environ.get('ALERTAS_CORREOS', '').split(',') if c.strip()]
 
+# Que /salud/ vigile tambien el Cron de recordatorios (enviar_recordatorios_clases, cada 15 min). Se enciende en el
+# servicio WEB solo cuando ese Cron ya existe en Railway: antes, /salud/ daria 503 sin motivo (lbwus/salud.py).
+SALUD_RECORDATORIOS = os.environ.get('SALUD_RECORDATORIOS', 'False').lower() in ('1', 'true', 'si')
+
 # El enlace de recuperación expira después de 1 hora
 PASSWORD_RESET_TIMEOUT = 3600
 

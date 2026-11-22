@@ -7,7 +7,10 @@ Actualizado: 20-nov-2026. Aqui queda solo lo que falta. Todo lo que listaba la v
 Los codigos LBW-xx y Dx son los del backlog y las decisiones grupales del 08-nov (se cargan en Jira).
 
 ## Railway: una sola vez (ver CONFIGURACION_PRODUCCION.md)
-- Servicio Cron `python manage.py tareas_diarias` a las 9:00 UTC (LBW-01). Corre las 8 tareas diarias.
+- Servicio Cron `python manage.py tareas_diarias` a las 9:00 UTC (LBW-01). Corre las 9 tareas diarias.
+- **Segundo Cron** `python manage.py enviar_recordatorios_clases` con `*/15 * * * *`: los recordatorios de clase (24 y 2
+  horas antes). **Sin el no sale ninguno.** Cuando ya haya corrido bien una vez, definir `SALUD_RECORDATORIOS=1` en el
+  servicio web para que `/salud/` lo vigile (CONFIGURACION_PRODUCCION.md, seccion 4).
 - Correr una vez: `manage.py pasar_reportes_a_tickets` y `manage.py pasar_titulos_a_base` (LBW-07).
 - Habilitar al menos un agente en cada tema nuevo: `manage.py habilitar_soporte <RUT> --agregar especializaciones
   horario contacto privacidad` (LBW-07). Sin agente, esos tickets quedan sin asignar.
@@ -224,10 +227,12 @@ nada propio) y al **profesor**. Cada uno ve **nombre y apellido** del otro y nad
   profesor cancela hasta **12 horas** antes (con menos, conversa con el alumno). «Ir a la clase» sale solo cuando la
   sala deja entrar: **el apoderado no entra a la sala** (SCRUM-87), el estudiante lo hace desde su cuenta. Lo que ya no
   se puede tocar (empezo o cancelada) no ofrece cambiar. «Pedir otro horario» al alumno queda para cuando el sitio crezca.
-- **Etapa 3:** recordatorios **1 dia antes** y **2 horas antes**, a los tres. Una reserva hecha con menos de 24 horas no
-  recibe el de un dia antes. Pide una tarea que corra cada 15 o 30 minutos (el Cron actual corre una vez al dia): un
-  **segundo servicio Cron en Railway**, marcas de «ya avisado» por reserva (se reinician si se reprograma) y sumarla al
-  monitoreo de `/salud/`.
+- **Etapa 3 (hecha en codigo; falta crear el Cron en Railway):** recordatorios de **24 horas** y de **2 horas** antes, a
+  los tres (`alumnos/recordatorios.py`, comando `enviar_recordatorios_clases`, cada 15 minutos). Dos marcas por reserva
+  (`recordatorio_1d` y `recordatorio_2h`): no se repiten y reagendar las reinicia. Una reserva con menos de 24 horas no
+  recibe el de un dia, y con menos de 2 horas no recibe ninguno. Cada reserva se avisa y se marca todo o nada; si una
+  falla, la corrida termina con error y se reintenta en la siguiente. `/salud/` lo vigila solo con `SALUD_RECORDATORIOS=1`.
+  Un correo que Gmail rechaza se registra y no se reintenta.
 - **Etapa 4:** cancelacion y cambio de horario con el mismo diseno (hoy el apoderado sigue con el correo de texto viejo).
 - **Limite de Gmail:** unos 500 correos al dia en cuentas gratuitas; con 3 correos por clase se llena con unas 80 clases
   diarias. Para empezar alcanza; si el sitio crece, pasar a un servicio de correo transaccional.

@@ -36,20 +36,38 @@ def _avisar(alumno, asunto, texto, ruta=None, boton='Ver mis clases'):
         enviar_aviso_clase(user, asunto, asunto, [mensaje], boton, ruta or enlace)
 
 
+def _clase_de(inscripcion):
+    """(asignatura, profesional, cuando) como se nombran en los avisos de una clase con sesion."""
+    return (inscripcion.clase.asignatura.nombre, inscripcion.clase.profesor.nombre,
+            _cuando(inscripcion.sesion.fecha_hora_inicio))
+
+
+def _sujeto(de_quien):
+    return f'La clase{de_quien}' if de_quien else 'Tu clase'
+
+
 def reserva(inscripcion, vinculo=None):
     """Reserva confirmada (21-nov): avisa al alumno adulto o, si es menor, a sus apoderados verificados, incluido quien
     la hizo. Con el nombre y apellido del profesional y sin ningun otro dato suyo (solo si alumnos/services.py la
     enlaza al confirmarse, on_commit)."""
-    cuando = _cuando(inscripcion.sesion.fecha_hora_inicio)
-    asignatura = inscripcion.clase.asignatura.nombre
-    profesor = inscripcion.clase.profesor.nombre
+    asignatura, profesor, cuando = _clase_de(inscripcion)
     autor = f' La reservó {vinculo.apoderado.nombre}.' if vinculo else ''
 
     def texto(de_quien):
-        sujeto = f'La clase{de_quien}' if de_quien else 'Tu clase'
-        return (f'{sujeto} ({asignatura}) con {profesor} quedó reservada para el {cuando}.'
+        return (f'{_sujeto(de_quien)} ({asignatura}) con {profesor} quedó reservada para el {cuando}.'
                 f'{autor if de_quien else ""}')
     _avisar(inscripcion.alumno, 'Clase reservada', texto, reverse('detalle_clase', args=[inscripcion.pk]), 'Ver la clase')
+
+
+def recordatorio(inscripcion, plazo):
+    """Recordatorio de la clase (21-nov): `plazo` es '24 horas' o '2 horas'. Dice 'en menos de': siempre es cierto,
+    aunque el Cron se atrase. Mismos destinatarios y mismo cuidado de datos que la reserva."""
+    asignatura, profesor, cuando = _clase_de(inscripcion)
+
+    def texto(de_quien):
+        return f'{_sujeto(de_quien)} ({asignatura}) con {profesor} empieza en menos de {plazo}: el {cuando}.'
+    _avisar(inscripcion.alumno, f'Recordatorio: tu clase empieza en menos de {plazo}', texto,
+            reverse('detalle_clase', args=[inscripcion.pk]), 'Ver la clase')
 
 
 def cancelacion_del_profesor(inscripcion):

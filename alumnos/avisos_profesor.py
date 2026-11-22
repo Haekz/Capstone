@@ -156,6 +156,14 @@ def reserva(inscripcion):
             reverse('detalle_clase', args=[inscripcion.pk]), 'Ver la clase')
 
 
+def recordatorio(inscripcion, plazo):
+    """Recordatorio de la clase (21-nov): `plazo` es '24 horas' o '2 horas'. Mismo cuidado de datos que la reserva."""
+    alumno, asignatura = _quien_y_que(inscripcion)
+    _avisar(inscripcion, f'Recordatorio: tu clase empieza en menos de {plazo}',
+            f'{alumno} tiene {asignatura} contigo y empieza en menos de {plazo}: el {_fecha(inscripcion.sesion)}.',
+            reverse('detalle_clase', args=[inscripcion.pk]), 'Ver la clase')
+
+
 def cancelacion(inscripcion):
     alumno, asignatura = _quien_y_que(inscripcion)
     cuando = f' del {_fecha(inscripcion.sesion)}' if inscripcion.sesion_id else ''

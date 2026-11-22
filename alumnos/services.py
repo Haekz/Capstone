@@ -5,7 +5,7 @@ Encapsula la lógica transaccional de reservas y matriculación con control estr
 import logging
 from django.db import transaction, IntegrityError
 from django.utils import timezone
-from . import avisos_profesor
+from . import avisos_profesor, recordatorios
 from agenda import avisos_alumno
 from .models import Alumno, Clase, Profesor, SesionClase, Inscripcion, PaqueteClases
 from .utils import es_menor
@@ -148,6 +148,7 @@ class InscripcionService:
                     sesion=sesion,
                     estado=Inscripcion.ESTADO_CONFIRMADA,
                     paquete=paquete,
+                    **recordatorios.marcas_al_agendar(sesion.fecha_hora_inicio),
                 )
             except IntegrityError as exc:
                 logger.warning(
@@ -296,8 +297,10 @@ class InscripcionService:
             sesion_anterior = inscripcion.sesion
             inscripcion.sesion = nueva
             inscripcion.clase = nueva.clase
+            for campo, marca in recordatorios.marcas_al_agendar(nueva.fecha_hora_inicio).items():
+                setattr(inscripcion, campo, marca)  # la hora cambio: los recordatorios se calculan de nuevo
             try:
-                inscripcion.save(update_fields=['sesion', 'clase'])
+                inscripcion.save(update_fields=['sesion', 'clase', *recordatorios.CAMPOS])
             except IntegrityError as exc:
                 raise InscripcionDuplicadaError("Ya tienes una reserva en esa sesión.") from exc
             transaction.on_commit(lambda: avisos_profesor.reagenda(inscripcion, sesion_anterior))
