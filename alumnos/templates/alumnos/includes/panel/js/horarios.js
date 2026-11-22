@@ -121,8 +121,8 @@
         }
 
         function confirmarReservaSesion(idSesion, nombreAsignatura, fechaHora) {
-            const safeAsig = window.escaparHtml ? window.escaparHtml(nombreAsignatura) : nombreAsignatura;
-            const safeFecha = window.escaparHtml ? window.escaparHtml(fechaHora) : fechaHora;
+            const safeAsig = escaparHtml(nombreAsignatura);
+            const safeFecha = escaparHtml(fechaHora);
             Swal.fire({
                 title: '¿Reservar este horario?',
                 html: `<b>${safeAsig}</b><br><span style="color:var(--primary-ink); font-weight:600;"><i class="bi bi-clock"></i> ${safeFecha}</span><br><small>Usa 1 clase de tu paquete. Si cancelas antes de que empiece, la clase vuelve a tu paquete.</small>`,
@@ -173,8 +173,8 @@
 
         // Mueve una reserva a otro horario del mismo profesor: no gasta otra clase del paquete.
         function confirmarReprogramacion(idInscripcion, idSesion, nombreAsignatura, fechaHora) {
-            const safeAsig = window.escaparHtml ? window.escaparHtml(nombreAsignatura) : nombreAsignatura;
-            const safeFecha = window.escaparHtml ? window.escaparHtml(fechaHora) : fechaHora;
+            const safeAsig = escaparHtml(nombreAsignatura);
+            const safeFecha = escaparHtml(fechaHora);
             Swal.fire({
                 title: 'Reprogramar clase',
                 html: `¿Mover tu reserva de <b>"${safeAsig}"</b> a este horario?<br><br><span style="color:var(--primary); font-weight:600;"><i class="bi bi-clock"></i> ${safeFecha}</span><br><br>No usa otra clase de tu paquete.`,

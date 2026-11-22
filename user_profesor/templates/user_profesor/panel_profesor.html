@@ -272,8 +272,6 @@ input:checked + .slider:before {
     }
 
     // esta parte es de la biblioteca de videos del profe: los trae del servidor (se guardan en MongoDB)
-    const escVideo = (str) => String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-
     function avisoVideos(texto) {
         const aviso = document.getElementById('profe-videos-aviso');
         if (aviso) { aviso.textContent = texto || ''; aviso.hidden = !texto; }
@@ -288,7 +286,7 @@ input:checked + .slider:before {
             gridEl.innerHTML = '';
             if (!data.disponible) { avisoVideos(data.message); return; }
             document.getElementById('upload-course').innerHTML = data.asignaturas
-                .map(a => `<option value="${Number(a.id)}">${escVideo(a.nombre)}</option>`).join('');
+                .map(a => `<option value="${Number(a.id)}">${escaparHtml(a.nombre)}</option>`).join('');
             avisoVideos(!data.asignaturas.length ? 'Para subir videos necesitas tener al menos una materia en tus clases.'
                         : (data.videos.length ? '' : 'Todavía no has subido videos.'));
             const counterEl = document.getElementById('profe-stat-videos-count');
@@ -296,19 +294,19 @@ input:checked + .slider:before {
             data.videos.forEach(video => {
                 const card = document.createElement('div');
                 card.className = 'profe-cursos-card';
-                const safeTitle = escVideo(video.titulo);
+                const safeTitle = escaparHtml(video.titulo);
                 card.innerHTML = `
                     <div class="profe-cursos-thumb">
                         <i class="bi bi-play-circle-fill"></i>
-                        <span class="profe-cursos-badge-duration">${escVideo(video.duracion)}</span>
+                        <span class="profe-cursos-badge-duration">${escaparHtml(video.duracion)}</span>
                     </div>
                     <div class="profe-cursos-body">
                         <h4 class="profe-cursos-title" title="${safeTitle}">${safeTitle}</h4>
-                        <span class="profe-cursos-category">${escVideo(video.asignatura)}</span>
+                        <span class="profe-cursos-category">${escaparHtml(video.asignatura)}</span>
                         <div class="profe-cursos-meta">
-                            <span><i class="bi bi-calendar"></i> ${escVideo(video.subido)}</span>
+                            <span><i class="bi bi-calendar"></i> ${escaparHtml(video.subido)}</span>
                         </div>
-                        <button class="profe-cursos-delete-btn" data-id="${escVideo(video.id)}" onclick="deleteTeacherVideo(this.dataset.id)">
+                        <button class="profe-cursos-delete-btn" data-id="${escaparHtml(video.id)}" onclick="deleteTeacherVideo(this.dataset.id)">
                             <i class="bi bi-trash3-fill"></i> Eliminar video
                         </button>
                     </div>
@@ -325,18 +323,18 @@ input:checked + .slider:before {
         const card = document.getElementById('profe-entregas-card');
         const lista = document.getElementById('profe-entregas-lista');
         card.hidden = !data.entregas.length;
-        const opciones = data.videos.map(v => `<option value="${escVideo(v.id)}">${escVideo(v.titulo)} (${escVideo(v.asignatura)})</option>`).join('');
+        const opciones = data.videos.map(v => `<option value="${escaparHtml(v.id)}">${escaparHtml(v.titulo)} (${escaparHtml(v.asignatura)})</option>`).join('');
         lista.innerHTML = data.entregas.map(e => {
             const estado = !e.falta ? 'Entrega completa'
-                : `${e.atrasada ? 'Atrasado: debías haber entregado hasta' : 'Próxima entrega'} el ${escVideo(e.proxima)} (faltan ${Number(e.falta)})`;
+                : `${e.atrasada ? 'Atrasado: debías haber entregado hasta' : 'Próxima entrega'} el ${escaparHtml(e.proxima)} (faltan ${Number(e.falta)})`;
             const acciones = e.compartidos >= e.videos ? '' : (opciones ? `
                 <div class="profe-entrega-acciones">
-                    <select class="prof-form-select" aria-label="Video para ${escVideo(e.alumno)}">${opciones}</select>
+                    <select class="prof-form-select" aria-label="Video para ${escaparHtml(e.alumno)}">${opciones}</select>
                     <button class="prof-form-btn" style="width:auto;padding:10px 20px" data-paquete="${Number(e.paquete)}" onclick="shareVideo(this)">Compartir</button>
                 </div>` : '<p class="profe-entrega-estado">Sube un video a tu biblioteca para poder compartirlo.</p>');
             return `<li class="profe-entrega${e.atrasada ? ' atrasada' : ''}">
-                <strong>${escVideo(e.alumno)}</strong>
-                <span>Plan ${escVideo(e.plan)} · ${Number(e.compartidos)} de ${Number(e.videos)} compartidos</span>
+                <strong>${escaparHtml(e.alumno)}</strong>
+                <span>Plan ${escaparHtml(e.plan)} · ${Number(e.compartidos)} de ${Number(e.videos)} compartidos</span>
                 <span class="profe-entrega-estado">${estado}</span>${acciones}
             </li>`;
         }).join('');

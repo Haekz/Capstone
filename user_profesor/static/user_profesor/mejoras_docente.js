@@ -8,7 +8,7 @@
         if (!document.querySelector('.prof-section')) return;
         const $ = (sel, raiz = document) => raiz.querySelector(sel);
         const $$ = (sel, raiz = document) => Array.from(raiz.querySelectorAll(sel));
-        const esc = window.escaparHtml || ((t) => String(t));
+        const esc = window.escaparHtml;
         const sinTildes = (t) => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
         // ── 1. La barra superior dice en qué sección estás (antes decía siempre "Panel docente") ──

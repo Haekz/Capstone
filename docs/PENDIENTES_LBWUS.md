@@ -29,7 +29,7 @@ Los codigos LBW-xx y Dx son los del backlog y las decisiones grupales del 08-nov
   Solo despues de correr `pasar_titulos_a_base` en produccion. Sin ticket todavia.
 
 ## Seguridad y calidad (detalle en el backlog)
-- LBW-11 y LBW-21 escape en el JS, LBW-12 suite en paralelo (la CI corre `manage.py test` sin `--parallel`),
+- LBW-12 suite en paralelo (la CI corre `manage.py test` sin `--parallel`),
   LBW-22 a LBW-26 deuda tecnica. LBW-03 (DEBUG seguro en Railway), LBW-04 (versiones fijas en `requirements.txt`),
   LBW-05 (gunicorn en el `Procfile`), LBW-06 (CI) y LBW-10 (Dependabot) ya estan hechos: se verificaron en el
   codigo el 15-nov.
