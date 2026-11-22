@@ -46,17 +46,46 @@ def _sujeto(de_quien):
     return f'La clase{de_quien}' if de_quien else 'Tu clase'
 
 
+def _autor(vinculo, verbo):
+    """' La canceló María.': que los demás apoderados sepan quién fue. Nada si no actuó un apoderado."""
+    return f' La {verbo} {vinculo.apoderado.nombre}.' if vinculo else ''
+
+
 def reserva(inscripcion, vinculo=None):
     """Reserva confirmada (21-nov): avisa al alumno adulto o, si es menor, a sus apoderados verificados, incluido quien
     la hizo. Con el nombre y apellido del profesional y sin ningun otro dato suyo (solo si alumnos/services.py la
     enlaza al confirmarse, on_commit)."""
     asignatura, profesor, cuando = _clase_de(inscripcion)
-    autor = f' La reservó {vinculo.apoderado.nombre}.' if vinculo else ''
+    autor = _autor(vinculo, 'reservó')
 
     def texto(de_quien):
         return (f'{_sujeto(de_quien)} ({asignatura}) con {profesor} quedó reservada para el {cuando}.'
                 f'{autor if de_quien else ""}')
     _avisar(inscripcion.alumno, 'Clase reservada', texto, reverse('detalle_clase', args=[inscripcion.pk]), 'Ver la clase')
+
+
+def cancelacion_del_apoderado(inscripcion, vinculo):
+    """Un apoderado canceló la clase del menor (21-nov): avisa a todos sus apoderados verificados, incluido quien lo
+    hizo. El menor no recibe nada. Con menos de 4 h la clase se descuenta: se dice."""
+    asignatura, profesor, cuando = _clase_de(inscripcion)
+    autor = _autor(vinculo, 'canceló')
+    tarde = (' Faltaban menos de 4 horas: la clase se descontó del paquete.'
+             if inscripcion.estado == inscripcion.ESTADO_CANCELADA_TARDE else '')
+
+    def texto(de_quien):
+        return f'{_sujeto(de_quien)} ({asignatura}) con {profesor} del {cuando} fue cancelada.{autor if de_quien else ""}{tarde}'
+    _avisar(inscripcion.alumno, 'Clase cancelada', texto)
+
+
+def reagenda_del_apoderado(inscripcion, sesion_anterior, vinculo):
+    """Un apoderado movió la clase del menor a otra hora (21-nov): mismos destinatarios que la cancelación."""
+    asignatura, profesor, cuando = _clase_de(inscripcion)
+    antes = _cuando(sesion_anterior.fecha_hora_inicio)
+    autor = _autor(vinculo, 'movió')
+
+    def texto(de_quien):
+        return f'{_sujeto(de_quien)} ({asignatura}) con {profesor} pasó del {antes} al {cuando}.{autor if de_quien else ""}'
+    _avisar(inscripcion.alumno, 'Clase reagendada', texto, reverse('detalle_clase', args=[inscripcion.pk]), 'Ver la clase')
 
 
 def recordatorio(inscripcion, plazo):

@@ -241,6 +241,8 @@ class InscripcionService:
                                   else Inscripcion.ESTADO_CANCELADA_TARDE)
             inscripcion.save(update_fields=['estado'])
             transaction.on_commit(lambda: avisos_profesor.cancelacion(inscripcion))
+            if vinculo is not None:  # actuó un apoderado: avisa a los demás (el alumno adulto no se avisa a sí mismo)
+                transaction.on_commit(lambda: avisos_alumno.cancelacion_del_apoderado(inscripcion, vinculo))
             return inscripcion
 
     @classmethod
@@ -304,4 +306,6 @@ class InscripcionService:
             except IntegrityError as exc:
                 raise InscripcionDuplicadaError("Ya tienes una reserva en esa sesión.") from exc
             transaction.on_commit(lambda: avisos_profesor.reagenda(inscripcion, sesion_anterior))
+            if vinculo is not None:
+                transaction.on_commit(lambda: avisos_alumno.reagenda_del_apoderado(inscripcion, sesion_anterior, vinculo))
             return inscripcion

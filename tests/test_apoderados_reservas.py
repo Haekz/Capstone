@@ -84,9 +84,11 @@ class ReservasDelApoderadoTests(TestCase):
 
     def test_reprograma_y_cancela(self):
         self.reservar()
-        self.client.post(self.url('apoderado_reprogramar_clase', self.reserva().pk), {'id_sesion': self.otra_sesion.pk})
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post(self.url('apoderado_reprogramar_clase', self.reserva().pk), {'id_sesion': self.otra_sesion.pk})
         self.assertEqual(self.reserva().sesion, self.otra_sesion)
-        self.client.post(self.url('apoderado_cancelar_clase', self.reserva().pk))
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post(self.url('apoderado_cancelar_clase', self.reserva().pk))
         self.assertEqual(self.reserva().estado, Inscripcion.ESTADO_CANCELADA)
         self.assertEqual(len(self.correos_a_apoderados()), 6)  # 3 cambios x 2 apoderados
 

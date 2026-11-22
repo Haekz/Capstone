@@ -176,7 +176,8 @@ def cancelacion(inscripcion):
 def reagenda(inscripcion, sesion_anterior):
     alumno, asignatura = _quien_y_que(inscripcion)
     _avisar(inscripcion, 'Clase reagendada',
-            f'{alumno} movió {asignatura} del {_fecha(sesion_anterior)} al {_fecha(inscripcion.sesion)}.')
+            f'{alumno} movió {asignatura} del {_fecha(sesion_anterior)} al {_fecha(inscripcion.sesion)}.',
+            reverse('detalle_clase', args=[inscripcion.pk]), 'Ver la clase')
 
 
 def clase_extra_solicitada(solicitud):

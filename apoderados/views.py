@@ -28,7 +28,7 @@ from alumnos.webpay import iniciar_compra_paquete, iniciar_compra_videos_extra  
 from observaciones import panel as observaciones_panel
 from soporte.permisos import lider_required
 
-from .correo import (avisar_apoderados, avisar_revocacion, enviar_confirmacion, enviar_confirmacion_adolescente,
+from .correo import (avisar_revocacion, enviar_confirmacion, enviar_confirmacion_adolescente,
                      enviar_invitacion)
 from .forms import (VERSION_DECLARACION_VINCULO, AceptarInvitacionForm, CarnetForm, ClaveEstudianteForm,
                     DocumentoVinculoForm, InvitacionForm, NuevaClaveForm, RegistroAdolescenteForm,
@@ -319,18 +319,16 @@ def clases_estudiante(request, id_vinculo):
     })
 
 
-def _operar(request, id_vinculo, accion, operacion):
-    """Reserva, cancela o reprograma por el estudiante y avisa a sus apoderados."""
+def _operar(request, id_vinculo, operacion):
+    """Reserva, cancela o reprograma por el estudiante. Los avisos a sus apoderados salen de InscripcionService."""
     vinculo = _vinculo_o_404(request, id_vinculo)
     try:
-        inscripcion = operacion(vinculo)
+        operacion(vinculo)
     except ValueError:
         messages.error(request, 'Elige una sesión válida.')
     except InscripcionError as error:
         messages.error(request, str(error))
     else:
-        if accion != 'reservó':  # la reserva la avisa agenda.avisos_alumno.reserva (campanita y diseño): no se repite
-            avisar_apoderados(inscripcion, accion, vinculo.apoderado.nombre)
         messages.success(request, 'Cambio guardado. Avisamos por correo a los apoderados del estudiante.')
     return redirect('apoderado_clases_estudiante', vinculo.pk)
 
@@ -342,21 +340,21 @@ def _sesion_del_post(request):
 @require_POST
 @apoderado_required
 def reservar_clase(request, id_vinculo):
-    return _operar(request, id_vinculo, 'reservó', lambda v: InscripcionService.inscribir_alumno_en_sesion(
+    return _operar(request, id_vinculo, lambda v: InscripcionService.inscribir_alumno_en_sesion(
         v.alumno, _sesion_del_post(request), vinculo=v))
 
 
 @require_POST
 @apoderado_required
 def cancelar_clase(request, id_vinculo, id_inscripcion):
-    return _operar(request, id_vinculo, 'canceló', lambda v: InscripcionService.cancelar_inscripcion(
+    return _operar(request, id_vinculo, lambda v: InscripcionService.cancelar_inscripcion(
         v.alumno, id_inscripcion, vinculo=v))
 
 
 @require_POST
 @apoderado_required
 def reprogramar_clase(request, id_vinculo, id_inscripcion):
-    return _operar(request, id_vinculo, 'reprogramó', lambda v: InscripcionService.reprogramar_inscripcion(
+    return _operar(request, id_vinculo, lambda v: InscripcionService.reprogramar_inscripcion(
         v.alumno, id_inscripcion, _sesion_del_post(request), vinculo=v))
 
 
