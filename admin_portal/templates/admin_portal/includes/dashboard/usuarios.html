@@ -16,17 +16,12 @@
                             </button>
                         </div>
 
-                        <!-- esta parte es de la barra con buscador y botón de agregar -->
+                        <!-- esta parte es de la barra con el buscador (el admin no crea ni edita alumnos) -->
                         <div class="users-toolbar">
-                            <div class="search-bar" style="flex:1; max-width:360px;">
+                            <div class="search-bar adm-buscar-usuarios">
                                 <i class="bi bi-search"></i>
-                                <input type="text" id="user-search" placeholder="Buscar por nombre, RUT o correo..."
-                                    oninput="filterUsers()">
+                                <input type="text" id="user-search" placeholder="Buscar por nombre, RUT o correo…" aria-label="Buscar usuarios por nombre, RUT o correo" oninput="filterUsers()">
                             </div>
-                            <a href="{% url 'alumnos_Add' %}" class="btn-primary" id="add-user-btn">
-                                <i class="bi bi-person-plus-fill"></i>
-                                Agregar Usuario
-                            </a>
                         </div>
 
                         <!-- esta parte es de la tabla de alumnos -->
@@ -64,15 +59,11 @@
                                         <td>{{ alumno.user.telefono }}</td>
                                         <td>
                                             <div style="display:flex; gap:6px;">
-                                                <a href="{% url 'alumnos_findEdit' alumno.id_alumno %}"
-                                                    class="btn-action edit" title="Editar">
-                                                    <i class="bi bi-pencil-fill"></i>
-                                                </a>
                                                 <form method="post" action="{% url 'alumnos_del' alumno.id_alumno %}"
-                                                    class="form-accion"
-                                                    onsubmit="return confirm('¿Seguro que quieres eliminar a {{ alumno.user.first_name }}?')">
+                                                    class="form-accion" data-confirmar="{{ alumno.user.first_name }}"
+                                                    onsubmit="return window.confirmarEliminar ? window.confirmarEliminar(this, event) : confirm('¿Seguro que quieres eliminar a {{ alumno.user.first_name }}?')">
                                                     {% csrf_token %}
-                                                    <button type="submit" class="btn-action delete" title="Eliminar">
+                                                    <button type="submit" class="btn-action delete" title="Eliminar" aria-label="Eliminar a {{ alumno.user.first_name }}">
                                                         <i class="bi bi-trash3-fill"></i>
                                                     </button>
                                                 </form>

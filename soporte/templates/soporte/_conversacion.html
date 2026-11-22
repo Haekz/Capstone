@@ -1,4 +1,32 @@
 {# Conversacion de un ticket de usuario. soporte_ve: lo mira soporte (cambian las etiquetas). #}
+{# titulo_en_barra (solo el portal del alumno): respuestas como las dibuja alumn_1/14_soporte.css (.tk-respuestas > li). #}
+{# Cualquier otra vista (soporte, apoderado, profesor) conserva su lista de siempre. #}
+{% if titulo_en_barra %}
+<ol class="tk-respuestas">
+    {% for m in mensajes %}
+    <li>
+        <strong>{% if m.de_soporte %}Equipo de soporte LBWUS{% else %}Tú{% endif %}</strong>
+        <small>· {{ m.fecha|date:"d-m-Y H:i" }}</small>
+        <p>{{ m.texto|linebreaksbr }}</p>
+    </li>
+    {% empty %}
+    <li class="tk-sin-respuestas"><i class="bi bi-hourglass-split" aria-hidden="true"></i> Todavía no hay respuestas. Cuando el equipo de soporte responda, lo verás aquí.</li>
+    {% endfor %}
+</ol>
+{% elif soporte_ve %}
+{# Lo mira soporte (portal-soporte): respuestas como las dibuja 07c_pulido_soporte_detalle.css (.sop-respuestas > li) #}
+<ol class="sop-respuestas">
+    {% for m in mensajes %}
+    <li>
+        <strong>{% if m.de_soporte %}{{ m.autor.first_name|default:"Soporte" }} (soporte){% else %}{{ m.autor.first_name|default:"Usuario" }}{% endif %}</strong>
+        <small>· {{ m.fecha|date:"d-m-Y H:i" }}</small>
+        <p>{{ m.texto|linebreaksbr }}</p>
+    </li>
+    {% empty %}
+    <li class="sop-sin-respuestas">Todavía no hay respuestas.</li>
+    {% endfor %}
+</ol>
+{% else %}
 <ol style="list-style:none; padding:0; margin:0; display:grid; gap:12px;">
     {% for m in mensajes %}
     <li style="padding:12px 14px; border:1px solid var(--border, #c8c8c8); border-radius:10px;">
@@ -10,3 +38,4 @@
     <li>Todavía no hay respuestas.</li>
     {% endfor %}
 </ol>
+{% endif %}

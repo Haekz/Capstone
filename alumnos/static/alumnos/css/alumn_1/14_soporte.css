@@ -1,0 +1,767 @@
+/* ======== Nuevo: /static/alumnos/css/alumn_1/14_soporte.css ======== */
+/* ==============================================================
+   SOPORTE (crear ticket, mis tickets, detalle) — CAPA FINAL
+   - Va después de 13_pulido.css: solo sobrescribe.
+   - Mismos colores del portal (--hue 270) y mismo lenguaje:
+     paneles planos con línea fina, minúscula inicial.
+   - Todo cuelga de #portal-alumno .tk-pagina.
+   ============================================================== */
+
+#portal-alumno .tk-pagina {
+    max-width: 1080px;
+}
+
+#portal-alumno .tk-pagina .perfil-prof__volver {
+    margin-bottom: 18px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+#portal-alumno .tk-pagina .perfil-prof__bloque {
+    padding: 24px 26px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-panel);
+    background: var(--white);
+}
+
+#portal-alumno .tk-pagina .perfil-prof__bloque > h2,
+#portal-alumno .tk-lista-titulo h2 {
+    margin-bottom: 4px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+}
+
+/* Botón principal (Enviar, Abrir un ticket) */
+#portal-alumno .tk-pagina .perfil-prof__reservar {
+    align-items: center;
+    margin-top: 0;
+    padding: 11px 20px;
+    border: none;
+    border-radius: var(--r-ctrl);
+    font-size: 0.95rem;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+#portal-alumno .tk-pagina .perfil-prof__reservar:hover {
+    box-shadow: 0 6px 16px hsl(var(--hue) 70% 40% / 0.25);
+}
+
+#portal-alumno .tk-pagina .perfil-prof__reservar:disabled {
+    opacity: 0.7;
+    cursor: progress;
+    box-shadow: none;
+}
+
+/* Campos */
+#portal-alumno .tk-pagina .apod-form {
+    gap: 18px;
+    margin-top: 18px;
+}
+
+#portal-alumno .tk-pagina .apod-form__campo {
+    gap: 8px;
+}
+
+#portal-alumno .tk-pagina .apod-form__campo > label {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+#portal-alumno .tk-pagina .apod-form__campo :is(input:not([type="radio"]), textarea, select) {
+    padding: 11px 14px;
+    border: 1px solid var(--line-2);
+    border-radius: var(--r-ctrl);
+    background: var(--white);
+    color: var(--text);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+#portal-alumno .tk-pagina .apod-form__campo textarea {
+    min-height: 140px;
+    resize: vertical;
+}
+
+#portal-alumno .tk-pagina .apod-form__campo :is(input, textarea)::placeholder {
+    color: var(--text-light);
+    opacity: 0.8;
+}
+
+#portal-alumno .tk-pagina .apod-form__campo :is(input, textarea, select):focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: var(--ring);
+}
+
+#portal-alumno .tk-pagina .apod-form__campo [aria-invalid="true"] {
+    border-color: #dc2626;
+}
+
+/* Ayuda del campo + contador en la misma línea */
+#portal-alumno .tk-campo-pie {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+}
+
+#portal-alumno .tk-pagina .apod-form__campo small {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+#portal-alumno .tk-contador {
+    flex-shrink: 0;
+    font-size: 0.78rem;
+    color: var(--text-light);
+    font-variant-numeric: tabular-nums;
+}
+
+#portal-alumno .tk-contador--cerca {
+    color: var(--warn);
+    font-weight: 600;
+}
+
+#portal-alumno .tk-error,
+#portal-alumno .tk-pagina .apod-form__error {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #dc2626;
+}
+
+body.dark-mode#portal-alumno .tk-error {
+    color: #f87171;
+}
+
+#portal-alumno .tk-error::before {
+    content: "\F33A";                 /* bi-exclamation-circle-fill */
+    font-family: "bootstrap-icons";
+    font-weight: normal;
+}
+
+/* Pie del formulario: plazo a la izquierda, botón a la derecha */
+#portal-alumno .tk-form-pie {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+}
+
+#portal-alumno .tk-plazo {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--text-light);
+}
+
+#portal-alumno .tk-plazo i {
+    color: var(--primary-ink);
+}
+
+/* ── Crear ticket ── */
+#portal-alumno .tk-nuevo-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 20px;
+    align-items: start;
+}
+
+#portal-alumno .tk-nuevo .tk-form-card {
+    margin-bottom: 0;
+}
+
+#portal-alumno .tk-form-intro {
+    font-size: 0.92rem;
+    color: var(--text-light);
+}
+
+/* Categorías como tarjetas */
+#portal-alumno .tk-categorias {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+#portal-alumno .tk-categoria {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 52px;
+    padding: 10px 14px;
+    border: 1px solid var(--line-2);
+    border-radius: var(--r-item);
+    background: var(--white);
+    color: var(--text);
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.25;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+#portal-alumno .tk-categoria:hover {
+    border-color: var(--primary);
+}
+
+#portal-alumno .tk-categoria input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+#portal-alumno .tk-categoria i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    border-radius: 9px;
+    background: var(--primary-soft);
+    color: var(--primary-ink);
+    font-size: 1rem;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+#portal-alumno .tk-categoria:has(input:checked) {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+    box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+#portal-alumno .tk-categoria:has(input:checked) i {
+    background: var(--primary);
+    color: #ffffff;
+}
+
+#portal-alumno .tk-categoria:has(input:focus-visible) {
+    box-shadow: var(--ring);
+}
+
+/* Panel lateral: plazos y consejos */
+#portal-alumno .tk-ayuda {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    position: sticky;
+    top: calc(var(--header-height) + 24px);
+}
+
+#portal-alumno .tk-ayuda-bloque {
+    padding: 18px 20px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-panel);
+    background: var(--white);
+}
+
+#portal-alumno .tk-ayuda-bloque h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+#portal-alumno .tk-ayuda-bloque h3 i {
+    color: var(--primary-ink);
+}
+
+#portal-alumno .tk-plazos {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+#portal-alumno .tk-plazos li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: var(--r-ctrl);
+    background: var(--bg);
+    font-size: 0.85rem;
+    color: var(--text-light);
+}
+
+#portal-alumno .tk-plazos strong {
+    flex-shrink: 0;
+    color: var(--text);
+    font-size: 0.85rem;
+}
+
+#portal-alumno .tk-consejos {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-left: 18px;
+    font-size: 0.86rem;
+    line-height: 1.5;
+    color: var(--text-light);
+}
+
+/* Ajuste del proyecto (no viene de la copia): el plazo que redacta la vista, al tamaño de los consejos */
+#portal-alumno .tk-ayuda-texto {
+    margin: 0;
+    font-size: 0.86rem;
+    line-height: 1.5;
+    color: var(--text-light);
+}
+
+#portal-alumno .tk-consejos li::marker {
+    color: var(--primary-ink);
+}
+
+#portal-alumno .tk-ayuda-nota {
+    display: block;
+    padding: 0 4px;
+    font-size: 0.84rem;
+    line-height: 1.5;
+    color: var(--text-light);
+}
+
+#portal-alumno .tk-ayuda-nota i {
+    margin-right: 6px;
+    color: var(--ok);
+}
+
+/* ── Mis tickets ── */
+#portal-alumno .tk-cabecera {
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+#portal-alumno .tk-cabecera-texto {
+    max-width: 60ch;
+    font-size: 0.98rem;
+    line-height: 1.55;
+    color: var(--text-light);
+}
+
+#portal-alumno .tk-lista-titulo {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+#portal-alumno .tk-cuenta {
+    font-size: 0.85rem;
+    color: var(--text-light);
+}
+
+#portal-alumno .tk-pagina .tk-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+#portal-alumno .tk-pagina .tk-lista > li {
+    padding: 0;
+    border: none;
+    background: none;
+}
+
+/* Fila completa = enlace */
+#portal-alumno .tk-item-enlace {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 18px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-item);
+    background: var(--white);
+    color: var(--text);
+    text-decoration: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+#portal-alumno .tk-item-enlace:hover {
+    border-color: var(--primary);
+    box-shadow: 0 6px 18px rgba(26, 18, 51, 0.06);
+}
+
+#portal-alumno .tk-item-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    padding: 0 8px;
+    border-radius: 10px;
+    background: var(--primary-soft);
+    color: var(--primary-ink);
+    font-size: 0.9rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+#portal-alumno .tk-item-cuerpo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+#portal-alumno .tk-item-titulo {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#portal-alumno .tk-item-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    font-size: 0.82rem;
+    color: var(--text-light);
+}
+
+#portal-alumno .tk-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 10px;
+    border-radius: 99px;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+#portal-alumno .tk-chip--cat {
+    border: 1px solid var(--line-2);
+    color: var(--text);
+}
+
+#portal-alumno .tk-item-lado {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    text-align: right;
+}
+
+/* Estado del ticket */
+#portal-alumno .tk-pagina .tk-estado {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border: none;
+    border-radius: 99px;
+    background: var(--ok-soft);
+    color: var(--ok);
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+#portal-alumno .tk-pagina .tk-estado::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+#portal-alumno .tk-item-plazo {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.78rem;
+    color: var(--text-light);
+    white-space: nowrap;
+}
+
+#portal-alumno .tk-item-flecha {
+    color: var(--text-light);
+    transition: transform 0.15s ease, color 0.15s ease;
+}
+
+#portal-alumno .tk-item-enlace:hover .tk-item-flecha {
+    color: var(--primary-ink);
+    transform: translateX(3px);
+}
+
+/* Privacidad: discreto, al final */
+#portal-alumno .tk-privacidad {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+    background: transparent;
+}
+
+#portal-alumno .tk-pagina .tk-privacidad h2 {
+    margin-bottom: 4px;
+    font-size: 1rem;
+}
+
+#portal-alumno .tk-privacidad p {
+    font-size: 0.88rem;
+    color: var(--text-light);
+}
+
+#portal-alumno .tk-eliminar {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 16px;
+    border: 1px solid rgba(220, 38, 38, 0.35);
+    border-radius: var(--r-ctrl);
+    color: #dc2626;
+    font-size: 0.88rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.15s ease;
+}
+
+body.dark-mode#portal-alumno .tk-eliminar {
+    color: #f87171;
+}
+
+#portal-alumno .tk-eliminar:hover {
+    background: rgba(220, 38, 38, 0.08);
+}
+
+/* ── Detalle del ticket ── */
+#portal-alumno .tk-detalle {
+    max-width: 860px;
+}
+
+#portal-alumno .tk-detalle-cabecera {
+    margin-bottom: 20px;
+}
+
+#portal-alumno .tk-detalle-cabecera > div {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+#portal-alumno .tk-pagina .tk-detalle-cabecera h2 {
+    font-size: clamp(1.4rem, 2.4vw, 1.8rem);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+}
+
+#portal-alumno .tk-detalle-meta {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    font-size: 0.85rem;
+    color: var(--text-light);
+}
+
+#portal-alumno .tk-detalle-meta li {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Hilo: mensajes como burbujas */
+#portal-alumno .tk-mensaje {
+    display: flex;
+    gap: 12px;
+    margin-top: 14px;
+}
+
+#portal-alumno .tk-mensaje-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #ffffff;
+    font-weight: 700;
+}
+
+#portal-alumno .tk-mensaje-cuerpo {
+    flex: 1;
+    min-width: 0;
+    padding: 12px 16px;
+    border-radius: 4px 16px 16px 16px;
+    background: var(--primary-soft);
+}
+
+#portal-alumno .tk-mensaje-autor {
+    margin-bottom: 4px;
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+#portal-alumno .tk-mensaje-autor strong {
+    color: var(--text);
+}
+
+#portal-alumno .tk-mensaje-texto {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--text);
+    overflow-wrap: anywhere;
+    white-space: pre-line;
+}
+
+/* Respuestas del equipo (la plantilla pinta cada una en un <li>) */
+#portal-alumno .tk-respuestas {
+    list-style: none;
+    display: grid;
+    gap: 12px;
+    margin: 14px 0 0 50px;
+    padding: 0;
+}
+
+#portal-alumno .tk-respuestas > li {
+    padding: 12px 16px;
+    border: 1px solid var(--line);
+    border-radius: 16px 4px 16px 16px;
+    background: var(--bg);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+#portal-alumno .tk-respuestas > li.tk-sin-respuestas {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px dashed var(--line-2);
+    border-radius: var(--r-item);
+    background: transparent;
+    font-size: 0.88rem;
+    color: var(--text-light);
+}
+
+#portal-alumno .tk-sin-respuestas i {
+    color: var(--primary-ink);
+}
+
+/* Responder */
+#portal-alumno .tk-pagina .tk-responder {
+    margin-top: 22px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+}
+
+#portal-alumno .tk-responder .tk-form-pie {
+    padding-top: 0;
+    border-top: none;
+}
+
+#portal-alumno .tk-responder textarea {
+    min-height: 110px;
+}
+
+/* ── Pantallas medianas y móvil ── */
+@media (max-width: 1000px) {
+    #portal-alumno .tk-nuevo-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    #portal-alumno .tk-ayuda {
+        position: static;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #portal-alumno .tk-ayuda-nota {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 700px) {
+    #portal-alumno .tk-pagina .perfil-prof__bloque {
+        padding: 20px 16px;
+    }
+
+    #portal-alumno .tk-categorias {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #portal-alumno .tk-ayuda {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    #portal-alumno .tk-cabecera .perfil-prof__reservar,
+    #portal-alumno .tk-form-pie .perfil-prof__reservar {
+        width: 100%;
+        justify-content: center;
+    }
+
+    #portal-alumno .tk-item-enlace {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: 12px;
+        padding: 14px;
+    }
+
+    #portal-alumno .tk-item-lado {
+        grid-column: 2 / -1;
+        grid-row: 2;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-start;
+        text-align: left;
+    }
+
+    #portal-alumno .tk-item-flecha {
+        grid-column: 3;
+        grid-row: 1;
+    }
+
+    #portal-alumno .tk-item-titulo {
+        white-space: normal;
+    }
+
+    #portal-alumno .tk-item-plazo {
+        white-space: normal;
+    }
+
+    #portal-alumno .tk-respuestas {
+        margin-left: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #portal-alumno .tk-pagina *,
+    #portal-alumno .tk-pagina *::before {
+        transition: none !important;
+    }
+}

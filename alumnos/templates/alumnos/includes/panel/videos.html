@@ -1,0 +1,14 @@
+{# Mis videos (B5): vista propia (antes era una pestaña del Inicio). La lista y sus herramientas de búsqueda y filtro las arma videos_apoyo.html. #}
+            <div class="dashboard-view" id="view-videos">
+                <div class="results-section">
+                    <h2 class="ap-mb-10"><i class="bi bi-play-circle-fill ap-text-primary"></i> Mis videos</h2>
+                    <p class="ap-section-intro">Videos que te comparten tus profesores para repasar entre clases.</p>
+                    {% url 'videos_alumno' as url_lista %}{% url 'ver_video' 'VIDEO_ID' as url_ver %}
+                    {% if not es_menor %}{% url 'nuevo_ticket' as url_reportar %}{% endif %}{# el menor no abre tickets: su apoderado (D18) #}
+                    {% include 'alumnos/includes/videos_apoyo.html' with diseno_alumno=True %}
+                    {% if not es_menor %}{# el menor no compra: lo hace su apoderado #}
+                        {% url 'comprar_videos_extra' as url_comprar %}
+                        {% include 'alumnos/includes/comprar_videos_extra.html' with estudiante=alumno con_mensajes=True %}
+                    {% endif %}
+                </div>
+            </div>

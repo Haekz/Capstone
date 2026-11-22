@@ -20,6 +20,7 @@ from django.views.decorators.http import require_POST
 from alumnos.decorators import alumno_required, alumno_sesion_required, apoderado_required
 from alumnos.exceptions import InscripcionError
 from alumnos.models import Inscripcion, PaqueteClases, SesionClase
+from alumnos.portales import contexto_apoderado
 from alumnos.roles import ALUMNO, APODERADO, abrir_sesion_rol, redirigir_a_portal, rol_en_sesion
 from alumnos.services import InscripcionService
 from alumnos.utils import es_menor
@@ -50,6 +51,12 @@ REINTENTO_CARNET = ('Soporte rechazó la verificación de tu identidad y borró 
                     'sube tu carnet por ambos lados y lo revisarán otra vez.')
 REINTENTO_DOCUMENTO = ('Soporte rechazó el vínculo y borró el documento. Si quieres intentarlo de nuevo, sube otro '
                        'documento y lo revisarán otra vez.')
+# Panel "Cómo funciona" de Registrar estudiante: (paso, explicación). Lo pinta formulario.html si la vista pasa ``pasos``.
+PASOS_REGISTRO = (
+    ('Completa sus datos', 'El estudiante entrará con su RUT y la contraseña que definas aquí.'),
+    ('Adjunta el documento', 'El certificado de nacimiento o la resolución del tribunal que acredita tu vínculo.'),
+    ('Verificamos el vínculo', 'Hasta que lo verifiquemos con el documento, el estudiante solo podrá ver el catálogo.'),
+)
 
 
 def _apoderado_en_sesion(request):
@@ -62,8 +69,9 @@ def _solicitud_en_sesion(request):
                              alumno_id=request.session[ALUMNO.clave_sesion])
 
 
-def _formulario(request, form, **textos):
-    return render(request, 'apoderados/formulario.html', {'form': form, **textos})
+def _formulario(request, form, seccion='cuenta', **textos):
+    # contexto_apoderado: vacio salvo que quien mira sea apoderado; entonces el formulario va dentro de su portal
+    return render(request, 'apoderados/formulario.html', {'form': form, **contexto_apoderado(request, seccion), **textos})
 
 
 def redirigir_si_no_verificado(request, apoderado):
@@ -134,6 +142,7 @@ def portal(request):
     token = request.session.get(CLAVE_INVITACION)
     return render(request, 'apoderados/portal.html', {
         'apoderado': apoderado,
+        'seccion_menu': 'cuenta',
         'revision': apoderado.ultima_revision,
         'espera': _segundos_para_reenviar(request),
         'vinculos': apoderado.vinculos.select_related('alumno__user')
@@ -175,8 +184,9 @@ def registrar_estudiante(request):
                                   'revisará el documento que adjuntaste para verificar el vínculo.')
         return redirect(APODERADO.ruta_portal)
     return _formulario(
-        request, form, titulo='Registrar a un estudiante', subtitulo='Datos del estudiante',
-        boton='Registrar estudiante', volver_url=reverse(APODERADO.ruta_portal),
+        request, form, seccion='registrar', titulo='Registrar a un estudiante', subtitulo='Datos del estudiante',
+        subtitulo_barra='Crea su cuenta y pide verificar tu vínculo',
+        boton='Registrar estudiante', volver_url=reverse(APODERADO.ruta_portal), pasos=PASOS_REGISTRO,
         intro=('El estudiante entrará con su RUT y la contraseña que definas aquí. Hasta que verifiquemos '
                'el vínculo con el documento que adjuntes, solo podrá ver el catálogo.'),
     )
@@ -304,6 +314,7 @@ def clases_estudiante(request, id_vinculo):
                 .order_by('fecha_hora_inicio')[:30]) if con_clases else []
     return render(request, 'apoderados/clases.html', {
         'vinculo': vinculo, 'paquetes': paquetes, 'reservas': reservas, 'sesiones': sesiones,
+        **contexto_apoderado(request, 'clases'), 'vinculo_activo': vinculo.pk,  # la barra marca a este estudiante
         'observaciones': observaciones_panel.del_alumno(alumno),  # las mismas que lee el menor en su Mi Progreso
     })
 

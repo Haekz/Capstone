@@ -8,6 +8,8 @@
 
 {% block content %}
 {# Datos de alumnos/paquetes.py, la misma fuente que la página de planes y Webpay #}
+{# Como en la copia: la capa 06b busca #section-planes > .stats-grid (tres planes en tres columnas), y admin-section active da el flex en columna con su gap entre las tarjetas y el panel (sin active la clase lo oculta) #}
+<div id="section-planes" class="admin-section active">
 <div class="stats-grid">
     {% for cotizacion, vigentes in planes %}
     <div class="stat-card">
@@ -25,11 +27,11 @@
     {% endfor %}
 </div>
 
-<div class="panel" style="margin-top:28px;">
+<div class="panel">
     <div class="panel-header">
         <span class="panel-title"><i class="bi bi-collection-fill" aria-hidden="true"></i> Precios de LBWUS</span>
     </div>
-    <p class="stat-sub" style="padding:0 20px;">
+    <p class="adm-panel-intro">
         La clase suelta cuesta {{ tarifa|clp }}, igual con todos los profesores, y cada paquete le aplica su
         descuento. Los profesores no eligen el precio. Lo ya vendido no cambia si cambian los precios.
     </p>
@@ -63,5 +65,6 @@
             </tbody>
         </table>
     </div>
+</div>
 </div>
 {% endblock %}

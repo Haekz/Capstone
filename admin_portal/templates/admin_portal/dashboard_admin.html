@@ -1,14 +1,11 @@
 {% extends 'admin_portal/base_admin.html' %}
 
 {% block title %}Panel Admin - LBWUS{% endblock %}
-{% block page_title %}Resumen General{% endblock %}
+{% block page_title %}Resumen{% endblock %}
 {% block page_subtitle %}Bienvenido de vuelta, {{ admin.user.first_name }}{% endblock %}
 
 {# Al entrar sin hash la seccion visible es el resumen. #}
 {% block nav_resumen %}active{% endblock %}
-
-{# El dashboard resuelve "usuarios" como seccion interna, no como pagina aparte. #}
-{% block nav_usuarios_href %}{% url 'dashboard_admin' %}#usuarios{% endblock %}
 
 {% block content %}
 
@@ -45,13 +42,15 @@
 <script>
     // Secciones que el dashboard muestra y oculta sin recargar la pagina.
     const sections = ['resumen', 'usuarios', 'clases', 'finanzas', 'ajustes'];
+    // La que se abre si la direccion no trae #seccion: 'ajustes' cuando ese formulario vuelve con errores.
+    const SECCION_INICIAL = '{{ seccion_inicial|escapejs }}';
 
     const titles = {
-        resumen: ['Resumen General', 'Vista general del sistema LBWUS'],
-        usuarios: ['Gestion de Usuarios', 'Administra alumnos, profesores y administradores'],
-        clases: ['Agenda de Clases', 'Las clases que soporte asignó a cada profesor (solo lectura)'],
-        finanzas: ['Finanzas y Solicitudes', 'Administra los balances y retiros de fondos de profesores'],
-        ajustes: ['Ajustes de Perfil', 'Configura tus opciones personales y apariencia del panel']
+        resumen: ['Resumen', 'Cómo está LBWUS hoy'],
+        usuarios: ['Usuarios', 'Alumnos, profesores y administradores'],
+        clases: ['Clases', 'Las clases que soporte asignó a cada profesor (solo lectura)'],
+        finanzas: ['Finanzas', 'Ingresos de la plataforma y retiros de los profesores'],
+        ajustes: ['Ajustes', 'Tus datos y la apariencia del panel']
     };
 
     function showSection(name) {
@@ -78,11 +77,16 @@
     // donde el navegador no recarga la pagina.
     function aplicarSeccionDesdeHash() {
         const hash = window.location.hash.replace('#', '');
-        showSection(sections.includes(hash) ? hash : 'resumen');
+        showSection(sections.includes(hash) ? hash : SECCION_INICIAL);
     }
 
     window.addEventListener('DOMContentLoaded', aplicarSeccionDesdeHash);
     window.addEventListener('hashchange', aplicarSeccionDesdeHash);
+    // Con errores en Ajustes, el foco va al primer campo marcado (su mensaje esta enlazado con aria-describedby).
+    window.addEventListener('DOMContentLoaded', () => {
+        const conError = document.querySelector('#section-ajustes [aria-invalid="true"]');
+        if (conError) conError.focus();
+    });
 
     // Estando en el dashboard el buscador global salta de seccion en vez de
     // recargar. Sobrescribe a proposito la version generica de base_admin.

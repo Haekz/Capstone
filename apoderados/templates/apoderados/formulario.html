@@ -4,7 +4,7 @@
 
 {% block title %}{{ titulo }} | LBWUS{% endblock %}
 {% block page_title %}{% if titulo_en_barra %}{{ titulo }}{% else %}{{ block.super }}{% endif %}{% endblock %}
-{% block page_subtitle %}{% if not titulo_en_barra %}{{ block.super }}{% endif %}{% endblock %}{# el subtitulo ya encabeza el formulario #}
+{% block page_subtitle %}{% if subtitulo_barra %}{{ subtitulo_barra }}{% elif not titulo_en_barra %}{{ block.super }}{% endif %}{% endblock %}{# el subtitulo ya encabeza el formulario #}
 
 {% block extra_css %}
 {{ block.super }}
@@ -13,23 +13,28 @@
 {% endblock %}
 
 {% block content %}
-<div class="perfil-prof">
+{# diseno_tickets: solo lo pasa 'Abrir un ticket' y solo es verdadero para el alumno (14_soporte.css). Los demás formularios no cambian. #}
+{# pasos (y nota_pasos): lo pasan Registrar y Vincular estudiante en el portal del apoderado: tarjeta + panel "Cómo funciona" (16_portal_apoderado.css). #}
+<div class="perfil-prof{% if diseno_tickets %} tk-pagina tk-nuevo{% elif pasos %} apo apo-form-pagina{% endif %}">
     <a class="perfil-prof__volver" href="{{ volver_url }}">
-        <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver{% if diseno_tickets %} a mis tickets{% elif pasos %} a mi cuenta{% endif %}
     </a>
 
+    {% if not diseno_tickets and not pasos %}
     <header class="perfil-prof__cabecera">
         <div>
             {% if not titulo_en_barra %}<h1>{{ titulo }}</h1>{% endif %}
             <p class="perfil-prof__vacio">{{ intro }}</p>
         </div>
     </header>
+    {% else %}<div class="{% if diseno_tickets %}tk-nuevo-grid{% else %}apo-form-grid{% endif %}">{% endif %}
 
-    <section class="perfil-prof__bloque" aria-labelledby="formulario-titulo">
+    <section class="perfil-prof__bloque{% if diseno_tickets %} tk-form-card{% elif pasos %} apo-form-card{% endif %}" aria-labelledby="formulario-titulo">
         <h2 id="formulario-titulo">{{ subtitulo }}</h2>
+        {% if diseno_tickets %}<p class="tk-form-intro">Mientras más detalles nos des, más rápido lo resolvemos.</p>{% endif %}
         {% for error in form.non_field_errors %}<p class="apod-form__error" role="alert">{{ error }}</p>{% endfor %}
 
-        <form method="post" class="apod-form" novalidate{% if form.is_multipart %} enctype="multipart/form-data"{% endif %}>
+        <form method="post" class="apod-form{% if pasos %} apo-form{% endif %}" novalidate{% if form.is_multipart %} enctype="multipart/form-data"{% endif %}>
             {% csrf_token %}
             {% for campo in form %}
             {% if campo.field.widget.input_type == 'checkbox' %}
@@ -41,7 +46,7 @@
             <div class="apod-form__campo">
                 <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
                 {{ campo }}
-                {% if campo.help_text %}<small id="{{ campo.auto_id }}_helptext">{{ campo.help_text }}</small>{% endif %}
+                {% if campo.help_text %}<small id="{{ campo.auto_id }}_helptext">{% if diseno_tickets %}<i class="bi bi-shield-lock" aria-hidden="true"></i> {% endif %}{{ campo.help_text }}</small>{% endif %}
             </div>
             {% endif %}
             {% if campo.errors %}
@@ -50,10 +55,52 @@
             </div>
             {% endif %}
             {% endfor %}
+            {% if diseno_tickets %}<div class="tk-form-pie"><p class="tk-plazo" id="tk-plazo" aria-live="polite"></p>{% endif %}
             <button type="submit" class="perfil-prof__reservar">
-                <i class="bi bi-check-lg" aria-hidden="true"></i> {{ boton }}
+                <i class="bi {% if diseno_tickets %}bi-send{% else %}bi-check-lg{% endif %}" aria-hidden="true"></i> {% if diseno_tickets %}Enviar ticket{% else %}{{ boton }}{% endif %}
             </button>
+            {% if diseno_tickets %}</div>{% endif %}
         </form>
     </section>
+
+    {% if pasos %}
+    <aside class="apo-ayuda" aria-label="Cómo funciona">
+        <h3>Cómo funciona</h3>
+        <ol class="apo-pasos">
+            {% for paso, texto in pasos %}<li><strong>{{ paso }}</strong><span>{{ texto }}</span></li>
+            {% endfor %}
+        </ol>
+        {% if nota_pasos %}<p class="apo-ayuda-nota"><i class="bi bi-bell" aria-hidden="true"></i> {{ nota_pasos }}</p>{% endif %}
+    </aside>
+    </div>
+    {% endif %}
+
+    {% if diseno_tickets %}
+    <aside class="tk-ayuda" aria-label="Antes de enviar">
+        <div class="tk-ayuda-bloque">
+            <h3><i class="bi bi-clock-history" aria-hidden="true"></i> Cuándo te respondemos</h3>
+            {# plazos_filas: solo lo manda la vista al apoderado (14_soporte.css trae .tk-plazos); el resto sigue con la frase #}
+            {% if plazos_filas %}
+            <ul class="tk-plazos">
+                {% for etiqueta, dias in plazos_filas %}<li><span>{{ etiqueta }}</span><strong>{{ dias }} días hábiles</strong></li>
+                {% endfor %}
+            </ul>
+            {% else %}<p class="tk-ayuda-texto">{{ intro }}</p>{% endif %}
+        </div>
+        <div class="tk-ayuda-bloque">
+            <h3><i class="bi bi-lightbulb" aria-hidden="true"></i> Para ayudarte más rápido</h3>
+            <ul class="tk-consejos">
+                <li>Indica la fecha y la hora de lo que pasó.</li>
+                <li>Si es sobre una clase, nombra al profesor y la materia.</li>
+                <li>Si es un pago, di el paquete y el monto.</li>
+            </ul>
+        </div>
+        <p class="tk-ayuda-nota"><i class="bi bi-envelope-check" aria-hidden="true"></i> Puedes ver el estado y las respuestas en <a href="{{ volver_url }}">Mis tickets</a>.</p>
+    </aside>
+    </div>
+    {% if plazos %}{{ plazos|json_script:"tk-plazos" }}{% endif %}
+    {% endif %}
 </div>
 {% endblock %}
+{# cuerpo_extra solo existe en base_alumno: las demas bases ignoran este bloque #}
+{% block cuerpo_extra %}{{ block.super }}{% if diseno_tickets %}<script src="{% static 'alumnos/java/tickets.js' %}"></script>{% endif %}{% endblock %}

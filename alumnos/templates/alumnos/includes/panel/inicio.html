@@ -8,9 +8,10 @@
                         <!-- Welcome Banner -->
                         <div class="welcome-banner">
                             <div class="welcome-text">
-                                <span class="welcome-eyebrow">Portal del alumno</span>
+                                {# La fecha de hoy, el próximo paso y la tarjeta de clases los completa js/mejoras.js #}
+                                <span class="welcome-eyebrow" id="ap-hoy">Portal del alumno</span>
                                 <h1>¡Hola de nuevo, {{ alumno.user.first_name }}!</h1>
-                                <p>Bienvenido a tu panel de control personalizado. Aquí podrás gestionar tu aprendizaje.</p>
+                                <p id="ap-proximo-texto">{% if es_menor %}Aquí ves tus clases, tus videos y tu avance.{% else %}Aquí reservas tus clases, conversas con tus profesores y sigues tu avance.{% endif %}</p>
                                 {% if es_menor %}
                                 <p class="aviso-menor" role="status"><strong>Cuenta de estudiante menor de edad.</strong>
                                     Puedes revisar el catálogo y entrar a las clases que reserve tu apoderado. Las reservas, cancelaciones y compras las hace tu apoderado desde su cuenta.
@@ -18,38 +19,47 @@
                                     {% if tiene_solicitud %}<a href="{% url 'adolescente_solicitud' %}">Ver mi solicitud de apoderado</a>{% endif %}</p>
                                 {% lineas_de_ayuda user %}
                                 {% endif %}
+                                <div class="welcome-actions">
+                                    {% if not es_menor %}{# el menor no reserva ni compra: lo hace su apoderado #}
+                                    <button type="button" class="btn-hero" id="ap-proximo-btn" hidden></button>
+                                    {% endif %}
+                                    <button type="button" class="btn-principal ap-btn-setup" id="dashboard-setup-btn">
+                                        <i class="bi bi-sliders" aria-hidden="true"></i> Elegir temas de interés
+                                    </button>
+                                </div>
                             </div>
-                            <button class="btn-principal ap-btn-setup" id="dashboard-setup-btn">Configurar Intereses</button>
+                            {# Tarjeta de clases del paquete vigente (la arma js/mejoras.js desde "Mis paquetes") #}
+                            <button type="button" class="tarjeta-clases" id="ap-tarjeta-clases" hidden></button>
                         </div>
 
                         <!-- Stats Widgets -->
                         <div class="stats-grid">
-                            <div class="stat-card">
+                            <div class="stat-card" data-ir="inscritas" role="button" tabindex="0" aria-label="Ver mis clases agendadas">
                                 <div class="stat-icon"><i class="bi bi-clock-history"></i></div>
                                 <div class="stat-info">
                                     <h3>{{ mis_inscripciones|length }}</h3>
-                                    <p>Clases inscritas</p>
+                                    <p>Clases agendadas</p>
                                 </div>
                             </div>
-                            <div class="stat-card">
+                            <div class="stat-card" data-ir="catalogo" role="button" tabindex="0" aria-label="Ver el catálogo de clases disponibles">
                                 <div class="stat-icon"><i class="bi bi-calendar-event"></i></div>
                                 <div class="stat-info">
                                     <h3>{{ clases_disponibles|length }}</h3>
-                                    <p>Clases disponibles</p>
+                                    <p>Clases en el catálogo</p>
                                 </div>
                             </div>
-                            <div class="stat-card">
+                            <div class="stat-card" data-ir="profesores" role="button" tabindex="0" aria-label="Ver los profesores disponibles">
                                 <div class="stat-icon"><i class="bi bi-person-video3"></i></div>
                                 <div class="stat-info">
                                     <h3>{{ profesores_list|length }}</h3>
-                                    <p>Profesores disponibles</p>
+                                    <p>Profesores</p>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Content tabs section -->
                         <div class="results-section">
-                            <h2>Tu Contenido Seleccionado</h2>
+                            <h2>Profesores y tutores</h2>
 
                             {% include 'alumnos/includes/recomendados.html' %}
 
@@ -57,9 +67,12 @@
                             <div class="dashboard-search-container ap-mb-20">
                                 <div class="search-input-wrapper">
                                     <i class="bi bi-search search-icon"></i>
-                                    <input type="search" id="dashboard-search-input" aria-label="Buscar profesor, tutor o especialidad" placeholder="Buscar profesor, tutor o especialidad (ej. Matemáticas, Carlos)..." oninput="renderDashboardContent()">
+                                    <input type="search" id="dashboard-search-input" aria-label="Buscar profesor, tutor o especialidad" aria-keyshortcuts="/" placeholder="Buscar profesor, tutor o especialidad (ej. Matemáticas, Carlos)..." oninput="renderDashboardContent()">
                                 </div>
                             </div>
+
+                            {# Filtros activos (temas de interés y favoritos): los arma js/mejoras.js #}
+                            <div class="filtros-activos" id="filtros-activos" hidden></div>
                             
                             <!-- Tabs Navigation -->
                             <div class="dashboard-tabs">
@@ -68,9 +81,6 @@
                                 </button>
                                 <button class="tab-btn" data-tab="tab-tutores">
                                     <i class="bi bi-people-fill"></i> Tutores
-                                </button>
-                                <button class="tab-btn" data-tab="tab-videos">
-                                    <i class="bi bi-play-circle-fill"></i> Mis videos
                                 </button>
                             </div>
 
@@ -87,16 +97,6 @@
                                     <!-- Populated via JS -->
                                 </div>
                             </div>
-
-                            <div class="tab-content" id="tab-videos">
-                                {% url 'videos_alumno' as url_lista %}{% url 'ver_video' 'VIDEO_ID' as url_ver %}
-                                {% if not es_menor %}{% url 'nuevo_ticket' as url_reportar %}{% endif %}{# el menor no abre tickets: su apoderado (D18) #}
-                                {% include 'alumnos/includes/videos_apoyo.html' %}
-                                {% if not es_menor %}{# el menor no compra: lo hace su apoderado #}
-                                    {% url 'comprar_videos_extra' as url_comprar %}
-                                    {% include 'alumnos/includes/comprar_videos_extra.html' with estudiante=alumno con_mensajes=True %}
-                                {% endif %}
-                            </div>
                         </div>
                     </div>
 
@@ -104,9 +104,9 @@
                     {% if not es_menor %}
                     <div class="dashboard-right-panel">
                         <div class="promo-ad-card ap-clickable" onclick="switchView('view-plans')">
-                            <span class="promo-badge">Paquetes de clases</span>
-                            <h3>Más clases, menos precio por clase</h3>
-                            <p>Compra Flexible, Progreso o Intensivo con el profesor que elijas y reserva tus clases.</p>
+                            <span class="promo-badge">Paquetes</span>
+                            <h3>Mientras más clases, menor el precio de cada una</h3>
+                            <p>Flexible, Progreso o Intensivo, con el profesor que elijas.</p>
                             <a class="btn-promo-cta" href="{% url 'planes' %}" onclick="event.stopPropagation()">Ver planes y precios</a>
                         </div>
                     </div>

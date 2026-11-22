@@ -1,5 +1,6 @@
 {# Formulario de soporte accesible como apoderados/formulario.html: respuestas y escalamientos. #}
-<form method="post" class="apod-form" novalidate style="display:grid; gap:10px; margin-top:16px;">
+{# titulo_en_barra (portal del alumno): lo estiliza .tk-responder en 14_soporte.css, asi que no lleva estilos en linea. #}
+<form method="post" class="apod-form{% if titulo_en_barra %} tk-responder{% endif %}" novalidate{% if not titulo_en_barra %} style="display:grid; gap:10px; margin-top:16px;"{% endif %}>
     {% csrf_token %}
     {% if form.non_field_errors %}
     <div role="alert">
@@ -10,10 +11,10 @@
     {% if campo.field.widget.input_type == 'checkbox' %}
     <div class="apod-form__declaracion">{{ campo }} <label for="{{ campo.id_for_label }}">{{ campo.label }}</label></div>
     {% else %}
-    <div class="apod-form__campo" style="display:grid; gap:6px;">
+    <div class="apod-form__campo"{% if not titulo_en_barra %} style="display:grid; gap:6px;"{% endif %}>
         <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
         {{ campo }}
-        {% if campo.help_text %}<small id="{{ campo.auto_id }}_helptext">{{ campo.help_text }}</small>{% endif %}
+        {% if campo.help_text %}<small id="{{ campo.auto_id }}_helptext">{% if titulo_en_barra %}<i class="bi bi-shield-lock" aria-hidden="true"></i> {% endif %}{{ campo.help_text }}</small>{% endif %}
     </div>
     {% endif %}
     {% if campo.errors %}
@@ -22,7 +23,9 @@
     </div>
     {% endif %}
     {% endfor %}
+    {% if titulo_en_barra %}<div class="tk-form-pie"><span></span>{% endif %}
     <button type="submit" class="{{ clase_boton|default:'perfil-prof__reservar' }}">
         <i class="bi {{ icono_boton|default:'bi-send-fill' }}" aria-hidden="true"></i> {{ texto_boton|default:'Enviar respuesta' }}
     </button>
+    {% if titulo_en_barra %}</div>{% endif %}
 </form>

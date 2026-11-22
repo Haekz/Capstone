@@ -46,7 +46,7 @@ class RevisionEspecializacionesTests(TestCase):
     def test_el_agente_de_especializaciones_las_ve_y_abre_el_certificado_con_registro(self):
         entrar_soporte(self.client, self.agente)
         pagina = self.client.get(reverse('titulos_adm'))
-        self.assertContains(pagina, 'Especializaciones pendientes de revisión (2)')
+        self.assertContains(pagina, 'Especializaciones por revisar <span class="sop-cuenta">2</span>')
         self.assertContains(pagina, 'Diplomado A')
         self.assertContains(pagina, 'Álgebra')
         respuesta = self.client.get(reverse('ver_especializacion', args=[self.a.pk]))

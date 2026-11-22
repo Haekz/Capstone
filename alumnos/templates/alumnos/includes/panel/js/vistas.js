@@ -8,13 +8,20 @@
             // Remove active state from all buttons and views
             viewBtns.forEach(btn => {
                 const viewAttr = btn.getAttribute('data-view');
-                // Los que abren una pestana (data-tab: Mis videos) se marcan solos en abrirPestana, no junto al Inicio
+                // Los que abren una pestana (data-tab) se marcan solos en abrirPestana, no junto a su vista
                 if (viewAttr === targetViewId && !btn.dataset.tab) {
                     btn.classList.add('active');
+                    btn.setAttribute('aria-current', 'page');
                 } else {
                     btn.classList.remove('active');
+                    btn.removeAttribute('aria-current');
                 }
             });
+            // Cada vista parte desde arriba, y la URL la recuerda (#view-...): al recargar vuelves a la misma vista.
+            window.scrollTo(0, 0);
+            if (document.getElementById(targetViewId) && window.location.hash !== '#' + targetViewId) {
+                history.replaceState(null, '', window.location.pathname + window.location.search + '#' + targetViewId);
+            }
 
             views.forEach(view => {
                 if (view.id === targetViewId) {
@@ -54,11 +61,16 @@
             }
         };
 
-        // Boton del menu que abre una pestana del Inicio (B5, Mis videos): abre la pestana y queda marcado solo el.
+        // Boton del menu que abre una pestana de una vista (data-tab): abre la pestana y queda marcado solo el.
         const abrirPestana = (btn) => {
             const pestana = document.querySelector(`.tab-btn[data-tab="${btn.dataset.tab}"]`);
             if (pestana) pestana.click();
-            viewBtns.forEach(b => b.classList.toggle('active', b === btn));
+            viewBtns.forEach(b => {
+                b.classList.toggle('active', b === btn);
+                if (b === btn) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+            });
+            // Al recargar vuelve a esta pestaña (el #tab-... lo entiende el script de abajo de Alumno_pag1)
+            history.replaceState(null, '', window.location.pathname + window.location.search + '#' + btn.dataset.tab);
         };
 
         viewBtns.forEach(btn => {

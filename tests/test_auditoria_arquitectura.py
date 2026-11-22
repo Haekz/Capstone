@@ -245,14 +245,18 @@ class AuditoriaSeguridadYArquitecturaTests(TestCase):
         # 38: las finanzas cuentan los videos (B1, 13-nov) con 2 consultas fijas: lo devuelto y los videos compartidos
         # (valorados con user_profesor.saldos.valores_videos, la misma cuenta del saldo). Agregado y extras van en la
         # consulta de paquetes que ya existia (videos_extra.anotar).
-        # 39 (SCRUM-100): 1 lectura fija de la DatabaseCache (lbwus.salud.tareas_atrasadas) para el aviso de tareas
+        # 41: el banner del Resumen suma 3 consultas fijas (reseñas reportadas, escalados al admin y retiros por pagar:
+        # admin_portal/metricas.pendientes); los tickets atrasados salen de las cifras de soporte que ya se calculaban.
+        # 42 (SCRUM-100): 1 lectura fija de la DatabaseCache (lbwus.salud.tareas_atrasadas) para el aviso de tareas
         # diarias atrasadas. Es una sola fila por clave, no crece con los datos: no es N+1.
-        self.assertLessEqual(despues_adm, 39)
+        self.assertLessEqual(despues_adm, 42)
         # Antes 20 (con 1 de holgura): el inicio con datos reales de hoy (user_profesor/inicio.py) suma 3 consultas
         # fijas (reservas de hoy, lo ya dictado con pagables() y bloques libres). Juntarlas obligaria a copiar la
         # regla del saldo. Sigue siendo O(1): lo que importa es la igualdad de arriba.
         # 23: el saldo suma 1 consulta fija por los videos compartidos (agregado de videos, fase 4a).
-        self.assertLessEqual(despues_prof, 23)
+        # 25: Detalle de liquidaciones suma 2 consultas fijas (clases pagables y videos compartidos, con select_related:
+        # user_profesor/detalle_liquidaciones.py); siguen siendo O(1), lo comprueba la igualdad de arriba.
+        self.assertLessEqual(despues_prof, 25)
         self.assertContains(r_prof, "Cálculo Vectorial")
 
     def test_formato_clp_y_alumnos_reg_dry(self):

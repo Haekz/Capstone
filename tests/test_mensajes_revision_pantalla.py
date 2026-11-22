@@ -59,7 +59,7 @@ class PantallaRevisionTests(Escenario):
 
     def test_la_lista_muestra_la_pendiente_solo_con_nombres_de_pila(self):
         r = self.client.get(self.lista)
-        self.assertContains(r, 'Esperan tu decisión (1)')
+        self.assertContains(r, 'Esperan tu decisión <span class="sop-cuenta">1</span>')
         self.assertContains(r, f'{self.ana.user.first_name} y {self.profe.user.first_name} (profesor)')
         self.assertContains(r, self.detalle)
         for privado in (self.ana.user.email, self.ana.user.rut, self.profe.user.email, self.profe.user.rut):
@@ -67,7 +67,21 @@ class PantallaRevisionTests(Escenario):
 
     def test_con_el_ticket_abierto_todavia_no_esta_en_la_lista(self):
         Ticket.objects.update(estado=Ticket.ABIERTO, cerrado=None)
-        self.assertContains(self.client.get(self.lista), 'Esperan tu decisión (0)')
+        self.assertContains(self.client.get(self.lista), 'Esperan tu decisión <span class="sop-cuenta">0</span>')
+
+    def test_la_lista_trae_la_estructura_de_la_copia(self):
+        html = self.client.get(self.lista).content.decode()
+        self.assertIn('<p class="sop-panel-intro">Mientras esperan, se siguen conservando.', html)
+        self.assertIn(f'<a class="sop-btn sop-btn--primario" href="{self.detalle}"', html)
+        self.assertIn('<div class="sop-tabla">', html)
+        self.assertNotIn('sop-vacio">No hay conversaciones esperando', html)
+
+    def test_sin_pendientes_ni_conservadas_se_ven_los_vacios_de_la_copia(self):
+        Ticket.objects.update(estado=Ticket.ABIERTO, cerrado=None)
+        html = self.client.get(self.lista).content.decode()
+        self.assertIn('<p class="sop-vacio">No hay conversaciones esperando una decisión.</p>', html)
+        self.assertIn('<p class="sop-vacio">No hay conversaciones conservadas.</p>', html)
+        self.assertIn('Conservadas por retención excepcional <span class="sop-cuenta">0</span>', html)
 
     # --- detalle ---
 
@@ -96,7 +110,7 @@ class PantallaRevisionTests(Escenario):
         decision = DecisionRetencion.objects.get()
         self.assertEqual((decision.decision, decision.decidida_por), (DecisionRetencion.LIBERAR, self.lider))
         self.assertContains(r, 'Conversación liberada')
-        self.assertContains(r, 'Esperan tu decisión (0)')
+        self.assertContains(r, 'Esperan tu decisión <span class="sop-cuenta">0</span>')
 
     def test_conservar_registra_y_aparece_en_conservadas(self):
         r = self.client.post(self.detalle, DATOS, follow=True)
@@ -104,7 +118,7 @@ class PantallaRevisionTests(Escenario):
         self.assertEqual((decision.motivo, decision.alcance, decision.decidida_por),
                          (DecisionRetencion.RECLAMACION, DATOS['alcance'], self.lider))
         self.assertContains(r, 'Retención excepcional registrada')
-        self.assertContains(r, 'Conservadas como retención excepcional (1)')
+        self.assertContains(r, 'Conservadas por retención excepcional <span class="sop-cuenta">1</span>')
         self.assertContains(r, 'Reclamación o defensa de derechos')
         self.assertContains(r, fecha(self.hoy + relativedelta(months=6)))
 

@@ -13,7 +13,6 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from admin_portal.forms import AdminAlumnoForm
 from alumnos.forms import AlumnoForm
 from alumnos.google_forms import CompletarRegistroGoogleForm
 from alumnos.models import Asignatura, Clase, Genero, Inscripcion, Tutor
@@ -72,12 +71,11 @@ class SalaVirtualSoloParticipantesTests(TestCase):
 
 
 class MismaReglaDeEdadTests(TestCase):
-    """Registro publico, Google y portal admin rechazan igual a un menor de 18."""
+    """Registro publico y Google rechazan igual a un menor de 18 (el admin ya no crea alumnos: 21-nov)."""
 
     FORMULARIOS = {
         'registro publico': AlumnoForm,
         'registro con Google': partial(CompletarRegistroGoogleForm, correo='google@demo.cl'),
-        'portal admin': AdminAlumnoForm,
     }
 
     def error_de_fecha(self, formulario, fecha):
@@ -85,13 +83,13 @@ class MismaReglaDeEdadTests(TestCase):
         form.is_valid()
         return form.errors.get('fecha_nacimiento')
 
-    def test_los_tres_caminos_rechazan_a_un_menor(self):
+    def test_los_dos_caminos_rechazan_a_un_menor(self):
         for nombre, formulario in self.FORMULARIOS.items():
             with self.subTest(nombre):
                 self.assertEqual(self.error_de_fecha(formulario, MENOR),
                                  ['Debes ser mayor o igual a 18 años.'])
 
-    def test_los_tres_caminos_aceptan_a_un_adulto(self):
+    def test_los_dos_caminos_aceptan_a_un_adulto(self):
         for nombre, formulario in self.FORMULARIOS.items():
             with self.subTest(nombre):
                 self.assertIsNone(self.error_de_fecha(formulario, ADULTO))

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap');
+@import url('vendor/fuentes/fuentes.css');
 
 /* ---------- Tokens (mismos del sitio público) ---------- */
 :root {
@@ -534,7 +534,7 @@ html.dark-mode .auth-icon--ok {
 
 .auth-icon--warn {
     background: rgba(245, 165, 36, 0.14);
-    color: #b45309;
+    color: #9c4708;  /* = --warn claro de los portales */
 }
 
 html.dark-mode .auth-icon--warn {

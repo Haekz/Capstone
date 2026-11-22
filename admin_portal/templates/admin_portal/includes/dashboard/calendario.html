@@ -5,16 +5,14 @@
                     <div class="panel-header">
                         <span class="panel-title"><i class="bi bi-calendar3"></i> Clases de los profesores</span>
                     </div>
-                    <p style="margin: 0 20px 15px; color: var(--text-secondary); font-size: 0.9rem;">
-                        Las asigna soporte al aprobar el título o una especialización de cada profesor.
-                    </p>
+                    <p class="adm-panel-intro">Las asigna soporte al aprobar el título o una especialización de cada profesor. Solo lectura.</p>
 
                     <div class="panel-body" style="overflow-x: auto;">
                         <table class="user-table">
                             <thead>
                                 <tr>
                                     <th>#</th>
-                                    <th>Curso / Materia</th>
+                                    <th>Materia</th>
                                     <th>Profesor</th>
                                     <th>Modalidad</th>
                                 </tr>
@@ -22,7 +20,7 @@
                             <tbody>
                                 {% for c in clases %}
                                 <tr>
-                                    <td style="color:var(--text-muted); font-size:0.8rem;">#{{ c.id_clase }}</td>
+                                    <td style="color:var(--text-secondary); font-size:0.8rem;">#{{ c.id_clase }}</td>
                                     <td><strong>{{ c.asignatura.nombre }}</strong></td>
                                     <td>
                                         <div class="user-cell">

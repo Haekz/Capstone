@@ -1,4 +1,6 @@
 {# Bloque de reseñas: perfil del profesor (portal del alumno) y "Mis reseñas" (portal docente). Ver resenas/consultas.py. #}
+{# El orden, el filtro por estrellas y las páginas los arma resenas_pulido.js con lo que ya trae el bloque: sin JavaScript se ve la lista completa. #}
+{% load static %}
 <section class="perfil-prof__bloque resenas" id="perfil-resenas" aria-labelledby="perfil-resenas-titulo">
     <h2 id="perfil-resenas-titulo">Reseñas verificadas</h2>
     {% include 'resenas/_mensajes.html' %}
@@ -19,9 +21,20 @@
             {% endfor %}
         </ul>
     </div>
+    <div class="resenas-barra" hidden>
+        <p class="resenas-barra__estado" aria-live="polite"></p>
+        <label class="resenas-barra__orden">
+            <span>Ordenar</span>
+            <select aria-label="Ordenar reseñas">
+                <option value="recientes">Más recientes</option>
+                <option value="mejores">Mejor calificadas</option>
+                <option value="peores">Peor calificadas</option>
+            </select>
+        </label>
+    </div>
     <ul class="resena-lista">
         {% for resena in resenas %}
-        <li class="resena">
+        <li class="resena" data-puntaje="{{ resena.puntaje }}">
             <span class="resena__avatar" aria-hidden="true">{{ resena.autor_publico|slice:":1"|upper }}</span>
             <div class="resena__cuerpo">
                 <div class="resena__cabecera">
@@ -57,6 +70,7 @@
         </li>
         {% endfor %}
     </ul>
+    <nav class="resenas-paginas" aria-label="Páginas de reseñas" hidden></nav>
     {% else %}
     <div class="resenas-vacio">
         <i class="bi bi-chat-square-heart" aria-hidden="true"></i>
@@ -64,3 +78,4 @@
     </div>
     {% endif %}
 </section>
+<script src="{% static 'resenas/resenas_pulido.js' %}" defer></script>

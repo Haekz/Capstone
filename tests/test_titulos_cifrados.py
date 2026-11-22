@@ -97,10 +97,10 @@ class TitulosCifradosTests(TestCase):
         self.subir()
         entrar_soporte(self.client, self.agente)
         self.client.get(self.url)
-        self.assertNotContains(self.client.get(reverse('titulos_adm')), 'Últimas aperturas')
+        self.assertNotContains(self.client.get(reverse('titulos_adm')), 'Aperturas de documentos')
         entrar_soporte(self.client, crear_agente('10000003-5', Ticket.TITULOS, lider=True))
         respuesta = self.client.get(reverse('titulos_adm'))
-        self.assertContains(respuesta, 'Últimas aperturas')
+        self.assertContains(respuesta, 'Aperturas de documentos')
         self.assertEqual(list(respuesta.context['accesos']), list(AccesoTitulo.objects.all()))
 
 

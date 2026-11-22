@@ -2,12 +2,12 @@
 <!-- esta parte es de la sección de clases solicitadas, muestra todos los alumnos inscritos -->
 <section id="sec-clases" class="prof-section">
     <div class="prof-section-header">
-        <h1 class="prof-section-title">Clases Solicitadas</h1>
+        <h1 class="prof-section-title">Clases solicitadas</h1>
         <p class="prof-section-subtitle">Gestiona las solicitudes e inscripciones de alumnos en tus materias.</p>
     </div>
     
     <div class="prof-card">
-        <h2 class="prof-card-title">Listado de Inscripciones Activas</h2>
+        <h2 class="prof-card-title">Inscripciones activas</h2>
         {% if inscripciones %}
             <!-- esta parte es de la tabla con los alumnos inscritos y sus cursos -->
             <div class="prof-table-wrapper">
@@ -15,8 +15,8 @@
                     <thead>
                         <tr>
                             <th>Alumno</th>
-                            <th>Materia / Curso</th>
-                            <th>Fecha de Solicitud</th>
+                            <th>Materia / curso</th>
+                            <th>Fecha de solicitud</th>
                             <th>Estado</th>
                         </tr>
                     </thead>
@@ -37,7 +37,7 @@
         {% else %}
             <div class="prof-empty-card">
                 <i class="bi bi-file-earmark-x"></i>
-                <p>Aún no has recibido solicitudes de alumnos en el sistema.</p>
+                <p>Aún no recibes solicitudes. Cuando un alumno se inscriba en una de tus clases, aparecerá aquí.</p>
             </div>
         {% endif %}
     </div>

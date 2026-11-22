@@ -12,46 +12,82 @@
 <link rel="stylesheet" href="{% static 'apoderados/apoderados.css' %}">
 {% endblock %}
 
+{# tk-*: diseño del portal del alumno (alumn_1/14_soporte.css, todo bajo #portal-alumno). Las demás bases no lo cargan: #}
+{# sus clases quedan sin estilo y lo que cambia de forma (cabecera, filas) se limita con titulo_en_barra, que solo trae el alumno. #}
 {% block content %}
-<div class="perfil-prof">
+<div class="perfil-prof tk-pagina tk-lista-pagina">
     {% if not en_portal %}
     <a class="perfil-prof__volver" href="{{ usuario_sesion.url_panel }}">
         <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a {{ usuario_sesion.texto_panel|lower }}
     </a>
     {% endif %}
 
-    <header class="perfil-prof__cabecera">
+    <header class="perfil-prof__cabecera tk-cabecera">
         <div>
             {% if not titulo_en_barra %}<h1>Ayuda y soporte</h1>{% endif %}
-            <p class="perfil-prof__vacio">¿Problemas con un pago, una clase o la plataforma? Abre un ticket y nuestro equipo te responde.</p>
+            <p class="perfil-prof__vacio tk-cabecera-texto">¿Problemas con un pago, una clase o la plataforma? Abre un ticket y nuestro equipo te responde{% if titulo_en_barra %} por escrito{% endif %}.</p>
         </div>
-    </header>
-
-    <section class="perfil-prof__bloque" aria-labelledby="tickets-titulo">
-        <h2 id="tickets-titulo">Mis tickets</h2>
-        {% include 'apoderados/_mensajes.html' %}
+        {% if titulo_en_barra %}
         <a class="perfil-prof__reservar" href="{% url 'nuevo_ticket' %}">
             <i class="bi bi-plus-lg" aria-hidden="true"></i> Abrir un ticket
         </a>
+        {% endif %}
+    </header>
+
+    <section class="perfil-prof__bloque tk-lista-card" aria-labelledby="tickets-titulo">
+        <div class="tk-lista-titulo">
+            <h2 id="tickets-titulo">Mis tickets</h2>
+            {% if titulo_en_barra and tickets %}<span class="tk-cuenta">{{ tickets|length }} ticket{{ tickets|length|pluralize }}</span>{% endif %}
+        </div>
+        {% include 'apoderados/_mensajes.html' %}
+        {% if not titulo_en_barra %}
+        <a class="perfil-prof__reservar" href="{% url 'nuevo_ticket' %}">
+            <i class="bi bi-plus-lg" aria-hidden="true"></i> Abrir un ticket
+        </a>
+        {% endif %}
         {% if tickets %}
-        <ul class="apod-vinculos">
+        <ul class="apod-vinculos tk-lista">
             {% for t in tickets %}
+            {% if titulo_en_barra %}
+            <li class="tk-item">
+                <a class="tk-item-enlace" href="{% url 'mi_ticket' t.pk %}">
+                    <span class="tk-item-num">#{{ t.pk }}</span>
+                    <span class="tk-item-cuerpo">
+                        <strong class="tk-item-titulo">{{ t.titulo }}</strong>
+                        <span class="tk-item-meta">
+                            <span class="tk-chip tk-chip--cat">{{ t.get_categoria_display }}</span>
+                            <span>Abierto el {{ t.creado|date:"d-m-Y" }}</span>
+                        </span>
+                    </span>
+                    <span class="tk-item-lado">
+                        <span class="apod-estado tk-estado">{{ t.get_estado_display }}</span>
+                        {% if t.estado == 'abierto' %}<small class="tk-item-plazo">{% if t.respondido %}<i class="bi bi-check2" aria-hidden="true"></i> Respondido{% else %}<i class="bi bi-clock" aria-hidden="true"></i> Respuesta a más tardar el {{ t.vence|date:"d-m-Y H:i" }}{% endif %}</small>{% endif %}
+                    </span>
+                    <i class="bi bi-chevron-right tk-item-flecha" aria-hidden="true"></i>
+                </a>
+            </li>
+            {% else %}
             <li>
                 <strong><a href="{% url 'mi_ticket' t.pk %}">#{{ t.pk }} · {{ t.titulo }}</a></strong> · {{ t.get_categoria_display }}<br>
                 <span class="apod-estado">{{ t.get_estado_display }}</span>
                 <small>· abierto el {{ t.creado|date:"d-m-Y" }}{% if t.estado == 'abierto' %}{% if t.respondido %} · respondido{% else %} · respuesta a más tardar el {{ t.vence|date:"d-m-Y H:i" }}{% endif %}{% endif %}</small>
             </li>
+            {% endif %}
             {% endfor %}
         </ul>
+        {% elif es_apoderado %}
+        <p class="apo-vacio"><i class="bi bi-inbox" aria-hidden="true"></i> Todavía no abres tickets.</p>
         {% else %}
         <p class="perfil-prof__vacio">Todavía no abres tickets.</p>
         {% endif %}
     </section>
 
-    <section class="perfil-prof__bloque" aria-labelledby="privacidad-titulo">
-        <h2 id="privacidad-titulo">Privacidad y datos</h2>
-        <p>Si ya no quieres usar LBWUS, puedes pedir que eliminemos tu cuenta y tus datos personales.</p>
-        <a href="{% url 'eliminar_cuenta' %}"><i class="bi bi-person-x" aria-hidden="true"></i> Eliminar mi cuenta</a>
+    <section class="perfil-prof__bloque tk-privacidad" aria-labelledby="privacidad-titulo">
+        <div>
+            <h2 id="privacidad-titulo">Privacidad y datos</h2>
+            <p>Si ya no quieres usar LBWUS, puedes pedir que eliminemos tu cuenta y tus datos personales.</p>
+        </div>
+        <a class="tk-eliminar" href="{% url 'eliminar_cuenta' %}"><i class="bi bi-person-x" aria-hidden="true"></i> Eliminar mi cuenta</a>
     </section>
 </div>
 {% endblock %}

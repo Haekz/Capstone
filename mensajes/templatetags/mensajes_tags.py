@@ -20,3 +20,11 @@ def aviso_mensajes(rol, conversacion_activa=None):
     """Aviso para quien usa el chat. ``rol``: 'alumno', 'profesor' o 'apoderado'. Va desplegado mientras no haya
     una conversacion abierta (antes de usar el chat) y plegado dentro de ella."""
     return {**_plazos(), 'rol': rol, 'abierto': conversacion_activa is None}
+
+
+@register.inclusion_tag('mensajes/_dialogo_aviso.html')
+def dialogo_aviso_mensajes(rol):
+    """El mismo aviso, en la ventana que abre el boton "?" de las conversaciones del apoderado y del profesor (el alumno lo
+    lleva desplegado, con aviso_mensajes). El texto legal debe decir lo mismo que _aviso.html:
+    tests/test_mensajes_aviso_dialogo.py lo comprueba para cada rol."""
+    return {**_plazos(), 'rol': rol}

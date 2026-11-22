@@ -5,6 +5,7 @@ comision de LBWUS del 15% (IVA incluido). Cubre precio, cantidad de clases,
 compra, reserva, cancelacion, reprogramacion y permisos. Webpay va con mock.
 """
 
+import re
 from datetime import timedelta
 from unittest.mock import patch
 
@@ -113,6 +114,14 @@ class PaginaPlanesTests(Escenario):
                       'Descuento de $243 por clase (1,5%)', 'Descuento de $492 por clase (3,1%)',
                       'comisión LBWUS de 15%', 'IVA incluido', 'Vigencia de 30 días', 'Vigencia de 60 días'):
             self.assertContains(r, texto)
+
+    def test_condiciones_dicen_las_vigencias_de_planes(self):
+        """20-nov: decia 30/60/90 escrito a mano cuando ya eran 30/30/60. Las tarjetas estaban bien, por eso la prueba
+        de arriba no lo veia: aqui se mira solo la seccion Condiciones."""
+        html = self.client.get(reverse('planes')).content.decode()
+        condiciones = html.split('id="pl-condiciones-titulo"', 1)[1].split('</section>', 1)[0]
+        self.assertEqual(re.findall(r'(\d+) días \((\w+)\)', condiciones),
+                         [(str(plan.vigencia_dias), plan.nombre) for plan in paquetes.PLANES])
 
     def test_ya_no_ofrece_los_planes_antiguos_ni_funciones_simuladas(self):
         r = self.client.get(reverse('planes'))

@@ -1,11 +1,18 @@
 <!-- esta parte es del chat o buzon de consultas de alumnos: conversaciones reales (paso C1b) -->
 {% load mensajes_tags %}
 <section id="sec-buzon" class="prof-section">
-    <div class="prof-section-header">
-        <h1 class="prof-section-title">Buzón de Alumnos</h1>
-        <p class="prof-section-subtitle">Coordina las clases con tus estudiantes. No compartas teléfonos, correos ni direcciones: todo se conversa aquí.</p>
-        {% aviso_mensajes 'profesor' buzon_activa %}
+    <div class="prof-section-header prof-header-con-accion">
+        <div>
+            <h1 class="prof-section-title">Buzón de alumnos</h1>
+            <p class="prof-section-subtitle">Coordina las clases con tus estudiantes. No compartas teléfonos, correos ni direcciones: todo se conversa aquí.</p>
+        </div>
+        {# El aviso legal (E5) vive en una ventana: antes era un bloque desplegable que empujaba todo hacia abajo #}
+        <button type="button" class="btn-ayuda-mensajes" aria-haspopup="dialog" aria-controls="dialogo-mensajes">
+            <i class="bi bi-question-circle" aria-hidden="true"></i>
+            <span>Cómo funcionan los mensajes</span>
+        </button>
     </div>
+    {% dialogo_aviso_mensajes 'profesor' %}
 
     {% if buzon %}
     <div class="profe-chat-container">

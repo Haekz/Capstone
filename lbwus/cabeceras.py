@@ -14,13 +14,12 @@ JITSI = 'https://meet.jit.si'
 TRANSBANK = ('https://webpay3gint.transbank.cl', 'https://webpay3g.transbank.cl')  # integracion y produccion
 
 # 'unsafe-inline' es temporal: hay <script>, onclick= y style= en linea en las plantillas.
+# Ningun script viene de internet salvo Jitsi: SweetAlert2 tambien es propio (static/vendor).
 CSP = {
     'default-src': ("'self'",),
-    'script-src': ("'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', JITSI),
-    'style-src': ("'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com',
-                  'https://fonts.googleapis.com'),
-    'font-src': ("'self'", 'data:', 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com',
-                 'https://fonts.gstatic.com'),
+    'script-src': ("'self'", "'unsafe-inline'", JITSI),
+    'style-src': ("'self'", "'unsafe-inline'"),  # iconos y letras son propios (static/vendor)
+    'font-src': ("'self'", 'data:'),
     'img-src': ("'self'", 'data:', 'https://commondatastorage.googleapis.com'),
     'media-src': ("'self'", 'https://commondatastorage.googleapis.com'),
     'connect-src': ("'self'", JITSI, 'wss://meet.jit.si'),

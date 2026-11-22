@@ -12,7 +12,7 @@
 
     <!-- Valores del eje Y -->
     {% for marca in grafico.marcas %}
-    <text x="25" y="{{ marca.y|add:4 }}" fill="var(--text-muted)" font-size="11">{{ marca.valor }}</text>
+    <text x="25" y="{{ marca.y|add:4 }}" fill="var(--text-secondary)" font-size="11">{{ marca.valor }}</text>
     {% endfor %}
 
     <!-- Área sombreada debajo de la línea -->
@@ -24,7 +24,7 @@
     <!-- Puntos (al pasar el mouse muestran el período y la cantidad) y períodos del eje X -->
     {% for punto in grafico.puntos %}
     <circle class="chart-point" cx="{{ punto.x|unlocalize }}" cy="{{ punto.y|unlocalize }}" r="6" fill="var(--primary)" stroke="var(--bg-card)" stroke-width="2"><title>{{ punto.etiqueta }}: {{ punto.cantidad }}</title></circle>
-    <text x="{{ punto.x|unlocalize }}" y="204" fill="var(--text-muted)" font-size="11" text-anchor="middle">{{ punto.etiqueta }}</text>
+    <text x="{{ punto.x|unlocalize }}" y="204" fill="var(--text-secondary)" font-size="11" text-anchor="middle">{{ punto.etiqueta }}</text>
     {% endfor %}
 
     <!-- Definición del degradado -->

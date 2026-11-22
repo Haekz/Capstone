@@ -9,8 +9,10 @@ class ReporteForm(AccesibleMixin, forms.Form):
     """Ticket que abre un usuario. ``categorias``: las que puede abrir (permisos.categorias_que_reporta).
     ``estudiantes``: los del apoderado, para indicar de quien se trata (D18)."""
     categoria = forms.ChoiceField(label='¿Sobre qué es?')
-    titulo = forms.CharField(label='Asunto', max_length=120)
-    descripcion = forms.CharField(label='Cuéntanos qué pasó', max_length=2000, widget=forms.Textarea,
+    titulo = forms.CharField(label='Asunto', max_length=120, widget=forms.TextInput(attrs={
+        'placeholder': 'Ej.: No puedo reservar la clase del jueves', 'autocomplete': 'off'}))
+    descripcion = forms.CharField(label='Detalle', max_length=2000, widget=forms.Textarea(attrs={
+        'rows': 8, 'placeholder': 'Qué intentabas hacer, qué pasó y cuándo. Si es sobre una clase, indica el profesor y la fecha.'}),
                                   help_text='No escribas contraseñas ni datos de tarjetas.')
 
     def __init__(self, *args, categorias, estudiantes=None, **kwargs):

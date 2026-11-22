@@ -1,0 +1,249 @@
+/* Portal de admin, capa de diseno (de la copia: 06_pulido_admin.css), parte «resumen»: Resumen: banner oscuro con pendientes.
+   Las partes cargan en este orden: 06a marco, 06b resumen, 06c pantallas, 06d cierre. Todo cuelga de #portal-admin. */
+
+/* ── 5. Resumen: banner oscuro con pendientes ── */
+#portal-admin .adm-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 28px;
+    padding: 28px 30px 28px 34px;
+    border-radius: 20px;
+    background:
+        radial-gradient(circle at 12% 0%, rgba(168, 85, 247, 0.45) 0%, transparent 45%),
+        radial-gradient(circle at 95% 100%, rgba(124, 58, 237, 0.35) 0%, transparent 50%),
+        #1a1233;
+    color: #ffffff;
+}
+
+body:not(.light-mode)#portal-admin .adm-hero {
+    border: 1px solid var(--border);
+}
+
+#portal-admin .adm-hero-fecha {
+    display: inline-block;
+    margin-bottom: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #f5a524;
+}
+
+#portal-admin .adm-hero-titulo {
+    font-size: clamp(1.6rem, 2.6vw, 2.1rem);
+    font-weight: 700;
+    line-height: 1.12;
+    letter-spacing: -0.03em;
+    color: #ffffff;
+    margin-bottom: 8px;
+}
+
+#portal-admin .adm-hero-resumen {
+    max-width: 48ch;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.78);
+}
+
+#portal-admin .adm-pendientes {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(150px, 1fr));
+    gap: 10px;
+}
+
+#portal-admin .adm-pend {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    column-gap: 10px;
+    align-items: center;
+    padding: 12px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+#portal-admin .adm-pend:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+#portal-admin .adm-pend i {
+    grid-row: 1 / span 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    font-size: 1rem;
+}
+
+#portal-admin .adm-pend strong {
+    font-size: 1.3rem;
+    font-weight: 700;
+    line-height: 1.1;
+    color: #ffffff;
+    font-variant-numeric: tabular-nums;
+}
+
+#portal-admin .adm-pend span {
+    font-size: 0.78rem;
+    line-height: 1.3;
+}
+
+/* Con algo pendiente: ámbar, para que se vea primero */
+#portal-admin .adm-pend--hay {
+    border-color: rgba(245, 165, 36, 0.55);
+    background: rgba(245, 165, 36, 0.12);
+    color: #ffe2a8;
+}
+
+#portal-admin .adm-pend--hay i {
+    background: #f5a524;
+    color: #1a1233;
+}
+
+/* Indicadores */
+#portal-admin .stat-card {
+    padding: 18px 20px;
+    gap: 14px;
+    background: var(--bg-card);
+}
+
+#portal-admin .stat-card[data-ir] {
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+}
+
+#portal-admin .stat-card[data-ir]:hover {
+    border-color: var(--primary);
+}
+
+#portal-admin .stat-value {
+    font-size: 1.7rem;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+}
+
+#portal-admin .stat-label {
+    margin-top: 2px;
+    font-size: 0.86rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+#portal-admin .stat-sub {
+    margin-top: 4px;
+    font-size: 0.78rem;
+    line-height: 1.4;
+    color: var(--text-secondary);
+}
+
+/* Gráficos en dos columnas; soporte a todo el ancho */
+#portal-admin .middle-row {
+    gap: 20px;
+}
+
+#portal-admin .middle-row > .panel:nth-child(3) {
+    grid-column: 1 / -1;
+}
+
+/* Días / Meses / Trimestres como control segmentado */
+#portal-admin .panel-header nav[aria-label="Período del gráfico"] {
+    display: inline-flex;
+    gap: 2px;
+    padding: 3px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg-main);
+}
+
+#portal-admin .panel-header nav[aria-label="Período del gráfico"] .panel-action {
+    min-height: 0;
+    padding: 5px 10px;
+    border-radius: 7px;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    text-decoration: none;
+}
+
+#portal-admin .panel-header nav[aria-label="Período del gráfico"] .panel-action[aria-current="page"] {
+    background: var(--bg-card);
+    color: var(--primary-light);
+    box-shadow: 0 1px 2px rgba(26, 18, 51, 0.1);
+}
+
+#portal-admin .chart-container {
+    max-width: none;
+}
+
+#portal-admin .chart-svg text {
+    font-family: inherit;
+}
+
+/* Soporte en cifras */
+#portal-admin .soporte-cifras {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+#portal-admin .soporte-cifras li {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-item);
+    background: var(--bg-main);
+}
+
+#portal-admin .soporte-cifras strong {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+#portal-admin .soporte-cifras span {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+#portal-admin .soporte-detalle {
+    margin-bottom: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-item);
+}
+
+#portal-admin .soporte-detalle > summary {
+    padding: 12px 16px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+#portal-admin .soporte-detalle[open] > summary {
+    border-bottom: 1px solid var(--border);
+}
+
+#portal-admin .soporte-tabla .user-table th[scope="row"] {
+    background: transparent;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border);
+}
+
+/* Planes: tres tarjetas, tres columnas */
+#portal-admin #section-planes > .stats-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}

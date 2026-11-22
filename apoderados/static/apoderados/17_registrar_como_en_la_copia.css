@@ -1,0 +1,41 @@
+/* Registrar estudiante, aspecto de la copia visual.
+
+   La copia conserva en esta pantalla el aspecto del registro del apoderado (apoderados.css): declaración lila, campos con más relleno y
+   la zona del carnet clara. El prefijo html:is([data-pagina=...]) que lleva en la copia hace que esas reglas ganen a las de
+   16_portal_apoderado.css; en la plataforma empatan y gana la que carga después. Aquí se reproduce lo que gana en la copia, sin tocar
+   16_portal_apoderado.css. Solo actúa en formularios con confirmación de clave (Registrar estudiante) dentro del portal: el ':has(#id_...)'
+   les da más peso que las reglas del portal. Los valores son los de apoderados.css (sección "Registro"). */
+
+#portal-alumno.portal-apoderado .apod-form:has(#id_confirmar_password) .apod-form__campo input:not([type="checkbox"]):not([type="file"]) {
+    padding: 13px 16px;
+    border-radius: 12px;
+}
+
+#portal-alumno.portal-apoderado .apod-form:has(#id_confirmar_password) .apod-form__campo input:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 1px;
+}
+
+/* Carnet: caja punteada clara */
+#portal-alumno.portal-apoderado .apod-form:has(#id_confirmar_password) .apod-form__campo input[type="file"] {
+    padding: 12px;
+    border: 1px dashed var(--line);
+    border-radius: 12px;
+    background: var(--surface);
+}
+
+#portal-alumno.portal-apoderado .apod-form:has(#id_confirmar_password) .apod-form__campo input[type="file"]::file-selector-button {
+    margin-right: 12px;
+    padding: 8px 16px;
+    border-radius: 999px;
+}
+
+#portal-alumno.portal-apoderado .apod-form:has(#id_confirmar_password) .apod-form__campo input[type="file"]::file-selector-button:hover {
+    background: var(--primary-dark);
+}
+
+/* Declaración legal, destacada */
+#portal-alumno.portal-apoderado .apod-form:has(#id_confirmar_password) .apod-form__declaracion {
+    border-radius: 12px;
+    background: var(--primary-soft);
+}

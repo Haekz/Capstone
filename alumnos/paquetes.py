@@ -89,6 +89,21 @@ def pago_profesor(monto, tasa=COMISION):
     return monto - comision(monto, tasa)
 
 
+def porcentaje(tasa):
+    """Una tasa lista para mostrar: Fraction(15, 100) -> 15; una con decimales (12,5%) sigue con ellos, que int() cortaria."""
+    valor = tasa * 100
+    return int(valor) if valor.denominator == 1 else float(valor)
+
+
+def porcentajes():
+    """Las tasas que muestran las pantallas. Nunca se escriben a mano en una plantilla: si cambian, quedarian desfasadas."""
+    return {
+        'comision_pct': porcentaje(COMISION),
+        'pago_profesor_pct': porcentaje(1 - COMISION),
+        'comision_videos_pct': porcentaje(COMISION_VIDEOS),
+    }
+
+
 def precio_agregado(plan):
     """Videos que trae el plan al contratarlo, a precio fijo por video."""
     return plan.videos * PRECIO_VIDEO

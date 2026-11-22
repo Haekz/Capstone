@@ -39,6 +39,7 @@ def escalar_ticket(request, id_ticket):
                                 else f'a {ticket.asignado.nombre}.'))
             return redirect('panel_soporte')
     return render(request, 'soporte/escalar.html', {
+        'agente': agente,  # la ficha y el menu de la barra salen de aqui
         'ticket': ticket, 'form': form, 'historial': historial, 'pendiente': pendiente,
         'destino': 'un administrador' if agente.es_lider else 'el líder de soporte',
     })

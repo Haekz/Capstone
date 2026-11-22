@@ -2,16 +2,19 @@
 {% load static %}
         <!-- esta parte es de la sección de inicio, la pantalla principal cuando entras al panel -->
         <section id="sec-inicio" class="prof-section active">
-            <div class="prof-section-header">
-                <h1 class="prof-section-title">¡Bienvenido de vuelta, Prof. {{ profesor.user.first_name }}!</h1>
-                <p class="prof-section-subtitle">Este es el resumen de tus actividades del día de hoy.</p>
-            </div>
+            {# Banner: la fecha y el resumen del día los completa mejoras_docente.js con lo que esta misma página ya pintó #}
+            <div class="prof-hero">
+                <div class="prof-hero-texto">
+                    <span class="prof-hero-fecha" id="prof-hoy">Panel docente</span>
+                    <h1 class="prof-hero-titulo">¡Bienvenido de vuelta, Prof. {{ profesor.user.first_name }}!</h1>
+                    <p class="prof-hero-resumen" id="prof-resumen-hoy">Este es el resumen de tus actividades del día de hoy.</p>
+                    <div class="prof-hero-acciones">
+                        <button type="button" class="prof-hero-btn" onclick="switchSection('agenda')"><i class="bi bi-calendar-week" aria-hidden="true"></i> Ver mi agenda</button>
+                        <button type="button" class="prof-hero-link" onclick="switchSection('grabaciones')"><i class="bi bi-cloud-arrow-up" aria-hidden="true"></i> Subir un video</button>
+                    </div>
+                </div>
 
-            {% include 'user_profesor/titulo_aviso.html' %}
-            {% include 'user_profesor/especializaciones.html' %}
-            <script src="{% static 'user_profesor/envio_documento.js' %}" defer></script>
-
-            <!-- esta parte es de las tarjetas de métricas arriba del inicio, muestran el dinero del día y clases disponibles -->
+            <!-- esta parte es de las tarjetas de métricas del banner, muestran el dinero del día y clases disponibles -->
             <div class="prof-metrics-grid">
                 <div class="prof-metric-card">
                     <div class="prof-metric-icon" style="color: var(--accent); background: rgba(245, 158, 11, 0.1);">
@@ -19,7 +22,7 @@
                     </div>
                     <div class="prof-metric-info">
                         <h3 class="prof-metric-val">{{ dinero_hoy }}</h3>
-                        <p class="prof-metric-label">Dinero Generado Hoy</p>
+                        <p class="prof-metric-label">Generado hoy</p>
                     </div>
                 </div>
                 
@@ -29,17 +32,21 @@
                     </div>
                     <div class="prof-metric-info">
                         <h3 class="prof-metric-val">{{ clases_disponibles }}</h3>
-                        <p class="prof-metric-label">Clases Disponibles Restantes</p>
+                        <p class="prof-metric-label">Clases disponibles restantes</p>
                     </div>
                 </div>
             </div>
+            </div>
+
+            {% include 'user_profesor/titulo_aviso.html' %}
+            <script src="{% static 'user_profesor/envio_documento.js' %}" defer></script>
 
             <!-- esta parte es del grid del centro con la agenda del día y el gráfico -->
             <div class="prof-dashboard-grid">
                 
                 <!-- agenda del día: las sesiones reservadas para hoy, en orden de hora (user_profesor/inicio.py) -->
                 <div class="prof-card">
-                    <h2 class="prof-card-title">Clases de Hoy</h2>
+                    <h2 class="prof-card-title">Clases de hoy</h2>
                     {% if clases_hoy %}
                         <div class="prof-schedule-list">
                             {% for ch in clases_hoy %}
@@ -69,7 +76,7 @@
 
                 <!-- esta parte es del gráfico de barras que muestra cuántas solicitudes tuvo el profe por mes -->
                 <div class="prof-card">
-                    <h2 class="prof-card-title">Rendimiento Mensual (Solicitudes)</h2>
+                    <h2 class="prof-card-title">Solicitudes por mes</h2>
                     <p class="prof-card-subtitle">Cantidad de solicitudes recibidas en los últimos 5 meses.</p>
                     
                     <!-- esta parte es del contenedor del gráfico, las barras se dibujan solo con CSS -->
@@ -90,4 +97,7 @@
                 </div>
 
             </div>
+
+            {# Mis especializaciones va al final del Inicio (antes empujaba todo lo demás hacia abajo) #}
+            {% include 'user_profesor/especializaciones.html' %}
         </section>

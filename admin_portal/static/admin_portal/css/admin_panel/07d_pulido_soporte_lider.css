@@ -1,0 +1,405 @@
+/* Portal de soporte, capa de diseno (de la copia: 07_pulido_soporte.css), parte «lider»: portal del lider: equipo, reasignar, registros y requerimientos.
+   Las partes cargan en este orden: 07a marco, 07b tickets, 07c detalle, 07d lider, 07e cierre. */
+
+/* ── 10b. Portal del líder: equipo, reasignar, registros, requerimientos ── */
+#portal-soporte .sop-tickets .panel-header {
+    flex-wrap: wrap;
+}
+
+/* Filtro por agente: fichas que se aprietan */
+#portal-soporte .sop-filtro-agentes {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-left: auto;
+}
+
+#portal-soporte .sop-filtro-agentes[hidden] {
+    display: none;
+}
+
+#portal-soporte .sop-filtro-agentes + .sop-filtro {
+    margin-left: 0;
+}
+
+#portal-soporte .sop-chip-filtro {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 12px;
+    border: 1px solid var(--line-2);
+    border-radius: 99px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+#portal-soporte .sop-chip-filtro span {
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+#portal-soporte .sop-chip-filtro:hover {
+    border-color: var(--primary);
+    color: var(--text-primary);
+}
+
+#portal-soporte .sop-chip-filtro[aria-pressed="true"] {
+    border-color: transparent;
+    background: var(--primary-dark);
+    color: #ffffff;
+}
+
+#portal-soporte .sop-chip-filtro[aria-pressed="true"] span {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+/* Enlace secundario bajo el asunto */
+#portal-soporte .sop-ticket-escalar {
+    display: inline-block;
+    margin-top: 4px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-radius: 4px;
+}
+
+#portal-soporte .sop-ticket-escalar:hover {
+    color: var(--primary-light);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+/* Persona: avatar chico + nombre; o nombre + dato debajo */
+#portal-soporte .sop-persona {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-primary);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+#portal-soporte .sop-avatar--sm {
+    width: 26px;
+    height: 26px;
+    font-size: 0.75rem;
+}
+
+#portal-soporte .sop-persona-texto {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+#portal-soporte .sop-persona-texto strong {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+#portal-soporte .sop-persona-texto small,
+#portal-soporte .user-table small {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+#portal-soporte .sop-persona-texto small:empty {
+    display: none;
+}
+
+/* Reasignar: selector + botón en una línea */
+#portal-soporte .sop-reasignar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#portal-soporte .sop-reasignar select {
+    height: 34px;
+    min-width: 96px;
+    padding: 0 30px 0 10px;
+    border: 1px solid var(--line-2);
+    border-radius: var(--r-ctrl);
+    background: var(--bg-card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16' fill='%237c7794'%3E%3Cpath d='M1.6 5.2a.75.75 0 0 1 1.06 0L8 10.5l5.34-5.3a.75.75 0 1 1 1.06 1.06l-5.87 5.83a.75.75 0 0 1-1.06 0L1.6 6.26a.75.75 0 0 1 0-1.06z'/%3E%3C/svg%3E") no-repeat right 10px center;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    appearance: none;
+    cursor: pointer;
+}
+
+#portal-soporte .sop-reasignar select:hover {
+    border-color: var(--primary);
+}
+
+#portal-soporte .sop-reasignar .sop-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+#portal-soporte .sop-reasignar .sop-btn:disabled:hover {
+    border-color: var(--line-2);
+    color: var(--text-primary);
+}
+
+/* Equipo de soporte: una fila por agente con su carga */
+#portal-soporte .sop-equipo {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+}
+
+#portal-soporte .sop-agente {
+    display: grid;
+    grid-template-columns: 40px minmax(140px, 200px) 150px minmax(0, 1fr);
+    align-items: center;
+    gap: 16px;
+    padding: 16px 22px;
+}
+
+#portal-soporte .sop-agente + .sop-agente {
+    border-top: 1px solid var(--border);
+}
+
+#portal-soporte .sop-agente > .sop-avatar {
+    width: 40px;
+    height: 40px;
+}
+
+#portal-soporte .sop-agente-datos {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+#portal-soporte .sop-agente-datos strong {
+    font-size: 0.95rem;
+    color: var(--text-primary);
+}
+
+#portal-soporte .sop-agente-datos span {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+}
+
+#portal-soporte .sop-agente-carga {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    column-gap: 10px;
+    row-gap: 4px;
+}
+
+#portal-soporte .sop-carga-etiqueta {
+    grid-column: 1 / -1;
+}
+
+#portal-soporte .sop-carga-n {
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+#portal-soporte .sop-carga-etiqueta {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+}
+
+#portal-soporte .sop-carga-barra {
+    height: 6px;
+    border-radius: 99px;
+    background: var(--bg-main);
+    overflow: hidden;
+}
+
+#portal-soporte .sop-carga-barra > span {
+    display: block;
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--primary);
+    transition: width 0.3s ease;
+}
+
+#portal-soporte .sop-agente-cats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+#portal-soporte .sop-agente-cats .badge {
+    background: var(--bg-main);
+    color: var(--text-secondary);
+}
+
+#portal-soporte .sop-agente-cats .badge[hidden] {
+    display: none;
+}
+
+#portal-soporte .sop-cats-mas {
+    padding: 3px 10px;
+    border: 1px dashed var(--line-2);
+    border-radius: 99px;
+    background: transparent;
+    color: var(--primary-light);
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+#portal-soporte .sop-cats-mas:hover {
+    border-color: var(--primary);
+}
+
+/* Registros: plegados, se abren al apretar */
+#portal-soporte .sop-grupo-titulo {
+    margin-top: 8px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+
+#portal-soporte .sop-registro > summary {
+    list-style: none;
+    cursor: pointer;
+    border-bottom-color: transparent;
+    transition: background 0.15s ease;
+}
+
+#portal-soporte .sop-registro > summary::-webkit-details-marker {
+    display: none;
+}
+
+#portal-soporte .sop-registro > summary:hover {
+    background: var(--bg-hover);
+}
+
+#portal-soporte .sop-registro[open] > summary {
+    border-bottom-color: var(--border);
+}
+
+#portal-soporte .sop-registro .panel-title {
+    font-size: 0.95rem;
+}
+
+#portal-soporte .sop-registro-nota {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+#portal-soporte .sop-registro-flecha {
+    color: var(--text-secondary);
+    transition: transform 0.2s ease;
+}
+
+#portal-soporte .sop-registro[open] .sop-registro-flecha {
+    transform: rotate(180deg);
+}
+
+#portal-soporte .sop-cuenta--cero {
+    background: var(--bg-main);
+    color: var(--text-secondary);
+}
+
+/* Paneles con texto: intro y estado vacío */
+#portal-soporte .sop-panel-intro {
+    max-width: 75ch;
+    margin-bottom: 14px;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+
+#portal-soporte .sop-vacio {
+    padding: 22px 16px;
+    border: 1px dashed var(--line-2);
+    border-radius: var(--r-item);
+    text-align: center;
+    font-size: 0.92rem;
+    color: var(--text-secondary);
+}
+
+#portal-soporte .sop-vacio::before {
+    content: "\f270";
+    display: block;
+    margin-bottom: 6px;
+    font-family: "bootstrap-icons";
+    font-size: 1.4rem;
+    line-height: 1;
+    color: var(--ok);
+}
+
+#portal-soporte .sop-aviso--pie {
+    margin: 18px 24px 0;
+}
+
+#portal-soporte .sop-aviso a {
+    color: var(--primary-light);
+    font-weight: 600;
+}
+
+#portal-soporte .sop-btn--peligro {
+    border-color: rgba(220, 38, 38, 0.4);
+    color: #dc2626;
+}
+
+#portal-soporte .sop-btn--peligro:hover {
+    border-color: #dc2626;
+    background: rgba(220, 38, 38, 0.08);
+    color: #dc2626;
+}
+
+body:not(.light-mode)#portal-soporte .sop-btn--peligro {
+    color: #f87171;
+}
+
+/* Registrar requerimiento: formulario en dos columnas */
+#portal-soporte .sop-panel-angosto {
+    max-width: 860px;
+}
+
+#portal-soporte .sop-form-dos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 18px !important;
+}
+
+#portal-soporte .sop-form-dos > :is(.apod-form__campo:has(textarea), .btn-primary, .sop-error) {
+    grid-column: 1 / -1;
+}
+
+#portal-soporte .apod-form :is(input[type="text"], input[type="date"]) {
+    width: 100%;
+    height: 44px;
+    padding: 0 14px;
+    border: 1.5px solid var(--line-2);
+    border-radius: var(--r-ctrl);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    transition: border-color 0.15s ease;
+}
+
+#portal-soporte .apod-form :is(input[type="text"], input[type="date"]):focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: var(--ring);
+}
+
+#portal-soporte .apod-form input[aria-invalid="true"] {
+    border-color: #dc2626;
+}
+
+body:not(.light-mode)#portal-soporte .apod-form input[type="date"] {
+    color-scheme: dark;
+}
+
+#portal-soporte .apod-form textarea[name="alcance"] {
+    min-height: 96px;
+}

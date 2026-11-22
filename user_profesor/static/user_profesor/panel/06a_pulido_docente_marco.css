@@ -1,0 +1,213 @@
+/* Panel docente, capa de diseno (de la copia: 06_pulido_docente.css), parte «marco»: tokens, menu lateral, barra superior, area de contenido y tarjetas.
+   Las partes cargan en este orden: 06a marco, 06b inicio, 06c formularios, 06d tablas, 06e agenda, 06f cuenta,
+   06g contenido, 06h cierre. */
+
+/* ==============================================================
+   PANEL DOCENTE — CAPA DE DISEÑO FINAL
+   - Va al final: solo sobrescribe, no borra nada de lo anterior.
+   - Mismos colores del portal: menú morado degradado (claro),
+     píldora blanca en el ítem activo, morado #7c3aed y ámbar.
+   - Todo cuelga de #portal-docente (id del <body>) para ganar
+     sin !important; los pocos !important pisan estilos en línea.
+   - Mismo lenguaje que el portal del alumno: paneles planos con
+     línea fina, textos en minúscula inicial, un solo banner oscuro.
+   ============================================================== */
+
+
+/* ── 1. Tokens y base ── */
+#portal-docente {
+    --line-2: rgba(26, 18, 51, 0.16);
+    --ring: 0 0 0 3px rgba(124, 58, 237, 0.35);
+    --ok: #066b4c;  /* 4,5:1 tambien sobre --ok-soft y fondos lila (#0f8a60 daba 3,6:1) */
+    --ok-soft: rgba(15, 138, 96, 0.1);
+    --warn: #9c4708;  /* 4,5:1 tambien sobre --warn-soft (#b45309 daba 4,5:1 justo) */
+    --warn-soft: rgba(245, 158, 11, 0.14);
+    --danger-soft: rgba(239, 68, 68, 0.1);
+    --r-panel: 16px;
+    --r-item: 12px;
+    --r-ctrl: 10px;
+}
+
+body:not(.light-mode)#portal-docente {
+    --line-2: rgba(255, 255, 255, 0.16);
+    --ok: #34d399;
+    --ok-soft: rgba(52, 211, 153, 0.12);
+    --warn: #fbbf24;
+}
+
+#portal-docente :is(button, input, select, textarea) {
+    font-family: inherit;
+}
+
+#portal-docente :is(a, button, select, input, summary, [tabindex]):focus-visible {
+    outline: none;
+    box-shadow: var(--ring);
+}
+
+#portal-docente .page-content :is(h1, h2, h3, h4) {
+    letter-spacing: -0.015em;
+}
+
+/* Fuera las MAYÚSCULAS forzadas: en español se lee mejor en minúscula inicial */
+#portal-docente :is(.sidebar-brand-role, .nav-label, .prof-badge, .prof-balance-card h4,
+    .user-table th, .form-label, .search-section-label) {
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+/* ── 2. Menú lateral (mismos colores; solo tipografía) ── */
+#portal-docente .admin-wrapper .sidebar .sidebar-brand-role {
+    font-size: 0.78rem;
+    font-weight: 500;
+}
+
+#portal-docente .admin-wrapper .sidebar .nav-label {
+    font-size: 0.75rem;
+    padding-top: 20px;
+}
+
+/* ── 3. Barra superior: botón "Ir a…" (el Ctrl + K estaba escondido) ── */
+#portal-docente .topbar-buscar {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 8px 0 14px;
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+#portal-docente .topbar-buscar:hover {
+    border-color: var(--primary);
+    color: var(--text-primary);
+}
+
+#portal-docente .topbar-buscar kbd {
+    padding: 2px 7px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg-main);
+    font-family: inherit;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+/* ── 4. Área de contenido: un solo margen (antes 32 + 40 px) ── */
+#portal-docente .prof-dashboard-layout {
+    background: transparent;
+}
+
+#portal-docente .prof-content-area {
+    padding: 0;
+    max-width: 1400px;
+    overflow: visible;
+}
+
+#portal-docente .prof-section.active {
+    animation: doc-entrar 0.22s ease both;
+}
+
+@keyframes doc-entrar {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: none; }
+}
+
+/* El título de la sección ya está en la barra superior: aquí queda solo la bajada */
+#portal-docente .prof-section-header .prof-section-title,
+#portal-docente #sec-resenas .perfil-prof__cabecera h1,
+#portal-docente #sec-ayuda .perfil-prof__cabecera h1 {
+    display: none;
+}
+
+#portal-docente .prof-section-header {
+    margin-bottom: 20px;
+}
+
+#portal-docente .prof-section-header .prof-section-subtitle {
+    max-width: 70ch;
+    font-size: 0.95rem;
+    line-height: 1.55;
+}
+
+#portal-docente .prof-header-con-accion {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+/* ── 5. Tarjetas: planas, línea fina, misma separación ── */
+#portal-docente :is(.prof-card, .prof-metric-card, .prof-balance-card, .profe-stat-box, .perfil-prof__bloque) {
+    border: 1px solid var(--border);
+    border-radius: var(--r-panel);
+    box-shadow: none;
+}
+
+#portal-docente .prof-card {
+    padding: 24px 26px;
+    margin-bottom: 20px;
+    background-color: var(--bg-card);
+}
+
+#portal-docente .prof-card-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+#portal-docente .prof-card-title > i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: var(--primary-soft);
+    color: var(--primary-light);
+    font-size: 0.95rem;
+}
+
+#portal-docente .prof-card-subtitle,
+#portal-docente .prof-card .prof-section-subtitle {
+    font-size: 0.9rem;
+    line-height: 1.55;
+    margin-bottom: 18px;
+    max-width: 75ch;
+}
+
+#portal-docente .prof-empty-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 32px 20px;
+    border: 1px dashed var(--line-2);
+    border-radius: var(--r-item);
+    font-size: 0.92rem;
+    line-height: 1.5;
+}
+
+#portal-docente .prof-empty-card i,
+body:not(.light-mode)#portal-docente .prof-empty-card i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    margin: 0;
+    border-radius: 50%;
+    background: var(--primary-soft);
+    color: var(--primary-light);
+    font-size: 1.3rem;
+}
+
+#portal-docente .prof-empty-card p {
+    max-width: 48ch;
+}

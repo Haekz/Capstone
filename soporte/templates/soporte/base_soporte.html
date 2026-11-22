@@ -1,7 +1,28 @@
 {% extends 'admin_portal/base_admin.html' %}
-{% comment %}Mismo diseño del portal admin: cambian la marca, la ficha, el menú y la salida.{% endcomment %}
+{% load static %}
+{% comment %}Mismo diseño del portal admin: cambian la marca, la ficha, el menú y la salida.
+La capa 07* y el JS cuelgan de #portal-soporte (id del <body>), asi que el portal admin no los ve.{% endcomment %}
 
 {% block title %}Soporte — LBWUS{% endblock %}
+{% block body_attrs %} id="portal-soporte"{% endblock %}
+{% block capa_admin %}{% endblock %}{# la capa 06* es del portal admin (#portal-admin): aqui no se carga #}
+{% block mejoras_admin_js %}{% endblock %}{# ni su JS (mejoras_admin.js): Soporte tiene mejoras_soporte.js #}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'admin_portal/css/admin_panel/07a_pulido_soporte_marco.css' %}">
+<link rel="stylesheet" href="{% static 'admin_portal/css/admin_panel/07b_pulido_soporte_tickets.css' %}">
+<link rel="stylesheet" href="{% static 'admin_portal/css/admin_panel/07c_pulido_soporte_detalle.css' %}">
+<link rel="stylesheet" href="{% static 'admin_portal/css/admin_panel/07d_pulido_soporte_lider.css' %}">
+<link rel="stylesheet" href="{% static 'admin_portal/css/admin_panel/07e_pulido_soporte_cierre.css' %}">{# 07e cierra la capa de la copia: trae pantallas medianas y movil #}
+<link rel="stylesheet" href="{% static 'admin_portal/css/admin_panel/07f_ajustes_soporte.css' %}">{# 07f son ajustes propios del proyecto, no de la copia #}
+{% endblock %}
+{% block extra_js %}<script src="{% static 'soporte/mejoras_soporte.js' %}"></script>{% endblock %}
+
+{# Buscador (Ctrl + K): es de soporte, no del admin. mejoras_soporte.js arma los resultados con el menu y los tickets de la pagina #}
+{% block busqueda_dialogo %} role="dialog" aria-modal="true" aria-label="Ir a una sección o ticket"{% endblock %}
+{% block busqueda_placeholder %}Ir a una sección o ticket…{% endblock %}
+{% block busqueda_campo %} aria-label="Buscar una sección o ticket"{% endblock %}
+{% block busqueda_esc %}Esc{% endblock %}
+{% block busqueda_resultados %}{% endblock %}
 {% block portal_url %}{% url 'panel_soporte' %}{% endblock %}
 {% block portal_nombre %}Soporte{% endblock %}
 {% block page_subtitle %}LBWUS - Soporte{% endblock %}
@@ -20,31 +41,50 @@
 <span class="nav-label">Tickets</span>
 
 <a id="nav-panel" class="nav-item {% block nav_panel %}{% endblock %}" href="{% url 'panel_soporte' %}">
-    <i class="bi bi-inbox-fill"></i>
+    <i class="bi bi-inbox-fill" aria-hidden="true"></i>
     Mis tickets
 </a>
 
+{# El agente ve cada revision solo si atiende ese tema (Verificaciones); el lider las ve siempre, como control: Supervision (AgenteSoporte.ve_*) #}
+{% if agente.ve_apoderados or agente.ve_documentos %}
+<span class="nav-label">{% if agente.es_lider %}Supervisión{% else %}Verificaciones{% endif %}</span>
+{% endif %}
+
+{% if agente.ve_apoderados %}
 <a id="nav-apoderados" class="nav-item {% block nav_apoderados %}{% endblock %}" href="{% url 'apoderados_revision' %}">
-    <i class="bi bi-person-vcard-fill"></i>
+    <i class="bi bi-person-vcard-fill" aria-hidden="true"></i>
     Apoderados
 </a>
+{% endif %}
 
+{% if agente.ve_documentos %}
 <a id="nav-titulos" class="nav-item {% block nav_titulos %}{% endblock %}" href="{% url 'titulos_adm' %}">
-    <i class="bi bi-mortarboard-fill"></i>
+    <i class="bi bi-mortarboard-fill" aria-hidden="true"></i>
     Documentos de profesores
 </a>
+{% endif %}
 
 {% if agente.es_lider %}
+<span class="nav-label">Privacidad y legal</span>
+
 <a id="nav-revision" class="nav-item {% block nav_revision %}{% endblock %}" href="{% url 'mensajes_revision' %}">
-    <i class="bi bi-chat-left-text-fill"></i>
+    <i class="bi bi-chat-left-text-fill" aria-hidden="true"></i>
     Conversaciones reportadas
 </a>
 <a id="nav-requerimientos" class="nav-item {% block nav_requerimientos %}{% endblock %}" href="{% url 'requerimientos' %}">
-    <i class="bi bi-bank2"></i>
+    <i class="bi bi-bank2" aria-hidden="true"></i>
     Requerimientos de autoridad
 </a>
 {% endif %}
 {% endblock %}
 
 {% block logout_url %}{% url 'logout_soporte' %}{% endblock %}
-{% block topbar_acciones %}{% include 'admin_portal/includes/boton_campana.html' %}{% endblock %}
+{% block topbar_acciones %}
+{# Buscador (Ctrl + K): lista las secciones del menu y los tickets de la pagina (mejoras_soporte.js) #}
+<button type="button" class="topbar-buscar" onclick="openSearchModal()" aria-label="Ir a una sección o ticket (Ctrl + K)">
+    <i class="bi bi-search" aria-hidden="true"></i>
+    <span>Ir a…</span>
+    <kbd>Ctrl K</kbd>
+</button>
+{% include 'admin_portal/includes/boton_campana.html' %}
+{% endblock %}

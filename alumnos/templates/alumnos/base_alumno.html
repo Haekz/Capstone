@@ -7,12 +7,11 @@
     <title>{% block title %}LBWUS | Portal del Alumno{% endblock %}</title>
     <link rel="icon" href="{% static 'alumnos/img/Logo.png' %}">
 
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Fuentes e iconos alojados en el sitio (lbwus/static/vendor/LEEME.txt) -->
+    <link rel="stylesheet" href="{% static 'vendor/fuentes/fuentes.css' %}">
 
     <!-- Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'vendor/bootstrap-icons/bootstrap-icons.min.css' %}">
 
     <!-- Custom CSS -->
     {# Antes alumn_1.css: capas en orden, cada una pisa a la anterior. #}
@@ -31,9 +30,13 @@
     <link rel="stylesheet" href="{% static 'alumnos/css/avisos.css' %}">
     <link rel="stylesheet" href="{% static 'notificaciones/campanita.css' %}">
     {% block extra_css %}{% endblock %}
+    {# Capa de diseño final: va después de todo (también del CSS propio de cada página) porque solo sobrescribe #}
+    <link rel="stylesheet" href="{% static 'alumnos/css/alumn_1/13_pulido.css' %}">
+    <link rel="stylesheet" href="{% static 'alumnos/css/alumn_1/14_soporte.css' %}">{# Ayuda y soporte (tickets): va después del pulido, solo sobrescribe #}
+    {% block css_final %}{% endblock %}{# lo que va después de todo: el portal del apoderado hereda este marco #}
     {% include 'alumnos/includes/sin_copia_atras.html' %}
 </head>
-<body id="portal-alumno">
+<body id="portal-alumno"{% block body_extra %}{% endblock %}>
     {% include 'alumnos/includes/tema_inicial.html' %}
 
 
@@ -43,6 +46,7 @@
     <!-- Main Dashboard Layout -->
     <div class="dashboard-layout">
         <!-- Left Sidebar Menu -->
+        {% block barra_lateral %}
         <aside class="sidebar-menu" id="sidebar-menu">
             <!-- Marca (mismo estilo que el portal admin) -->
             <!-- El logo vuelve al propio portal, no al sitio publico: salir al
@@ -75,11 +79,11 @@
                 <li>
                     <button class="sidebar-nav-item sidebar-view-btn" data-view="view-my-classes">
                         <i class="bi bi-journal-bookmark-fill"></i>
-                        <span>Mis Clases</span>
+                        <span>Mis clases</span>
                     </button>
                 </li>
-                <li>{# B5: abre la pestana de videos del Inicio (data-tab); no es premium, se pagan aparte #}
-                    <button class="sidebar-nav-item sidebar-view-btn" data-view="view-dashboard" data-tab="tab-videos">
+                <li>{# B5: Mis videos es una vista propia; no es premium, se pagan aparte #}
+                    <button class="sidebar-nav-item sidebar-view-btn" data-view="view-videos">
                         <i class="bi bi-play-circle-fill"></i>
                         <span>Mis videos</span>
                     </button>
@@ -87,13 +91,13 @@
                 <li>
                     <button class="sidebar-nav-item sidebar-view-btn" data-view="view-favorites">
                         <i class="bi bi-heart-fill"></i>
-                        <span>Profesores Favoritos</span>
+                        <span>Profesores favoritos</span>
                     </button>
                 </li>
                 <li>
                     <button class="sidebar-nav-item" id="nav-open-interests">
                         <i class="bi bi-star-fill"></i>
-                        <span>Temas de Interés</span>
+                        <span>Temas de interés</span>
                     </button>
                 </li>
 
@@ -102,14 +106,14 @@
                     {% if not es_menor %}{# Menores: sin mensajeria privada (decisiones de menores) #}
                     <button class="sidebar-nav-item sidebar-view-btn" data-view="view-inbox">
                         <i class="bi bi-chat-text-fill"></i>
-                        <span>Buzón de Dudas</span>
+                        <span>Buzón de dudas</span>
                     </button>
                     {% endif %}
                 </li>
                 <li>
                     <button class="sidebar-nav-item sidebar-view-btn" data-view="view-progress">
                         <i class="bi bi-bar-chart-line-fill"></i>
-                        <span>Informe de Progreso</span>
+                        <span>Informe de progreso</span>
                     </button>
                 </li>
 
@@ -117,21 +121,21 @@
                 <li>
                     <button class="sidebar-nav-item sidebar-view-btn" data-view="view-plans">
                         <i class="bi bi-credit-card-fill"></i>
-                        <span>Mis Paquetes</span>
+                        <span>Mis paquetes</span>
                     </button>
                 </li>
                 {% if not es_menor %}{# D18: los reportes del menor los hace su apoderado #}
                 <li>
                     <button class="sidebar-nav-item sidebar-view-btn" data-view="view-support">
                         <i class="bi bi-envelope-paper-fill"></i>
-                        <span>Soporte / Reportes</span>
+                        <span>Soporte</span>
                     </button>
                 </li>
                 {% endif %}
                 <li>
                     <button class="sidebar-nav-item sidebar-view-btn" data-view="view-profile">
                         <i class="bi bi-person-fill"></i>
-                        <span>Mi Perfil</span>
+                        <span>Mi perfil</span>
                     </button>
                 </li>
             </ul>
@@ -151,6 +155,7 @@
                 </form>
             </div>
         </aside>
+        {% endblock %}
 
         <!-- Right Scrollable Views Container -->
         <div class="portal-main">

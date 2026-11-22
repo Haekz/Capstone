@@ -81,6 +81,21 @@ class DatosDelResponsableTests(TestCase):
                 with self.subTest(relleno=relleno):
                     self.assertNotContains(respuesta, relleno)
 
+    def test_ninguna_plantilla_trae_los_correos_de_ejemplo_escritos_a_mano(self):
+        # Un correo escrito en una plantilla no sigue a settings.LEGAL: con teachers@lbwus.cl pasaba en 8 lugares.
+        plantillas = [p for p in pathlib.Path(settings.BASE_DIR).rglob('*.html') if 'templates' in p.parts]
+        self.assertGreater(len(plantillas), 50)  # que la busqueda de verdad encuentre las plantillas
+        for plantilla in plantillas:
+            texto = plantilla.read_text(encoding='utf-8')
+            for correo in ('teachers@lbwus.cl', 'privacidad@lbwus.cl'):
+                with self.subTest(plantilla=plantilla.name, correo=correo):
+                    self.assertNotIn(correo, texto)
+
+    @override_settings(LEGAL=OTROS_DATOS)
+    def test_recuperar_clave_muestra_el_correo_de_settings(self):
+        respuesta = self.client.get(reverse('password_reset'))
+        self.assertContains(respuesta, OTROS_DATOS['correo_contacto'])
+
 
 class PieDePaginaTests(TestCase):
 

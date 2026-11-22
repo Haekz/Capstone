@@ -115,7 +115,7 @@ class BuscadorProfesoresTests(TestCase):
                 self.assertContains(
                     r, '<script id="profesores-data" type="application/json">[]</script>',
                     html=False)
-                self.assertContains(r, 'No hay profesores que coincidan con tu búsqueda.')
+                self.assertContains(r, 'Ningún profesor calza con tu búsqueda o tus filtros.')
 
     def test_sin_tutores_inventados_y_los_videos_ya_son_reales(self):
         r = self._portal()

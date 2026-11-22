@@ -12,6 +12,8 @@
             
 {% include 'alumnos/includes/panel/inicio.html' %}
 
+{% include 'alumnos/includes/panel/videos.html' %}
+
 {% include 'alumnos/includes/panel/favoritos.html' %}
 
 {% include 'alumnos/includes/panel/mis_clases.html' %}
@@ -32,7 +34,7 @@
 {% include 'alumnos/includes/panel/modal_intereses.html' %}
 
     <!-- SweetAlert2 CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="{% static 'vendor/sweetalert2/sweetalert2.all.min.js' %}"></script>
     {{ profesores_js|json_script:"profesores-data" }}
 
     <!-- App Logic -->
@@ -55,8 +57,9 @@
 
         // Exponer funciones globalmente para manejadores onclick inline en HTML
         window.confirmarReprogramacion = confirmarReprogramacion;
+        window.escaparHtml = escaparHtml;  // confirmarReservaSesion lo busca aquí: sin esto, la asignatura entraba al HTML sin escapar
         window.switchView = switchView;
-        window.abrirPestana = abrirPestana;  // la usa el #hash de abajo (Mis videos, B5)
+        window.abrirPestana = abrirPestana;  // la usa el #hash de abajo (pestañas con data-tab)
         window.toggleFavorite = toggleFavorite;
         window.requestClassAccess = requestClassAccess;
         window.filterChatContacts = filterChatContacts;
@@ -78,13 +81,14 @@
             // Título de la barra superior según la vista activa (igual que el admin)
             const TITULOS = {
                 'view-dashboard': ['Dashboard', 'Tu panel de aprendizaje'],
-                'view-my-classes': ['Mis Clases', 'Tus clases agendadas e historial'],
-                'view-favorites': ['Profesores Favoritos', 'Los profesores que guardaste'],
-                'view-inbox': ['Buzón de Dudas', 'Conversa con tus profesores'],
-                'view-progress': ['Informe de Progreso', 'Tu avance por asignatura'],
-                'view-plans': ['Mis Paquetes', 'Tus clases disponibles y vigencia'],
-                'view-support': ['Soporte / Reportes', 'Abre un ticket y revisa sus respuestas'],
-                'view-profile': ['Mi Perfil', 'Tus datos y transacciones']
+                'view-videos': ['Mis videos', 'Material de tus profesores para repasar'],
+                'view-my-classes': ['Mis clases', 'Agendadas, completadas y catálogo'],
+                'view-favorites': ['Profesores favoritos', 'Los profesores que guardaste'],
+                'view-inbox': ['Buzón de dudas', 'Conversa con tus profesores'],
+                'view-progress': ['Informe de progreso', 'Tu avance por ramo'],
+                'view-plans': ['Mis paquetes', 'Clases disponibles y vencimiento'],
+                'view-support': ['Soporte', 'Tickets y respuestas'],
+                'view-profile': ['Mi perfil', 'Tus datos y pagos']
             };
             function actualizarTitulo() {
                 const activa = document.querySelector('.dashboard-view.active');
@@ -106,7 +110,7 @@
         });
         {% endif %}
         // Llegar con #view-... (el menú de otras páginas del portal, como Notificaciones) abre esa vista, y con #tab-... la
-        // pestaña del Inicio (Mis videos). Solo valen las que tienen botón en el menú: al menor no se le ofrecen el Buzón
+        // pestaña de una vista. Solo valen las que tienen botón en el menú: al menor no se le ofrecen el Buzón
         // ni el Soporte, y un #hash escrito a mano no los abre.
         document.addEventListener('DOMContentLoaded', () => {
             const vista = window.location.hash.slice(1);
@@ -117,8 +121,13 @@
                 if (boton.dataset.tab) abrirPestana(boton);
             }
             else if (vista === 'temas') document.getElementById('nav-open-interests').click();
+            else if (vista === 'tab-videos') switchView('view-videos');  // enlaces guardados de cuando era una pestaña
         });
         })();
     </script>
 {% include 'alumnos/includes/panel/calificar.html' %}
+    <!-- Mejoras de uso del portal (banner, tarjeta de clases, agenda, filtros, atajos): solo lee lo que ya está en la página -->
+    <script>
+{% include 'alumnos/includes/panel/js/mejoras.js' %}
+    </script>
 {% endblock %}

@@ -5,26 +5,26 @@
                     <div class="profile-header">
                         <div class="profile-avatar-large">{{ alumno.user.first_name|slice:":1"|upper }}</div>
                         <div class="profile-title-box">
-                            <h2>Perfil del Alumno</h2>
-                            <span class="plan-badge"><i class="bi bi-x-circle-fill"></i> Sin Plan Activo</span>
+                            <h2>Mi perfil</h2>
+                            <span class="plan-badge"><i class="bi bi-x-circle-fill"></i> Sin plan activo</span>
                         </div>
                     </div>
 
                     <div class="profile-details-grid">
                         <div class="profile-field">
-                            <label>Nombre Completo</label>
+                            <label>Nombre</label>
                             <p>{{ alumno.user.first_name }}</p>
                         </div>
                         <div class="profile-field">
-                            <label>Correo Electrónico</label>
+                            <label>Correo</label>
                             <p>{{ alumno.user.email }}</p>
                         </div>
                         <div class="profile-field">
-                            <label>Nivel de Educación</label>
+                            <label>Nivel educativo</label>
                             <p>{{ alumno.get_nivel_educacion_display }}</p>
                         </div>
                         <div class="profile-field">
-                            <label>Teléfono de Contacto</label>
+                            <label>Teléfono</label>
                             <p>{{ alumno.user.telefono|default:"No registrado" }}</p>
                         </div>
                     </div>
@@ -32,14 +32,14 @@
                     <!-- Historial de Pagos y Transacciones -->
                     <div class="profile-transactions-section ap-transactions">
                         <h3 class="ap-transactions-title">
-                            <i class="bi bi-credit-card-2-front-fill ap-text-primary"></i> Historial de Pagos y Transacciones
+                            <i class="bi bi-credit-card-2-front-fill ap-text-primary"></i> Historial de pagos
                         </h3>
                         <div class="classes-table-container">
                             <table class="classes-table">
                                 <thead>
                                     <tr>
-                                        <th>ID Transacción</th>
-                                        <th>Plan / Concepto</th>
+                                        <th>Transacción</th>
+                                        <th>Concepto</th>
                                         <th>Fecha</th>
                                         <th>Monto</th>
                                         <th>Método</th>

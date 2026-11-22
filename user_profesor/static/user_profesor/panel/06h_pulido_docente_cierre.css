@@ -1,0 +1,210 @@
+/* Panel docente, capa de diseno (de la copia: 06_pulido_docente.css), parte «cierre»: buscador, dialogos y pantallas medianas/movil (va AL FINAL de la cascada).
+   Las partes cargan en este orden: 06a marco, 06b inicio, 06c formularios, 06d tablas, 06e agenda, 06f cuenta,
+   06g contenido, 06h cierre. */
+
+/* ── 16. Buscador (Ctrl + K) ── */
+#portal-docente .search-modal {
+    border-radius: 16px;
+}
+
+#portal-docente .search-section-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+#portal-docente .search-result-item:focus-visible {
+    background: var(--bg-hover);
+}
+
+#portal-docente .search-result-type {
+    border: none;
+    background: transparent;
+    font-weight: 500;
+}
+
+#portal-docente .search-sin-resultados {
+    padding: 16px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* ── 17. Diálogos de confirmación (SweetAlert) ── */
+#portal-docente .swal2-popup {
+    width: min(440px, 92vw);
+    padding: 28px 24px 22px;
+    border-radius: 20px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-family: inherit;
+}
+
+#portal-docente .swal2-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+}
+
+#portal-docente .swal2-html-container {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+
+#portal-docente .swal2-styled {
+    padding: 11px 22px;
+    border-radius: 10px;
+    font-weight: 600;
+    box-shadow: none !important;
+}
+
+/* ── 18. Pantallas medianas y móvil ── */
+@media (max-width: 1100px) {
+    #portal-docente .prof-hero {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    #portal-docente .prof-hero .prof-metrics-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    #portal-docente .prof-dashboard-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0;
+    }
+
+    #portal-docente #sec-agenda .prof-form-row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    #portal-docente .prof-pago-campos {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    #portal-docente .sidebar-toggle {
+        display: inline-flex;
+    }
+
+    #portal-docente .topbar-buscar span,
+    #portal-docente .topbar-buscar kbd {
+        display: none;
+    }
+
+    #portal-docente .topbar-buscar {
+        width: 40px;
+        padding: 0;
+        justify-content: center;
+    }
+
+    #portal-docente .prof-hero {
+        padding: 24px;
+    }
+
+    #portal-docente .prof-card,
+    #portal-docente .perfil-prof__bloque {
+        padding: 20px 18px;
+    }
+
+    #portal-docente .di-lista {
+        grid-template-columns: 1fr;
+        padding: 16px;
+    }
+
+    #portal-docente .dialogo-info {
+        width: 100vw;
+        max-width: 100vw;
+        max-height: 88vh;
+        margin: auto 0 0;
+        border-radius: 20px 20px 0 0;
+    }
+
+    #portal-docente .di-pie .prof-form-btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 600px) {
+    #portal-docente .prof-hero .prof-metrics-grid,
+    #portal-docente .prof-form-row,
+    #portal-docente #sec-agenda .prof-form-row,
+    #portal-docente .prof-pago-campos,
+    #portal-docente .prof-pago-campos--corto {
+        grid-template-columns: 1fr;
+    }
+
+    #portal-docente .prof-hero-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    #portal-docente .prof-foto {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    #portal-docente .prof-foto-texto {
+        align-items: center;
+    }
+
+    #portal-docente .prof-btn-auto,
+    #portal-docente #sec-agenda form .prof-form-btn {
+        width: 100%;
+    }
+
+    #portal-docente .prof-chart-column {
+        width: 40px;
+    }
+}
+
+/* Celular: saldos en una franja compacta (antes tres tarjetas altas) */
+@media (max-width: 600px) {
+    #portal-docente .prof-balance-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    #portal-docente .prof-balance-card {
+        padding: 14px 14px 16px;
+    }
+
+    #portal-docente .prof-balance-card-primary {
+        grid-column: 1 / -1;
+    }
+
+    #portal-docente .prof-balance-card h2 {
+        font-size: 1.5rem;
+        margin: 4px 0;
+    }
+
+    #portal-docente .prof-balance-card h4 {
+        font-size: 0.8rem;
+    }
+
+    #portal-docente .prof-balance-card p {
+        font-size: 0.75rem;
+        line-height: 1.35;
+    }
+
+    #portal-docente .prof-pagos-reglas li {
+        border-radius: 12px;
+    }
+}
+
+/* Ventana de subida: cabecera más compacta */
+#portal-docente .custom-modal-header {
+    padding-bottom: 14px;
+    margin-bottom: 0;
+}
+
+/* Quien pide menos movimiento, no lo ve */
+@media (prefers-reduced-motion: reduce) {
+    #portal-docente *,
+    #portal-docente *::before,
+    #portal-docente *::after {
+        animation: none !important;
+        transition: none !important;
+    }
+}

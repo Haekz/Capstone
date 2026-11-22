@@ -1,7 +1,9 @@
-{% extends 'alumnos/base.html' %}
+{% extends 'apoderados/base_apoderado.html' %}
 {% load static %}
 
 {% block title %}Clases de {{ vinculo.alumno.user.first_name }} | LBWUS{% endblock %}
+{% block page_title %}Clases de {{ vinculo.alumno.user.first_name }}{% endblock %}
+{% block page_subtitle %}Paquetes, reservas, videos y observaciones de sus profesores{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'alumnos/css/perfil_profesor.css' %}">
@@ -9,22 +11,25 @@
 {% endblock %}
 
 {% block content %}
-<div class="perfil-prof">
+<div class="perfil-prof apo apo-clases">
     <a class="perfil-prof__volver" href="{% url 'portal_apoderado' %}">
         <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a mi cuenta
     </a>
 
-    <header class="perfil-prof__cabecera">
+    <header class="apo-est-cabecera">
+        <span class="apo-avatar apo-avatar--lg" aria-hidden="true">{{ vinculo.alumno.user.first_name|slice:":1"|upper }}</span>
         <div>
-            <h1>Clases de {{ vinculo.alumno.user.first_name }}</h1>
-            <p class="perfil-prof__vacio">Solo tú y los demás apoderados verificados pueden reservar, cancelar o reprogramar sus clases. Les avisamos por correo cada cambio.</p>
+            <h2>{{ vinculo.alumno.user.first_name }}</h2>
+            <p>Solo tú y los demás apoderados verificados pueden reservar, cancelar o reprogramar sus clases. Les avisamos por correo cada cambio.</p>
         </div>
+        <a class="apo-btn apo-btn--primario" href="{% url 'planes' %}?estudiante={{ vinculo.pk }}"><i class="bi bi-bag-plus-fill" aria-hidden="true"></i> Contratar clases</a>
     </header>
 
     {% include 'apoderados/_mensajes.html' %}
 
+    <div class="apo-clases-grid">
     <section class="perfil-prof__bloque" aria-labelledby="paquetes-titulo">
-        <h2 id="paquetes-titulo">Paquetes vigentes</h2>
+        <h2 id="paquetes-titulo"><i class="bi bi-box-seam" aria-hidden="true"></i> Paquetes vigentes</h2>
         {% if paquetes %}
         <ul class="apod-vinculos">
             {% for p in paquetes %}
@@ -32,15 +37,15 @@
             {% endfor %}
         </ul>
         {% else %}
-        <p class="perfil-prof__vacio">No tiene paquetes vigentes.</p>
+        <p class="apo-vacio"><i class="bi bi-bag" aria-hidden="true"></i> No tiene paquetes vigentes.</p>
         {% endif %}
-        <a class="perfil-prof__reservar" href="{% url 'planes' %}?estudiante={{ vinculo.pk }}">
+        <a class="apo-btn apo-btn--suave" href="{% url 'planes' %}?estudiante={{ vinculo.pk }}">
             <i class="bi bi-bag-plus-fill" aria-hidden="true"></i> Contratar clases
         </a>
     </section>
 
     <section class="perfil-prof__bloque" aria-labelledby="reservas-titulo">
-        <h2 id="reservas-titulo">Próximas clases</h2>
+        <h2 id="reservas-titulo"><i class="bi bi-calendar-event" aria-hidden="true"></i> Próximas clases</h2>
         {% if reservas %}
         <ul class="apod-vinculos">
             {% for r in reservas %}
@@ -69,12 +74,13 @@
             {% endfor %}
         </ul>
         {% else %}
-        <p class="perfil-prof__vacio">No tiene clases reservadas.</p>
+        <p class="apo-vacio"><i class="bi bi-calendar2-x" aria-hidden="true"></i> No tiene clases reservadas.</p>
         {% endif %}
     </section>
+    </div>
 
     <section class="perfil-prof__bloque" aria-labelledby="sesiones-titulo">
-        <h2 id="sesiones-titulo">Reservar una clase</h2>
+        <h2 id="sesiones-titulo"><i class="bi bi-calendar-plus" aria-hidden="true"></i> Reservar una clase</h2>
         {% if sesiones %}
         <ul class="apod-vinculos">
             {% for s in sesiones %}
@@ -89,13 +95,13 @@
             {% endfor %}
         </ul>
         {% else %}
-        <p class="perfil-prof__vacio">No hay sesiones disponibles con los profesores de sus paquetes vigentes.</p>
+        <p class="apo-vacio"><i class="bi bi-clock" aria-hidden="true"></i> No hay sesiones disponibles con los profesores de sus paquetes vigentes.</p>
         {% endif %}
     </section>
 
     <section class="perfil-prof__bloque" aria-labelledby="videos-titulo">
-    <h2 id="videos-titulo">Videos de apoyo</h2>
-    <p>Revisa cada video antes de habilitarlo: {{ vinculo.alumno.user.first_name }} solo ve los que tú habilitas.</p>
+    <h2 id="videos-titulo"><i class="bi bi-play-circle" aria-hidden="true"></i> Videos de apoyo</h2>
+    <p class="apo-bloque-intro">Revisa cada video antes de habilitarlo: {{ vinculo.alumno.user.first_name }} solo ve los que tú habilitas.</p>
     {% url 'apoderado_videos_estudiante' vinculo.pk as url_lista %}{% url 'apoderado_ver_video' vinculo.pk 'VIDEO_ID' as url_ver %}{% url 'apoderado_habilitar_video' vinculo.pk 'VIDEO_ID' as url_habilitar %}{% url 'nuevo_ticket' as url_reportar %}
     {% include 'alumnos/includes/videos_apoyo.html' %}
     {% url 'apoderado_comprar_videos_extra' vinculo.pk as url_comprar %}
@@ -103,7 +109,7 @@
 </section>
 
 <section class="perfil-prof__bloque" aria-labelledby="observaciones-titulo">
-        <h2 id="observaciones-titulo">Observaciones de los profesores</h2>
+        <h2 id="observaciones-titulo"><i class="bi bi-journal-text" aria-hidden="true"></i> Observaciones de los profesores</h2>
         {% include 'observaciones/_lista.html' %}
     </section>
 </div>

@@ -191,7 +191,7 @@ body.dark-mode .reserva-accion--peligro {
 
 /* Pocos cupos: el aviso va en texto oscuro/claro con contraste, no en verde o rojo sobre blanco */
 .horario__cupos--pocos {
-    color: #b45309;
+    color: #9c4708;  /* = --warn claro del portal */
     font-weight: 600;
 }
 

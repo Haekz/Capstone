@@ -2,69 +2,85 @@
 {% load dinero %}
             <!-- ============ SECCIÓN: FINANZAS Y RETIROS ============ -->
             <div class="admin-section" id="section-finanzas">
-                <!-- Tarjetas financieras: montos reales (admin_portal/metricas.py, paso 8) -->
-                <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 28px; gap: 20px;">
-                    <div class="stat-card purple">
-                        <div class="stat-card-inner">
-                            <div class="stat-info">
-                                <div class="stat-value">{{ finanzas.cobrado|clp }}</div>
-                                <div class="stat-label">Cobrado (pagos aprobados, sin lo devuelto)</div>
+                <!-- Tarjetas financieras: montos reales (admin_portal/metricas.py, paso 8). Agrupadas: plataforma y profesores -->
+                <div class="fin-grupo">
+                    <h2 class="fin-grupo-titulo">Ingresos de la plataforma</h2>
+                    <div class="stats-grid fin-grid">
+                        <div class="stat-card purple">
+                            <div class="stat-card-inner">
+                                <div class="stat-info">
+                                    <div class="stat-label">Cobrado</div>
+                                    <div class="stat-value">{{ finanzas.cobrado|clp }}</div>
+                                    <div class="stat-sub">Pagos aprobados, sin lo devuelto</div>
+                                </div>
+                                <div class="stat-icon"><i class="bi bi-wallet2" aria-hidden="true"></i></div>
                             </div>
-                            <div class="stat-icon" style="margin-left:auto;"><i class="bi bi-wallet2" aria-hidden="true"></i></div>
+                        </div>
+                        <div class="stat-card blue">
+                            <div class="stat-card-inner">
+                                <div class="stat-info">
+                                    <div class="stat-label">Por dictar o entregar</div>
+                                    <div class="stat-value">{{ finanzas.por_dictar|clp }}</div>
+                                    <div class="stat-sub">Aún no es ingreso</div>
+                                </div>
+                                <div class="stat-icon"><i class="bi bi-hourglass-split" aria-hidden="true"></i></div>
+                            </div>
+                        </div>
+                        <div class="stat-card purple">
+                            <div class="stat-card-inner">
+                                <div class="stat-info">
+                                    <div class="stat-label">Comisión estimada</div>
+                                    <div class="stat-value">{{ finanzas.comision_estimada|clp }}</div>
+                                    <div class="stat-sub">{{ comision_pct }} % de clases y {{ comision_videos_pct }} % de videos, si se entrega todo</div>
+                                </div>
+                                <div class="stat-icon"><i class="bi bi-calculator" aria-hidden="true"></i></div>
+                            </div>
+                        </div>
+                        <div class="stat-card green">
+                            <div class="stat-card-inner">
+                                <div class="stat-info">
+                                    <div class="stat-label">Ganancia LBWUS</div>
+                                    <div class="stat-value">{{ finanzas.ganancia|clp }}</div>
+                                    <div class="stat-sub">{{ comision_pct }} % de clases dictadas y {{ comision_videos_pct }} % de videos compartidos</div>
+                                </div>
+                                <div class="stat-icon"><i class="bi bi-graph-up-arrow" aria-hidden="true"></i></div>
+                            </div>
                         </div>
                     </div>
-                    <div class="stat-card purple">
-                        <div class="stat-card-inner">
-                            <div class="stat-info">
-                                <div class="stat-value">{{ finanzas.comision_estimada|clp }}</div>
-                                <div class="stat-label">Comisión estimada (15% de clases y 25% de videos, si se entrega todo)</div>
+                </div>
+
+                <div class="fin-grupo">
+                    <h2 class="fin-grupo-titulo">Pagos a profesores</h2>
+                    <div class="stats-grid fin-grid fin-grid--3">
+                        <div class="stat-card amber">
+                            <div class="stat-card-inner">
+                                <div class="stat-info">
+                                    <div class="stat-label">Retiros pendientes</div>
+                                    <div class="stat-value">{{ finanzas.retiros_pendientes|clp }}</div>
+                                    <div class="stat-sub">Esperan que los pagues</div>
+                                </div>
+                                <div class="stat-icon"><i class="bi bi-clock-history" aria-hidden="true"></i></div>
                             </div>
-                            <div class="stat-icon" style="margin-left:auto;"><i class="bi bi-calculator" aria-hidden="true"></i></div>
                         </div>
-                    </div>
-                    <div class="stat-card green">
-                        <div class="stat-card-inner">
-                            <div class="stat-info">
-                                <div class="stat-value">{{ finanzas.ganancia|clp }}</div>
-                                <div class="stat-label">Ganancia LBWUS (15% de clases dictadas y 25% de videos compartidos)</div>
+                        <div class="stat-card green">
+                            <div class="stat-card-inner">
+                                <div class="stat-info">
+                                    <div class="stat-label">Retiros pagados</div>
+                                    <div class="stat-value">{{ finanzas.retiros_pagados|clp }}</div>
+                                    <div class="stat-sub">Total transferido</div>
+                                </div>
+                                <div class="stat-icon"><i class="bi bi-cash-coin" aria-hidden="true"></i></div>
                             </div>
-                            <div class="stat-icon" style="margin-left:auto;"><i class="bi bi-graph-up-arrow" aria-hidden="true"></i></div>
                         </div>
-                    </div>
-                    <div class="stat-card blue">
-                        <div class="stat-card-inner">
-                            <div class="stat-info">
-                                <div class="stat-value">{{ finanzas.por_dictar|clp }}</div>
-                                <div class="stat-label">Por dictar o entregar (aún no es ingreso)</div>
+                        <div class="stat-card blue">
+                            <div class="stat-card-inner">
+                                <div class="stat-info">
+                                    <div class="stat-label">Saldo sin pedir</div>
+                                    <div class="stat-value">{{ finanzas.saldo_profesores|clp }}</div>
+                                    <div class="stat-sub">Disponible de los profesores, aún sin solicitar</div>
+                                </div>
+                                <div class="stat-icon"><i class="bi bi-person-badge" aria-hidden="true"></i></div>
                             </div>
-                            <div class="stat-icon" style="margin-left:auto;"><i class="bi bi-hourglass-split" aria-hidden="true"></i></div>
-                        </div>
-                    </div>
-                    <div class="stat-card blue">
-                        <div class="stat-card-inner">
-                            <div class="stat-info">
-                                <div class="stat-value">{{ finanzas.saldo_profesores|clp }}</div>
-                                <div class="stat-label">Saldo disponible de profesores (aún sin pedir)</div>
-                            </div>
-                            <div class="stat-icon" style="margin-left:auto;"><i class="bi bi-person-badge" aria-hidden="true"></i></div>
-                        </div>
-                    </div>
-                    <div class="stat-card green">
-                        <div class="stat-card-inner">
-                            <div class="stat-info">
-                                <div class="stat-value">{{ finanzas.retiros_pagados|clp }}</div>
-                                <div class="stat-label">Retiros Pagados</div>
-                            </div>
-                            <div class="stat-icon" style="margin-left:auto;"><i class="bi bi-cash-coin" aria-hidden="true"></i></div>
-                        </div>
-                    </div>
-                    <div class="stat-card amber">
-                        <div class="stat-card-inner">
-                            <div class="stat-info">
-                                <div class="stat-value">{{ finanzas.retiros_pendientes|clp }}</div>
-                                <div class="stat-label">Retiros Pendientes</div>
-                            </div>
-                            <div class="stat-icon" style="margin-left:auto;"><i class="bi bi-clock-history" aria-hidden="true"></i></div>
                         </div>
                     </div>
                 </div>
@@ -72,7 +88,7 @@
                 <!-- Tabla de solicitudes -->
                 <div class="panel">
                     <div class="panel-header">
-                        <span class="panel-title"><i class="bi bi-card-list"></i> Solicitudes de Retiro</span>
+                        <span class="panel-title"><i class="bi bi-card-list"></i> Solicitudes de retiro</span>
                     </div>
                     <div style="overflow-x:auto;">
                         <table class="user-table">
@@ -80,7 +96,7 @@
                                 <tr>
                                     <th>Profesor</th>
                                     <th>Monto</th>
-                                    <th>Fecha Solicitud</th>
+                                    <th>Fecha de solicitud</th>
                                     <th>Estado</th>
                                     <th>Acciones</th>
                                 </tr>
@@ -95,7 +111,7 @@
                                             </div>
                                             <div>
                                                 <div class="user-cell-name">{{ r.profesor.user.first_name }}</div>
-                                                <small style="color: var(--text-muted); font-size: 0.75rem;">{{ r.banco }} · {{ r.numero_cuenta }}{% if r.pagar_el %} · Pagar el {{ r.pagar_el|date:"d/m/Y" }}{% endif %}</small>
+                                                <small style="color: var(--text-secondary); font-size: 0.75rem;">{{ r.banco }} · {{ r.numero_cuenta }}{% if r.pagar_el %} · Pagar el {{ r.pagar_el|date:"d/m/Y" }}{% endif %}</small>
                                             </div>
                                         </div>
                                     </td>
@@ -139,18 +155,18 @@
                                             <button type="submit" class="btn-action edit" style="border:none; background:rgba(16,185,129,0.12); color:#10b981; cursor:pointer; height:32px; padding:0 10px; border-radius:6px;">Registrar pago</button>
                                         </form>
                                         {% elif r.estado == 'pagado' %}
-                                        <span style="color:var(--text-muted); font-size:0.8rem;">Pagado el {{ r.fecha_pago|date:"d/m/Y" }} · Op. {{ r.numero_operacion }}</span>
+                                        <span style="color:var(--text-secondary); font-size:0.8rem;">Pagado el {{ r.fecha_pago|date:"d/m/Y" }} · Op. {{ r.numero_operacion }}</span>
                                         {% else %}
-                                        <span style="color:var(--text-muted); font-size:0.8rem;">Rechazado el {% if r.fecha_resolucion %}{{ r.fecha_resolucion|date:"d/m/Y" }}{% else %}-{% endif %}{% if r.motivo_rechazo %}: {{ r.motivo_rechazo }}{% endif %}</span>
+                                        <span style="color:var(--text-secondary); font-size:0.8rem;">Rechazado el {% if r.fecha_resolucion %}{{ r.fecha_resolucion|date:"d/m/Y" }}{% else %}-{% endif %}{% if r.motivo_rechazo %}: {{ r.motivo_rechazo }}{% endif %}</span>
                                         {% endif %}
                                     </td>
                                 </tr>
                                 {% empty %}
                                 <tr>
                                     <td colspan="5">
-                                        <div class="empty-state" style="text-align: center; padding: 30px; color: var(--text-muted);">
-                                            <i class="bi bi-wallet2" style="font-size: 2rem; display: block; margin-bottom: 8px;"></i>
-                                            No hay solicitudes de retiro registradas en el sistema.
+                                        <div class="empty-state">
+                                            <i class="bi bi-wallet2" aria-hidden="true"></i>
+                                            <p>No hay solicitudes de retiro. Cuando un profesor pida un retiro, aparecerá aquí.</p>
                                         </div>
                                     </td>
                                 </tr>

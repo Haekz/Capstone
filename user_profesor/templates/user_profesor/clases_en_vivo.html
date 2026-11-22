@@ -1,31 +1,33 @@
 ﻿{% load static %}
 <section id="sec-streaming" class="prof-section">
     <div class="prof-section-header">
-        <h1 class="prof-section-title">Sala de Streaming Docente</h1>
-        <p class="prof-section-subtitle">Selecciona una de tus clases para iniciar la sala virtual (1-a-1) con tus alumnos.</p>
+        <h1 class="prof-section-title">Sala de streaming</h1>
+        <p class="prof-section-subtitle">Elige una de tus clases para abrir la sala virtual 1 a 1 con tu alumno.</p>
     </div>
 
-    <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-top: 20px;">
-        <h3 style="color: var(--text); margin-bottom: 20px;">Tus Clases Activas</h3>
-        
+    <div class="prof-card">
+        <h2 class="prof-card-title">Tus clases activas</h2>
+
         {% if clases %}
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+            <div class="stream-grid">
             {% for c in clases %}
-                <div style="background: var(--bg-main); border: 1px solid var(--border); border-radius: 8px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between;">
-                    <div>
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
-                            <h4 style="margin: 0; color: var(--primary-light); font-size: 1.1rem;">{{ c.asignatura.nombre }}</h4>
-                            <span style="background: rgba(168, 85, 247, 0.1); color: var(--primary-light); padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;">{{ c.modalidad }}</span>
-                        </div>
+                <article class="stream-card">
+                    <div class="stream-card-top">
+                        <span class="stream-card-icono" aria-hidden="true"><i class="bi bi-camera-video"></i></span>
+                        <span class="stream-modalidad">{{ c.modalidad }}</span>
                     </div>
-                    <a href="{% url 'sala_virtual' c.id_clase %}" target="_blank" class="prof-form-btn" style="text-align: center; background: #10b981; color: white; text-decoration: none; padding: 10px; display: block;">
-                        <i class="bi bi-play-fill"></i> Entrar a la Sala
+                    <h3 class="stream-card-titulo">{{ c.asignatura.nombre }}</h3>
+                    <a href="{% url 'sala_virtual' c.id_clase %}" target="_blank" rel="noopener" class="stream-entrar">
+                        <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> Entrar a la sala
                     </a>
-                </div>
+                </article>
             {% endfor %}
             </div>
         {% else %}
-            <p style="color: var(--text-light); text-align: center; padding: 40px 0;">No tienes clases creadas an. Crea una clase primero para poder transmitir.</p>
+            <div class="prof-empty-card">
+                <i class="bi bi-camera-video" aria-hidden="true"></i>
+                <p>No tienes clases creadas aún. Crea una clase primero para poder transmitir.</p>
+            </div>
         {% endif %}
     </div>
 </section>

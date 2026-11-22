@@ -65,6 +65,6 @@ class SoporteEnCifrasTests(TestCase):
         entrar_admin(self.client, admin, tutor)
         respuesta = self.client.get(reverse('dashboard_admin'))
         self.assertContains(respuesta, 'Soporte en cifras')
-        self.assertContains(respuesta, '1 abierto ·')
-        self.assertContains(respuesta, '1 atrasado ·')
+        self.assertContains(respuesta, '<li><strong>1</strong><span>abierto</span></li>')  # las cifras (antes un parrafo: '1 abierto · ...')
+        self.assertContains(respuesta, '<li><strong>1</strong><span>atrasado</span></li>')
         self.assertNotContains(respuesta, 'Me cobraron dos veces')

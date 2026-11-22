@@ -13,12 +13,12 @@
             if (planBadge) {
                 if (hasPlan) {
                     const safePlan = window.escaparHtml ? window.escaparHtml(activePlanName) : activePlanName;
-                    planBadge.innerHTML = `<i class="bi bi-check-circle-fill" style="color: #10b981;"></i> Plan Activo: ${safePlan}`;
+                    planBadge.innerHTML = `<i class="bi bi-check-circle-fill" style="color: #10b981;"></i> Plan activo: ${safePlan}`;
                     planBadge.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
                     planBadge.style.color = '#10b981';
                     planBadge.style.borderColor = 'rgba(16, 185, 129, 0.2)';
                 } else {
-                    planBadge.innerHTML = `<i class="bi bi-x-circle-fill"></i> Sin Plan Activo`;
+                    planBadge.innerHTML = `<i class="bi bi-x-circle-fill"></i> Sin plan activo`;
                     planBadge.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
                     planBadge.style.color = '#ef4444';
                     planBadge.style.borderColor = 'rgba(239, 68, 68, 0.2)';

@@ -1,5 +1,5 @@
 /* Variables globales del tema, paleta de colores y tipografía del admin */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('../../../vendor/fuentes/fuentes.css');
 
 :root {
     --primary: #a855f7;
@@ -136,7 +136,7 @@ body {
 
 .sidebar-brand-role {
     font-size: 0.7rem;
-    color: var(--text-muted);
+    color: var(--text-secondary);
     letter-spacing: 1px;
     text-transform: uppercase;
     font-weight: 500;
@@ -196,7 +196,7 @@ body {
 .nav-label {
     font-size: 0.72rem;
     font-weight: 700;
-    color: var(--text-muted);
+    color: var(--text-secondary);
     letter-spacing: 1.5px;
     text-transform: uppercase;
     padding: 12px 12px 6px;
@@ -360,7 +360,7 @@ body.light-mode .sidebar-logout {
 
 .topbar-left p {
     font-size: 0.75rem;
-    color: var(--text-muted);
+    color: var(--text-secondary);
     margin-top: 2px;
 }
 

@@ -1,45 +1,35 @@
-{# Perfil y ajustes del administrador. #}
+{# Perfil y ajustes del administrador. Guarda de verdad: admin_portal.views.ajustes_admin (AjustesAdminForm). #}
             <!-- ============ SECCIÓN: PERFIL Y AJUSTES ============ -->
             <div class="admin-section" id="section-ajustes">
-                <div class="panel" style="max-width: 720px;">
+                <div class="panel adm-panel-angosto">
                     <div class="panel-header">
-                        <span class="panel-title"><i class="bi bi-gear-fill"></i> Configuración del Administrador</span>
+                        <span class="panel-title"><i class="bi bi-gear-fill"></i> Tus datos</span>
                     </div>
                     <div class="panel-body">
-                        <form id="formAjustes" onsubmit="event.preventDefault(); Swal.fire('Ajustes Guardados', 'Tu perfil ha sido actualizado.', 'success');">
+                        <form id="formAjustes" method="post" action="{% url 'ajustes_admin' %}">
+                            {% csrf_token %}
                             <div class="form-grid">
+                                {% include 'admin_portal/includes/dashboard/campo_ajustes.html' with campo=form_ajustes.nombre autocompletar='given-name' %}
                                 <div class="form-field">
-                                    <label class="form-label">Nombre del Administrador</label>
-                                    <input type="text" class="form-input" value="{{ admin.user.first_name }}" required>
+                                    {# Sin name: el RUT es la identidad de la cuenta y no se edita. #}
+                                    <label class="form-label" for="ajustes-rut">RUT <span class="adm-nota">(no se puede cambiar)</span></label>
+                                    <input type="text" class="form-input" id="ajustes-rut" value="{{ admin.user.rut }}" readonly>
                                 </div>
+                                {% include 'admin_portal/includes/dashboard/campo_ajustes.html' with campo=form_ajustes.correo tipo='email' autocompletar='email' %}
+                                {% include 'admin_portal/includes/dashboard/campo_ajustes.html' with campo=form_ajustes.telefono tipo='tel' autocompletar='tel-national' %}
                                 <div class="form-field">
-                                    <label class="form-label">RUT</label>
-                                    <input type="text" class="form-input" value="{{ admin.user.rut }}" required>
-                                </div>
-                                <div class="form-field">
-                                    <label class="form-label">Correo Electrónico</label>
-                                    <input type="email" class="form-input" value="{{ admin.user.email }}" required>
-                                </div>
-                                <div class="form-field">
-                                    <label class="form-label">Teléfono</label>
-                                    <input type="text" class="form-input" value="{{ admin.user.telefono }}" required>
-                                </div>
-                                <div class="form-field">
-                                    <label class="form-label">Color de Acento del Panel</label>
+                                    <label class="form-label" for="accent-color-select">Color de acento del panel <span class="adm-nota">(solo esta sesión)</span></label>
                                     <select class="form-input" id="accent-color-select" onchange="changeAccentColor()">
-                                        <option value="purple">Morado LBWUS (Defecto)</option>
-                                        <option value="blue">Azul Océano</option>
-                                        <option value="green">Verde Menta</option>
+                                        <option value="purple">Morado LBWUS (por defecto)</option>
+                                        <option value="blue">Azul océano</option>
+                                        <option value="green">Verde menta</option>
                                     </select>
                                 </div>
-                                <div class="form-field">
-                                    <label class="form-label">Dirección</label>
-                                    <input type="text" class="form-input" value="{{ admin.user.direccion }}" required>
-                                </div>
+                                {% include 'admin_portal/includes/dashboard/campo_ajustes.html' with campo=form_ajustes.direccion autocompletar='street-address' %}
                             </div>
-                            <div style="margin-top:24px;">
+                            <div class="form-actions">
                                 <button type="submit" class="btn-primary">
-                                    <i class="bi bi-save"></i> Guardar Configuración
+                                    <i class="bi bi-save"></i> Guardar cambios
                                 </button>
                             </div>
                         </form>

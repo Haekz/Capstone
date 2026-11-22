@@ -1,0 +1,168 @@
+/* Portal de admin, capa de diseno (de la copia: 06_pulido_admin.css), parte «marco»: tokens, menu lateral, barra superior y paneles.
+   Las partes cargan en este orden: 06a marco, 06b resumen, 06c pantallas, 06d cierre. Todo cuelga de #portal-admin. */
+
+/* ==============================================================
+   PORTAL ADMIN — CAPA DE DISEÑO FINAL
+   - Va al final: solo sobrescribe, no borra nada de lo anterior.
+   - Mismos colores: menú morado degradado, píldora blanca en el
+     ítem activo, morado #7c3aed y ámbar.
+   - Todo cuelga de #portal-admin (id del <body>) para ganar sin
+     !important; los pocos !important pisan estilos en línea.
+   - Mismo lenguaje que los portales del alumno y del profesor.
+   ============================================================== */
+
+
+/* ── 1. Tokens y base ── */
+#portal-admin {
+    --line-2: rgba(26, 18, 51, 0.16);
+    --ring: 0 0 0 3px rgba(124, 58, 237, 0.35);
+    --ok: #066b4c;  /* 4,5:1 tambien sobre --ok-soft y fondos lila (#0f8a60 daba 3,6:1) */
+    --ok-soft: rgba(15, 138, 96, 0.1);
+    --warn: #9c4708;  /* 4,5:1 tambien sobre --warn-soft y fondos lila (#b45309 daba 4,2:1) */
+    --warn-soft: rgba(245, 158, 11, 0.14);
+    --r-panel: 16px;
+    --r-item: 12px;
+    --r-ctrl: 10px;
+}
+
+body:not(.light-mode)#portal-admin {
+    --line-2: rgba(255, 255, 255, 0.16);
+    --ok: #34d399;
+    --ok-soft: rgba(52, 211, 153, 0.12);
+    --warn: #fbbf24;
+}
+
+#portal-admin :is(button, input, select, textarea) {
+    font-family: inherit;
+}
+
+#portal-admin :is(a, button, select, input, summary, [tabindex]):focus-visible {
+    outline: none;
+    box-shadow: var(--ring);
+}
+
+/* Fuera las MAYÚSCULAS forzadas: en español se lee mejor en minúscula inicial */
+#portal-admin :is(.sidebar-brand-role, .nav-label, .user-table th, .form-label, .search-section-label) {
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+#portal-admin .page-content {
+    max-width: 1440px;
+    gap: 20px;
+}
+
+#portal-admin .admin-section {
+    gap: 20px;
+}
+
+#portal-admin .admin-section.active {
+    animation: adm-entrar 0.22s ease both;
+}
+
+@keyframes adm-entrar {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: none; }
+}
+
+/* ── 2. Menú lateral (mismos colores; solo tipografía) ── */
+#portal-admin .admin-wrapper .sidebar .sidebar-brand-role {
+    font-size: 0.78rem;
+    font-weight: 500;
+}
+
+#portal-admin .admin-wrapper .sidebar .nav-label {
+    font-size: 0.75rem;
+    padding-top: 20px;
+}
+
+/* ── 3. Barra superior: botón "Ir a…" ── */
+#portal-admin .topbar-buscar {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 8px 0 14px;
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+#portal-admin .topbar-buscar:hover {
+    border-color: var(--primary);
+    color: var(--text-primary);
+}
+
+#portal-admin .topbar-buscar kbd {
+    padding: 2px 7px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg-main);
+    font-family: inherit;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+/* ── 4. Paneles: planos, línea fina, sin sombra ── */
+#portal-admin .panel,
+#portal-admin .stat-card {
+    border: 1px solid var(--border);
+    border-radius: var(--r-panel);
+    box-shadow: none;
+}
+
+#portal-admin .panel-header {
+    padding: 16px 22px;
+}
+
+#portal-admin .panel-title {
+    font-size: 1.02rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+#portal-admin .panel-action {
+    gap: 4px;
+    text-decoration: none;
+}
+
+#portal-admin .panel-action:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+#portal-admin .adm-panel-intro {
+    margin: 14px 22px 4px;
+    max-width: 75ch;
+    font-size: 0.88rem;
+    line-height: 1.55;
+    color: var(--text-secondary);
+}
+
+#portal-admin .adm-panel-intro--dentro {
+    margin: 0 0 12px;
+}
+
+#portal-admin .adm-nota {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+#portal-admin .adm-vacio {
+    padding: 18px;
+    border: 1px dashed var(--line-2);
+    border-radius: var(--r-item);
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+#portal-admin .adm-panel-angosto {
+    max-width: 760px;
+}
