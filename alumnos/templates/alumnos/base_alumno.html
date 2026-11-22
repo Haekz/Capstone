@@ -35,6 +35,7 @@
     <link rel="stylesheet" href="{% static 'alumnos/css/alumn_1/14_soporte.css' %}">{# Ayuda y soporte (tickets): va después del pulido, solo sobrescribe #}
     {% block css_final %}{% endblock %}{# lo que va después de todo: el portal del apoderado hereda este marco #}
     {% include 'alumnos/includes/sin_copia_atras.html' %}
+    <script src=\"{% static 'alumnos/java/lbwus-utils.js' %}\"></script>{# window.escaparHtml: la unica copia (LBW-21) #}
 </head>
 <body id="portal-alumno"{% block body_extra %}{% endblock %}>
     {% include 'alumnos/includes/tema_inicial.html' %}

@@ -14,7 +14,6 @@
             });
             const $$ = (sel, raiz = document) => Array.from(raiz.querySelectorAll(sel));
             const numero = (texto) => { const n = parseInt(String(texto).replace(/\D+/g, ''), 10); return Number.isNaN(n) ? null : n; };
-            const escapar = (texto) => String(texto).replace(/[&<>"']/g, (c) => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[c]);
 
             let plan = null;
             try { plan = JSON.parse($('#plan-activo').textContent); } catch (e) {}
@@ -105,11 +104,11 @@
                 const textoVence = dias === null ? '' : dias < 0 ? 'Vencido' : dias === 0 ? 'Vence hoy'
                     : `Vence en ${dias} día${dias === 1 ? '' : 's'}`;
                 tarjeta.innerHTML =
-                    `<span class="tc-top"><span class="tc-plan">${escapar(nombre)}</span>` +
-                    (textoVence ? `<span class="tc-vence${dias !== null && dias <= 7 ? ' tc-vence--pronto' : ''}">${escapar(textoVence)}</span>` : '') +
+                    `<span class="tc-top"><span class="tc-plan">${escaparHtml(nombre)}</span>` +
+                    (textoVence ? `<span class="tc-vence${dias !== null && dias <= 7 ? ' tc-vence--pronto' : ''}">${escaparHtml(textoVence)}</span>` : '') +
                     `</span>${circulos}` +
                     `<span class="tc-cuenta"><strong>${quedan}</strong> de ${total} clases por usar</span>` +
-                    `<span class="tc-pie"><span>${profesor ? 'Con ' + escapar(profesor) : ''}</span>` +
+                    `<span class="tc-pie"><span>${profesor ? 'Con ' + escaparHtml(profesor) : ''}</span>` +
                     (paquetes.length > 1 ? `<span>+${paquetes.length - 1} paquete${paquetes.length > 2 ? 's' : ''}</span>` : '') + `</span>`;
                 tarjeta.setAttribute('aria-label', `${nombre}: te quedan ${quedan} de ${total} clases${textoVence ? '. ' + textoVence : ''}. Ver mis paquetes`);
                 tarjeta.addEventListener('click', () => window.switchView('view-plans'));
@@ -136,10 +135,10 @@
                 const items = libres.slice(0, 5).map(h => {
                     const ddmm = h.fecha.split('-').reverse().join('/');
                     return `<li><button type="button" class="ag-item" data-sesion="${Number(h.id_sesion)}" ` +
-                        `data-asig="${escapar(h.asignatura)}" data-fechahora="${escapar(ddmm + ' ' + h.hora)}" ` +
-                        `aria-label="${escapar(`Reservar ${h.asignatura} con ${h.profesor}, ${fechaCorta(h.fecha, {weekday: 'long', day: 'numeric', month: 'long'})} a las ${h.hora}`)}">` +
-                        `<span class="ag-fecha"><span>${escapar(fechaCorta(h.fecha, {weekday: 'short'}))}</span><strong>${Number(h.fecha.slice(8))}</strong></span>` +
-                        `<span class="ag-info"><strong>${escapar(h.hora)} h</strong><span>${escapar(h.asignatura)} con ${escapar(h.profesor)}</span></span>` +
+                        `data-asig="${escaparHtml(h.asignatura)}" data-fechahora="${escaparHtml(ddmm + ' ' + h.hora)}" ` +
+                        `aria-label="${escaparHtml(`Reservar ${h.asignatura} con ${h.profesor}, ${fechaCorta(h.fecha, {weekday: 'long', day: 'numeric', month: 'long'})} a las ${h.hora}`)}">` +
+                        `<span class="ag-fecha"><span>${escaparHtml(fechaCorta(h.fecha, {weekday: 'short'}))}</span><strong>${Number(h.fecha.slice(8))}</strong></span>` +
+                        `<span class="ag-info"><strong>${escaparHtml(h.hora)} h</strong><span>${escaparHtml(h.asignatura)} con ${escaparHtml(h.profesor)}</span></span>` +
                         `<i class="bi bi-plus-circle ag-accion" aria-hidden="true"></i></button></li>`;
                 }).join('');
                 const agenda = document.createElement('section');
@@ -234,7 +233,7 @@
                 if (!barra) return;
                 const temas = $$('.topic-tag.selected').map(b => b.dataset.topic);
                 const chips = temas.map(t =>
-                    `<button type="button" class="filtro-chip" data-tema="${escapar(t)}" aria-label="Quitar filtro ${escapar(t)}">${escapar(t)} <i class="bi bi-x" aria-hidden="true"></i></button>`).join('');
+                    `<button type="button" class="filtro-chip" data-tema="${escaparHtml(t)}" aria-label="Quitar filtro ${escaparHtml(t)}">${escaparHtml(t)} <i class="bi bi-x" aria-hidden="true"></i></button>`).join('');
                 const cuantos = $$('#dashboard-teachers-container .teacher-card').length;
                 barra.innerHTML =
                     `<button type="button" class="filtro-chip filtro-chip--fav" aria-pressed="${Boolean(window.soloFavoritos)}">` +

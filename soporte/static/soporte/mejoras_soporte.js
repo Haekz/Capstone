@@ -9,7 +9,7 @@
     'use strict';
     const $ = (sel, raiz = document) => raiz.querySelector(sel);
     const $$ = (sel, raiz = document) => [...raiz.querySelectorAll(sel)];
-    const esc = window.escaparHtml || (s => String(s));
+    const esc = window.escaparHtml;
     const normalizar = s => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 
     /* ── Fechas y plazos ── */
