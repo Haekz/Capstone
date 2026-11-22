@@ -210,6 +210,24 @@ de la demo); los puntos 3 y 4 son lo que se vio al comparar y no se tocó porque
   del dominio desde el que sale el correo (si faltan, la recuperacion de clave y los avisos pueden caer en spam); y
   la carga de datos iniciales de produccion (generos, asignaturas, planes).
 
+## Avisos de clases por correo (decidido 21-nov)
+La reserva avisa con campanita y correo con diseno (texto de respaldo + HTML, `alumnos/correo_clase.py` y
+`templates/correos/aviso_clase.*`) al **alumno adulto**, a **cada apoderado verificado** si es menor (el menor no recibe
+nada propio) y al **profesor**. Cada uno ve **nombre y apellido** del otro y nada mas: ni RUT, ni correo, ni telefono
+(prueba: `test_aviso_reserva.py`). Antes el profesor veia solo el nombre de pila (decision del 02-nov, cambiada el 21-nov).
+- **Etapa 1 (hecha):** aviso al reservar. El boton lleva hoy al panel de clases; en la etapa 2 pasa a la pagina de la clase.
+- **Etapa 2:** pagina de la clase (alumno, profesor y apoderado): fecha y hora de Chile, boton «Ir a la clase», el nombre
+  del otro y «Necesito cambiar el horario». Para el alumno y el apoderado lleva a reprogramar o cancelar; para el profesor,
+  a la **cancelacion que ya existe** (el alumno recibe el aviso y la clase vuelve a su paquete; «pedir otro horario» queda
+  para cuando el sitio crezca). La pagina dice la **regla de las 4 horas** antes del clic: con menos, el cambio se cobra.
+- **Etapa 3:** recordatorios **1 dia antes** y **2 horas antes**, a los tres. Una reserva hecha con menos de 24 horas no
+  recibe el de un dia antes. Pide una tarea que corra cada 15 o 30 minutos (el Cron actual corre una vez al dia): un
+  **segundo servicio Cron en Railway**, marcas de «ya avisado» por reserva (se reinician si se reprograma) y sumarla al
+  monitoreo de `/salud/`.
+- **Etapa 4:** cancelacion y cambio de horario con el mismo diseno (hoy el apoderado sigue con el correo de texto viejo).
+- **Limite de Gmail:** unos 500 correos al dia en cuentas gratuitas; con 3 correos por clase se llena con unas 80 clases
+  diarias. Para empezar alcanza; si el sitio crece, pasar a un servicio de correo transaccional.
+
 ## Pagos
 - Transbank en produccion: checklist en CONCILIACION_Y_TRANSBANK_7_6.md, seccion 6 (LBW-09).
 - Reporte de conciliacion (LBW-18) y retiros con dinero real: falta el contador y Webpay en produccion (LBW-19).

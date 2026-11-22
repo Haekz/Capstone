@@ -329,7 +329,8 @@ def _operar(request, id_vinculo, accion, operacion):
     except InscripcionError as error:
         messages.error(request, str(error))
     else:
-        avisar_apoderados(inscripcion, accion, vinculo.apoderado.nombre)
+        if accion != 'reservó':  # la reserva la avisa agenda.avisos_alumno.reserva (campanita y diseño): no se repite
+            avisar_apoderados(inscripcion, accion, vinculo.apoderado.nombre)
         messages.success(request, 'Cambio guardado. Avisamos por correo a los apoderados del estudiante.')
     return redirect('apoderado_clases_estudiante', vinculo.pk)
 

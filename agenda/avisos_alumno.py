@@ -1,18 +1,17 @@
 """Aviso al alumno (o a su apoderado) cuando su profesor cancela (paso A3b, decidido 02-nov).
 
 Correo + campanita. Un alumno menor no recibe nada: avisa a sus apoderados con vinculo
-verificado. Privacidad: no lleva ningun dato del profesor, solo la asignatura y la fecha.
+verificado. Privacidad: la cancelacion y la clase extra no llevan ningun dato del profesor, solo la asignatura y la
+fecha; la reserva (21-nov) lleva ademas su nombre y apellido, sin ningun otro dato.
 """
 
 from django.urls import reverse
 from django.utils import timezone
 
-from alumnos.correo import enviar
+from alumnos.correo_clase import enviar_aviso_clase
 from alumnos.utils import es_menor
 from apoderados.models import Vinculo
 from notificaciones.models import notificar
-
-PLANTILLA = 'agenda/correo_aviso_alumno.txt'
 
 
 def _destinatarios(alumno):
@@ -34,7 +33,23 @@ def _avisar(alumno, asunto, texto):
     for user, enlace, de_quien in _destinatarios(alumno):
         mensaje = texto(de_quien)
         notificar(user, mensaje, enlace)
-        enviar(asunto, PLANTILLA, {'nombre': user.first_name, 'texto': mensaje}, user.email)
+        enviar_aviso_clase(user, asunto, asunto, [mensaje], 'Ver mis clases', enlace)
+
+
+def reserva(inscripcion, vinculo=None):
+    """Reserva confirmada (21-nov): avisa al alumno adulto o, si es menor, a sus apoderados verificados, incluido quien
+    la hizo. Con el nombre y apellido del profesional y sin ningun otro dato suyo (solo si alumnos/services.py la
+    enlaza al confirmarse, on_commit)."""
+    cuando = _cuando(inscripcion.sesion.fecha_hora_inicio)
+    asignatura = inscripcion.clase.asignatura.nombre
+    profesor = inscripcion.clase.profesor.nombre
+    autor = f' La reservó {vinculo.apoderado.nombre}.' if vinculo else ''
+
+    def texto(de_quien):
+        sujeto = f'La clase{de_quien}' if de_quien else 'Tu clase'
+        return (f'{sujeto} ({asignatura}) con {profesor} quedó reservada para el {cuando}.'
+                f'{autor if de_quien else ""}')
+    _avisar(inscripcion.alumno, 'Clase reservada', texto)
 
 
 def cancelacion_del_profesor(inscripcion):

@@ -6,6 +6,7 @@ import logging
 from django.db import transaction, IntegrityError
 from django.utils import timezone
 from . import avisos_profesor
+from agenda import avisos_alumno
 from .models import Alumno, Clase, Profesor, SesionClase, Inscripcion, PaqueteClases
 from .utils import es_menor
 from .exceptions import (
@@ -83,7 +84,7 @@ class InscripcionService:
     """
 
     @classmethod
-    def inscribir_alumno_en_sesion(cls, alumno: Alumno, sesion_id: int, vinculo=None) -> Inscripcion:
+    def inscribir_alumno_en_sesion(cls, alumno: Alumno, sesion_id: int, vinculo=None, avisar_alumno=True) -> Inscripcion:
         """
         Inscribe atómicamente a un alumno en una SesionClase puntual.
 
@@ -158,6 +159,8 @@ class InscripcionService:
                 ) from exc
 
             transaction.on_commit(lambda: avisos_profesor.reserva(inscripcion))
+            if avisar_alumno:  # la clase extra aceptada manda su propio aviso (alumnos/clase_extra.py)
+                transaction.on_commit(lambda: avisos_alumno.reserva(inscripcion, vinculo))
             return inscripcion
 
     @classmethod

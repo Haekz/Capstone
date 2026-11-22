@@ -1,7 +1,7 @@
 """Avisos al profesor: reserva, cancelacion y reagenda (paso B2b, decidido 02-nov).
 
-Correo + campanita, solo despues de guardar (on_commit) y solo con el nombre
-de pila del alumno. Datos ficticios.
+Correo + campanita, solo despues de guardar (on_commit) y solo con el nombre y apellido del alumno (antes, solo el
+de pila; cambio del 21-nov). Datos ficticios.
 """
 
 from django.core import mail
@@ -28,9 +28,10 @@ class AvisosAlProfesorTests(Escenario):
         self.reservar()
         [texto] = self.avisos()
         self.assertIn('Ana reservó Algebra para el', texto)
-        [correo] = mail.outbox
+        [correo] = [m for m in mail.outbox if m.to == ['profe@lbwus.cl']]  # la alumna recibe el suyo aparte
         self.assertEqual((correo.subject, correo.to), ('Nueva reserva - LBWUS', ['profe@lbwus.cl']))
         self.assertIn(texto, correo.body)
+        self.assertIn(texto, correo.alternatives[0][0])  # y tambien la version con diseno
 
     def test_cancelacion_tardia_le_dice_que_se_le_paga(self):
         dar_paquete(self.ana, self.profe)

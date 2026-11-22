@@ -171,7 +171,7 @@ def _reservar(solicitud, ahora):
         clase=solicitud.clase, fecha_hora_inicio=solicitud.fecha_hora_inicio,
         fecha_hora_fin=solicitud.fecha_hora_fin, cupo_maximo=1,
     )
-    InscripcionService.inscribir_alumno_en_sesion(solicitud.alumno, sesion.pk)
+    InscripcionService.inscribir_alumno_en_sesion(solicitud.alumno, sesion.pk, avisar_alumno=False)
     solicitud.sesion = sesion
     _cerrar(solicitud, SolicitudClaseExtra.ACEPTADA, ahora)
     transaction.on_commit(lambda: avisos_alumno.clase_extra_aceptada(solicitud))

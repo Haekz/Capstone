@@ -1,7 +1,8 @@
 """Avisos al profesor cuando le reservan, cancelan o reagendan (paso B2b, decidido 02-nov).
 
-Correo + campanita. Privacidad: solo el nombre de pila del alumno, aunque actue
-su apoderado (el profesor no recibe datos del apoderado). InscripcionService los
+Correo + campanita. Privacidad: solo nombre y apellido del alumno (antes solo el de pila; cambio del 21-nov: el
+profesor ya los ve en su panel), aunque actue su apoderado (el profesor no recibe datos del apoderado).
+InscripcionService los
 llama con transaction.on_commit: si la operacion se deshace, no sale ningun aviso.
 Un fallo del correo no afecta la campanita ni la reserva (correo.enviar lo registra).
 
@@ -21,6 +22,7 @@ from notificaciones.models import notificar
 
 from . import paquetes
 from .correo import enviar
+from .correo_clase import enviar_aviso_clase
 
 
 def bienvenida(user):
@@ -140,11 +142,11 @@ def _avisar(inscripcion, asunto, texto):
 
 def _avisar_a(user, asunto, texto):
     notificar(user, texto, reverse('panel_profesor'))
-    enviar(asunto, 'alumnos/correo_aviso_profesor.txt', {'nombre': user.first_name, 'texto': texto}, user.email)
+    enviar_aviso_clase(user, asunto, asunto, [texto], 'Ver mi agenda', reverse('panel_profesor'))
 
 
 def _quien_y_que(inscripcion):
-    return inscripcion.alumno.user.first_name, inscripcion.clase.asignatura.nombre
+    return inscripcion.alumno.user.get_full_name(), inscripcion.clase.asignatura.nombre  # nombre y apellido (21-nov)
 
 
 def reserva(inscripcion):

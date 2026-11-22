@@ -1,8 +1,0 @@
-Hola {{ nombre }},
-
-{{ texto }}
-Las horas son de Chile.
-
-Revisa tu agenda en tu panel de profesor de LBWUS.
-
-Equipo LBWUS
