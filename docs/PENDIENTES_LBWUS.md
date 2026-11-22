@@ -233,11 +233,11 @@ nada propio) y al **profesor**. Cada uno ve **nombre y apellido** del otro y nad
   recibe el de un dia, y con menos de 2 horas no recibe ninguno. Cada reserva se avisa y se marca todo o nada; si una
   falla, la corrida termina con error y se reintenta en la siguiente. `/salud/` lo vigila solo con `SALUD_RECORDATORIOS=1`.
   Un correo que Gmail rechaza se registra y no se reintenta.
-- **Etapa 4 (hecha):** cuando un **apoderado** cancela o reagenda la clase del menor, todos sus apoderados verificados
-  reciben campanita y correo con el mismo diseno (antes: un correo de texto sin campanita, `avisar_apoderados`, ya
-  borrado). Dice quien lo hizo; con menos de 4 horas dice que la clase se descuenta; el de reagendar lleva a la pagina de
-  la clase. El aviso al profesor por un reagendado tambien lleva a la clase. **No avisa** al alumno adulto de lo que hace
-  el mismo (no se avisa a si mismo): si se quiere una confirmacion, queda como mejora aparte.
+- **Etapa 4 (hecha):** cuando se cancela o se reagenda una clase por el alumno adulto o por un **apoderado**, se confirma
+  con campanita y correo con el mismo diseno: al alumno adulto, o a todos los apoderados verificados si es menor (el menor
+  no recibe nada). Antes el apoderado recibia un correo de texto sin campanita (`avisar_apoderados`, ya borrado) y el
+  alumno adulto no recibia nada. Con apoderado dice quien lo hizo; con menos de 4 horas dice que la clase se descuenta; el de
+  reagendar lleva a la pagina de la clase. El aviso al profesor por un reagendado tambien lleva a la clase.
 - **Limite de Gmail:** unos 500 correos al dia en cuentas gratuitas; con 3 correos por clase se llena con unas 80 clases
   diarias. Para empezar alcanza; si el sitio crece, pasar a un servicio de correo transaccional.
 

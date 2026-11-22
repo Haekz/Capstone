@@ -64,9 +64,9 @@ def reserva(inscripcion, vinculo=None):
     _avisar(inscripcion.alumno, 'Clase reservada', texto, reverse('detalle_clase', args=[inscripcion.pk]), 'Ver la clase')
 
 
-def cancelacion_del_apoderado(inscripcion, vinculo):
-    """Un apoderado canceló la clase del menor (21-nov): avisa a todos sus apoderados verificados, incluido quien lo
-    hizo. El menor no recibe nada. Con menos de 4 h la clase se descuenta: se dice."""
+def cancelacion(inscripcion, vinculo=None):
+    """La clase se canceló por el alumno o su apoderado (21-nov): confirma al alumno adulto o, si es menor, a todos sus
+    apoderados verificados, incluido quien lo hizo. El menor no recibe nada. Con menos de 4 h la clase se descuenta: se dice."""
     asignatura, profesor, cuando = _clase_de(inscripcion)
     autor = _autor(vinculo, 'canceló')
     tarde = (' Faltaban menos de 4 horas: la clase se descontó del paquete.'
@@ -77,8 +77,8 @@ def cancelacion_del_apoderado(inscripcion, vinculo):
     _avisar(inscripcion.alumno, 'Clase cancelada', texto)
 
 
-def reagenda_del_apoderado(inscripcion, sesion_anterior, vinculo):
-    """Un apoderado movió la clase del menor a otra hora (21-nov): mismos destinatarios que la cancelación."""
+def reagenda(inscripcion, sesion_anterior, vinculo=None):
+    """La clase se movió a otra hora por el alumno o su apoderado (21-nov): mismos destinatarios que la cancelación."""
     asignatura, profesor, cuando = _clase_de(inscripcion)
     antes = _cuando(sesion_anterior.fecha_hora_inicio)
     autor = _autor(vinculo, 'movió')

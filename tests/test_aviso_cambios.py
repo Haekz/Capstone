@@ -1,7 +1,8 @@
-"""Avisos de cancelacion y cambio de horario cuando actua un apoderado (21-nov, etapa 4). Datos ficticios.
+"""Avisos de cancelacion y cambio de horario (21-nov, etapa 4). Datos ficticios.
 
-Antes salia un correo de texto («Clases de Ana») sin campanita; ahora es el mismo diseño que la reserva. El profesor ya
-recibia los suyos. El alumno adulto no se avisa a si mismo: lo hizo el.
+Cuando actua un apoderado, avisan todos los apoderados verificados del menor. Cuando actua el alumno adulto, se le
+confirma a el (sobre todo el costo si faltaban menos de 4 h). Antes salia un correo de texto («Clases de Ana») solo
+al apoderado y sin campanita; ahora es el mismo diseño que la reserva. El profesor ya recibia los suyos.
 """
 
 import re
@@ -135,17 +136,42 @@ class AvisosDeCambiosDelAlumnoTests(Escenario):
     def correos_a(self, user):
         return [m for m in mail.outbox if m.to == [user.email]]
 
-    def test_el_alumno_adulto_no_se_avisa_a_si_mismo_pero_el_profesor_si_con_enlace_a_la_clase(self):
-        inscripcion = InscripcionService.inscribir_alumno_en_sesion(self.ana, crear_sesion(self.clase, dias=3).pk)
+    def reservar(self, dias=3):
+        return InscripcionService.inscribir_alumno_en_sesion(self.ana, crear_sesion(self.clase, dias=dias).pk)
+
+    def cancelar(self, inscripcion):
+        with self.captureOnCommitCallbacks(execute=True):
+            InscripcionService.cancelar_inscripcion(self.ana, inscripcion.pk)
+
+    def test_al_reagendar_el_alumno_adulto_recibe_la_confirmacion_y_el_profesor_el_aviso(self):
+        inscripcion = self.reservar()
         nueva = crear_sesion(self.clase, dias=4)
         with self.captureOnCommitCallbacks(execute=True):
             InscripcionService.reprogramar_inscripcion(self.ana, inscripcion.pk, nueva.pk)
-        with self.captureOnCommitCallbacks(execute=True):
-            InscripcionService.cancelar_inscripcion(self.ana, inscripcion.pk)
-        self.assertEqual(self.correos_a(self.ana.user), [])
-        self.assertFalse(Notificacion.objects.filter(usuario=self.ana.user).exists())
-        reagenda, cancelacion = self.correos_a(self.profe.user)
-        self.assertEqual((reagenda.subject, cancelacion.subject), ('Clase reagendada - LBWUS', 'Clase cancelada - LBWUS'))
         ruta = reverse('detalle_clase', args=[inscripcion.pk])
-        self.assertIn(ruta, reagenda.alternatives[0][0])  # el cambio de hora lleva a la clase con su hora nueva
-        self.assertNotIn(ruta, cancelacion.alternatives[0][0])  # una clase cancelada lleva a su agenda
+        [correo] = self.correos_a(self.ana.user)
+        [aviso] = Notificacion.objects.filter(usuario=self.ana.user)
+        self.assertEqual(correo.subject, 'Clase reagendada - LBWUS')
+        self.assertRegex(aviso.texto, r'^Tu clase \(Algebra\) con Profe pasó del .+ al .+\.$')
+        self.assertNotIn('La movió', aviso.texto)  # lo hizo el mismo: no hace falta decirlo
+        self.assertEqual(aviso.enlace, ruta)
+        self.assertIn(ruta, correo.alternatives[0][0])
+        [del_profesor] = self.correos_a(self.profe.user)  # y el profesor sigue recibiendo el suyo
+        self.assertEqual(del_profesor.subject, 'Clase reagendada - LBWUS')
+        self.assertIn(ruta, del_profesor.alternatives[0][0])
+
+    def test_al_cancelar_el_alumno_adulto_recibe_la_confirmacion_sin_costo_si_faltaban_4_horas_o_mas(self):
+        inscripcion = self.reservar()
+        self.cancelar(inscripcion)
+        [correo] = self.correos_a(self.ana.user)
+        [aviso] = Notificacion.objects.filter(usuario=self.ana.user)
+        self.assertEqual(correo.subject, 'Clase cancelada - LBWUS')
+        self.assertRegex(aviso.texto, r'^Tu clase \(Algebra\) con Profe del .+ fue cancelada\.$')  # sin aviso de costo
+        self.assertTrue(correo.alternatives)
+        [del_profesor] = self.correos_a(self.profe.user)
+        self.assertNotIn(reverse('detalle_clase', args=[inscripcion.pk]), del_profesor.alternatives[0][0])  # va a su agenda
+
+    def test_cancelar_con_menos_de_4_horas_le_dice_al_alumno_que_la_clase_se_descuenta(self):
+        self.cancelar(self.reservar(dias=EN_2_HORAS))
+        [correo] = self.correos_a(self.ana.user)
+        self.assertIn('Faltaban menos de 4 horas: la clase se descontó del paquete.', correo.body)
