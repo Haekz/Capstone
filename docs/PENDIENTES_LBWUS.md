@@ -217,7 +217,8 @@ de la demo); los puntos 3 y 4 son lo que se vio al comparar y no se tocó porque
 La reserva avisa con campanita y correo con diseno (texto de respaldo + HTML, `alumnos/correo_clase.py` y
 `templates/correos/aviso_clase.*`) al **alumno adulto**, a **cada apoderado verificado** si es menor (el menor no recibe
 nada propio) y al **profesor**. Cada uno ve **nombre y apellido** del otro y nada mas: ni RUT, ni correo, ni telefono
-(prueba: `test_aviso_reserva.py`). Antes el profesor veia solo el nombre de pila (decision del 02-nov, cambiada el 21-nov).
+(prueba: `test_aviso_reserva.py`). **Excepcion: de un menor, el profesor ve solo el nombre de pila** (`nombre_para_el_profesor`).
+Antes el profesor veia solo el nombre de pila de todos (decision del 02-nov, cambiada el 21-nov para los adultos).
 - **Etapa 1 (hecha):** aviso al reservar. El boton y la campanita llevan a la pagina de la clase (etapa 2).
 - **Etapa 2 (hecha):** pagina de la clase en `alumnos/clase/<id>/` (`alumnos/detalle_clase.py`), de **solo lectura**, para el
   alumno, el apoderado y el profesor: fecha y hora de Chile, el nombre del otro y «Necesito cambiar el horario», que

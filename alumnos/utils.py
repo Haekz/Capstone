@@ -41,6 +41,12 @@ def es_menor(user):
     return bool(user.fecha_nacimiento) and edad(user.fecha_nacimiento) < EDAD_ADULTA
 
 
+def nombre_para_el_profesor(user):
+    """Lo que el profesor puede ver del alumno (decidido 21-nov): nombre y apellido de un adulto; de un menor, solo el
+    nombre de pila."""
+    return user.first_name if es_menor(user) else user.get_full_name()
+
+
 def error_fecha_nacimiento(fecha, edad_minima=EDAD_ADULTA):
     """Mensaje de error para una fecha de nacimiento, o None si sirve.
 

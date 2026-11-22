@@ -17,7 +17,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from alumnos import avisos_profesor, recordatorios
-from alumnos.models import Asignatura, Clase, Inscripcion, SesionClase
+from alumnos.models import Asignatura, Clase, SesionClase
 from alumnos.recordatorios import enviar_pendientes
 from alumnos.services import InscripcionService
 from apoderados.forms import VERSION_DECLARACION_VINCULO

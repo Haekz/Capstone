@@ -12,6 +12,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
+from alumnos import avisos_profesor
 from alumnos.exceptions import InscripcionError
 from alumnos.models import Asignatura, Clase
 from alumnos.services import InscripcionService
@@ -36,6 +37,8 @@ class AvisosDeCambiosDelApoderadoTests(TestCase):
         cls.madre = crear_apoderado(RUT, Apoderado.VERIFICADO)
         cls.vinculo_madre = crear_menor_vinculado(cls.madre)
         cls.menor = cls.vinculo_madre.alumno
+        cls.menor.user.last_name = 'Soto'  # con apellido: si no, «nombre completo» y «nombre de pila» no se distinguen
+        cls.menor.user.save()
         cls.padre = crear_apoderado('55555555-5', Apoderado.VERIFICADO)
         cls.vinculo_padre = Vinculo.objects.create(
             apoderado=cls.padre, alumno=cls.menor, parentesco='padre', estado=Vinculo.VERIFICADO,
@@ -118,6 +121,23 @@ class AvisosDeCambiosDelApoderadoTests(TestCase):
                 with self.subTest(dato=dato, asunto=correo.subject):
                     self.assertNotIn(dato, correo.body)
                     self.assertNotIn(dato, correo.alternatives[0][0])
+
+    def test_el_profesor_ve_solo_el_nombre_de_pila_del_menor_en_todos_sus_avisos(self):
+        with self.captureOnCommitCallbacks(execute=True):
+            inscripcion = InscripcionService.inscribir_alumno_en_sesion(
+                self.menor, crear_sesion(self.clase, dias=3).pk, vinculo=self.vinculo_madre)
+        self.reagendar(inscripcion)
+        avisos_profesor.recordatorio(inscripcion, '2 horas')
+        self.cancelar(inscripcion)
+        correos = [m for m in mail.outbox if m.to == [self.profesor.user.email]]
+        self.assertEqual(len(correos), 4)  # reserva, reagenda, recordatorio y cancelación
+        textos = [t for m in correos for t in (m.body, m.alternatives[0][0])]
+        textos += [a.texto for a in Notificacion.objects.filter(usuario=self.profesor.user)]
+        nombre, apellido = self.menor.user.first_name, self.menor.user.last_name
+        self.assertEqual(len(textos), 12)  # 4 correos x 2 formatos + 4 campanitas
+        for texto in textos:
+            self.assertIn(nombre, texto)
+            self.assertNotIn(apellido, texto)
 
     def test_si_la_cancelacion_falla_no_sale_ningun_aviso_mas(self):
         inscripcion = self.reservar()

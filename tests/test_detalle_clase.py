@@ -6,16 +6,14 @@ cambiar o cancelar, que ya existen y tienen sus propias pruebas.
 
 from django.test import TestCase
 from django.urls import reverse
-from django.utils import timezone
 
 from alumnos.models import Asignatura, Clase, Inscripcion, Profesor
 from alumnos.services import InscripcionService
-from apoderados.forms import VERSION_DECLARACION_VINCULO
 from apoderados.models import Apoderado, CompraApoderado, Vinculo
 from tests.test_apoderados import RUT, crear_apoderado, entrar
 from tests.test_apoderados_vinculos import crear_menor_vinculado
 from tests.test_cancelar_4_horas import EN_2_HORAS, EN_3_DIAS, EN_5_HORAS
-from tests.test_especialidad import crear_profesor
+from tests.test_especialidad import CLAVE, crear_profesor
 from tests.test_filtros_clases import crear_sesion
 from tests.test_paquetes import RUT_ANA, RUT_BETO, RUT_OTRO, RUT_PROFE, Escenario, dar_paquete
 
@@ -159,6 +157,12 @@ class DetalleClaseApoderadoTests(TestCase):
         self.assertContains(respuesta, f'href="{reverse("apoderado_clases_estudiante", args=[self.vinculo.pk])}"')
         # y la sala, en efecto, no lo deja entrar: el boton no existe porque no serviria
         self.assertEqual(self.client.get(reverse('sala_virtual', args=[self.clase.id_clase])).status_code, 403)
+
+    def test_el_profesor_ve_solo_el_nombre_de_pila_del_menor(self):
+        self.client.post(reverse('login'), {'username': self.profesor.user.rut, 'password': CLAVE})
+        html = self.client.get(self.url).content.decode()
+        self.assertIn(self.menor.user.first_name, html)
+        self.assertNotIn(self.menor.user.last_name, html)  # el apellido existe (Pérez): el menor no lo muestra
 
     def test_el_menor_entra_a_la_clase_pero_el_cambio_lo_hace_su_apoderado(self):
         entrar(self.client, self.menor.user, alumno_id=self.menor.id_alumno)

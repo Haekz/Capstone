@@ -3,7 +3,8 @@
 La ven el alumno, su apoderado y el profesor de la clase, cada uno con lo suyo. Es de solo lectura: no hay ninguna ruta
 nueva que cambie datos. Para cambiar el horario envia a la pantalla de cada rol, que ya tiene su flujo y su regla
 (4 h el alumno y el apoderado, 12 h el profesor). Quien no tiene relacion con la clase recibe 404, como si no existiera.
-Privacidad: nombre y apellido del otro y nada mas (ni RUT, ni correo, ni telefono; el profesor no ve al apoderado).
+Privacidad: nombre y apellido del otro (del menor, el profesor ve solo el nombre de pila) y nada mas: ni RUT, ni correo,
+ni telefono; el profesor no ve al apoderado.
 """
 
 from urllib.parse import urlencode
@@ -20,7 +21,7 @@ from apoderados.permisos import clase_pagada_por_apoderado
 from .models import Inscripcion
 from .roles import ALUMNO, APODERADO, PROFESOR
 from .sala_virtual import es_profesor_habilitado_de
-from .utils import es_menor
+from .utils import es_menor, nombre_para_el_profesor
 
 CAMBIO_A_TIEMPO = 'Puedes cambiar el horario o cancelar sin costo hasta 4 horas antes de la clase.'
 CAMBIO_TARDE = ('Faltan menos de 4 horas: ya no se puede cambiar el horario. Si cancelas, la clase se descuenta '
@@ -83,7 +84,7 @@ def detalle_clase(request, pk):
                                            'paquete'), pk=pk, sesion__isnull=False)
     rol, vinculo = _rol_y_vinculo(user, inscripcion)
     es_profesor = rol == PROFESOR.clave
-    otro = inscripcion.alumno.user.get_full_name() if es_profesor else inscripcion.clase.profesor.nombre
+    otro = nombre_para_el_profesor(inscripcion.alumno.user) if es_profesor else inscripcion.clase.profesor.nombre
     return render(request, 'alumnos/detalle_clase.html', {
         'inscripcion': inscripcion,
         'rol': rol,

@@ -569,7 +569,9 @@ una cuenta respete las conversaciones reportadas.
 
 ### Privacidad
 - El alumno no ve datos personales del profesor: se quita el telefono (y la casilla "hacer publico").
-- El profesor solo ve el **nombre de pila** del alumno.
+- El profesor solo ve el **nombre de pila** del alumno. **Ajustado el 21-nov:** en los avisos de clases por correo y
+  campanita y en la pagina de la clase, el profesor ve **nombre y apellido de un alumno adulto**; de un **menor**, solo el
+  nombre de pila (`alumnos/utils.py: nombre_para_el_profesor`). En su agenda sigue viendo solo el nombre de pila.
 
 ### Orden de trabajo (rama `fran-agenda`, un commit por paso)
 A1 quitar telefono del profesor -> A2 regla de 4 h (cancelar/reagendar; tarde = profesor cobra) ->
