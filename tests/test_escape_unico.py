@@ -20,6 +20,9 @@ BASES = (
 )
 COPIA_DEL_ESCAPE = re.compile(r"replace\(/&/g|replace\(/\[&<>")
 RESPALDO_SIN_ESCAPE = re.compile(r'window\.escaparHtml\s*(\?|\|\|)')
+# La etiqueta exacta: con comillas escapadas (src=\"...\") el navegador pide /%22/static/...%22, da 404 y el portal
+# queda sin escaparHtml (el Dashboard del alumno salia vacio).
+CARGA = '<script src="{% static \'alumnos/java/lbwus-utils.js\' %}"></script>'
 
 
 def archivos_propios(*sufijos):
@@ -47,7 +50,7 @@ class EscapeUnicoTests(SimpleTestCase):
     def test_cada_base_de_portal_carga_la_utilidad(self):
         for base in BASES:
             with self.subTest(base=base):
-                self.assertIn('alumnos/java/lbwus-utils.js', (RAIZ / base).read_text(encoding='utf-8'))
+                self.assertIn(CARGA, (RAIZ / base).read_text(encoding='utf-8'))
 
     def test_nadie_cae_a_sin_escapar_si_falta_la_utilidad(self):
         """Un respaldo "window.escaparHtml || String" esconde que falta la carga y deja pasar el texto crudo."""
