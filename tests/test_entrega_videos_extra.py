@@ -16,7 +16,7 @@ from alumnos import paquetes
 from alumnos.models import PaqueteClases
 from alumnos.models.videos import CompraVideosExtra
 from alumnos.webpay import registrar_respuesta
-from comunidad.tests.base import GridFsTestCase
+from comunidad.tests.base import VideosTestCase
 from notificaciones.models import Notificacion
 from soporte.models import Ticket
 from tests.test_paquetes import Escenario
@@ -27,7 +27,7 @@ from user_profesor.saldos import calcular_saldos
 ACTIVA, PENDIENTE = CompraVideosExtra.ESTADO_ACTIVA, CompraVideosExtra.ESTADO_PENDIENTE
 
 
-class Base(GridFsTestCase, Escenario):
+class Base(VideosTestCase, Escenario):
 
     def setUp(self):
         super().setUp()
