@@ -60,6 +60,7 @@ def _archivo(video_id):
     ficha = videoteca.ficha(video_id)
     if not ficha:
         raise Http404
+    videoteca.registrar_vista(ficha['_id'])  # actividad: si nadie lo abre en 30 dias, se borra (limpieza_videos.py)
     respuesta = HttpResponseRedirect(videoteca.enlace(ficha))
     respuesta['Cache-Control'] = 'no-store'  # que el navegador vuelva a pasar por aqui: se revisa el acceso cada vez
     return respuesta

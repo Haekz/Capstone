@@ -7,7 +7,7 @@ Actualizado: 20-nov-2026. Aqui queda solo lo que falta. Todo lo que listaba la v
 Los codigos LBW-xx y Dx son los del backlog y las decisiones grupales del 08-nov (se cargan en Jira).
 
 ## Railway: una sola vez (ver CONFIGURACION_PRODUCCION.md)
-- Servicio Cron `python manage.py tareas_diarias` a las 9:00 UTC (LBW-01). Corre las 9 tareas diarias.
+- Servicio Cron `python manage.py tareas_diarias` a las 9:00 UTC (LBW-01). Corre las 10 tareas diarias.
 - **Segundo Cron** `python manage.py enviar_recordatorios_clases` con `*/15 * * * *`: los recordatorios de clase (24 y 2
   horas antes). **Sin el no sale ninguno.** Cuando ya haya corrido bien una vez, definir `SALUD_RECORDATORIOS=1` en el
   servicio web para que `/salud/` lo vigile (CONFIGURACION_PRODUCCION.md, seccion 4).

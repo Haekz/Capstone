@@ -159,6 +159,28 @@ def ficha(video_id):
     return _fichas().find_one({'_id': oid})
 
 
+def todas():
+    """Las fichas de todos los videos (para la limpieza diaria, limpieza_videos.py)."""
+    return list(_fichas().find({}))
+
+
+def registrar_vista(oid):
+    """Anota que alguien abrio el video ahora: cuenta como actividad para no borrarlo (limpieza_videos.py)."""
+    _fichas().update_one({'_id': oid}, {'$set': {'ultima_vista': timezone.now()}})
+
+
+def marcar_aviso(oid, cuando):
+    """Anota que ya se aviso que el video se borrara: el borrado ocurre 7 dias despues (limpieza_videos.py)."""
+    _fichas().update_one({'_id': oid}, {'$set': {'aviso_borrado': cuando}})
+
+
+def borrar(oid):
+    """Quita la ficha y el archivo de R2. Quien llama ya decidio que se puede borrar."""
+    _fichas().delete_one({'_id': oid})
+    with suppress(*almacen_videos.ERRORES):  # sin ficha ya nadie lo ve: si R2 falla, solo queda un archivo huerfano
+        almacen_videos.borrar(str(oid))
+
+
 def eliminar(profesor_id, video_id):
     """Borra el video si es suyo. True si lo borró.
 
@@ -175,7 +197,5 @@ def eliminar(profesor_id, video_id):
             .filter(video_id=str(oid), paquete__in=PaqueteClases.objects.vigentes()).exists()):
         raise ValidationError('Ya compartiste este video con un alumno que tiene su paquete vigente: '
                               'podrás borrarlo cuando el paquete venza.')
-    _fichas().delete_one({'_id': oid})
-    with suppress(*almacen_videos.ERRORES):  # sin ficha ya nadie lo ve: si R2 falla, solo queda un archivo huerfano
-        almacen_videos.borrar(str(oid))
+    borrar(oid)
     return True
