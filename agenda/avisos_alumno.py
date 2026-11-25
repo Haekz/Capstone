@@ -131,3 +131,11 @@ def clase_extra_vencida(solicitud, motivo):
     _avisar(alumno, 'Tu pedido de clase extra venció', lambda de_quien: (
         f'Tu pedido de clase extra{de_quien} de {asignatura} del {cuando} venció y no se reservó. {motivo} '
         'Puedes pedir otra hora.'))
+
+
+def video_por_borrarse(alumno, titulo, fecha):
+    """Un video de apoyo que tiene con paquete vigente lleva casi un mes sin abrirse y se borra el `fecha`
+    (user_profesor/limpieza_videos.py). Abrirlo antes lo conserva; lo puede abrir el alumno o su apoderado."""
+    _avisar(alumno, 'Un video de apoyo se eliminará pronto', lambda de_quien: (
+        f'El video «{titulo}»{de_quien} se eliminará el {fecha:%d/%m/%Y} porque lleva casi un mes sin abrirse. '
+        'Para conservarlo, ábrelo antes de esa fecha.'))

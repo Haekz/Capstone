@@ -28,4 +28,4 @@ def videos_alumno(request):
 @alumno_required
 def ver_video(request, video_id):
     alumno_id, solo_habilitados = _alumno(request)
-    return videos_compartidos.video_respuesta(request, alumno_id, video_id, solo_habilitados)
+    return videos_compartidos.video_respuesta(alumno_id, video_id, solo_habilitados)

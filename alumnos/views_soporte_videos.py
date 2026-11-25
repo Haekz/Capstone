@@ -41,7 +41,7 @@ def ver_video(request, id_ticket, video_id):
     _, compartidos = _del_ticket(tickets_visibles(request), id_ticket, video_id)
     if not compartidos.exists():
         raise Http404
-    return videos_compartidos.archivo_respuesta(request, video_id)
+    return videos_compartidos.archivo_respuesta(video_id)
 
 
 @require_POST

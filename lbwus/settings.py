@@ -211,9 +211,17 @@ DATABASES = {
 MONGODB_URI = os.environ.get('MONGODB_URI')          # None = MongoDB desactivado
 MONGODB_DB = os.environ.get('MONGODB_DB', 'lbwus_dev')
 MONGODB_TIMEOUT_MS = int(os.environ.get('MONGODB_TIMEOUT_MS', '5000'))
-# Venta de videos (agregado y extras): solo con MongoDB configurado, donde viven los archivos (B2). Sin el no se
+# Cloudflare R2: los archivos de video (user_profesor/almacen_videos.py); su ficha sigue en MongoDB. Sin las cuatro
+# variables los videos quedan desactivados. Las claves solo como variables de entorno (docs/CONFIGURACION_PRODUCCION.md).
+R2_ACCOUNT_ID = os.environ.get('R2_ACCOUNT_ID', '').strip()
+R2_ACCESS_KEY_ID = os.environ.get('R2_ACCESS_KEY_ID', '').strip()
+R2_SECRET_ACCESS_KEY = os.environ.get('R2_SECRET_ACCESS_KEY', '').strip()
+R2_BUCKET = os.environ.get('R2_BUCKET', '').strip()
+R2_ENDPOINT = f'https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com' if R2_ACCOUNT_ID else ''
+R2_CONFIGURADO = all((R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET))
+# Venta de videos (agregado y extras): solo con MongoDB (fichas) y R2 (archivos) configurados (B2). Sin ellos no se
 # cobra lo que nadie podria entregar; el paquete de clases se sigue vendiendo (alumnos/videos_extra.py).
-VIDEOS_A_LA_VENTA = bool(MONGODB_URI)
+VIDEOS_A_LA_VENTA = bool(MONGODB_URI) and R2_CONFIGURADO
 
 # Puerta con clave para todo el sitio (lbwus/puerta.py). Vacia = sin puerta.
 # La clave se define solo como variable de entorno, nunca en el codigo.

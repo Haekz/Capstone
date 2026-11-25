@@ -12,6 +12,8 @@ from django.conf import settings
 
 JITSI = 'https://meet.jit.si'
 TRANSBANK = ('https://webpay3gint.transbank.cl', 'https://webpay3g.transbank.cl')  # integracion y produccion
+# Videos de apoyo: la web redirige al enlace firmado de Cloudflare R2 (user_profesor/almacen_videos.py).
+R2 = (settings.R2_ENDPOINT,) if settings.R2_ENDPOINT else ()
 
 # 'unsafe-inline' es temporal: hay <script>, onclick= y style= en linea en las plantillas.
 # Ningun script viene de internet salvo Jitsi: SweetAlert2 tambien es propio (static/vendor).
@@ -21,7 +23,7 @@ CSP = {
     'style-src': ("'self'", "'unsafe-inline'"),  # iconos y letras son propios (static/vendor)
     'font-src': ("'self'", 'data:'),
     'img-src': ("'self'", 'data:', 'https://commondatastorage.googleapis.com'),
-    'media-src': ("'self'", 'https://commondatastorage.googleapis.com'),
+    'media-src': ("'self'", 'https://commondatastorage.googleapis.com', *R2),
     'connect-src': ("'self'", JITSI, 'wss://meet.jit.si'),
     'frame-src': (JITSI, 'https://www.google.com'),  # sala virtual y mapa de home.html
     # Webpay recibe un POST (redirect_webpay.html); Google responde con un redirect tras el POST de allauth.

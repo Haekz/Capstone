@@ -102,6 +102,14 @@ def entrega_proxima(paquete, limite, falta):
               f'(fecha límite: {timezone.localtime(limite):%d/%m/%Y}). Hazlo desde la pestaña Videos de tu panel.')
 
 
+def video_por_borrarse(profesor, titulo, fecha):
+    """Un video de su biblioteca lleva casi un mes sin abrirse ni compartirse y se borra el `fecha`
+    (user_profesor/limpieza_videos.py). Compartirlo antes lo conserva."""
+    _decision(profesor.user, 'Un video de tu biblioteca se eliminará pronto',
+              f'Tu video «{titulo}» se eliminará el {fecha:%d/%m/%Y} porque lleva casi un mes sin abrirse ni compartirse. '
+              'Para conservarlo, compártelo con un alumno antes de esa fecha.')
+
+
 def video_retirado(compartido):
     """Soporte retiro un video que compartió, por un reclamo (fase 5e). Sale solo si el retiro se confirma.
     Sin el motivo (como en los rechazos): el reclamo es del alumno, el profesor no ve su ticket."""

@@ -24,8 +24,9 @@ Todas las lee `lbwus/settings.py`, salvo donde se indica.
 | `ERRORES_CORREOS` | Correos, separados por comas, que reciben un aviso cuando hay un error 500 (`lbwus/aviso_errores.py`). El aviso **no lleva datos de las personas** ni el mensaje del error: solo la pantalla, el tipo de error, el id de la cuenta y por dónde pasó el código. **Va en el servicio web** | Recomendada | No se avisa por correo; el error igual queda completo en los registros de Railway |
 | `ALERTAS_CORREOS` | A quién avisar por correo si falla alguna tarea de `tareas_diarias` (sección 8). Varios correos separados por comas. **Va en el servicio Cron**, que es el que envía el aviso | Recomendada | No se envía ningún aviso: la falla queda solo en los logs del Cron y en `/salud/` |
 | `SALUD_RECORDATORIOS` | `1` hace que `/salud/` vigile también el cron de recordatorios de clase (sección 4). **Va en el servicio web, y solo cuando ese cron ya existe** | No | `/salud/` solo vigila `tareas_diarias` |
-| `MONGODB_URI` | MongoDB Atlas (app `comunidad`) | Sí, si se usa la comunidad | MongoDB queda desactivado y el sitio funciona igual |
+| `MONGODB_URI` | MongoDB Atlas (app `comunidad` y la ficha de cada video) | Sí, si se usa la comunidad o se venden videos | MongoDB queda desactivado, no se venden videos y el resto del sitio funciona igual |
 | `MONGODB_DB`, `MONGODB_TIMEOUT_MS` | Base de MongoDB y tiempo de espera | No (por omisión `lbwus_dev`, 5000) | **En producción debe ser `lbwus_prod`** |
+| `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` | Cloudflare R2: los archivos de video (sección 2, «Crear el bucket de R2») | Sí, para vender videos: **las cuatro** y además `MONGODB_URI` | Los videos quedan desactivados: no se suben, no se ven y no se venden (`VIDEOS_A_LA_VENTA`). El paquete de clases se sigue vendiendo |
 | `CSP_OBLIGATORIA` | `1` hace obligatoria la Content-Security-Policy (sección 7) | No | Queda en Report-Only: el navegador avisa, pero no bloquea |
 | `SITIO_URL` | Dirección pública del sitio: la usan la dirección canónica, la vista previa al compartir (WhatsApp, redes), `robots.txt` y `sitemap.xml` (`lbwus/seo.py`). Así, entrando por `*.up.railway.app` los buscadores siguen viendo `lbwus.xyz` | No | Usa `https://lbwus.xyz`. **Si el dominio cambia hay que definirla**: si no, Google tomaría la dirección vieja como la oficial |
 | `SITIO_CLAVE` | Puerta "Sitio en mantenimiento" (`lbwus/puerta.py`) | No | Sin puerta |
@@ -45,9 +46,22 @@ El inicio de sesión con Google no usa variables: el `client_id` y el secreto es
 | Títulos de profesores (`Profesor.titulo_archivo`, `titulos/`) | Volumen de Railway en `MEDIA_ROOT=/data/media` | Solo por `admin_portal/titulos.py::ver_titulo` (`@admin_required`) |
 | Fotos de perfil (`CustomUser.foto_perfil`, `perfiles/`) | Volumen | **Ninguna vista las sirve hoy** (pendiente conocido: la imagen se ve rota) |
 | Documentos de apoderados (carnet, documento del vínculo) | **PostgreSQL, cifrados** (`apoderados.Documento.contenido`, `BinaryField`). No van a disco ni al volumen | Solo por `apoderados/views_revision.py::ver_documento` (`@soporte_required`, solo el agente con el ticket), con marca de agua y registro de cada apertura; se borran al resolver la revisión o a los 30 días |
+| Videos de apoyo (MP4 de hasta 500 MB y 30 minutos) | Archivo en **Cloudflare R2, bucket privado** (`user_profesor/almacen_videos.py`); su ficha en la colección `videos` de MongoDB | La web revisa el acceso (`alumnos/videos_compartidos.py`) y redirige a un **enlace firmado que vence en 2 horas**. Un enlace ya entregado sigue sirviendo hasta que vence, aunque el acceso se quite antes. **Se borra solo** el video con 30 días sin actividad (la más reciente entre subida, compartido y vista; `user_profesor/limpieza_videos.py`), aunque el paquete siga vigente: 7 días antes se avisa al profesor y a quienes lo tienen (campanita y correo). Un reclamo abierto lo protege |
 
 - `lbwus/urls.py` **no publica `MEDIA_URL`**: no existe ninguna ruta `/media/`. Un GET a `/media/titulos/...` o `/media/perfiles/...` da 404, también para un admin (`tests/test_configuracion_produccion.py::ArchivosPrivadosTests`).
 - WhiteNoise sirve solo `STATIC_ROOT` (`/static/`), nunca `MEDIA_ROOT`.
+
+### Crear el bucket de R2 (una vez)
+
+Hasta hacer esto, los videos quedan desactivados (no se venden). Nada de esto va al repositorio.
+1. En Cloudflare → **R2 Object Storage**: activar R2. Pide un medio de pago, aunque los primeros 10 GB al mes son gratis y ver los videos no cobra salida de datos.
+2. **Create bucket**: por ejemplo `lbwus-videos`, ubicación automática. **No** activar *Public access* ni el dominio `r2.dev`: el bucket debe quedar privado. **No hace falta CORS**: la subida pasa por la web y el reproductor solo carga el video.
+3. R2 → **Manage API tokens → Create API token**: permiso **Object Read & Write**, limitado **solo a ese bucket**. Copiar el *Access Key ID* y el *Secret Access Key* (este último se muestra una sola vez) al gestor de contraseñas del equipo.
+4. Copiar el **Account ID**, que aparece en la página de R2.
+5. Railway → servicio web → Variables: `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` y `R2_BUCKET`. Desplegar.
+6. Probar: como profesor, subir un video corto y compartirlo; como ese alumno, verlo y adelantarlo.
+
+Si la clave se filtra: en Cloudflare, borrar ese token y crear otro (pasos 3 y 5). Los enlaces ya entregados dejan de servir.
 
 ## 3. Claves: `SECRET_KEY` y `DOCUMENTOS_CLAVE`
 
@@ -79,10 +93,11 @@ El inicio de sesión con Google no usa variables: el `client_id` y el secreto es
 | Títulos y fotos | **Solo si el volumen está montado en `/data/media` y `MEDIA_ROOT=/data/media`** | El disco del contenedor se borra en cada despliegue |
 | Estáticos | Se regeneran | `collectstatic` en cada inicio |
 | Comunidad (MongoDB) | Sí | Atlas es externo |
+| Videos de apoyo (Cloudflare R2) | Sí | R2 es externo |
 
 Con `DEBUG=False`, `CompressedManifestStaticFilesStorage` da error 500 si una plantilla pide un estático que no existe. Las pruebas no usan el manifiesto (`lbwus/test_runner.py`), así que no necesitan `collectstatic`; a cambio, `tests/test_configuracion_produccion.py::EstaticosTests` corre `collectstatic` con el almacenamiento de producción en una carpeta temporal (falla si un CSS apunta a un archivo inexistente) y revisa que cada `{% static '...' %}` literal de las plantillas esté en el manifiesto. Las rutas armadas con variables no se revisan.
 
-**Tareas diarias (un solo cron).** `python manage.py tareas_diarias` corre todas las tareas diarias en orden (lista en `TAREAS`, `alumnos/management/commands/tareas_diarias.py`): agenda (`generar_bloques`), pagos que no volvieron, borrado de documentos de más de 30 días, observaciones y conversaciones vencidas, y avisos a líderes y agentes. Si una falla, corren las demás y la corrida termina con error nombrándola (se ve en los logs del servicio), y se avisa por correo a `ALERTAS_CORREOS`. Si todas terminan bien, guarda la hora de la corrida para `/salud/` (sección 8). Una tarea nueva se suma en `TAREAS`; Railway no se toca.
+**Tareas diarias (un solo cron).** `python manage.py tareas_diarias` corre todas las tareas diarias en orden (lista en `TAREAS`, `alumnos/management/commands/tareas_diarias.py`): agenda (`generar_bloques`), pagos que no volvieron, borrado de documentos de más de 30 días, observaciones y conversaciones vencidas, videos sin actividad (`borrar_videos_inactivos`) y avisos a líderes y agentes. Si una falla, corren las demás y la corrida termina con error nombrándola (se ve en los logs del servicio), y se avisa por correo a `ALERTAS_CORREOS`. Si todas terminan bien, guarda la hora de la corrida para `/salud/` (sección 8). Una tarea nueva se suma en `TAREAS`; Railway no se toca.
 
 No está en el `Procfile` (ese arranca solo la web). Se crea **una vez** en Railway:
 1. Proyecto → **+ New → GitHub Repo** → el mismo repositorio.
@@ -123,6 +138,7 @@ Cada reserva lleva sus marcas de «ya avisado» (`recordatorio_1d`, `recordatori
    ```bash
    mongodump --uri "$MONGODB_URI" --db lbwus_prod --gzip --archive=lbwus_mongo_AAAA-MM-DD.gz
    ```
+   Incluye las fichas de los videos. **Los archivos de video (R2) no entran en estos respaldos**: Cloudflare los guarda con redundancia, y si se perdiera uno, el profesor tendría que volver a subirlo.
 4. **Claves:** `SECRET_KEY` y `DOCUMENTOS_CLAVE` van **solo** en el gestor de contraseñas, nunca junto a los respaldos. Sin `DOCUMENTOS_CLAVE`, los documentos del respaldo de PostgreSQL no se pueden leer, y eso es lo que se busca.
 
 ## 6. `check --deploy`

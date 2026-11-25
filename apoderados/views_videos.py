@@ -22,7 +22,7 @@ def videos_estudiante(request, id_vinculo):
 @require_GET
 @apoderado_required
 def ver_video_estudiante(request, id_vinculo, video_id):
-    return videos_compartidos.video_respuesta(request, _vinculo_o_404(request, id_vinculo).alumno_id, video_id)
+    return videos_compartidos.video_respuesta(_vinculo_o_404(request, id_vinculo).alumno_id, video_id)
 
 
 @require_POST

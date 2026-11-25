@@ -1,10 +1,10 @@
-from types import SimpleNamespace
-
 import mongomock
 from django.test import TestCase
-from mongomock.gridfs import enable_gridfs_integration
 
 from comunidad import esquemas, mongo
+from user_profesor import almacen_videos
+
+R2_PRUEBA = 'https://r2.test/'  # donde "firma" sus enlaces el R2 de mentira
 
 
 class MongoTestCase(TestCase):
@@ -20,15 +20,30 @@ class MongoTestCase(TestCase):
         super().tearDown()
 
 
-class GridFsTestCase(MongoTestCase):
-    """MongoTestCase con GridFS (videos).
+class R2Falso:
+    """Cloudflare R2 de mentira, en memoria: solo lo que usa almacen_videos (subir, firmar un enlace y borrar)."""
 
-    enable_gridfs_integration() parcha gridfs con mock.patch(...).start(), y otras pruebas (test_puerta) cierran con
-    patch.stopall(), que deshace tambien ese parche: por eso se activa en cada setUp y no una vez al importar.
-    """
+    def __init__(self):
+        self.objetos = {}  # {clave: (contenido, content_type)}
+
+    def upload_fileobj(self, archivo, bucket, clave, ExtraArgs=None):
+        self.objetos[clave] = (archivo.read(), (ExtraArgs or {}).get('ContentType'))
+
+    def generate_presigned_url(self, operacion, Params, ExpiresIn):
+        return f'{R2_PRUEBA}{Params["Key"]}?vence={ExpiresIn}'
+
+    def delete_object(self, Bucket, Key):
+        self.objetos.pop(Key, None)  # como S3: borrar lo que no existe no es error
+
+
+class VideosTestCase(MongoTestCase):
+    """MongoTestCase con un R2 de mentira (los archivos de video): nunca se conecta a Cloudflare."""
 
     def setUp(self):
         super().setUp()
-        enable_gridfs_integration()
-        # GridFS de pymongo lee client.options.timeout; mongomock no lo trae. Sin limite, como pymongo por omision.
-        mongo.get_client().options = SimpleNamespace(timeout=None)
+        self.r2 = R2Falso()
+        almacen_videos.usar_cliente(self.r2)
+
+    def tearDown(self):
+        almacen_videos.restablecer()
+        super().tearDown()

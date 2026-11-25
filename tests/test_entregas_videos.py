@@ -15,7 +15,7 @@ from django.utils import timezone
 from alumnos import paquetes
 from alumnos.models import PaqueteClases
 from alumnos.models.videos import VideoCompartido
-from comunidad.tests.base import GridFsTestCase
+from comunidad.tests.base import VideosTestCase
 from tests.test_paquetes import RUT_ANA, RUT_OTRO, RUT_PROFE, Escenario
 from tests.test_videoteca import archivo
 from user_profesor import entregas, videoteca
@@ -43,7 +43,7 @@ class FechasDeEntregaTests(SimpleTestCase):
                 self.assertEqual(paquetes.fechas_entrega(plan, INICIO)[-1][1], plan.videos)
 
 
-class EntregasTests(GridFsTestCase, Escenario):
+class EntregasTests(VideosTestCase, Escenario):
 
     def setUp(self):
         super().setUp()

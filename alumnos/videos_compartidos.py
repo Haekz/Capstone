@@ -3,7 +3,8 @@
 Lo usan el alumno y el apoderado (de su estudiante); cada uno valida primero su propio acceso y luego llama aqui.
 Regla unica: se ve un video solo si esta compartido con ESE alumno y su paquete sigue vigente. Si no, 404 (no se
 revela si el video existe). Si el alumno es menor, ademas su apoderado tiene que haberlo habilitado (solo_habilitados).
-Se entrega por partes con soporte de Range: es lo que permite adelantar y retroceder.
+Con acceso, se redirige a un enlace firmado de Cloudflare R2 que vence (user_profesor/almacen_videos.py): R2 entrega el
+archivo y resuelve Range (adelantar y retroceder). Cada vez que se abre se revisa el acceso y se firma uno nuevo.
 
 Soporte (fase 5e) ve los videos que nombra un reclamo de Videos de apoyo: del_ticket() decide cuales, y la vista de
 soporte entrega el archivo con archivo_respuesta(), sin las reglas del alumno.
@@ -11,18 +12,15 @@ soporte entrega el archivo con archivo_respuesta(), sin las reglas del alumno.
 
 import re
 
-from django.http import Http404, HttpResponse, JsonResponse, StreamingHttpResponse
+from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.utils import timezone
 
-from comunidad import mongo
 from soporte.models import Ticket
 from user_profesor import videoteca
 
 from .models import Alumno, PaqueteClases
 from .models.videos import VideoCompartido
 
-TROZO = 256 * 1024
-RANGO = re.compile(r'^bytes=(\d*)-(\d*)$')
 ID_VIDEO = re.compile(r'\b[0-9a-f]{24}\b')
 
 
@@ -50,68 +48,21 @@ def habilitar(alumno_id, video_id, habilitado):
         raise Http404
 
 
-def _rango(cabecera, total):
-    """(desde, hasta) de un solo tramo; None si no hay Range o esta mal escrito (RFC 7233: se ignora y va completo).
-
-    ValueError si el tramo cae fuera del archivo (se responde 416).
-    """
-    pedido = RANGO.match(cabecera or '')
-    if not pedido or not any(pedido.groups()):
-        return None
-    inicio, fin = pedido.groups()
-    if not inicio:  # bytes=-N: los ultimos N
-        if int(fin) == 0:
-            raise ValueError
-        return max(total - int(fin), 0), total - 1
-    desde = int(inicio)
-    if fin and int(fin) < desde:
-        return None
-    if desde >= total:
-        raise ValueError
-    return desde, min(int(fin), total - 1) if fin else total - 1
-
-
-def _trozos(lector, desde, hasta):
-    try:
-        lector.seek(desde)
-        restante = hasta - desde + 1
-        while restante > 0:
-            dato = lector.read(min(TROZO, restante))
-            if not dato:
-                break
-            restante -= len(dato)
-            yield dato
-    finally:
-        lector.close()
-
-
-def transmitir(request, alumno_id, video_id, solo_habilitados=False):
-    """El video (completo o el tramo pedido) si es del alumno y esta vigente; Http404 si no."""
+def transmitir(alumno_id, video_id, solo_habilitados=False):
+    """Redireccion al video si es del alumno y esta vigente; Http404 si no."""
     if not _compartidos(alumno_id, solo_habilitados).filter(video_id=video_id).exists():
         raise Http404
-    return _archivo(request, video_id)
+    return _archivo(video_id)
 
 
-def _archivo(request, video_id):
-    """El archivo, completo o el tramo pedido. Quien llama ya valido el acceso."""
+def _archivo(video_id):
+    """Redireccion al enlace firmado del archivo en R2. Quien llama ya valido el acceso."""
     ficha = videoteca.ficha(video_id)
     if not ficha:
         raise Http404
-    total = ficha['length']
-    try:
-        tramo = _rango(request.headers.get('Range'), total)
-    except ValueError:
-        respuesta = HttpResponse(status=416)
-        respuesta['Content-Range'] = f'bytes */{total}'
-        return respuesta
-    desde, hasta = tramo or (0, total - 1)
-    respuesta = StreamingHttpResponse(_trozos(videoteca.abrir(ficha['_id']), desde, hasta),
-                                      status=206 if tramo else 200, content_type='video/mp4')
-    respuesta['Content-Length'] = hasta - desde + 1
-    respuesta['Accept-Ranges'] = 'bytes'
-    respuesta['Cache-Control'] = 'private'
-    if tramo:
-        respuesta['Content-Range'] = f'bytes {desde}-{hasta}/{total}'
+    videoteca.registrar_vista(ficha['_id'])  # actividad: si nadie lo abre en 30 dias, se borra (limpieza_videos.py)
+    respuesta = HttpResponseRedirect(videoteca.enlace(ficha))
+    respuesta['Cache-Control'] = 'no-store'  # que el navegador vuelva a pasar por aqui: se revisa el acceso cada vez
     return respuesta
 
 
@@ -124,16 +75,16 @@ def lista_json(alumno_id, solo_habilitados=False):
     try:
         return JsonResponse({'success': True, 'disponible': True, 'videos': listar(alumno_id, solo_habilitados),
                              'por_revisar': por_revisar})
-    except mongo.ERRORES:
+    except videoteca.ERRORES:
         return JsonResponse({'success': False, 'disponible': False,
                              'message': 'Los videos no están disponibles por ahora. Intenta más tarde.'})
 
 
-def video_respuesta(request, alumno_id, video_id, solo_habilitados=False):
-    """transmitir() con Mongo caido convertido en 503."""
+def video_respuesta(alumno_id, video_id, solo_habilitados=False):
+    """transmitir() con los videos no disponibles (MongoDB o R2) convertido en 503."""
     try:
-        return transmitir(request, alumno_id, video_id, solo_habilitados)
-    except mongo.ERRORES:
+        return transmitir(alumno_id, video_id, solo_habilitados)
+    except videoteca.ERRORES:
         return HttpResponse(status=503)
 
 
@@ -160,9 +111,9 @@ def del_ticket(ticket):
             .select_related('paquete__alumno__user', 'paquete__profesor__user'))
 
 
-def archivo_respuesta(request, video_id):
-    """Para soporte, ya autorizado por su ticket: el archivo sin las reglas del alumno. Mongo caido = 503."""
+def archivo_respuesta(video_id):
+    """Para soporte, ya autorizado por su ticket: el archivo sin las reglas del alumno. Sin videos disponibles = 503."""
     try:
-        return _archivo(request, video_id)
-    except mongo.ERRORES:
+        return _archivo(video_id)
+    except videoteca.ERRORES:
         return HttpResponse(status=503)

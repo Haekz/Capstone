@@ -1,8 +1,8 @@
 """Ver los videos compartidos (agregado de videos, fase 3b): alumno y apoderado.
 
 Lo importante es la seguridad: un video solo se ve si el profesor se lo compartió a ESE alumno y su paquete sigue
-vigente; en cualquier otro caso la respuesta es 404 (no se revela si el video existe). También soporta Range,
-que es lo que permite adelantar y retroceder en el reproductor. Mongo en memoria (mongomock).
+vigente; en cualquier otro caso la respuesta es 404 (no se revela si el video existe). Con acceso, la web redirige a
+un enlace firmado de R2 que vence (adelantar y retroceder lo resuelve R2). Mongo en memoria y un R2 de mentira.
 """
 
 from datetime import timedelta
@@ -16,23 +16,19 @@ from alumnos.models import PaqueteClases
 from alumnos.models.videos import VideoCompartido
 from apoderados.models import Apoderado
 from comunidad import mongo
-from comunidad.tests.base import GridFsTestCase
+from comunidad.tests.base import R2_PRUEBA, VideosTestCase
 from tests.test_apoderados import crear_apoderado, entrar
 from tests.test_apoderados_vinculos import crear_menor_vinculado
 from tests.test_paquetes import RUT_ANA, RUT_BETO, RUT_PROFE, Escenario
 from tests.test_videoteca import archivo, mp4
-from user_profesor import videoteca
+from user_profesor import almacen_videos, videoteca
 
 # RUT propios de esta prueba: no deben repetirse con los del escenario base.
 RUT_APODERADO, RUT_MENOR = '66666666-6', '77777777-7'
 RUT_OTRO_APODERADO, RUT_OTRO_MENOR = '99999999-9', '88888888-8'
 
 
-def cuerpo(respuesta):
-    return b''.join(respuesta.streaming_content)
-
-
-class Base(GridFsTestCase, Escenario):
+class Base(VideosTestCase, Escenario):
 
     def setUp(self):
         super().setUp()
@@ -50,6 +46,18 @@ class Base(GridFsTestCase, Escenario):
             fecha_fin=timezone.now() + timedelta(days=dias_restantes))
         VideoCompartido.objects.create(paquete=paquete, video_id=video or self.video)
         return paquete
+
+    def assertVaAR2(self, respuesta, video=None):
+        """Con acceso: redirige al enlace firmado de R2 (vence) y el navegador no guarda la redireccion."""
+        self.assertEqual(respuesta.status_code, 302)
+        self.assertEqual(respuesta['Location'], f'{R2_PRUEBA}videos/{video or self.video}.mp4'
+                                                f'?vence={almacen_videos.DURACION_ENLACE_SEG}')
+        self.assertEqual(respuesta['Cache-Control'], 'no-store')
+
+    def assertNoVaAR2(self, respuesta):
+        """Sin sesion: redirige al login. Ojo: tambien es un 302, por eso se revisa adonde va."""
+        self.assertEqual(respuesta.status_code, 302)
+        self.assertFalse(respuesta['Location'].startswith(R2_PRUEBA))
 
 
 class VerVideosDelAlumnoTests(Base):
@@ -77,39 +85,15 @@ class VerVideosDelAlumnoTests(Base):
         self.assertEqual(self.client.get(reverse('videos_alumno')).json()['videos'], [])
         self.assertEqual(self.ver().status_code, 404)
 
-    def test_si_el_archivo_falta_en_mongo_no_se_lista_ni_se_cae(self):
+    def test_si_la_ficha_falta_en_mongo_no_se_lista_ni_se_cae(self):
         # El profesor ya no puede borrar un video compartido vigente (fase 4b); esto cubre que falte igual,
         # por ejemplo si se borro a mano en Atlas.
-        videoteca._bucket().delete(ObjectId(self.video))
+        videoteca._fichas().delete_one({'_id': ObjectId(self.video)})
         self.assertEqual(self.client.get(reverse('videos_alumno')).json()['videos'], [])
         self.assertEqual(self.ver().status_code, 404)
 
-    def test_entrega_el_video_completo(self):
-        r = self.ver()
-        self.assertEqual((r.status_code, r['Content-Type'], r['Accept-Ranges']), (200, 'video/mp4', 'bytes'))
-        self.assertEqual(int(r['Content-Length']), len(self.contenido))
-        self.assertEqual(cuerpo(r), self.contenido)
-
-    def test_rangos_para_adelantar_y_retroceder(self):
-        total = len(self.contenido)
-        for cabecera, desde, hasta in (('bytes=0-9', 0, 9), ('bytes=5-', 5, total - 1), ('bytes=-10', total - 10, total - 1),
-                                       ('bytes=0-999999999', 0, total - 1)):
-            with self.subTest(cabecera=cabecera):
-                r = self.ver(HTTP_RANGE=cabecera)
-                self.assertEqual(r.status_code, 206)
-                self.assertEqual(r['Content-Range'], f'bytes {desde}-{hasta}/{total}')
-                self.assertEqual(cuerpo(r), self.contenido[desde:hasta + 1])
-                self.assertEqual(int(r['Content-Length']), hasta - desde + 1)
-
-    def test_rango_fuera_del_archivo_da_416_y_el_mal_escrito_se_ignora(self):
-        total = len(self.contenido)
-        for cabecera in ('bytes=999999999-', f'bytes={total}-', 'bytes=-0'):
-            with self.subTest(cabecera=cabecera):
-                r = self.ver(HTTP_RANGE=cabecera)
-                self.assertEqual((r.status_code, r['Content-Range']), (416, f'bytes */{total}'))
-        for cabecera in ('bytes=9-3', 'bytes=abc', 'bytes=-', 'items=0-1', 'bytes=0-1,3-4', ''):  # RFC 7233: se ignoran
-            with self.subTest(cabecera=cabecera):
-                self.assertEqual(self.ver(HTTP_RANGE=cabecera).status_code, 200)
+    def test_redirige_a_un_enlace_de_r2_que_vence(self):
+        self.assertVaAR2(self.ver())
 
     def test_nadie_mas_lo_ve(self):
         self.assertEqual(self.ver(self.subir('No compartido')).status_code, 404)  # existe, pero no es de ella
@@ -119,9 +103,9 @@ class VerVideosDelAlumnoTests(Base):
         self.assertEqual(self.ver().status_code, 404)
         self.assertEqual(self.client.get(reverse('videos_alumno')).json()['videos'], [])
         self.client.logout()  # sin sesión
-        self.assertEqual(self.ver().status_code, 302)
+        self.assertNoVaAR2(self.ver())
         self.entrar(RUT_PROFE)  # un profesor tampoco es alumno
-        self.assertEqual(self.ver().status_code, 302)
+        self.assertNoVaAR2(self.ver())
 
     def test_con_el_paquete_vencido_o_pendiente_ya_no_se_ve(self):
         otro = self.subir('Otro')
@@ -137,6 +121,11 @@ class VerVideosDelAlumnoTests(Base):
     def test_sin_mongo_avisa_y_no_se_cae(self):
         mongo.restablecer()
         self.assertFalse(self.client.get(reverse('videos_alumno')).json()['disponible'])
+        self.assertEqual(self.ver().status_code, 503)
+
+    @override_settings(R2_CONFIGURADO=False)
+    def test_sin_r2_no_se_cae(self):
+        almacen_videos.restablecer()
         self.assertEqual(self.ver().status_code, 503)
 
     def test_el_panel_ya_no_trae_los_videos_inventados(self):
@@ -165,9 +154,7 @@ class VerVideosDelApoderadoTests(Base):
 
     def test_ve_y_reproduce_los_videos_de_su_estudiante(self):
         self.assertEqual([v['titulo'] for v in self.lista().json()['videos']], ['Factorización'])
-        r = self.ver(HTTP_RANGE='bytes=0-9')
-        self.assertEqual((r.status_code, cuerpo(r)), (206, self.contenido[:10]))
-        self.assertEqual(cuerpo(self.ver()), self.contenido)
+        self.assertVaAR2(self.ver())
 
     def test_la_pagina_de_clases_trae_los_videos(self):
         pagina = self.client.get(reverse('apoderado_clases_estudiante', args=[self.vinculo.pk])).content.decode()
@@ -189,5 +176,5 @@ class VerVideosDelApoderadoTests(Base):
 
     def test_sin_sesion_de_apoderado_no_entra(self):
         self.client.logout()
-        self.assertEqual(self.ver().status_code, 302)
+        self.assertNoVaAR2(self.ver())
         self.assertEqual(self.lista().status_code, 302)
