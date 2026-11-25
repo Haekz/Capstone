@@ -99,6 +99,10 @@ class ReservasDelApoderadoTests(TestCase):
         self.reservar()
         respuesta = self.client.get(self.url('apoderado_clases_estudiante'))
         self.assertContains(respuesta, self.url('apoderado_cancelar_clase', self.reserva().pk))
+        # Botones del portal del apoderado: btn-secondary solo existe en el CSS del admin y aqui salia sin estilo.
+        self.assertContains(respuesta, 'class="apo-btn apo-btn--peligro">Cancelar clase</button>', count=1)
+        self.assertContains(respuesta, 'class="apo-btn">Reprogramar</button>', count=1)
+        self.assertNotContains(respuesta, 'btn-secondary')
 
     def test_el_menor_no_reserva_cancela_ni_reprograma_por_su_cuenta(self):
         self.reservar()
