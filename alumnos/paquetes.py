@@ -142,6 +142,12 @@ def valor_clase(inscripcion):
     return inscripcion.paquete.precio_por_clase if inscripcion.paquete_id else VALOR_INSCRIPCION
 
 
+def por_clase(monto, clases):
+    """Lo que vale cada clase de un paquete. Unica cuenta: la usan la pagina de planes (Cotizacion) y el pago al
+    profesor (PaqueteClases), asi lo que se muestra es lo que se paga. Hacia abajo: $62.990 / 4 = $15.747."""
+    return monto // clases
+
+
 @dataclass(frozen=True)
 class Cotizacion:
     """Un plan con su precio, listo para mostrar."""
@@ -154,8 +160,7 @@ class Cotizacion:
 
     @property
     def precio_por_clase(self):
-        # Hacia abajo, igual que PaqueteClases.precio_por_clase: $62.990 / 4 = $15.747 (sobran $2 del paquete)
-        return self.precio // self.plan.clases
+        return por_clase(self.precio, self.plan.clases)
 
     @property
     def descuento_por_clase(self):
