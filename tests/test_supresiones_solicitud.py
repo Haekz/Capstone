@@ -2,7 +2,6 @@
 identidad por enlace al correo, constancia y limites. Datos ficticios."""
 
 import re
-from datetime import timedelta
 from unittest import mock
 
 from django.core import mail, signing
@@ -13,6 +12,7 @@ from django.utils import timezone
 from alumnos.models import Alumno, Inscripcion
 from mensajes import servicio
 from soporte.models import Ticket
+from soporte.plazos import vencimiento
 from soporte.tickets import abrir_reporte, agregar_mensaje
 from supresiones import evaluacion, identidad, solicitud
 from supresiones.models import SolicitudSupresion
@@ -143,7 +143,7 @@ class SolicitarTests(Escenario):
         self.assertRedirects(r, reverse('mi_ticket', args=[ticket.pk]), fetch_redirect_response=False)
         self.assertEqual((s.usuario, s.rol, s.estado), (self.beto.user, 'alumno', SolicitudSupresion.ABIERTA))
         self.assertEqual((ticket.categoria, ticket.autor, ticket.asignado), (Ticket.PRIVACIDAD, self.beto.user, self.agente))
-        self.assertLess(ticket.vence - timezone.now(), timedelta(days=15))
+        self.assertEqual(ticket.vence, vencimiento(ticket.creado, 10))  # 10 dias habiles: con feriados pasa de 15 corridos
         constancia = [m for m in mail.outbox if f'solicitud #{s.pk}' in m.subject][0]
         self.assertEqual(constancia.to, [self.beto.user.email])
         self.assertIn(f'#{s.pk}', constancia.body)
