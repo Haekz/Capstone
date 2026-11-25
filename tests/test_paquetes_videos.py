@@ -87,12 +87,12 @@ class PrecioVideosTests(SimpleTestCase):
 
 class RepartoVideosTests(SimpleTestCase):
 
-    def test_lbwus_se_queda_el_25_y_el_profesor_el_75(self):
-        for monto, lbwus in ((5000, 1250), (13500, 3375), (30000, 7500)):
+    def test_lbwus_se_queda_el_26_y_el_profesor_el_74(self):
+        for monto, lbwus in ((5000, 1300), (13500, 3510), (30000, 7800)):
             with self.subTest(monto=monto):
                 self.assertEqual(paquetes.comision(monto, paquetes.COMISION_VIDEOS), lbwus)
                 self.assertEqual(paquetes.pago_profesor(monto, paquetes.COMISION_VIDEOS), monto - lbwus)
 
-    def test_las_clases_siguen_con_el_15(self):
-        self.assertEqual(paquetes.comision(59000), 8850)
-        self.assertEqual(paquetes.pago_profesor(59000), 50150)
+    def test_las_clases_van_con_el_26(self):
+        self.assertEqual(paquetes.comision(59000), 15340)
+        self.assertEqual(paquetes.pago_profesor(59000), 43660)

@@ -2,7 +2,7 @@
 
 Unica fuente de precios: la pagina de planes, el cobro en Webpay y el saldo del
 profesor usan estas funciones. Los precios los fija LBWUS, iguales con todos los
-profesores (decidido 14-nov-2026): $15.990 / $62.990 / $123.990.
+profesores (decidido 14-nov-2026; actualizados 25-nov-2026): $18.990 / $74.990 / $146.990.
 
 Fracciones exactas: nada de floats con plata.
 """
@@ -13,9 +13,9 @@ from fractions import Fraction
 
 from django.core.exceptions import ValidationError
 
-TARIFA = 15990  # una clase suelta; los paquetes le aplican su descuento. El profesor no la elige.
+TARIFA = 18990  # una clase suelta; los paquetes le aplican su descuento. El profesor no la elige.
 DURACION_CLASE_MIN = 60
-COMISION = Fraction(15, 100)  # la retiene LBWUS, IVA incluido
+COMISION = Fraction(26, 100)  # la retiene LBWUS, IVA incluido (15% hasta el 25-nov-2026; no se habia vendido ningun plan)
 IVA = Fraction(19, 100)
 REDONDEO_PAQUETE = 1000
 TERMINACION = 990  # todo precio de paquete termina en $990
@@ -28,7 +28,7 @@ PROMO_VIDEOS_PRECIO = 13500  # 3 videos extra con 10% de descuento
 MAX_VIDEOS_EXTRA = 6  # comprados despues de contratar, por paquete
 MIN_DIAS_PARA_EXTRA = 14  # al paquete deben quedarle al menos estos dias para comprar extras
 DIAS_ENTREGA_EXTRA = 14  # el profesor los comparte dentro de estos dias desde cada compra
-COMISION_VIDEOS = Fraction(25, 100)  # LBWUS aloja los videos; IVA incluido
+COMISION_VIDEOS = Fraction(26, 100)  # LBWUS aloja los videos; IVA incluido (25% hasta el 25-nov-2026)
 
 
 @dataclass(frozen=True)
@@ -75,7 +75,7 @@ def precio(plan):
 
 
 def comision(monto, tasa=COMISION):
-    """Parte de LBWUS (IVA incluido) de un monto pagado: 15% en clases, COMISION_VIDEOS en videos."""
+    """Parte de LBWUS (IVA incluido) de un monto pagado: COMISION en clases, COMISION_VIDEOS en videos."""
     return _redondear(monto * tasa)
 
 
@@ -85,7 +85,7 @@ def iva_incluido(monto):
 
 
 def pago_profesor(monto, tasa=COMISION):
-    """Lo que le queda al profesor de un monto pagado (85% en clases)."""
+    """Lo que le queda al profesor de un monto pagado (lo que no es comision)."""
     return monto - comision(monto, tasa)
 
 
@@ -144,8 +144,9 @@ def valor_clase(inscripcion):
 
 def por_clase(monto, clases):
     """Lo que vale cada clase de un paquete. Unica cuenta: la usan la pagina de planes (Cotizacion) y el pago al
-    profesor (PaqueteClases), asi lo que se muestra es lo que se paga. Hacia abajo: $62.990 / 4 = $15.747."""
-    return monto // clases
+    profesor (PaqueteClases), asi lo que se muestra es lo que se paga. Al peso mas cercano (decidido 25-nov-2026):
+    $74.990 / 4 = $18.748, aunque las clases sumen $2 mas que el paquete."""
+    return _redondear(Fraction(monto, clases))
 
 
 @dataclass(frozen=True)
@@ -168,9 +169,10 @@ class Cotizacion:
 
     @property
     def descuento_pct(self):
-        """'1,7' (coma decimal chilena, sin depender del idioma de Django)."""
-        pct = Fraction(self.descuento_por_clase * 100, self.tarifa)
-        return f'{float(pct):.1f}'.replace('.', ',')
+        """'1,28': lo que se ahorra frente a las mismas clases sueltas (decidido 25-nov-2026), con coma decimal
+        chilena y sin depender del idioma de Django."""
+        pct = Fraction(self.ahorro_total * 100, self.plan.clases * self.tarifa)
+        return f'{float(pct):.2f}'.replace('.', ',')
 
     @property
     def ahorro_total(self):
