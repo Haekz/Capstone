@@ -37,8 +37,8 @@ class PantallasDelAdminTests(BaseResenas):
         self.assertEqual(tarjetas['Retiros pagados'], ('$2.500', 'Total transferido'))
         self.assertEqual({rotulo: nota for rotulo, (_, nota) in tarjetas.items()}, {
             'Cobrado': 'Pagos aprobados, sin lo devuelto', 'Por dictar o entregar': 'Aún no es ingreso',
-            'Comisión estimada': '15 % de clases y 25 % de videos, si se entrega todo',
-            'Ganancia LBWUS': '15 % de clases dictadas y 25 % de videos compartidos',
+            'Comisión estimada': '26 % de clases y 26 % de videos, si se entrega todo',
+            'Ganancia LBWUS': '26 % de clases dictadas y 26 % de videos compartidos',
             'Retiros pendientes': 'Esperan que los pagues', 'Retiros pagados': 'Total transferido',
             'Saldo sin pedir': 'Disponible de los profesores, aún sin solicitar'})
 
