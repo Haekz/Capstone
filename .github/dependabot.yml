@@ -7,3 +7,10 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+
+  # Las actions del CI (.github/workflows) tambien quedan vigiladas: sin esto se quedaron en Node 20 sin aviso.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
