@@ -2,7 +2,7 @@
 
 Politica (docs/POLITICA_PAQUETES.md, seccion 12): 75% el profesor y 25% LBWUS, y gana cada vez que comparte un video
 (un video atrasado no se paga hasta que lo comparte). Suma al mismo saldo que ya usan su panel y las finanzas del
-admin (user_profesor/saldos.py); solo PostgreSQL, sin depender de Mongo.
+admin (user_profesor/saldos.py); solo PostgreSQL, sin depender de R2.
 """
 
 from datetime import timedelta

@@ -109,7 +109,7 @@ def iniciar_compra_paquete(request, alumno_id, al_crear=None, vinculo=None):
     con_videos = request.POST.get('videos') == '1'  # el navegador solo dice si lo quiere; el precio es del servidor
     if con_videos:
         try:
-            videos_extra.exigir_a_la_venta()  # sin MongoDB no se cobra un agregado que nadie podria entregar
+            videos_extra.exigir_a_la_venta()  # sin R2 no se cobra un agregado que nadie podria entregar
         except ValidationError as error:
             messages.error(request, error.messages[0])
             return redirect('planes')

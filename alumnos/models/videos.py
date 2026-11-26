@@ -1,12 +1,13 @@
-"""Videos que el profesor le compartió a un alumno (agregado de videos, fase 3).
+"""Videos de apoyo del profesor (agregado de videos) y lo que se compra y comparte de ellos.
 
-El archivo vive en Cloudflare R2 y su ficha en MongoDB (ver user_profesor/videoteca.py); aquí solo queda quién lo
-recibe y cuándo.
+El archivo vive en Cloudflare R2 y su ficha es Video (ver user_profesor/videoteca.py). VideoCompartido dice quien lo
+recibe y cuando.
 Cuelga del paquete: cuando el paquete vence, el alumno deja de verlos. Si el alumno es menor, ademas su apoderado
 tiene que habilitar cada video. Si soporte retira uno por un reclamo (fase 5), deja de verse, de pagarse y de ocupar
 cupo: por eso casi todo usa entregados(). La regla de no repetir un video al mismo alumno cuenta tambien los retirados.
 """
 
+import secrets
 from datetime import timedelta
 
 from django.conf import settings
@@ -14,7 +15,35 @@ from django.db import models
 from django.utils import timezone
 
 from .. import paquetes
+from .clases import Asignatura
 from .pagos import PaqueteClases, Suscripcion
+from .usuarios import Profesor
+
+
+def nuevo_id_video():
+    """24 caracteres hex, el formato del ObjectId que usaba MongoDB: los ids ya guardados (VideoCompartido, reclamos de
+    soporte, nombre del archivo en R2) siguen sirviendo."""
+    return secrets.token_hex(12)
+
+
+class Video(models.Model):
+    """Ficha de un video de apoyo; el archivo esta en R2 con este mismo id. Las reglas estan en videoteca.py."""
+    id = models.CharField(primary_key=True, max_length=24, default=nuevo_id_video, editable=False)
+    profesor = models.ForeignKey(Profesor, on_delete=models.CASCADE, related_name='videos')
+    # SET_NULL: si el admin borra la materia, el video queda y se muestra "Materia eliminada".
+    asignatura = models.ForeignKey(Asignatura, on_delete=models.SET_NULL, null=True, related_name='+')
+    titulo = models.CharField(max_length=100)
+    duracion_seg = models.PositiveIntegerField()
+    subido = models.DateTimeField(default=timezone.now)
+    # Limpieza por inactividad (user_profesor/limpieza_videos.py): ultima vez que alguien lo abrio y aviso de borrado.
+    ultima_vista = models.DateTimeField(null=True, blank=True)
+    aviso_borrado = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-subido']
+
+    def __str__(self):
+        return f'{self.titulo} ({self.pk})'
 
 
 class VideoCompartidoQuerySet(models.QuerySet):
@@ -25,7 +54,7 @@ class VideoCompartidoQuerySet(models.QuerySet):
 
 class VideoCompartido(models.Model):
     paquete = models.ForeignKey(PaqueteClases, on_delete=models.CASCADE, related_name='videos_compartidos')
-    video_id = models.CharField(max_length=24)  # ObjectId de la ficha del video en MongoDB (videoteca.py)
+    video_id = models.CharField(max_length=24)  # id de la ficha Video (videoteca.py)
     compartido = models.DateTimeField(auto_now_add=True)
     # Menores: el apoderado revisa cada video y recien ahi lo habilita (decidido 09-nov). Vacio = aun no.
     habilitado_menor = models.DateTimeField(null=True, blank=True)

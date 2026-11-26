@@ -1,27 +1,17 @@
-import mongomock
+"""Base de las pruebas de videos: un Cloudflare R2 de mentira, en memoria. Nunca se conecta a Cloudflare.
+
+Las fichas (tabla Video) van a la base de pruebas de Django, como todo lo demas.
+"""
+
 from django.test import TestCase
 
-from comunidad import esquemas, mongo
 from user_profesor import almacen_videos
 
 R2_PRUEBA = 'https://r2.test/'  # donde "firma" sus enlaces el R2 de mentira
 
 
-class MongoTestCase(TestCase):
-    """Usa mongomock en memoria (base lbwus_test): nunca se conecta a Atlas."""
-
-    def setUp(self):
-        super().setUp()
-        mongo.usar_cliente(mongomock.MongoClient(), db='lbwus_test')
-        esquemas.crear_indices(mongo.get_db())
-
-    def tearDown(self):
-        mongo.restablecer()
-        super().tearDown()
-
-
 class R2Falso:
-    """Cloudflare R2 de mentira, en memoria: solo lo que usa almacen_videos (subir, firmar un enlace y borrar)."""
+    """Cloudflare R2 de mentira: solo lo que usa almacen_videos (subir, firmar un enlace y borrar)."""
 
     def __init__(self):
         self.objetos = {}  # {clave: (contenido, content_type)}
@@ -36,8 +26,8 @@ class R2Falso:
         self.objetos.pop(Key, None)  # como S3: borrar lo que no existe no es error
 
 
-class VideosTestCase(MongoTestCase):
-    """MongoTestCase con un R2 de mentira (los archivos de video): nunca se conecta a Cloudflare."""
+class VideosTestCase(TestCase):
+    """TestCase con un R2 de mentira (los archivos de video)."""
 
     def setUp(self):
         super().setUp()

@@ -2,7 +2,7 @@
 
 El menor no ve (ni en la lista ni por enlace directo) un video que su apoderado no habilito; el apoderado lo ve
 todo para poder revisarlo. Cuando el profesor comparte un video con un menor, se avisa a sus apoderados verificados.
-Un alumno adulto lo sigue viendo apenas se comparte. Mongo en memoria (mongomock).
+Un alumno adulto lo sigue viendo apenas se comparte. R2 de mentira (tests/videos_base.py).
 """
 
 from datetime import timedelta

@@ -1,6 +1,6 @@
 """Vistas del profesor para su biblioteca de videos (agregado de videos, fase 1). La lógica está en videoteca.py.
 
-Si MongoDB o R2 no están configurados o no responden, contestan {'disponible': False} y el panel lo avisa.
+Si R2 no está configurado o no responde, contestan {'disponible': False} y el panel lo avisa.
 """
 
 from django.core.exceptions import ValidationError

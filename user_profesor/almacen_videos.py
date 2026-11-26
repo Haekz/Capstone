@@ -1,10 +1,10 @@
-"""Archivos de video en Cloudflare R2 (API compatible con S3). La ficha de cada video sigue en MongoDB (videoteca.py).
+"""Archivos de video en Cloudflare R2 (API compatible con S3). La ficha de cada video es la tabla Video (videoteca.py).
 
 El alumno no descarga desde la web: tras revisar su acceso, la web lo redirige a un enlace firmado que vence
 (enlace()) y R2 entrega el archivo, con Range para adelantar y retroceder. Asi el video no pasa por el servidor.
 
-Sin las cuatro variables R2_* los videos quedan desactivados: _s3() lanza AlmacenNoConfigurado, como MongoDB sin
-MONGODB_URI. Un solo cliente por proceso, creado al primer uso (seguro con los workers de Gunicorn).
+Sin las cuatro variables R2_* los videos quedan desactivados: _s3() lanza AlmacenNoConfigurado. Un solo cliente por
+proceso, creado al primer uso (seguro con los workers de Gunicorn).
 Regla: las claves nunca se escriben en logs, excepciones ni respuestas.
 """
 
@@ -58,6 +58,11 @@ def usar_cliente(cliente):
 def restablecer():
     """Vuelve al estado inicial: el proximo uso crea un cliente nuevo con los settings de ese momento."""
     usar_cliente(None)
+
+
+def exigir_configurado():
+    """AlmacenNoConfigurado si faltan las variables R2_*. No consulta a R2: solo arma el cliente."""
+    _s3()
 
 
 def _clave(video_id):

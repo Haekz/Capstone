@@ -1,6 +1,6 @@
-"""Videos del profesor (agregado de videos, fase 1): el archivo en Cloudflare R2 y su ficha en MongoDB.
+"""Videos del profesor (agregado de videos, fase 1): el archivo en Cloudflare R2 y su ficha en la tabla Video.
 
-Mongo en memoria (mongomock) y un R2 de mentira (comunidad/tests/base.py): nunca se conecta a Atlas ni a Cloudflare.
+Un R2 de mentira (tests/videos_base.py): nunca se conecta a Cloudflare.
 Los MP4 se arman a mano con lo mínimo que lee videoteca.duracion_mp4 (cajas ftyp, mdat y moov/mvhd).
 """
 
@@ -11,13 +11,13 @@ from unittest import mock
 from botocore.exceptions import ClientError
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import DatabaseError
 from django.test import SimpleTestCase, override_settings
 from django.urls import reverse
-from pymongo.errors import PyMongoError
 
-from comunidad import mongo
-from comunidad.tests.base import VideosTestCase
+from alumnos.models import Video
 from tests.test_paquetes import RUT_ANA, RUT_OTRO, RUT_PROFE, Escenario
+from tests.videos_base import VideosTestCase
 from user_profesor import almacen_videos, videoteca
 
 
@@ -75,20 +75,19 @@ class VideotecaTests(VideosTestCase, Escenario):
         self.subir(archivo=archivo(contenido=mp4(600)))
         [video] = self.listar()['videos']
         self.assertEqual(self.r2.objetos, {f'videos/{video["id"]}.mp4': (mp4(600), 'video/mp4')})
-        ficha = videoteca.ficha(video['id'])
-        self.assertEqual((ficha['length'], ficha['metadata']['duracion_seg']), (len(mp4(600)), 600))
+        self.assertEqual(videoteca.ficha(video['id']).duracion_seg, 600)
 
-    def test_al_borrarlo_se_va_de_mongo_y_de_r2(self):
+    def test_al_borrarlo_se_va_de_la_base_y_de_r2(self):
         self.subir()
         [video] = self.listar()['videos']
         self.assertTrue(self.client.post(reverse('eliminar_video', args=[video['id']])).json()['success'])
         self.assertIsNone(videoteca.ficha(video['id']))
         self.assertEqual(self.r2.objetos, {})
 
-    def test_si_mongo_falla_despues_de_subir_no_queda_el_archivo_huerfano_en_r2(self):
-        fichas = mock.Mock(**{'insert_one.side_effect': PyMongoError('caido')})
-        with mock.patch.object(videoteca, '_fichas', return_value=fichas):
-            self.assertFalse(self.subir()['disponible'])
+    def test_si_la_base_falla_despues_de_subir_no_queda_el_archivo_huerfano_en_r2(self):
+        with mock.patch.object(Video.objects, 'create', side_effect=DatabaseError('caida')), \
+                self.assertRaises(DatabaseError):
+            videoteca.subir(self.profe.pk, self.clase.asignatura_id, 'Factorización', archivo())
         self.assertEqual(self.r2.objetos, {})
 
     def test_si_r2_falla_al_borrar_el_video_igual_sale_de_la_biblioteca(self):
@@ -104,7 +103,7 @@ class VideotecaTests(VideosTestCase, Escenario):
         almacen_videos.restablecer()
         r = self.subir()
         self.assertEqual((r['success'], r['disponible']), (False, False))
-        self.assertEqual(mongo.get_db()[videoteca.COLECCION].count_documents({}), 0)  # sin archivo no hay ficha
+        self.assertEqual(Video.objects.count(), 0)  # sin archivo no hay ficha
 
     def test_rechaza_videos_de_mas_de_30_minutos(self):
         r = self.subir(archivo=archivo(30 * 60 + 1))
@@ -136,12 +135,12 @@ class VideotecaTests(VideosTestCase, Escenario):
         self.assertNotIn('videos', self.client.get(reverse('videos_profesor')).json())
         self.assertNotEqual(self.client.post(reverse('subir_video'), {}).status_code, 500)
 
-    @override_settings(MONGODB_URI=None)
-    def test_sin_mongo_avisa_y_no_se_cae(self):
-        mongo.restablecer()
-        datos = self.listar()
+    def test_sin_r2_la_biblioteca_avisa_y_no_se_cae_aunque_haya_fichas(self):
+        self.assertTrue(self.subir()['success'])
+        almacen_videos.restablecer()
+        with override_settings(R2_CONFIGURADO=False):
+            datos = self.listar()
         self.assertFalse(datos['disponible'])
-        self.assertFalse(self.subir()['disponible'])
 
     def test_la_pestana_ya_no_trae_datos_inventados_ni_la_variable_que_faltaba(self):
         pagina = self.client.get(reverse('panel_profesor')).content.decode()

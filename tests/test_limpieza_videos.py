@@ -9,15 +9,14 @@ dias se pasa `ahora` a revisar() y las fechas de la ficha se ponen a mano.
 from datetime import timedelta
 from io import StringIO
 
-from bson import ObjectId
 from django.core.management import call_command
 from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
 
 from alumnos.management.commands.tareas_diarias import TAREAS
+from alumnos.models import Video
 from apoderados.models import Apoderado
-from comunidad import mongo
 from notificaciones.models import Notificacion
 from soporte.models import Ticket
 from soporte.tickets import abrir_reporte
@@ -25,7 +24,7 @@ from tests.test_apoderados import crear_agente, crear_apoderado
 from tests.test_apoderados_vinculos import crear_menor_vinculado
 from tests.test_paquetes import RUT_ANA
 from tests.test_ver_videos import RUT_APODERADO, RUT_MENOR, Base
-from user_profesor import limpieza_videos, videoteca
+from user_profesor import almacen_videos, limpieza_videos, videoteca
 
 RUT_AGENTE = '10000001-9'
 
@@ -44,7 +43,7 @@ class Reglas(Base):
         return videoteca.ficha(self.video)
 
     def poner(self, **campos):
-        videoteca._fichas().update_one({'_id': ObjectId(self.video)}, {'$set': campos})
+        Video.objects.filter(pk=self.video).update(**campos)
 
 
 class BorradoPorInactividadTests(Reglas):
@@ -55,7 +54,7 @@ class BorradoPorInactividadTests(Reglas):
 
     def test_con_actividad_reciente_no_se_toca(self):
         self.assertEqual(limpieza_videos.revisar(en(22)), (0, 0))
-        self.assertIsNone(self.ficha().get('aviso_borrado'))
+        self.assertIsNone(self.ficha().aviso_borrado)
 
     def test_a_los_23_dias_avisa_al_profesor_y_a_quien_lo_tiene_pero_no_borra(self):
         self.assertEqual(limpieza_videos.revisar(en(23)), (1, 0))  # beto no tiene el video: no recibe nada
@@ -66,7 +65,7 @@ class BorradoPorInactividadTests(Reglas):
             self.assertIn('«Factorización»', aviso.texto)
             self.assertIn(fecha, aviso.texto)
         self.assertEqual(self.avisos(self.beto.user), [])
-        self.assertIsNotNone(self.ficha()['aviso_borrado'])
+        self.assertIsNotNone(self.ficha().aviso_borrado)
         self.assertEqual(len(self.r2.objetos), 1)  # sigue todo en R2
 
     def test_no_avisa_dos_veces(self):
@@ -88,13 +87,13 @@ class BorradoPorInactividadTests(Reglas):
     def test_abrirlo_despues_del_aviso_lo_salva(self):
         base = timezone.now()
         self.poner(aviso_borrado=base - timedelta(days=8), ultima_vista=base - timedelta(days=1),
-                   uploadDate=base - timedelta(days=40))
+                   subido=base - timedelta(days=40))
         self.assertEqual(limpieza_videos.revisar(base), (0, 0))
         self.assertIsNotNone(self.ficha())
 
     def test_compartirlo_despues_del_aviso_lo_salva(self):
         base = timezone.now()
-        self.poner(aviso_borrado=base - timedelta(days=8), uploadDate=base - timedelta(days=40))
+        self.poner(aviso_borrado=base - timedelta(days=8), subido=base - timedelta(days=40))
         self.compartir(self.beto)  # ahora: mas nuevo que el aviso
         self.assertEqual(limpieza_videos.revisar(base), (0, 0))
         self.assertIsNotNone(self.ficha())
@@ -109,21 +108,21 @@ class BorradoPorInactividadTests(Reglas):
         crear_agente(RUT_AGENTE, Ticket.VIDEOS)
         abrir_reporte(self.ana.user, Ticket.VIDEOS, 'Problema con un video de apoyo', f'Video: {self.video}\nNo es de Álgebra.')
         self.assertEqual(limpieza_videos.revisar(en(60)), (0, 0))
-        self.assertIsNone(self.ficha().get('aviso_borrado'))
+        self.assertIsNone(self.ficha().aviso_borrado)
         Ticket.objects.update(estado=Ticket.CERRADO)
         self.assertEqual(limpieza_videos.revisar(en(60)), (1, 0))
 
     def test_abrir_el_video_anota_la_actividad(self):
-        self.assertIsNone(self.ficha().get('ultima_vista'))
+        self.assertIsNone(self.ficha().ultima_vista)
         self.entrar(RUT_ANA)
         self.assertEqual(self.client.get(reverse('ver_video', args=[self.video])).status_code, 302)
-        self.assertIsNotNone(self.ficha()['ultima_vista'])
+        self.assertIsNotNone(self.ficha().ultima_vista)
 
     def test_un_video_que_no_se_puede_ver_no_anota_actividad(self):
         self.entrar(RUT_ANA)
         otro = self.subir('No es de ella')
         self.assertEqual(self.client.get(reverse('ver_video', args=[otro])).status_code, 404)
-        self.assertIsNone(videoteca.ficha(otro).get('ultima_vista'))
+        self.assertIsNone(videoteca.ficha(otro).ultima_vista)
 
 
 class AvisoAlApoderadoDelMenorTests(Reglas):
@@ -148,9 +147,9 @@ class ComandoDiarioTests(Reglas):
         call_command('borrar_videos_inactivos', stdout=salida)
         self.assertEqual(salida.getvalue().strip(), 'Avisados: 0. Borrados: 0.')
 
-    @override_settings(MONGODB_URI=None)
-    def test_sin_mongo_termina_bien_para_no_alertar_todos_los_dias(self):
-        mongo.restablecer()
+    @override_settings(R2_CONFIGURADO=False)
+    def test_sin_r2_termina_bien_para_no_alertar_todos_los_dias(self):
+        almacen_videos.restablecer()
         salida = StringIO()
         call_command('borrar_videos_inactivos', stdout=salida)
         self.assertIn('desactivados', salida.getvalue())

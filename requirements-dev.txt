@@ -3,7 +3,6 @@
 -r requirements.txt
 # Solo desarrollo y pruebas (antes estaban en requirements.txt e iban a produccion):
 django-extensions==4.1
-mongomock==4.3.0
 tblib==3.2.2
 # QA
 pytest==9.2.0

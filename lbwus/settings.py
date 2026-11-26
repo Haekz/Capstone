@@ -98,7 +98,6 @@ INSTALLED_APPS = [
     'alumnos',
     'admin_portal',
     'user_profesor',
-    'comunidad',
     'resenas',
     'apoderados',
     'soporte',
@@ -206,22 +205,18 @@ DATABASES = {
     'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600)
 }
 
-# MongoDB Atlas (app comunidad). Sin MONGODB_URI, MongoDB queda desactivado
-# y el sitio funciona igual. Nunca escribir la URI en el codigo.
-MONGODB_URI = os.environ.get('MONGODB_URI')          # None = MongoDB desactivado
-MONGODB_DB = os.environ.get('MONGODB_DB', 'lbwus_dev')
-MONGODB_TIMEOUT_MS = int(os.environ.get('MONGODB_TIMEOUT_MS', '5000'))
-# Cloudflare R2: los archivos de video (user_profesor/almacen_videos.py); su ficha sigue en MongoDB. Sin las cuatro
-# variables los videos quedan desactivados. Las claves solo como variables de entorno (docs/CONFIGURACION_PRODUCCION.md).
+# Cloudflare R2: los archivos de video (user_profesor/almacen_videos.py); su ficha es la tabla Video de PostgreSQL. Sin
+# las cuatro variables los videos quedan desactivados. Las claves solo como variables de entorno
+# (docs/CONFIGURACION_PRODUCCION.md).
 R2_ACCOUNT_ID = os.environ.get('R2_ACCOUNT_ID', '').strip()
 R2_ACCESS_KEY_ID = os.environ.get('R2_ACCESS_KEY_ID', '').strip()
 R2_SECRET_ACCESS_KEY = os.environ.get('R2_SECRET_ACCESS_KEY', '').strip()
 R2_BUCKET = os.environ.get('R2_BUCKET', '').strip()
 R2_ENDPOINT = f'https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com' if R2_ACCOUNT_ID else ''
 R2_CONFIGURADO = all((R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET))
-# Venta de videos (agregado y extras): solo con MongoDB (fichas) y R2 (archivos) configurados (B2). Sin ellos no se
-# cobra lo que nadie podria entregar; el paquete de clases se sigue vendiendo (alumnos/videos_extra.py).
-VIDEOS_A_LA_VENTA = bool(MONGODB_URI) and R2_CONFIGURADO
+# Venta de videos (agregado y extras): solo con R2 configurado (B2). Sin el no se cobra lo que nadie podria entregar;
+# el paquete de clases se sigue vendiendo (alumnos/videos_extra.py).
+VIDEOS_A_LA_VENTA = R2_CONFIGURADO
 
 # Puerta con clave para todo el sitio (lbwus/puerta.py). Vacia = sin puerta.
 # La clave se define solo como variable de entorno, nunca en el codigo.
@@ -236,7 +231,7 @@ SITIO_DOMINIOS_CORREO = [
 # CSP (lbwus/cabeceras.py): Report-Only por omision; CSP_OBLIGATORIA=1 la hace bloquear.
 CSP_OBLIGATORIA = os.environ.get('CSP_OBLIGATORIA', 'False').lower() in ('1', 'true', 'si')
 
-# La pagina de error de Django oculta tambien MONGODB_URI y SITIO_CLAVE.
+# La pagina de error de Django oculta tambien DATABASE_URL, SITIO_CLAVE y las claves de R2.
 DEFAULT_EXCEPTION_REPORTER_FILTER = 'lbwus.reporte_errores.FiltroReporteErrores'
 
 # Quien responde por los datos personales y como contactarlo (pie de pagina, Contacto, Terminos y Privacidad).
@@ -412,7 +407,7 @@ CACHES = {
 # Una linea por evento: "fecha nivel logger mensaje". FormatoSeguro enmascara correos, RUT y tokens de
 # Webpay en todo lo que sale, trazas incluidas (lbwus/registro.py). Nunca registrar contrasenas.
 APPS_PROPIAS = (
-    'lbwus', 'alumnos', 'user_profesor', 'admin_portal', 'apoderados', 'comunidad', 'resenas', 'soporte',
+    'lbwus', 'alumnos', 'user_profesor', 'admin_portal', 'apoderados', 'resenas', 'soporte',
     'notificaciones', 'agenda', 'mensajes', 'supresiones', 'requerimientos', 'observaciones',
 )
 LOGGING = {

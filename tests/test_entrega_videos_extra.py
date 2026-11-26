@@ -16,11 +16,11 @@ from alumnos import paquetes
 from alumnos.models import PaqueteClases
 from alumnos.models.videos import CompraVideosExtra
 from alumnos.webpay import registrar_respuesta
-from comunidad.tests.base import VideosTestCase
 from notificaciones.models import Notificacion
 from soporte.models import Ticket
 from tests.test_paquetes import Escenario
 from tests.test_videoteca import archivo
+from tests.videos_base import VideosTestCase
 from user_profesor import entregas, plazos_videos, videoteca
 from user_profesor.saldos import calcular_saldos
 

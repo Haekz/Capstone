@@ -10,7 +10,7 @@ from django.urls import reverse
 from django.utils.html import escape
 from django.views.decorators.http import require_safe
 
-RUTAS_PRIVADAS = ('/admin/', '/admin_portal/', '/profesor/', '/soporte/', '/apoderados/', '/comunidad/', '/resenas/',
+RUTAS_PRIVADAS = ('/admin/', '/admin_portal/', '/profesor/', '/soporte/', '/apoderados/', '/resenas/',
                   '/mensajes/', '/notificaciones/', '/agenda/', '/observaciones/', '/requerimientos/', '/accounts/',
                   '/puerta/', '/salud/')
 PAGINAS_PUBLICAS = ('home', 'nosotros', 'servicios', 'planes', 'contactos')  # nombres de url

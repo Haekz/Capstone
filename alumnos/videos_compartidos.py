@@ -60,14 +60,14 @@ def _archivo(video_id):
     ficha = videoteca.ficha(video_id)
     if not ficha:
         raise Http404
-    videoteca.registrar_vista(ficha['_id'])  # actividad: si nadie lo abre en 30 dias, se borra (limpieza_videos.py)
+    videoteca.registrar_vista(ficha.pk)  # actividad: si nadie lo abre en 30 dias, se borra (limpieza_videos.py)
     respuesta = HttpResponseRedirect(videoteca.enlace(ficha))
     respuesta['Cache-Control'] = 'no-store'  # que el navegador vuelva a pasar por aqui: se revisa el acceso cada vez
     return respuesta
 
 
 def lista_json(alumno_id, solo_habilitados=False):
-    """Respuesta JSON de la lista; si Mongo no esta disponible lo avisa en vez de caerse.
+    """Respuesta JSON de la lista; si los videos no estan disponibles (R2) lo avisa en vez de caerse.
 
     por_revisar: los que el menor todavia no puede ver porque su apoderado no los habilito.
     """
@@ -81,7 +81,7 @@ def lista_json(alumno_id, solo_habilitados=False):
 
 
 def video_respuesta(alumno_id, video_id, solo_habilitados=False):
-    """transmitir() con los videos no disponibles (MongoDB o R2) convertido en 503."""
+    """transmitir() con los videos no disponibles (R2) convertido en 503."""
     try:
         return transmitir(alumno_id, video_id, solo_habilitados)
     except videoteca.ERRORES:

@@ -2,25 +2,23 @@
 
 Lo importante es la seguridad: un video solo se ve si el profesor se lo compartió a ESE alumno y su paquete sigue
 vigente; en cualquier otro caso la respuesta es 404 (no se revela si el video existe). Con acceso, la web redirige a
-un enlace firmado de R2 que vence (adelantar y retroceder lo resuelve R2). Mongo en memoria y un R2 de mentira.
+un enlace firmado de R2 que vence (adelantar y retroceder lo resuelve R2). Un R2 de mentira (tests/videos_base.py).
 """
 
 from datetime import timedelta
 
-from bson import ObjectId
 from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from alumnos.models import PaqueteClases
+from alumnos.models import PaqueteClases, Video
 from alumnos.models.videos import VideoCompartido
 from apoderados.models import Apoderado
-from comunidad import mongo
-from comunidad.tests.base import R2_PRUEBA, VideosTestCase
 from tests.test_apoderados import crear_apoderado, entrar
 from tests.test_apoderados_vinculos import crear_menor_vinculado
 from tests.test_paquetes import RUT_ANA, RUT_BETO, RUT_PROFE, Escenario
 from tests.test_videoteca import archivo, mp4
+from tests.videos_base import R2_PRUEBA, VideosTestCase
 from user_profesor import almacen_videos, videoteca
 
 # RUT propios de esta prueba: no deben repetirse con los del escenario base.
@@ -85,10 +83,10 @@ class VerVideosDelAlumnoTests(Base):
         self.assertEqual(self.client.get(reverse('videos_alumno')).json()['videos'], [])
         self.assertEqual(self.ver().status_code, 404)
 
-    def test_si_la_ficha_falta_en_mongo_no_se_lista_ni_se_cae(self):
+    def test_si_la_ficha_falta_no_se_lista_ni_se_cae(self):
         # El profesor ya no puede borrar un video compartido vigente (fase 4b); esto cubre que falte igual,
-        # por ejemplo si se borro a mano en Atlas.
-        videoteca._fichas().delete_one({'_id': ObjectId(self.video)})
+        # por ejemplo si se borro a mano en la base.
+        Video.objects.filter(pk=self.video).delete()
         self.assertEqual(self.client.get(reverse('videos_alumno')).json()['videos'], [])
         self.assertEqual(self.ver().status_code, 404)
 
@@ -117,15 +115,10 @@ class VerVideosDelAlumnoTests(Base):
             fecha_fin=timezone.now() - timedelta(minutes=1))
         self.assertEqual(self.ver().status_code, 404)  # y el que sí era suyo, al vencer, desaparece
 
-    @override_settings(MONGODB_URI=None)
-    def test_sin_mongo_avisa_y_no_se_cae(self):
-        mongo.restablecer()
-        self.assertFalse(self.client.get(reverse('videos_alumno')).json()['disponible'])
-        self.assertEqual(self.ver().status_code, 503)
-
     @override_settings(R2_CONFIGURADO=False)
-    def test_sin_r2_no_se_cae(self):
+    def test_sin_r2_avisa_y_no_se_cae(self):
         almacen_videos.restablecer()
+        self.assertFalse(self.client.get(reverse('videos_alumno')).json()['disponible'])
         self.assertEqual(self.ver().status_code, 503)
 
     def test_el_panel_ya_no_trae_los_videos_inventados(self):

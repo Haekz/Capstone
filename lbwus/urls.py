@@ -35,7 +35,6 @@ urlpatterns = [
     path('alumnos/', include('alumnos.urls')),
     path('admin_portal/', include('admin_portal.urls')),
     path('profesor/', include('user_profesor.urls')),
-    path('comunidad/', include('comunidad.urls')),
     path('resenas/', include('resenas.urls')),
     path('apoderados/', include('apoderados.urls')),
     path('soporte/', include('soporte.urls')),

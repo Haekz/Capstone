@@ -8,8 +8,8 @@
 - Hasher MD5: crear miles de usuarios con PBKDF2 hacia lenta la suite. Solo en pruebas;
   ninguna verifica el algoritmo (PR #107, Franco).
 - ``MEDIA_ROOT`` temporal y borrado al final: las pruebas no ensucian ``media/`` (PR #107).
-- ``VIDEOS_A_LA_VENTA`` prendida: en Railway la da MONGODB_URI; aqui Mongo es mongomock (comunidad/tests/base.py).
-  tests.test_videos_sin_mongo la apaga para probar que sin Mongo no se cobran videos.
+- ``VIDEOS_A_LA_VENTA`` prendida: en Railway la dan las variables R2_*; aqui R2 es uno de mentira
+  (tests/videos_base.py). tests.test_videos_desactivados la apaga para probar que sin R2 no se cobran videos.
 """
 
 import shutil
