@@ -19,7 +19,7 @@
 3. [Arquitectura de Datos y Bases de Datos Utilizadas](#3-arquitectura-de-datos-y-bases-de-datos-utilizadas)
    - 3.1 Enfoque Híbrido / Políglota
    - 3.2 Base de Datos Relacional Principal: PostgreSQL
-   - 3.3 Base de Datos No Relacional (NoSQL): MongoDB Atlas (App Comunidad)
+   - 3.3 Almacenamiento de Archivos de Video: Cloudflare R2
    - 3.4 Persistencia de Caché Centralizada: DatabaseCache
 4. [Métodos y Arquitectura de Autenticación](#4-métodos-y-arquitectura-de-autenticación)
    - 4.1 Autenticación Tradicional Híbrida (RUT, Correo o Nombre de Usuario)
@@ -61,7 +61,6 @@ El proyecto sigue una filosofía de ingeniería orientada a la **simplicidad, ma
      - `alumnos`: Gestión de catálogo, reservas, pagos, compras de planes e inicio de sesión.
      - `admin_portal`: Panel administrativo, moderación de reportes y validación de títulos.
      - `user_profesor`: Portal de docentes, gestión de agenda y subida de credenciales académicas.
-     - `comunidad`: Módulo social/colaborativo desacoplado con almacenamiento documental.
      - `lbwus`: Configuración troncal, enrutamiento raíz, middlewares de seguridad y políticas globales.
 
 ### 2.2 Frontend: HTML5 Semántico, Vanilla CSS y JavaScript Nativo
@@ -85,7 +84,7 @@ El proyecto sigue una filosofía de ingeniería orientada a la **simplicidad, ma
 ### 2.4 Ecosistema de Librerías Principales
 - `psycopg2-binary` y `dj-database-url`: Conector de base de datos PostgreSQL de alto rendimiento con análisis dinámico de cadenas de conexión.
 - `django-allauth`, `oauthlib`, `requests-oauthlib`: Gestión robusta del ciclo de vida OAuth2 para Google Social Login.
-- `pymongo` y `mongomock`: Controlador oficial de MongoDB para interacciones documentales y emulador de pruebas en memoria.
+- `boto3`: Cliente para Cloudflare R2 (API compatible con S3), donde se guardan los archivos de los videos de apoyo.
 - `transbank-sdk (v6.1.0)`: SDK oficial de Transbank para la integración de pagos electrónicos vía Webpay Plus.
 - `cryptography` y `PyJWT`: Manejo de primitivas criptográficas y firmas digitales.
 - `Pillow`: Procesamiento y validación de formatos de imagen y documentos en subidas de títulos.
@@ -102,12 +101,12 @@ flowchart TD
     
     subgraph Persistencia Relacional ["Datos Transaccionales ACID (Relacional)"]
         LBWUS -->|Local y Producción: PostgreSQL| ProdDB[("PostgreSQL Database\n(dj-database-url)")]
-        ProdDB -.-> RelModels["Modelos: CustomUser, Alumno, Profesor,\nClase, SesionClase, Inscripcion,\nPago, DesgloseOperacion"]
+        ProdDB -.-> RelModels["Modelos: CustomUser, Alumno, Profesor,\nClase, SesionClase, Inscripcion,\nPago, DesgloseOperacion, Video"]
     end
     
-    subgraph Persistencia NoSQL ["Datos Sociales / Documentales (NoSQL)"]
-        LBWUS -->|PyMongo Client| MongoDB[("MongoDB Atlas\n(Colección Comunidad)")]
-        MongoDB -.-> DocModels["Publicaciones, Comentarios,\nReacciones y Trazas Flexibles"]
+    subgraph Almacenamiento de Objetos ["Archivos de Video"]
+        LBWUS -->|boto3, API S3| R2[("Cloudflare R2\n(bucket privado)")]
+        R2 -.-> Archivos["MP4 de los videos de apoyo,\nservidos con enlaces firmados"]
     end
     
     subgraph Persistencia de Estado ["Caché Centralizada"]
@@ -116,7 +115,7 @@ flowchart TD
 ```
 
 ### 3.1 Enfoque Híbrido / Políglota
-No existe un único motor de base de datos que resuelva de manera óptima las necesidades transaccionales críticas (donde la integridad financiera y de reservas es innegociable) y las necesidades de esquemas dinámicos (donde la flexibilidad en publicaciones de estudiantes es prioritaria). Por ello se combinan tres subsistemas de persistencia:
+Los datos del negocio (usuarios, reservas, pagos y las fichas de los videos) tienen siempre la misma forma y se relacionan entre sí, por lo que van todos en PostgreSQL. Los archivos de video, en cambio, pesan hasta 500 MB cada uno: no conviene guardarlos en la base ni en el disco del servidor, y van a un almacenamiento de objetos. Por ello se combinan tres subsistemas de persistencia:
 
 ### 3.2 Base de Datos Relacional Principal (PostgreSQL)
 * **Entorno de Desarrollo y Pruebas:** **PostgreSQL**, indicado en `DATABASE_URL`. Sin esa variable el proyecto no arranca.
@@ -133,12 +132,14 @@ No existe un único motor de base de datos que resuelva de manera óptima las ne
      - `sesion_cupo_maximo_positivo`: Obliga a que `cupo_maximo > 0`.
      - `sesion_precio_no_negativo`: Impide que se ingresen precios inferiores a `$0`.
 
-### 3.3 Base de Datos No Relacional (NoSQL): MongoDB Atlas (App Comunidad)
-* **Motor:** **MongoDB** (Cloud Atlas) mediante el conector **PyMongo**.
-* **Propósito:** Almacenar interacciones comunitarias, hilos de conversación, preguntas de estudiantes y metadatos no estructurados.
+### 3.3 Almacenamiento de Archivos de Video: Cloudflare R2
+* **Servicio:** **Cloudflare R2**, almacenamiento de objetos compatible con la API de S3, mediante la librería **boto3** (`user_profesor/almacen_videos.py`).
+* **Propósito:** Guardar los archivos MP4 de los videos de apoyo que suben los profesores (hasta 500 MB y 30 minutos). La ficha de cada video (título, materia, duración y profesor) está en PostgreSQL, en la tabla `alumnos.Video`, con el mismo identificador que el archivo.
+* **Seguridad:** El bucket es privado. La web revisa primero que quien pide el video tenga acceso (`alumnos/videos_compartidos.py`) y recien ahí lo redirige a un enlace firmado que vence pronto, así que un enlace compartido deja de servir.
 * **Estrategia de Desacoplamiento y Resiliencia (Graceful Degradation):**
-  - El cliente se instancia de forma perezosa (*lazy singleton* protegido por candado `threading.Lock()`), garantizando que cada worker de Gunicorn obtenga su propia conexión tras el *fork* del proceso.
-  - Si la variable `MONGODB_URI` no está configurada o si el clúster sufre una caída de red, la función `disponible()` captura el timeout (`MONGODB_TIMEOUT_MS = 5000`) y el sistema desactiva amigablemente el panel social, permitiendo que el 100% del resto de la plataforma (clases, pagos, login, administración) continúe operando sin errores 500.
+  - El cliente se crea al primer uso, uno por proceso, lo que es seguro con los workers de Gunicorn.
+  - Si faltan las variables `R2_*` o R2 no responde, los videos quedan desactivados: no se ofrecen ni se cobran, y el resto de la plataforma (clases, pagos, login, administración) sigue operando sin errores 500.
+* **Decisión de diseño:** Al comienzo las fichas y los archivos estaban en MongoDB Atlas. Se retiró porque las fichas tienen forma fija y se relacionan con profesores, materias y paquetes, que ya están en PostgreSQL; mantener una segunda base solo para ellas sumaba un servicio, una credencial y un punto de falla sin aportar nada.
 
 ### 3.4 Persistencia de Caché Centralizada: DatabaseCache
 * **Backend:** `django.core.cache.backends.db.DatabaseCache` apuntando a la tabla `lbwus_cache_table`.
@@ -222,9 +223,9 @@ El proyecto ha sido auditado y fortalecido siguiendo los principios de **Defensa
 | :--- | :--- | :--- |
 | **A01: Broken Access Control** | Acceso horizontal no autorizado (IDOR) o cierre de sesión involuntario. | Validación estricta de pertenencia en todas las vistas (`Inscripcion.objects.get(alumno=alumno)`). Cierres de sesión forzados por `POST` con token CSRF (S-19). Rutas de testing aisladas en producción (S-21). |
 | **A02: Cryptographic Failures** | Exposición de credenciales o comunicaciones no cifradas en tránsito. | HSTS forzado (`SECURE_HSTS_SECONDS = 31536000`), redirección HTTPS automática (`SECURE_SSL_REDIRECT = True`), cookies `Secure` y `HttpOnly`. Filtro de reporte de excepciones que sanitiza secretos. |
-| **A03: Injection** | Inyecciones SQL o NoSQL en formularios o APIs. | Uso mandatorio del ORM de Django (consultas preparadas y parametrizadas). Uso de PyMongo con validación de esquemas tipados y desinfección de operadores. |
+| **A03: Injection** | Inyecciones SQL en formularios o APIs. | Uso mandatorio del ORM de Django (consultas preparadas y parametrizadas). |
 | **A04: Insecure Design** | Sobrecupos en reservas masivas o cobros sin respaldo. | Bloqueo pesimista `select_for_update()` a nivel de fila y servicios de pago con recálculo de montos en backend (*Zero Trust*). |
-| **A05: Security Misconfiguration** | Páginas de depuración con trazas visibles en producción. | `DEBUG = False` gestionado por variable de entorno. `FiltroReporteErrores` que oculta `MONGODB_URI`, `SECRET_KEY` y `SITIO_CLAVE`. |
+| **A05: Security Misconfiguration** | Páginas de depuración con trazas visibles en producción. | `DEBUG = False` gestionado por variable de entorno. `FiltroReporteErrores` que oculta `DATABASE_URL`, `SECRET_KEY` y `SITIO_CLAVE`. |
 | **A07: Identification & Auth Failures** | Ataques de fuerza bruta, login CSRF o reuso de sesiones. | Rate limiting canónico persistente en BD (`DatabaseCache`), `SOCIALACCOUNT_LOGIN_ON_GET = False` (S-20), tokens de reseteo de clave con tiempo de vida limitado (1 hora). |
 | **A08: Software & Data Integrity** | Alteración de precios de compra o estados de pago no autorizados. | Pasarela Webpay con validación cruzada de `buy_order` y montos, bloqueo estricto de transacciones productivas reales en entornos de prueba. |
 
@@ -268,7 +269,7 @@ Para impedir **condiciones de carrera (*race conditions*)** en la asignación de
 ### 5.5 Sanitización de Trazas de Error y Puerta de Acceso Global
 * **Filtro de Reporte de Errores (`lbwus.reporte_errores.FiltroReporteErrores`):**
   - Hereda de `SafeExceptionReporterFilter` de Django.
-  - Oculta proactivamente de cualquier traza de error, correo de diagnóstico o volcado de pantalla los valores sensibles correspondientes a `MONGODB_URI`, `SITIO_CLAVE`, contraseñas de correo y claves secretas de Transbank.
+  - Oculta proactivamente de cualquier traza de error, correo de diagnóstico o volcado de pantalla los valores sensibles correspondientes a `DATABASE_URL` (trae la clave de PostgreSQL), `SITIO_CLAVE`, las claves de Cloudflare R2, contraseñas de correo y claves secretas de Transbank.
 * **Puerta con Clave para el Sitio (`lbwus.puerta.PuertaSitioMiddleware`):**
   - Middleware que actúa como escudo perimetral durante etapas de auditoría o marcha blanca cuando se define la variable `SITIO_CLAVE`.
   - Emplea `hmac.compare_digest` para evitar ataques de temporización (*timing attacks*) al validar la clave ingresada.
@@ -284,8 +285,8 @@ Toda decisión técnica en LBWUS responde a razones fundamentadas de ingeniería
    - *Razón:* Las plataformas universitarias y proyectos Capstone requieren que futuros desarrolladores, diseñadores o evaluadores puedan inspeccionar y modificar estilos con conocimientos elementales de CSS. Tailwind genera clases utilitarias extensas y crípticas en el HTML que dificultan la auditoría manual de código y aumentan el acoplamiento a dependencias de Node.js en tiempo de compilación.
 2. **¿Por qué PostgreSQL también en desarrollo y pruebas?:**
    - *Razón:* PostgreSQL implementa bloqueos a nivel de fila (`select_for_update`), concurrencia multihilo real, agrupación de conexiones (*connection pooling*) y restricciones avanzadas de integridad relacional que garantizan que jamás existan inscripciones duplicadas ni inconsistencias financieras. Usar la misma base en todos los entornos evita que una prueba pase en local y falle en producción.
-3. **¿Por qué MongoDB aislado para la Comunidad?:**
-   - *Razón:* Las publicaciones, comentarios, etiquetas e hilos de foros tienen estructuras heterogéneas que cambian con frecuencia. Forzar este contenido en tablas SQL requeriría continuas migraciones de esquema o múltiples uniones relacionales (*JOINs*) costosas. Además, al desacoplar MongoDB con tolerancia a fallos, una caída de la base de datos social no interrumpe el servicio central académico ni el procesamiento de pagos.
+3. **¿Por qué los videos en Cloudflare R2 y sus fichas en PostgreSQL?:**
+   - *Razón:* Un archivo de video de cientos de megabytes no debe vivir en la base de datos ni en el disco del contenedor, que en Railway se borra en cada despliegue. Un almacenamiento de objetos como R2 está hecho para eso y entrega el archivo directamente al navegador con enlaces firmados. La ficha, en cambio, son pocos datos con forma fija que se cruzan con profesores, materias, paquetes y pagos: en PostgreSQL esas relaciones las garantiza el motor. Por eso se retiró MongoDB, que solo guardaba esas fichas.
 4. **¿Por qué forzar POST en Cierres de Sesión y Social Login?:**
    - *Razón:* Los estándares HTTP (RFC 7231 y RFC 9110) y las guías de OWASP establecen que el método `GET` debe ser idempotente y seguro (sin efectos secundarios en el estado de la aplicación). Permitir mutaciones de sesión vía `GET` abre la puerta a ataques de CSRF donde enlaces invisibles forzarían al usuario a salir de su cuenta o autenticarse involuntariamente con credenciales de un atacante.
 5. **¿Por qué DatabaseCache en lugar de Memoria Local?:**
@@ -320,8 +321,8 @@ System check identified no issues (0 silenced).
    - Detección y bloqueo de manipulación de montos (*Price Tampering*).
    - Prevención de ataques de repetición (*Replay Attacks*) en callbacks de Transbank.
    - Cálculo exacto de la comisión del 15% IVA incluido y asignación del 85% a tutores.
-4. **Resiliencia de MongoDB y Servicios Desacoplados:**
-   - Operatividad del sistema ante ausencia o indisponibilidad de MongoDB Atlas.
+4. **Resiliencia de Servicios Desacoplados:**
+   - Operatividad del sistema cuando Cloudflare R2 no está configurado o no responde: los videos se desactivan y no se cobran.
 
 ---
 
