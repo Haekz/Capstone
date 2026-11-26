@@ -11,7 +11,7 @@ cosas que dependen del rol:
     * apoderado: compras pagadas o un vinculo que llego a estar verificado (quien tuvo autoridad sobre un menor).
 - ``limpiar``: los datos propios que se quitan siempre, se borre la cuenta o se seudonimice (la cascada no borra los
   archivos del disco ni los correos que otras filas copiaron): foto, y por rol observaciones recibidas, titulo,
-  especializaciones, cuenta bancaria, carnet.
+  especializaciones, cuenta bancaria, videos de apoyo (en ellos salen su cara y su voz), carnet.
 
 Para todos los roles: las filas de allauth (correo y datos de Google) se borran; sin eso el correo seguiria guardado.
 """
@@ -25,6 +25,7 @@ from agenda.models import HorarioSemanal
 from alumnos.models import CuentaBancaria, Especializacion, Inscripcion, PaqueteClases, Profesor, SesionClase
 from apoderados.models import Documento, Invitacion, SolicitudAdolescente, Vinculo
 from observaciones.models import Observacion
+from user_profesor import videoteca
 
 
 def _perfil(user, nombre):
@@ -63,7 +64,7 @@ def _limpiar_alumno(alumno):
 
 
 def _limpiar_profesor(profesor):
-    """Sin titulo, especializaciones, cuenta bancaria ni horario, y fuera del catalogo: sin titulo aprobado no se
+    """Sin titulo, especializaciones, cuenta bancaria, horario ni videos, y fuera del catalogo: sin titulo aprobado no se
     hacen clases."""
     if profesor.titulo_archivo:
         profesor.titulo_archivo.delete(save=False)  # el archivo del titulo, no solo la referencia
@@ -73,6 +74,7 @@ def _limpiar_profesor(profesor):
     CuentaBancaria.objects.filter(profesor=profesor).delete()
     Especializacion.objects.filter(profesor=profesor).delete()  # sus certificados cifrados
     HorarioSemanal.objects.filter(profesor=profesor).delete()
+    videoteca.borrar_del_profesor(profesor)  # fichas y archivos en R2: el Profesor queda, asi que no hay cascada
     SesionClase.objects.filter(clase__profesor=profesor, estado='programada', fecha_hora_inicio__gt=timezone.now()
                                ).update(estado='cancelada')  # sin clases reservadas (lo exige la evaluacion)
 

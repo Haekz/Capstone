@@ -1,8 +1,9 @@
 """Evaluar por categoria que pasa con los datos de quien pide eliminar su cuenta (respuesta legal, E3 paso 3).
 
 Reutiliza las reglas de ``mensajes.supresion`` (la misma que aplica el borrado): lo que aqui se muestra es lo
-que ``suprimir_cuenta`` hara. Ademas calcula lo que *impide eliminar hoy*: mientras haya una clase por dictar
-o un paquete pagado sin usar, borrar la cuenta le quitaria al usuario (y al profesor) algo que ya se pago.
+que ``suprimir_cuenta`` hara. Ademas calcula lo que *impide eliminar hoy*: mientras haya una clase por dictar,
+un paquete pagado sin usar o un video que el alumno todavia puede ver, borrar la cuenta le quitaria al usuario (y al
+profesor) algo que ya se pago.
 
 Cada rol aporta sus bloqueos y sus datos propios; lo demas (conversaciones, avisos, tickets) es comun. El que no
 tenga evaluador (admin, soporte) no se elimina automaticamente.
@@ -12,7 +13,7 @@ from dataclasses import dataclass
 
 from django.utils import timezone
 
-from alumnos.models import Inscripcion, PaqueteClases, SolicitudRetiro
+from alumnos.models import Inscripcion, PaqueteClases, SolicitudRetiro, VideoCompartido
 from alumnos.roles import ALUMNO, APODERADO, PROFESOR, resolver_rol
 from alumnos.utils import es_menor
 from apoderados.models import Vinculo
@@ -122,6 +123,13 @@ def _profesor(user, ticket):
     sin_usar = sum(p.clases_disponibles for p in PaqueteClases.objects.vigentes().filter(profesor=profesor))
     if sin_usar:
         bloqueos.append(f'Hay {sin_usar} clase(s) pagada(s) sin usar por alumnos con este profesor: se perderían.')
+    # Eliminar la cuenta borra sus videos; la misma regla que al borrar uno (videoteca.eliminar).
+    con_videos = (VideoCompartido.objects.entregados()
+                  .filter(paquete__in=PaqueteClases.objects.vigentes().filter(profesor=profesor))
+                  .values('paquete__alumno').distinct().count())
+    if con_videos:
+        bloqueos.append(f'{con_videos} alumno(s) con su paquete vigente tienen videos de este profesor: se perderían. '
+                        'Se podrá eliminar cuando esos paquetes venzan.')
     disponible = calcular_saldos(profesor)['disponible']
     if disponible:
         bloqueos.append(f'Tiene {formato_clp(disponible)} disponibles para retirar: hay que retirarlos antes.')
@@ -133,7 +141,8 @@ def _profesor(user, ticket):
                          'Los documentos de tu título y tus especializaciones, y las observaciones de su revisión.'),
                Categoria('Cuenta bancaria y horario', ELIMINA,
                          'La cuenta donde se te paga y tu horario. Dejas de aparecer en el catálogo y se cancelan '
-                         'las clases programadas que no tengan reservas.')]
+                         'las clases programadas que no tengan reservas.'),
+               Categoria('Videos de apoyo', ELIMINA, 'Los videos que subiste: en ellos salen tu cara y tu voz.')]
     return Evaluacion(_categorias(user, propias, 'alumnos', HISTORIAL_PROFESOR), tuple(bloqueos))
 
 

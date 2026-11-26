@@ -14,8 +14,8 @@ from django.utils import timezone
 
 from agenda.models import HorarioSemanal
 from alumnos import catalogos
-from alumnos.models import (Alumno, Clase, CuentaBancaria, CustomUser, Especializacion, Inscripcion, Profesor,
-                            SolicitudRetiro)
+from alumnos.models import (Alumno, Clase, CuentaBancaria, CustomUser, Especializacion, Inscripcion, PaqueteClases,
+                            Profesor, SolicitudRetiro, VideoCompartido)
 from apoderados.models import Apoderado, CompraApoderado, Documento, Invitacion, SolicitudAdolescente, Vinculo
 from soporte.models import Ticket
 from supresiones import evaluacion, registro, solicitud
@@ -50,7 +50,7 @@ class EvaluacionDelProfesorTests(Escenario):
         ev = evaluacion.evaluar(self.otro.user)
         self.assertTrue(ev.puede)
         self.assertEqual(nombres(ev), ['Datos de la cuenta', 'Título profesional y especializaciones',
-                                       'Cuenta bancaria y horario'])
+                                       'Cuenta bancaria y horario', 'Videos de apoyo'])
         self.assertFalse(ev.conserva_algo)
 
     def test_una_clase_por_dictar_impide(self):
@@ -64,6 +64,20 @@ class EvaluacionDelProfesorTests(Escenario):
         dar_paquete(self.ana, self.profe)
         ev = evaluacion.evaluar(self.profe.user)
         self.assertTrue(any('sin usar por alumnos' in b for b in ev.bloqueos))
+
+    def test_videos_compartidos_con_paquete_vigente_impiden_aunque_no_queden_clases(self):
+        """Eliminar la cuenta borra sus videos: el alumno perderia lo que pago hasta que su paquete venza."""
+        paquete = dar_paquete(self.ana, self.profe)
+        PaqueteClases.objects.filter(pk=paquete.pk).update(clases=0)  # ya uso todas sus clases
+        compartido = VideoCompartido.objects.create(paquete=paquete, video_id='a' * 24)
+        ev = evaluacion.evaluar(self.profe.user)
+        self.assertEqual([b for b in ev.bloqueos if 'videos de este profesor' in b], [(
+            '1 alumno(s) con su paquete vigente tienen videos de este profesor: se perderían. '
+            'Se podrá eliminar cuando esos paquetes venzan.')])
+        self.assertFalse(any('sin usar por alumnos' in b for b in ev.bloqueos))
+        compartido.retirado = timezone.now()  # soporte lo retiro: ya no lo ve, no se pierde nada
+        compartido.save()
+        self.assertFalse(any('videos de este profesor' in b for b in evaluacion.evaluar(self.profe.user).bloqueos))
 
     def test_el_dinero_disponible_para_retirar_impide(self):
         with mock.patch('user_profesor.views.calcular_saldos', return_value={'disponible': 12000}):

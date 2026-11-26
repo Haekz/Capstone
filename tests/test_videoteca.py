@@ -16,6 +16,7 @@ from django.test import SimpleTestCase, override_settings
 from django.urls import reverse
 
 from alumnos.models import Video
+from supresiones import datos_propios
 from tests.test_paquetes import RUT_ANA, RUT_OTRO, RUT_PROFE, Escenario
 from tests.videos_base import VideosTestCase
 from user_profesor import almacen_videos, videoteca
@@ -141,6 +142,13 @@ class VideotecaTests(VideosTestCase, Escenario):
         with override_settings(R2_CONFIGURADO=False):
             datos = self.listar()
         self.assertFalse(datos['disponible'])
+
+    def test_al_eliminar_la_cuenta_del_profesor_se_borran_sus_videos_y_sus_archivos(self):
+        """En el video salen su cara y su voz: son datos personales (supresiones/datos_propios.py)."""
+        self.subir()
+        self.subir(titulo='Ecuaciones')
+        datos_propios.limpiar(self.profe.user)
+        self.assertEqual((Video.objects.count(), self.r2.objetos), (0, {}))
 
     def test_la_pestana_ya_no_trae_datos_inventados_ni_la_variable_que_faltaba(self):
         pagina = self.client.get(reverse('panel_profesor')).content.decode()

@@ -179,6 +179,13 @@ def borrar(video_id):
     _borrar_archivo(video_id)
 
 
+def borrar_del_profesor(profesor):
+    """Todos sus videos, al eliminar su cuenta (supresiones/datos_propios.py): su cara y su voz son datos personales.
+    Sin R2 configurado se quitan igual las fichas; el archivo que quede se registra para quitarlo a mano."""
+    for video_id in list(Video.objects.filter(profesor=profesor).values_list('pk', flat=True)):
+        borrar(video_id)
+
+
 def eliminar(profesor_id, video_id):
     """Borra el video si es suyo. True si lo borró.
 
