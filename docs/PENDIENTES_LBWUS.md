@@ -201,8 +201,6 @@ de la demo); los puntos 3 y 4 son lo que se vio al comparar y no se tocó porque
   `https://cdn.jsdelivr.net` de `script-src` (ahora solo queda Jitsi). Medido en el navegador con jsDelivr bloqueado:
   las 6 pantallas que lo usan abren su aviso, sin peticiones a internet ni avisos de CSP; `collectstatic` como en Railway
   lo recoge con hash. Tampoco es propia la letra del correo de recuperar clave: un correo no puede traer archivos.
-- **Probar Atlas.** Las 6 pruebas que exigen conexion real a MongoDB (`MONGODB_INTEGRACION=1`) no se corrieron en esta
-  revision. Correrlas con una base **de prueba**, nunca `lbwus_prod`: escriben datos.
 - **Cookies en la politica de privacidad.** No menciona que el sitio usa cookies esenciales (sesion y proteccion
   CSRF), ni que no usa cookies de seguimiento. Para la abogada, junto con L-2, L-3 y L-5.
 - **Politica de privacidad: Google y las letras.** La lista de proveedores dice que Google entrega "fuentes de texto

@@ -271,7 +271,7 @@ input:checked + .slider:before {
         });
     }
 
-    // esta parte es de la biblioteca de videos del profe: los trae del servidor (se guardan en MongoDB)
+    // esta parte es de la biblioteca de videos del profe: los trae del servidor (el archivo esta en R2)
     function avisoVideos(texto) {
         const aviso = document.getElementById('profe-videos-aviso');
         if (aviso) { aviso.textContent = texto || ''; aviso.hidden = !texto; }
