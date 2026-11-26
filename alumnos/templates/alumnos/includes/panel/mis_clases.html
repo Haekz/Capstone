@@ -130,6 +130,13 @@
                             </div>
                             {% endfor %}
                         </div>
+                        {% if clases_disponibles.has_other_pages %}
+                        <nav class="catalog-pagination" aria-label="Páginas del catálogo de clases">
+                            {% if clases_disponibles.has_previous %}<a class="btn-join-class" rel="prev" href="?{% if consulta_catalogo %}{{ consulta_catalogo }}&amp;{% endif %}pagina={{ clases_disponibles.previous_page_number }}"><i class="bi bi-chevron-left" aria-hidden="true"></i> Anterior</a>{% endif %}
+                            <span class="catalog-pagination-estado" aria-current="page">Página {{ clases_disponibles.number }} de {{ clases_disponibles.paginator.num_pages }}</span>
+                            {% if clases_disponibles.has_next %}<a class="btn-join-class" rel="next" href="?{% if consulta_catalogo %}{{ consulta_catalogo }}&amp;{% endif %}pagina={{ clases_disponibles.next_page_number }}">Siguiente <i class="bi bi-chevron-right" aria-hidden="true"></i></a>{% endif %}
+                        </nav>
+                        {% endif %}
                     </div>
                 </div>
             </div>

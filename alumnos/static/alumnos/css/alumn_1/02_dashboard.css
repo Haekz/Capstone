@@ -572,6 +572,29 @@ body.dark-mode .demo-notice {
     color: var(--primary-ink);
 }
 
+/* Paginas del catálogo de clases */
+.catalog-pagination {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 12px 16px;
+    margin-top: 18px;
+}
+
+#portal-alumno .catalog-pagination .btn-join-class {
+    width: auto;
+    min-height: 40px;
+    padding: 8px 18px;
+    text-decoration: none;
+}
+
+.catalog-pagination-estado {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-light);
+}
+
 .btn-contact-teacher {
     background-color: var(--primary);
     color: var(--white);

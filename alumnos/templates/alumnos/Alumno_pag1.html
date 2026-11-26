@@ -71,7 +71,7 @@
         renderDashboardContent();
         renderModalPreview();
         updatePlanUI();
-        {% if hay_filtros %}requestClassAccess();  // vuelve al catalogo tras filtrar{% endif %}
+        {% if en_catalogo %}requestClassAccess();  // vuelve al catalogo tras filtrar o cambiar de pagina{% endif %}
     </script>
 <!-- Título de la barra superior según la vista activa -->
     <script>
