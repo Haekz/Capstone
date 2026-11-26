@@ -233,6 +233,9 @@ class SesionClase(models.Model):
 
     @property
     def cupos_ocupados(self):
+        anotado = getattr(self, 'cupos_ocupados_count', None)  # lo trae SesionClase.objects.disponibles()
+        if anotado is not None:
+            return anotado  # sin otra consulta por sesion al listar muchas
         return self.inscripciones.filter(
             estado__in=['confirmada', 'pendiente']
         ).count()
