@@ -92,7 +92,7 @@ def intentar(devolucion):
     """
     with transaction.atomic():
         devolucion = DevolucionVideos.objects.select_for_update(of=('self',)).select_related('paquete').get(pk=devolucion.pk)
-        if devolucion.devuelta or not devolucion.aprobada:
+        if devolucion.devuelta:  # sin pedir aprobacion: esa es solo para la transferencia a mano (devoluciones_videos)
             return False
         if devolucion.reembolsos.filter(confirmado__isnull=True).exists():  # uno a medias: puede haber salido el dinero
             return _fallo(devolucion, EN_CURSO)

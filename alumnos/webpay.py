@@ -231,9 +231,11 @@ def registrar_respuesta(resp):
     buy_order = resp.get('buy_order', '')
     paquete = PaqueteClases.objects.filter(buy_order=buy_order).first() if buy_order else None
     compra = CompraVideosExtra.objects.filter(buy_order=buy_order).first() if buy_order else None
-    esperado = paquete.total if paquete else compra.monto if compra else None
-    monto_distinto = esperado is None or int(resp.get('amount') or 0) != esperado
-    if monto_distinto:
+    suscripcion = Suscripcion.objects.filter(buy_order=buy_order).first() if buy_order else None
+    esperado = (paquete.total if paquete else compra.monto if compra else suscripcion.monto if suscripcion else None)
+    orden_desconocida = esperado is None  # sin monto que verificar no se aprueba
+    monto_distinto = not orden_desconocida and int(resp.get('amount') or 0) != esperado
+    if monto_distinto or orden_desconocida:
         aprobado = False
     Suscripcion.confirmar_pago(buy_order, aprobado)
     autorizacion, fecha = resp.get('authorization_code') or '', parse_datetime(resp.get('transaction_date') or '')
@@ -241,7 +243,7 @@ def registrar_respuesta(resp):
     extras_activados = CompraVideosExtra.confirmar_pago(buy_order, aprobado, autorizacion, fecha)
     # Despues de guardar: si la confirmacion local falla, no queda un "aprobado" que nunca se activo.
     if buy_order:  # sin orden (commit caido) ya quedo el pago_error_transbank
-        motivo = ' motivo=monto_distinto' if monto_distinto else ' motivo=orden_desconocida' if esperado is None else ''
+        motivo = ' motivo=monto_distinto' if monto_distinto else ' motivo=orden_desconocida' if orden_desconocida else ''
         (logger.warning if motivo else logger.info)(
             'evento=%s buy_order=%s monto=%s esperado=%s estado=%s codigo=%s activados=%s%s',
             'pago_aprobado' if aprobado else 'pago_rechazado', buy_order, resp.get('amount'),

@@ -494,7 +494,7 @@ class ReprogramacionTests(Escenario):
 
     def test_endpoint_permisos_y_resultado(self):
         url = reverse('reprogramar_inscripcion', args=[self.insc.pk])
-        self.assertEqual(self.client.post(url, {'id_sesion': self.s2.pk}).status_code, 302)  # sin sesion
+        self.assertEqual(self.client.post(url, {'id_sesion': self.s2.pk}).status_code, 401)  # sin sesion
         self.entrar(RUT_BETO)
         self.assertFalse(self.client.post(url, {'id_sesion': self.s2.pk}).json()['success'])
         self.entrar(RUT_ANA)
@@ -593,14 +593,15 @@ class CriteriosSaldosScrum85Tests(Escenario):
     @patch('alumnos.webpay._tx')
     def test_compra_aprobada_de_cada_plan_deja_su_saldo(self, mock_tx):
         self.entrar(RUT_ANA)
-        mock_tx.return_value.create.return_value = {'url': 'https://webpay.test/', 'token': 'tok'}
         for plan, monto, clases in (('flexible', 18990, 1), ('progreso', 74990, 4), ('intensivo', 146990, 8)):
             with self.subTest(plan=plan):
+                token = f'tok-{plan}'  # cada transaccion de Webpay trae su propio token
+                mock_tx.return_value.create.return_value = {'url': 'https://webpay.test/', 'token': token}
                 self.client.post(reverse('comprar_paquete'), {'plan': plan, 'profesor': self.profe.id_profesor})
                 paquete = PaqueteClases.objects.get(plan=plan)
                 mock_tx.return_value.commit.return_value = {
                     'response_code': 0, 'status': 'AUTHORIZED', 'amount': monto, 'buy_order': paquete.buy_order}
-                self.client.post(reverse('confirmacion'), {'token_ws': 'tok'})
+                self.client.post(reverse('confirmacion'), {'token_ws': token})
                 paquete.refresh_from_db()
                 self.assertEqual((paquete.estado, paquete.clases_disponibles), (PaqueteClases.ESTADO_ACTIVA, clases))
 

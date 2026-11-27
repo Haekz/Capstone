@@ -97,7 +97,7 @@ class ConfirmacionQATests(Escenario):
                                                     **APROBADO}
         self.client.post(reverse('confirmacion'), {'token_ws': 'tok', 'TBK_TOKEN': 'tok'})
         mock_tx.return_value.commit.assert_not_called()
-        self.assertEqual(self.estado(paquete), PaqueteClases.ESTADO_PENDIENTE)
+        self.assertEqual(self.estado(paquete), PaqueteClases.ESTADO_RECHAZADA)  # no se cobra y no queda colgada
 
 
 @patch('alumnos.webpay._tx')
