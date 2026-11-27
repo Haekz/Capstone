@@ -8,7 +8,7 @@ vuelve a pedir; si cambian los textos, `VERSION` sube y se le pide una vez mas. 
 from .models.aceptacion import AceptacionLegal
 
 # Fecha de actualizacion de /terminos/ y /privacidad/ (la muestran ambas paginas). Cambiarla pide aceptar de nuevo.
-VERSION = '15 de noviembre de 2026'
+VERSION = '26 de noviembre de 2026'  # Privacidad: los videos pasan de MongoDB Atlas a Cloudflare R2
 CAMPO = 'acepta_terminos'  # nombre de la casilla en el formulario de compra
 
 

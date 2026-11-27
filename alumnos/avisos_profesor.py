@@ -1,7 +1,8 @@
 """Avisos al profesor cuando le reservan, cancelan o reagendan (paso B2b, decidido 02-nov).
 
-Correo + campanita. Privacidad: solo el nombre de pila del alumno, aunque actue
-su apoderado (el profesor no recibe datos del apoderado). InscripcionService los
+Correo + campanita. Privacidad: nombre y apellido de un alumno adulto; de un menor, solo el nombre de pila (decidido
+21-nov); aunque actue su apoderado, el profesor no recibe datos del apoderado.
+InscripcionService los
 llama con transaction.on_commit: si la operacion se deshace, no sale ningun aviso.
 Un fallo del correo no afecta la campanita ni la reserva (correo.enviar lo registra).
 
@@ -21,6 +22,8 @@ from notificaciones.models import notificar
 
 from . import paquetes
 from .correo import enviar
+from .correo_clase import enviar_aviso_clase
+from .utils import nombre_para_el_profesor
 
 
 def bienvenida(user):
@@ -99,6 +102,14 @@ def entrega_proxima(paquete, limite, falta):
               f'(fecha límite: {timezone.localtime(limite):%d/%m/%Y}). Hazlo desde la pestaña Videos de tu panel.')
 
 
+def video_por_borrarse(profesor, titulo, fecha):
+    """Un video de su biblioteca lleva casi un mes sin abrirse ni compartirse y se borra el `fecha`
+    (user_profesor/limpieza_videos.py). Compartirlo antes lo conserva."""
+    _decision(profesor.user, 'Un video de tu biblioteca se eliminará pronto',
+              f'Tu video «{titulo}» se eliminará el {fecha:%d/%m/%Y} porque lleva casi un mes sin abrirse ni compartirse. '
+              'Para conservarlo, compártelo con un alumno antes de esa fecha.')
+
+
 def video_retirado(compartido):
     """Soporte retiro un video que compartió, por un reclamo (fase 5e). Sale solo si el retiro se confirma.
     Sin el motivo (como en los rechazos): el reclamo es del alumno, el profesor no ve su ticket."""
@@ -134,22 +145,32 @@ def videos_extra_comprados(compra):
               f'{timezone.localtime(compra.fecha_limite):%d/%m/%Y}, desde la pestaña Videos de tu panel.')
 
 
-def _avisar(inscripcion, asunto, texto):
-    _avisar_a(inscripcion.clase.profesor.user, asunto, texto)
+def _avisar(inscripcion, asunto, texto, ruta=None, boton='Ver mi agenda'):
+    _avisar_a(inscripcion.clase.profesor.user, asunto, texto, ruta, boton)
 
 
-def _avisar_a(user, asunto, texto):
-    notificar(user, texto, reverse('panel_profesor'))
-    enviar(asunto, 'alumnos/correo_aviso_profesor.txt', {'nombre': user.first_name, 'texto': texto}, user.email)
+def _avisar_a(user, asunto, texto, ruta=None, boton='Ver mi agenda'):
+    destino = ruta or reverse('panel_profesor')
+    notificar(user, texto, destino)
+    enviar_aviso_clase(user, asunto, asunto, [texto], boton, destino)
 
 
 def _quien_y_que(inscripcion):
-    return inscripcion.alumno.user.first_name, inscripcion.clase.asignatura.nombre
+    return nombre_para_el_profesor(inscripcion.alumno.user), inscripcion.clase.asignatura.nombre
 
 
 def reserva(inscripcion):
     alumno, asignatura = _quien_y_que(inscripcion)
-    _avisar(inscripcion, 'Nueva reserva', f'{alumno} reservó {asignatura} para el {_fecha(inscripcion.sesion)}.')
+    _avisar(inscripcion, 'Nueva reserva', f'{alumno} reservó {asignatura} para el {_fecha(inscripcion.sesion)}.',
+            reverse('detalle_clase', args=[inscripcion.pk]), 'Ver la clase')
+
+
+def recordatorio(inscripcion, plazo):
+    """Recordatorio de la clase (21-nov): `plazo` es '24 horas' o '2 horas'. Mismo cuidado de datos que la reserva."""
+    alumno, asignatura = _quien_y_que(inscripcion)
+    _avisar(inscripcion, f'Recordatorio: tu clase empieza en menos de {plazo}',
+            f'{alumno} tiene {asignatura} contigo y empieza en menos de {plazo}: el {_fecha(inscripcion.sesion)}.',
+            reverse('detalle_clase', args=[inscripcion.pk]), 'Ver la clase')
 
 
 def cancelacion(inscripcion):
@@ -164,7 +185,8 @@ def cancelacion(inscripcion):
 def reagenda(inscripcion, sesion_anterior):
     alumno, asignatura = _quien_y_que(inscripcion)
     _avisar(inscripcion, 'Clase reagendada',
-            f'{alumno} movió {asignatura} del {_fecha(sesion_anterior)} al {_fecha(inscripcion.sesion)}.')
+            f'{alumno} movió {asignatura} del {_fecha(sesion_anterior)} al {_fecha(inscripcion.sesion)}.',
+            reverse('detalle_clase', args=[inscripcion.pk]), 'Ver la clase')
 
 
 def clase_extra_solicitada(solicitud):

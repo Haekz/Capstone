@@ -1,0 +1,11 @@
+Hola {{ nombre }},
+
+{{ titulo }}
+
+{% for linea in lineas %}{{ linea }}
+{% endfor %}
+{{ boton_texto }}: {{ enlace }}
+
+Las horas son de Chile.
+
+Equipo LBWUS

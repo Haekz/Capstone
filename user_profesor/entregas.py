@@ -95,14 +95,14 @@ def compartir(profesor_id, paquete_id, video_id):
         if not contratados:
             raise ValidationError('No encontramos un paquete vigente con videos para ese alumno.')
         ficha = videoteca.ficha(video_id)
-        if not ficha or ficha['metadata']['profesor_id'] != profesor_id:
+        if not ficha or ficha.profesor_id != profesor_id:
             raise ValidationError('No encontramos ese video en tu biblioteca.')
         if paquete.videos_compartidos.entregados().count() >= contratados:  # uno retirado libera su cupo
             raise ValidationError(f'Ya compartiste los {contratados} videos que contrató.')
         # Con los retirados: el que soporte retiró no se vuelve a compartir.
-        if VideoCompartido.objects.filter(paquete__alumno_id=paquete.alumno_id, video_id=str(ficha['_id'])).exists():
+        if VideoCompartido.objects.filter(paquete__alumno_id=paquete.alumno_id, video_id=ficha.pk).exists():
             raise ValidationError('Ya le compartiste este video a ese alumno. Elige uno nuevo.')
-        compartido = VideoCompartido.objects.create(paquete=paquete, video_id=str(ficha['_id']))
+        compartido = VideoCompartido.objects.create(paquete=paquete, video_id=ficha.pk)
     alumno = paquete.alumno
     if es_menor(alumno.user):  # su apoderado lo revisa y lo habilita antes de que lo vea; robust: el aviso no tumba nada
         transaction.on_commit(lambda: avisar_video_por_revisar(alumno), robust=True)

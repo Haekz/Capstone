@@ -1,21 +1,25 @@
-"""Videos del profesor (agregado de videos, fase 1): biblioteca en MongoDB con GridFS.
+"""Videos del profesor (agregado de videos, fase 1): el archivo en Cloudflare R2 y su ficha en la tabla Video.
 
-Mongo en memoria (mongomock): nunca se conecta a Atlas. Los MP4 se arman a mano con lo mínimo que lee
-videoteca.duracion_mp4 (cajas ftyp, mdat y moov/mvhd).
+Un R2 de mentira (tests/videos_base.py): nunca se conecta a Cloudflare.
+Los MP4 se arman a mano con lo mínimo que lee videoteca.duracion_mp4 (cajas ftyp, mdat y moov/mvhd).
 """
 
 import io
 import struct
+from unittest import mock
 
+from botocore.exceptions import ClientError
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import DatabaseError
 from django.test import SimpleTestCase, override_settings
 from django.urls import reverse
 
-from comunidad import mongo
-from comunidad.tests.base import GridFsTestCase
+from alumnos.models import Video
+from supresiones import datos_propios
 from tests.test_paquetes import RUT_ANA, RUT_OTRO, RUT_PROFE, Escenario
-from user_profesor import videoteca
+from tests.videos_base import VideosTestCase
+from user_profesor import almacen_videos, videoteca
 
 
 def caja(tipo, contenido):
@@ -48,7 +52,7 @@ class DuracionMp4Tests(SimpleTestCase):
                 videoteca.duracion_mp4(io.BytesIO(malo))
 
 
-class VideotecaTests(GridFsTestCase, Escenario):
+class VideotecaTests(VideosTestCase, Escenario):
 
     def setUp(self):
         super().setUp()
@@ -67,6 +71,40 @@ class VideotecaTests(GridFsTestCase, Escenario):
         self.assertEqual(datos['asignaturas'], [{'id': self.clase.asignatura_id, 'nombre': 'Algebra'}])
         [video] = datos['videos']
         self.assertEqual((video['titulo'], video['asignatura'], video['duracion']), ('Factorización', 'Algebra', '25:00'))
+
+    def test_el_archivo_queda_en_r2_con_el_id_de_su_ficha(self):
+        self.subir(archivo=archivo(contenido=mp4(600)))
+        [video] = self.listar()['videos']
+        self.assertEqual(self.r2.objetos, {f'videos/{video["id"]}.mp4': (mp4(600), 'video/mp4')})
+        self.assertEqual(videoteca.ficha(video['id']).duracion_seg, 600)
+
+    def test_al_borrarlo_se_va_de_la_base_y_de_r2(self):
+        self.subir()
+        [video] = self.listar()['videos']
+        self.assertTrue(self.client.post(reverse('eliminar_video', args=[video['id']])).json()['success'])
+        self.assertIsNone(videoteca.ficha(video['id']))
+        self.assertEqual(self.r2.objetos, {})
+
+    def test_si_la_base_falla_despues_de_subir_no_queda_el_archivo_huerfano_en_r2(self):
+        with mock.patch.object(Video.objects, 'create', side_effect=DatabaseError('caida')), \
+                self.assertRaises(DatabaseError):
+            videoteca.subir(self.profe.pk, self.clase.asignatura_id, 'Factorización', archivo())
+        self.assertEqual(self.r2.objetos, {})
+
+    def test_si_r2_falla_al_borrar_el_video_igual_sale_de_la_biblioteca(self):
+        self.subir()
+        [video] = self.listar()['videos']
+        falla = ClientError({'Error': {'Code': 'InternalError'}}, 'DeleteObject')
+        with mock.patch.object(self.r2, 'delete_object', side_effect=falla):
+            self.assertTrue(self.client.post(reverse('eliminar_video', args=[video['id']])).json()['success'])
+        self.assertEqual(self.listar()['videos'], [])  # queda un archivo huerfano en R2: solo ocupa espacio
+
+    @override_settings(R2_CONFIGURADO=False)
+    def test_sin_r2_avisa_al_subir_y_no_se_cae(self):
+        almacen_videos.restablecer()
+        r = self.subir()
+        self.assertEqual((r['success'], r['disponible']), (False, False))
+        self.assertEqual(Video.objects.count(), 0)  # sin archivo no hay ficha
 
     def test_rechaza_videos_de_mas_de_30_minutos(self):
         r = self.subir(archivo=archivo(30 * 60 + 1))
@@ -98,12 +136,19 @@ class VideotecaTests(GridFsTestCase, Escenario):
         self.assertNotIn('videos', self.client.get(reverse('videos_profesor')).json())
         self.assertNotEqual(self.client.post(reverse('subir_video'), {}).status_code, 500)
 
-    @override_settings(MONGODB_URI=None)
-    def test_sin_mongo_avisa_y_no_se_cae(self):
-        mongo.restablecer()
-        datos = self.listar()
+    def test_sin_r2_la_biblioteca_avisa_y_no_se_cae_aunque_haya_fichas(self):
+        self.assertTrue(self.subir()['success'])
+        almacen_videos.restablecer()
+        with override_settings(R2_CONFIGURADO=False):
+            datos = self.listar()
         self.assertFalse(datos['disponible'])
-        self.assertFalse(self.subir()['disponible'])
+
+    def test_al_eliminar_la_cuenta_del_profesor_se_borran_sus_videos_y_sus_archivos(self):
+        """En el video salen su cara y su voz: son datos personales (supresiones/datos_propios.py)."""
+        self.subir()
+        self.subir(titulo='Ecuaciones')
+        datos_propios.limpiar(self.profe.user)
+        self.assertEqual((Video.objects.count(), self.r2.objetos), (0, {}))
 
     def test_la_pestana_ya_no_trae_datos_inventados_ni_la_variable_que_faltaba(self):
         pagina = self.client.get(reverse('panel_profesor')).content.decode()

@@ -1,0 +1,108 @@
+/* Pagina de una clase reservada (alumnos/detalle_clase.py). Colores del sitio, con modo oscuro. */
+.detalle-clase {
+    max-width: 640px;
+    margin: calc(var(--header-height, 76px) + 32px) auto 64px; /* baja bajo el header fijo, como perfil_profesor.css */
+    padding: 0 1rem;
+    color: var(--text, #1a1233);
+}
+
+.detalle-clase__cabecera {
+    background: var(--primary-soft, #efe9fb);
+    border-radius: 16px;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.detalle-clase__cabecera h1 {
+    margin: 0.5rem 0;
+    font-size: 1.75rem;
+}
+
+.detalle-clase__estado {
+    display: inline-block;
+    margin: 0;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    background: var(--surface, #f7f5fb);
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.detalle-clase__cuando {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.detalle-clase__zona {
+    color: var(--text-light, #6b6580);
+    font-size: 0.9rem;
+}
+
+.detalle-clase__datos {
+    margin: 1.5rem 0;
+}
+
+.detalle-clase__datos div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--primary-soft, #efe9fb);
+}
+
+.detalle-clase__datos dt {
+    color: var(--text-light, #6b6580);
+}
+
+.detalle-clase__datos dd {
+    margin: 0;
+    font-weight: 600;
+    text-align: right;
+}
+
+.detalle-clase__boton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    background: var(--primary-dark, #6d28d9);
+    color: #fff;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.detalle-clase__boton--suave {
+    background: transparent;
+    border: 2px solid var(--primary-dark, #6d28d9);
+    color: var(--primary-dark, #6d28d9);
+}
+
+.detalle-clase__boton:focus-visible {
+    outline: 3px solid var(--accent, #f5a524);
+    outline-offset: 3px;
+}
+
+.detalle-clase__nota {
+    padding: 1rem;
+    border-radius: 10px;
+    background: var(--surface, #f7f5fb);
+}
+
+.detalle-clase__cambio {
+    margin-top: 2rem;
+    padding: 1.25rem;
+    border: 1px solid var(--primary-soft, #efe9fb);
+    border-radius: 12px;
+}
+
+.detalle-clase__cambio h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1.15rem;
+}
+
+body.dark-mode .detalle-clase__boton--suave {
+    border-color: var(--primary-ink, #c4b5fd);
+    color: var(--primary-ink, #c4b5fd);
+}

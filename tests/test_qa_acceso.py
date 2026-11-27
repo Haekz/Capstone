@@ -74,7 +74,7 @@ SOLO_REDIRIGEN = {
     'google_login',  # POST: lleva a accounts.google.com (S-20)
     None,  # /accounts/social/signup/ -> /accounts/3rdparty/signup/ (ruta antigua de allauth, sin nombre)
 }
-CON_BUG_O_503 = {'comunidad_salud', 'salud'}  # salud: 503 = tareas diarias atrasadas (esperado sin Cron)
+CON_BUG_O_503 = {'salud'}  # salud: 503 = tareas diarias atrasadas (esperado sin Cron)
 # Lo que responden al anonimo los endpoints JSON privados (decoradores *_json y las vistas que lo validan a mano).
 RECHAZOS_DE_SESION = {
     'Sesión inválida.',
@@ -158,7 +158,7 @@ class AccesoPorRolTests(Escenario):
                 self.assertEqual(propias - vistas, set())
 
     def test_ninguna_ruta_da_error_500_con_ids_inexistentes(self):
-        """Un id que no existe es 404, no 500. La salud de MongoDB da 503 (esperado)."""
+        """Un id que no existe es 404, no 500. La salud de las tareas diarias da 503 (esperado sin Cron)."""
         for rol in ('anonimo', *PROPIAS):
             for metodo in ('get', 'post'):
                 with self.subTest(rol=rol, metodo=metodo):
@@ -188,13 +188,6 @@ class AccesoPorRolTests(Escenario):
                     for (url, nombre), r in self.recorrer('anonimo', 'post').items()
                     if r.get('Content-Type', '').startswith('application/json') and nombre not in PUBLICAS}
         self.assertEqual({n: m for n, m in mensajes.items() if m not in RECHAZOS_DE_SESION}, {})
-
-    def test_la_salud_de_mongodb_da_503_sin_mongodb_y_solo_al_admin(self):
-        """503 es lo esperado sin MONGODB_URI (comunidad/views.py), no un error."""
-        self.como('admin')
-        self.assertEqual(self.client.get('/comunidad/salud/').status_code, 503)
-        self.como('alumno')
-        self.assertFalse(es_acceso(self.client.get('/comunidad/salud/')))
 
 
 class IdNoNumericoTests(Escenario):

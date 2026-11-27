@@ -18,7 +18,7 @@ from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from alumnos.models import Alumno, Genero, PaqueteClases
+from alumnos.models import Alumno, Genero, PaqueteClases, Suscripcion
 
 User = get_user_model()
 
@@ -34,12 +34,13 @@ class SeguridadPagoWebpayTests(TestCase):
         # Pagar exige alumna logueada (el plan necesita un dueño).
         user = User.objects.create_user('44444444-4', rut='44444444-4',
                                         password='Clave12345!', rol='alumno')
-        Alumno.objects.create(user=user, nivel_educacion='media')
+        self.alumno = Alumno.objects.create(user=user, nivel_educacion='media')
         self.client.post(reverse('login'), {'username': '44444444-4', 'password': 'Clave12345!'})
 
     @patch('alumnos.webpay._tx')
     def test_05_confirmacion_pago_aprobado_webpay(self, mock_tx):
-        """Transacción aprobada por Webpay (response_code=0, status=AUTHORIZED) renderiza éxito."""
+        """Transacción aprobada por Webpay (response_code=0, status=AUTHORIZED) renderiza éxito, si la orden existe."""
+        Suscripcion.objects.create(alumno=self.alumno, plan='2', dias=30, monto=25000, buy_order='LB7778889')
         instancia_mock = MagicMock()
         instancia_mock.commit.return_value = {
             'response_code': 0,

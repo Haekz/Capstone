@@ -41,7 +41,7 @@ def ver_video(request, id_ticket, video_id):
     _, compartidos = _del_ticket(tickets_visibles(request), id_ticket, video_id)
     if not compartidos.exists():
         raise Http404
-    return videos_compartidos.archivo_respuesta(request, video_id)
+    return videos_compartidos.archivo_respuesta(video_id)
 
 
 @require_POST
@@ -50,7 +50,7 @@ def retirar_video(request, id_ticket, video_id):
     ticket, compartidos = _del_ticket(tickets_del_agente(request), id_ticket, video_id)
     try:
         with transaction.atomic():
-            compartido = compartidos.entregados().select_for_update().first()
+            compartido = compartidos.entregados().select_for_update(of=('self',)).first()
             if compartido is None:  # ajeno o ya retirado
                 raise Http404
             updated = VideoCompartido.objects.filter(pk=compartido.pk, retirado__isnull=True).update(

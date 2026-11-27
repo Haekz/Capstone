@@ -1,21 +1,17 @@
 """Eliminar la cuenta de profesores y apoderados (paso 5 de la respuesta legal del 02-nov): que bloquea, que se
 conserva, que datos propios se quitan y que el historial de otras personas no se toca. Datos ficticios."""
 
-import tempfile
 from datetime import time
 from unittest import mock
 
 from allauth.account.models import EmailAddress
 from allauth.socialaccount.models import SocialAccount
-from django.core.files.base import ContentFile
-from django.core.files.storage import default_storage
-from django.test import override_settings
 from django.utils import timezone
 
 from agenda.models import HorarioSemanal
 from alumnos import catalogos
-from alumnos.models import (Alumno, Clase, CuentaBancaria, CustomUser, Especializacion, Inscripcion, Profesor,
-                            SolicitudRetiro)
+from alumnos.models import (Alumno, Clase, CuentaBancaria, CustomUser, Especializacion, FotoPerfil, Inscripcion,
+                            PaqueteClases, Profesor, SolicitudRetiro, VideoCompartido)
 from apoderados.models import Apoderado, CompraApoderado, Documento, Invitacion, SolicitudAdolescente, Vinculo
 from soporte.models import Ticket
 from supresiones import evaluacion, registro, solicitud
@@ -50,7 +46,7 @@ class EvaluacionDelProfesorTests(Escenario):
         ev = evaluacion.evaluar(self.otro.user)
         self.assertTrue(ev.puede)
         self.assertEqual(nombres(ev), ['Datos de la cuenta', 'Título profesional y especializaciones',
-                                       'Cuenta bancaria y horario'])
+                                       'Cuenta bancaria y horario', 'Videos de apoyo'])
         self.assertFalse(ev.conserva_algo)
 
     def test_una_clase_por_dictar_impide(self):
@@ -64,6 +60,20 @@ class EvaluacionDelProfesorTests(Escenario):
         dar_paquete(self.ana, self.profe)
         ev = evaluacion.evaluar(self.profe.user)
         self.assertTrue(any('sin usar por alumnos' in b for b in ev.bloqueos))
+
+    def test_videos_compartidos_con_paquete_vigente_impiden_aunque_no_queden_clases(self):
+        """Eliminar la cuenta borra sus videos: el alumno perderia lo que pago hasta que su paquete venza."""
+        paquete = dar_paquete(self.ana, self.profe)
+        PaqueteClases.objects.filter(pk=paquete.pk).update(clases=0)  # ya uso todas sus clases
+        compartido = VideoCompartido.objects.create(paquete=paquete, video_id='a' * 24)
+        ev = evaluacion.evaluar(self.profe.user)
+        self.assertEqual([b for b in ev.bloqueos if 'videos de este profesor' in b], [(
+            '1 alumno(s) con su paquete vigente tienen videos de este profesor: se perderían. '
+            'Se podrá eliminar cuando esos paquetes venzan.')])
+        self.assertFalse(any('sin usar por alumnos' in b for b in ev.bloqueos))
+        compartido.retirado = timezone.now()  # soporte lo retiro: ya no lo ve, no se pierde nada
+        compartido.save()
+        self.assertFalse(any('videos de este profesor' in b for b in evaluacion.evaluar(self.profe.user).bloqueos))
 
     def test_el_dinero_disponible_para_retirar_impide(self):
         with mock.patch('user_profesor.views.calcular_saldos', return_value={'disponible': 12000}):
@@ -236,21 +246,15 @@ class AllauthYArchivosTests(Escenario):
         self.assertFalse(EmailAddress.objects.exists())
         self.assertFalse(SocialAccount.objects.exists())
 
-    def test_al_borrar_por_completo_tambien_se_borra_la_foto_del_disco(self):
-        with tempfile.TemporaryDirectory() as carpeta, override_settings(MEDIA_ROOT=carpeta):
-            user = self.beto.user
-            user.foto_perfil.save('foto.png', ContentFile(b'imagen'), save=True)
-            nombre = user.foto_perfil.name
-            self.assertTrue(default_storage.exists(nombre))
-            self.assertTrue(registro.eliminar(user))
-            self.assertFalse(default_storage.exists(nombre))
+    def test_al_borrar_por_completo_tambien_se_borra_la_foto(self):
+        FotoPerfil.objects.create(user=self.beto.user, contenido=b'imagen')
+        self.assertTrue(registro.eliminar(self.beto.user))
+        self.assertFalse(FotoPerfil.objects.exists())
 
-    def test_al_seudonimizar_tambien_se_borra_la_foto_del_disco(self):
+    def test_al_seudonimizar_tambien_se_borra_la_foto(self):
         Inscripcion.objects.create(alumno=self.ana, clase=self.clase, sesion=crear_sesion(self.clase, -3),
                                    paquete=dar_paquete(self.ana, self.profe, plan='flexible'))
-        with tempfile.TemporaryDirectory() as carpeta, override_settings(MEDIA_ROOT=carpeta):
-            user = self.ana.user
-            user.foto_perfil.save('foto.png', ContentFile(b'imagen'), save=True)
-            nombre = user.foto_perfil.name
-            self.assertFalse(registro.eliminar(user))
-            self.assertFalse(default_storage.exists(nombre))
+        FotoPerfil.objects.create(user=self.ana.user, contenido=b'imagen')
+        self.assertFalse(registro.eliminar(self.ana.user))
+        self.assertTrue(CustomUser.objects.filter(pk=self.ana.user.pk).exists())  # la fila queda, la foto no
+        self.assertFalse(FotoPerfil.objects.exists())

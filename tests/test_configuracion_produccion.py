@@ -140,7 +140,7 @@ class DocumentosClaveTests(SimpleTestCase):
 
 
 class ArchivosPrivadosTests(TestCase):
-    """Nada de MEDIA_ROOT se publica en /media/: titulos y fotos solo por vistas con permiso."""
+    """Nada de MEDIA_ROOT se publica en /media/ (quedan titulos antiguos) ni la ruta vieja de las fotos."""
 
     def setUp(self):
         carpeta = tempfile.TemporaryDirectory()

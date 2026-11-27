@@ -5,13 +5,13 @@ La suite corre con `python manage.py test` (runner de Django) o con `pytest`: la
 ## Requisitos
 
 - **PostgreSQL** en `DATABASE_URL`. Django crea y borra una base `test_<nombre>` en ese servidor: nunca apuntarlo a la base de produccion.
-- **Sin `MONGODB_URI` real.** Las pruebas normales usan mongomock. El `activate` del entorno puede exportar la URI de Atlas: quitala antes (`unset MONGODB_URI`).
+- **Sin `R2_*` reales.** Las pruebas usan un R2 de mentira (`tests/videos_base.py`) y nunca se conectan a Cloudflare.
 - **Sin `SITIO_CLAVE`.** Con la puerta activa, las demas pruebas no la pasan y fallan.
 - Herramientas de QA: `pip install -r requirements-dev.txt` (incluye `requirements.txt`). Produccion no instala este archivo.
 
 ```bash
 source .venv/bin/activate
-unset MONGODB_URI SITIO_CLAVE
+unset SITIO_CLAVE
 export DATABASE_URL=postgresql://usuario:clave@localhost:5432/lbwus
 ```
 
@@ -39,7 +39,6 @@ Referencia (15-11-2026, `main` en 44d815b más la limpieza de textos, `manage.py
 
 | Marcador | Que marca | Como se usa |
 |---|---|---|
-| `integracion_atlas` | `comunidad/tests/test_atlas.py`, contra Atlas real | Se omiten sin `MONGODB_URI` y `MONGODB_INTEGRACION=1`. `pytest -m "not integracion_atlas"` |
 | `postgres` | `tests/test_concurrencia_inscripcion.py` (bloqueos y concurrencia reales) | `pytest -m postgres` |
 | `lento` | Pruebas de mas de un segundo | `pytest -m "not lento"` |
 

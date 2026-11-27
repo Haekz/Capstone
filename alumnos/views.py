@@ -10,6 +10,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 from django.views.decorators.debug import sensitive_post_parameters
 from django.core.cache import cache
+from django.core.paginator import Paginator
 from django.db.models import F
 
 from .models import (
@@ -48,6 +49,7 @@ from .roles import (
 from .backends import obtener_identificador_rate_limit
 
 logger = logging.getLogger(__name__)
+CLASES_POR_PAGINA = 12  # catalogo del panel del alumno
 
 
 def _plan_para_js(alumno):
@@ -121,7 +123,7 @@ def planes(request):
         'cotizaciones': paquetes.cotizar(),
         'duracion_clase': paquetes.DURACION_CLASE_MIN,
         'comision_pct': paquetes.porcentaje(paquetes.COMISION),
-        'videos_a_la_venta': settings.VIDEOS_A_LA_VENTA,  # sin MongoDB no se pregunta por el agregado (B2)
+        'videos_a_la_venta': settings.VIDEOS_A_LA_VENTA,  # sin R2 no se pregunta por el agregado (B2)
         'es_alumno': bool(request.session.get('alumno_id')),
         # El menor ve que contrata su apoderado, en vez de botones que no harian nada.
         'es_menor': _alumno_en_sesion_es_menor(request),
@@ -311,7 +313,11 @@ def alumno_pag1(request):
         especialidad=criterios.get('especialidad'),
         solo_disponibles=criterios.get('disponible', False),
         profesor=criterios.get('profesor'),
-    ).select_related('asignatura', 'profesor__user', 'profesor__especialidad')
+    ).select_related('asignatura', 'profesor__user', 'profesor__especialidad').order_by('id_clase')
+    # Por paginas: con miles de clases, dibujarlas todas tardaba 12 s y pesaba 20 MB. Una pagina invalida no falla.
+    catalogo = Paginator(clases_disponibles, CLASES_POR_PAGINA).get_page(request.GET.get('pagina'))
+    otros_parametros = request.GET.copy()
+    otros_parametros.pop('pagina', None)  # los filtros se conservan al cambiar de pagina
 
     relacionadas = ('clase__asignatura', 'clase__profesor__user', 'clase__profesor__especialidad', 'sesion')
     mis_inscripciones = (
@@ -362,10 +368,13 @@ def alumno_pag1(request):
             }
             for p in profesores_list
         ],
-        'clases_disponibles': clases_disponibles,
+        'clases_disponibles': catalogo,  # la pagina actual; se recorre como una lista
+        'total_clases_catalogo': catalogo.paginator.count,
+        'consulta_catalogo': otros_parametros.urlencode(),
         'filtros': filtros,
         'profesor_filtrado': criterios.get('profesor'),
         'hay_filtros': any(criterios.values()),
+        'en_catalogo': any(criterios.values()) or 'pagina' in request.GET,  # el portal vuelve solo al catalogo
         'especialidades': filtros.fields['especialidad'].queryset,
         'mis_inscripciones': mis_inscripciones,
         'historial_clases': historial_clases,

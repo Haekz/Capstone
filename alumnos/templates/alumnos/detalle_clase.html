@@ -1,0 +1,40 @@
+{% extends 'alumnos/base.html' %}
+{% load static %}
+
+{% block title %}Tu clase de {{ inscripcion.clase.asignatura.nombre }} | LBWUS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'alumnos/css/detalle_clase.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="detalle-clase" aria-labelledby="detalle-clase-titulo">
+    <header class="detalle-clase__cabecera">
+        <p class="detalle-clase__estado">{{ inscripcion.get_estado_display }}</p>
+        <h1 id="detalle-clase-titulo">{{ inscripcion.clase.asignatura.nombre }}</h1>
+        <p class="detalle-clase__cuando">
+            {{ inscripcion.sesion.inicio_local|date:"l j \d\e F \d\e Y" }}, {{ inscripcion.sesion.inicio_local|date:"H:i" }}
+            <span class="detalle-clase__zona">(hora de Chile)</span>
+        </p>
+    </header>
+
+    <dl class="detalle-clase__datos">
+        <div><dt>{{ rotulo_otro }}</dt><dd>{{ otro }}</dd></div>
+        {% if estudiante %}<div><dt>Estudiante</dt><dd>{{ estudiante }}</dd></div>{% endif %}
+    </dl>
+
+    {% if puede_entrar %}
+    <a class="detalle-clase__boton" href="{% url 'sala_virtual' inscripcion.clase.id_clase %}">Ir a la clase</a>
+    {% elif estudiante and inscripcion.puede_unirse %}
+    <p class="detalle-clase__nota">{{ estudiante }} entra a la clase desde su propia cuenta.</p>
+    {% endif %}
+
+    {% if cambio %}
+    <section class="detalle-clase__cambio" aria-labelledby="detalle-clase-cambio">
+        <h2 id="detalle-clase-cambio">Necesito cambiar el horario</h2>
+        <p>{{ cambio.0 }}</p>
+        {% if cambio.1 %}<a class="detalle-clase__boton detalle-clase__boton--suave" href="{{ cambio.1 }}">{{ cambio.2 }}</a>{% endif %}
+    </section>
+    {% endif %}
+</section>
+{% endblock %}

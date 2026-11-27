@@ -2,7 +2,7 @@
 
 Reglas (decididas 08-nov): comparte videos de SU biblioteca, solo a paquetes vigentes y suyos, sin pasar de los que
 el alumno pagó, y nunca el mismo video dos veces al mismo alumno (si renueva, contenido nuevo). Las fechas límite
-salen del plan (alumnos/paquetes.py). Mongo en memoria (mongomock); Webpay no interviene.
+salen del plan (alumnos/paquetes.py). R2 de mentira (tests/videos_base.py); Webpay no interviene.
 """
 
 from datetime import datetime, timedelta, timezone as utc
@@ -15,7 +15,7 @@ from django.utils import timezone
 from alumnos import paquetes
 from alumnos.models import PaqueteClases
 from alumnos.models.videos import VideoCompartido
-from comunidad.tests.base import GridFsTestCase
+from tests.videos_base import VideosTestCase
 from tests.test_paquetes import RUT_ANA, RUT_OTRO, RUT_PROFE, Escenario
 from tests.test_videoteca import archivo
 from user_profesor import entregas, videoteca
@@ -43,7 +43,7 @@ class FechasDeEntregaTests(SimpleTestCase):
                 self.assertEqual(paquetes.fechas_entrega(plan, INICIO)[-1][1], plan.videos)
 
 
-class EntregasTests(GridFsTestCase, Escenario):
+class EntregasTests(VideosTestCase, Escenario):
 
     def setUp(self):
         super().setUp()

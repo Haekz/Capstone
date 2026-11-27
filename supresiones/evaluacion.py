@@ -1,8 +1,9 @@
 """Evaluar por categoria que pasa con los datos de quien pide eliminar su cuenta (respuesta legal, E3 paso 3).
 
 Reutiliza las reglas de ``mensajes.supresion`` (la misma que aplica el borrado): lo que aqui se muestra es lo
-que ``suprimir_cuenta`` hara. Ademas calcula lo que *impide eliminar hoy*: mientras haya una clase por dictar
-o un paquete pagado sin usar, borrar la cuenta le quitaria al usuario (y al profesor) algo que ya se pago.
+que ``suprimir_cuenta`` hara. Ademas calcula lo que *impide eliminar hoy*: mientras haya una clase por dictar,
+un paquete pagado sin usar o un video que el alumno todavia puede ver, borrar la cuenta le quitaria al usuario (y al
+profesor) algo que ya se pago.
 
 Cada rol aporta sus bloqueos y sus datos propios; lo demas (conversaciones, avisos, tickets) es comun. El que no
 tenga evaluador (admin, soporte) no se elimina automaticamente.
@@ -13,7 +14,7 @@ from dataclasses import dataclass
 from django.db.models import Q
 from django.utils import timezone
 
-from alumnos.models import Inscripcion, PaqueteClases, SolicitudRetiro
+from alumnos.models import Inscripcion, PaqueteClases, SolicitudRetiro, VideoCompartido
 from alumnos.roles import ADMIN, ALUMNO, APODERADO, PROFESOR, SOPORTE, resolver_rol
 from alumnos.utils import es_menor
 from apoderados.models import Vinculo
@@ -129,6 +130,13 @@ def _profesor(user, ticket):
     sin_usar = sum(p.clases_disponibles for p in PaqueteClases.objects.vigentes().filter(profesor=profesor))
     if sin_usar:
         bloqueos.append(f'Hay {sin_usar} clase(s) pagada(s) sin usar por alumnos con este profesor: se perderían.')
+    # Eliminar la cuenta borra sus videos; la misma regla que al borrar uno (videoteca.eliminar).
+    con_videos = (VideoCompartido.objects.entregados()
+                  .filter(paquete__in=PaqueteClases.objects.vigentes().filter(profesor=profesor))
+                  .values('paquete__alumno').distinct().count())
+    if con_videos:
+        bloqueos.append(f'{con_videos} alumno(s) con su paquete vigente tienen videos de este profesor: se perderían. '
+                        'Se podrá eliminar cuando esos paquetes venzan.')
     disponible = calcular_saldos(profesor)['disponible']
     if disponible:
         bloqueos.append(f'Tiene {formato_clp(disponible)} disponibles para retirar: hay que retirarlos antes.')
@@ -140,7 +148,8 @@ def _profesor(user, ticket):
                          'Los documentos de tu título y tus especializaciones, y las observaciones de su revisión.'),
                Categoria('Cuenta bancaria y horario', ELIMINA,
                          'La cuenta donde se te paga y tu horario. Dejas de aparecer en el catálogo y se cancelan '
-                         'las clases programadas que no tengan reservas.')]
+                         'las clases programadas que no tengan reservas.'),
+               Categoria('Videos de apoyo', ELIMINA, 'Los videos que subiste: en ellos salen tu cara y tu voz.')]
     return Evaluacion(_categorias(user, propias, 'alumnos', HISTORIAL_PROFESOR), tuple(bloqueos))
 
 
@@ -163,8 +172,8 @@ EVALUADORES = {ALUMNO.clave: _alumno, PROFESOR.clave: _profesor, APODERADO.clave
 def evaluar(user, ticket=None):
     """Que pasaria hoy con la cuenta de ``user``. ``ticket``: el de su solicitud (no cuenta como gestion abierta)."""
     if (user.is_staff or user.is_superuser
-            or getattr(user, ADMIN.nombre_perfil, None) is not None
-            or getattr(user, SOPORTE.nombre_perfil, None) is not None):
+            or getattr(user, ADMIN.perfil, None) is not None
+            or getattr(user, SOPORTE.perfil, None) is not None):
         rol, _ = resolver_rol(user)
         etiqueta = rol.etiqueta.lower() if rol else 'esta cuenta'
         return Evaluacion((), (f'Una cuenta de {etiqueta} no se elimina desde aquí: hay que tratarla con el equipo.',))
@@ -172,9 +181,9 @@ def evaluar(user, ticket=None):
     perfiles = [
         (clave, getattr(user, nombre_perfil, None))
         for clave, nombre_perfil in (
-            (ALUMNO.clave, ALUMNO.nombre_perfil),
-            (PROFESOR.clave, PROFESOR.nombre_perfil),
-            (APODERADO.clave, APODERADO.nombre_perfil),
+            (ALUMNO.clave, ALUMNO.perfil),
+            (PROFESOR.clave, PROFESOR.perfil),
+            (APODERADO.clave, APODERADO.perfil),
         )
     ]
     activos = [(clave, perfil) for clave, perfil in perfiles if perfil is not None]

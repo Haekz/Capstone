@@ -15,7 +15,7 @@
                     {# Foto: si el profesor ya tiene una, va su <img> dentro de .prof-foto-avatar; el JS del panel muestra la vista previa al elegir otra #}
                     <div class="prof-foto">
                         <div class="prof-foto-avatar" id="prof-foto-preview">
-                            {% if profesor.user.foto_perfil %}
+                            {% if profesor.user.tiene_foto %}
                                 <img src="{% url 'foto_profesor' profesor.id_profesor %}" alt="Tu foto de perfil">
                             {% else %}
                                 <i class="bi bi-person" aria-hidden="true"></i>
@@ -25,7 +25,7 @@
                             <span class="prof-form-label">Foto de perfil</span>
                             <p>La ven los alumnos en tu perfil público. JPG, PNG o WEBP.</p>
                             <input type="file" id="prof-foto" name="foto_perfil" class="prof-foto-input" accept="image/jpeg,image/png,image/webp">
-                            <label for="prof-foto" class="prof-foto-boton"><i class="bi bi-upload" aria-hidden="true"></i> <span id="prof-foto-texto-boton">{% if profesor.user.foto_perfil %}Cambiar foto{% else %}Elegir foto{% endif %}</span></label>
+                            <label for="prof-foto" class="prof-foto-boton"><i class="bi bi-upload" aria-hidden="true"></i> <span id="prof-foto-texto-boton">{% if profesor.user.tiene_foto %}Cambiar foto{% else %}Elegir foto{% endif %}</span></label>
                         </div>
                     </div>
                     

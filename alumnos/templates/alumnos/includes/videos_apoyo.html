@@ -1,6 +1,6 @@
 {% load static %}
 {# Videos que el profesor le compartió al alumno. Lo incluyen el panel del alumno y la página del apoderado. #}
-{# Recibe url_lista (JSON) y url_ver (con VIDEO_ID de marcador). Carga al hacerse visible: el panel no depende de Mongo. #}
+{# Recibe url_lista (JSON) y url_ver (con VIDEO_ID de marcador). Carga al hacerse visible: el panel no depende de R2. #}
 {# Opcional url_habilitar (apoderado): boton para habilitar cada video a su estudiante menor despues de revisarlo. #}
 {# Opcional url_reportar (formulario de tickets): "Reportar este video". No se pasa al menor: reporta su apoderado. #}
 {# Opcional diseno_alumno (solo el portal del alumno): buscador, filtros por ramo, contador y la cabecera nueva del #}
@@ -95,7 +95,8 @@
             boton.addEventListener('click', () => {
                 dialogo.querySelector('.va-dialogo-titulo').textContent = v.titulo;
                 if (metaDialogo) metaDialogo.textContent = `${v.asignatura}, con ${v.profesor}${v.duracion ? ` (${v.duracion})` : ''}`;
-                video.src = raiz.dataset.ver.replace('VIDEO_ID', encodeURIComponent(v.id));
+                video.dataset.url = raiz.dataset.ver.replace('VIDEO_ID', encodeURIComponent(v.id));
+                video.src = video.dataset.url;
                 if (reportar) reportar.href = reportar.dataset.base + encodeURIComponent(v.id);
                 dialogo.showModal();
                 video.play().catch(() => {});
@@ -172,7 +173,19 @@
             herramientas.hidden = false;
         }
 
-        dialogo.addEventListener('close', () => { video.pause(); video.removeAttribute('src'); video.load(); });
+        dialogo.addEventListener('close', () => { delete video.dataset.url; video.pause(); video.removeAttribute('src'); video.load(); });
+
+        // La web redirige a un enlace de R2 que vence (2 horas). Si vence a mitad de camino (una pausa larga), se pide
+        // otro a la web, que vuelve a revisar el acceso, y se sigue desde el mismo segundo. Un reintento por vez: si
+        // vuelve a fallar enseguida, el problema es otro y se deja el error del reproductor.
+        let ultimoReintento = 0;
+        video.addEventListener('error', () => {
+            if (!video.dataset.url || Date.now() - ultimoReintento < 30000) return;
+            ultimoReintento = Date.now();
+            const segundo = video.currentTime;
+            video.src = video.dataset.url;
+            video.addEventListener('loadedmetadata', () => { video.currentTime = segundo; video.play().catch(() => {}); }, { once: true });
+        });
 
         function cargar() {
             if (cargado || cargando) return;

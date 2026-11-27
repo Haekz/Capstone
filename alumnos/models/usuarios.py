@@ -3,6 +3,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
+from django.utils.functional import cached_property
 
 from .. import liquidacion
 
@@ -28,13 +29,27 @@ class CustomUser(AbstractUser):
     direccion = models.CharField(max_length=100, blank=True)
     fecha_nacimiento = models.DateField(null=True, blank=True)
     genero = models.ForeignKey(Genero, on_delete=models.SET_NULL, null=True, blank=True)
-    foto_perfil = models.ImageField(upload_to='perfiles/', null=True, blank=True)
     # Cuenta suprimida (mensajes/supresion.py): la fila se conserva, sin datos personales, solo porque tiene
     # conversaciones reportadas retenidas. Nunca vuelve a entrar.
     suprimida = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.username} ({self.get_rol_display()})"
+
+    @cached_property
+    def tiene_foto(self):
+        """Para las pantallas: pregunta si hay foto sin traer sus bytes."""
+        return FotoPerfil.objects.filter(user_id=self.pk).exists()
+
+
+class FotoPerfil(models.Model):
+    """Foto de perfil en PostgreSQL (JPEG ya limpio: user_profesor/foto.py).
+
+    Tabla aparte y no un campo de CustomUser: el usuario se carga en cada request y un BinaryField no se difiere solo.
+    """
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, primary_key=True,
+                                related_name='foto')
+    contenido = models.BinaryField()
 
 
 class Tutor(models.Model):

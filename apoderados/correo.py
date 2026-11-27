@@ -112,19 +112,6 @@ def avisar_revocacion(vinculo, era_verificado, canceladas):
     return all(envios)
 
 
-def avisar_apoderados(inscripcion, accion, autor):
-    """Avisa a cada apoderado con vinculo verificado del estudiante.
-
-    Un correo por persona: ningun apoderado ve la direccion del otro. Un fallo
-    de SMTP no deshace la reserva, que ya quedo guardada.
-    """
-    estudiante = inscripcion.alumno.user.first_name
-    contexto = {'accion': accion, 'autor': autor, 'estudiante': estudiante,
-                'clase': inscripcion.clase, 'sesion': inscripcion.sesion}
-    return all([_enviar(f'Clases de {estudiante}', 'apoderados/correo_aviso_clase.txt', contexto, correo)
-                for correo in _correos_de_apoderados(inscripcion.alumno)])
-
-
 def avisar_segundo_apoderado(vinculo):
     """Otra persona pidio ser apoderado de un estudiante: se avisa a sus apoderados verificados y al
     adolescente de 14 a 17 con correo propio.

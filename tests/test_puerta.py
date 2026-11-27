@@ -17,7 +17,7 @@ from lbwus.reporte_errores import FiltroReporteErrores
 
 # Valor ficticio, solo para las pruebas. La clave real vive en Railway.
 CLAVE_PRUEBA = 'clave-ficticia-de-prueba'
-URI_PRUEBA = 'mongodb+srv://usuario:secreto@cluster.ficticio/'
+URI_PRUEBA = 'postgresql://usuario:secreto@servidor.ficticio:5432/base'
 
 
 def es_redireccion_a_puerta(r):
@@ -125,19 +125,20 @@ class ConClaveTests(TestCase):
 
 class FiltroReporteErroresTests(SimpleTestCase):
 
-    @override_settings(MONGODB_URI=URI_PRUEBA, SITIO_CLAVE=CLAVE_PRUEBA)
-    def test_oculta_mongodb_uri_y_sitio_clave(self):
+    @override_settings(DATABASE_URL=URI_PRUEBA, SITIO_CLAVE=CLAVE_PRUEBA)
+    def test_oculta_database_url_y_sitio_clave(self):
         filtro = get_default_exception_reporter_filter()
         self.assertIsInstance(filtro, FiltroReporteErrores)
         seguros = filtro.get_safe_settings()
-        self.assertEqual(seguros['MONGODB_URI'], filtro.cleansed_substitute)
+        self.assertEqual(seguros['DATABASE_URL'], filtro.cleansed_substitute)  # trae la clave de PostgreSQL
         self.assertEqual(seguros['SITIO_CLAVE'], filtro.cleansed_substitute)
         # Lo que Django ya ocultaba sigue oculto.
         self.assertEqual(seguros['SECRET_KEY'], filtro.cleansed_substitute)
         # Lo demas se sigue mostrando.
-        self.assertNotEqual(seguros['MONGODB_DB'], filtro.cleansed_substitute)
+        self.assertNotEqual(seguros['TIME_ZONE'], filtro.cleansed_substitute)
 
-    def test_la_clave_enviada_a_la_puerta_no_sale_en_el_reporte(self):
+    @override_settings(CACHES={'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}})
+    def test_la_clave_enviada_a_la_puerta_no_sale_en_el_reporte(self):  # el limite de intentos usa el cache: sin base
         # Tambien con DEBUG=True: el filtro original solo oculta el POST con
         # DEBUG=False, y Railway todavia corre con DEBUG=True.
         from lbwus.puerta import puerta
@@ -150,7 +151,7 @@ class FiltroReporteErroresTests(SimpleTestCase):
                 self.assertEqual(post['clave'], FiltroReporteErrores.cleansed_substitute)
                 self.assertEqual(post['next'], '/')
 
-    @override_settings(DEBUG=True, SITIO_CLAVE=CLAVE_PRUEBA, MONGODB_URI=URI_PRUEBA)
+    @override_settings(DEBUG=True, SITIO_CLAVE=CLAVE_PRUEBA, DATABASE_URL=URI_PRUEBA)
     def test_la_pagina_de_error_no_muestra_las_claves(self):
         # Los valores van en constantes del modulo: el traceback muestra el
         # codigo fuente de esta funcion y un literal aqui daria falso positivo.
@@ -161,7 +162,7 @@ class FiltroReporteErroresTests(SimpleTestCase):
         except RuntimeError:
             html = technical_500_response(request, *sys.exc_info()).content.decode()
         self.assertIn('error de prueba', html)
-        self.assertIn('MONGODB_URI', html)
+        self.assertIn('DATABASE_URL', html)
         self.assertNotIn(CLAVE_PRUEBA, html)
         self.assertNotIn(URI_PRUEBA, html)
 

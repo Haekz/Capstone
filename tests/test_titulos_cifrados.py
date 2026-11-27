@@ -36,7 +36,8 @@ class TitulosCifradosTests(TestCase):
         self.url = reverse('ver_titulo', args=[self.profesor.pk])
 
     def subir(self, archivo=None):
-        titulo.subir(self.profesor, archivo or SimpleUploadedFile('titulo.pdf', bytes_pdf(2)))
+        with self.captureOnCommitCallbacks(execute=True):  # el archivo antiguo se borra al confirmar la transaccion
+            titulo.subir(self.profesor, archivo or SimpleUploadedFile('titulo.pdf', bytes_pdf(2)))
         self.profesor.refresh_from_db()
 
     def test_soporte_ve_una_imagen_con_marca_de_agua_y_nunca_el_original(self):
@@ -126,7 +127,8 @@ class PasarTitulosABaseTests(TestCase):
 
     def pasar(self):
         salida = StringIO()
-        call_command('pasar_titulos_a_base', stdout=salida)
+        with self.captureOnCommitCallbacks(execute=True):  # el archivo se borra al confirmar la transaccion
+            call_command('pasar_titulos_a_base', stdout=salida)
         self.profesor.refresh_from_db()
         return salida.getvalue()
 

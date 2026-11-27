@@ -16,7 +16,7 @@ from soporte.tickets import abrir_reporte
 from tests.test_apoderados import crear_agente, crear_apoderado, entrar_soporte
 from tests.test_apoderados_vinculos import crear_menor_vinculado
 from tests.test_paquetes import RUT_ANA
-from tests.test_ver_videos import RUT_APODERADO, RUT_MENOR, Base, cuerpo
+from tests.test_ver_videos import RUT_APODERADO, RUT_MENOR, Base
 
 RUT_AGENTE, RUT_OTRO_AGENTE, RUT_LIDER = '10000001-9', '10000002-7', '10000003-5'
 
@@ -49,7 +49,7 @@ class SoporteVideosTests(Base):
         self.assertContains(pagina, reverse('soporte_retirar_video', args=[self.ticket.pk, self.video]))
 
     def test_el_agente_lo_ve_para_revisarlo(self):
-        self.assertEqual(cuerpo(self.ver()), self.contenido)
+        self.assertVaAR2(self.ver())
 
     def test_al_retirarlo_queda_en_el_ticket_se_avisa_al_profesor_y_el_alumno_ya_no_lo_ve(self):
         with self.captureOnCommitCallbacks(execute=True):  # el aviso al profesor sale al confirmar el retiro
@@ -87,7 +87,7 @@ class SoporteVideosTests(Base):
         self.assertEqual(self.retirar().status_code, 404)
         lider = crear_agente(RUT_LIDER, lider=True)
         entrar_soporte(self.client, lider)
-        self.assertEqual(self.ver().status_code, 200)
+        self.assertVaAR2(self.ver())
         self.assertEqual(self.retirar().status_code, 404)  # el lider, reasignandoselo antes
         self.assertEqual(self.retirados(), 0)
 

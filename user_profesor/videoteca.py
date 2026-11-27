@@ -1,23 +1,29 @@
-"""Videos de apoyo del profesor (agregado de videos, fase 1): se guardan en MongoDB con GridFS.
+"""Videos de apoyo del profesor (agregado de videos, fase 1).
+
+El archivo vive en Cloudflare R2 (almacen_videos.py) y su ficha (titulo, materia, duracion, dueno) es la tabla Video de
+PostgreSQL, con el mismo id: el video_id de VideoCompartido y el que nombran los reclamos de soporte. Sin las variables
+R2_* los videos quedan desactivados (ERRORES): ni se listan ni se suben.
 
 El profesor sube MP4 de hasta 30 minutos por cada materia que enseña (sus Clase). La duración se lee de la
-caja mvhd del propio MP4: no hace falta instalar ffmpeg. Sin MONGODB_URI los videos quedan desactivados
-(comunidad.mongo lanza MongoNoConfigurado). La materia se guarda por id: si el admin la renombra, se ve el
-nombre nuevo.
+caja mvhd del propio MP4: no hace falta instalar ffmpeg. La materia se guarda por id: si el admin la renombra, se
+ve el nombre nuevo.
 """
 
+import logging
 import struct
 
-from bson import ObjectId
-from bson.errors import InvalidId
 from django.core.exceptions import ValidationError
-from django.db import transaction
-from gridfs import GridFSBucket
+from django.db import DatabaseError, transaction
+from django.utils import timezone
 
-from alumnos.models import Asignatura, Clase, PaqueteClases, VideoCompartido
-from comunidad import mongo
+from alumnos.models import Asignatura, Clase, PaqueteClases, Profesor, Video, VideoCompartido
+from alumnos.models.videos import nuevo_id_video
 
-BUCKET = 'videos'
+from . import almacen_videos
+
+logger = logging.getLogger(__name__)
+
+ERRORES = almacen_videos.ERRORES  # "los videos no estan disponibles": lo que hay que atrapar
 DURACION_MAX_SEG = 30 * 60
 TAMANO_MAX_MB = 500
 TITULO_MIN, TITULO_MAX = 3, 100
@@ -73,12 +79,10 @@ def duracion_mp4(archivo):
     raise ValidationError(NO_ES_MP4)
 
 
-def _bucket():
-    return GridFSBucket(mongo.get_db(), bucket_name=BUCKET)
-
-
-def _archivos():
-    return mongo.get_db()[f'{BUCKET}.files']
+def _fichas():
+    """Las fichas. Sin R2 configurado los videos estan desactivados: AlmacenNoConfigurado, aunque haya fichas."""
+    almacen_videos.exigir_configurado()
+    return Video.objects
 
 
 def materias(profesor_id):
@@ -102,50 +106,84 @@ def subir(profesor_id, asignatura, titulo, archivo):
     if duracion > DURACION_MAX_SEG:
         raise ValidationError(f'El video dura más de {DURACION_MAX_SEG // 60} minutos.')
     archivo.seek(0)
-    metadata = {'profesor_id': profesor_id, 'asignatura_id': int(asignatura), 'titulo': titulo, 'duracion_seg': round(duracion)}
-    return str(_bucket().upload_from_stream(archivo.name, archivo, metadata=metadata))
+    video_id = nuevo_id_video()  # antes de subir: el archivo en R2 se llama igual que su ficha
+    almacen_videos.guardar(video_id, archivo)
+    try:
+        Video.objects.create(id=video_id, profesor_id=profesor_id, asignatura_id=int(asignatura), titulo=titulo,
+                             duracion_seg=round(duracion))
+    except DatabaseError:
+        _borrar_archivo(video_id)  # sin ficha nadie lo veria: no dejar el archivo huerfano en R2
+        raise
+    return video_id
 
 
-def _presentar(docs):
-    """Documentos de GridFS convertidos a lo que se muestra: id, titulo, materia, duracion y fecha."""
-    nombres = dict(Asignatura.objects.filter(id__in={d['metadata']['asignatura_id'] for d in docs}).values_list('id', 'nombre'))
+def _presentar(videos):
+    """Fichas convertidas a lo que se muestra: id, titulo, materia, duracion y fecha."""
     return [{
-        'id': str(d['_id']),
-        'titulo': d['metadata']['titulo'],
-        'asignatura': nombres.get(d['metadata']['asignatura_id'], 'Materia eliminada'),
-        'duracion': '{}:{:02d}'.format(*divmod(d['metadata']['duracion_seg'], 60)),
-        'subido': d['uploadDate'].strftime('%d-%m-%Y'),
-    } for d in docs]
+        'id': v.pk,
+        'titulo': v.titulo,
+        'asignatura': v.asignatura.nombre if v.asignatura else 'Materia eliminada',
+        'duracion': '{}:{:02d}'.format(*divmod(v.duracion_seg, 60)),
+        'subido': timezone.localtime(v.subido).strftime('%d-%m-%Y'),
+    } for v in videos]
 
 
 def listar(profesor_id):
     """Sus videos, del más nuevo al más antiguo, listos para mostrar."""
-    return _presentar(list(_archivos().find({'metadata.profesor_id': profesor_id}).sort('uploadDate', -1)))
+    return _presentar(_fichas().filter(profesor_id=profesor_id).select_related('asignatura'))
 
 
 def por_id(video_ids):
     """{id: video listo para mostrar} de los que existen; los ids inválidos o borrados no aparecen."""
-    oids = []
-    for video_id in video_ids:
-        try:
-            oids.append(ObjectId(video_id))
-        except (InvalidId, TypeError):
-            pass
-    return {v['id']: v for v in _presentar(list(_archivos().find({'_id': {'$in': oids}})))}
+    return {v['id']: v for v in _presentar(_fichas().filter(pk__in=[str(i) for i in video_ids])
+                                                   .select_related('asignatura'))}
 
 
-def abrir(oid):
-    """Lector del archivo (con seek y read) para entregarlo por partes; quien lo abre debe cerrarlo."""
-    return _bucket().open_download_stream(oid)
+def enlace(ficha):
+    """Enlace firmado de R2 para ver el video de esa ficha; vence (almacen_videos.DURACION_ENLACE_SEG)."""
+    return almacen_videos.enlace(ficha.pk)
 
 
 def ficha(video_id):
-    """El documento del video en GridFS (con su metadata), o None si el id no existe o no es valido."""
+    """La ficha del video, o None si el id no existe."""
+    return _fichas().filter(pk=str(video_id)).first() if video_id else None
+
+
+def todas():
+    """Las fichas de todos los videos, con su profesor (para la limpieza diaria, limpieza_videos.py)."""
+    return list(_fichas().select_related('profesor__user'))
+
+
+def registrar_vista(video_id):
+    """Anota que alguien abrio el video ahora: cuenta como actividad para no borrarlo (limpieza_videos.py)."""
+    _fichas().filter(pk=video_id).update(ultima_vista=timezone.now())
+
+
+def marcar_aviso(video_id, cuando):
+    """Anota que ya se aviso que el video se borrara: el borrado ocurre 7 dias despues (limpieza_videos.py)."""
+    _fichas().filter(pk=video_id).update(aviso_borrado=cuando)
+
+
+def _borrar_archivo(video_id):
+    """Quita el archivo de R2. Si R2 falla, queda un archivo huerfano que nadie puede ver: se registra su id (nunca el
+    titulo) para quitarlo a mano desde el panel de Cloudflare."""
     try:
-        oid = ObjectId(video_id)
-    except (InvalidId, TypeError):
-        return None
-    return _archivos().find_one({'_id': oid})
+        almacen_videos.borrar(video_id)
+    except almacen_videos.ERRORES as exc:
+        logger.warning('No se pudo borrar de R2 el video %s (%s): quitarlo a mano.', video_id, type(exc).__name__)
+
+
+def borrar(video_id):
+    """Quita la ficha y el archivo de R2. Quien llama ya decidio que se puede borrar."""
+    Video.objects.filter(pk=video_id).delete()
+    _borrar_archivo(video_id)
+
+
+def borrar_del_profesor(profesor):
+    """Todos sus videos, al eliminar su cuenta (supresiones/datos_propios.py): su cara y su voz son datos personales.
+    Sin R2 configurado se quitan igual las fichas; el archivo que quede se registra para quitarlo a mano."""
+    for video_id in list(Video.objects.filter(profesor=profesor).values_list('pk', flat=True)):
+        borrar(video_id)
 
 
 def eliminar(profesor_id, video_id):
@@ -154,18 +192,13 @@ def eliminar(profesor_id, video_id):
     ValidationError si ya lo compartió con un alumno de paquete vigente (fase 4b): el alumno lo pagó y el profesor
     ya cobró su parte; borrarlo lo dejaría sin el video. Al vencer el paquete, se puede.
     """
-    try:
-        oid = ObjectId(video_id)
-    except (InvalidId, TypeError):
-        return False
-    with transaction.atomic():
-        from alumnos.models import Profesor
+    with transaction.atomic():  # mismo candado que entregas: no se borra un video mientras se esta compartiendo
         Profesor.objects.select_for_update().get(pk=profesor_id)
-        if not _archivos().find_one({'_id': oid, 'metadata.profesor_id': profesor_id}, {'_id': 1}):
+        if not _fichas().filter(pk=str(video_id), profesor_id=profesor_id).exists():
             return False
         if (VideoCompartido.objects.entregados()
-                .filter(video_id=str(oid), paquete__in=PaqueteClases.objects.vigentes()).exists()):
+                .filter(video_id=video_id, paquete__in=PaqueteClases.objects.vigentes()).exists()):
             raise ValidationError('Ya compartiste este video con un alumno que tiene su paquete vigente: '
                                   'podrás borrarlo cuando el paquete venza.')
-        _bucket().delete(oid)
+        borrar(video_id)
     return True

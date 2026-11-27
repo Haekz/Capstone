@@ -6,9 +6,12 @@ vinculo sigue siendo la revision de identidad (1a) y del certificado (1b-i).
 
 import re
 from datetime import date, timedelta
+from unittest import mock
 
 from django.contrib.auth import get_user_model
+from django.contrib.messages import get_messages
 from django.core import mail
+from django.core.exceptions import ValidationError
 from django.db.models import F
 from django.test import TestCase
 from django.urls import reverse
@@ -170,6 +173,20 @@ class AceptarInvitacionTests(TestCase):
         otra = self.solicitud.invitar(CORREO_MAMA)
         self.aceptar(otra)
         self.assertEqual(Vinculo.objects.count(), 1)
+
+    def test_aceptar_dos_veces_la_misma_invitacion_es_validationerror(self):
+        self.invitacion.aceptar(self.apoderado, 'padre', VERSION_DECLARACION_VINCULO)
+        with self.assertRaisesMessage(ValidationError, 'Esta invitación ya fue utilizada o venció.'):
+            self.invitacion.aceptar(self.apoderado, 'padre', VERSION_DECLARACION_VINCULO)
+        self.assertEqual(Vinculo.objects.count(), 1)
+
+    def test_si_otra_pestana_la_acepto_primero_avisa_sin_error(self):
+        error = ValidationError('Esta invitación ya fue utilizada o venció.')
+        with mock.patch.object(Invitacion, 'aceptar', side_effect=error):
+            respuesta = self.aceptar()
+        self.assertRedirects(respuesta, reverse('portal_apoderado'), fetch_redirect_response=False)
+        self.assertEqual([str(m) for m in get_messages(respuesta.wsgi_request)], [error.messages[0]])
+        self.assertFalse(Vinculo.objects.exists())
 
     def test_otra_cuenta_no_acepta(self):
         entrar(self.client, self.solicitud.alumno.user, alumno_id=self.solicitud.alumno.id_alumno)

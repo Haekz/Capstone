@@ -1,6 +1,6 @@
-"""B2 (13-nov): sin MongoDB configurado no se venden videos.
+"""B2 (13-nov): con los videos desactivados (sin R2 configurado) no se venden videos.
 
-Los archivos viven en MongoDB (GridFS). Sin MONGODB_URI el profesor no puede subirlos ni el alumno verlos, pero la
+Los archivos viven en Cloudflare R2: sin el, el profesor no puede subirlos ni el alumno verlos, pero la
 compra no lo revisaba: se podia cobrar un agregado o un extra que nadie iba a poder entregar. La regla es una sola,
 settings.VIDEOS_A_LA_VENTA (en pruebas la prende lbwus/test_runner.py). El paquete de clases se sigue vendiendo.
 Webpay va con mock.
@@ -67,7 +67,7 @@ class SinVideosALaVentaTests(Escenario):
 
 
 class ConVideosALaVentaTests(Escenario):
-    """El contraste: con MongoDB configurado (en pruebas, el runner) todo sigue como antes."""
+    """El contraste: con R2 configurado (en pruebas, el runner) todo sigue como antes."""
 
     def test_planes_pregunta_por_el_agregado(self):
         self.entrar(RUT_ANA)

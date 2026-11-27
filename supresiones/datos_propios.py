@@ -10,8 +10,8 @@ cosas que dependen del rol:
     * profesor: clases con inscripciones, paquetes vendidos o retiros de dinero;
     * apoderado: compras pagadas o un vinculo que llego a estar verificado (quien tuvo autoridad sobre un menor).
 - ``limpiar``: los datos propios que se quitan siempre, se borre la cuenta o se seudonimice (la cascada no borra los
-  archivos del disco ni los correos que otras filas copiaron): foto, y por rol observaciones recibidas, titulo,
-  especializaciones, cuenta bancaria, carnet.
+  archivos de R2 o del disco ni los correos que otras filas copiaron): foto, y por rol observaciones recibidas, titulo,
+  especializaciones, cuenta bancaria, videos de apoyo (en ellos salen su cara y su voz), carnet.
 
 Para todos los roles: las filas de allauth (correo y datos de Google) se borran; sin eso el correo seguiria guardado.
 """
@@ -30,6 +30,7 @@ from alumnos.models import (
 from apoderados.models import Documento, Invitacion, SolicitudAdolescente, Vinculo
 from observaciones.models import Observacion
 from resenas.models import ReporteResena, Resena
+from user_profesor import foto, videoteca
 
 
 def _perfil(user, nombre):
@@ -65,14 +66,14 @@ def tiene_historial(user):
 def _limpiar_alumno(alumno):
     """Sin las observaciones que recibio, resenas ni solicitudes de clase extra."""
     Observacion.objects.filter(inscripcion__alumno=alumno).delete()
-    Resena.objects.filter(alumno=alumno).delete()
+    Resena.objects.filter(inscripcion__alumno=alumno).delete()
     ReporteResena.objects.filter(remitente=alumno.user).delete()
     SolicitudClaseExtra.objects.filter(alumno=alumno).delete()
-    Reporte.objects.filter(alumno=alumno).delete()
+    Reporte.objects.filter(remitente=alumno.user).delete()
 
 
 def _limpiar_profesor(profesor):
-    """Sin titulo, especializaciones, cuenta bancaria ni horario, y fuera del catalogo: sin titulo aprobado no se
+    """Sin titulo, especializaciones, cuenta bancaria, horario ni videos, y fuera del catalogo: sin titulo aprobado no se
     hacen clases."""
     if profesor.titulo_archivo:
         storage, nombre = profesor.titulo_archivo.storage, profesor.titulo_archivo.name
@@ -87,6 +88,7 @@ def _limpiar_profesor(profesor):
     CuentaBancaria.objects.filter(profesor=profesor).delete()
     Especializacion.objects.filter(profesor=profesor).delete()  # sus certificados cifrados
     HorarioSemanal.objects.filter(profesor=profesor).delete()
+    videoteca.borrar_del_profesor(profesor)  # fichas y archivos en R2: el Profesor queda, asi que no hay cascada
     SesionClase.objects.filter(clase__profesor=profesor, estado='programada', fecha_hora_inicio__gt=timezone.now()
                                ).update(estado='cancelada')  # sin clases reservadas (lo exige la evaluacion)
 
@@ -103,11 +105,7 @@ def _limpiar_apoderado(apoderado):
 
 
 def limpiar(user):
-    if user.foto_perfil:
-        storage, nombre = user.foto_perfil.storage, user.foto_perfil.name
-        user.foto_perfil = ''
-        if nombre:
-            transaction.on_commit(lambda n=nombre, s=storage: s.delete(n))
+    foto.borrar(user)  # la fila se conserva si se seudonimiza: la cascada no alcanza
     EmailAddress.objects.filter(user=user).delete()
     SocialAccount.objects.filter(user=user).delete()
     alumno = _perfil(user, 'perfil_alumno')

@@ -99,7 +99,6 @@ INSTALLED_APPS = [
     'alumnos',
     'admin_portal',
     'user_profesor',
-    'comunidad',
     'resenas',
     'apoderados',
     'soporte',
@@ -207,14 +206,18 @@ DATABASES = {
     'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600, conn_health_checks=True)
 }
 
-# MongoDB Atlas (app comunidad). Sin MONGODB_URI, MongoDB queda desactivado
-# y el sitio funciona igual. Nunca escribir la URI en el codigo.
-MONGODB_URI = os.environ.get('MONGODB_URI')          # None = MongoDB desactivado
-MONGODB_DB = os.environ.get('MONGODB_DB', 'lbwus_dev')
-MONGODB_TIMEOUT_MS = int(os.environ.get('MONGODB_TIMEOUT_MS', '5000'))
-# Venta de videos (agregado y extras): solo con MongoDB configurado, donde viven los archivos (B2). Sin el no se
-# cobra lo que nadie podria entregar; el paquete de clases se sigue vendiendo (alumnos/videos_extra.py).
-VIDEOS_A_LA_VENTA = bool(MONGODB_URI)
+# Cloudflare R2: los archivos de video (user_profesor/almacen_videos.py); su ficha es la tabla Video de PostgreSQL. Sin
+# las cuatro variables los videos quedan desactivados. Las claves solo como variables de entorno
+# (docs/CONFIGURACION_PRODUCCION.md).
+R2_ACCOUNT_ID = os.environ.get('R2_ACCOUNT_ID', '').strip()
+R2_ACCESS_KEY_ID = os.environ.get('R2_ACCESS_KEY_ID', '').strip()
+R2_SECRET_ACCESS_KEY = os.environ.get('R2_SECRET_ACCESS_KEY', '').strip()
+R2_BUCKET = os.environ.get('R2_BUCKET', '').strip()
+R2_ENDPOINT = f'https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com' if R2_ACCOUNT_ID else ''
+R2_CONFIGURADO = all((R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET))
+# Venta de videos (agregado y extras): solo con R2 configurado (B2). Sin el no se cobra lo que nadie podria entregar;
+# el paquete de clases se sigue vendiendo (alumnos/videos_extra.py).
+VIDEOS_A_LA_VENTA = R2_CONFIGURADO
 
 # Puerta con clave para todo el sitio (lbwus/puerta.py). Vacia = sin puerta.
 # La clave se define solo como variable de entorno, nunca en el codigo.
@@ -229,7 +232,7 @@ SITIO_DOMINIOS_CORREO = [
 # CSP (lbwus/cabeceras.py): Report-Only por omision; CSP_OBLIGATORIA=1 la hace bloquear.
 CSP_OBLIGATORIA = os.environ.get('CSP_OBLIGATORIA', 'False').lower() in ('1', 'true', 'si')
 
-# La pagina de error de Django oculta tambien MONGODB_URI y SITIO_CLAVE.
+# La pagina de error de Django oculta tambien DATABASE_URL, SITIO_CLAVE y las claves de R2.
 DEFAULT_EXCEPTION_REPORTER_FILTER = 'lbwus.reporte_errores.FiltroReporteErrores'
 
 # Quien responde por los datos personales y como contactarlo (pie de pagina, Contacto, Terminos y Privacidad).
@@ -298,8 +301,8 @@ STORAGES = {
     },
 }
 
-# Archivos subidos (fotos de perfil; titulos antiguos hasta pasarlos a la base, paso 9b).
-# NO se publica MEDIA_URL en urls: se sirven por vistas protegidas.
+# Archivos subidos: solo quedan titulos antiguos hasta pasarlos a la base (paso 9b). Las fotos de perfil ya van en
+# PostgreSQL (alumnos.FotoPerfil). NO se publica MEDIA_URL en urls: se sirven por vistas protegidas.
 # En Railway el disco es efimero: montar un Volume en MEDIA_ROOT.
 MEDIA_ROOT = Path(os.environ.get('MEDIA_ROOT', BASE_DIR / 'media'))
 MEDIA_URL = '/media/'
@@ -346,6 +349,10 @@ DEFAULT_FROM_EMAIL = os.environ.get(
 
 # SCRUM-100: a quien avisar si falla tareas_diarias (lbwus/alertas.py). Separados por comas; vacia = sin aviso.
 ALERTAS_CORREOS = [c.strip() for c in os.environ.get('ALERTAS_CORREOS', '').split(',') if c.strip()]
+
+# Que /salud/ vigile tambien el Cron de recordatorios (enviar_recordatorios_clases, cada 15 min). Se enciende en el
+# servicio WEB solo cuando ese Cron ya existe en Railway: antes, /salud/ daria 503 sin motivo (lbwus/salud.py).
+SALUD_RECORDATORIOS = os.environ.get('SALUD_RECORDATORIOS', 'False').lower() in ('1', 'true', 'si')
 
 # El enlace de recuperación expira después de 1 hora
 PASSWORD_RESET_TIMEOUT = 3600
@@ -401,7 +408,7 @@ CACHES = {
 # Una linea por evento: "fecha nivel logger mensaje". FormatoSeguro enmascara correos, RUT y tokens de
 # Webpay en todo lo que sale, trazas incluidas (lbwus/registro.py). Nunca registrar contrasenas.
 APPS_PROPIAS = (
-    'lbwus', 'alumnos', 'user_profesor', 'admin_portal', 'apoderados', 'comunidad', 'resenas', 'soporte',
+    'lbwus', 'alumnos', 'user_profesor', 'admin_portal', 'apoderados', 'resenas', 'soporte',
     'notificaciones', 'agenda', 'mensajes', 'supresiones', 'requerimientos', 'observaciones',
 )
 LOGGING = {

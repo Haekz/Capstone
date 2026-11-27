@@ -154,6 +154,6 @@ class SolicitarRetiroTests(TestCase):
 
     def test_anonimo_recibe_sesion_invalida_y_no_crea_retiro(self):
         respuesta = self.client.post(reverse('solicitar_retiro'), {'monto': '1000'})
-        self.assertEqual(respuesta.status_code, 200)
+        self.assertEqual(respuesta.status_code, 401)
         self.assertFalse(respuesta.json()['success'])
         self.assertFalse(SolicitudRetiro.objects.exists())

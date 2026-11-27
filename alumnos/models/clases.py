@@ -233,6 +233,9 @@ class SesionClase(models.Model):
 
     @property
     def cupos_ocupados(self):
+        anotado = getattr(self, 'cupos_ocupados_count', None)  # lo trae SesionClase.objects.disponibles()
+        if anotado is not None:
+            return anotado  # sin otra consulta por sesion al listar muchas
         return self.inscripciones.filter(
             estado__in=['confirmada', 'pendiente']
         ).count()
@@ -342,6 +345,10 @@ class Inscripcion(models.Model):
         blank=True,
         related_name='inscripciones',
     )
+    # Recordatorios (alumnos/recordatorios.py): cuando se avisaron, o se dieron por innecesarios porque se reservo
+    # ya dentro de esa ventana. Reagendar los reinicia.
+    recordatorio_1d = models.DateTimeField(null=True, blank=True, editable=False)
+    recordatorio_2h = models.DateTimeField(null=True, blank=True, editable=False)
 
     objects = InscripcionQuerySet.as_manager()
 

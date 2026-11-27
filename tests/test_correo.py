@@ -17,8 +17,9 @@ TEXTO = 'Clase "especial" de Física & Química <hoy>.'
 class CorreoTextoPlanoTests(SimpleTestCase):
 
     def test_el_correo_llega_sin_entidades_html(self):
-        self.assertTrue(enviar('Aviso', 'alumnos/correo_aviso_profesor.txt',
-                               {'nombre': NOMBRE, 'texto': TEXTO}, 'profe@example.com'))
+        self.assertTrue(enviar('Aviso', 'correos/aviso_clase.txt',
+                               {'nombre': NOMBRE, 'titulo': 'Aviso', 'lineas': [TEXTO], 'boton_texto': 'Ver',
+                                'enlace': 'https://lbwus.xyz/'}, 'profe@example.com'))
         cuerpo = mail.outbox[0].body
         self.assertIn(f'Hola {NOMBRE},', cuerpo)
         self.assertIn(TEXTO, cuerpo)

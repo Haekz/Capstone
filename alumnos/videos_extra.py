@@ -8,7 +8,7 @@ Un extra solo cuenta para entregar, plazo y saldo cuando su pago esta confirmado
 contratados() son el unico lugar que lo calcula (fase 6d). Lo que se devolvio por videos no entregados (fase 6e) se
 resta de lo que el profesor debe entregar, pero no cambia lo pagado: por eso totales() es bruto y contratados() neto.
 
-Sin MongoDB no se vende ningun video, ni extra ni agregado (B2): exigir_a_la_venta() es la unica regla y la usan
+Sin R2 no se vende ningun video, ni extra ni agregado (B2): exigir_a_la_venta() es la unica regla y la usan
 validar() y el inicio de la compra del paquete (alumnos/webpay.py).
 """
 
@@ -79,7 +79,7 @@ def ofertas(alumno_id, ahora=None):
 
 
 def exigir_a_la_venta():
-    """ValidationError si los videos no se venden: sin MongoDB (settings.VIDEOS_A_LA_VENTA) nadie podria entregarlos."""
+    """ValidationError si los videos no se venden: sin R2 (settings.VIDEOS_A_LA_VENTA) nadie podria entregarlos."""
     if not settings.VIDEOS_A_LA_VENTA:
         raise ValidationError('Los videos de ayuda no están disponibles por ahora. Intenta más tarde.')
 

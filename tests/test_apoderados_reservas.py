@@ -18,6 +18,7 @@ from alumnos.models import Asignatura, Clase, Genero, Inscripcion
 from alumnos.services import MENSAJE_MENOR, InscripcionService
 from apoderados.forms import VERSION_DECLARACION_VINCULO
 from apoderados.models import Apoderado, CompraApoderado, Vinculo
+from notificaciones.models import Notificacion
 from tests.test_apoderados import RUT, crear_apoderado, entrar
 from tests.test_apoderados_vinculos import RUT_HERMANA, crear_menor_vinculado
 from tests.test_especialidad import crear_profesor
@@ -50,8 +51,12 @@ class ReservasDelApoderadoTests(TestCase):
         return reverse(nombre, args=[(vinculo or self.vinculo).pk, *args])
 
     def reservar(self, sesion=None, vinculo=None):
-        return self.client.post(self.url('apoderado_reservar_clase', vinculo=vinculo),
-                                {'id_sesion': (sesion or self.sesion).pk})
+        with self.captureOnCommitCallbacks(execute=True):  # los avisos salen al guardar, como en el sitio
+            return self.client.post(self.url('apoderado_reservar_clase', vinculo=vinculo),
+                                    {'id_sesion': (sesion or self.sesion).pk})
+
+    def correos_a_apoderados(self):
+        return [m for m in mail.outbox if m.to[0] in (self.madre.user.email, self.padre.user.email)]
 
     def reserva(self):
         return Inscripcion.objects.get(alumno=self.menor)
@@ -61,18 +66,31 @@ class ReservasDelApoderadoTests(TestCase):
         reserva = self.reserva()
         self.assertEqual((reserva.sesion, reserva.paquete, reserva.estado),
                          (self.sesion, self.paquete, Inscripcion.ESTADO_CONFIRMADA))
-        self.assertEqual(sorted(m.to[0] for m in mail.outbox), sorted([self.madre.user.email, self.padre.user.email]))
-        self.assertTrue(all(len(m.to) == 1 for m in mail.outbox))  # nadie ve el correo del otro
-        self.assertIn('reservó una clase para', mail.outbox[0].body)
-        self.assertIn('Álgebra', mail.outbox[0].body)
+        correos = self.correos_a_apoderados()
+        self.assertEqual(sorted(m.to[0] for m in correos), sorted([self.madre.user.email, self.padre.user.email]))
+        self.assertTrue(all(len(m.to) == 1 for m in correos))  # nadie ve el correo del otro
+        self.assertIn('quedó reservada', correos[0].body)
+        self.assertIn(f'La reservó {self.madre.nombre}.', correos[0].body)  # el otro apoderado sabe quién fue
+        self.assertIn('Álgebra', correos[0].body)
+        self.assertEqual(len(correos), 2)  # y el aviso viejo («reservó una clase para») ya no se repite
+
+    def test_el_menor_no_recibe_nada_y_cada_apoderado_tiene_su_campanita(self):
+        self.reservar()
+        self.assertFalse(Notificacion.objects.filter(usuario=self.menor.user).exists())
+        self.assertNotIn(self.menor.user.email, [destino for m in mail.outbox for destino in m.to])
+        for apoderado in (self.madre, self.padre):
+            [aviso] = Notificacion.objects.filter(usuario=apoderado.user)
+            self.assertEqual(aviso.enlace, reverse('detalle_clase', args=[self.reserva().pk]))  # a la pagina de la clase
 
     def test_reprograma_y_cancela(self):
         self.reservar()
-        self.client.post(self.url('apoderado_reprogramar_clase', self.reserva().pk), {'id_sesion': self.otra_sesion.pk})
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post(self.url('apoderado_reprogramar_clase', self.reserva().pk), {'id_sesion': self.otra_sesion.pk})
         self.assertEqual(self.reserva().sesion, self.otra_sesion)
-        self.client.post(self.url('apoderado_cancelar_clase', self.reserva().pk))
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post(self.url('apoderado_cancelar_clase', self.reserva().pk))
         self.assertEqual(self.reserva().estado, Inscripcion.ESTADO_CANCELADA)
-        self.assertEqual(len(mail.outbox), 6)  # 3 cambios x 2 apoderados
+        self.assertEqual(len(self.correos_a_apoderados()), 6)  # 3 cambios x 2 apoderados
 
     def test_la_pantalla_muestra_paquete_sesiones_y_reservas(self):
         respuesta = self.client.get(self.url('apoderado_clases_estudiante'))

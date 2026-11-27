@@ -7,7 +7,10 @@ Actualizado: 20-nov-2026. Aqui queda solo lo que falta. Todo lo que listaba la v
 Los codigos LBW-xx y Dx son los del backlog y las decisiones grupales del 08-nov (se cargan en Jira).
 
 ## Railway: una sola vez (ver CONFIGURACION_PRODUCCION.md)
-- Servicio Cron `python manage.py tareas_diarias` a las 9:00 UTC (LBW-01). Corre las 8 tareas diarias.
+- Servicio Cron `python manage.py tareas_diarias` a las 9:00 UTC (LBW-01). Corre las 10 tareas diarias.
+- **Segundo Cron** `python manage.py enviar_recordatorios_clases` con `*/15 * * * *`: los recordatorios de clase (24 y 2
+  horas antes). **Sin el no sale ninguno.** Cuando ya haya corrido bien una vez, definir `SALUD_RECORDATORIOS=1` en el
+  servicio web para que `/salud/` lo vigile (CONFIGURACION_PRODUCCION.md, seccion 4).
 - Correr una vez: `manage.py pasar_reportes_a_tickets` y `manage.py pasar_titulos_a_base` (LBW-07).
 - Habilitar al menos un agente en cada tema nuevo: `manage.py habilitar_soporte <RUT> --agregar especializaciones
   horario contacto privacidad` (LBW-07). Sin agente, esos tickets quedan sin asignar.
@@ -198,8 +201,6 @@ de la demo); los puntos 3 y 4 son lo que se vio al comparar y no se tocó porque
   `https://cdn.jsdelivr.net` de `script-src` (ahora solo queda Jitsi). Medido en el navegador con jsDelivr bloqueado:
   las 6 pantallas que lo usan abren su aviso, sin peticiones a internet ni avisos de CSP; `collectstatic` como en Railway
   lo recoge con hash. Tampoco es propia la letra del correo de recuperar clave: un correo no puede traer archivos.
-- **Probar Atlas.** Las 6 pruebas que exigen conexion real a MongoDB (`MONGODB_INTEGRACION=1`) no se corrieron en esta
-  revision. Correrlas con una base **de prueba**, nunca `lbwus_prod`: escriben datos.
 - **Cookies en la politica de privacidad.** No menciona que el sitio usa cookies esenciales (sesion y proteccion
   CSRF), ni que no usa cookies de seguimiento. Para la abogada, junto con L-2, L-3 y L-5.
 - **Politica de privacidad: Google y las letras.** La lista de proveedores dice que Google entrega "fuentes de texto
@@ -209,6 +210,35 @@ de la demo); los puntos 3 y 4 son lo que se vio al comparar y no se tocó porque
   carga con el `Procfile` actual (gunicorn, 4 hilos); un entorno de ensayo distinto de produccion; SPF, DKIM y DMARC
   del dominio desde el que sale el correo (si faltan, la recuperacion de clave y los avisos pueden caer en spam); y
   la carga de datos iniciales de produccion (generos, asignaturas, planes).
+
+## Avisos de clases por correo (decidido 21-nov)
+La reserva avisa con campanita y correo con diseno (texto de respaldo + HTML, `alumnos/correo_clase.py` y
+`templates/correos/aviso_clase.*`) al **alumno adulto**, a **cada apoderado verificado** si es menor (el menor no recibe
+nada propio) y al **profesor**. Cada uno ve **nombre y apellido** del otro y nada mas: ni RUT, ni correo, ni telefono
+(prueba: `test_aviso_reserva.py`). **Excepcion: de un menor, el profesor ve solo el nombre de pila** (`nombre_para_el_profesor`).
+Antes el profesor veia solo el nombre de pila de todos (decision del 02-nov, cambiada el 21-nov para los adultos).
+- **Etapa 1 (hecha):** aviso al reservar. El boton y la campanita llevan a la pagina de la clase (etapa 2).
+- **Etapa 2 (hecha):** pagina de la clase en `alumnos/clase/<id>/` (`alumnos/detalle_clase.py`), de **solo lectura**, para el
+  alumno, el apoderado y el profesor: fecha y hora de Chile, el nombre del otro y «Necesito cambiar el horario», que
+  envia a la pantalla que ya tiene ese flujo (alumno: sus clases; apoderado: clases del estudiante; profesor: su panel).
+  Quien no tiene relacion con la clase recibe 404; el anonimo entra y vuelve (`login?next=`). Reglas que muestra: alumno y
+  apoderado cambian o cancelan sin costo hasta **4 horas** antes (con menos solo se cancela y la clase se cobra); el
+  profesor cancela hasta **12 horas** antes (con menos, conversa con el alumno). «Ir a la clase» sale solo cuando la
+  sala deja entrar: **el apoderado no entra a la sala** (SCRUM-87), el estudiante lo hace desde su cuenta. Lo que ya no
+  se puede tocar (empezo o cancelada) no ofrece cambiar. «Pedir otro horario» al alumno queda para cuando el sitio crezca.
+- **Etapa 3 (hecha en codigo; falta crear el Cron en Railway):** recordatorios de **24 horas** y de **2 horas** antes, a
+  los tres (`alumnos/recordatorios.py`, comando `enviar_recordatorios_clases`, cada 15 minutos). Dos marcas por reserva
+  (`recordatorio_1d` y `recordatorio_2h`): no se repiten y reagendar las reinicia. Una reserva con menos de 24 horas no
+  recibe el de un dia, y con menos de 2 horas no recibe ninguno. Cada reserva se avisa y se marca todo o nada; si una
+  falla, la corrida termina con error y se reintenta en la siguiente. `/salud/` lo vigila solo con `SALUD_RECORDATORIOS=1`.
+  Un correo que Gmail rechaza se registra y no se reintenta.
+- **Etapa 4 (hecha):** cuando se cancela o se reagenda una clase por el alumno adulto o por un **apoderado**, se confirma
+  con campanita y correo con el mismo diseno: al alumno adulto, o a todos los apoderados verificados si es menor (el menor
+  no recibe nada). Antes el apoderado recibia un correo de texto sin campanita (`avisar_apoderados`, ya borrado) y el
+  alumno adulto no recibia nada. Con apoderado dice quien lo hizo; con menos de 4 horas dice que la clase se descuenta; el de
+  reagendar lleva a la pagina de la clase. El aviso al profesor por un reagendado tambien lleva a la clase.
+- **Limite de Gmail:** unos 500 correos al dia en cuentas gratuitas; con 3 correos por clase se llena con unas 80 clases
+  diarias. Para empezar alcanza; si el sitio crece, pasar a un servicio de correo transaccional.
 
 ## Pagos
 - Transbank en produccion: checklist en CONCILIACION_Y_TRANSBANK_7_6.md, seccion 6 (LBW-09).

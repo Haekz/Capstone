@@ -2,7 +2,7 @@
 
 El menor no ve (ni en la lista ni por enlace directo) un video que su apoderado no habilito; el apoderado lo ve
 todo para poder revisarlo. Cuando el profesor comparte un video con un menor, se avisa a sus apoderados verificados.
-Un alumno adulto lo sigue viendo apenas se comparte. Mongo en memoria (mongomock).
+Un alumno adulto lo sigue viendo apenas se comparte. R2 de mentira (tests/videos_base.py).
 """
 
 from datetime import timedelta
@@ -17,8 +17,7 @@ from notificaciones.models import Notificacion
 from tests.test_apoderados import crear_apoderado, entrar
 from tests.test_apoderados_vinculos import crear_menor_vinculado
 from tests.test_paquetes import RUT_ANA, RUT_PROFE
-from tests.test_ver_videos import (RUT_APODERADO, RUT_MENOR, RUT_OTRO_APODERADO, RUT_OTRO_MENOR, Base,
-                                   cuerpo)
+from tests.test_ver_videos import RUT_APODERADO, RUT_MENOR, RUT_OTRO_APODERADO, RUT_OTRO_MENOR, Base
 from user_profesor import entregas
 
 
@@ -61,12 +60,12 @@ class VideosDeMenoresTests(Base):
         lista = self.client.get(reverse('apoderado_videos_estudiante', args=[self.vinculo.pk])).json()['videos']
         self.assertEqual([(v['titulo'], v['habilitado']) for v in lista], [('Factorización', False)])
         respuesta = self.client.get(reverse('apoderado_ver_video', args=[self.vinculo.pk, self.video]))
-        self.assertEqual(cuerpo(respuesta), self.contenido)  # lo revisa antes de habilitarlo
+        self.assertVaAR2(respuesta)  # lo revisa antes de habilitarlo
         self.assertEqual(self.habilitar().json(), {'success': True, 'habilitado': True})
         self.como_menor()
         datos = self.lista_menor()
         self.assertEqual(([v['titulo'] for v in datos['videos']], datos['por_revisar']), (['Factorización'], 0))
-        self.assertEqual(cuerpo(self.ver_menor()), self.contenido)
+        self.assertVaAR2(self.ver_menor())
 
     def test_el_apoderado_puede_quitar_la_habilitacion(self):
         self.como_apoderado()
@@ -105,7 +104,7 @@ class VideosDeMenoresTests(Base):
         self.compartir(self.ana)
         self.entrar(RUT_ANA)
         self.assertEqual(self.client.get(reverse('videos_alumno')).json()['por_revisar'], 0)
-        self.assertEqual(self.client.get(reverse('ver_video', args=[self.video])).status_code, 200)
+        self.assertVaAR2(self.client.get(reverse('ver_video', args=[self.video])))
 
 
 class AvisoAlApoderadoTests(Base):
