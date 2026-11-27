@@ -22,8 +22,8 @@ CSP = {
     'script-src': ("'self'", "'unsafe-inline'", JITSI),
     'style-src': ("'self'", "'unsafe-inline'"),  # iconos y letras son propios (static/vendor)
     'font-src': ("'self'", 'data:'),
-    'img-src': ("'self'", 'data:', 'https://commondatastorage.googleapis.com'),
-    'media-src': ("'self'", 'https://commondatastorage.googleapis.com', *R2),
+    'img-src': ("'self'", 'data:'),
+    'media-src': ("'self'", *R2),
     'connect-src': ("'self'", JITSI, 'wss://meet.jit.si'),
     'frame-src': (JITSI, 'https://www.google.com'),  # sala virtual y mapa de home.html
     # Webpay recibe un POST (redirect_webpay.html); Google responde con un redirect tras el POST de allauth.

@@ -46,7 +46,8 @@
             <button class="close-modal-btn" onclick="closeUploadModal()" aria-label="Cerrar"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
         </div>
         <div class="custom-modal-body" style="padding-top: 15px;">
-            <form id="profe-video-upload-form" onsubmit="submitUploadedVideo(event)" class="prof-form">
+            <form id="profe-video-upload-form" method="post" enctype="multipart/form-data" onsubmit="submitUploadedVideo(event)" class="prof-form">
+                {% csrf_token %}
                 <div class="prof-form-group">
                     <label class="prof-form-label" for="upload-title">Título del video</label>
                     <input class="prof-form-input" type="text" id="upload-title" name="titulo" minlength="3" maxlength="100" placeholder="Ej. Factorización paso a paso" required>

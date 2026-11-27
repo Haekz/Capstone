@@ -13,10 +13,10 @@ from django.core.exceptions import ValidationError
 
 CORREO = re.compile(r'[\w.+-]+\s*(?:@|\(\s*at\s*\)|\barroba\b)\s*[\w-]+|\b(?:punto|dot)\s*(?:com|cl|net|org)\b')
 # Un telefono chileno tiene 9 digitos (2 a 9 al inicio), o 11 con el 56 del pais.
-TELEFONO_CADENA = re.compile(r'\d(?:[\s.\-()]{0,2}\d)*')
+TELEFONO_CADENA = re.compile(r'\d(?:[\s.\-()/_]{0,3}\d)*')
 TELEFONO = re.compile(r'(?:56)?[2-9]\d{8}')
 REDES = re.compile(r'\b(?:whats\s?app|whatsap|wasap|guasap|wsp|wsap|telegram|instagram|insta|facebook|tiktok|'
-                   r'snapchat|discord|messenger)\b')
+                   r'snapchat|discord|messenger)\b|(?:t\.me|ig\.me|wa\.me|bit\.ly|zoom\.us|meet\.google\.com)/')
 # "calle/avenida/pasaje" + 1 a 3 palabras + numero: asi un "pasaje 3 del texto" no se confunde.
 DIRECCION = re.compile(r'\b(?:calle|avenida|avda|av|pasaje|psje|pje)\.?\s+(?:[a-z]+\s+){1,3}#?\d{1,5}\b'
                        r'|\bmi\s+direccion\b|\bvivo\s+en\s+(?:calle|avenida|pasaje)\b')
@@ -27,8 +27,9 @@ class ContactoBloqueado(ValidationError):
 
 
 def _normalizar(texto):
-    """Minusculas y sin tildes: 'Dirección' y 'direccion' se detectan igual."""
-    sin_tildes = ''.join(c for c in unicodedata.normalize('NFKD', texto) if not unicodedata.combining(c))
+    """Minusculas, sin tildes ni caracteres de formato invisible (ZWSP, etc.)."""
+    sin_formato = ''.join(c for c in texto if unicodedata.category(c) not in ('Cf', 'Cc'))
+    sin_tildes = ''.join(c for c in unicodedata.normalize('NFKD', sin_formato) if not unicodedata.combining(c))
     return sin_tildes.lower()
 
 

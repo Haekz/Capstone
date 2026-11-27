@@ -10,6 +10,7 @@ from datetime import timedelta
 
 from django.core import signing
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.urls import reverse
 from django.utils import timezone
 
@@ -45,16 +46,17 @@ def confirmar(profesor_id, token):
         datos = signing.loads(token, salt=SAL, max_age=VIGENCIA)
     except signing.BadSignature:  # incluye SignatureExpired
         raise ValidationError('El enlace no es válido o venció. Pide el cambio de nuevo.')
-    cuenta = (CuentaBancaria.objects.select_related('profesor__user')
-              .filter(pk=datos['cuenta'], profesor_id=profesor_id).first())
-    if cuenta is None or cuenta.actualizada.isoformat() != datos['version']:
-        raise ValidationError('El enlace ya se usó o la cuenta cambió después. Pide el cambio de nuevo.')
+    with transaction.atomic():
+        cuenta = (CuentaBancaria.objects.select_for_update().select_related('profesor__user')
+                  .filter(pk=datos['cuenta'], profesor_id=profesor_id).first())
+        if cuenta is None or cuenta.actualizada.isoformat() != datos['version']:
+            raise ValidationError('El enlace ya se usó o la cuenta cambió después. Pide el cambio de nuevo.')
 
-    cuenta.banco, cuenta.tipo_cuenta = datos['banco'], datos['tipo']
-    cuenta.numero_cifrado = datos['numero'].encode()
-    cuenta.ultimos_digitos = cuenta.numero[-4:]
-    cuenta.cambiada_en = timezone.now()
-    cuenta.save()
+        cuenta.banco, cuenta.tipo_cuenta = datos['banco'], datos['tipo']
+        cuenta.numero_cifrado = datos['numero'].encode()
+        cuenta.ultimos_digitos = cuenta.numero[-4:]
+        cuenta.cambiada_en = timezone.now()
+        cuenta.save()
 
     user = cuenta.profesor.user
     enviar('Tu cuenta bancaria cambió', 'user_profesor/correo_cuenta_cambiada.txt', {

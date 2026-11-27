@@ -18,7 +18,7 @@ from django.views.debug import SafeExceptionReporterFilter
 
 class FiltroReporteErrores(SafeExceptionReporterFilter):
     hidden_settings = re.compile(
-        'API|AUTH|TOKEN|KEY|SECRET|PASS|SIGNATURE|HTTP_COOKIE|URI|DATABASE_URL|CLAVE',
+        'API|AUTH|TOKEN|KEY|SECRET|PASS|SIGNATURE|HTTP_COOKIE|URI|URL|CLAVE',
         flags=re.I,
     )
 

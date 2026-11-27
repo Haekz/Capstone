@@ -292,7 +292,7 @@
                 
                 {% if puede_iniciar and not clase.en_vivo %}
                     <!-- Modo edición para el profesor antes de empezar -->
-                    <form id="form-pre-stream" class="pre-stream-form">
+                    <form id="form-pre-stream" method="post" class="pre-stream-form">
                         {% csrf_token %}
                         <input type="text" id="input-temas" name="temas_vivo" class="form-input" placeholder="Ej. Temas de Hoy: Resolución de integrales dobles..." value="{{ clase.temas_vivo|default:'' }}">
                         <textarea id="input-descripcion" name="descripcion_vivo" class="form-input" rows="3" placeholder="Escribe una breve descripción de lo que se verá en la clase hoy...">{{ clase.descripcion_vivo|default:'' }}</textarea>

@@ -1,0 +1,45 @@
+================================================================================
+                    USUARIOS DE PRUEBA DEL SISTEMA LBWUS
+================================================================================
+URL de Login: http://127.0.0.1:8000/accounts/login/
+
+--------------------------------------------------------------------------------
+1. ADMINISTRADOR
+--------------------------------------------------------------------------------
+- Usuario:    admin_test  (o también RUT: 11.111.111-1)
+- Clave:      Admin1234!
+- Rol:        Administrador / Superusuario (Tutor)
+- Redirige a: /admin_portal/dashboard/
+- Django Adm: /admin/
+
+--------------------------------------------------------------------------------
+2. PROFESOR (DOCENTE)
+--------------------------------------------------------------------------------
+Opción A:
+- Usuario:    test_profesor
+- Clave:      Profesor123!
+- Rol:        Profesor (Aprobado, Tarifa $15.000)
+- Redirige a: /profesor/panel
+
+Opción B (con formato RUT):
+- Usuario:    15123456-7
+- Clave:      Profe1234!
+- Rol:        Profesor (Aprobado, Tarifa $15.000)
+- Redirige a: /profesor/panel
+
+--------------------------------------------------------------------------------
+3. ALUMNO (ESTUDIANTE)
+--------------------------------------------------------------------------------
+Opción A:
+- Usuario:    alumno_test
+- Clave:      Alumno1234!
+- Rol:        Alumno (Mayor de edad / Superior)
+- Redirige a: /alumnos/alumno_home
+
+Opción B (con formato RUT):
+- Usuario:    19.999.999-9
+- Clave:      Alumno1234!
+- Rol:        Alumno (Mayor de edad / Superior)
+- Redirige a: /alumnos/alumno_home
+================================================================================
+

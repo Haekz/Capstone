@@ -24,10 +24,18 @@ def variaciones_rut(texto):
         partes = clean.split('-')
         if len(partes) == 2:
             cuerpo, dv = partes[0], partes[1]
+            vars_set.add(f'{cuerpo}{dv}')
+            if dv == 'K':
+                vars_set.add(f'{cuerpo}-k')
+                vars_set.add(f'{cuerpo}k')
             if len(cuerpo) == 8:
                 vars_set.add(f"{cuerpo[:2]}.{cuerpo[2:5]}.{cuerpo[5:]}-{dv}")
+                if dv == 'K':
+                    vars_set.add(f"{cuerpo[:2]}.{cuerpo[2:5]}.{cuerpo[5:]}-k")
             elif len(cuerpo) == 7:
                 vars_set.add(f"{cuerpo[:1]}.{cuerpo[1:4]}.{cuerpo[4:]}-{dv}")
+                if dv == 'K':
+                    vars_set.add(f"{cuerpo[:1]}.{cuerpo[1:4]}.{cuerpo[4:]}-k")
     return list(vars_set)
 
 
@@ -88,6 +96,8 @@ class RutOrEmailBackend(ModelBackend):
             return None
 
         identificador = username.strip()
+        if not identificador:
+            return None
         ruts = variaciones_rut(identificador)
 
         # 1. Buscar en CustomUser directamente por rut, username o email

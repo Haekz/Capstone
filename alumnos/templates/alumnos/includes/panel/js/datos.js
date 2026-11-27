@@ -30,6 +30,7 @@
         // json_script entrega el texto tal cual lo escribio el profesor, asi que
         // todo dato suyo que va a innerHTML pasa por escaparHtml (lbwus-utils.js, cargado en base_alumno.html).
         const teachers = JSON.parse(document.getElementById('profesores-data').textContent);
+
         // SCRUM-32: enlace al perfil profesional (solo profesores reales; los tutores son de ejemplo).
         const URL_PERFIL_PROFESOR = "{% url 'perfil_profesor' 0 %}";
         const enlacePerfil = (t) =>

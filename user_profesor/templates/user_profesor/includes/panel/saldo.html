@@ -49,7 +49,8 @@
                 </div>
                 {% endif %}
 
-                <form id="formCuentaBancaria" action="{% url 'guardar_cuenta_bancaria' %}" onsubmit="submitFormJson(event)" class="prof-pago-form">
+                <form id="formCuentaBancaria" method="post" action="{% url 'guardar_cuenta_bancaria' %}" onsubmit="submitFormJson(event)" class="prof-pago-form">
+                    {% csrf_token %}
                     <div class="prof-pago-form-cabecera">
                         <h3>Tu cuenta bancaria</h3>
                         <p>Solo cuentas a tu nombre: el titular es tu RUT ({{ profesor.user.rut }}).{% if cuenta_bancaria %} Actual: <strong>{{ cuenta_bancaria.banco }} {{ cuenta_bancaria.enmascarado }}</strong> ({{ cuenta_bancaria.get_tipo_cuenta_display }}).{% if cuenta_bancaria.bloqueada %} Por seguridad, los pagos a esta cuenta se habilitan el {{ cuenta_bancaria.pagable_desde|date:"d/m/Y H:i" }}.{% endif %}{% endif %}</p>
@@ -83,7 +84,8 @@
                     </div>
                 </form>
 
-                <form id="formFrecuenciaPago" action="{% url 'guardar_frecuencia_pago' %}" onsubmit="submitFormJson(event)" class="prof-pago-form">
+                <form id="formFrecuenciaPago" method="post" action="{% url 'guardar_frecuencia_pago' %}" onsubmit="submitFormJson(event)" class="prof-pago-form">
+                    {% csrf_token %}
                     <div class="prof-pago-form-cabecera">
                         <h3>Frecuencia de pago</h3>
                         <p>Un cambio rige desde el ciclo siguiente.{% if profesor.frecuencia_nueva and profesor.frecuencia_nueva != frecuencia_vigente %} <strong>Desde el {{ profesor.frecuencia_nueva_desde|date:"d/m/Y" }} tu pago será {{ profesor.get_frecuencia_nueva_display|lower }}.</strong>{% endif %}</p>
@@ -100,7 +102,8 @@
                 </form>
 
                 {% if cuenta_bancaria and saldo_disponible_raw >= minimo_retiro_raw %}
-                <form id="formSolicitarRetiro" onsubmit="submitRetiroForm(event)" class="prof-pago-form">
+                <form id="formSolicitarRetiro" method="post" action="{% url 'solicitar_retiro' %}" onsubmit="submitRetiroForm(event)" class="prof-pago-form">
+                    {% csrf_token %}
                     <div class="prof-pago-campos prof-pago-campos--corto">
                         <div class="prof-form-group">
                             <label for="retiro_monto" class="prof-form-label">Monto a retirar ($)</label>

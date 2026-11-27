@@ -6,6 +6,9 @@
 - Pruebas de bugs abiertos (@bug_qa, tests/bugs_qa.py) como xfail estricto.
 """
 
+import shutil
+import tempfile
+
 import pytest
 from cryptography.fernet import Fernet
 from django.conf import settings
@@ -22,16 +25,21 @@ MARCADORES_POR_MODULO = {
 
 @pytest.fixture(scope='session', autouse=True)
 def ajustes_lbwus(django_test_environment):
+    media_dir = tempfile.mkdtemp(prefix='lbwus_pytest_media_')
     ajustes = override_settings(
         STORAGES={
             **settings.STORAGES,
             'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
         },
         DOCUMENTOS_CLAVE=settings.DOCUMENTOS_CLAVE or Fernet.generate_key().decode(),
+        PASSWORD_HASHERS=['django.contrib.auth.hashers.MD5PasswordHasher'],
+        MEDIA_ROOT=media_dir,
+        VIDEOS_A_LA_VENTA=True,
     )
     ajustes.enable()
     yield
     ajustes.disable()
+    shutil.rmtree(media_dir, ignore_errors=True)
 
 
 def pytest_collection_modifyitems(config, items):

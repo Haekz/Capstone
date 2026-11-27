@@ -70,6 +70,8 @@ def reasignar_ticket(request, id_ticket):
     return redirect('panel_soporte')
 
 
+@never_cache
+@require_POST
 def logout_soporte(request):
     auth_logout(request)
     return redirect('home')

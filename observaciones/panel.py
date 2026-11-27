@@ -14,8 +14,11 @@ LIMITE = 20  # clases realizadas que se listan al profesor: las mas recientes
 
 def contexto_profesor(profesor):
     """Sus ultimas clases realizadas (dentro del plazo de conservacion), cada una con su observacion o vacia."""
-    realizadas = (Inscripcion.objects.completadas().filter(clase__profesor=profesor,
-                                                           sesion__fecha_hora_inicio__gte=fecha_limite())
+    realizadas = (Inscripcion.objects.completadas().filter(
+        clase__profesor=profesor,
+        alumno__user__suprimida__isnull=True,
+        sesion__fecha_hora_inicio__gte=fecha_limite(),
+    )
                   .select_related('alumno__user', 'clase__asignatura', 'sesion', 'observacion')
                   .order_by('-sesion__fecha_hora_inicio')[:LIMITE])
     return {

@@ -272,11 +272,17 @@ class VincularEstudianteForm(_VinculoForm):
 
     def _contar_sin_resultado(self):
         clave = self._clave_intentos()
-        cache.set(clave, cache.get(clave, 0) + 1, timeout=24 * 60 * 60)
+        if not cache.add(clave, 1, timeout=24 * 60 * 60):
+            try:
+                cache.incr(clave)
+            except ValueError:
+                cache.set(clave, 1, timeout=24 * 60 * 60)
 
     def clean(self):
         datos = super().clean()
         self._respetar_limites()
+        if self.errors:
+            return datos
         if datos.get('rut'):
             self.alumno = self._menor_con_rut(datos['rut'])
             if self.alumno is None:
@@ -325,7 +331,7 @@ class RegistroAdolescenteForm(_CorreoApoderadoMixin, _CuentaForm):
                    'password', 'confirmar_password', 'acepta_declaracion']
 
     def correo_propio(self):
-        return self.data.get('correo')
+        return (self.data.get('correo') or '').strip()
 
     def clean_fecha_nacimiento(self):
         return _validar_edad_menor(self.cleaned_data['fecha_nacimiento'], EDAD_SOLICITUD_PROPIA)

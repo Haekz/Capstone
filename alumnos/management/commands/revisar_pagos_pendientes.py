@@ -10,6 +10,7 @@ Si Transbank no responde, el paquete sigue pendiente y se informa; se revisa en 
 Los pendientes anteriores al campo token_ws no se pueden consultar y quedan para soporte.
 """
 
+import logging
 from datetime import timedelta
 from itertools import chain
 
@@ -19,28 +20,42 @@ from django.utils import timezone
 from alumnos import webpay
 from alumnos.models import CompraVideosExtra, PaqueteClases
 
+logger = logging.getLogger(__name__)
+
 ESPERA = timedelta(hours=1)  # el alumno puede seguir pagando en el formulario de Webpay
+EXPIRACION_MAXIMA = timedelta(days=2)  # tokens expirados en Transbank no deben bloquear cuotas para siempre
 
 
 class Command(BaseCommand):
     help = 'Activa o rechaza los paquetes pendientes consultando su estado en Transbank.'
 
     def handle(self, *args, **opciones):
-        limite = timezone.now() - ESPERA
+        ahora = timezone.now()
+        limite = ahora - ESPERA
+        limite_expirado = ahora - EXPIRACION_MAXIMA
         pendientes = chain(*(modelo.objects.filter(estado=modelo.ESTADO_PENDIENTE, creada__lt=limite)
                              .exclude(token_ws='') for modelo in (PaqueteClases, CompraVideosExtra)))
         activados = rechazados = sin_respuesta = 0
         for paquete in pendientes:
             try:
                 respuesta = webpay._tx().status(paquete.token_ws)
-            except Exception as error:  # Transbank caido o token vencido: se vuelve a intentar en la proxima corrida
+            except Exception as error:  # Transbank caido o token vencido
                 webpay._log_error_transbank('status', paquete.buy_order, error)
-                sin_respuesta += 1
+                if paquete.creada < limite_expirado:
+                    type(paquete).confirmar_pago(paquete.buy_order, False)
+                    rechazados += 1
+                else:
+                    sin_respuesta += 1
                 continue
             if respuesta.get('buy_order') != paquete.buy_order:  # no es la orden que se pregunto: no se decide nada
                 sin_respuesta += 1
                 continue
-            aprobado, _ = webpay.registrar_respuesta(respuesta)
+            try:
+                aprobado, _ = webpay.registrar_respuesta(respuesta)
+            except Exception:
+                logger.exception('Error aplicando respuesta Transbank (%s)', paquete.buy_order)
+                sin_respuesta += 1
+                continue
             activados += aprobado
             rechazados += not aprobado
         self.stdout.write(f'Pagos pendientes revisados: {activados} activados, {rechazados} rechazados, '

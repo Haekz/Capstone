@@ -79,3 +79,14 @@ def iniciar_directo(request, clase_id):
     clase.save(update_fields=['descripcion_vivo', 'temas_vivo', 'en_vivo'])
 
     return JsonResponse({'success': True})
+
+
+@profesor_required_json
+@require_POST
+def finalizar_directo(request, clase_id):
+    clase = get_object_or_404(Clase.objects.select_related('profesor'), id_clase=clase_id)
+    if not es_profesor_habilitado_de(clase, request.user):
+        return JsonResponse({'success': False, 'message': 'No tienes permiso.'}, status=403)
+    clase.en_vivo = False
+    clase.save(update_fields=['en_vivo'])
+    return JsonResponse({'success': True})

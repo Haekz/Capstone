@@ -382,12 +382,17 @@ class Inscripcion(models.Model):
 
     @property
     def puede_unirse(self):
-        """Solo una inscripcion confirmada, de una sesion no cancelada, entra a la sala virtual.
+        """Solo una inscripcion confirmada, de una sesion vigente y no cancelada, entra a la sala virtual.
 
         'pendiente' solo la asigna un admin a mano: aun no esta confirmada.
         """
-        sesion_cancelada = self.sesion_id is not None and self.sesion.estado == SesionClase.ESTADO_CANCELADA
-        return self.estado == self.ESTADO_CONFIRMADA and not sesion_cancelada
+        if self.estado != self.ESTADO_CONFIRMADA:
+            return False
+        if self.sesion_id is None:
+            return True
+        if self.sesion.estado in (SesionClase.ESTADO_CANCELADA, SesionClase.ESTADO_FINALIZADA):
+            return False
+        return self.sesion.fecha_hora_fin > timezone.now()
 
     @property
     def puede_cancelar(self):

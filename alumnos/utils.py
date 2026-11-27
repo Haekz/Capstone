@@ -1,5 +1,6 @@
 import re
-from datetime import date
+
+from django.utils import timezone
 
 def validar_rut_chileno(rut):
     rut_clean = rut.replace(".", "").replace("-", "").strip().upper()
@@ -24,7 +25,7 @@ EDAD_MINIMA_ESTUDIANTE = 6  # edad minima comercial (decisiones de menores)
 
 
 def edad(fecha):
-    hoy = date.today()
+    hoy = timezone.localdate()
     return hoy.year - fecha.year - ((hoy.month, hoy.day) < (fecha.month, fecha.day))
 
 
@@ -54,7 +55,7 @@ def error_fecha_nacimiento(fecha, edad_minima=EDAD_ADULTA):
     admin exigen 18. Los menores solo los registra un apoderado verificado
     (app apoderados).
     """
-    if fecha >= date.today(): return "La fecha de nacimiento no puede ser actual ni futura."
+    if fecha >= timezone.localdate(): return "La fecha de nacimiento no puede ser actual ni futura."
     if edad(fecha) < edad_minima: return f"Debes ser mayor o igual a {edad_minima} años."
     return None
 

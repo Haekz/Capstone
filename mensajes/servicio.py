@@ -38,9 +38,14 @@ class MensajeError(ValidationError):
 
 
 def ids_profesores_con_relacion(alumno):
-    """Profesores con quienes el alumno tiene una reserva activa o un paquete vigente."""
-    con_reserva = Inscripcion.objects.filter(alumno=alumno, estado__in=Inscripcion.ESTADOS_ACTIVOS)
-    con_paquete = PaqueteClases.objects.vigentes().filter(alumno=alumno)
+    """Profesores activos con quienes el alumno tiene una reserva próxima o un paquete vigente."""
+    from alumnos.models import SesionClase
+    con_reserva = (Inscripcion.objects.proximas()
+                   .filter(alumno=alumno, clase__profesor__user__suprimida__isnull=True,
+                           clase__profesor__user__is_active=True)
+                   .exclude(sesion__estado=SesionClase.ESTADO_CANCELADA))
+    con_paquete = PaqueteClases.objects.vigentes().filter(
+        alumno=alumno, profesor__user__suprimida__isnull=True, profesor__user__is_active=True)
     ids = set(con_reserva.values_list('clase__profesor_id', flat=True))
     ids.update(con_paquete.values_list('profesor_id', flat=True))
     ids.discard(None)  # paquete cuyo profesor ya no existe

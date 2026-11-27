@@ -9,6 +9,7 @@ digitos y entra solo si el correo es de ese dominio. Tiene prioridad sobre
 SITIO_CLAVE. Sin ninguna de las dos variables, la puerta no hace nada.
 """
 
+import hashlib
 import hmac
 import secrets
 import time
@@ -16,6 +17,7 @@ import time
 from django import forms
 from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
+from django.core.cache import cache
 from django.core.mail import send_mail
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
@@ -163,7 +165,11 @@ def _puerta_correo(request, destino):
         pendiente = None
     elif accion == 'correo':
         correo = (request.POST.get('correo') or '').strip().lower()
-        if not correo_permitido(correo):
+        falta = ESPERA_REENVIO - (time.time() - pendiente.get('enviado', 0)) if pendiente else 0
+        if falta > 0:
+            ctx['error'] = f'Espera {int(falta) + 1} segundos para pedir otro código.'
+            ctx['correo_valor'] = correo
+        elif not correo_permitido(correo):
             dominios = ', '.join('@' + d for d in settings.SITIO_DOMINIOS_CORREO)
             ctx['error'] = f'Solo pueden entrar correos {dominios}.'
             ctx['correo_valor'] = correo
@@ -203,9 +209,24 @@ def puerta(request):
     if modo_correo():
         return _puerta_correo(request, destino)
 
+    xff = request.META.get('HTTP_X_FORWARDED_FOR', '')
+    ip = xff.split(',')[-1].strip() if xff else request.META.get('REMOTE_ADDR', '0.0.0.0')
+    clave_ip = f'puerta_ip_{hashlib.sha256(ip.encode("utf-8")).hexdigest()[:32]}'
+    if request.method == 'POST' and cache.get(clave_ip, 0) >= 15:
+        form = PuertaForm()
+        form.add_error('clave', 'Demasiados intentos. Espera unos minutos antes de intentar de nuevo.')
+        return render(request, 'puerta.html', {'form': form, 'next': destino}, status=429)
+
     form = PuertaForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
+        cache.delete(clave_ip)
         request.session[SESION_PUERTA] = True
         return HttpResponseRedirect(destino)
+    if request.method == 'POST':
+        if not cache.add(clave_ip, 1, 900):
+            try:
+                cache.incr(clave_ip)
+            except ValueError:
+                cache.set(clave_ip, 1, 900)
 
     return render(request, 'puerta.html', {'form': form, 'next': destino})

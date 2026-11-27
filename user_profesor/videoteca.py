@@ -13,10 +13,10 @@ import logging
 import struct
 
 from django.core.exceptions import ValidationError
-from django.db import DatabaseError
+from django.db import DatabaseError, transaction
 from django.utils import timezone
 
-from alumnos.models import Asignatura, Clase, PaqueteClases, Video, VideoCompartido
+from alumnos.models import Asignatura, Clase, PaqueteClases, Profesor, Video, VideoCompartido
 from alumnos.models.videos import nuevo_id_video
 
 from . import almacen_videos
@@ -192,11 +192,13 @@ def eliminar(profesor_id, video_id):
     ValidationError si ya lo compartió con un alumno de paquete vigente (fase 4b): el alumno lo pagó y el profesor
     ya cobró su parte; borrarlo lo dejaría sin el video. Al vencer el paquete, se puede.
     """
-    if not _fichas().filter(pk=str(video_id), profesor_id=profesor_id).exists():
-        return False
-    if (VideoCompartido.objects.entregados()
-            .filter(video_id=video_id, paquete__in=PaqueteClases.objects.vigentes()).exists()):
-        raise ValidationError('Ya compartiste este video con un alumno que tiene su paquete vigente: '
-                              'podrás borrarlo cuando el paquete venza.')
-    borrar(video_id)
+    with transaction.atomic():  # mismo candado que entregas: no se borra un video mientras se esta compartiendo
+        Profesor.objects.select_for_update().get(pk=profesor_id)
+        if not _fichas().filter(pk=str(video_id), profesor_id=profesor_id).exists():
+            return False
+        if (VideoCompartido.objects.entregados()
+                .filter(video_id=video_id, paquete__in=PaqueteClases.objects.vigentes()).exists()):
+            raise ValidationError('Ya compartiste este video con un alumno que tiene su paquete vigente: '
+                                  'podrás borrarlo cuando el paquete venza.')
+        borrar(video_id)
     return True

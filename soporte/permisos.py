@@ -64,7 +64,7 @@ def categorias_que_reporta(request):
     """Categorias en que el usuario en sesion puede abrir tickets (D10); el profesor, ademas, la de su
     horario (fase 7). El alumno menor ninguna: los abre su apoderado (D18, revisada el 01-nov)."""
     rol = rol_en_sesion(request)
-    if not request.user.is_authenticated or not abre_tickets(rol, request.user):
+    if not request.user.is_authenticated or not request.user.is_active or not abre_tickets(rol, request.user):
         return ()
     return Ticket.DE_PROFESORES if rol is PROFESOR else Ticket.DE_USUARIOS
 

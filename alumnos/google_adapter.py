@@ -19,7 +19,7 @@ from django.contrib.auth import get_user_model, login as auth_login
 from django.shortcuts import redirect
 
 from . import codigo_google
-from .roles import abrir_sesion_rol, redirigir_a_portal, resolver_rol
+from .roles import ADMIN, SOPORTE, abrir_sesion_rol, redirigir_a_portal, resolver_rol
 
 BACKEND_SESION = 'django.contrib.auth.backends.ModelBackend'
 
@@ -51,6 +51,9 @@ def entrar_al_portal(request, user):
         return redirect('login')
 
     rol, perfil = resolver_rol(user)
+    if rol is None or perfil is None:
+        messages.error(request, 'Tu cuenta no tiene un perfil habilitado para ingresar.')
+        return redirect('login')
     auth_login(request, user, backend=BACKEND_SESION)
     abrir_sesion_rol(request, rol, perfil)
     return redirigir_a_portal(rol)
@@ -88,6 +91,16 @@ class LbwusSocialAdapter(DefaultSocialAccountAdapter):
             raise ImmediateHttpResponse(redirect('login'))
 
         rol, _ = resolver_rol(user) if user is not None else (None, None)
+
+        if user is not None and not sociallogin.is_existing and (
+            user.is_staff or user.is_superuser or rol in (ADMIN, SOPORTE)
+        ):
+            messages.error(
+                request,
+                'Las cuentas administrativas o de soporte no pueden vincularse automáticamente con Google. '
+                'Inicia sesión con tu RUT o correo y contraseña.'
+            )
+            raise ImmediateHttpResponse(redirect('login'))
 
         if rol is not None:
             if not sociallogin.is_existing:

@@ -5,8 +5,10 @@ sesion el correo verificado por Google (ver alumnos/codigo_google.py).
 """
 
 from django.contrib import messages
+from django.db import transaction
 from django.shortcuts import redirect, render
 from django.views.decorators.cache import never_cache
+from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_POST
 
 from . import codigo_google
@@ -21,6 +23,7 @@ def _sin_registro_en_curso(request):
 
 
 @never_cache
+@sensitive_post_parameters('codigo')
 def google_verificar(request):
     if codigo_google.pendiente(request) is None:
         return _sin_registro_en_curso(request)
@@ -61,7 +64,8 @@ def _cuenta_a_completar(sociallogin, correo):
     if sociallogin.is_existing:
         return sociallogin.user
     user = buscar_usuario_por_correo(correo)
-    if user is not None and resolver_rol(user)[0] is None:
+    if (user is not None and resolver_rol(user)[0] is None
+            and not user.is_staff and not user.is_superuser and user.is_active):
         return user
     return None
 
@@ -85,9 +89,10 @@ def google_completar(request):
         initial={'nombre': datos.get('nombre', '')},
     )
     if request.method == 'POST' and form.is_valid():
-        user = form.save()
-        if not sociallogin.is_existing:
-            sociallogin.connect(request, user)
+        with transaction.atomic():
+            user = form.save()
+            if not sociallogin.is_existing:
+                sociallogin.connect(request, user)
         codigo_google.terminar(request)
         messages.success(request, '¡Listo! Tu cuenta quedó creada.')
         return entrar_al_portal(request, user)

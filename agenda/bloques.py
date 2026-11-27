@@ -7,12 +7,12 @@
 - Solo profesores habilitados (titulo aprobado): el resto no puede hacer clases.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone as dt_timezone
 
 from django.db import transaction
 from django.utils import timezone
 
-from alumnos.models import Clase, SesionClase
+from alumnos.models import Clase, Profesor, SesionClase
 
 from .models import BloqueAgenda
 
@@ -30,7 +30,8 @@ def _inicios(franja, desde, hasta):
         inicio, fin = datetime.combine(dia, franja.hora_inicio), datetime.combine(dia, franja.hora_fin)
         while inicio + DURACION <= fin:
             aware = timezone.make_aware(inicio)
-            if desde < aware <= hasta:
+            # En cambio de hora (DST America/Santiago), si la hora local no existe se omite.
+            if timezone.localtime(aware).replace(tzinfo=None) == inicio and desde < aware <= hasta:
                 yield aware
             inicio += DURACION
 
@@ -41,17 +42,23 @@ def generar(profesor, ahora=None):
         return 0
     ahora = ahora or timezone.now()
     hasta = ahora + timedelta(weeks=SEMANAS)
-    clases = list(Clase.objects.filter(profesor=profesor))
-    existentes = set(SesionClase.objects.filter(
-        clase__in=clases, fecha_hora_inicio__gt=ahora, fecha_hora_inicio__lte=hasta,
-    ).values_list('clase_id', 'fecha_hora_inicio'))  # incluye las canceladas: no vuelven
-    nuevos = [(franja, clase, inicio)
-              for franja in profesor.horario_semanal.all()
-              for inicio in _inicios(franja, ahora, hasta)
-              for clase in clases if franja.clase_id in (None, clase.pk) and (clase.pk, inicio) not in existentes]
     with transaction.atomic():
+        Profesor.objects.select_for_update().get(pk=profesor.pk)
+        clases = list(Clase.objects.filter(profesor=profesor))
+        existentes = set(SesionClase.objects.filter(
+            clase__in=clases, fecha_hora_inicio__gt=ahora, fecha_hora_inicio__lte=hasta,
+        ).values_list('clase_id', 'fecha_hora_inicio'))  # incluye las canceladas: no vuelven
+        nuevos = [(franja, clase, inicio)
+                  for franja in profesor.horario_semanal.all()
+                  for inicio in _inicios(franja, ahora, hasta)
+                  for clase in clases if franja.clase_id in (None, clase.pk) and (clase.pk, inicio) not in existentes]
         sesiones = SesionClase.objects.bulk_create([
-            SesionClase(clase=clase, fecha_hora_inicio=inicio, fecha_hora_fin=inicio + DURACION, cupo_maximo=1)
+            SesionClase(
+                clase=clase,
+                fecha_hora_inicio=inicio,
+                fecha_hora_fin=inicio.astimezone(dt_timezone.utc) + DURACION,
+                cupo_maximo=1,
+            )
             for _, clase, inicio in nuevos
         ])
         BloqueAgenda.objects.bulk_create([BloqueAgenda(sesion=sesion, horario=franja)
@@ -67,6 +74,7 @@ def quitar_franja(franja, ahora=None):
     """
     ahora = ahora or timezone.now()
     with transaction.atomic():
+        Profesor.objects.select_for_update().get(pk=franja.profesor_id)
         SesionClase.objects.filter(
             bloque_agenda__horario=franja, fecha_hora_inicio__gt=ahora, inscripciones__isnull=True,
         ).delete()

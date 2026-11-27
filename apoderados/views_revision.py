@@ -7,6 +7,7 @@ revisa. El lider ademas ve el historial, los vinculos vigentes, las revocaciones
 
 from cryptography.fernet import InvalidToken
 from django.contrib import messages
+from django.db.models import Prefetch
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.cache import never_cache
@@ -26,15 +27,16 @@ def revision(request):
     """Lo que el agente tiene asignado. El lider ademas ve registros, vinculos y accesos."""
     agente = agente_en_sesion(request)
     mios = tickets_del_agente(request)
+    docs_sin_contenido = Prefetch('documentos', queryset=Documento.objects.defer('contenido'))
     contexto = {
         'agente': agente,
         'pendientes': (Apoderado.objects.filter(estado=Apoderado.REVISION_PENDIENTE, tickets__in=mios)
-                       .select_related('user').prefetch_related('documentos')),
+                       .select_related('user').prefetch_related(docs_sin_contenido)),
         # Solo los que se pueden revisar: el apoderado ya tiene su identidad verificada.
         'vinculos_pendientes': (Vinculo.objects.filter(estado=Vinculo.PENDIENTE, apoderado__estado=Apoderado.VERIFICADO,
                                                        tickets__in=mios)
                                 .select_related('apoderado__user', 'alumno__user')
-                                .prefetch_related('invitaciones', 'documentos')),
+                                .prefetch_related('invitaciones', docs_sin_contenido)),
     }
     if agente.es_lider:
         contexto.update({

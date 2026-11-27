@@ -93,10 +93,12 @@ def inscribir_clase(request):
 @alumno_required_json
 def listar_sesiones_disponibles(request):
     """Retorna las sesiones programadas a futuro con cupos libres en formato JSON."""
-    clase_id = request.GET.get('clase_id')
-    qs = SesionClase.objects.disponibles()
+    clase_id = (request.GET.get('clase_id') or '').strip()
+    qs = SesionClase.objects.disponibles().filter(clase__profesor__titulo_estado='aprobado')
     if clase_id:
-        qs = qs.filter(clase_id=clase_id)
+        if not clase_id.isdecimal():
+            return JsonResponse({'success': False, 'message': 'ID de clase inválido.'}, status=400)
+        qs = qs.filter(clase_id=int(clase_id))
 
     sesiones = (
         qs.select_related('clase', 'clase__asignatura', 'clase__profesor', 'clase__profesor__user')
@@ -126,7 +128,7 @@ def listar_sesiones_disponibles(request):
             'inicio_formateado': s.inicio_local.strftime('%d/%m/%Y %H:%M'),
             'duracion_minutos': s.duracion_minutos,
             'cupo_maximo': s.cupo_maximo,
-            'cupos_disponibles': s.cupos_disponibles,
+            'cupos_disponibles': max(0, s.cupo_maximo - getattr(s, 'cupos_ocupados_count', s.cupos_ocupados)),
             'ya_inscrito': s.id_sesion in inscritas_sesion_ids,
         }
         for s in sesiones
@@ -195,7 +197,7 @@ def cancelar_inscripcion(request, pk):
     return redirect('alumno_pag1')
 
 
-@alumno_required
+@alumno_required_json
 @require_POST
 def reprogramar_inscripcion(request, pk):
     """Mueve una reserva propia a otra sesion del mismo profesor (POST id_sesion)."""

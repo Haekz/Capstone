@@ -1,3 +1,4 @@
+import hashlib
 import logging
 import os
 
@@ -165,8 +166,20 @@ def contactos(request):
     )
 
 
+def _incrementar_cache(clave, timeout):
+    if not cache.add(clave, 1, timeout):
+        try:
+            cache.incr(clave)
+        except ValueError:
+            cache.set(clave, 1, timeout)
+
+
+def _clave_hash(prefijo, valor):
+    return f'{prefijo}_{hashlib.sha256(str(valor).encode("utf-8")).hexdigest()[:32]}'
+
+
 def _recibir_contacto(request):
-    clave = f'contacto_ip_{_obtener_ip(request)}'
+    clave = _clave_hash('contacto_ip', _obtener_ip(request))
     enviados = cache.get(clave, 0)
     if enviados >= LIMITE_CONTACTO:
         return JsonResponse({'success': False, 'message': 'Ya enviaste varios mensajes. Intenta de nuevo en una hora.'},
@@ -177,7 +190,7 @@ def _recibir_contacto(request):
         return JsonResponse({'success': False, 'message': primer_error}, status=400)
     # Lo atiende soporte, como cualquier caso (H14, D5): el admin solo ve metricas.
     abrir_contacto(form.save(commit=False))
-    cache.set(clave, enviados + 1, 3600)
+    _incrementar_cache(clave, 3600)
     return JsonResponse({'success': True})
 
 
@@ -449,10 +462,10 @@ def custom_login(request):
         password = request.POST.get('password', '')
 
         ip = _obtener_ip(request)
-        # Mismo contador para todas las formas de escribir el RUT.
+        # Mismo contador para todas las formas de escribir el RUT; hash evita exceder 255 chars en DatabaseCache.
         canon_user = obtener_identificador_rate_limit(username)
-        clave_cache_ip = f'intentos_login_ip_{ip}'
-        clave_cache_user = f'intentos_login_user_{canon_user}'
+        clave_cache_ip = _clave_hash('intentos_login_ip', ip)
+        clave_cache_user = _clave_hash('intentos_login_user', canon_user)
 
         intentos_ip = cache.get(clave_cache_ip, 0)
         intentos_user = cache.get(clave_cache_user, 0)
@@ -469,15 +482,14 @@ def custom_login(request):
         else:
             user = authenticate(request, username=username, password=password)
             if user is not None:
-                cache.delete(clave_cache_ip)
                 cache.delete(clave_cache_user)
                 respuesta, error = _abrir_sesion(request, user, siguiente)
                 if respuesta is not None:
                     return respuesta
             else:
-                cache.set(clave_cache_ip, intentos_ip + 1, BLOQUEO_LOGIN_SEGUNDOS)
+                _incrementar_cache(clave_cache_ip, BLOQUEO_LOGIN_SEGUNDOS)
                 if canon_user:
-                    cache.set(clave_cache_user, intentos_user + 1, BLOQUEO_LOGIN_SEGUNDOS)
+                    _incrementar_cache(clave_cache_user, BLOQUEO_LOGIN_SEGUNDOS)
                 logger.warning('evento=login_fallido %s intentos_ip=%s intentos_usuario=%s',
                                quien, intentos_ip + 1, intentos_user + 1 if canon_user else 0)
                 if intentos_ip + 1 >= LIMITE_INTENTOS_IP or (canon_user and intentos_user + 1 >= LIMITE_INTENTOS_USUARIO):

@@ -37,18 +37,31 @@ def _cerrar_ticket(profesor):
     cerrar_tickets(profesor.tickets.filter(categoria=Ticket.TITULOS))
 
 
+def _programar_borrado_archivo(profesor):
+    """Borra el titulo antiguo en disco solo despues de confirmar la transaccion."""
+    if not profesor.titulo_archivo:
+        return
+    storage = profesor.titulo_archivo.storage
+    nombre = profesor.titulo_archivo.name
+    profesor.titulo_archivo = ''
+    if nombre:
+        transaction.on_commit(lambda n=nombre, s=storage: s.delete(n))
+
+
 def subir(profesor, archivo):
     """Guarda el titulo cifrado y lo deja en revision. Lanza ValidationError."""
-    if not profesor.puede_subir_titulo:
-        raise ValidationError('Tu título ya está en revisión o aprobado.')
     if archivo is None:
         raise ValidationError('Selecciona el archivo de tu título.')
-    profesor.titulo_contenido, profesor.titulo_formato = documentos.preparar(archivo)
-    _borrar_archivo_antiguo(profesor)
-    profesor.titulo_estado = Profesor.TITULO_EN_REVISION
-    profesor.titulo_observacion = ''
-    profesor.titulo_actualizado = timezone.now()
+    contenido, formato = documentos.preparar(archivo)
     with transaction.atomic():
+        profesor = Profesor.objects.select_for_update().get(pk=profesor.pk)
+        if not profesor.puede_subir_titulo:
+            raise ValidationError('Tu título ya está en revisión o aprobado.')
+        _programar_borrado_archivo(profesor)
+        profesor.titulo_contenido, profesor.titulo_formato = contenido, formato
+        profesor.titulo_estado = Profesor.TITULO_EN_REVISION
+        profesor.titulo_observacion = ''
+        profesor.titulo_actualizado = timezone.now()
         profesor.save()
         abrir_ticket(Ticket.TITULOS, profesor=profesor)
 
@@ -59,19 +72,22 @@ def resolver(profesor, aprobar, observacion='', ids_asignaturas=()):
     Al aprobar, soporte puede asignarle asignaturas del catalogo (opcional) y se crean sus clases.
     Devuelve las clases nuevas.
     """
-    if profesor.titulo_estado != Profesor.TITULO_EN_REVISION:
-        raise ValidationError('Ese título no está pendiente de revisión.')
     if not aprobar and not observacion.strip():
         raise ValidationError('Indica el motivo del rechazo.')
     elegidas = asignaturas.del_catalogo(ids_asignaturas, obligatoria=False) if aprobar else []
-    profesor.titulo_estado = Profesor.TITULO_APROBADO if aprobar else Profesor.TITULO_RECHAZADO
-    profesor.titulo_observacion = '' if aprobar else observacion.strip()[:200]
-    profesor.titulo_actualizado = timezone.now()
-    profesor.titulo_contenido, profesor.titulo_formato = None, ''
-    _borrar_archivo_antiguo(profesor)
     with transaction.atomic():
-        Profesor.objects.select_for_update().filter(pk=profesor.pk).first()  # a la vez que una especializacion
-        profesor.save()
+        profesor = Profesor.objects.select_for_update().get(pk=profesor.pk)  # a la vez que una especializacion
+        if profesor.titulo_estado != Profesor.TITULO_EN_REVISION:
+            raise ValidationError('Ese título no está pendiente de revisión.')
+        profesor.titulo_estado = Profesor.TITULO_APROBADO if aprobar else Profesor.TITULO_RECHAZADO
+        profesor.titulo_observacion = '' if aprobar else observacion.strip()[:200]
+        profesor.titulo_actualizado = timezone.now()
+        profesor.titulo_contenido, profesor.titulo_formato = None, ''
+        _programar_borrado_archivo(profesor)
+        profesor.save(update_fields=[
+            'titulo_estado', 'titulo_observacion', 'titulo_actualizado',
+            'titulo_contenido', 'titulo_formato', 'titulo_archivo',
+        ])
         _cerrar_ticket(profesor)
         nuevas = asignaturas.asignar(profesor, elegidas)  # despues de aprobar: sus bloques ya se pueden generar
         if aprobar and not nuevas:
@@ -99,8 +115,8 @@ def pasar_a_base(profesor):
             profesor.titulo_observacion = NO_SE_RECUPERO
             profesor.titulo_actualizado = timezone.now()
             resultado = A_RESUBIR
-    _borrar_archivo_antiguo(profesor)  # si ya no estaba en el disco, Django no reclama
     with transaction.atomic():
+        _programar_borrado_archivo(profesor)
         profesor.save()
         if resultado == A_RESUBIR:
             _cerrar_ticket(profesor)

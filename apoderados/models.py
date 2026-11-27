@@ -280,6 +280,7 @@ class Vinculo(models.Model):
             self.estado = self.REVOCADO
             Revocacion.objects.create(vinculo=self, autor=autor, motivo=motivo)
             cerrar_tickets(self.tickets)  # si seguia pendiente, ya no hay nada que revisar
+            self.documentos.all().delete()
             return Inscripcion.objects.filter(
                 paquete__compra_apoderado__vinculo=self, estado__in=Inscripcion.ESTADOS_ACTIVOS,
                 sesion__fecha_hora_inicio__gt=timezone.now(),
@@ -370,13 +371,17 @@ class Invitacion(models.Model):
     def aceptar(self, apoderado, parentesco, version_declaracion):
         """Crea el vinculo pendiente: lo verifica soporte con el certificado de nacimiento."""
         with transaction.atomic():
-            self.vinculo = Vinculo.objects.create(
-                apoderado=apoderado, alumno=self.solicitud.alumno, parentesco=parentesco,
+            inv = Invitacion.objects.select_for_update().get(pk=self.pk)
+            if not inv.vigente():
+                raise ValidationError('Esta invitación ya fue utilizada o venció.')
+            inv.vinculo = Vinculo.objects.create(
+                apoderado=apoderado, alumno=inv.solicitud.alumno, parentesco=parentesco,
                 version_declaracion=version_declaracion, declaracion_aceptada=timezone.now(),
             )
-            self.vinculo.abrir_ticket_si_revisable()
-            self.usada = timezone.now()
-            self.save(update_fields=['vinculo', 'usada'])
+            inv.vinculo.abrir_ticket_si_revisable()
+            inv.usada = timezone.now()
+            inv.save(update_fields=['vinculo', 'usada'])
+            self.vinculo, self.usada = inv.vinculo, inv.usada
         return self.vinculo
 
 

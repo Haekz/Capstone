@@ -16,12 +16,13 @@ de datos, para no mantener bloqueos mientras se espera la red.
 
 import logging
 
+import requests
 from django.db import IntegrityError, transaction
 from django.db.models import Sum
 from django.utils import timezone
 
 from . import webpay
-from .models.videos import CompraVideosExtra, DevolucionVideos, ReembolsoTransbank
+from .models.videos import CompraVideosExtra, DevolucionVideos, PaqueteClases, ReembolsoTransbank
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +76,10 @@ def _fallo(devolucion, motivo):
 def _pedir(token_ws, monto):
     """Respuesta de Transbank, o ValueError si responde con codigo de rechazo (una reversa solo trae el tipo)."""
     respuesta = webpay._tx().refund(token_ws, monto)
-    if respuesta.get('type') == 'NULLIFIED' and respuesta.get('response_code') != 0:
+    tipo = respuesta.get('type')
+    if tipo not in ('REVERSED', 'NULLIFIED'):
+        raise ValueError(f'Respuesta inesperada de Transbank ({tipo!r}).')
+    if tipo == 'NULLIFIED' and respuesta.get('response_code') != 0:
         raise ValueError(f'Transbank no anuló la compra (código {respuesta.get("response_code")}).')
     return respuesta
 
@@ -86,13 +90,16 @@ def intentar(devolucion):
     Si no se puede (sin token, sin saldo en esas transacciones, plazo, tarjeta, red), False y el motivo en
     ``devolucion.error_reembolso`` para que soporte lo vea; queda para devolver a mano. Se puede repetir.
     """
-    if devolucion.devuelta:
-        return False
-    if devolucion.reembolsos.filter(confirmado__isnull=True).exists():  # uno a medias: puede haber salido el dinero
-        return _fallo(devolucion, EN_CURSO)
-    partes = _repartir(devolucion)
-    if partes is None:
-        return _fallo(devolucion, 'Los pagos de estos videos no alcanzan o no tienen datos para devolver por Transbank.')
+    with transaction.atomic():
+        devolucion = DevolucionVideos.objects.select_for_update().select_related('paquete').get(pk=devolucion.pk)
+        if devolucion.devuelta or not devolucion.aprobada:
+            return False
+        if devolucion.reembolsos.filter(confirmado__isnull=True).exists():  # uno a medias: puede haber salido el dinero
+            return _fallo(devolucion, EN_CURSO)
+        PaqueteClases.objects.select_for_update().get(pk=devolucion.paquete_id)
+        partes = _repartir(devolucion)
+        if partes is None:
+            return _fallo(devolucion, 'Los pagos de estos videos no alcanzan o no tienen datos para devolver por Transbank.')
     for token_ws, monto in partes:
         try:
             with transaction.atomic():  # punto de guardado: un choque de unicidad no rompe la transaccion de afuera
@@ -101,7 +108,11 @@ def intentar(devolucion):
             return _fallo(devolucion, EN_CURSO)  # otro intento se nos adelanto
         try:
             respuesta = _pedir(token_ws, monto)
-        except Exception as error:  # rechazo de Transbank, red o credenciales: cualquiera cae al camino manual
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, TimeoutError, ConnectionError) as error:
+            # Timeout o error de red: Transbank pudo procesar el reembolso; se conserva confirmado=None como candado.
+            logger.warning('Timeout/red en reembolso (devolucion %s): %s', devolucion.pk, error)
+            return _fallo(devolucion, EN_CURSO)
+        except Exception as error:  # rechazo explícito de Transbank o credenciales: cae al camino manual
             reembolso.delete()
             logger.warning('Reembolso rechazado (devolucion %s): %s', devolucion.pk, error)
             return _fallo(devolucion, f'Transbank no pudo devolver: {error}')

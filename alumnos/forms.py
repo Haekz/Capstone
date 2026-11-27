@@ -29,20 +29,22 @@ class FiltroClasesForm(forms.Form):
 
 class AlumnoForm(forms.ModelForm):
     # Campos de CustomUser
-    nombre = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre Completo'}), label='Nombre Completo')
-    rut = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'RUT (ej: 12.345.678-9)'}), label='RUT')
-    direccion = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Dirección'}), label='Dirección')
+    nombre = forms.CharField(max_length=150, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre Completo'}), label='Nombre Completo')
+    rut = forms.CharField(max_length=12, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'RUT (ej: 12.345.678-9)'}), label='RUT')
+    direccion = forms.CharField(max_length=100, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Dirección'}), label='Dirección')
     fecha_nacimiento = forms.DateField(widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}), label='Fecha de Nacimiento')
     correo_electronico = forms.EmailField(widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'correo@ejemplo.com'}), label='Correo Electrónico')
-    telefono = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '987654321'}), label='Teléfono', required=False)
+    telefono = forms.CharField(max_length=20, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '987654321'}), label='Teléfono', required=False)
     genero = forms.ModelChoiceField(queryset=Genero.objects.all(), widget=forms.Select(attrs={'class': 'form-control'}), label='Género', required=False)
     
     password = forms.CharField(
+        strip=False,
         widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Contraseña'}),
         label='Contraseña',
         min_length=6
     )
     confirm_password = forms.CharField(
+        strip=False,
         widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Confirmar Contraseña'}),
         label='Confirmar Contraseña',
         min_length=6
@@ -75,11 +77,13 @@ class AlumnoForm(forms.ModelForm):
         return fecha
 
     def clean_rut(self):
-        rut = self.cleaned_data.get('rut')
+        rut = (self.cleaned_data.get('rut') or '').strip()
         if rut:
+            from .backends import normalizar_rut_canonico
             from .utils import validar_rut_chileno
             if not validar_rut_chileno(rut):
                 raise forms.ValidationError("El RUT ingresado no es válido.")
+            return normalizar_rut_canonico(rut)
         return rut
 
     def clean(self):
@@ -97,7 +101,7 @@ class AlumnoForm(forms.ModelForm):
         if password:
             from .utils import validar_clave_nueva
             try:
-                validar_clave_nueva(password, rut, correo)
+                validar_clave_nueva(password, rut, correo, cleaned_data.get('nombre', ''))
             except forms.ValidationError as error:
                 self.add_error('password', error)
 
@@ -110,6 +114,7 @@ class AlumnoForm(forms.ModelForm):
         return cleaned_data
 
     def save(self, commit=True):
+        from django.db import transaction
         alumno = super().save(commit=False)
         password = self.cleaned_data.get('password')
         rut = self.cleaned_data.get('rut')
@@ -117,19 +122,20 @@ class AlumnoForm(forms.ModelForm):
         nombre = self.cleaned_data.get('nombre')
 
         User = get_user_model()
-        user = User.objects.create_user(
-            username=rut,
-            rut=rut,
-            email=correo,
-            rol='alumno',
-            password=password,
-            first_name=nombre,
-            telefono=self.cleaned_data.get('telefono', ''),
-            direccion=self.cleaned_data.get('direccion', ''),
-            fecha_nacimiento=self.cleaned_data.get('fecha_nacimiento'),
-            genero=self.cleaned_data.get('genero')
-        )
-        alumno.user = user
-        if commit:
-            alumno.save()
+        with transaction.atomic():
+            user = User.objects.create_user(
+                username=rut,
+                rut=rut,
+                email=correo,
+                rol='alumno',
+                password=password,
+                first_name=nombre,
+                telefono=self.cleaned_data.get('telefono', ''),
+                direccion=self.cleaned_data.get('direccion', ''),
+                fecha_nacimiento=self.cleaned_data.get('fecha_nacimiento'),
+                genero=self.cleaned_data.get('genero')
+            )
+            alumno.user = user
+            if commit:
+                alumno.save()
         return alumno

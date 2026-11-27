@@ -54,4 +54,4 @@ class AlmacenVideosTests(SimpleTestCase):
         self.assertIn(R2['R2_ENDPOINT'], cabeceras.CSP['media-src'])
         with override_settings(R2_ENDPOINT=''):
             importlib.reload(cabeceras)
-        self.assertEqual(cabeceras.CSP['media-src'], ("'self'", 'https://commondatastorage.googleapis.com'))
+        self.assertEqual(cabeceras.CSP['media-src'], ("'self'",))

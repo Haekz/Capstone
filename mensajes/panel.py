@@ -50,7 +50,9 @@ def contexto_alumno(alumno, activa_id, error=None):
                           .bandeja(alumno.user, 'visto_cliente'))
     activa, mensajes = _activa_y_mensajes(alumno.user, conversaciones, activa_id)
     sin_conversacion = servicio.ids_profesores_con_relacion(alumno) - {c.profesor_id for c in conversaciones}
-    nuevos = Profesor.objects.filter(pk__in=sin_conversacion).select_related('user', 'especialidad')
+    nuevos = Profesor.objects.filter(
+        pk__in=sin_conversacion, user__suprimida__isnull=True, user__is_active=True
+    ).select_related('user', 'especialidad')
     return {**vacio, 'bandeja': conversaciones, 'bandeja_activa': activa, 'bandeja_mensajes': mensajes,
             'bandeja_nuevos': list(nuevos)}
 
@@ -68,7 +70,9 @@ def contexto_apoderado(apoderado, activa_id):
         if not vinculo.autoriza(vinculo.alumno):
             continue
         ids = servicio.ids_profesores_con_relacion(vinculo.alumno)
-        profesores = Profesor.objects.filter(pk__in=ids).select_related('user', 'especialidad')
+        profesores = Profesor.objects.filter(
+            pk__in=ids, user__suprimida__isnull=True, user__is_active=True
+        ).select_related('user', 'especialidad')
         nuevos += [{'vinculo': vinculo, 'profesor': p} for p in profesores if (vinculo.alumno_id, p.pk) not in hablados]
     return {'bandeja': conversaciones, 'bandeja_activa': activa, 'bandeja_mensajes': mensajes,
             'bandeja_nuevos': nuevos}

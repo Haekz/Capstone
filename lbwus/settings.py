@@ -38,7 +38,7 @@ if not SECRET_KEY:
 # Clave Fernet de los documentos de apoderados (apoderados/documentos.py). Obligatoria
 # con DEBUG=False: sin ella no se suben ni se ven documentos. Ver docs/CONFIGURACION_PRODUCCION.md.
 # Generarla con: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
-DOCUMENTOS_CLAVE = os.environ.get("DOCUMENTOS_CLAVE", "")
+DOCUMENTOS_CLAVE = os.environ.get("DOCUMENTOS_CLAVE", "").strip()
 
 # Clave de las huellas del registro de supresiones (supresiones/registro.py). Sin ella se deriva de SECRET_KEY. Si
 # cambia, el registro y los archivos exportados dejan de reconocer a las personas eliminadas: definirla aparte y
@@ -72,6 +72,7 @@ if not DEBUG:
     SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'True').lower() in ('1', 'true', 'si')
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+    CSRF_COOKIE_HTTPONLY = True
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
@@ -202,7 +203,7 @@ if not DATABASE_URL.startswith(('postgres://', 'postgresql://')):
         'SQLite ya no se usa en este proyecto.'
     )
 DATABASES = {
-    'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600)
+    'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600, conn_health_checks=True)
 }
 
 # Cloudflare R2: los archivos de video (user_profesor/almacen_videos.py); su ficha es la tabla Video de PostgreSQL. Sin
@@ -431,6 +432,7 @@ LOGGING = {
         'django': {'handlers': ['consola'], 'level': 'WARNING', 'propagate': False},
         # Los 500 (con su traza) a la consola y por correo. Los 404 y 403 son WARNING y no se registran: serian ruido.
         'django.request': {'handlers': ['consola', 'aviso_errores'], 'level': 'ERROR', 'propagate': False},
+        'django.security': {'handlers': ['consola'], 'level': 'WARNING', 'propagate': False},
         # Las apps propias en INFO: llegan a la consola por la raiz.
         **{app: {'level': 'INFO'} for app in APPS_PROPIAS},
     },
