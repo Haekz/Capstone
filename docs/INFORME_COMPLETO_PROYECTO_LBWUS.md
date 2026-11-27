@@ -263,7 +263,7 @@ Para impedir **condiciones de carrera (*race conditions*)** en la asignación de
   - Al completar la transacción, la orden se extrae de la sesión del usuario (`request.session.pop('orden_compra_webpay', None)`).
   - El callback valida la idempotencia: si la orden ya figura como `pagada` en la base de datos, no se re-ejecuta el `.commit()` bancario, impidiendo dobles cargos por recarga de página.
 * **Liquidación y Custodia Preventiva (S4-09):**
-  - La plataforma retiene una comisión oficial del **15% IVA incluido** y asigna el **85%** al tutor.
+  - La plataforma retiene una comisión oficial del **26% IVA incluido** y asigna el **74%** al tutor.
   - Los fondos de paquetes prepagados se mantienen en **custodia preventiva** en el modelo `DesgloseOperacion`; los saldos solo se liberan a la billetera retirable del profesor a medida que las clases son efectivamente dictadas y consumidas por el alumno.
 
 ### 5.5 Sanitización de Trazas de Error y Puerta de Acceso Global
@@ -320,7 +320,7 @@ System check identified no issues (0 silenced).
 3. **Seguridad en Pagos y Liquidaciones Financieras:**
    - Detección y bloqueo de manipulación de montos (*Price Tampering*).
    - Prevención de ataques de repetición (*Replay Attacks*) en callbacks de Transbank.
-   - Cálculo exacto de la comisión del 15% IVA incluido y asignación del 85% a tutores.
+   - Cálculo exacto de la comisión del 26% IVA incluido y asignación del 74% a tutores.
 4. **Resiliencia de Servicios Desacoplados:**
    - Operatividad del sistema cuando Cloudflare R2 no está configurado o no responde: los videos se desactivan y no se cobran.
 

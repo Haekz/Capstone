@@ -47,9 +47,9 @@ class DetalleDeLiquidacionesTests(Armado):
         operaciones, total = detalle_liquidaciones.detalle(self.profe)
         self.assertEqual(total, 1)
         (operacion,) = operaciones
-        self.assertEqual((operacion.concepto, operacion.bruto), ('Clase dictada', 15498))  # $123.990 / 8, hacia abajo
+        self.assertEqual((operacion.concepto, operacion.bruto), ('Clase dictada', 18374))  # $146.990 / 8, al peso mas cercano
         self.assertEqual((operacion.comision, operacion.abono),
-                         (paquetes.comision(15498), paquetes.pago_profesor(15498)))
+                         (paquetes.comision(18374), paquetes.pago_profesor(18374)))
         self.assertEqual(operacion.comision + operacion.abono, operacion.bruto)
         self.assertEqual(operacion.alumno, f'{self.ana.user.first_name} {self.ana.user.last_name}'.strip())
 
@@ -64,7 +64,7 @@ class DetalleDeLiquidacionesTests(Armado):
         self.assertEqual(total, 2)
         for operacion in operaciones:
             self.assertEqual((operacion.concepto, operacion.bruto), ('Video compartido', paquetes.PRECIO_VIDEO))
-            self.assertEqual((operacion.comision, operacion.abono), (1250, 3750))  # 25% y 75%
+            self.assertEqual((operacion.comision, operacion.abono), (1300, 3700))  # 26% y 74%
 
     def test_no_aparece_lo_que_no_suma_al_saldo(self):
         paquete = dar_paquete(self.ana, self.profe, 'intensivo')
@@ -120,8 +120,8 @@ class DetalleEnElPanelTests(Armado):
         saldo = self.saldo()
         detalle = saldo[saldo.index('Detalle de liquidaciones'):]
         self.assertNotIn('Aún no has dictado clases', detalle)
-        for esperado in ('Clase dictada', 'Video compartido', clp(15498), f'&minus;{clp(paquetes.comision(15498))}',
-                         f'+{clp(paquetes.pago_profesor(15498))}', f'+{clp(3750)}'):
+        for esperado in ('Clase dictada', 'Video compartido', clp(18374), f'&minus;{clp(paquetes.comision(18374))}',
+                         f'+{clp(paquetes.pago_profesor(18374))}', f'+{clp(3700)}'):
             self.assertIn(esperado, detalle)
         self.assertIn(self.ana.user.first_name, detalle)
         self.assertNotIn('desgloses_profesor', saldo)

@@ -20,7 +20,7 @@ from tests.test_apoderados_vinculos import RUT_HERMANA, crear_menor_vinculado
 from tests.test_especialidad import crear_profesor
 from tests.test_filtros_clases import crear_sesion
 
-PRECIO_PROGRESO = 62990  # precio fijo de LBWUS (tests/test_paquetes.py)
+PRECIO_PROGRESO = 74990  # precio fijo de LBWUS (tests/test_paquetes.py)
 
 
 @mock.patch('alumnos.webpay._tx')

@@ -40,7 +40,7 @@ class TarjetasDePlanesTests(Escenario):
             with self.subTest(tarjeta=tarjeta[:90]):
                 self.assertNotIn('<details class="plan-desglose" open', tarjeta)  # plegado al abrir la pagina
                 self.assertIn('<summary>Ver desglose</summary>', desglose)
-                for texto in ('comisión LBWUS de 15%', 'IVA incluido', 'El profesor recibe'):
+                for texto in ('comisión LBWUS de 26%', 'IVA incluido', 'El profesor recibe'):
                     self.assertIn(texto, desglose)
                     self.assertNotIn(texto, beneficios)  # no compite con el precio ni con los beneficios
                 self.assertIn('Vigencia de', beneficios)
