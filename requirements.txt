@@ -3,7 +3,7 @@ gunicorn==26.2.0
 setuptools==78.1.1
 whitenoise==6.12.0
 psycopg2-binary==2.9.13
-asgiref==3.8.1
+asgiref==3.13.0
 certifi==2026.5.20
 cffi==2.0.0
 charset-normalizer==3.4.7
