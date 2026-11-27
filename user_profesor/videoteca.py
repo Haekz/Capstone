@@ -11,6 +11,7 @@ import struct
 from bson import ObjectId
 from bson.errors import InvalidId
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from gridfs import GridFSBucket
 
 from alumnos.models import Asignatura, Clase, PaqueteClases, VideoCompartido
