@@ -11,6 +11,7 @@ import time
 from django.contrib import messages
 from django.contrib.auth import login as auth_login, logout as auth_logout, update_session_auth_hash
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
@@ -556,10 +557,15 @@ def invitacion(request, token):
         return redirect(APODERADO.ruta_portal)
     form = AceptarInvitacionForm(request.POST or None, request.FILES or None)
     if request.method == 'POST' and form.is_valid():
-        with transaction.atomic():
-            vinculo = pendiente.aceptar(apoderado, form.cleaned_data['parentesco'], VERSION_DECLARACION_VINCULO)
-            form.guardar_documento(vinculo)
-            vinculo.abrir_ticket_si_revisable()
+        try:
+            with transaction.atomic():
+                vinculo = pendiente.aceptar(apoderado, form.cleaned_data['parentesco'], VERSION_DECLARACION_VINCULO)
+                form.guardar_documento(vinculo)
+                vinculo.abrir_ticket_si_revisable()
+        except ValidationError as error:  # otra pestaña la acepto primero (aceptar() la bloquea y la revisa)
+            request.session.pop(CLAVE_INVITACION, None)
+            messages.error(request, error.messages[0])
+            return redirect(APODERADO.ruta_portal)
         request.session.pop(CLAVE_INVITACION, None)
         messages.success(request, f'Aceptaste la invitación de {estudiante.user.first_name}. Nuestro equipo de soporte '
                                   'revisará el documento que adjuntaste para verificar el vínculo.')
