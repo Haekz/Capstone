@@ -12,13 +12,13 @@
             const planBadge = document.querySelector('.profile-title-box .plan-badge');
             if (planBadge) {
                 if (hasPlan) {
-                    const safePlan = window.escaparHtml ? window.escaparHtml(activePlanName) : activePlanName;
-                    planBadge.innerHTML = `<i class="bi bi-check-circle-fill" style="color: #10b981;"></i> Plan Activo: ${safePlan}`;
+                    const safePlan = escaparHtml(activePlanName);
+                    planBadge.innerHTML = `<i class="bi bi-check-circle-fill" style="color: #10b981;"></i> Plan activo: ${safePlan}`;
                     planBadge.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
                     planBadge.style.color = '#10b981';
                     planBadge.style.borderColor = 'rgba(16, 185, 129, 0.2)';
                 } else {
-                    planBadge.innerHTML = `<i class="bi bi-x-circle-fill"></i> Sin Plan Activo`;
+                    planBadge.innerHTML = `<i class="bi bi-x-circle-fill"></i> Sin plan activo`;
                     planBadge.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
                     planBadge.style.color = '#ef4444';
                     planBadge.style.borderColor = 'rgba(239, 68, 68, 0.2)';
@@ -28,12 +28,9 @@
         // ── DATA POOLS ──
         // Teachers: vienen de la vista como JSON (ver profesores_js en views.py).
         // json_script entrega el texto tal cual lo escribio el profesor, asi que
-        // todo dato suyo que va a innerHTML pasa por escaparHtml.
+        // todo dato suyo que va a innerHTML pasa por escaparHtml (lbwus-utils.js, cargado en base_alumno.html).
         const teachers = JSON.parse(document.getElementById('profesores-data').textContent);
-        const escaparHtml = (texto) => String(texto ?? '').replace(/[&<>"']/g, (c) => ({
-            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-        })[c]);
-        window.escaparHtml = escaparHtml;
+
         // SCRUM-32: enlace al perfil profesional (solo profesores reales; los tutores son de ejemplo).
         const URL_PERFIL_PROFESOR = "{% url 'perfil_profesor' 0 %}";
         const enlacePerfil = (t) =>

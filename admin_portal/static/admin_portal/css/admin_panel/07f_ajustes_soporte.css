@@ -1,0 +1,10 @@
+/* Portal de soporte: ajustes propios del proyecto sobre la capa de la copia (07a-07e).
+   NO viene de la copia: crear_pulido_soporte.py no lo genera ni lo toca. Cada regla explica por que existe. */
+
+/* En celular, una tabla con scroll horizontal (.sop-tabla, overflow-x: auto) dejaba escapar el texto solo-lector de su cabecera
+   (.sop-solo-lector: position: absolute, sin ancestro posicionado dentro de la tabla). El texto oculto se quedaba en la posicion
+   de su columna, fuera del recorte, y estiraba el ancho de la pagina (456 px en una pantalla de 390). Con el contenedor como
+   referencia, el texto oculto queda dentro del scroll y la tabla sigue deslizandose igual. */
+#portal-soporte .sop-tabla {
+    position: relative;
+}

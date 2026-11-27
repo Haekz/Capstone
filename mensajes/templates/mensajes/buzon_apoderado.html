@@ -1,8 +1,10 @@
-{% extends 'alumnos/base.html' %}
+{% extends 'apoderados/base_apoderado.html' %}
 {% load static %}
 {% load mensajes_tags %}
 
 {% block title %}Mensajes con los profesores | LBWUS{% endblock %}
+{% block page_title %}Mensajes con los profesores{% endblock %}
+{% block page_subtitle %}Coordina las clases de tus estudiantes{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'alumnos/css/perfil_profesor.css' %}">
@@ -10,20 +12,18 @@
 {% endblock %}
 
 {% block content %}
-<div class="perfil-prof">
-    <a class="perfil-prof__volver" href="{% url 'portal_apoderado' %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Mi cuenta</a>
-    <header class="perfil-prof__cabecera">
-        <div>
-            <h1>Mensajes con los profesores</h1>
-            <p class="perfil-prof__vacio">Coordina las clases de tus estudiantes. No compartas teléfonos, correos ni direcciones: todo se conversa aquí.</p>
-        </div>
-    </header>
+<div class="perfil-prof apo">
+    <p class="apo-nota apo-nota--arriba"><i class="bi bi-shield-check" aria-hidden="true"></i> <span>No compartas teléfonos, correos ni direcciones: todo se conversa aquí.</span></p>
 
-    {% aviso_mensajes 'apoderado' bandeja_activa %}
     {% include 'apoderados/_mensajes.html' %}
 
-    <section class="perfil-prof__bloque" aria-labelledby="conversaciones-titulo">
-        <h2 id="conversaciones-titulo">Tus conversaciones</h2>
+    <section class="perfil-prof__bloque apo-conversaciones" aria-labelledby="conversaciones-titulo">
+        <div class="apo-bloque-cabecera">
+            <h2 id="conversaciones-titulo">Tus conversaciones</h2>
+            <button type="button" class="btn-ayuda-mensajes" aria-haspopup="dialog" aria-controls="dialogo-mensajes" aria-label="Cómo funcionan los mensajes y qué pasa con tus datos" title="Cómo funcionan los mensajes">
+                <i class="bi bi-question-lg" aria-hidden="true"></i>
+            </button>
+        </div>
         {% if bandeja %}
         <ul class="apod-vinculos">
             {% for c in bandeja %}
@@ -37,9 +37,12 @@
             {% endfor %}
         </ul>
         {% else %}
-        <p class="perfil-prof__vacio">Todavía no tienes conversaciones.</p>
+        <p class="apo-vacio"><i class="bi bi-chat-square-text" aria-hidden="true"></i> Todavía no tienes conversaciones.</p>
         {% endif %}
     </section>
+
+    {# "Cómo funcionan los mensajes" (aviso legal E5): se abre con el botón "?" de Tus conversaciones #}
+    {% dialogo_aviso_mensajes 'apoderado' %}
 
     {% if bandeja_nuevos %}
     <section class="perfil-prof__bloque" aria-labelledby="nuevas-titulo">

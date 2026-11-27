@@ -92,7 +92,7 @@ class PlazoDelTicketTests(TestCase):
         Ticket.objects.update(vence=timezone.now() - timedelta(days=1))
         entrar_soporte(self.client, self.agente)
         respuesta = self.client.get(reverse('panel_soporte'))
-        self.assertContains(respuesta, '<th>Vence</th>', html=True)
+        self.assertContains(respuesta, '<th scope="col">Vence</th>', html=True)
         self.assertContains(respuesta, 'Atrasado')
 
 

@@ -100,11 +100,11 @@ class FlujoCompletoTests(TestCase):
         # 5. Soporte solo lo ve cuando la identidad de la madre esta verificada
         #    (al verificarla, Apoderado.aplicar_revision abre el ticket del vinculo).
         entrar_soporte(self.client, crear_agente('10101010-1', Ticket.APODERADOS))
-        self.assertContains(self.client.get(reverse('apoderados_revision')), 'Vínculos por verificar (0)')
+        self.assertContains(self.client.get(reverse('apoderados_revision')), 'Vínculos por verificar <span class="sop-cuenta">0</span>')
         Apoderado.objects.update(estado=Apoderado.VERIFICADO)
         Vinculo.objects.get().abrir_ticket_si_revisable()
         respuesta = self.client.get(reverse('apoderados_revision'))
-        self.assertContains(respuesta, 'Vínculos por verificar (1)')
+        self.assertContains(respuesta, 'Vínculos por verificar <span class="sop-cuenta">1</span>')
         self.assertContains(respuesta, f'El estudiante invitó a {CORREO_MAMA}')
 
 

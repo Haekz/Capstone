@@ -60,23 +60,23 @@ No existen `es_simulacion` ni `detalle_carrito`: el ambiente (prueba o real) lo 
 ## 4. Definición de Liquidación a Profesores y Conciliación Financiera (Auditoría F-09 / S4-09)
 
 ### Reglas Económicas Oficiales (`alumnos/paquetes.py`)
-- **Comisión de Plataforma LBWUS:** **15 % IVA incluido** sobre lo pagado por el alumno. El IVA contenido (19 %) se calcula con `iva_incluido()`.
-- **Pago al profesor:** el **85 %** restante (`pago_profesor()`).
-- **Precio por clase:** lo fija LBWUS, igual con todos los profesores: **$15.990** la clase suelta (`TARIFA`, decidido 14-nov-2026). El profesor no lo elige.
-- **Precio del paquete:** clases × $15.990 con el descuento del plan, al número terminado en $990 más cercano:
+- **Comisión de Plataforma LBWUS:** **26 % IVA incluido** sobre lo pagado por el alumno, en clases y en videos (desde el 25-nov-2026; antes 15 % y 25 %). El IVA contenido (19 %) se calcula con `iva_incluido()`.
+- **Pago al profesor:** el **74 %** restante (`pago_profesor()`).
+- **Precio por clase:** lo fija LBWUS, igual con todos los profesores: **$18.990** la clase suelta (`TARIFA`, decidido 14-nov-2026 y actualizado el 25-nov-2026). El profesor no lo elige.
+- **Precio del paquete:** clases × $18.990 con el descuento del plan, al número terminado en $990 más cercano:
 
-| Plan | Clases | Vigencia | Total | LBWUS (15 %) | Profesor (85 %) |
+| Plan | Clases | Vigencia | Total | LBWUS (26 %) | Profesor (74 %) |
 |---|---|---|---|---|---|
-| Flexible | 1 | 30 días | $15.990 | $2.399 | $13.591 |
-| Progreso | 4 | 60 días | $62.990 | $9.449 | $53.541 |
-| Intensivo | 8 | 90 días | $123.990 | $18.599 | $105.391 |
+| Flexible | 1 | 30 días | $18.990 | $4.937 | $14.053 |
+| Progreso | 4 | 30 días | $74.990 | $19.497 | $55.493 |
+| Intensivo | 8 | 60 días | $146.990 | $38.217 | $108.773 |
 
 No hay tabla de desglose (`DesgloseOperacion` no existe): comisión, IVA y pago al profesor se calculan cada vez con las funciones de `alumnos/paquetes.py`, para tener una sola fuente.
 
 ### Prevención de Fraude y Custodia Preventiva (`user_profesor/saldos.py`)
 1. **Solo clases dictadas liberan saldo:** lo cobrado por clases que aún no se dictan queda en custodia. Una reserva futura todavía se puede cancelar.
 2. **Excepción acordada (02-nov):** si el alumno cancela con menos de 4 horas, la clase se le paga igual al profesor.
-3. **Saldos del profesor** (`calcular_saldos`): `total_ganado`, `disponible` (su 85 % menos retiros aprobados, pagados y en trámite) y `pendiente` (comisión de la plataforma más lo que está en trámite).
+3. **Saldos del profesor** (`calcular_saldos`): `total_ganado`, `disponible` (su 74 % menos retiros aprobados, pagados y en trámite) y `pendiente` (comisión de la plataforma más lo que está en trámite).
 4. **Retiros:** mínimo de $10.000 (`liquidacion.MINIMO`); el saldo se acumula hasta alcanzarlo.
 5. **Panel del admin** (`admin_portal/metricas.finanzas`): `cobrado`, `comision_estimada`, `ganancia` (comisión de las clases ya dictadas y de los videos ya compartidos), `por_dictar` (clases por dictar y videos por entregar), `saldo_profesores`, `retiros_pagados` y `retiros_pendientes`. Los videos (agregado y extras pagados) cuentan desde el 13-nov (B1); lo devuelto por videos no entregados se resta de lo cobrado.
 

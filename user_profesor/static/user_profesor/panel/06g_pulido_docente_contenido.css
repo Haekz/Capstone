@@ -1,0 +1,282 @@
+/* Panel docente, capa de diseno (de la copia: 06_pulido_docente.css), parte «contenido»: videos, streaming, resenas y ayuda.
+   Las partes cargan en este orden: 06a marco, 06b inicio, 06c formularios, 06d tablas, 06e agenda, 06f cuenta,
+   06g contenido, 06h cierre. */
+
+/* ── 13. Videos de apoyo ── */
+#portal-docente #sec-grabaciones .prof-section-header {
+    align-items: flex-end !important;   /* el encabezado trae flex en línea */
+}
+
+#portal-docente #sec-grabaciones .prof-form-btn-accent {
+    margin: 0;
+}
+
+#portal-docente .profe-cursos-stats {
+    margin-bottom: 20px;
+}
+
+#portal-docente .profe-stat-box {
+    background: var(--bg-card);
+}
+
+#portal-docente .profe-cursos-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 18px;
+}
+
+#portal-docente .profe-cursos-card {
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--r-item);
+    background: var(--bg-card);
+    box-shadow: none;
+    transition: border-color 0.15s ease, box-shadow 0.2s ease;
+}
+
+#portal-docente .profe-cursos-card:hover {
+    transform: none;
+    border-color: var(--line-2);
+    box-shadow: 0 10px 24px rgba(26, 18, 51, 0.08);
+}
+
+#portal-docente .profe-cursos-thumb {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    height: auto;
+    background:
+        radial-gradient(circle at 85% 15%, rgba(255, 255, 255, 0.18) 0%, transparent 45%),
+        repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0 2px, transparent 2px 14px),
+        linear-gradient(135deg, #8b5cf6 0%, #5b21b6 100%);
+}
+
+#portal-docente .profe-cursos-thumb i {
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 2.8rem;
+    filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.3));
+}
+
+#portal-docente .profe-cursos-badge-duration {
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.65);
+    font-variant-numeric: tabular-nums;
+}
+
+#portal-docente .profe-cursos-body {
+    gap: 6px;
+    padding: 14px 16px 16px;
+}
+
+#portal-docente .profe-cursos-title {
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+#portal-docente .profe-cursos-category {
+    align-self: flex-start;
+    padding: 2px 10px;
+    border-radius: 99px;
+    background: var(--primary-soft);
+    color: var(--primary-light);
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+#portal-docente .profe-cursos-delete-btn {
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-secondary);
+}
+
+#portal-docente .profe-cursos-delete-btn:hover {
+    border-color: rgba(239, 68, 68, 0.3);
+    background: var(--danger-soft);
+    color: #dc2626;
+}
+
+#portal-docente .profe-entrega {
+    border: 1px solid var(--border);
+    border-radius: var(--r-item);
+}
+
+#portal-docente .profe-entrega.atrasada {
+    border-color: rgba(239, 68, 68, 0.35);
+    background: var(--danger-soft);
+}
+
+/* Ventana para subir video */
+#portal-docente .custom-modal-card {
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: var(--bg-card);
+}
+
+#portal-docente .upload-titulo {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+#portal-docente .close-modal-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 0.95rem;
+}
+
+#portal-docente .close-modal-btn:hover {
+    background: var(--bg-hover);
+}
+
+#portal-docente .upload-archivo-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: var(--ok-soft);
+    color: var(--ok);
+    font-size: 0.82rem;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+#portal-docente .upload-archivo-info[hidden] {
+    display: none;
+}
+
+#portal-docente .upload-archivo-info--error {
+    background: var(--danger-soft);
+    color: #dc2626;
+}
+
+/* ── 14. Sala de streaming ── */
+#portal-docente .stream-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+    margin-top: 14px;
+}
+
+#portal-docente .stream-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 18px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-item);
+    background: var(--bg-main);
+}
+
+#portal-docente .stream-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#portal-docente .stream-card-icono {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: var(--primary-soft);
+    color: var(--primary-light);
+    font-size: 1.15rem;
+}
+
+#portal-docente .stream-modalidad {
+    padding: 3px 10px;
+    border-radius: 99px;
+    background: var(--ok-soft);
+    color: var(--ok);
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+#portal-docente .page-content .stream-card-titulo {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+#portal-docente .stream-entrar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 11px 16px;
+    border-radius: var(--r-ctrl);
+    background: var(--primary);
+    color: #ffffff;
+    font-size: 0.92rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.15s ease;
+}
+
+#portal-docente .stream-entrar:hover {
+    background: var(--primary-dark);
+}
+
+/* ── 15. Mis reseñas y Ayuda (componentes compartidos con el sitio público) ── */
+#portal-docente .page-content .perfil-prof {
+    max-width: none;
+    padding: 0;
+}
+
+#portal-docente .perfil-prof__cabecera {
+    margin-bottom: 20px;
+    padding: 0;
+    border: none;
+}
+
+#portal-docente .perfil-prof__cabecera p {
+    max-width: 70ch;
+    font-size: 0.95rem;
+    line-height: 1.55;
+    color: var(--text-secondary);
+}
+
+#portal-docente .perfil-prof__bloque {
+    margin-bottom: 20px;
+    padding: 24px 26px;
+    background: var(--bg-card);
+}
+
+#portal-docente .perfil-prof__bloque h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+#portal-docente .perfil-prof__reservar {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 6px 0 10px;
+    padding: 11px 20px;
+    border-radius: var(--r-ctrl);
+    background: var(--primary);
+    color: #ffffff;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+#portal-docente .resenas-vacio {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 28px 16px;
+    border: 1px dashed var(--line-2);
+    border-radius: var(--r-item);
+}

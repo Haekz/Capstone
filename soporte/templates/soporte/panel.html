@@ -1,7 +1,7 @@
 {% extends 'soporte/base_soporte.html' %}
 
-{% block page_title %}Tickets de Soporte{% endblock %}
-{% block page_subtitle %}Tus tickets abiertos. Los documentos se revisan desde la pantalla de cada categoría.{% endblock %}
+{% block page_title %}{% if agente.es_lider %}Tickets{% else %}Mis tickets{% endif %}{% endblock %}
+{% block page_subtitle %}{% if agente.es_lider %}Los tuyos y los de todo el equipo de soporte.{% else %}Los tickets abiertos que tienes asignados.{% endif %}{% endblock %}
 {% block nav_panel %}active{% endblock %}
 
 {% block content %}
@@ -12,65 +12,113 @@
 </div>
 {% endif %}
 
-<div class="panel">
-    <div class="panel-header">
-        <span class="panel-title"><i class="bi bi-inbox-fill"></i> Mis tickets ({{ mis_tickets|length }})</span>
+{# Banner: el resumen y el siguiente paso los calcula el JS de soporte con las filas de la tabla #}
+<section class="sop-hero" aria-labelledby="sop-saludo">
+    <div class="sop-hero-texto">
+        <span class="sop-hero-fecha" id="sop-hoy"></span>
+        <h2 class="sop-hero-titulo" id="sop-saludo">Hola, {{ agente.nombre|default:"Soporte" }}</h2>
+        <p class="sop-hero-resumen" id="sop-resumen">Estos son los tickets que tienes asignados.</p>
+        <a class="sop-hero-btn" id="sop-siguiente" href="{% url 'panel_soporte' %}" hidden>
+            <i class="bi bi-arrow-right-circle-fill" aria-hidden="true"></i>
+            <span>Revisar el próximo</span>
+        </a>
     </div>
-    <div style="overflow-x:auto;">
-        <table class="user-table">
+    <ul class="sop-cifras" id="sop-cifras" aria-label="{% if agente.es_lider %}Estado de los tickets del equipo{% else %}Estado de tus tickets{% endif %}" hidden>
+        <li><i class="bi bi-inbox" aria-hidden="true"></i><strong id="sop-n-abiertos">0</strong><span>{% if agente.es_lider %}Abiertos en el equipo{% else %}Abiertos{% endif %}</span></li>
+        <li id="sop-c-pronto"><i class="bi bi-hourglass-split" aria-hidden="true"></i><strong id="sop-n-pronto">0</strong><span>Vencen hoy o mañana</span></li>
+        <li id="sop-c-vencidos"><i class="bi bi-exclamation-circle" aria-hidden="true"></i><strong id="sop-n-vencidos">0</strong><span>Vencidos</span></li>
+    </ul>
+</section>
+
+<div class="panel sop-tickets">
+    <div class="panel-header">
+        <h2 class="panel-title"><i class="bi bi-inbox-fill" aria-hidden="true"></i> {% if agente.es_lider %}Mis tickets{% else %}Tickets abiertos{% endif %} <span class="sop-cuenta">{{ mis_tickets|length }}</span></h2>
+        <!-- Solo aparece con más de 5 tickets -->
+        <label class="search-bar sop-filtro" hidden>
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <input type="search" placeholder="Buscar por número, asunto o categoría" aria-label="{% if agente.es_lider %}Buscar en mis tickets{% else %}Buscar tickets{% endif %}" autocomplete="off">
+        </label>
+    </div>
+    <div class="sop-tabla">
+        <table class="user-table sop-tabla-tickets{% if agente.es_lider %} sop-tabla-tickets--mios{% endif %}">
             <thead>
-                <tr><th>Ticket</th><th>Categoría</th><th>Asunto</th><th>Abierto el</th><th>Vence</th><th>Acción</th></tr>
+                <tr><th scope="col">Ticket</th><th scope="col">Categoría</th><th scope="col">Abierto el</th><th scope="col">Vence</th><th scope="col"><span class="sop-solo-lector">Acciones</span></th></tr>
             </thead>
             <tbody>
                 {% for t in mis_tickets %}
+                {% if t.es_conversacion %}{% url 'soporte_reporte' t.pk as revisar %}{% elif t.categoria == 'titulos' or t.categoria == 'especializaciones' %}{% url 'titulos_adm' as revisar %}{% else %}{% url 'apoderados_revision' as revisar %}{% endif %}
                 <tr>
-                    <td>#{{ t.pk }}</td>
-                    <td><span class="badge">{{ t.get_categoria_display }}</span></td>
-                    <td>{{ t.asunto }}{% if t.escalados %} <span class="badge">Escalado</span>{% endif %}</td>
-                    <td>{{ t.creado|date:"d-m-Y H:i" }}</td>
-                    <td>{{ t.vence|date:"d-m-Y H:i" }}{% if t.atrasado %} <span class="badge">Atrasado</span>{% endif %}</td>
-                    <td><a href="{% if t.es_conversacion %}{% url 'soporte_reporte' t.pk %}{% elif t.categoria == 'titulos' or t.categoria == 'especializaciones' %}{% url 'titulos_adm' %}{% else %}{% url 'apoderados_revision' %}{% endif %}">Revisar</a>
-                        · <a href="{% url 'soporte_escalar' t.pk %}" aria-label="Escalar el ticket #{{ t.pk }}">Escalar</a></td>
+                    <td data-label="Ticket">
+                        <a class="sop-ticket" href="{{ revisar }}">
+                            <span class="sop-ticket-num">#{{ t.pk }}</span>
+                            <span class="sop-ticket-asunto">{{ t.asunto }}</span>
+                        </a>{% if t.escalados %} <span class="badge">Escalado</span>{% endif %}
+                    </td>
+                    <td data-label="Categoría"><span class="badge sop-categoria">{{ t.get_categoria_display }}</span></td>
+                    <td data-label="Abierto el"><time datetime="{{ t.creado|date:'Y-m-d\TH:i' }}">{{ t.creado|date:"d-m-Y H:i" }}</time></td>
+                    <td data-label="Vence"><time class="sop-vence" datetime="{{ t.vence|date:'Y-m-d\TH:i' }}">{{ t.vence|date:"d-m-Y H:i" }}</time>{% if t.atrasado %} <span class="badge">Atrasado</span>{% endif %}</td>
+                    <td class="sop-acciones">
+                        <a class="sop-btn sop-btn--primario" href="{{ revisar }}">Revisar</a>
+                        <a class="sop-btn" href="{% url 'soporte_escalar' t.pk %}" aria-label="Escalar el ticket #{{ t.pk }}">Escalar</a>
+                    </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="6">No tienes tickets abiertos.</td></tr>
+                <tr><td colspan="5">No tienes tickets abiertos.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
+        <p class="sop-sin-resultados" hidden>Ningún ticket coincide con la búsqueda.</p>
     </div>
 </div>
 
 {% if agente.es_lider %}
-<div class="panel" style="margin-top:28px;">
+<div class="panel sop-tickets">
     <div class="panel-header">
-        <span class="panel-title"><i class="bi bi-list-task"></i> Todos los tickets abiertos ({{ abiertos|length }})</span>
+        <h2 class="panel-title"><i class="bi bi-list-task" aria-hidden="true"></i> Todos los tickets abiertos <span class="sop-cuenta">{{ abiertos|length }}</span></h2>
+        <!-- El JS arma un botón por agente (si hay más de uno) y el buscador (con más de 5 tickets) -->
+        <div class="sop-filtro-agentes" role="group" aria-label="Filtrar por agente" hidden></div>
+        <label class="search-bar sop-filtro" hidden>
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <input type="search" placeholder="Buscar por número, asunto o categoría" aria-label="Buscar en todos los tickets" autocomplete="off">
+        </label>
     </div>
-    <div style="overflow-x:auto;">
-        <table class="user-table">
+    <div class="sop-tabla">
+        <table class="user-table sop-tabla-tickets sop-tabla-tickets--equipo">
             <thead>
-                <tr><th>Ticket</th><th>Categoría</th><th>Asunto</th><th>Abierto el</th><th>Vence</th><th>Asignado a</th><th>Reasignar</th></tr>
+                <tr><th scope="col">Ticket</th><th scope="col">Categoría</th><th scope="col">Abierto el</th><th scope="col">Vence</th><th scope="col">Asignado a</th><th scope="col">Reasignar</th></tr>
             </thead>
             <tbody>
                 {% for t in abiertos %}
                 <tr>
-                    <td>#{{ t.pk }}</td>
-                    <td><span class="badge">{{ t.get_categoria_display }}</span></td>
-                    <td>{% if t.es_conversacion %}<a href="{% url 'soporte_reporte' t.pk %}">{{ t.asunto }}</a>{% else %}{{ t.asunto }}{% endif %}{% if t.escalados %} <span class="badge">Escalado</span>{% endif %}
-                        <br><small><a href="{% url 'soporte_escalar' t.pk %}" aria-label="Escalar el ticket #{{ t.pk }} o ver su historial">Escalar / historial</a></small></td>
-                    <td>{{ t.creado|date:"d-m-Y H:i" }}</td>
-                    <td>{{ t.vence|date:"d-m-Y H:i" }}{% if t.atrasado %} <span class="badge">Atrasado</span>{% endif %}</td>
-                    <td>{% if t.asignado %}{{ t.asignado.nombre }}{% else %}<span class="badge">Sin asignar</span>{% endif %}</td>
-                    <td>
+                    <td data-label="Ticket">
+                        {# Solo los tickets de conversacion tienen pagina de detalle; los demas muestran su asunto sin enlace #}
+                        {% if t.es_conversacion %}
+                        <a class="sop-ticket" href="{% url 'soporte_reporte' t.pk %}">
+                            <span class="sop-ticket-num">#{{ t.pk }}</span>
+                            <span class="sop-ticket-asunto">{{ t.asunto }}</span>
+                        </a>
+                        {% else %}
+                        <span class="sop-ticket">
+                            <span class="sop-ticket-num">#{{ t.pk }}</span>
+                            <span class="sop-ticket-asunto">{{ t.asunto }}</span>
+                        </span>
+                        {% endif %}{% if t.escalados %} <span class="badge">Escalado</span>{% endif %}
+                        <a class="sop-ticket-escalar" href="{% url 'soporte_escalar' t.pk %}" aria-label="Escalar el ticket #{{ t.pk }} o ver su historial">Escalar o ver historial</a>
+                    </td>
+                    <td data-label="Categoría"><span class="badge sop-categoria">{{ t.get_categoria_display }}</span></td>
+                    <td data-label="Abierto el"><time datetime="{{ t.creado|date:'Y-m-d\TH:i' }}">{{ t.creado|date:"d-m-Y H:i" }}</time></td>
+                    <td data-label="Vence"><time class="sop-vence" datetime="{{ t.vence|date:'Y-m-d\TH:i' }}">{{ t.vence|date:"d-m-Y H:i" }}</time>{% if t.atrasado %} <span class="badge">Atrasado</span>{% endif %}</td>
+                    <td data-label="Asignado a" class="sop-asignado">{% if t.asignado %}<span class="sop-persona"><span class="sop-avatar sop-avatar--sm" aria-hidden="true">{{ t.asignado.nombre|slice:":1"|upper }}</span><span class="sop-persona-nombre">{{ t.asignado.nombre }}</span></span>{% else %}<span class="badge">Sin asignar</span>{% endif %}</td>
+                    <td data-label="Reasignar">
                         {% if t.candidatos %}
-                        <form method="post" action="{% url 'soporte_reasignar' t.pk %}" style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+                        <form method="post" action="{% url 'soporte_reasignar' t.pk %}" class="sop-reasignar">
                             {% csrf_token %}
-                            <select name="agente" aria-label="Agente para el ticket #{{ t.pk }}"
-                                style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--bg-card); color:var(--text-primary);">
+                            <select name="agente" aria-label="Agente para el ticket #{{ t.pk }}">
                                 {% for a in t.candidatos %}
                                 <option value="{{ a.pk }}"{% if a.pk == t.asignado_id %} selected{% endif %}>{{ a.nombre }}</option>
                                 {% endfor %}
                             </select>
-                            <button type="submit" class="btn-primary"><i class="bi bi-arrow-left-right"></i> Asignar</button>
+                            <button type="submit" class="sop-btn"><i class="bi bi-arrow-left-right" aria-hidden="true"></i> Reasignar</button>
                         </form>
                         {% else %}
                         <small>Nadie atiende esta categoría.</small>
@@ -78,44 +126,46 @@
                     </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="7">No hay tickets abiertos.</td></tr>
+                <tr><td colspan="6">No hay tickets abiertos.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
+        <p class="sop-sin-resultados" hidden>Ningún ticket coincide con la búsqueda.</p>
     </div>
 </div>
 
-<div class="panel" style="margin-top:28px;">
+<div class="panel">
     <div class="panel-header">
-        <span class="panel-title"><i class="bi bi-people-fill"></i> Equipo de soporte</span>
+        <h2 class="panel-title"><i class="bi bi-people-fill" aria-hidden="true"></i> Equipo de soporte</h2>
     </div>
-    <div style="overflow-x:auto;">
-        <table class="user-table">
-            <thead>
-                <tr><th>Agente</th><th>Cargo</th><th>Categorías</th><th>Tickets abiertos</th></tr>
-            </thead>
-            <tbody>
-                {% for a in equipo %}
-                <tr>
-                    <td>{{ a.nombre }}{% if not a.user.is_active %} <small>(cuenta desactivada)</small>{% endif %}</td>
-                    <td>{{ a.cargo }}</td>
-                    <td>{% for h in a.habilitaciones.all %}<span class="badge">{{ h.get_categoria_display }}</span> {% empty %}—{% endfor %}</td>
-                    <td>{{ a.carga }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+    <ul class="sop-equipo">
+        {% for a in equipo %}
+        <li class="sop-agente">
+            <span class="sop-avatar" aria-hidden="true">{{ a.nombre|slice:":1"|upper }}</span>
+            <div class="sop-agente-datos">
+                <strong>{{ a.nombre }}{% if not a.user.is_active %} <small>(cuenta desactivada)</small>{% endif %}</strong>
+                <span>{{ a.cargo }}</span>
+            </div>
+            <div class="sop-agente-carga">
+                <span class="sop-carga-etiqueta">Tickets abiertos</span>
+                <strong class="sop-carga-n">{{ a.carga }}</strong>
+                <span class="sop-carga-barra" aria-hidden="true"><span></span></span>
+            </div>
+            <div class="sop-agente-cats" aria-label="Categorías que atiende {{ a.nombre }}">{% for h in a.habilitaciones.all %}<span class="badge">{{ h.get_categoria_display }}</span> {% empty %}—{% endfor %}</div>
+        </li>
+        {% endfor %}
+    </ul>
 </div>
 
-<div class="panel" style="margin-top:28px;">
-    <div class="panel-header">
-        <span class="panel-title"><i class="bi bi-clock-history"></i> Asignaciones (últimas 50)</span>
-    </div>
-    <div style="overflow-x:auto;">
+<details class="panel sop-registro">
+    <summary class="panel-header">
+        <span class="panel-title"><i class="bi bi-clock-history" aria-hidden="true"></i> Asignaciones <span class="sop-registro-nota">últimas 50</span></span>
+        <i class="bi bi-chevron-down sop-registro-flecha" aria-hidden="true"></i>
+    </summary>
+    <div class="sop-tabla">
         <table class="user-table">
             <thead>
-                <tr><th>Fecha</th><th>Ticket</th><th>Asignado a</th><th>Asignó</th></tr>
+                <tr><th scope="col">Fecha</th><th scope="col">Ticket</th><th scope="col">Asignado a</th><th scope="col">Asignó</th></tr>
             </thead>
             <tbody>
                 {% for s in asignaciones %}
@@ -131,7 +181,7 @@
             </tbody>
         </table>
     </div>
-</div>
+</details>
 {% endif %}
 
 {% endblock %}

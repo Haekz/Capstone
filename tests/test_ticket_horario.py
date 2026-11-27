@@ -52,7 +52,8 @@ class TicketHorarioTests(TestCase):
                 entrar(self.client, user, **sesion)
                 r = self.client.get(reverse('nuevo_ticket'), {'categoria': Ticket.HORARIO})
                 self.assertNotContains(r, 'value="horario"')
-                self.assertContains(r, 'Pagos, clases, conducta y videos: respondemos')
+                self.assertContains(r, 'Pagos, clases, conducta y videos')  # en la frase (alumno) o en la fila de plazos (apoderado)
+                self.assertNotContains(r, 'horario, conducta')  # y sin el tema Horario, que es del profesor
                 self.client.post(reverse('nuevo_ticket'), datos(categoria=Ticket.HORARIO))
                 self.assertFalse(Ticket.objects.exists())
 

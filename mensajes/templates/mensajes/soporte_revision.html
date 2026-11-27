@@ -1,7 +1,7 @@
 {% extends 'soporte/base_soporte.html' %}
 
 {% block page_title %}Conversaciones reportadas{% endblock %}
-{% block page_subtitle %}Qué se hace con ellas cuando se cierra el ticket{% endblock %}
+{% block page_subtitle %}Decide qué pasa con ellas cuando se cierra su ticket.{% endblock %}
 {% block nav_revision %}active{% endblock %}
 
 {% block content %}
@@ -13,40 +13,43 @@
 
 <div class="panel">
     <div class="panel-header">
-        <span class="panel-title"><i class="bi bi-hourglass-split" aria-hidden="true"></i> Esperan tu decisión ({{ pendientes|length }})</span>
+        <h2 class="panel-title"><i class="bi bi-hourglass-split" aria-hidden="true"></i> Esperan tu decisión <span class="sop-cuenta">{{ pendientes|length }}</span></h2>
     </div>
-    <div style="padding:18px;">
-        <p><small>Mientras esperan se siguen conservando. Libérala para que vuelva a la regla de borrado a los 90 días sin mensajes, o conserva solo lo que tenga una necesidad concreta, dejando registrado por qué.</small></p>
-        {% if pendientes %}
+    <div class="panel-body">
+        <p class="sop-panel-intro">Mientras esperan, se siguen conservando. Libérala para que vuelva a la regla de borrado a los 90 días sin mensajes, o conserva solo lo que tenga una necesidad concreta y deja registrado por qué.</p>
+        {% if not pendientes %}
+        <p class="sop-vacio">No hay conversaciones esperando una decisión.</p>
+        {% endif %}
+    </div>
+    {% if pendientes %}
+    <div class="sop-tabla">
         <table class="user-table">
             <thead>
-                <tr><th scope="col">Conversación</th><th scope="col">Esperando desde</th><th scope="col">Acción</th></tr>
+                <tr><th scope="col">Conversación</th><th scope="col">Esperando desde</th><th scope="col"><span class="sop-solo-lector">Acción</span></th></tr>
             </thead>
             <tbody>
                 {% for c in pendientes %}
                 <tr>
                     <td>{{ c.nombre_para_profesor }} y {{ c.profesor.user.first_name }} (profesor)</td>
                     <td>{{ c.desde|date:"d-m-Y" }}{% if c.ultima %} <span class="badge">Vuelve a revisión</span>{% endif %}</td>
-                    <td><a href="{% url 'mensajes_revision_detalle' c.pk %}" aria-label="Decidir sobre la conversación de {{ c.nombre_para_profesor }} y {{ c.profesor.user.first_name }}">Decidir</a></td>
+                    <td class="sop-acciones"><a class="sop-btn sop-btn--primario" href="{% url 'mensajes_revision_detalle' c.pk %}" aria-label="Decidir sobre la conversación de {{ c.nombre_para_profesor }} y {{ c.profesor.user.first_name }}">Decidir</a></td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
-        {% else %}
-        <p>No hay conversaciones esperando una decisión.</p>
-        {% endif %}
     </div>
+    {% endif %}
 </div>
 
-<div class="panel" style="margin-top:20px;">
+<div class="panel">
     <div class="panel-header">
-        <span class="panel-title"><i class="bi bi-archive-fill" aria-hidden="true"></i> Conservadas como retención excepcional ({{ conservadas|length }})</span>
+        <h2 class="panel-title"><i class="bi bi-archive-fill" aria-hidden="true"></i> Conservadas por retención excepcional <span class="sop-cuenta">{{ conservadas|length }}</span></h2>
     </div>
-    <div style="padding:18px;">
-        {% if conservadas %}
+    {% if conservadas %}
+    <div class="sop-tabla">
         <table class="user-table">
             <thead>
-                <tr><th scope="col">Conversación</th><th scope="col">Motivo</th><th scope="col">Próxima revisión</th><th scope="col">Detalle</th></tr>
+                <tr><th scope="col">Conversación</th><th scope="col">Motivo</th><th scope="col">Próxima revisión</th><th scope="col"><span class="sop-solo-lector">Detalle</span></th></tr>
             </thead>
             <tbody>
                 {% for c in conservadas %}
@@ -54,14 +57,16 @@
                     <td>{{ c.nombre_para_profesor }} y {{ c.profesor.user.first_name }} (profesor)</td>
                     <td>{{ c.motivo }}</td>
                     <td>{{ c.ultima_hasta|date:"d-m-Y" }}</td>
-                    <td><a href="{% url 'mensajes_revision_detalle' c.pk %}" aria-label="Ver la retención de la conversación de {{ c.nombre_para_profesor }} y {{ c.profesor.user.first_name }}">Ver</a></td>
+                    <td class="sop-acciones"><a class="sop-btn" href="{% url 'mensajes_revision_detalle' c.pk %}" aria-label="Ver la retención de la conversación de {{ c.nombre_para_profesor }} y {{ c.profesor.user.first_name }}">Ver</a></td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
-        {% else %}
-        <p>No hay conversaciones conservadas.</p>
-        {% endif %}
     </div>
+    {% else %}
+    <div class="panel-body">
+        <p class="sop-vacio">No hay conversaciones conservadas.</p>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

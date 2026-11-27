@@ -13,7 +13,21 @@ para que tambien sirvan desde otras paginas del docente (Mis Resenas).{% endcomm
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'notificaciones/campanita.css' %}">
 <link rel="stylesheet" href="{% static 'user_profesor/portal_docente.css' %}?v=3">
+{% comment %}Capa de diseño del panel (06_pulido_docente), por partes y en su orden: todo cuelga de #portal-docente, así que gana sin
+importar el orden de las demás hojas. Las tablas (06d) van con el marco: el área de contenido ya no recorta y ellas se desplazan por dentro.{% endcomment %}
+<link rel="stylesheet" href="{% static 'user_profesor/panel/06a_pulido_docente_marco.css' %}">
+<link rel="stylesheet" href="{% static 'user_profesor/panel/06b_pulido_docente_inicio.css' %}">
+<link rel="stylesheet" href="{% static 'user_profesor/panel/06c_pulido_docente_formularios.css' %}">
+<link rel="stylesheet" href="{% static 'user_profesor/panel/06d_pulido_docente_tablas.css' %}">
+<link rel="stylesheet" href="{% static 'user_profesor/panel/06e_pulido_docente_agenda.css' %}">
+<link rel="stylesheet" href="{% static 'user_profesor/panel/06f_pulido_docente_cuenta.css' %}">
+<link rel="stylesheet" href="{% static 'user_profesor/panel/06g_pulido_docente_contenido.css' %}">
+<link rel="stylesheet" href="{% static 'user_profesor/panel/06h_pulido_docente_cierre.css' %}">
 {% endblock %}
+{# El id del <body> es el enganche de la capa de diseño (y de su modo noche: body:not(.light-mode)#portal-docente). #}
+{% block body_attrs %} id="portal-docente"{% endblock %}
+{% block capa_admin %}{% endblock %}{# la capa 06* es del portal admin (#portal-admin): aqui no se carga #}
+{% block mejoras_admin_js %}{% endblock %}{# ni su JS (mejoras_admin.js) #}
 
 {% block sidebar_usuario %}
 <div class="sidebar-user-avatar">
@@ -34,41 +48,41 @@ para que tambien sirvan desde otras paginas del docente (Mis Resenas).{% endcomm
 </a>
 <a id="menu-clases" class="nav-item" data-seccion="clases" href="{% url 'panel_profesor' %}#clases">
     <i class="bi bi-file-earmark-text"></i>
-    Clases Solicitadas
+    Clases solicitadas
 </a>
 <a id="menu-agenda" class="nav-item" data-seccion="agenda" href="{% url 'panel_profesor' %}#agenda">
     <i class="bi bi-calendar-week"></i>
-    Mi Agenda
+    Mi agenda
 </a>
 <a id="menu-buzon" class="nav-item" data-seccion="buzon" href="{% url 'panel_profesor' %}#buzon">
     <i class="bi bi-chat-dots-fill"></i>
-    Buzón de Alumnos
+    Buzón de alumnos
 </a>
 
 <span class="nav-label">Contenido</span>
 
 <a id="menu-grabaciones" class="nav-item" data-seccion="grabaciones" href="{% url 'panel_profesor' %}#grabaciones">
     <i class="bi bi-play-circle-fill"></i>
-    Clases Grabadas
+    Videos de apoyo
 </a>
 <a id="menu-streaming" class="nav-item" data-seccion="streaming" href="{% url 'panel_profesor' %}#streaming">
     <i class="bi bi-camera-video-fill"></i>
-    Sala de Streaming
+    Sala de streaming
 </a>
 
 <span class="nav-label">Mi cuenta</span>
 
 <a id="menu-perfil" class="nav-item" data-seccion="perfil" href="{% url 'panel_profesor' %}#perfil">
     <i class="bi bi-person-gear"></i>
-    Personalizar Perfil
+    Mi perfil
 </a>
 <a id="menu-saldo" class="nav-item" data-seccion="saldo" href="{% url 'panel_profesor' %}#saldo">
     <i class="bi bi-cash-stack"></i>
-    Saldo Generado
+    Saldo y pagos
 </a>
 <a id="nav-resenas" class="nav-item {% block nav_resenas %}{% endblock %}" href="{% url 'resenas_profesor' %}">
     <i class="bi bi-star-half"></i>
-    Mis Reseñas
+    Mis reseñas
 </a>
 {% if usuario_sesion.url_ayuda %}
 <a id="nav-ayuda" class="nav-item{% if seccion_menu == 'ayuda' %} active{% endif %}" href="{{ usuario_sesion.url_ayuda }}">
@@ -79,5 +93,5 @@ para que tambien sirvan desde otras paginas del docente (Mis Resenas).{% endcomm
 {% endblock %}
 
 {% block logout_url %}{% url 'logout_prof' %}{% endblock %}
-{# La busqueda global es del admin: el docente solo lleva su campanita #}
-{% block topbar_acciones %}{% include 'notificaciones/_campanita.html' with clase_boton='theme-btn' %}{% endblock %}
+{# El buscador Ctrl+K es del admin: solo el panel lo ofrece (con las secciones del profesor); las demás páginas llevan la campanita #}
+{% block topbar_acciones %}{% block topbar_buscar %}{% endblock %}{% include 'notificaciones/_campanita.html' with clase_boton='theme-btn' %}{% endblock %}

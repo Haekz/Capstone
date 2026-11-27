@@ -15,12 +15,14 @@ from collections import Counter
 from datetime import date, datetime, time, timedelta
 
 from django.db.models import Sum
+from django.urls import reverse
 from django.utils import timezone
 
 from alumnos import paquetes, videos_extra
 from alumnos.models import Alumno, Inscripcion, PaqueteClases, Profesor, SolicitudRetiro, Suscripcion
 from alumnos.models.videos import DevolucionVideos, VideoCompartido
-from soporte.models import Ticket
+from resenas.models import ReporteResena
+from soporte.models import Escalamiento, Ticket
 from user_profesor.saldos import saldos_de, valores_videos  # las mismas cuentas que ve cada profesor
 
 from .models import IngresoDiario
@@ -189,3 +191,23 @@ def soporte(ahora=None):
                                      timedelta(hours=1)),
         'dias_cierre': _promedio([t['cerrado'] - t['creado'] for t in tickets if t['cerrado']], timedelta(days=1)),
     }
+
+
+def pendientes(cifras_soporte):
+    """Lo que espera una decision del admin, para el banner del Resumen: los mismos criterios que la campana (avisos.py).
+
+    Resenas: las que tienen algun reporte pendiente (varios reportes de una misma resena cuentan una). Escalados: los que soporte
+    le paso y aun no indica. Retiros: los que siguen sin pagarse, sea por revisar (pendiente) o por pagar (aprobado); los pagados y
+    rechazados ya no esperan nada. Tickets atrasados: los de metricas.soporte().
+    """
+    resenas = ReporteResena.objects.filter(estado=ReporteResena.ESTADO_PENDIENTE).values('resena').distinct().count()
+    escalados = Escalamiento.objects.filter(destino=Escalamiento.AL_ADMIN, indicado__isnull=True).count()
+    retiros = SolicitudRetiro.objects.filter(estado__in=[SolicitudRetiro.PENDIENTE, SolicitudRetiro.APROBADO]).count()
+    return [
+        {'n': resenas, 'uno': 'reseña reportada', 'varios': 'reseñas reportadas', 'icono': 'bi-flag', 'ir': reverse('resenas_moderacion')},
+        {'n': escalados, 'uno': 'caso escalado', 'varios': 'casos escalados', 'icono': 'bi-exclamation-octagon',
+         'ir': reverse('casos_escalados')},
+        {'n': retiros, 'uno': 'retiro por pagar', 'varios': 'retiros por pagar', 'icono': 'bi-cash-coin', 'ir': '#finanzas'},
+        {'n': cifras_soporte['atrasados'], 'uno': 'ticket atrasado', 'varios': 'tickets atrasados', 'icono': 'bi-headset',
+         'ir': '#resumen'},
+    ]

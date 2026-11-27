@@ -1,0 +1,321 @@
+/* Portal de soporte, capa de diseno (de la copia: 07_pulido_soporte.css), parte «tickets»: Mis tickets (banner), tablas y botones.
+   Las partes cargan en este orden: 07a marco, 07b tickets, 07c detalle, 07d lider, 07e cierre. */
+
+/* ── 5. Mis tickets: banner con el estado del día ── */
+#portal-soporte .sop-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 28px;
+    padding: 28px 30px 28px 34px;
+    border-radius: 20px;
+    background:
+        radial-gradient(circle at 12% 0%, rgba(168, 85, 247, 0.45) 0%, transparent 45%),
+        radial-gradient(circle at 95% 100%, rgba(124, 58, 237, 0.35) 0%, transparent 50%),
+        #1a1233;
+    color: #ffffff;
+}
+
+body:not(.light-mode)#portal-soporte .sop-hero {
+    border: 1px solid var(--border);
+}
+
+#portal-soporte .sop-hero-fecha {
+    display: inline-block;
+    min-height: 1.2em;
+    margin-bottom: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #f5a524;
+}
+
+#portal-soporte .sop-hero-titulo {
+    margin-bottom: 8px;
+    font-size: clamp(1.6rem, 2.6vw, 2.1rem);
+    font-weight: 700;
+    line-height: 1.12;
+    letter-spacing: -0.03em;
+    color: #ffffff;
+}
+
+#portal-soporte .sop-hero-resumen {
+    max-width: 52ch;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.78);
+}
+
+#portal-soporte .sop-hero-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 18px;
+    padding: 10px 18px;
+    border-radius: var(--r-ctrl);
+    background: #ffffff;
+    color: #5b21b6;
+    font-size: 0.92rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: transform 0.15s ease;
+}
+
+#portal-soporte .sop-hero-btn:hover {
+    transform: translateY(-1px);
+}
+
+#portal-soporte .sop-hero-btn[hidden] {
+    display: none;
+}
+
+#portal-soporte .sop-cifras {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(120px, 1fr));
+    gap: 10px;
+}
+
+#portal-soporte .sop-cifras[hidden] {
+    display: none;
+}
+
+#portal-soporte .sop-cifras li {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    column-gap: 10px;
+    align-items: center;
+    padding: 12px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+#portal-soporte .sop-cifras i {
+    grid-row: 1 / span 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    font-size: 1rem;
+}
+
+#portal-soporte .sop-cifras strong {
+    font-size: 1.3rem;
+    font-weight: 700;
+    line-height: 1.1;
+    color: #ffffff;
+    font-variant-numeric: tabular-nums;
+}
+
+#portal-soporte .sop-cifras span {
+    font-size: 0.78rem;
+    line-height: 1.3;
+}
+
+/* Algo por vencer: ámbar. Algo vencido: rojo suave. */
+#portal-soporte .sop-cifras .sop-cifra--hay {
+    border-color: rgba(245, 165, 36, 0.55);
+    background: rgba(245, 165, 36, 0.12);
+    color: #ffe2a8;
+}
+
+#portal-soporte .sop-cifras .sop-cifra--hay i {
+    background: #f5a524;
+    color: #1a1233;
+}
+
+#portal-soporte .sop-cifras .sop-cifra--alerta {
+    border-color: rgba(248, 113, 113, 0.6);
+    background: rgba(248, 113, 113, 0.14);
+    color: #fecaca;
+}
+
+#portal-soporte .sop-cifras .sop-cifra--alerta i {
+    background: #f87171;
+    color: #1a1233;
+}
+
+/* ── 6. Tablas ── */
+#portal-soporte .sop-tabla {
+    overflow-x: auto;
+}
+
+#portal-soporte .panel-header .sop-filtro {
+    flex: 1;
+    max-width: 360px;
+    margin-left: auto;
+}
+
+#portal-soporte .sop-filtro[hidden],
+#portal-soporte .sop-sin-resultados[hidden] {
+    display: none;
+}
+
+#portal-soporte .user-table th {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+#portal-soporte .user-table td {
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Filas "no hay…": estado vacío con un visto, no un dato */
+#portal-soporte .user-table td[colspan] {
+    padding: 28px 16px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+}
+
+#portal-soporte .user-table td[colspan]::before {
+    content: "\f270";
+    display: block;
+    margin-bottom: 6px;
+    font-family: "bootstrap-icons";
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--ok);
+}
+
+#portal-soporte .user-table tbody tr:has(td[colspan]):hover {
+    background: transparent;
+}
+
+#portal-soporte .sop-sin-resultados {
+    margin: 0;
+    padding: 22px;
+    text-align: center;
+    font-size: 0.92rem;
+    color: var(--text-secondary);
+}
+
+/* Fila de ticket: número + asunto como un solo enlace; la fila entera se puede apretar */
+#portal-soporte .sop-tabla-tickets tbody tr:not(:has(td[colspan])) {
+    cursor: pointer;
+}
+
+#portal-soporte .sop-ticket {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    color: inherit;
+    text-decoration: none;
+    border-radius: 6px;
+}
+
+#portal-soporte .sop-ticket-num {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+#portal-soporte .sop-ticket-asunto {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+#portal-soporte .sop-tabla-tickets tr:hover .sop-ticket-asunto {
+    color: var(--primary-light);
+}
+
+#portal-soporte .sop-categoria {
+    background: var(--primary-soft);
+    color: var(--primary-light);
+    white-space: nowrap;
+}
+
+#portal-soporte .sop-tabla-tickets time {
+    display: block;
+    white-space: nowrap;
+}
+
+#portal-soporte .sop-acciones {
+    text-align: right;
+    white-space: nowrap;
+}
+
+/* Plazo relativo bajo la fecha */
+#portal-soporte .sop-plazo {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 4px;
+    padding: 2px 9px;
+    border-radius: 99px;
+    background: var(--bg-main);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+#portal-soporte .sop-plazo::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+#portal-soporte .sop-plazo--pronto {
+    background: var(--warn-soft);
+    color: var(--warn);
+}
+
+#portal-soporte .sop-plazo--vencido {
+    background: var(--bad-soft);
+    color: var(--bad);
+}
+
+/* ── 7. Botones ── */
+#portal-soporte .sop-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 34px;
+    padding: 0 14px;
+    border: 1px solid var(--line-2);
+    border-radius: var(--r-ctrl);
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+#portal-soporte .sop-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary-light);
+}
+
+#portal-soporte .sop-btn--primario {
+    border-color: transparent;
+    background: var(--primary-dark);
+    color: #ffffff;
+}
+
+#portal-soporte .sop-btn--primario:hover {
+    background: #6d28d9;
+    color: #ffffff;
+}
+
+#portal-soporte .sop-acciones .sop-btn + .sop-btn {
+    margin-left: 6px;
+}
+
+#portal-soporte .btn-primary {
+    border-radius: var(--r-ctrl);
+}

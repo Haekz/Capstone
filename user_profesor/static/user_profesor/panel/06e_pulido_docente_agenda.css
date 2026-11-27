@@ -1,0 +1,83 @@
+/* Panel docente, capa de diseno (de la copia: 06_pulido_docente.css), parte «agenda»: Mi agenda.
+   Las partes cargan en este orden: 06a marco, 06b inicio, 06c formularios, 06d tablas, 06e agenda, 06f cuenta,
+   06g contenido, 06h cierre. */
+
+/* ── 9. Mi agenda ── */
+#portal-docente .agenda-ayuda {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--primary-light);
+    text-decoration: none;
+}
+
+#portal-docente .agenda-ayuda:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+#portal-docente #sec-agenda .prof-table-wrapper + form {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+}
+
+#portal-docente #sec-agenda .prof-form-row {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+}
+
+#portal-docente #sec-agenda form .prof-form-btn {
+    width: auto;
+    margin-top: 4px;
+}
+
+#portal-docente .agenda-duracion {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 10px 0 12px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+#portal-docente .agenda-duracion i {
+    color: var(--primary-light);
+}
+
+#portal-docente .agenda-duracion--error,
+#portal-docente .agenda-duracion--error i {
+    color: #dc2626;
+}
+
+#portal-docente .agenda-libre {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border: none;
+    border-radius: 99px;
+    background: var(--ok-soft);
+    color: var(--ok);
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+#portal-docente .agenda-libre::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+#portal-docente .agenda-btn {
+    border-radius: 8px;
+}
+
+#portal-docente .agenda-reserva {
+    border-radius: var(--r-item);
+}

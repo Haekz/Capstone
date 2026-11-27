@@ -1,7 +1,7 @@
 """Ayuda y soporte dentro de cada portal: mis tickets, el detalle y Abrir un ticket.
 
-El alumno y el docente las ven con el menu de su portal y la seccion marcada; el apoderado sigue en el diseno publico
-(su portal usa ese diseno). Datos ficticios.
+El alumno y el docente las ven con el menu de su portal y la seccion marcada; el apoderado, con el de su portal
+(base_apoderado, que hereda el marco del alumno). Datos ficticios.
 """
 
 from django.test import SimpleTestCase
@@ -82,13 +82,26 @@ class TicketsEnElPortalTests(BaseResenas):
         r = self.client.get(reverse('panel_profesor'))
         self.assertContains(r, f'id="nav-ayuda" class="nav-item" href="{reverse("mis_tickets")}"')
 
-    def test_el_apoderado_sigue_en_el_diseno_publico(self):
+    def test_el_apoderado_las_ve_en_su_portal_con_ayuda_marcada(self):
         apoderado = crear_apoderado('44444444-4', Apoderado.VERIFICADO)
         entrar(self.client, apoderado, APODERADO)
         for nombre in PAGINAS:
             with self.subTest(pagina=nombre):
                 r = self.client.get(self.url(nombre, apoderado.user))
-                self.assertTemplateNotUsed(r, 'alumnos/base_alumno.html')
+                self.assertTemplateUsed(r, 'apoderados/base_apoderado.html')
                 self.assertTemplateNotUsed(r, 'user_profesor/base_docente.html')
-                self.assertNotContains(r, 'class="sidebar-menu"')
-        self.assertContains(self.client.get(reverse('mis_tickets')), 'Volver a mi cuenta')
+                self.assertContains(r, 'Portal apoderado')
+                self.assertContains(r, f'class="sidebar-nav-item active" href="{reverse("mis_tickets")}" aria-current="page"')
+
+    def test_al_apoderado_el_marco_no_llega_a_paginas_sin_su_diseno(self):
+        """Notificaciones es compartida pero la copia no la cubre: el apoderado la sigue viendo en el diseno publico."""
+        apoderado = crear_apoderado('44444444-4', Apoderado.VERIFICADO)
+        entrar(self.client, apoderado, APODERADO)
+        r = self.client.get(reverse('mis_notificaciones'))
+        self.assertTemplateNotUsed(r, 'apoderados/base_apoderado.html')
+        self.assertNotContains(r, 'Portal apoderado')
+
+    def test_el_marco_del_apoderado_no_aparece_a_otros_roles(self):
+        entrar(self.client, self.profesor, PROFESOR)
+        for nombre in PAGINAS[:1]:
+            self.assertTemplateNotUsed(self.client.get(self.url(nombre, self.profesor)), 'apoderados/base_apoderado.html')

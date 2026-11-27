@@ -14,6 +14,7 @@ from django.views.decorators.http import require_POST
 
 from alumnos.decorators import apoderado_required
 from alumnos.models import Profesor
+from alumnos.portales import contexto_apoderado as marco_apoderado
 from alumnos.roles import APODERADO
 from apoderados.models import Apoderado
 from apoderados.permisos import vinculo_contratable
@@ -37,7 +38,8 @@ def _al_buzon(conversacion=None):
 def buzon_apoderado(request):
     apoderado = _apoderado(request)
     return render(request, 'mensajes/buzon_apoderado.html',
-                  {'apoderado': apoderado, **panel.contexto_apoderado(apoderado, request.GET.get('c'))})
+                  {'apoderado': apoderado, **marco_apoderado(request, 'mensajes'),
+                   **panel.contexto_apoderado(apoderado, request.GET.get('c'))})
 
 
 @require_POST

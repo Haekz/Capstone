@@ -39,8 +39,8 @@ class Command(BaseCommand):
         for paquete in pendientes:
             try:
                 respuesta = webpay._tx().status(paquete.token_ws)
-            except Exception as exc:  # Transbank caido o token vencido
-                logger.warning('Error consultando estado Transbank (%s): %s', paquete.buy_order, exc)
+            except Exception as error:  # Transbank caido o token vencido
+                webpay._log_error_transbank('status', paquete.buy_order, error)
                 if paquete.creada < limite_expirado:
                     type(paquete).confirmar_pago(paquete.buy_order, False)
                     rechazados += 1

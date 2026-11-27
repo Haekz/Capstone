@@ -16,11 +16,11 @@
 
         function inscribirAClase(idClase, nombreCurso) {
             Swal.fire({
-                title: 'Confirmar Inscripción',
+                title: '¿Inscribirte en esta clase?',
                 text: `¿Deseas inscribirte a la clase "${nombreCurso}"?`,
                 icon: 'question',
                 showCancelButton: true,
-                confirmButtonText: 'Sí, Inscribirme',
+                confirmButtonText: 'Inscribirme',
                 cancelButtonText: 'Cancelar',
                 confirmButtonColor: 'var(--primary)',
                 cancelButtonColor: '#6b7280'
@@ -38,7 +38,7 @@
                     .then(data => {
                         if (data.success) {
                             Swal.fire({
-                                title: '¡Inscripción Exitosa!',
+                                title: 'Inscripción lista',
                                 text: data.message,
                                 icon: 'success',
                                 confirmButtonColor: 'var(--primary)'

@@ -127,4 +127,4 @@ class PlanesJsonTests(Escenario):
     def test_el_json_de_planes_tiene_los_precios_fijos(self):
         """Riesgo: lo que muestra el sitio no es lo que se cobra (planes: 'todo precio sale de paquetes.py')."""
         r = self.client.get(reverse('planes'), {'profesor': self.profe.id_profesor, 'format': 'json'})
-        self.assertEqual([p['precio_total'] for p in r.json()['planes']], [15990, 62990, 123990])
+        self.assertEqual([p['precio_total'] for p in r.json()['planes']], [18990, 74990, 146990])

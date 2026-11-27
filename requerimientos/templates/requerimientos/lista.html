@@ -1,7 +1,7 @@
 {% extends 'soporte/base_soporte.html' %}
 
 {% block page_title %}Requerimientos de autoridad{% endblock %}
-{% block page_subtitle %}Lo que piden tribunales, fiscalías y otras autoridades{% endblock %}
+{% block page_subtitle %}Lo que piden tribunales, fiscalías y otras autoridades.{% endblock %}
 {% block nav_requerimientos %}active{% endblock %}
 
 {% block content %}
@@ -11,17 +11,21 @@
 </div>
 {% endif %}
 
+<p class="sop-aviso">
+    <i class="bi bi-shield-check" aria-hidden="true"></i>
+    <span>Antes de entregar cualquier dato hay que verificar el requerimiento. Aquí queda registrado qué se recibió, cómo se verificó y qué se entregó, sin copiar datos personales.</span>
+</p>
+
 <div class="panel">
     <div class="panel-header">
-        <span class="panel-title"><i class="bi bi-bank2" aria-hidden="true"></i> Abiertos ({{ abiertos|length }})</span>
-        <a href="{% url 'requerimiento_nuevo' %}">Registrar uno nuevo</a>
+        <h2 class="panel-title"><i class="bi bi-bank2" aria-hidden="true"></i> Abiertos <span class="sop-cuenta">{{ abiertos|length }}</span></h2>
+        <a class="sop-btn sop-btn--primario" href="{% url 'requerimiento_nuevo' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Registrar requerimiento</a>
     </div>
-    <div style="padding:18px;">
-        <p><small>Antes de entregar cualquier dato hay que verificar el requerimiento. Aquí queda registrado qué se recibió, cómo se verificó y qué se entregó, sin copiar datos personales.</small></p>
-        {% if abiertos %}
+    {% if abiertos %}
+    <div class="sop-tabla">
         <table class="user-table">
             <thead>
-                <tr><th scope="col">Autoridad</th><th scope="col">Referencia</th><th scope="col">Estado</th><th scope="col">Plazo</th><th scope="col">Detalle</th></tr>
+                <tr><th scope="col">Autoridad</th><th scope="col">Referencia</th><th scope="col">Estado</th><th scope="col">Plazo</th><th scope="col"><span class="sop-solo-lector">Detalle</span></th></tr>
             </thead>
             <tbody>
                 {% for r in abiertos %}
@@ -30,26 +34,28 @@
                     <td>{{ r.referencia }}</td>
                     <td>{{ r.get_estado_display }}</td>
                     <td>{% if r.vence %}{{ r.vence|date:"d-m-Y" }}{% if r.atrasado %} <span class="badge">Vencido</span>{% endif %}{% else %}Sin plazo{% endif %}</td>
-                    <td><a href="{% url 'requerimiento_detalle' r.pk %}" aria-label="Abrir el requerimiento {{ r.referencia }} de {{ r.autoridad }}">Abrir</a></td>
+                    <td class="sop-acciones"><a class="sop-btn sop-btn--primario" href="{% url 'requerimiento_detalle' r.pk %}" aria-label="Abrir el requerimiento {{ r.referencia }} de {{ r.autoridad }}">Abrir</a></td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
-        {% else %}
-        <p>No hay requerimientos abiertos.</p>
-        {% endif %}
     </div>
+    {% else %}
+    <div class="panel-body">
+        <p class="sop-vacio">No hay requerimientos abiertos.</p>
+    </div>
+    {% endif %}
 </div>
 
-<div class="panel" style="margin-top:20px;">
+<div class="panel">
     <div class="panel-header">
-        <span class="panel-title"><i class="bi bi-archive-fill" aria-hidden="true"></i> Resueltos</span>
+        <h2 class="panel-title"><i class="bi bi-archive-fill" aria-hidden="true"></i> Resueltos</h2>
     </div>
-    <div style="padding:18px;">
-        {% if resueltos %}
+    {% if resueltos %}
+    <div class="sop-tabla">
         <table class="user-table">
             <thead>
-                <tr><th scope="col">Autoridad</th><th scope="col">Referencia</th><th scope="col">Resultado</th><th scope="col">Resuelto el</th><th scope="col">Detalle</th></tr>
+                <tr><th scope="col">Autoridad</th><th scope="col">Referencia</th><th scope="col">Resultado</th><th scope="col">Resuelto el</th><th scope="col"><span class="sop-solo-lector">Detalle</span></th></tr>
             </thead>
             <tbody>
                 {% for r in resueltos %}
@@ -58,14 +64,16 @@
                     <td>{{ r.referencia }}</td>
                     <td>{{ r.get_estado_display }}</td>
                     <td>{{ r.resuelto|date:"d-m-Y" }}</td>
-                    <td><a href="{% url 'requerimiento_detalle' r.pk %}" aria-label="Ver el requerimiento {{ r.referencia }} de {{ r.autoridad }}">Ver</a></td>
+                    <td class="sop-acciones"><a class="sop-btn" href="{% url 'requerimiento_detalle' r.pk %}" aria-label="Ver el requerimiento {{ r.referencia }} de {{ r.autoridad }}">Ver</a></td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
-        {% else %}
-        <p>Todavía no hay requerimientos resueltos.</p>
-        {% endif %}
     </div>
+    {% else %}
+    <div class="panel-body">
+        <p class="sop-vacio">Todavía no hay requerimientos resueltos.</p>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

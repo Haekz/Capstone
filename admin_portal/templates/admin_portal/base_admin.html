@@ -7,9 +7,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Admin — LBWUS{% endblock %}</title>
     <link rel="icon" href="{% static 'alumnos/img/Logo.png' %}">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'vendor/bootstrap-icons/bootstrap-icons.min.css' %}">
+    <link rel="stylesheet" href="{% static 'vendor/fuentes/fuentes.css' %}">
     <!-- Estilos específicos de la interfaz del administrador -->
     {# Antes admin_panel.css: capas en orden, cada una pisa a la anterior. #}
     <link rel="stylesheet" href="{% static 'admin_portal/css/admin_panel/01_base.css' %}">
@@ -18,10 +17,17 @@
     <link rel="stylesheet" href="{% static 'admin_portal/css/admin_panel/04_rediseno_marco.css' %}">
     <link rel="stylesheet" href="{% static 'admin_portal/css/admin_panel/05_rediseno_contenido.css' %}">
     <link rel="stylesheet" href="{% static 'alumnos/css/avisos.css' %}">
+    {# Capa de diseño del portal admin (06*): todo cuelga de #portal-admin. Soporte y Docente la dejan vacía: tienen la suya. #}
+    {% block capa_admin %}
+    <link rel="stylesheet" href="{% static 'admin_portal/css/admin_panel/06a_pulido_admin_marco.css' %}">
+    <link rel="stylesheet" href="{% static 'admin_portal/css/admin_panel/06b_pulido_admin_resumen.css' %}">
+    <link rel="stylesheet" href="{% static 'admin_portal/css/admin_panel/06c_pulido_admin_pantallas.css' %}">
+    <link rel="stylesheet" href="{% static 'admin_portal/css/admin_panel/06d_pulido_admin_cierre.css' %}">
+    {% endblock %}
     {% include 'alumnos/includes/sin_copia_atras.html' %}
     {% block extra_css %}{% endblock %}
 </head>
-<body class="light-mode">
+<body{% block body_attrs %} id="portal-admin"{% endblock %} class="light-mode">
 {% avisos_campana as avisos %}{# plazos de quien abre la pagina, segun su rol (admin_portal/avisos.py) #}
 <script>
     // Aplica el tema guardado antes de pintar (evita el destello claro en modo oscuro)
@@ -36,18 +42,20 @@
             <img src="{% static 'alumnos/img/Logo.png' %}" alt="Logo LBWUS">
             <div class="sidebar-brand-text">
                 <span class="sidebar-brand-name">LBWUS</span>
-                <span class="sidebar-brand-role">{% block portal_nombre %}Admin Portal{% endblock %}</span>
+                <span class="sidebar-brand-role">{% block portal_nombre %}Portal admin{% endblock %}</span>
             </div>
         </a>
 
         <!-- Mini ficha del perfil del administrador que tiene la sesión activa -->
         <div class="sidebar-user">
             {% block sidebar_usuario %}
+            {# Solo el dashboard pasa `admin`; en las demás páginas el nombre sale de la sesión (antes se mostraba el genérico "Administrador") #}
+            {% firstof admin.user.first_name request.user.first_name "Administrador" as nombre_admin %}
             <div class="sidebar-user-avatar">
-                {{ admin.user.first_name|slice:":1"|upper|default:"A" }}
+                {{ nombre_admin|slice:":1"|upper }}
             </div>
             <div class="sidebar-user-info">
-                <div class="sidebar-user-name">{{ admin.user.first_name|default:"Administrador" }}</div>
+                <div class="sidebar-user-name">{{ nombre_admin }}</div>
                 <div class="sidebar-user-role">Administrador</div>
             </div>
             {% endblock %}
@@ -60,13 +68,13 @@
 
             <a id="nav-resumen" class="nav-item {% block nav_resumen %}{% endblock %}" href="{% url 'dashboard_admin' %}">
                 <i class="bi bi-grid-1x2-fill"></i>
-                Resumen General
+                Resumen
             </a>
 
             {# El dashboard resuelve "usuarios" como seccion interna y sobrescribe este destino. #}
-            <a id="nav-usuarios" class="nav-item {% block nav_usuarios %}{% endblock %}" href="{% block nav_usuarios_href %}{% url 'crud' %}{% endblock %}">
+            <a id="nav-usuarios" class="nav-item {% block nav_usuarios %}{% endblock %}" href="{% url 'dashboard_admin' %}#usuarios">
                 <i class="bi bi-people-fill"></i>
-                Gestión de Alumnos
+                Usuarios
             </a>
 
             <a id="nav-resenas" class="nav-item {% block nav_resenas %}{% endblock %}" href="{% url 'resenas_moderacion' %}">
@@ -95,7 +103,7 @@
 
             <a id="nav-clases" class="nav-item {% block nav_clases %}{% endblock %}" href="{% url 'dashboard_admin' %}#clases">
                 <i class="bi bi-calendar3"></i>
-                Clases / Horarios
+                Clases
             </a>
 
             <a id="nav-asignaturas" class="nav-item {% block nav_asignaturas %}{% endblock %}" href="{% url 'asignaturas_adm' %}">
@@ -105,7 +113,7 @@
 
             <a id="nav-finanzas" class="nav-item {% block nav_finanzas %}{% endblock %}" href="{% url 'dashboard_admin' %}#finanzas">
                 <i class="bi bi-wallet2"></i>
-                Finanzas / Retiros
+                Finanzas
             </a>
 
             <a id="nav-ajustes" class="nav-item {% block nav_ajustes %}{% endblock %}" href="{% url 'dashboard_admin' %}#ajustes">
@@ -125,7 +133,7 @@
                 {% csrf_token %}
                 <button type="submit" class="sidebar-logout btn-sidebar-logout">
                     <i class="bi bi-box-arrow-left"></i>
-                    <span>Cerrar Sesión</span>
+                    <span>Cerrar sesión</span>
                 </button>
             </form>
         </div>
@@ -148,9 +156,11 @@
             </div>
             <div class="topbar-right">
                 {% block topbar_acciones %}
-                <!-- Botón de búsqueda flotante (Ctrl + K) -->
-                <button class="theme-btn" onclick="openSearchModal()" title="Buscar (Ctrl + K)">
-                    <i class="bi bi-search"></i>
+                <!-- Botón para ir a una sección (Ctrl + K) -->
+                <button type="button" class="topbar-buscar" onclick="openSearchModal()" aria-label="Ir a una sección (Ctrl + K)" aria-keyshortcuts="Control+K">
+                    <i class="bi bi-search" aria-hidden="true"></i>
+                    <span>Ir a…</span>
+                    <kbd>Ctrl K</kbd>
                 </button>
                 {% include 'admin_portal/includes/boton_campana.html' %}
                 {% endblock %}
@@ -198,13 +208,14 @@
 
     <!-- Modal de Búsqueda Global (Ctrl + K) -->
     <div class="search-modal-backdrop" id="search-modal-backdrop" onclick="closeSearchModal()">
-        <div class="search-modal" onclick="event.stopPropagation()">
+        <div class="search-modal" onclick="event.stopPropagation()"{% block busqueda_dialogo %}{% endblock %}>
             <div class="search-modal-header">
                 <i class="bi bi-search"></i>
-                <input type="text" class="search-modal-input" id="search-modal-input" placeholder="Buscar alumnos, profesores, clases..." oninput="handleGlobalSearch()">
-                <span class="search-esc-badge">ESC</span>
+                <input type="text" class="search-modal-input" id="search-modal-input" placeholder="{% block busqueda_placeholder %}Buscar alumnos, profesores, clases...{% endblock %}" oninput="handleGlobalSearch()"{% block busqueda_campo %}{% endblock %}>
+                <span class="search-esc-badge">{% block busqueda_esc %}ESC{% endblock %}</span>
             </div>
             <div class="search-modal-results" id="search-modal-results">
+                {% block busqueda_resultados %}
                 <div class="search-section-label">Sugerencias rápidas</div>
                 <div class="search-result-item" onclick="navigateFromSearch('usuarios')">
                     <i class="bi bi-people"></i>
@@ -216,6 +227,7 @@
                     <span>Agenda de Clases</span>
                     <span class="search-result-type">Sección</span>
                 </div>
+                {% endblock %}
             </div>
         </div>
     </div>
@@ -337,14 +349,16 @@
         } else {
             resultsBox.innerHTML = `
                 <div class="search-section-label">Búsqueda</div>
-                <div style="padding: 16px; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+                <div style="padding: 16px; text-align: center; color: var(--text-secondary); font-size: 0.9rem;">
                     No se encontraron secciones para "<strong>${esc(query)}</strong>"
                 </div>
             `;
         }
     }
 </script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="{% static 'vendor/sweetalert2/sweetalert2.all.min.js' %}"></script>
 {% block extra_js %}{% endblock %}
+{# Mejoras de uso del portal admin. Soporte y Docente lo dejan vacío: tienen las suyas. #}
+{% block mejoras_admin_js %}<script src="{% static 'admin_portal/mejoras_admin.js' %}"></script>{% endblock %}
 </body>
 </html>

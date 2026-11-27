@@ -12,8 +12,9 @@ from tests.test_apoderados import entrar
 
 class AccesoPortalAdminTests(TestCase):
     """Las pantallas internas exigen sesion de admin; la de salida no."""
-    VISTAS_PRIVADAS = ('dashboard_admin', 'crud', 'alumnos_Add', 'alumnos_Update', 'planes_adm', 'nosotros_adm',
-                   'casos_escalados')
+    VISTAS_PRIVADAS = ('dashboard_admin', 'crud', 'planes_adm', 'nosotros_adm', 'casos_escalados')
+    # crud solo redirige al dashboard (test_admin_un_solo_usuarios): con sesion de admin no abre una pagina.
+    PAGINAS_DEL_ADMIN = tuple(v for v in VISTAS_PRIVADAS if v != 'crud')
 
     @classmethod
     def setUpTestData(cls):
@@ -36,7 +37,7 @@ class AccesoPortalAdminTests(TestCase):
 
     def test_admin_con_sesion_si_entra(self):
         self._entrar_como_admin()
-        for nombre in self.VISTAS_PRIVADAS:
+        for nombre in self.PAGINAS_DEL_ADMIN:
             with self.subTest(vista=nombre):
                 respuesta = self.client.get(reverse(nombre))
                 self.assertNotEqual(respuesta.status_code, 302)
@@ -72,7 +73,7 @@ class AccesoPortalAdminTests(TestCase):
         alumno = self._crear_alumno()
         self._entrar_como_admin()
         respuesta = self.client.post(reverse('alumnos_del', args=[alumno.id_alumno]))
-        self.assertEqual(respuesta.status_code, 200)
+        self.assertEqual(respuesta.status_code, 302)  # vuelve a Usuarios del dashboard
         self.assertFalse(Alumno.objects.filter(pk=alumno.pk).exists())
         self.assertFalse(User.objects.filter(username='30303030-3').exists())
 

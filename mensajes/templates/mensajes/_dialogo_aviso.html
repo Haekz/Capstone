@@ -1,0 +1,39 @@
+{# Aviso legal (E5, respuesta legal 02-nov) en ventana: lo abre el boton "?" de las conversaciones del apoderado y del profesor. #}
+{# Los plazos vienen de mensajes/templatetags/mensajes_tags.py. El texto debe coincidir con _aviso.html (hay una prueba). #}
+<dialog class="dialogo-info" id="dialogo-mensajes" aria-labelledby="dialogo-mensajes-titulo" aria-describedby="dialogo-mensajes-sub">
+    <div class="di-cabecera">
+        <span class="di-icono" aria-hidden="true"><i class="bi bi-shield-lock"></i></span>
+        <div>
+            <h3 id="dialogo-mensajes-titulo">Cómo funcionan los mensajes</h3>
+            <p id="dialogo-mensajes-sub">Y qué pasa con tus datos</p>
+        </div>
+        <form method="dialog"><button class="di-cerrar" aria-label="Cerrar"><i class="bi bi-x-lg" aria-hidden="true"></i></button></form>
+    </div>
+    <ul class="di-lista">
+        <li>
+            <span class="di-item-icono" aria-hidden="true"><i class="bi bi-chat-square-text"></i></span>
+            <div><strong>Para qué sirven</strong><p>Solo para coordinar las clases. No se usan para otra cosa.</p></div>
+        </li>
+        <li>
+            <span class="di-item-icono" aria-hidden="true"><i class="bi bi-funnel"></i></span>
+            <div><strong>Filtro automático</strong><p>Un programa revisa cada mensaje antes de enviarlo y bloquea teléfonos, correos, redes sociales y direcciones, para que todo se converse dentro de LBWUS. No es infalible. Ninguna persona lee los mensajes por este filtro.</p></div>
+        </li>
+        <li>
+            <span class="di-item-icono" aria-hidden="true"><i class="bi bi-eye"></i></span>
+            <div><strong>Quién los puede leer</strong><p>{% if rol == 'apoderado' %}Tú y el profesor. El profesor ve si eres madre, padre o tutor legal, y el nombre de pila de tu estudiante, no tu nombre.{% elif rol == 'profesor' %}Tú y el alumno o su apoderado.{% else %}Tú y el profesor.{% endif %} El equipo de soporte de LBWUS solo puede leer una conversación si alguien la reporta, únicamente desde el ticket, y queda registrado quién la abrió y cuándo. El administrador no puede leerlas.</p></div>
+        </li>
+        <li>
+            <span class="di-item-icono" aria-hidden="true"><i class="bi bi-bell"></i></span>
+            <div><strong>Avisos</strong><p>Cuando llega un mensaje nuevo te avisamos con la campanita y un correo que no incluye el mensaje.</p></div>
+        </li>
+        <li>
+            <span class="di-item-icono" aria-hidden="true"><i class="bi bi-clock-history"></i></span>
+            <div><strong>Cuánto tiempo se guardan</strong><p>Se eliminan solas cuando pasan {{ dias }} días sin mensajes, salvo que haya clases por dictar, un paquete vigente entre ustedes o un ticket abierto. Si una conversación se reporta, se conserva mientras soporte la revisa; después un líder de soporte decide si se libera o, solo si hay un reclamo, el requerimiento de una autoridad o una investigación, se conserva más tiempo, con revisión cada {{ meses }} meses.</p></div>
+        </li>
+        <li>
+            <span class="di-item-icono" aria-hidden="true"><i class="bi bi-person-check"></i></span>
+            <div><strong>Tus derechos</strong><p>Puedes pedir ver, corregir o eliminar tus datos escribiéndonos desde <a href="{% url 'mis_tickets' %}">Ayuda y soporte</a>, o pedir <a href="{% url 'eliminar_cuenta' %}">eliminar tu cuenta</a>.</p></div>
+        </li>
+    </ul>
+    <form method="dialog" class="di-pie"><button class="{% if rol == 'profesor' %}prof-form-btn prof-btn-auto{% else %}btn-principal{% endif %} di-ok">Entendido</button></form>
+</dialog>

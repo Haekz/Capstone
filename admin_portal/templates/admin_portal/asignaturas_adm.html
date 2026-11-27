@@ -16,16 +16,15 @@
     <div class="panel-header">
         <span class="panel-title"><i class="bi bi-plus-circle" aria-hidden="true"></i> Nueva asignatura</span>
     </div>
-    <form method="post" action="{% url 'crear_asignatura' %}" style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:18px;">
+    <form method="post" action="{% url 'crear_asignatura' %}" class="adm-form-linea">
         {% csrf_token %}
-        <label for="nueva-asignatura" style="font-weight:600;">Nombre</label>
-        <input type="text" id="nueva-asignatura" name="nombre" maxlength="{{ largo_maximo }}" required placeholder="Ej. Física"
-            style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--bg-card); color:var(--text-primary);">
+        <label for="nueva-asignatura" class="form-label">Nombre</label>
+        <input type="text" id="nueva-asignatura" name="nombre" maxlength="{{ largo_maximo }}" required placeholder="Ej.: Física" class="form-input">
         <button type="submit" class="btn-primary"><i class="bi bi-plus-lg" aria-hidden="true"></i> Crear</button>
     </form>
 </div>
 
-<div class="panel" style="margin-top:28px;">
+<div class="panel">
     <div class="panel-header">
         <span class="panel-title"><i class="bi bi-journal-bookmark-fill" aria-hidden="true"></i> Catálogo ({{ asignaturas|length }})</span>
     </div>
@@ -38,18 +37,17 @@
                 {% for a, usada in asignaturas %}
                 <tr>
                     <td>
-                        <form method="post" action="{% url 'renombrar_asignatura' a.pk %}" style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+                        <form method="post" action="{% url 'renombrar_asignatura' a.pk %}" class="adm-form-linea adm-form-linea--tabla">
                             {% csrf_token %}
                             <input type="text" name="nombre" value="{{ a.nombre }}" maxlength="{{ largo_maximo }}" required
-                                aria-label="Nuevo nombre de {{ a.nombre }}"
-                                style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--bg-card); color:var(--text-primary);">
+                                aria-label="Nuevo nombre de {{ a.nombre }}" class="form-input">
                             <button type="submit" class="btn-secondary">Renombrar</button>
                         </form>
                     </td>
                     <td>{{ a.clases }}</td>
                     <td>
                         {% if usada %}
-                        <small>En uso (clases o especializaciones)</small>
+                        <small class="adm-nota"><i class="bi bi-lock" aria-hidden="true"></i> En uso (clases o especializaciones)</small>
                         {% else %}
                         <form method="post" action="{% url 'eliminar_asignatura' a.pk %}" onsubmit="return confirm('¿Eliminar «{{ a.nombre|escapejs }}»?')">
                             {% csrf_token %}

@@ -20,7 +20,7 @@ from tests.test_apoderados_vinculos import crear_menor_vinculado
 from tests.test_especialidad import crear_profesor
 from tests.test_paquetes import RUT_ANA, Escenario
 
-PRECIO_PROGRESO = 62990  # precio fijo de LBWUS
+PRECIO_PROGRESO = 74990  # precio fijo de LBWUS
 
 
 def respuesta_webpay(paquete, monto):

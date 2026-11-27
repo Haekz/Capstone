@@ -20,7 +20,7 @@ from tests.test_apoderados_vinculos import RUT_HERMANA, crear_menor_vinculado
 from tests.test_especialidad import crear_profesor
 from tests.test_filtros_clases import crear_sesion
 
-PRECIO_PROGRESO = 62990  # precio fijo de LBWUS (tests/test_paquetes.py)
+PRECIO_PROGRESO = 74990  # precio fijo de LBWUS (tests/test_paquetes.py)
 
 
 @mock.patch('alumnos.webpay._tx')
@@ -51,7 +51,10 @@ class CompraDelApoderadoTests(TestCase):
         respuesta = self.client.get(reverse('planes'), {'estudiante': self.vinculo.pk,
                                                         'profesor': self.profesor.id_profesor})
         self.assertContains(respuesta, reverse('apoderado_comprar_paquete', args=[self.vinculo.pk]))
-        self.assertContains(respuesta, f'Contratando para {self.vinculo.alumno.user.first_name}')
+        self.assertContains(respuesta, f'Contratar Flexible para {self.vinculo.alumno.user.first_name}')
+        # La caja lila de arriba repetia lo que ya dicen la barra, el selector y cada boton: se quito (21-nov).
+        for repetido in ('Contratando para', 'Precios con'):
+            self.assertNotContains(respuesta, repetido)
 
     def test_el_apoderado_conserva_el_selector_de_profesor(self, tx):
         """Es su unico camino para elegir profesor: no tiene buscador propio."""
@@ -85,7 +88,7 @@ class CompraDelApoderadoTests(TestCase):
         tx.return_value.create.assert_not_called()
         self.assertFalse(PaqueteClases.objects.exists())
         respuesta = self.client.get(reverse('planes'), {'estudiante': ajeno.pk, 'profesor': self.profesor.id_profesor})
-        self.assertNotContains(respuesta, 'Contratando para')
+        self.assertNotContains(respuesta, reverse('apoderado_comprar_paquete', args=[ajeno.pk]))  # ni boton ni nombre del hijo ajeno
 
     def test_el_menor_y_los_anonimos_no_usan_la_compra_del_apoderado(self, tx):
         menor = self.vinculo.alumno

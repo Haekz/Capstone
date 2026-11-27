@@ -8,10 +8,12 @@
 {{ block.super }}
 <link rel="stylesheet" href="{% static 'alumnos/css/perfil_profesor.css' %}">
 <link rel="stylesheet" href="{% static 'resenas/resenas.css' %}">
+<link rel="stylesheet" href="{% static 'resenas/resenas_pulido.css' %}">
 {% endblock %}
 
 {% block content %}
-<div class="perfil-prof">
+{# .mr: contenedor de Mis reseñas; resenas_pulido.css cuelga de él lo que solo corresponde a este panel #}
+<div class="perfil-prof mr">
     <header class="perfil-prof__cabecera">
         <div>
             <h1>Mis reseñas</h1>

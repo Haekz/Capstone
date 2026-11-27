@@ -8,7 +8,9 @@ from django.views.generic import TemplateView
 from alumnos.views import home, custom_login
 from alumnos.views_legal import privacidad, terminos
 from alumnos import google_views
+from lbwus.seo import robots, sitemap
 from lbwus.puerta import puerta
+from lbwus.salud import salud
 
 
 def cerrada(request, *args, **kwargs):
@@ -18,6 +20,8 @@ def cerrada(request, *args, **kwargs):
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('robots.txt', robots, name='robots'),
+    path('sitemap.xml', sitemap, name='sitemap'),
     
     # Ruta raíz que muestra la página de inicio.
     # Este es el UNICO lugar donde se registra name='home'.
@@ -25,6 +29,8 @@ urlpatterns = [
     # duplicados sin avisar y el ultimo registrado gana el reverse().
     path('', home, name='home'),
     path('puerta/', puerta, name='puerta'),
+    # Monitor externo (SCRUM-100): publica, sin login ni puerta; solo {"estado": "ok"|"atrasado"}.
+    path('salud/', salud, name='salud'),
     path('terminos/', terminos, name='terminos'),
     path('alumnos/', include('alumnos.urls')),
     path('admin_portal/', include('admin_portal.urls')),

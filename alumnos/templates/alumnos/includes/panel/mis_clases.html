@@ -2,12 +2,12 @@
             <!-- ── VIEW 4: MY CLASSES ── -->
             <div class="dashboard-view" id="view-my-classes">
                 <div class="results-section ap-section-narrow">
-                    <h2 class="ap-mb-10"><i class="bi bi-journal-bookmark-fill ap-text-primary"></i> Mis Clases y Horarios</h2>
-                    <p class="ap-section-intro">Gestiona tus clases programadas y revisa el historial de tus clases completadas.</p>
+                    <h2 class="ap-mb-10"><i class="bi bi-journal-bookmark-fill ap-text-primary"></i> Mis clases</h2>
+                    <p class="ap-section-intro">Tus clases agendadas, las que ya tomaste y el catálogo para reservar más.</p>
                     
                     <!-- Upcoming Classes -->
                     <div class="classes-subsection ap-mb-40">
-                        <h3 class="subsection-title"><i class="bi bi-calendar-check-fill"></i> Clases Próximas en las que estás Inscrito</h3>
+                        <h3 class="subsection-title"><i class="bi bi-calendar-check-fill"></i> Próximas clases</h3>
                         <div class="classes-grid" id="upcoming-classes-container">
                             {% if mis_inscripciones %}
                                 {% for insc in mis_inscripciones %}
@@ -54,7 +54,7 @@
                             {% else %}
                                 <div class="empty-teachers-state ap-full-row">
                                     <i class="bi bi-calendar-x"></i>
-                                    <p>No estás inscrito en ninguna clase todavía. ¡Revisa el catálogo abajo para inscribirte a tu primera clase!</p>
+                                    <p>Aún no tienes clases agendadas. Elige una del catálogo de abajo y reserva un horario.</p>
                                 </div>
                             {% endif %}
                         </div>
@@ -62,7 +62,7 @@
 
                     <!-- Historial: sesiones confirmadas que ya terminaron -->
                     <div class="classes-subsection ap-mb-40" id="historial-clases-seccion">
-                        <h3 class="subsection-title"><i class="bi bi-check2-circle"></i> Historial de Clases Completadas</h3>
+                        <h3 class="subsection-title"><i class="bi bi-check2-circle"></i> Clases completadas</h3>
                         <div class="classes-grid">
                             {% for insc in historial_clases %}
                             <div class="class-item-card">
@@ -84,7 +84,7 @@
                             {% empty %}
                             <div class="empty-teachers-state ap-full-row">
                                 <i class="bi bi-hourglass-split"></i>
-                                <p>Todavía no tienes clases completadas. Aquí aparecerán tus sesiones ya realizadas.</p>
+                                <p>Cuando tomes tu primera clase, aparecerá aquí.</p>
                             </div>
                             {% endfor %}
                         </div>
@@ -92,7 +92,7 @@
 
                     <!-- Available Classes Catalog to Enroll -->
                     <div class="classes-subsection ap-mb-40" id="catalogo-clases-seccion">
-                        <h3 class="subsection-title"><i class="bi bi-journal-plus"></i> Catálogo de Clases Disponibles</h3>
+                        <h3 class="subsection-title"><i class="bi bi-journal-plus"></i> Catálogo de clases</h3>
                         <!-- Filtros combinados: opciones y disponibilidad las resuelve el backend -->
                         <form method="get" class="catalog-filters" id="catalogo-filtros" aria-label="Filtrar catálogo de clases">
                             <div class="catalog-filter">{{ filtros.especialidad.label_tag }}{{ filtros.especialidad }}</div>

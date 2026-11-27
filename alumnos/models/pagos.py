@@ -146,7 +146,7 @@ class PaqueteClases(models.Model):
 
     @property
     def precio_por_clase(self):
-        return self.monto // self.clases
+        return paquetes.por_clase(self.monto, self.clases)
 
     @property
     def total(self):

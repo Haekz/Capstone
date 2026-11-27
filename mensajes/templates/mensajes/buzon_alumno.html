@@ -9,6 +9,9 @@
 <div class="inbox-layout">
     <!-- Panel Izquierdo: Lista de Chats -->
     <div class="chat-sidebar">
+        <div class="chat-sidebar-titulo">
+            <h2>Conversaciones</h2>
+        </div>
         <div class="chat-sidebar-header">
             <i class="bi bi-search" aria-hidden="true"></i>
             <input type="text" id="chat-search-input" placeholder="Buscar profesor..." aria-label="Buscar profesor" oninput="filterChatContacts()">
@@ -44,6 +47,10 @@
             <p style="padding: 15px;">Podrás escribir a un profesor cuando tengas una clase reservada o un paquete activo con él.</p>
             {% endif %}
         </div>
+        <p class="chat-sidebar-nota">
+            <i class="bi bi-shield-check" aria-hidden="true"></i>
+            <span>No compartas teléfonos, correos ni direcciones: todo se conversa aquí.</span>
+        </p>
     </div>
 
     <!-- Panel Derecho: Conversación activa -->
@@ -83,7 +90,16 @@
         {% if bandeja_error %}
         <p role="alert" style="margin: 0; padding: 10px 16px; background: #fdecea; color: #8a1c1c; font-weight: 600;">{{ bandeja_error }}</p>
         {% endif %}
-        <p style="padding: 20px;">Elige una conversación de la lista.</p>
+        <div class="chat-vacio">
+            <span class="chat-vacio-icono" aria-hidden="true"><i class="bi bi-chat-dots"></i></span>
+            <h3>Elige un profesor para conversar</h3>
+            <p>Usa el buzón para coordinar tus clases y resolver dudas entre sesiones.</p>
+            <ul class="chat-vacio-ideas" aria-label="Ideas para escribir">
+                <li><i class="bi bi-calendar2-week" aria-hidden="true"></i> Coordinar o mover un horario</li>
+                <li><i class="bi bi-clock-history" aria-hidden="true"></i> Avisar que llegarás tarde</li>
+                <li><i class="bi bi-question-circle" aria-hidden="true"></i> Preguntar una duda de la materia</li>
+            </ul>
+        </div>
         {% endif %}
     </div>
 </div>

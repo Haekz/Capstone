@@ -1,0 +1,421 @@
+/* Portal de soporte, capa de diseno (de la copia: 07_pulido_soporte.css), parte «detalle»: aviso de privacidad, detalle del ticket y escalamiento.
+   Las partes cargan en este orden: 07a marco, 07b tickets, 07c detalle, 07d lider, 07e cierre. */
+
+/* ── 8. Aviso de privacidad (apoderados) ── */
+#portal-soporte .sop-aviso {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 0;
+    padding: 12px 16px;
+    border-radius: var(--r-item);
+    background: var(--primary-soft);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+#portal-soporte .sop-aviso i {
+    margin-top: 1px;
+    color: var(--primary-light);
+}
+
+/* ── 9. Detalle y escalamiento: columna principal + ficha lateral ── */
+#portal-soporte .sop-volver {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    align-self: flex-start;
+    padding: 4px 2px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+    border-radius: 6px;
+}
+
+#portal-soporte .sop-volver:hover {
+    color: var(--primary-light);
+}
+
+#portal-soporte .sop-detalle {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    align-items: start;
+    gap: 20px;
+}
+
+#portal-soporte .sop-detalle-main,
+#portal-soporte .sop-detalle-aside {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+}
+
+#portal-soporte .sop-detalle-aside {
+    position: sticky;
+    top: calc(var(--topbar-height) + 20px);
+}
+
+#portal-soporte .sop-detalle-main > .panel {
+    padding-bottom: 22px;
+}
+
+#portal-soporte .sop-detalle-main > .panel:has(.panel-header) {
+    padding-bottom: 0;
+}
+
+#portal-soporte .sop-detalle-cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px 16px;
+    padding: 22px 24px 18px;
+    border-bottom: 1px solid var(--border);
+}
+
+#portal-soporte .sop-detalle-titulo {
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+}
+
+#portal-soporte .sop-chips {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+#portal-soporte .sop-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 99px;
+    background: var(--bg-main);
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+#portal-soporte .sop-chip--estado {
+    background: var(--ok-soft);
+    color: var(--ok);
+}
+
+#portal-soporte .sop-chip--estado::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+/* Conversación */
+#portal-soporte .sop-hilo {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 22px 24px 4px;
+}
+
+#portal-soporte .sop-mensaje {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr);
+    gap: 12px;
+}
+
+#portal-soporte .sop-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    color: #ffffff;
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+#portal-soporte .sop-burbuja {
+    padding: 14px 16px;
+    border-radius: 4px 14px 14px 14px;
+    background: var(--bg-main);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+#portal-soporte .sop-burbuja > * + * {
+    margin-top: 6px;
+}
+
+#portal-soporte .sop-mensaje-autor {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 0.85rem;
+}
+
+#portal-soporte .sop-mensaje-autor span {
+    color: var(--text-secondary);
+}
+
+#portal-soporte .sop-respuestas {
+    list-style: none;
+    display: grid;
+    gap: 12px;
+    margin: 0;
+    padding: 0 0 0 48px;
+}
+
+#portal-soporte .sop-respuestas > li {
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--text-primary);
+}
+
+#portal-soporte .sop-respuestas > .sop-sin-respuestas {
+    border-style: dashed;
+    border-color: var(--line-2);
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+/* Formularios (respuesta y escalamiento): mismos campos, mejor forma */
+#portal-soporte .apod-form {
+    margin: 18px 24px 0 !important;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+    gap: 14px !important;
+}
+
+#portal-soporte .panel-body .apod-form {
+    margin: 18px 0 0 !important;
+    padding-top: 0;
+    border-top: none;
+}
+
+#portal-soporte .apod-form__campo {
+    align-content: start;
+}
+
+#portal-soporte .apod-form__campo > label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+#portal-soporte .apod-form textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 12px 14px;
+    border: 1.5px solid var(--line-2);
+    border-radius: var(--r-ctrl);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    line-height: 1.55;
+    resize: vertical;
+    transition: border-color 0.15s ease;
+}
+
+#portal-soporte .apod-form textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: var(--ring);
+}
+
+#portal-soporte .apod-form textarea[aria-invalid="true"] {
+    border-color: #dc2626;
+}
+
+#portal-soporte .apod-form small {
+    font-size: 0.8rem;
+    line-height: 1.45;
+    color: var(--text-secondary);
+}
+
+#portal-soporte .sop-campo-pie {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+#portal-soporte .sop-contador {
+    flex-shrink: 0;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+#portal-soporte .sop-contador--cerca {
+    color: var(--warn);
+    font-weight: 600;
+}
+
+#portal-soporte .sop-error {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.84rem;
+    font-weight: 500;
+    color: #dc2626;
+}
+
+body:not(.light-mode)#portal-soporte .sop-error {
+    color: #f87171;
+}
+
+#portal-soporte .apod-form__declaracion {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-ctrl);
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+#portal-soporte .apod-form__declaracion:has(input:checked) {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+}
+
+#portal-soporte .apod-form__declaracion input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary-dark);
+    cursor: pointer;
+}
+
+#portal-soporte .apod-form__declaracion label {
+    cursor: pointer;
+}
+
+#portal-soporte .apod-form > .btn-primary {
+    justify-self: end;
+    justify-content: center;
+    min-width: 180px;
+    padding: 11px 20px;
+    font-size: 0.9rem;
+}
+
+#portal-soporte .apod-form > .btn-primary:disabled {
+    opacity: 0.7;
+    cursor: progress;
+    transform: none;
+}
+
+/* Fichas laterales */
+#portal-soporte .sop-ficha {
+    padding: 18px 20px;
+}
+
+#portal-soporte .sop-ficha-titulo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+#portal-soporte .sop-ficha-titulo i {
+    color: var(--primary-light);
+}
+
+#portal-soporte .sop-datos {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+}
+
+#portal-soporte .sop-datos > div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px 0;
+    border-top: 1px solid var(--border);
+}
+
+#portal-soporte .sop-datos dt {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+#portal-soporte .sop-datos dd {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    overflow-wrap: anywhere;
+}
+
+#portal-soporte .sop-correo {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+}
+
+#portal-soporte .sop-datos time {
+    display: block;
+}
+
+#portal-soporte .sop-datos .sop-plazo {
+    margin-top: 6px;
+}
+
+#portal-soporte .sop-ficha > p {
+    font-size: 0.88rem;
+    line-height: 1.55;
+    color: var(--text-secondary);
+}
+
+#portal-soporte .sop-ficha--escalar .sop-btn {
+    width: 100%;
+    margin-top: 14px;
+}
+
+#portal-soporte .sop-ficha--escalar .sop-ficha-titulo i {
+    color: var(--warn);
+}
+
+#portal-soporte .sop-ficha-vacio {
+    padding: 14px;
+    border: 1px dashed var(--line-2);
+    border-radius: var(--r-item);
+    text-align: center;
+    color: var(--text-secondary) !important;
+}
+
+/* Escalar: advertencia en ámbar antes del formulario */
+#portal-soporte .sop-alerta {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px 16px 14px 18px;
+    border-left: 3px solid #f59e0b;
+    border-radius: var(--r-item);
+    background: var(--warn-soft);
+    color: var(--text-primary);
+    font-size: 0.92rem;
+    line-height: 1.55;
+}

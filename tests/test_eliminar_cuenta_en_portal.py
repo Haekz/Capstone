@@ -1,7 +1,8 @@
 """Eliminar mi cuenta dentro de cada portal: la evaluacion, la confirmacion (enlace del correo) y la solicitud en curso.
 
-Pertenece a Ayuda y soporte: el alumno ve marcado Soporte / Reportes y el docente Ayuda y soporte. El apoderado sigue en
-el diseno publico. Datos ficticios.
+Pertenece a Ayuda y soporte: el alumno ve marcado Soporte / Reportes y el docente Ayuda y soporte. El apoderado la ve
+dentro de su portal, con Ayuda y soporte marcada (la copia no la diseña, pero así no salta al diseno publico a mitad del
+flujo). Datos ficticios.
 """
 
 from django.core import signing
@@ -65,12 +66,13 @@ class EliminarCuentaEnElPortalTests(BaseResenas):
                 self.assertContains(r, 'id="nav-ayuda" class="nav-item active"')
                 self.assertContains(r, 'portal_docente.css')
 
-    def test_el_apoderado_sigue_en_el_diseno_publico(self):
+    def test_el_apoderado_las_ve_en_su_portal_con_ayuda_marcada(self):
         apoderado = crear_apoderado('44444444-4', Apoderado.VERIFICADO)
         entrar(self.client, apoderado, APODERADO)
         for nombre, url in self.paginas(apoderado.user):
             with self.subTest(pagina=nombre):
                 r = self.client.get(url)
-                self.assertTemplateNotUsed(r, 'alumnos/base_alumno.html')
+                self.assertTemplateUsed(r, 'apoderados/base_apoderado.html')
                 self.assertTemplateNotUsed(r, 'user_profesor/base_docente.html')
-                self.assertNotContains(r, 'class="sidebar-menu"')
+                self.assertContains(r, 'Portal apoderado')
+                self.assertContains(r, f'class="sidebar-nav-item active" href="{reverse("mis_tickets")}" aria-current="page"')

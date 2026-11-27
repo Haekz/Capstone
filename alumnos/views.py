@@ -1,4 +1,5 @@
 import hashlib
+import logging
 import os
 
 from django.conf import settings
@@ -29,6 +30,7 @@ from resenas.consultas import (
 )
 from apoderados.permisos import vinculo_contratable
 from lbwus.puerta import destino_seguro
+from lbwus.registro import enmascarar_usuario, referencia
 from .forms import AlumnoForm, FiltroClasesForm
 from admin_portal.forms import MensajeContactoForm
 from soporte.tickets import abrir_contacto
@@ -44,6 +46,8 @@ from .roles import (
     rol_en_sesion,
 )
 from .backends import obtener_identificador_rate_limit
+
+logger = logging.getLogger(__name__)
 
 
 def _plan_para_js(alumno):
@@ -106,6 +110,7 @@ def planes(request):
             'status': 'ok'
         })
 
+    estudiante = vinculo_contratable(request, request.GET.get('estudiante'))
     return render(request, 'alumnos/planes.html', {
         # Primero el marco: las claves propias de Planes (es_menor...) mandan sobre las suyas
         **contexto_de_marco(request, seccion='paquetes'),
@@ -115,13 +120,14 @@ def planes(request):
         'tarifa': tarifa,
         'cotizaciones': paquetes.cotizar(),
         'duracion_clase': paquetes.DURACION_CLASE_MIN,
-        'comision_pct': int(paquetes.COMISION * 100),
+        'comision_pct': paquetes.porcentaje(paquetes.COMISION),
         'videos_a_la_venta': settings.VIDEOS_A_LA_VENTA,  # sin MongoDB no se pregunta por el agregado (B2)
         'es_alumno': bool(request.session.get('alumno_id')),
         # El menor ve que contrata su apoderado, en vez de botones que no harian nada.
         'es_menor': _alumno_en_sesion_es_menor(request),
         # Apoderado contratando para su estudiante (?estudiante=id del vinculo verificado).
-        'estudiante': vinculo_contratable(request, request.GET.get('estudiante')),
+        'estudiante': estudiante,
+        'vinculo_activo': estudiante.pk if estudiante else None,  # la barra del apoderado marca a ese estudiante
     })
 
 
@@ -455,7 +461,11 @@ def custom_login(request):
         intentos_ip = cache.get(clave_cache_ip, 0)
         intentos_user = cache.get(clave_cache_user, 0)
 
+        # SCRUM-100: usuario enmascarado, huella para correlacionar formatos del mismo RUT, e IP. Nunca la clave.
+        quien = f'usuario={enmascarar_usuario(username)} ref={referencia(canon_user)} ip={ip}'
+
         if intentos_ip >= LIMITE_INTENTOS_IP or intentos_user >= LIMITE_INTENTOS_USUARIO:
+            logger.warning('evento=login_bloqueado %s intentos_ip=%s intentos_usuario=%s', quien, intentos_ip, intentos_user)
             return render(request, 'registration/login.html', {'error': MENSAJE_LOGIN_BLOQUEADO})
 
         if not username or not password:
@@ -471,6 +481,10 @@ def custom_login(request):
                 _incrementar_cache(clave_cache_ip, BLOQUEO_LOGIN_SEGUNDOS)
                 if canon_user:
                     _incrementar_cache(clave_cache_user, BLOQUEO_LOGIN_SEGUNDOS)
+                logger.warning('evento=login_fallido %s intentos_ip=%s intentos_usuario=%s',
+                               quien, intentos_ip + 1, intentos_user + 1 if canon_user else 0)
+                if intentos_ip + 1 >= LIMITE_INTENTOS_IP or (canon_user and intentos_user + 1 >= LIMITE_INTENTOS_USUARIO):
+                    logger.warning('evento=login_bloqueo_activado %s segundos=%s', quien, BLOQUEO_LOGIN_SEGUNDOS)
                 error = "RUT/Correo o contraseña incorrectos. Inténtalo de nuevo."
 
     return render(request, 'registration/login.html', {'error': error, 'siguiente': siguiente})

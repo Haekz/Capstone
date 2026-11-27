@@ -1,4 +1,4 @@
-{# Vistas premium: buzon de dudas e informe de progreso. Los videos estan en la pestana "Mis videos" del Inicio (B5). #}
+{# Vistas premium: buzon de dudas e informe de progreso. Los videos tienen su propia vista (panel/videos.html, B5). #}
         <!-- ── VIEW 8: BUZÓN DE DUDAS (PREMIUM) ── -->
         <!-- esta parte es del chat o buzon de dudas premium -->
         <div class="dashboard-view" id="view-inbox">
@@ -10,9 +10,9 @@
                         <div class="lock-icon-wrapper">
                             <i class="bi bi-lock-fill"></i>
                         </div>
-                        <h2>Función Premium Exclusiva</h2>
-                        <p>Resuelve tus dudas directamente con tus profesores preferidos. Esta función requiere un paquete de clases vigente.</p>
-                        <button class="btn-principal" onclick="switchView('view-plans')">Ver Mis Paquetes</button>
+                        <h2>Disponible con un paquete vigente</h2>
+                        <p>Escríbele a tu profesor para coordinar clases y resolver dudas entre sesiones.</p>
+                        <button class="btn-principal" onclick="switchView('view-plans')">Ver mis paquetes</button>
                     </div>
                 </div>
 
@@ -36,9 +36,9 @@
                         <div class="lock-icon-wrapper">
                             <i class="bi bi-lock-fill"></i>
                         </div>
-                        <h2>Función Premium Exclusiva</h2>
-                        <p>Obtén análisis detallados de tu avance, horas de estudio y la retroalimentación de tus tutores. Esta función requiere un paquete de clases vigente.</p>
-                        <button class="btn-principal" onclick="switchView('view-plans')">Ver Mis Paquetes</button>
+                        <h2>Disponible con un paquete vigente</h2>
+                        <p>Revisa tus horas de estudio, tu avance por ramo y los comentarios que te dejan tus profesores.</p>
+                        <button class="btn-principal" onclick="switchView('view-plans')">Ver mis paquetes</button>
                     </div>
                 </div>
 
@@ -46,8 +46,8 @@
                 <div class="progress-wrapper-content" id="progress-unlocked-content" style="display: none;">
                     {% if plan_activo.premium %}{# sin plan premium este contenido ni siquiera llega al HTML #}
                     <div class="ap-mb-25">
-                        <h2><i class="bi bi-bar-chart-line-fill ap-text-primary"></i> Mi Informe de Progreso</h2>
-                        <p class="ap-view-sub">Revisa tus estadísticas de estudio, horas dedicadas y el feedback de tus tutores.</p>
+                        <h2><i class="bi bi-bar-chart-line-fill ap-text-primary"></i> Tu progreso</h2>
+                        <p class="ap-view-sub">Horas de estudio, clases tomadas y comentarios de tus profesores.</p>
                     </div>
                     
                     <!-- Resumen de Estadísticas -->
@@ -56,21 +56,21 @@
                             <div class="stat-icon stat-icon--purple"><i class="bi bi-hourglass-split"></i></div>
                             <div class="stat-info">
                                 <h4 id="progress-stat-hours">{{ progreso.horas|floatformat:"-1" }} hrs</h4>
-                                <p>Tiempo de Estudio Total</p>
+                                <p>Horas de estudio</p>
                             </div>
                         </div>
                         <div class="progress-stat-card">
                             <div class="stat-icon stat-icon--green"><i class="bi bi-check-circle-fill"></i></div>
                             <div class="stat-info">
                                 <h4 id="progress-stat-classes">{{ progreso.clases }}</h4>
-                                <p>Clases Completadas</p>
+                                <p>Clases completadas</p>
                             </div>
                         </div>
                         <div class="progress-stat-card">
                             <div class="stat-icon stat-icon--amber"><i class="bi bi-journal-check"></i></div>
                             <div class="stat-info">
                                 <h4 id="progress-stat-subjects">{{ progreso.ramos }}</h4>
-                                <p>Ramos Cursados</p>
+                                <p>Ramos cursados</p>
                             </div>
                         </div>
                     </div>
@@ -78,7 +78,7 @@
                     <div class="progress-details-grid">
                         <!-- Avance por ramo -->
                         <div class="progress-details-card">
-                            <h3>Avance por Ramo</h3>
+                            <h3>Avance por ramo</h3>
                             <p class="ap-view-sub">Clases completadas y horas en cada ramo. La barra compara cada ramo con el que más has estudiado.</p>
                             <div class="progress-subject-list" id="progress-subject-list">
                                 {% for ramo in progreso_ramos %}
@@ -99,7 +99,7 @@
                         
                         <!-- Gráfico de tendencia SVG -->
                         <div class="progress-details-card">
-                            <h3>Horas de Estudio Semanales</h3>
+                            <h3>Horas de estudio por semana</h3>
                             <p class="ap-view-sub">Horas de clases completadas en las últimas 5 semanas (de lunes a domingo).</p>
                             <div class="chart-container ap-chart-box">
                                 <svg class="progress-chart-svg ap-fill" viewBox="0 0 500 200" role="img" aria-label="Horas de estudio por semana: {% for s in grafico_semanal %}semana del {{ s.desde|date:'d/m' }}, {{ s.horas|floatformat:'-1' }} horas{% if not forloop.last %}; {% endif %}{% endfor %}">
@@ -130,7 +130,7 @@
                     
                     <!-- Retroalimentación de docentes -->
                     <div class="progress-feedback-section ap-mt-30">
-                        <h3>Comentarios y Observaciones del Equipo Docente</h3>
+                        <h3>Comentarios de tus profesores</h3>
                         <div class="feedback-list-container" id="feedback-list-container">
                             {% include 'observaciones/_lista.html' %}
                         </div>

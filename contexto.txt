@@ -50,7 +50,7 @@ filosofía de trabajo.
 * alumnos:
   Páginas públicas (Home, Nosotros, Planes, Servicios, Contactos, Selección de tipo de usuario) e inicio de sesión y registro de alumnos.
 * admin_portal:
-  Panel de administración central (`dashboard_admin`), CRUD de alumnos (`crud`, `alumnos_Add`, `alumnos_del`, `alumnos_findEdit`, `alumnos_Update`), gestión de contenidos de páginas administrativas y resolución de reportes (`resolver_reporte`). Protegido por sesión de administrador (`admin_id`).
+  Panel de administración central (`dashboard_admin`), listado de usuarios y eliminación de alumnos (`crud` solo redirige a Usuarios del dashboard; `alumnos_del`; el admin ya no crea ni edita alumnos), Ajustes del propio admin (`ajustes_admin`), gestión de contenidos de páginas administrativas y resolución de reportes (`resolver_reporte`). Protegido por sesión de administrador (`admin_id`).
 * user_profesor:
   Registro, inicio de sesión passwordless y panel de profesores (`registro_profesor`, `login_profesor`, `panel_profesor`, `actualizar_perfil`).
   Registro e inicio de sesión passwordless para administradores/tutores usando el modelo `Tutor` (`registro_tutor`, `login_admin`), el cual guarda `admin_id` en la sesión para dar acceso a `admin_portal`.

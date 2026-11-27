@@ -1,0 +1,13 @@
+Hubo un error 500 en LBWUS.
+
+Cuándo: {{ cuando }}
+Pantalla: {{ metodo }} {{ pantalla }}
+Error: {{ tipo }}
+Quién navegaba: {% if usuario_id %}la cuenta con id {{ usuario_id }}{% else %}nadie con la sesión iniciada{% endif %}
+
+Por dónde pasó el código (lo último, al final):
+{% for paso in pasos %}- {{ paso }}
+{% endfor %}
+Este aviso no trae datos de las personas ni el mensaje del error. El detalle completo está en los registros del servicio (Railway). Si el mismo error se repite en la misma pantalla, no se vuelve a avisar durante 10 minutos.
+
+Equipo LBWUS

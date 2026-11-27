@@ -53,6 +53,10 @@ OBSERVACIONES_MESES = 12
 # acepta comodines tipo '*.dominio'.
 ALLOWED_HOSTS = ['lbwus.xyz', '.up.railway.app', 'localhost', '127.0.0.1']
 
+# Direccion publica del sitio: canonical, Open Graph, robots.txt y sitemap.xml la usan (lbwus/seo.py), aunque se
+# entre por el dominio de Railway.
+SITIO_URL = os.environ.get('SITIO_URL', 'https://lbwus.xyz').rstrip('/')
+
 CSRF_TRUSTED_ORIGINS = [
     'https://lbwus.xyz',
     'https://capstone-production-eddd.up.railway.app'
@@ -72,6 +76,10 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
+
+# Aviso por correo de los errores 500 (lbwus/aviso_errores.py): correos separados por comas. Vacio = no se avisa.
+# Su manejador va en LOGGING (mas abajo, junto al registro en consola): un solo LOGGING, o el ultimo pisa al otro.
+ERRORES_CORREOS = [c.strip() for c in os.environ.get('ERRORES_CORREOS', '').split(',') if c.strip()]
 
 
 # Application definition
@@ -157,6 +165,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                # SITIO_URL para canonical y Open Graph (lbwus/seo.py)
+                'lbwus.seo.sitio',
                 # Expone 'usuario_sesion' al menu global (alumnos/base.html)
                 'alumnos.context_processors.estado_sesion',
                 # Responsable de los datos y contacto, para el pie, Contacto, Terminos y Privacidad (settings.LEGAL)
@@ -223,16 +233,16 @@ CSP_OBLIGATORIA = os.environ.get('CSP_OBLIGATORIA', 'False').lower() in ('1', 't
 DEFAULT_EXCEPTION_REPORTER_FILTER = 'lbwus.reporte_errores.FiltroReporteErrores'
 
 # Quien responde por los datos personales y como contactarlo (pie de pagina, Contacto, Terminos y Privacidad).
-# VALORES DE EJEMPLO mientras LBWUS define los suyos (L-1 y L-4 de docs/PENDIENTES_LBWUS.md): hay que cambiarlos por
-# los reales con estas variables de entorno ANTES de abrir al publico. Un RUT o un correo inventados no son un
-# responsable de verdad: una solicitud de datos enviada a un correo que nadie lee no se responde.
+# El telefono y los correos son los reales (15-nov). El nombre, el RUT y el domicilio siguen siendo VALORES DE EJEMPLO
+# mientras LBWUS define los suyos (L-1 de docs/PENDIENTES_LBWUS.md): hay que cambiarlos por los reales con estas
+# variables de entorno ANTES de abrir al publico. Un RUT inventado no es un responsable de verdad.
 LEGAL = {
     'nombre': os.environ.get('LEGAL_NOMBRE', 'LBWUS SpA'),
     'rut': os.environ.get('LEGAL_RUT', '76.000.000-0'),
     'domicilio': os.environ.get('LEGAL_DOMICILIO', 'Pacifico Norte 123, Santiago, Chile'),
-    'telefono': os.environ.get('LEGAL_TELEFONO', '+56 2 2123 4567'),
-    'correo_datos': os.environ.get('LEGAL_CORREO_DATOS', 'privacidad@lbwus.cl'),
-    'correo_contacto': os.environ.get('LEGAL_CORREO_CONTACTO', 'teachers@lbwus.cl'),
+    'telefono': os.environ.get('LEGAL_TELEFONO', '+56 9 3906 2158'),
+    'correo_datos': os.environ.get('LEGAL_CORREO_DATOS', 'lbwus.proyecto@gmail.com'),
+    'correo_contacto': os.environ.get('LEGAL_CORREO_CONTACTO', 'lbwus.proyecto@gmail.com'),
 }
 
 
@@ -334,6 +344,9 @@ DEFAULT_FROM_EMAIL = os.environ.get(
     EMAIL_HOST_USER
 )
 
+# SCRUM-100: a quien avisar si falla tareas_diarias (lbwus/alertas.py). Separados por comas; vacia = sin aviso.
+ALERTAS_CORREOS = [c.strip() for c in os.environ.get('ALERTAS_CORREOS', '').split(',') if c.strip()]
+
 # El enlace de recuperación expira después de 1 hora
 PASSWORD_RESET_TIMEOUT = 3600
 
@@ -381,26 +394,39 @@ CACHES = {
     }
 }
 
+# ============================================================
+# LOGGING (SCRUM-100)
+# ============================================================
+# Todo a la consola: Railway guarda stdout/stderr de cada servicio (web y Cron) en su pestana de logs.
+# Una linea por evento: "fecha nivel logger mensaje". FormatoSeguro enmascara correos, RUT y tokens de
+# Webpay en todo lo que sale, trazas incluidas (lbwus/registro.py). Nunca registrar contrasenas.
+APPS_PROPIAS = (
+    'lbwus', 'alumnos', 'user_profesor', 'admin_portal', 'apoderados', 'comunidad', 'resenas', 'soporte',
+    'notificaciones', 'agenda', 'mensajes', 'supresiones', 'requerimientos', 'observaciones',
+)
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'estandar': {
-            'format': '%(asctime)s [%(levelname)s] %(name)s: %(message)s',
+        'seguro': {
+            '()': 'lbwus.registro.FormatoSeguro',
+            'format': '%(asctime)s %(levelname)s %(name)s %(message)s',
+            'datefmt': '%Y-%m-%dT%H:%M:%S%z',
         },
     },
     'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'estandar',
-        },
+        'consola': {'class': 'logging.StreamHandler', 'formatter': 'seguro'},
+        # Correo a ERRORES_CORREOS por cada 500, sin datos de las personas (lbwus/aviso_errores.py).
+        'aviso_errores': {'class': 'lbwus.aviso_errores.AvisoDeError', 'level': 'ERROR'},
     },
+    'root': {'handlers': ['consola'], 'level': 'WARNING'},
     'loggers': {
-        'django.request': {'handlers': ['console'], 'level': 'ERROR', 'propagate': False},
-        'django.security': {'handlers': ['console'], 'level': 'WARNING', 'propagate': False},
-        'alumnos': {'handlers': ['console'], 'level': 'INFO', 'propagate': False},
-        'comunidad': {'handlers': ['console'], 'level': 'INFO', 'propagate': False},
-        'user_profesor': {'handlers': ['console'], 'level': 'INFO', 'propagate': False},
-        'admin_portal': {'handlers': ['console'], 'level': 'INFO', 'propagate': False},
+        # propagate False: sin esto cada linea de Django saldria dos veces (su logger y la raiz).
+        'django': {'handlers': ['consola'], 'level': 'WARNING', 'propagate': False},
+        # Los 500 (con su traza) a la consola y por correo. Los 404 y 403 son WARNING y no se registran: serian ruido.
+        'django.request': {'handlers': ['consola', 'aviso_errores'], 'level': 'ERROR', 'propagate': False},
+        'django.security': {'handlers': ['consola'], 'level': 'WARNING', 'propagate': False},
+        # Las apps propias en INFO: llegan a la consola por la raiz.
+        **{app: {'level': 'INFO'} for app in APPS_PROPIAS},
     },
 }

@@ -41,7 +41,8 @@ PLANTILLAS_PANEL = [
 ]
 
 # Mis Resenas: su plantilla y las dos hojas que comparte con el sitio publico (perfil del profesor, calificar).
-HOJAS_RESENAS = ['resenas/static/resenas/resenas.css', 'alumnos/static/alumnos/css/perfil_profesor.css']
+HOJAS_RESENAS = ['resenas/static/resenas/resenas.css', 'resenas/static/resenas/resenas_pulido.css',
+                 'alumnos/static/alumnos/css/perfil_profesor.css']
 PLANTILLAS_RESENAS = [
     'resenas/templates/resenas/profesor.html', 'resenas/templates/resenas/_bloque.html',
     'resenas/templates/resenas/_estrellas.html', 'resenas/templates/resenas/_mensajes.html',

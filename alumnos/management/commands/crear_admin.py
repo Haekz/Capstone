@@ -17,11 +17,9 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.core.management.base import BaseCommand, CommandError
 from django.db import IntegrityError, transaction
-from django.db.models import Q
 
-from alumnos.backends import variaciones_rut
 from alumnos.models import Tutor
-from alumnos.utils import validar_rut_chileno
+from alumnos.utils import correo_en_uso, rut_en_uso, validar_rut_chileno
 
 
 def normalizar_rut(rut):
@@ -41,19 +39,14 @@ class DatosAdminForm(forms.Form):
         if not validar_rut_chileno(rut):
             raise ValidationError('El RUT ingresado no es válido.')
         rut = normalizar_rut(rut)
-        # Los RUT antiguos pueden estar guardados con o sin puntos y guion.
-        variantes = variaciones_rut(rut) + [rut.replace('-', '')]
-        variantes += [v.lower() for v in variantes]
-        existe = get_user_model().objects.filter(
-            Q(rut__in=variantes) | Q(username__in=variantes)
-        ).exists()
-        if existe:
+        # Los RUT antiguos pueden estar guardados con o sin puntos y guion: la misma regla de todos los registros.
+        if rut_en_uso(rut):
             raise ValidationError('Ya existe un usuario con ese RUT.')
         return rut
 
     def clean_email(self):
         email = self.cleaned_data['email']
-        if get_user_model().objects.filter(email__iexact=email).exists():
+        if correo_en_uso(email):
             raise ValidationError('Ya existe un usuario con ese correo.')
         return email
 

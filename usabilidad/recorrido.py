@@ -141,7 +141,8 @@ def pasos():
         ('21', 'Cambiar contraseña', 'alumno', ir('/accounts/password_change/')),
         ('22', 'Panel profesor', 'profesor', ir('/profesor/panel')),
         ('23', 'Panel administrador', 'admin', ir('/admin_portal/dashboard/')),
-        ('24', 'Administrador: listado de alumnos', 'admin', ir('/admin_portal/crud/')),
+        # /admin_portal/crud/ (el listado viejo) ya solo redirige: el listado de alumnos es la seccion Usuarios del dashboard.
+        ('24', 'Administrador: listado de alumnos', 'admin', ir('/admin_portal/dashboard/#usuarios')),
         # 25 en adelante: roles y pantallas nuevas (apoderados, menores, soporte y fases 1 a 7).
         ('25', 'Registro: apoderado', None, ir('/apoderados/registro/')),
         ('26', 'Registro: adolescente de 14 a 17', None, ir('/apoderados/estudiantes/registro/')),

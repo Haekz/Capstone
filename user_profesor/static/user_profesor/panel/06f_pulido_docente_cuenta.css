@@ -1,0 +1,422 @@
+/* Panel docente, capa de diseno (de la copia: 06_pulido_docente.css), parte «cuenta»: perfil, saldo y buzon.
+   Las partes cargan en este orden: 06a marco, 06b inicio, 06c formularios, 06d tablas, 06e agenda, 06f cuenta,
+   06g contenido, 06h cierre. */
+
+/* ── 10. Mi perfil: foto con vista previa ── */
+#portal-docente .prof-foto {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 18px;
+    margin-bottom: 4px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-item);
+    background: var(--bg-main);
+}
+
+#portal-docente .prof-foto-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 88px;
+    height: 88px;
+    flex-shrink: 0;
+    overflow: hidden;
+    border-radius: 50%;
+    background: var(--primary-soft);
+    color: var(--primary-light);
+    font-size: 2.4rem;
+}
+
+#portal-docente .prof-foto-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+#portal-docente .prof-foto-texto {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+}
+
+#portal-docente .prof-foto-texto p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+/* El input queda accesible pero oculto: el botón visible es su <label> */
+#portal-docente .prof-foto-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+#portal-docente .prof-foto-boton {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 9px 16px;
+    border: 1px solid var(--line-2);
+    border-radius: var(--r-ctrl);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+#portal-docente .prof-foto-boton:hover {
+    border-color: var(--primary);
+    color: var(--primary-light);
+}
+
+#portal-docente .prof-foto-input:focus-visible + .prof-foto-boton {
+    box-shadow: var(--ring);
+}
+
+#portal-docente #form-update-profile {
+    max-width: 820px;
+}
+
+#portal-docente #form-update-profile > .prof-form-btn {
+    align-self: flex-start;
+}
+
+/* ── 11. Saldo y pagos ── */
+#portal-docente .prof-balance-grid {
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+#portal-docente .prof-balance-card {
+    padding: 22px 24px;
+    background-color: var(--bg-card);
+}
+
+#portal-docente .prof-balance-card h4 {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+#portal-docente .prof-balance-card h2 {
+    font-size: 2rem;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+}
+
+#portal-docente .prof-balance-card p {
+    font-size: 0.84rem;
+}
+
+#portal-docente .prof-balance-card-primary {
+    border: none;
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+}
+
+#portal-docente .prof-balance-card-primary h4,
+#portal-docente .prof-balance-card-primary p {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+#portal-docente .prof-pagos-reglas {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 6px 0 16px;
+}
+
+#portal-docente .prof-pagos-reglas li {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 12px;
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    background: var(--bg-main);
+    font-size: 0.84rem;
+    color: var(--text-secondary);
+}
+
+#portal-docente .prof-pagos-reglas i {
+    color: var(--primary-light);
+}
+
+#portal-docente .prof-pagos-reglas strong {
+    color: var(--text-primary);
+}
+
+#portal-docente .prof-aviso {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 18px;
+    padding: 12px 16px;
+    border-radius: var(--r-ctrl);
+    font-size: 0.9rem;
+}
+
+#portal-docente .prof-aviso--warn {
+    background: var(--warn-soft);
+    color: var(--warn);
+}
+
+#portal-docente .prof-aviso--warn p {
+    color: var(--text-primary);
+}
+
+#portal-docente .prof-pago-form {
+    padding: 18px 0 0;
+    margin-top: 18px;
+    border-top: 1px solid var(--border);
+}
+
+#portal-docente .prof-aviso + .prof-pago-form {
+    margin-top: 0;
+    border-top: none;
+    padding-top: 0;
+}
+
+#portal-docente .prof-pago-form-cabecera h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+#portal-docente .prof-pago-form-cabecera p {
+    margin: 2px 0 12px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+#portal-docente .prof-pago-campos {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+    align-items: end;
+    justify-content: start;
+    gap: 14px;
+}
+
+#portal-docente .prof-pago-campos--corto {
+    grid-template-columns: minmax(0, 220px) auto;
+}
+
+/* ── 12. Buzón de alumnos ── */
+#portal-docente .btn-ayuda-mensajes {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px 8px 10px;
+    border: 1px solid var(--line-2);
+    border-radius: 99px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 0.86rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+#portal-docente .btn-ayuda-mensajes i {
+    font-size: 1.1rem;
+    color: var(--primary-light);
+}
+
+#portal-docente .btn-ayuda-mensajes:hover {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+    color: var(--primary-light);
+}
+
+/* Ventana de información */
+#portal-docente .dialogo-info {
+    margin: auto;
+    width: min(760px, 94vw);
+    max-height: min(86vh, 760px);
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    box-shadow: 0 30px 80px rgba(10, 6, 30, 0.35);
+    overflow: hidden;
+}
+
+#portal-docente .dialogo-info[open] {
+    display: flex;
+    flex-direction: column;
+    animation: doc-dialogo 0.22s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+#portal-docente .dialogo-info::backdrop {
+    background: rgba(15, 8, 35, 0.55);
+    backdrop-filter: blur(4px);
+}
+
+@keyframes doc-dialogo {
+    from { opacity: 0; transform: translateY(10px) scale(0.98); }
+    to   { opacity: 1; transform: none; }
+}
+
+#portal-docente .di-cabecera {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 22px 22px 18px 24px;
+    background:
+        radial-gradient(circle at 12% 0%, rgba(168, 85, 247, 0.45) 0%, transparent 55%),
+        #1a1233;
+    color: #ffffff;
+}
+
+#portal-docente .di-cabecera > div {
+    flex: 1;
+    min-width: 0;
+}
+
+#portal-docente .di-icono {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    flex-shrink: 0;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.12);
+    font-size: 1.35rem;
+}
+
+#portal-docente .di-cabecera h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+#portal-docente .di-cabecera p {
+    margin-top: 2px;
+    font-size: 0.88rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+#portal-docente .di-cerrar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    cursor: pointer;
+}
+
+#portal-docente .di-cerrar:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+#portal-docente .di-lista {
+    list-style: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 20px 24px;
+    overflow-y: auto;
+}
+
+#portal-docente .di-lista li {
+    display: flex;
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--bg-main);
+}
+
+#portal-docente .di-lista li:nth-child(n+5) {
+    grid-column: 1 / -1;
+}
+
+#portal-docente .di-item-icono {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    border-radius: 10px;
+    background: var(--primary-soft);
+    color: var(--primary-light);
+}
+
+#portal-docente .di-lista strong {
+    display: block;
+    margin-bottom: 3px;
+    font-size: 0.92rem;
+    color: var(--text-primary);
+}
+
+#portal-docente .di-lista p {
+    font-size: 0.85rem;
+    line-height: 1.55;
+    color: var(--text-secondary);
+}
+
+#portal-docente .di-lista a {
+    color: var(--primary-light);
+    font-weight: 600;
+}
+
+#portal-docente .di-pie {
+    display: flex;
+    justify-content: flex-end;
+    padding: 14px 24px 18px;
+    border-top: 1px solid var(--border);
+}
+
+#portal-docente .di-pie .prof-form-btn {
+    margin: 0;
+}
+
+/* Conversación (cuando hay chats): mensajes enviados en morado sólido, legibles */
+#portal-docente .profe-chat-container {
+    border: 1px solid var(--border);
+    border-radius: var(--r-panel);
+    box-shadow: none;
+    overflow: hidden;
+}
+
+#portal-docente .profe-chat-item {
+    border-radius: var(--r-ctrl);
+}
+
+#portal-docente .profe-chat-item.active {
+    background: var(--primary-soft);
+    box-shadow: inset 3px 0 0 var(--primary);
+}
+
+#portal-docente .profe-chat-bubble-row.sent .profe-chat-bubble {
+    background: var(--primary);
+    color: #ffffff;
+}
+
+#portal-docente .profe-chat-bubble-row.received .profe-chat-bubble {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+}
+
+#portal-docente .profe-chat-input-box input {
+    border-radius: 22px;
+}
+
+#portal-docente .profe-chat-send-btn {
+    border-radius: 50%;
+}

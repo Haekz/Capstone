@@ -16,6 +16,15 @@ from .correo import avisar_segundo_apoderado
 from .forms import VincularEstudianteForm
 from .views import _apoderado_en_sesion, _formulario, redirigir_si_no_verificado
 
+# Panel "Cómo funciona" (ver formulario.html) y la nota de avisos que lo cierra.
+PASOS_VINCULO = (
+    ('Escribe su RUT', 'El del estudiante que otra persona ya registró.'),
+    ('Adjunta el documento', 'El que acredita tu vínculo con el estudiante.'),
+    ('Lo verificamos', 'Hasta que nuestro equipo lo verifique no verás datos del estudiante ni podrás actuar por él.'),
+)
+NOTA_VINCULO = ('Los apoderados que ya están vinculados, y el estudiante si tiene 14 años o más y correo propio, '
+                'recibirán un aviso, sin tus datos.')
+
 
 @never_cache
 @apoderado_required
@@ -31,8 +40,10 @@ def vincular_estudiante(request):
                                   'adjuntaste para verificar el vínculo.')
         return redirect(APODERADO.ruta_portal)
     return _formulario(
-        request, form, titulo='Vincularme a un estudiante ya registrado', subtitulo='Datos del estudiante',
+        request, form, seccion='vincular', titulo='Vincularme a un estudiante ya registrado', subtitulo='Datos del estudiante',
+        subtitulo_barra='Para cuando otra persona ya lo registró',
         boton='Pedir el vínculo', volver_url=reverse(APODERADO.ruta_portal),
+        pasos=PASOS_VINCULO, nota_pasos=NOTA_VINCULO,
         intro=('Si otra persona ya registró al estudiante, escribe su RUT y adjunta el documento que acredita tu '
                'vínculo. Hasta que nuestro equipo lo verifique no verás datos del estudiante ni podrás actuar por él. '
                'Los apoderados que ya están vinculados, y el estudiante si tiene 14 años o más y correo propio, '

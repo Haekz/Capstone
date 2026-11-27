@@ -75,7 +75,7 @@ class TestS23SeguridadXss(TestCase):
 
         # Videos: el componente real (videos_apoyo.html) arma las tarjetas con textContent, nunca con innerHTML,
         # asi que titulo, materia y profesor que vienen del servidor no se interpretan como HTML.
-        self.assertIn('nodo.textContent = texto', contenido)
+        self.assertIn('.textContent = texto', contenido)
         self.assertNotIn('boton.innerHTML', contenido)
 
     def test_buzon_alumno_y_profesor_escapan_nombres_y_mensajes(self):

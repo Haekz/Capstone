@@ -103,8 +103,9 @@ def destino_seguro(destino):
 def _rutas_exentas():
     # Se calculan en cada peticion: reverse() no se puede usar al importar.
     return {
-        'exactas': {reverse('puerta'), reverse('confirmacion')},
+        'exactas': {reverse('puerta'), reverse('confirmacion'), reverse('salud')},
         # Webpay vuelve a confirmacion desde su dominio, sin pasar por la puerta.
+        # El monitor externo consulta /salud/ sin sesion (SCRUM-100).
         'prefijos': (settings.STATIC_URL,),
     }
 

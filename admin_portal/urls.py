@@ -1,8 +1,8 @@
 from django.urls import path
 from .views import (
-    menu, reporte_alumnos, home_adm, planes_adm, nosotros_adm,
-    crud, alumnos_Add, alumnos_del, alumnos_findEdit, alumnos_Update,
-    dashboard_admin, logout_admin,
+    menu, home_adm, planes_adm, nosotros_adm,
+    crud, alumnos_del,
+    dashboard_admin, ajustes_admin, logout_admin,
     aprobar_retiro, rechazar_retiro, marcar_pagado_retiro
 )
 from .asignaturas import asignaturas_adm, crear_asignatura, eliminar_asignatura, renombrar_asignatura
@@ -14,7 +14,8 @@ urlpatterns = [
     # esta parte es de las rutas del portal del administrador
     path('menu', menu, name='menu'),
     path('dashboard/', dashboard_admin, name='dashboard_admin'),
-    path('reporte_alumnos', reporte_alumnos, name='reporte_alumnos'),
+    path('ajustes/', ajustes_admin, name='ajustes_admin'),
+    path('reporte_alumnos', crud, name='reporte_alumnos'),  # ruta antigua: la misma redireccion que crud
     path('home_adm', home_adm, name='home_adm'),
     path('planes_adm', planes_adm, name='planes_adm'),
     path('nosotros_adm', nosotros_adm, name='nosotros_adm'),
@@ -43,9 +44,6 @@ urlpatterns = [
 
     # esta parte es de las rutas CRUD de alumnos
     path('crud/', crud, name='crud'),
-    path('alumnos_Add', alumnos_Add, name='alumnos_Add'),
     path('alumnos_del/<int:pk>/', alumnos_del, name='alumnos_del'),
-    path('alumnos_findEdit/<int:pk>/', alumnos_findEdit, name='alumnos_findEdit'),
-    path('alumnos_Update', alumnos_Update, name='alumnos_Update'),
     path('logout_admin/', logout_admin, name='logout_admin'),
 ]

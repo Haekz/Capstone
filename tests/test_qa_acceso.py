@@ -31,6 +31,8 @@ from tests.test_especialidad import crear_profesor
 from tests.test_progreso_alumno import crear_alumno
 
 PUBLICAS = {
+    # Para buscadores, sin sesion (lbwus/seo.py).
+    'robots', 'sitemap',
     'home', 'contactos', 'nosotros', 'planes', 'servicios', 'opcion_user', 'regis_alum', 'alumnos_reg',
     'terminos', 'privacidad',
     'custom_login_alumno', 'sesiones_disponibles', 'home_adm', 'regis_prof', 'registro_apoderado',
@@ -42,6 +44,8 @@ PUBLICAS = {
     'socialaccount_login_cancelled',
     # Con SOCIALACCOUNT_LOGIN_ON_GET = False, el GET solo muestra el boton que hace POST (S-20).
     'google_login',
+    # Monitor externo (SCRUM-100): 200 solo si tareas_diarias corrio en las ultimas 26 h; si no, 503.
+    'salud',
 }
 # Cualquier cuenta con sesion.
 COMUNES = {
@@ -52,23 +56,25 @@ COMUNES = {
 PROPIAS = {
     'alumno': {'alumno_pag1', 'mis_tickets', 'nuevo_ticket', 'eliminar_cuenta'},
     'profesor': {'panel_profesor', 'resenas_profesor', 'mis_tickets', 'nuevo_ticket', 'eliminar_cuenta'},
-    'admin': {'dashboard_admin', 'planes_adm', 'nosotros_adm', 'casos_escalados', 'asignaturas_adm', 'crud',
-              'alumnos_Add', 'regis_tutor', 'resenas_moderacion'},
+    'admin': {'dashboard_admin', 'planes_adm', 'nosotros_adm', 'casos_escalados', 'asignaturas_adm',
+              'regis_tutor', 'resenas_moderacion'},
     'soporte': {'titulos_adm', 'apoderados_revision', 'panel_soporte', 'mensajes_revision', 'requerimientos',
                 'requerimiento_nuevo'},
     'apoderado': {'portal_apoderado', 'apoderado_registrar_estudiante', 'apoderado_vincular_estudiante',
                   'mensajes_apoderado', 'mis_tickets', 'nuevo_ticket', 'eliminar_cuenta'},
 }
+# Acciones solo POST de un rol que dan 200 al volver a mostrar su formulario con errores (por GET: 405, no son paginas).
+ACCIONES_PROPIAS = {'admin': {'ajustes_admin'}}
 
 
 # Redirigen siempre, sin hacer nada (o inician Google): su destino no es el login.
 SOLO_REDIRIGEN = {
-    'puerta', 'alumnos_index', 'reporte_alumnos',  # a la portada o a crud, que exige admin
+    'puerta', 'alumnos_index', 'reporte_alumnos', 'crud',  # a la portada o al dashboard, que exige admin
     'confirmacion',  # sin token_ws ni TBK_TOKEN vuelve a planes
     'google_login',  # POST: lleva a accounts.google.com (S-20)
     None,  # /accounts/social/signup/ -> /accounts/3rdparty/signup/ (ruta antigua de allauth, sin nombre)
 }
-CON_BUG_O_503 = {'comunidad_salud'}
+CON_BUG_O_503 = {'comunidad_salud', 'salud'}  # salud: 503 = tareas diarias atrasadas (esperado sin Cron)
 # Lo que responden al anonimo los endpoints JSON privados (decoradores *_json y las vistas que lo validan a mano).
 RECHAZOS_DE_SESION = {
     'Sesión inválida.',
@@ -164,7 +170,7 @@ class AccesoPorRolTests(Escenario):
         """Riesgo: una accion con @require_POST pierde su decorador; por GET sigue dando 405 y no se nota."""
         for rol, propias in {'anonimo': set(), **PROPIAS}.items():
             with self.subTest(rol=rol):
-                permitidas = PUBLICAS if rol == 'anonimo' else PUBLICAS | COMUNES | propias
+                permitidas = PUBLICAS if rol == 'anonimo' else PUBLICAS | COMUNES | propias | ACCIONES_PROPIAS.get(rol, set())
                 vistas = {nombre for (url, nombre), r in self.recorrer(rol, 'post').items() if es_acceso(r)}
                 self.assertEqual(vistas - permitidas, set())
 
@@ -192,11 +198,6 @@ class AccesoPorRolTests(Escenario):
 
 
 class IdNoNumericoTests(Escenario):
-
-    def test_un_id_no_numerico_en_alumnos_findedit_es_404(self):
-        self.como('admin')
-        self.client.raise_request_exception = False
-        self.assertEqual(self.client.get('/admin_portal/alumnos_findEdit/x/').status_code, 404)
 
     def test_un_id_no_numerico_en_alumnos_del_es_404(self):
         self.como('admin')

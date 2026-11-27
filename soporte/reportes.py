@@ -73,12 +73,20 @@ def nuevo_ticket(request):
         messages.success(request, f'Abrimos el ticket #{ticket.pk}. Te responderemos a más tardar el '
                                   f'{plazo:%d-%m-%Y} a las {plazo:%H:%M}.')
         return redirect('mis_tickets')
+    marco = contexto_de_marco(request, seccion='ayuda')
+    rapidas = f"Pagos, clases{', horario' if Ticket.HORARIO in categorias else ''}, conducta y videos"
+    para_apoderado = marco.get('es_apoderado', False)  # su copia trae la lista de plazos y un subtitulo en la barra
     return render(request, 'apoderados/formulario.html', {
         'form': form, 'titulo': 'Abrir un ticket', 'subtitulo': 'Cuéntanos qué pasó', 'boton': 'Enviar',
         'volver_url': reverse('mis_tickets'),
-        'intro': (f"Pagos, clases{', horario' if Ticket.HORARIO in categorias else ''}, conducta y videos: respondemos "
-                  'en 2 días hábiles. Lo demás, en 5 días hábiles.'),
-        **contexto_de_marco(request, seccion='ayuda'),
+        # El formulario generico toma el diseño de tickets solo si es este formulario y quien lo abre es un alumno
+        'diseno_tickets': marco.get('titulo_en_barra', False),
+        'plazos': {c: Ticket.DIAS_HABILES[c] for c in categorias},  # los lee el script: el plazo prometido es el real
+        'plazos_filas': [(rapidas, Ticket.DIAS_HABILES[Ticket.PAGOS]),
+                         ('Problemas técnicos y otros', Ticket.DIAS_HABILES[Ticket.TECNICO])] if para_apoderado else None,
+        'subtitulo_barra': 'Cuéntanos qué pasó y te respondemos por escrito' if para_apoderado else None,
+        'intro': f'{rapidas}: respondemos en 2 días hábiles. Lo demás, en 5 días hábiles.',
+        **marco,
     })
 
 
@@ -118,6 +126,8 @@ def _inicial_de_video(request, video_id):
 def mi_ticket(request, id_ticket):
     ticket = get_object_or_404(Ticket, pk=id_ticket, autor=request.user)
     form = MensajeForm(request.POST or None) if ticket.estado == Ticket.ABIERTO else None
+    if form is not None:
+        form.fields['texto'].widget.attrs['placeholder'] = 'Agrega información o responde al equipo de soporte'
     if _publicar(request, ticket, form, de_soporte=False):
         return redirect('mi_ticket', ticket.pk)
     return render(request, 'soporte/mi_ticket.html',
