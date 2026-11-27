@@ -297,7 +297,7 @@ def actualizar_perfil_prof(request):
             if error_msg:
                 return JsonResponse({"success": False, "message": error_msg})
 
-# La foto se valida antes de guardar nada: si no sirve, el perfil queda igual.
+            # La foto se valida antes de guardar nada: si no sirve, el perfil queda igual.
             archivo_foto = request.FILES.get('foto_perfil')
             try:
                 foto_jpeg = foto.procesar(archivo_foto) if archivo_foto else None

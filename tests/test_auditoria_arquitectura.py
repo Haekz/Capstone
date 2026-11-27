@@ -21,7 +21,7 @@ from alumnos.models import (
     SolicitudRetiro,
     Tutor,
 )
-from alumnos.utils import formato_clp, validar_imagen_perfil
+from alumnos.utils import formato_clp
 
 User = get_user_model()
 
