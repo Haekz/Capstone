@@ -85,7 +85,7 @@ class IntegracionFlujosTestCase(TestCase):
         )
         
         # Debe responder success: False (No autorizado)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 401)
         self.assertFalse(response.json()['success'])
         
         self.clase.refresh_from_db()

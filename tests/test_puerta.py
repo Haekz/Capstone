@@ -137,7 +137,8 @@ class FiltroReporteErroresTests(SimpleTestCase):
         # Lo demas se sigue mostrando.
         self.assertNotEqual(seguros['TIME_ZONE'], filtro.cleansed_substitute)
 
-    def test_la_clave_enviada_a_la_puerta_no_sale_en_el_reporte(self):
+    @override_settings(CACHES={'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}})
+    def test_la_clave_enviada_a_la_puerta_no_sale_en_el_reporte(self):  # el limite de intentos usa el cache: sin base
         # Tambien con DEBUG=True: el filtro original solo oculta el POST con
         # DEBUG=False, y Railway todavia corre con DEBUG=True.
         from lbwus.puerta import puerta

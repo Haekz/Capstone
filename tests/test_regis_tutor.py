@@ -53,14 +53,15 @@ class RegistroDeAdministradorTests(TestCase):
         self.entrar()
         self.assertEqual(self.client.get(self.url).status_code, 200)
 
-    def test_el_admin_crea_otro_admin_y_entra_con_su_perfil(self):
+    def test_el_admin_crea_otro_admin_sin_perder_ni_suplantar_su_sesion(self):
         self.entrar()
+        sesion_del_creador = self.client.session['admin_id']
         respuesta = self.client.post(self.url, self.datos())
         self.assertTrue(respuesta.json()['success'])
         nuevo = User.objects.get(rut=RUT_NUEVO)
         self.assertEqual(nuevo.rol, 'admin')
         self.assertTrue(Tutor.objects.filter(user=nuevo).exists())
-        self.assertEqual(self.client.session['admin_id'], Tutor.objects.get(user=nuevo).id_tutor)
+        self.assertEqual(self.client.session['admin_id'], sesion_del_creador)  # sigue siendo quien creo la cuenta
 
     def test_faltan_campos(self):
         self.rechazado('obligatorios', telefono='')
