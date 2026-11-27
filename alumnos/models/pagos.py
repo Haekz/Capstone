@@ -1,7 +1,7 @@
 """Pagos de alumnos: suscripciones y paquetes de clases (Webpay)."""
 
 from datetime import timedelta
-from django.db import models
+from django.db import models, transaction
 from django.core.validators import MinValueValidator
 from django.utils import timezone
 
