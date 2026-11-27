@@ -66,10 +66,10 @@ def tiene_historial(user):
 def _limpiar_alumno(alumno):
     """Sin las observaciones que recibio, resenas ni solicitudes de clase extra."""
     Observacion.objects.filter(inscripcion__alumno=alumno).delete()
-    Resena.objects.filter(alumno=alumno).delete()
+    Resena.objects.filter(inscripcion__alumno=alumno).delete()
     ReporteResena.objects.filter(remitente=alumno.user).delete()
     SolicitudClaseExtra.objects.filter(alumno=alumno).delete()
-    Reporte.objects.filter(alumno=alumno).delete()
+    Reporte.objects.filter(remitente=alumno.user).delete()
 
 
 def _limpiar_profesor(profesor):

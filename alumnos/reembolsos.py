@@ -91,7 +91,7 @@ def intentar(devolucion):
     ``devolucion.error_reembolso`` para que soporte lo vea; queda para devolver a mano. Se puede repetir.
     """
     with transaction.atomic():
-        devolucion = DevolucionVideos.objects.select_for_update().select_related('paquete').get(pk=devolucion.pk)
+        devolucion = DevolucionVideos.objects.select_for_update(of=('self',)).select_related('paquete').get(pk=devolucion.pk)
         if devolucion.devuelta or not devolucion.aprobada:
             return False
         if devolucion.reembolsos.filter(confirmado__isnull=True).exists():  # uno a medias: puede haber salido el dinero

@@ -172,8 +172,8 @@ EVALUADORES = {ALUMNO.clave: _alumno, PROFESOR.clave: _profesor, APODERADO.clave
 def evaluar(user, ticket=None):
     """Que pasaria hoy con la cuenta de ``user``. ``ticket``: el de su solicitud (no cuenta como gestion abierta)."""
     if (user.is_staff or user.is_superuser
-            or getattr(user, ADMIN.nombre_perfil, None) is not None
-            or getattr(user, SOPORTE.nombre_perfil, None) is not None):
+            or getattr(user, ADMIN.perfil, None) is not None
+            or getattr(user, SOPORTE.perfil, None) is not None):
         rol, _ = resolver_rol(user)
         etiqueta = rol.etiqueta.lower() if rol else 'esta cuenta'
         return Evaluacion((), (f'Una cuenta de {etiqueta} no se elimina desde aquí: hay que tratarla con el equipo.',))
@@ -181,9 +181,9 @@ def evaluar(user, ticket=None):
     perfiles = [
         (clave, getattr(user, nombre_perfil, None))
         for clave, nombre_perfil in (
-            (ALUMNO.clave, ALUMNO.nombre_perfil),
-            (PROFESOR.clave, PROFESOR.nombre_perfil),
-            (APODERADO.clave, APODERADO.nombre_perfil),
+            (ALUMNO.clave, ALUMNO.perfil),
+            (PROFESOR.clave, PROFESOR.perfil),
+            (APODERADO.clave, APODERADO.perfil),
         )
     ]
     activos = [(clave, perfil) for clave, perfil in perfiles if perfil is not None]
