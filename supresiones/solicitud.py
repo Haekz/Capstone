@@ -71,8 +71,10 @@ def ejecutar(solicitud, agente):
     """Elimina la cuenta. Devuelve (borrada, avisada): si se borro completa o se seudonimizo, y si el correo
     del resultado salio."""
     with transaction.atomic():
+        from django.contrib.auth import get_user_model
         solicitud = _bloquear_abierta(solicitud.pk)
-        user, ticket = solicitud.usuario, solicitud.ticket
+        user = get_user_model().objects.select_for_update().get(pk=solicitud.usuario_id)
+        ticket = solicitud.ticket
         evaluacion = evaluar(user, ticket)
         if not evaluacion.puede:
             raise SolicitudError('Hoy no se puede eliminar: ' + ' '.join(evaluacion.bloqueos))

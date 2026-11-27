@@ -48,6 +48,9 @@ def get_client():
                     uri,
                     serverSelectionTimeoutMS=timeout,
                     connectTimeoutMS=timeout,
+                    socketTimeoutMS=timeout,
+                    maxPoolSize=50,
+                    maxIdleTimeMS=60000,
                     tz_aware=True,
                     appname='lbwus',
                 )

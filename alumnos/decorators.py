@@ -16,16 +16,24 @@ from django.shortcuts import redirect
 
 from apoderados.permisos import debe_renovar_clave
 
-from .roles import ADMIN, ALUMNO, APODERADO, PROFESOR, SOPORTE, redirigir_a_portal, rol_en_sesion
+from .roles import ADMIN, ALUMNO, APODERADO, PROFESOR, SOPORTE, perfil_de, redirigir_a_portal, rol_en_sesion
 
 
 def _rol_requerido(rol, anonimo, json=False):
     def decorador(vista):
         @wraps(vista)
         def envoltura(request, *args, **kwargs):
-            if request.session.get(rol.clave_sesion):
+            sesion_pk = request.session.get(rol.clave_sesion)
+            if sesion_pk:
                 user = getattr(request, 'user', None)
-                if user is not None and (not user.is_authenticated or not user.is_active):
+                perfil = perfil_de(user, rol) if user is not None else None
+                if (
+                    user is None
+                    or not user.is_authenticated
+                    or not user.is_active
+                    or perfil is None
+                    or getattr(perfil, rol.campo_id, None) != sesion_pk
+                ):
                     from django.contrib.auth import logout
                     logout(request)
                     return anonimo(request)
@@ -47,7 +55,7 @@ def _al_login(_request):
 
 
 def _sesion_invalida_json(_request):
-    return JsonResponse({"success": False, "message": "Sesión inválida."})
+    return JsonResponse({"success": False, "message": "Sesión inválida."}, status=401)
 
 
 def sesion_iniciada_required(vista):
@@ -62,6 +70,8 @@ def sesion_iniciada_required(vista):
         user = getattr(request, 'user', None)
         if user is None or not user.is_authenticated or not user.is_active:
             return _al_login(request)
+        if debe_renovar_clave(user):
+            return redirect('nueva_clave_estudiante')
         return vista(request, *args, **kwargs)
 
     return envoltura
@@ -98,11 +108,22 @@ admin_required_json = _rol_requerido(
     ADMIN, _sesion_invalida_json, json=True
 )
 
-# Solo el rol, como alumno_sesion_required: la regla de la clave propia ya la aplica el portal
-# (alumno_required), que es la unica pagina desde donde se llaman estos endpoints.
-# 401 y un mensaje claro: el portal muestra data.message y lee el JSON sin mirar el estado.
-alumno_required_json = _rol_requerido(
+# Exige rol alumno y además valida que el ex-menor haya renovado la clave del apoderado.
+_alumno_sesion_json = _rol_requerido(
     ALUMNO,
     lambda _r: JsonResponse({"success": False, "message": "Debes iniciar sesión como alumno."}, status=401),
     json=True,
 )
+
+
+def alumno_required_json(vista):
+    @wraps(vista)
+    def con_clave_propia(request, *args, **kwargs):
+        if debe_renovar_clave(request.user):
+            return JsonResponse(
+                {"success": False, "message": "Debes definir tu propia contraseña antes de continuar."},
+                status=403,
+            )
+        return vista(request, *args, **kwargs)
+
+    return _alumno_sesion_json(con_clave_propia)

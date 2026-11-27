@@ -86,7 +86,9 @@ def compartir(profesor_id, paquete_id, video_id):
         paquete_id = int(paquete_id)
     except (TypeError, ValueError):
         paquete_id = None
-    with transaction.atomic():  # el candado en el paquete evita pasarse de los videos pagados si llegan dos juntos
+    with transaction.atomic():  # el candado en profesor y paquete evita carreras con videoteca.eliminar y doble compartir
+        from alumnos.models import Profesor
+        Profesor.objects.select_for_update().get(pk=profesor_id)
         paquete = (PaqueteClases.objects.vigentes().select_for_update()
                    .filter(pk=paquete_id, profesor_id=profesor_id).first())
         contratados = videos_extra.contratados(paquete) if paquete else 0  # el agregado y los extra ya pagados

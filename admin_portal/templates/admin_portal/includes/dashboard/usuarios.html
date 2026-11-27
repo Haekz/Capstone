@@ -70,7 +70,7 @@
                                                 </a>
                                                 <form method="post" action="{% url 'alumnos_del' alumno.id_alumno %}"
                                                     class="form-accion"
-                                                    onsubmit="return confirm('¿Seguro que quieres eliminar a {{ alumno.user.first_name }}?')">
+                                                    onsubmit="return confirm('¿Seguro que quieres eliminar a {{ alumno.user.first_name|escapejs }}?')">
                                                     {% csrf_token %}
                                                     <button type="submit" class="btn-action delete" title="Eliminar">
                                                         <i class="bi bi-trash3-fill"></i>
@@ -112,8 +112,7 @@
                                         <td>
                                             <div class="user-cell">
                                                 <div class="user-avatar-sm"
-                                                    style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">{{
-                                                    prof.user.first_name|slice:":1"|upper }}</div>
+                                                    style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">{{ prof.user.first_name|slice:":1"|upper }}</div>
                                                 <div>
                                                     <div class="user-cell-name">{{ prof.user.first_name }}</div>
                                                     <div class="user-cell-sub">{{ prof.user.direccion|truncatechars:30 }}
@@ -159,12 +158,10 @@
                                         <td>
                                             <div class="user-cell">
                                                 <div class="user-avatar-sm"
-                                                    style="background: linear-gradient(135deg, #f59e0b, #d97706);">{{
-                                                    admin_user.user.first_name|slice:":1"|upper }}</div>
+                                                    style="background: linear-gradient(135deg, #f59e0b, #d97706);">{{ admin_user.user.first_name|slice:":1"|upper }}</div>
                                                 <div>
                                                     <div class="user-cell-name">{{ admin_user.user.first_name }}</div>
-                                                    <div class="user-cell-sub">{{ admin_user.user.direccion|truncatechars:30
-                                                        }}</div>
+                                                    <div class="user-cell-sub">{{ admin_user.user.direccion|truncatechars:30 }}</div>
                                                 </div>
                                             </div>
                                         </td>

@@ -5,10 +5,12 @@ muestra su cuenta y sus vinculos: no abre nada de alumnos, profesores ni admin.
 Las revisiones son de soporte y estan en views_revision.py.
 """
 
+import hashlib
 import time
 
 from django.contrib import messages
 from django.contrib.auth import login as auth_login, logout as auth_logout, update_session_auth_hash
+from django.core.cache import cache
 from django.db import transaction
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
@@ -94,13 +96,40 @@ def _con_token_valido(perfiles, campo_user, uidb64, token, generador):
     return perfil if perfil is not None and generador.check_token(perfil.user, token) else None
 
 
+def _ip_cliente(request):
+    if hasattr(request, 'META'):
+        xff = request.META.get('HTTP_X_FORWARDED_FOR', '')
+        if xff:
+            return xff.split(',')[-1].strip()
+        return request.META.get('REMOTE_ADDR', '0.0.0.0')
+    return '0.0.0.0'
+
+
+def _limite_registro_ip(request, prefijo, limite=15, ventana=900):
+    ip_hash = hashlib.sha256(_ip_cliente(request).encode('utf-8')).hexdigest()[:32]
+    clave = f'{prefijo}_{ip_hash}'
+    actual = cache.get(clave, 0)
+    if actual >= limite:
+        return True
+    if not cache.add(clave, 1, ventana):
+        try:
+            cache.incr(clave)
+        except ValueError:
+            cache.set(clave, actual + 1, ventana)
+    return False
+
+
 @sensitive_post_parameters('password', 'confirmar_password')
 @never_cache
 def registro(request):
     rol = rol_en_sesion(request)
     if rol is not None:
         return redirigir_a_portal(rol)
-    form = RegistroApoderadoForm(request.POST or None, request.FILES or None)
+    if request.method == 'POST' and _limite_registro_ip(request, 'reg_apoderado'):
+        messages.error(request, 'Demasiados intentos desde tu conexión. Espera unos minutos e intenta de nuevo.')
+        form = RegistroApoderadoForm()
+    else:
+        form = RegistroApoderadoForm(request.POST or None, request.FILES or None)
     if request.method == 'POST' and form.is_valid():
         apoderado = form.save()
         auth_login(request, apoderado.user, backend=BACKEND)
@@ -373,6 +402,8 @@ def revocar_vinculo(request, id_vinculo):
     vinculo = get_object_or_404(Vinculo.objects.select_related('apoderado', 'alumno__user'), pk=id_vinculo,
                                 apoderado_id=request.session[APODERADO.clave_sesion],
                                 estado__in=Vinculo.REVOCABLES)
+    if not es_menor(vinculo.alumno.user):
+        raise Http404
     return _revocar(request, vinculo, vinculo.nombre_visible, APODERADO.ruta_portal, motivo_obligatorio=False)
 
 
@@ -381,6 +412,8 @@ def revocar_vinculo(request, id_vinculo):
 def revocar_vinculo_admin(request, id_vinculo):
     vinculo = get_object_or_404(Vinculo.objects.select_related('apoderado', 'alumno__user'), pk=id_vinculo,
                                 estado__in=Vinculo.REVOCABLES)
+    if not es_menor(vinculo.alumno.user):
+        raise Http404
     return _revocar(request, vinculo, vinculo.alumno.user.first_name, 'apoderados_revision', motivo_obligatorio=True)
 
 
@@ -397,7 +430,7 @@ def nueva_clave_estudiante(request):
         return redirect(ALUMNO.ruta_portal)
     return _formulario(
         request, form, titulo='Define tu nueva contraseña', subtitulo='Ya cumpliste 18 años',
-        boton='Guardar contraseña', volver_url=reverse('logout_apoderado'),
+        boton='Guardar contraseña', volver_url=None,
         intro=('Tu apoderado definió tu contraseña actual. Desde ahora tu cuenta es solo tuya: '
                'elige una nueva que solo tú conozcas para seguir.'),
     )
@@ -411,7 +444,11 @@ def registro_adolescente(request):
     rol = rol_en_sesion(request)
     if rol is not None:
         return redirigir_a_portal(rol)
-    form = RegistroAdolescenteForm(request.POST or None)
+    if request.method == 'POST' and _limite_registro_ip(request, 'reg_adolescente'):
+        messages.error(request, 'Demasiados intentos desde tu conexión. Espera unos minutos e intenta de nuevo.')
+        form = RegistroAdolescenteForm()
+    else:
+        form = RegistroAdolescenteForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
         alumno = form.save()
         auth_login(request, alumno.user, backend=BACKEND)
@@ -512,6 +549,7 @@ def invitacion(request, token):
         with transaction.atomic():
             vinculo = pendiente.aceptar(apoderado, form.cleaned_data['parentesco'], VERSION_DECLARACION_VINCULO)
             form.guardar_documento(vinculo)
+            vinculo.abrir_ticket_si_revisable()
         request.session.pop(CLAVE_INVITACION, None)
         messages.success(request, f'Aceptaste la invitación de {estudiante.user.first_name}. Nuestro equipo de soporte '
                                   'revisará el documento que adjuntaste para verificar el vínculo.')
@@ -524,6 +562,8 @@ def invitacion(request, token):
     )
 
 
+@never_cache
+@require_POST
 def logout_apoderado(request):
     auth_logout(request)
     return redirect('home')

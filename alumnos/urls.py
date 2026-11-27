@@ -22,7 +22,7 @@ from .reservas import (
 )
 from .webpay import comprar_paquete, comprar_videos_extra, confirmacion
 from .views_clase_extra import horas_clase_extra, pedir_clase_extra
-from .sala_virtual import sala_virtual, iniciar_directo
+from .sala_virtual import finalizar_directo, iniciar_directo, sala_virtual
 from .perfil_profesor import perfil_profesor
 from .views_videos import ver_video, videos_alumno
 from . import views_soporte_videos
@@ -31,6 +31,7 @@ urlpatterns = [
     path('profesores/<int:id_profesor>/', perfil_profesor, name='perfil_profesor'),
     path('sala-virtual/<int:clase_id>/', sala_virtual, name='sala_virtual'),
     path('sala-virtual/<int:clase_id>/iniciar/', iniciar_directo, name='iniciar_directo'),
+    path('sala-virtual/<int:clase_id>/finalizar/', finalizar_directo, name='finalizar_directo'),
     # Sitio público
     # El home canónico vive en la raíz ('/') y se registra en lbwus/urls.py.
     # Aquí solo redirigimos para no romper enlaces antiguos a /alumnos/.

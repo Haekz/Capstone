@@ -23,7 +23,11 @@ def pendiente_de_calificar(alumno):
     Misma regla que ``Resena.objects.de_la_contratacion``: una reseña cubre el paquete o, sin paquete, la inscripcion."""
     ya_calificada = Resena.objects.filter(
         Q(paquete_id=OuterRef('paquete_id')) | Q(inscripcion=OuterRef('pk'), paquete__isnull=True))
-    return (Inscripcion.objects.filter(alumno=alumno).completadas()
+    return (Inscripcion.objects.filter(
+        alumno=alumno,
+        clase__profesor__titulo_estado='aprobado',
+        clase__profesor__user__suprimida__isnull=True,
+    ).completadas()
             .select_related('clase__asignatura', 'clase__profesor__user')
             .annotate(calificada=Exists(ya_calificada)).filter(calificada=False)
             .order_by('-sesion__fecha_hora_inicio').first())

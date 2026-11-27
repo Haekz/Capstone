@@ -154,6 +154,7 @@ class PaqueteClases(models.Model):
         return self.monto + self.monto_videos
 
     @classmethod
+    @transaction.atomic
     def confirmar_pago(cls, buy_order, aprobado, codigo_autorizacion='', fecha_pago=None):
         """Confirma o rechaza la orden. Devuelve los paquetes que esta llamada dejo activos."""
         if aprobado:  # solo los pendientes: un retorno repetido no pisa los datos del primero

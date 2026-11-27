@@ -20,10 +20,13 @@ def contexto_de_marco(request, seccion=''):
 
     seccion: a que parte del menu pertenece la pagina ('ayuda'...); cada base marca su propio item.
     """
+    user = getattr(request, 'user', None)
+    if user is None or not user.is_authenticated or not user.is_active:
+        return {'base': BASE_PUBLICA, 'en_portal': False, 'seccion_menu': seccion}
     rol = rol_en_sesion(request)
     base = BASES_DE_PORTAL.get(rol)
     contexto = {'base': base or BASE_PUBLICA, 'en_portal': base is not None, 'seccion_menu': seccion}
     if rol == ALUMNO:
         # La ficha y el menu de base_alumno usan alumno y es_menor; su barra superior lleva el titulo de la pagina
-        contexto.update(alumno=perfil_de(request.user, ALUMNO), es_menor=es_menor(request.user), titulo_en_barra=True)
+        contexto.update(alumno=perfil_de(user, ALUMNO), es_menor=es_menor(user), titulo_en_barra=True)
     return contexto

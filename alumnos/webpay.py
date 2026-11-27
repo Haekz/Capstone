@@ -121,6 +121,7 @@ def iniciar_compra_paquete(request, alumno_id, al_crear=None, vinculo=None):
     try:
         response = _tx().create(buy_order, session_id, monto + monto_videos, request.build_absolute_uri(reverse('confirmacion')))
     except Exception:  # Transbank caido o rechazo la orden: no se cobra ni se crea el paquete
+        logger.exception('Error iniciando Webpay para paquete (%s)', buy_order)
         return render(request, 'alumnos/confirmacion.html', {'aprobado': False, 'items': []})
 
     with transaction.atomic():  # paquete y registro del apoderado: ambos o ninguno
@@ -170,10 +171,11 @@ def iniciar_compra_videos_extra(request, alumno_id, al_crear=None, vinculo=None,
     try:
         response = _tx().create(buy_order, session_id, monto, request.build_absolute_uri(reverse('confirmacion')))
     except Exception:  # Transbank caido o rechazo la orden: no se cobra ni se crea la compra
+        logger.exception('Error iniciando Webpay para videos extra (%s)', buy_order)
         return render(request, 'alumnos/confirmacion.html', {'aprobado': False, 'items': []})
     try:
         with transaction.atomic():
-            PaqueteClases.objects.select_for_update().get(pk=paquete.pk)
+            paquete = PaqueteClases.objects.select_for_update().get(pk=paquete.pk)
             videos_extra.validar(paquete, cantidad)
             compra = CompraVideosExtra.objects.create(
                 paquete=paquete, cantidad=cantidad, monto=monto, buy_order=buy_order, token_ws=response['token'])
@@ -193,6 +195,7 @@ def _avisar_profesor(aviso, pago):
         logger.exception('No se pudo avisar al profesor (%r, pago %s)', aviso, pago.pk)
 
 
+@transaction.atomic
 def registrar_respuesta(resp):
     """Aplica a la orden lo que Transbank respondio (commit al volver el alumno, o status al revisar despues).
 
@@ -207,7 +210,7 @@ def registrar_respuesta(resp):
     paquete = PaqueteClases.objects.filter(buy_order=buy_order).first() if buy_order else None
     compra = CompraVideosExtra.objects.filter(buy_order=buy_order).first() if buy_order else None
     esperado = paquete.total if paquete else compra.monto if compra else None
-    if esperado is not None and int(resp.get('amount') or 0) != esperado:
+    if esperado is None or int(resp.get('amount') or 0) != esperado:
         aprobado = False
     Suscripcion.confirmar_pago(buy_order, aprobado)
     autorizacion, fecha = resp.get('authorization_code') or '', parse_datetime(resp.get('transaction_date') or '')
@@ -242,14 +245,27 @@ def confirmacion(request):
     # Pago recibido desde Webpay (con TBK_TOKEN tambien, es invalido: no se confirma, BUG-QA-02)
 
     if token and not tbk_token:
-
-        try:
-            resp = _tx().commit(token)
-        except Exception:
-            resp = {}
+        existente = (
+            PaqueteClases.objects.filter(token_ws=token, estado=PaqueteClases.ESTADO_ACTIVA).first()
+            or CompraVideosExtra.objects.filter(token_ws=token, estado=CompraVideosExtra.ESTADO_ACTIVA).first()
+        )
+        if existente is not None:
+            aprobado = True
+            buy_order = existente.buy_order
+            resp = {
+                'amount': existente.total if isinstance(existente, PaqueteClases) else existente.monto,
+                'authorization_code': existente.codigo_autorizacion,
+                'transaction_date': existente.fecha_pago.isoformat() if existente.fecha_pago else '',
+            }
+        else:
+            try:
+                resp = _tx().commit(token)
+            except Exception:
+                logger.exception('Error confirmando transaccion Webpay')
+                resp = {}
+            aprobado, buy_order = registrar_respuesta(resp)
 
         card = resp.get('card_detail') or {}
-        aprobado, buy_order = registrar_respuesta(resp)
         de_la_orden = list(PaqueteClases.objects.filter(buy_order=buy_order).select_related('profesor__user')) if buy_order else []
         ctx['items'] = [
             {'titulo': f'{p.get_plan_display()}: {p.clases} clase(s) con {p.profesor.nombre if p.profesor else "—"}',
@@ -273,12 +289,29 @@ def confirmacion(request):
             'fecha': resp.get('transaction_date', ''),
         })
     elif tbk_token:
+        orden_anulada = request.GET.get('TBK_ORDEN_COMPRA') or request.POST.get('TBK_ORDEN_COMPRA') or ''
+        if orden_anulada:
+            PaqueteClases.confirmar_pago(orden_anulada, False)
+            CompraVideosExtra.confirmar_pago(orden_anulada, False)
+        elif token:
+            PaqueteClases.objects.filter(token_ws=token, estado=PaqueteClases.ESTADO_PENDIENTE).update(
+                estado=PaqueteClases.ESTADO_RECHAZADA
+            )
+            CompraVideosExtra.objects.filter(token_ws=token, estado=CompraVideosExtra.ESTADO_PENDIENTE).update(
+                estado=CompraVideosExtra.ESTADO_RECHAZADA
+            )
         ctx.update({
             'aprobado': False,
             'anulado': True
         })
     else:
-        return redirect('planes')
+        orden_timeout = request.GET.get('TBK_ORDEN_COMPRA') or request.POST.get('TBK_ORDEN_COMPRA') or ''
+        if orden_timeout:
+            PaqueteClases.confirmar_pago(orden_timeout, False)
+            CompraVideosExtra.confirmar_pago(orden_timeout, False)
+            ctx.update({'aprobado': False, 'orden': orden_timeout})
+        else:
+            return redirect('planes')
     return render(
         request,
         'alumnos/confirmacion.html',

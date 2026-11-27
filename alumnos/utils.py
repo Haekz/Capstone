@@ -1,5 +1,6 @@
 import re
-from datetime import date
+
+from django.utils import timezone
 
 def validar_rut_chileno(rut):
     rut_clean = rut.replace(".", "").replace("-", "").strip().upper()
@@ -24,7 +25,7 @@ EDAD_MINIMA_ESTUDIANTE = 6  # edad minima comercial (decisiones de menores)
 
 
 def edad(fecha):
-    hoy = date.today()
+    hoy = timezone.localdate()
     return hoy.year - fecha.year - ((hoy.month, hoy.day) < (fecha.month, fecha.day))
 
 
@@ -48,13 +49,15 @@ def error_fecha_nacimiento(fecha, edad_minima=EDAD_ADULTA):
     admin exigen 18. Los menores solo los registra un apoderado verificado
     (app apoderados).
     """
-    if fecha >= date.today(): return "La fecha de nacimiento no puede ser actual ni futura."
+    if fecha >= timezone.localdate(): return "La fecha de nacimiento no puede ser actual ni futura."
     if edad(fecha) < edad_minima: return f"Debes ser mayor o igual a {edad_minima} años."
     return None
 
 def usuario_existe(rut, correo, excluir_user=None):
     from django.contrib.auth import get_user_model
     from django.db.models import Q
+    from .backends import normalizar_rut_canonico, variaciones_rut
+
     User = get_user_model()
     usuarios = User.objects.all()
     if excluir_user is not None:
@@ -63,7 +66,11 @@ def usuario_existe(rut, correo, excluir_user=None):
     # no puede chocar con las demas cuentas sin correo.
     if correo and usuarios.filter(email__iexact=correo).exists():
         return "El correo electrónico ya está registrado en el sistema."
-    if usuarios.filter(Q(username__iexact=rut) | Q(rut__iexact=rut)).exists():
+    variantes = set(variaciones_rut(rut))
+    canon = normalizar_rut_canonico(rut)
+    if canon:
+        variantes.add(canon)
+    if usuarios.filter(Q(username__in=variantes) | Q(rut__in=variantes) | Q(username__iexact=rut) | Q(rut__iexact=rut)).exists():
         return "El RUT ingresado ya está registrado en el sistema."
     return None
 

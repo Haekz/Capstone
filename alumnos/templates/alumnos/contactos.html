@@ -47,7 +47,7 @@
             <h2>Envíanos un mensaje</h2>
             <p class="ct-form-sub">Responderemos a tu consulta a la brevedad.</p>
 
-            <form id="contact-form" autocomplete="off" class="contact-form needs-validation" novalidate>
+            <form id="contact-form" method="post" autocomplete="off" class="contact-form needs-validation" novalidate>
                 {% csrf_token %}
 
                 <div class="form-group">
@@ -163,7 +163,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     // esta parte es de marcar el link de contacto como activo en el nav
     const navContacto = document.getElementById('nav-contacto');

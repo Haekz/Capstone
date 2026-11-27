@@ -51,12 +51,12 @@ def _suman(retiros):
 def _de_admin(hoy):
     """Retiros (por revisar, para pagar hoy o atrasados, en espera), reseñas por moderar y
     casos escalados por soporte."""
-    finanzas = reverse('dashboard_admin') + '#section-finanzas'
+    finanzas = reverse('dashboard_admin') + '#finanzas'
     avisos = []
 
     atrasados, de_hoy, en_espera = [], [], []
     aprobados = SolicitudRetiro.objects.filter(estado=SolicitudRetiro.APROBADO).select_related(
-        'profesor__user', 'profesor__cuenta_bancaria')
+        'profesor__user', 'profesor__cuenta_bancaria').defer('profesor__titulo_contenido')
     for retiro in aprobados:
         cuenta = getattr(retiro.profesor, 'cuenta_bancaria', None)
         if cuenta is not None and cuenta.bloqueada:

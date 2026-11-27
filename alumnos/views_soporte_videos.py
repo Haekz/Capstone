@@ -48,14 +48,22 @@ def ver_video(request, id_ticket, video_id):
 @soporte_required
 def retirar_video(request, id_ticket, video_id):
     ticket, compartidos = _del_ticket(tickets_del_agente(request), id_ticket, video_id)
-    compartido = compartidos.entregados().first()
-    if compartido is None:  # ajeno o ya retirado
-        raise Http404
-    with transaction.atomic():
-        VideoCompartido.objects.filter(pk=compartido.pk).update(retirado=timezone.now())
-        agregar_mensaje(ticket, request.user, 'Retiramos el video que reportaste: ya no aparece en tus videos. '
-                                              'Tu profesor puede compartirte otro.', de_soporte=True)
-        avisos_profesor.video_retirado(compartido)
+    try:
+        with transaction.atomic():
+            compartido = compartidos.entregados().select_for_update().first()
+            if compartido is None:  # ajeno o ya retirado
+                raise Http404
+            updated = VideoCompartido.objects.filter(pk=compartido.pk, retirado__isnull=True).update(
+                retirado=timezone.now()
+            )
+            if not updated:
+                raise Http404
+            agregar_mensaje(ticket, request.user, 'Retiramos el video que reportaste: ya no aparece en tus videos. '
+                                                  'Tu profesor puede compartirte otro.', de_soporte=True)
+            avisos_profesor.video_retirado(compartido)
+    except ValidationError as error:
+        messages.error(request, error.messages[0])
+        return redirect('soporte_reporte', ticket.pk)
     messages.success(request, 'Video retirado. Se lo contamos en el ticket y le avisamos al profesor.')
     return redirect('soporte_reporte', ticket.pk)
 
@@ -72,10 +80,13 @@ def _devolver_por_transbank(request, ticket, devolucion):
     """
     if not reembolsos.intentar(devolucion):
         return False
-    agregar_mensaje(ticket, request.user,
-                    f'Ya te devolvimos {clp(devolucion.monto)} por {_videos(devolucion.cantidad)} que tu profesor no te '
-                    'compartió, por el mismo medio de pago con que pagaste. Tu banco puede tardar unos días en mostrarlo.',
-                    de_soporte=True)
+    try:
+        agregar_mensaje(ticket, request.user,
+                        f'Ya te devolvimos {clp(devolucion.monto)} por {_videos(devolucion.cantidad)} que tu profesor no te '
+                        'compartió, por el mismo medio de pago con que pagaste. Tu banco puede tardar unos días en mostrarlo.',
+                        de_soporte=True)
+    except ValidationError:
+        pass
     return True
 
 

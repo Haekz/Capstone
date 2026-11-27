@@ -39,7 +39,10 @@ class HorarioSemanal(models.Model):
         super().clean()
         if self.hora_inicio is None or self.hora_fin is None:
             return
-        if self.hora_inicio.minute or self.hora_fin.minute:
+        if self.hora_inicio.tzinfo is not None or self.hora_fin.tzinfo is not None:
+            raise ValidationError('Las horas no deben incluir zona horaria.')
+        if (self.hora_inicio.minute or self.hora_inicio.second or self.hora_inicio.microsecond
+                or self.hora_fin.minute or self.hora_fin.second or self.hora_fin.microsecond):
             raise ValidationError('Usa horas en punto (ej. 15:00): cada bloque dura 60 minutos.')
         if self.hora_fin <= self.hora_inicio:
             raise ValidationError('La hora de término debe ser posterior a la de inicio.')

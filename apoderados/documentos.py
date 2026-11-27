@@ -10,6 +10,7 @@ revision, o a los 30 dias.
 """
 
 import io
+import threading
 
 import pypdfium2 as pdfium
 import pypdfium2.raw as pdfium_raw
@@ -20,6 +21,10 @@ from django.utils import timezone
 from PIL import Image, ImageDraw, ImageFont, ImageOps, UnidentifiedImageError
 
 from alumnos.cifrado import cifrador
+
+MAX_IMAGEN_PIXELES = 25_000_000
+Image.MAX_IMAGE_PIXELS = MAX_IMAGEN_PIXELES
+_PDFIUM_LOCK = threading.Lock()
 
 TAMANO_MAXIMO = 5 * 1024 * 1024
 LADO_MAXIMO = 2000  # pixeles: suficiente para leer un carnet o un certificado
@@ -64,10 +69,13 @@ def preparar(archivo):
     try:
         imagen = Image.open(archivo)
         formato = imagen.format
+        if formato not in FORMATOS:
+            raise ValidationError(ERROR_FORMATO)
+        ancho, alto = imagen.size
+        if ancho <= 0 or alto <= 0 or ancho * alto > MAX_IMAGEN_PIXELES:
+            raise ValidationError(ERROR_FORMATO)
         imagen.load()
     except (UnidentifiedImageError, OSError, Image.DecompressionBombError):
-        raise ValidationError(ERROR_FORMATO)
-    if formato not in FORMATOS:
         raise ValidationError(ERROR_FORMATO)
     imagen = ImageOps.exif_transpose(imagen)  # respeta la orientacion antes de descartar el EXIF
     imagen.thumbnail((LADO_MAXIMO, LADO_MAXIMO))
@@ -85,22 +93,27 @@ def descifrar(contenido):
 
 def _pdf_a_imagen(original):
     """Las paginas del PDF, una bajo otra, en una sola imagen RGB. Lanza ValidationError."""
-    try:
-        pdf = pdfium.PdfDocument(original)
-    except pdfium.PdfiumError as error:
-        raise ValidationError(ERROR_PDF_CLAVE if error.err_code == pdfium_raw.FPDF_ERR_PASSWORD else ERROR_FORMATO)
-    try:
-        if not 1 <= len(pdf) <= MAX_PAGINAS:
-            raise ValidationError(ERROR_PDF_PAGINAS)
-        paginas = []
-        for numero in range(len(pdf)):
-            ancho, alto = pdf[numero].get_size()  # en puntos; la escala acota los pixeles en ambos lados
-            escala = min(ANCHO_PAGINA / ancho, LADO_MAXIMO / alto)
-            paginas.append(pdf[numero].render(scale=escala).to_pil().convert('RGB'))
-    except pdfium.PdfiumError:
-        raise ValidationError(ERROR_FORMATO)
-    finally:
-        pdf.close()
+    with _PDFIUM_LOCK:
+        try:
+            pdf = pdfium.PdfDocument(original)
+        except pdfium.PdfiumError as error:
+            raise ValidationError(ERROR_PDF_CLAVE if error.err_code == pdfium_raw.FPDF_ERR_PASSWORD else ERROR_FORMATO)
+        try:
+            if not 1 <= len(pdf) <= MAX_PAGINAS:
+                raise ValidationError(ERROR_PDF_PAGINAS)
+            paginas = []
+            for numero in range(len(pdf)):
+                ancho, alto = pdf[numero].get_size()  # en puntos; la escala acota los pixeles en ambos lados
+                if ancho <= 0 or alto <= 0:
+                    raise ValidationError(ERROR_FORMATO)
+                escala = min(ANCHO_PAGINA / ancho, LADO_MAXIMO / alto)
+                if escala <= 0 or ancho * escala < 1 or alto * escala < 1:
+                    raise ValidationError(ERROR_FORMATO)
+                paginas.append(pdf[numero].render(scale=escala).to_pil().convert('RGB'))
+        except (pdfium.PdfiumError, ValueError, ZeroDivisionError):
+            raise ValidationError(ERROR_FORMATO)
+        finally:
+            pdf.close()
     hoja = Image.new('RGB', (max(p.width for p in paginas),
                              sum(p.height for p in paginas) + SEPARACION * (len(paginas) - 1)), 'gray')
     y = 0

@@ -21,8 +21,8 @@ CSP = {
                   'https://fonts.googleapis.com'),
     'font-src': ("'self'", 'data:', 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com',
                  'https://fonts.gstatic.com'),
-    'img-src': ("'self'", 'data:', 'https://commondatastorage.googleapis.com'),
-    'media-src': ("'self'", 'https://commondatastorage.googleapis.com'),
+    'img-src': ("'self'", 'data:'),
+    'media-src': ("'self'",),
     'connect-src': ("'self'", JITSI, 'wss://meet.jit.si'),
     'frame-src': (JITSI, 'https://www.google.com'),  # sala virtual y mapa de home.html
     # Webpay recibe un POST (redirect_webpay.html); Google responde con un redirect tras el POST de allauth.

@@ -5,6 +5,13 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -35,7 +42,7 @@ jobs:
       - name: Configurar Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'  # la del README (Prerrequisitos)
+          python-version: '3.14'  # alineado con .python-version
           cache: pip
 
       - name: Instalar dependencias
@@ -43,8 +50,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
 
-      - name: Verificar configuración de Django
-        run: python manage.py check
+      - name: Verificar migraciones y despliegue de Django
+        env:
+          DEBUG: 'False'
+          DOCUMENTOS_CLAVE: 'ZmFrZS1jaS1kb2N1bWVudG9zLWNsYXZlLTMyLWJ5dGVzLQ=='
+        run: |
+          python manage.py check --deploy --fail-level ERROR
+          python manage.py makemigrations --check --dry-run
+
+      - name: Análisis estático (Ruff y Bandit)
+        run: |
+          ruff check . --extend-select B,S,DJ || true
+          bandit -r . -x ./.venv,./tests,*/migrations -ll
 
       - name: Ejecutar pruebas
         run: python manage.py test --noinput

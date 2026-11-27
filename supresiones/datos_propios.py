@@ -18,13 +18,18 @@ Para todos los roles: las filas de allauth (correo y datos de Google) se borran;
 
 from allauth.account.models import EmailAddress
 from allauth.socialaccount.models import SocialAccount
+from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
 from agenda.models import HorarioSemanal
-from alumnos.models import CuentaBancaria, Especializacion, Inscripcion, PaqueteClases, Profesor, SesionClase
+from alumnos.models import (
+    Clase, CuentaBancaria, Especializacion, Inscripcion, PaqueteClases,
+    Profesor, Reporte, SesionClase, SolicitudClaseExtra,
+)
 from apoderados.models import Documento, Invitacion, SolicitudAdolescente, Vinculo
 from observaciones.models import Observacion
+from resenas.models import ReporteResena, Resena
 
 
 def _perfil(user, nombre):
@@ -58,18 +63,27 @@ def tiene_historial(user):
 
 
 def _limpiar_alumno(alumno):
-    """Sin las observaciones que recibio: son un juicio sobre la persona y sin ella no sirven de nada."""
+    """Sin las observaciones que recibio, resenas ni solicitudes de clase extra."""
     Observacion.objects.filter(inscripcion__alumno=alumno).delete()
+    Resena.objects.filter(alumno=alumno).delete()
+    ReporteResena.objects.filter(remitente=alumno.user).delete()
+    SolicitudClaseExtra.objects.filter(alumno=alumno).delete()
+    Reporte.objects.filter(alumno=alumno).delete()
 
 
 def _limpiar_profesor(profesor):
     """Sin titulo, especializaciones, cuenta bancaria ni horario, y fuera del catalogo: sin titulo aprobado no se
     hacen clases."""
     if profesor.titulo_archivo:
-        profesor.titulo_archivo.delete(save=False)  # el archivo del titulo, no solo la referencia
+        storage, nombre = profesor.titulo_archivo.storage, profesor.titulo_archivo.name
+        profesor.titulo_archivo = ''
+        if nombre:
+            transaction.on_commit(lambda n=nombre, s=storage: s.delete(n))
     profesor.titulo_contenido, profesor.titulo_formato, profesor.titulo_observacion = None, '', ''
     profesor.titulo_estado, profesor.titulo_actualizado = Profesor.TITULO_PENDIENTE, None
     profesor.save()
+    Clase.objects.filter(profesor=profesor).update(descripcion_vivo='', temas_vivo='', en_vivo=False)
+    SolicitudClaseExtra.objects.filter(clase__profesor=profesor).update(motivo_rechazo='')
     CuentaBancaria.objects.filter(profesor=profesor).delete()
     Especializacion.objects.filter(profesor=profesor).delete()  # sus certificados cifrados
     HorarioSemanal.objects.filter(profesor=profesor).delete()
@@ -80,13 +94,20 @@ def _limpiar_profesor(profesor):
 def _limpiar_apoderado(apoderado):
     """Sin carnet ni certificados, y sin su correo en las invitaciones que guardan los estudiantes."""
     Documento.objects.filter(Q(apoderado=apoderado) | Q(vinculo__apoderado=apoderado)).delete()
-    Invitacion.objects.filter(vinculo__apoderado=apoderado).update(correo='')
+    correo_ap = (apoderado.user.email or '').strip()
+    filtro_inv = Q(vinculo__apoderado=apoderado)
+    if correo_ap:
+        filtro_inv |= Q(correo__iexact=correo_ap)
+    Invitacion.objects.filter(filtro_inv).update(correo='')
     SolicitudAdolescente.objects.filter(invitaciones__vinculo__apoderado=apoderado).update(correo_apoderado='')
 
 
 def limpiar(user):
     if user.foto_perfil:
-        user.foto_perfil.delete(save=False)  # tambien el archivo, no solo la referencia
+        storage, nombre = user.foto_perfil.storage, user.foto_perfil.name
+        user.foto_perfil = ''
+        if nombre:
+            transaction.on_commit(lambda n=nombre, s=storage: s.delete(n))
     EmailAddress.objects.filter(user=user).delete()
     SocialAccount.objects.filter(user=user).delete()
     alumno = _perfil(user, 'perfil_alumno')

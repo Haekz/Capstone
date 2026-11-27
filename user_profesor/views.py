@@ -486,27 +486,25 @@ def _error_en_datos_de_registro(datos):
 
 
 def _crear_administrador(request, datos):
-    """Crea el usuario con su perfil Tutor y abre su sesion de administrador."""
+    """Crea el usuario con su perfil Tutor sin cerrar ni suplantar la sesion del admin creador."""
+    from django.db import transaction
     genero = get_object_or_404(Genero, id_genero=datos['genero'])
 
-    from django.contrib.auth import get_user_model, login as auth_login
-    user = get_user_model().objects.create_user(
-        username=datos['rut'],
-        rut=datos['rut'],
-        email=datos['correo_electronico'],
-        rol='admin',
-        password=datos['password'],
-        first_name=datos['nombre'],
-        telefono=datos['telefono'],
-        direccion=datos['direccion'],
-        fecha_nacimiento=datos['fecha_nacimiento'],
-        genero=genero,
-    )
-    user.save()
-
-    tutor = Tutor.objects.create(user=user)
-    auth_login(request, user, backend='alumnos.backends.RutOrEmailBackend')
-    abrir_sesion_rol(request, ADMIN, tutor)
+    from django.contrib.auth import get_user_model
+    with transaction.atomic():
+        user = get_user_model().objects.create_user(
+            username=datos['rut'],
+            rut=datos['rut'],
+            email=datos['correo_electronico'],
+            rol='admin',
+            password=datos['password'],
+            first_name=datos['nombre'],
+            telefono=datos['telefono'],
+            direccion=datos['direccion'],
+            fecha_nacimiento=datos['fecha_nacimiento'],
+            genero=genero,
+        )
+        Tutor.objects.create(user=user)
 
 
 def regis_tutor(request):

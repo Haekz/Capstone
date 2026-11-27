@@ -87,8 +87,8 @@ class Resena(models.Model):
         return partes[0] + (f' {partes[1][0].upper()}.' if len(partes) > 1 else '')
 
     def puede_actualizarse(self):
-        """Solo si completó una clase nueva del mismo paquete desde la última vez."""
-        if not self.paquete_id:
+        """Solo si sigue visible y completó una clase nueva del mismo paquete desde la última vez."""
+        if self.estado != self.ESTADO_VISIBLE or not self.paquete_id:
             return False
         return (Inscripcion.objects.filter(paquete_id=self.paquete_id).completadas()
                 .filter(sesion__fecha_hora_fin__gt=self.actualizada).exists())

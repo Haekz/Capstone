@@ -10,10 +10,11 @@ tenga evaluador (admin, soporte) no se elimina automaticamente.
 
 from dataclasses import dataclass
 
+from django.db.models import Q
 from django.utils import timezone
 
 from alumnos.models import Inscripcion, PaqueteClases, SolicitudRetiro
-from alumnos.roles import ALUMNO, APODERADO, PROFESOR, resolver_rol
+from alumnos.roles import ADMIN, ALUMNO, APODERADO, PROFESOR, SOPORTE, resolver_rol
 from alumnos.utils import es_menor
 from apoderados.models import Vinculo
 from mensajes import supresion
@@ -63,7 +64,13 @@ HISTORIAL_APODERADO = Categoria(
 
 def _bloqueos_comunes(user, ticket):
     """Otros tickets abiertos del usuario: hay una gestion en curso que se perderia al borrar la cuenta."""
-    abiertos = Ticket.objects.filter(autor=user, estado=Ticket.ABIERTO)
+    abiertos = Ticket.objects.filter(
+        Q(autor=user)
+        | Q(apoderado__user=user)
+        | Q(vinculo__apoderado__user=user)
+        | Q(profesor__user=user),
+        estado=Ticket.ABIERTO,
+    ).distinct()
     if ticket is not None:
         abiertos = abiertos.exclude(pk=ticket.pk)
     n = abiertos.count()
@@ -155,9 +162,37 @@ EVALUADORES = {ALUMNO.clave: _alumno, PROFESOR.clave: _profesor, APODERADO.clave
 
 def evaluar(user, ticket=None):
     """Que pasaria hoy con la cuenta de ``user``. ``ticket``: el de su solicitud (no cuenta como gestion abierta)."""
-    rol, _ = resolver_rol(user)
-    evaluador = EVALUADORES.get(rol.clave) if rol else None
-    if evaluador is None:
+    if (user.is_staff or user.is_superuser
+            or getattr(user, ADMIN.nombre_perfil, None) is not None
+            or getattr(user, SOPORTE.nombre_perfil, None) is not None):
+        rol, _ = resolver_rol(user)
         etiqueta = rol.etiqueta.lower() if rol else 'esta cuenta'
         return Evaluacion((), (f'Una cuenta de {etiqueta} no se elimina desde aquí: hay que tratarla con el equipo.',))
-    return evaluador(user, ticket)
+
+    perfiles = [
+        (clave, getattr(user, nombre_perfil, None))
+        for clave, nombre_perfil in (
+            (ALUMNO.clave, ALUMNO.nombre_perfil),
+            (PROFESOR.clave, PROFESOR.nombre_perfil),
+            (APODERADO.clave, APODERADO.nombre_perfil),
+        )
+    ]
+    activos = [(clave, perfil) for clave, perfil in perfiles if perfil is not None]
+    if not activos:
+        return Evaluacion((), ('Una cuenta de esta cuenta no se elimina desde aquí: hay que tratarla con el equipo.',))
+
+    categorias = []
+    vistas = set()
+    bloqueos = []
+    bloqueos_vistos = set()
+    for clave, _perfil in activos:
+        ev = EVALUADORES[clave](user, ticket)
+        for cat in ev.categorias:
+            if cat.nombre not in vistas:
+                vistas.add(cat.nombre)
+                categorias.append(cat)
+        for b in ev.bloqueos:
+            if b not in bloqueos_vistos:
+                bloqueos_vistos.add(b)
+                bloqueos.append(b)
+    return Evaluacion(tuple(categorias), tuple(bloqueos))

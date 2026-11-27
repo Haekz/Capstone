@@ -32,7 +32,8 @@
                 <h2 class="prof-card-title"><i class="bi bi-bank"></i> Solicitar Transferencia de Fondos</h2>
                 <p class="prof-card-subtitle">Pago {{ frecuencia_vigente }}: corte {% if frecuencia_vigente == 'mensual' %}el último viernes del mes{% else %}los viernes{% endif %}; lo que pidas hasta el corte se paga el lunes siguiente (o el siguiente día hábil). Próximo pago: {{ proximo_pago|date:"d/m/Y" }}. Mínimo por retiro: {{ minimo_retiro }}.</p>
                 
-                <form id="formCuentaBancaria" action="{% url 'guardar_cuenta_bancaria' %}" onsubmit="submitFormJson(event)" style="margin-top: 20px;">
+                <form id="formCuentaBancaria" method="post" action="{% url 'guardar_cuenta_bancaria' %}" onsubmit="submitFormJson(event)" style="margin-top: 20px;">
+                    {% csrf_token %}
                     <h3 style="font-size: 1rem; margin-bottom: 6px;">Tu cuenta bancaria</h3>
                     <p style="font-size: 0.85rem; margin: 0 0 12px;">Solo cuentas a tu nombre: el titular es tu RUT ({{ profesor.user.rut }}).{% if cuenta_bancaria %} Actual: <strong>{{ cuenta_bancaria.banco }} {{ cuenta_bancaria.enmascarado }}</strong> ({{ cuenta_bancaria.get_tipo_cuenta_display }}).{% if cuenta_bancaria.bloqueada %} Por seguridad, los pagos a esta cuenta se habilitan el {{ cuenta_bancaria.pagable_desde|date:"d/m/Y H:i" }}.{% endif %}{% endif %}</p>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; align-items: end;">
@@ -64,7 +65,8 @@
                     </div>
                 </form>
 
-                <form id="formFrecuenciaPago" action="{% url 'guardar_frecuencia_pago' %}" onsubmit="submitFormJson(event)" style="margin-top: 20px;">
+                <form id="formFrecuenciaPago" method="post" action="{% url 'guardar_frecuencia_pago' %}" onsubmit="submitFormJson(event)" style="margin-top: 20px;">
+                    {% csrf_token %}
                     <h3 style="font-size: 1rem; margin-bottom: 6px;">Frecuencia de pago</h3>
                     <p style="font-size: 0.85rem; margin: 0 0 12px;">Un cambio rige desde el ciclo siguiente.{% if profesor.frecuencia_nueva and profesor.frecuencia_nueva != frecuencia_vigente %} <strong>Desde el {{ profesor.frecuencia_nueva_desde|date:"d/m/Y" }} tu pago será {{ profesor.get_frecuencia_nueva_display|lower }}.</strong>{% endif %}</p>
                     <div style="display: flex; gap: 15px; align-items: end; flex-wrap: wrap;">
@@ -83,7 +85,8 @@
                     <p style="margin: 0; color: #92400e; font-size: 0.92rem;"><i class="bi bi-info-circle-fill"></i> Registra tu cuenta bancaria para poder solicitar retiros.</p>
                 </div>
                 {% elif saldo_disponible_raw >= minimo_retiro_raw %}
-                <form id="formSolicitarRetiro" onsubmit="submitRetiroForm(event)" style="margin-top: 20px;">
+                <form id="formSolicitarRetiro" method="post" action="{% url 'solicitar_retiro' %}" onsubmit="submitRetiroForm(event)" style="margin-top: 20px;">
+                    {% csrf_token %}
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px;">
                         <div>
                             <label for="retiro_monto" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px;">Monto a Retirar ($)</label>

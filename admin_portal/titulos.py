@@ -51,7 +51,7 @@ def _imagen(request, contenido):
 @soporte_required
 def titulos_adm(request):
     agente = agente_en_sesion(request)
-    profesores = Profesor.objects.order_by('titulo_estado', 'user__first_name')
+    profesores = Profesor.objects.select_related('user', 'especialidad').defer('titulo_contenido').order_by('titulo_estado', 'user__first_name')
     return render(request, 'admin_portal/titulos_adm.html', {
         'agente': agente,
         'en_revision': profesores.filter(titulo_estado=Profesor.TITULO_EN_REVISION,

@@ -20,6 +20,8 @@
         }
 
         // idInscripcion: modo "mover reserva" (reprogramar) en vez de reservar una nueva.
+        let _horariosRequestToken = 0;
+        let _horariosEmptyDefaultText = null;
         function abrirModalHorarios(idClase, nombreAsignatura, nombreProfesor, idInscripcion = null) {
             const modal = document.getElementById('modal-horarios-sesiones');
             if (!modal) return;
@@ -29,6 +31,13 @@
 
             const loadingEl = document.getElementById('modal-horarios-loading');
             const emptyEl = document.getElementById('modal-horarios-empty');
+            const emptyP = emptyEl.querySelector('p');
+            if (emptyP && _horariosEmptyDefaultText === null) {
+                _horariosEmptyDefaultText = emptyP.innerText;
+            }
+            if (emptyP && _horariosEmptyDefaultText !== null) {
+                emptyP.innerText = _horariosEmptyDefaultText;
+            }
             const listaEl = document.getElementById('modal-horarios-lista');
 
             loadingEl.style.display = 'block';
@@ -39,9 +48,11 @@
             modal.classList.add('open');
             prepararClaseExtra(idClase, nombreAsignatura, nombreProfesor, !idInscripcion);  // js/clase_extra.js
 
+            const reqToken = ++_horariosRequestToken;
             fetch(`{% url 'sesiones_disponibles' %}?clase_id=${idClase}`)
                 .then(res => res.json())
                 .then(data => {
+                    if (reqToken !== _horariosRequestToken) return;
                     loadingEl.style.display = 'none';
                     if (data.success && data.sesiones && data.sesiones.length > 0) {
                         listaEl.style.display = 'flex';
@@ -96,15 +107,27 @@
                                 );
                             });
                         });
+                        listaEl.querySelectorAll('.btn-mover-sesion').forEach(btn => {
+                            btn.addEventListener('click', function() {
+                                confirmarReprogramacion(
+                                    this.dataset.inscripcion,
+                                    this.dataset.id,
+                                    this.dataset.asig,
+                                    this.dataset.fechahora
+                                );
+                            });
+                        });
                     } else {
                         emptyEl.style.display = 'block';
                     }
                 })
                 .catch(err => {
+                    if (reqToken !== _horariosRequestToken) return;
                     console.error('Error al cargar horarios:', err);
                     loadingEl.style.display = 'none';
                     emptyEl.style.display = 'block';
-                    emptyEl.querySelector('p').innerText = 'Ocurrió un error al cargar los horarios disponibles.';
+                    const emptyP = emptyEl.querySelector('p');
+                    if (emptyP) emptyP.innerText = 'Ocurrió un error al cargar los horarios disponibles.';
                 });
         }
 
