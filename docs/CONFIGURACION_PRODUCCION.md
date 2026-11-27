@@ -43,7 +43,7 @@ El inicio de sesión con Google no usa variables: el `client_id` y el secreto es
 | Qué | Dónde vive | Cómo se entrega |
 |---|---|---|
 | Títulos de profesores (`Profesor.titulo_archivo`, `titulos/`) | Volumen de Railway en `MEDIA_ROOT=/data/media` | Solo por `admin_portal/titulos.py::ver_titulo` (`@admin_required`) |
-| Fotos de perfil (`CustomUser.foto_perfil`, `perfiles/`) | Volumen | **Ninguna vista las sirve hoy** (pendiente conocido: la imagen se ve rota) |
+| Fotos de perfil | **PostgreSQL** (`alumnos.FotoPerfil.contenido`, JPEG sin EXIF de hasta 512 px). Las que quedaban en `perfiles/` las pasa la migración `alumnos/0045` y las borra del disco | Solo por `user_profesor/views.py::foto_profesor` (con sesión: el propio profesor o, si está habilitado, cualquier usuario) |
 | Documentos de apoderados (carnet, documento del vínculo) | **PostgreSQL, cifrados** (`apoderados.Documento.contenido`, `BinaryField`). No van a disco ni al volumen | Solo por `apoderados/views_revision.py::ver_documento` (`@soporte_required`, solo el agente con el ticket), con marca de agua y registro de cada apertura; se borran al resolver la revisión o a los 30 días |
 | Videos de apoyo (MP4 de hasta 500 MB y 30 minutos) | Archivo en **Cloudflare R2, bucket privado** (`user_profesor/almacen_videos.py`); su ficha en la tabla `alumnos.Video` de PostgreSQL | La web revisa el acceso (`alumnos/videos_compartidos.py`) y redirige a un **enlace firmado que vence en 2 horas**. Un enlace ya entregado sigue sirviendo hasta que vence, aunque el acceso se quite antes. **Se borra solo** el video con 30 días sin actividad (la más reciente entre subida, compartido y vista; `user_profesor/limpieza_videos.py`), aunque el paquete siga vigente: 7 días antes se avisa al profesor y a quienes lo tienen (campanita y correo). Un reclamo abierto lo protege |
 
@@ -89,7 +89,8 @@ Si la clave se filtra: en Cloudflare, borrar ese token y crear otro (pasos 3 y 5
 |---|---|---|
 | Usuarios, pagos, paquetes, reservas, sesiones de Django y caché del límite de intentos | Sí | PostgreSQL es un servicio aparte. La sesión y la caché usan la base (`DatabaseCache`, la tabla la crea `alumnos/apps.py` después de cada `migrate`) |
 | Documentos de apoderados | Sí | Están en PostgreSQL |
-| Títulos y fotos | **Solo si el volumen está montado en `/data/media` y `MEDIA_ROOT=/data/media`** | El disco del contenedor se borra en cada despliegue |
+| Títulos antiguos | **Solo si el volumen está montado en `/data/media` y `MEDIA_ROOT=/data/media`** | El disco del contenedor se borra en cada despliegue |
+| Fotos de perfil | Sí | Están en PostgreSQL |
 | Estáticos | Se regeneran | `collectstatic` en cada inicio |
 | Videos de apoyo (Cloudflare R2) | Sí | R2 es externo |
 
@@ -126,7 +127,7 @@ Cada reserva lleva sus marcas de «ya avisado» (`recordatorio_1d`, `recordatori
    pg_restore --list lbwus_pg_AAAA-MM-DD.dump | head   # comprobar que se puede leer
    ```
    Usa un `pg_dump` de la misma versión mayor que el PostgreSQL de Railway, o una más nueva.
-2. **Volumen (`/data/media`: títulos y fotos)**:
+2. **Volumen (`/data/media`: títulos antiguos)**:
    ```bash
    railway ssh -- tar czf - -C /data media > lbwus_media_AAAA-MM-DD.tar.gz
    tar tzf lbwus_media_AAAA-MM-DD.tar.gz | head        # comprobar

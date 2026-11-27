@@ -10,7 +10,7 @@ cosas que dependen del rol:
     * profesor: clases con inscripciones, paquetes vendidos o retiros de dinero;
     * apoderado: compras pagadas o un vinculo que llego a estar verificado (quien tuvo autoridad sobre un menor).
 - ``limpiar``: los datos propios que se quitan siempre, se borre la cuenta o se seudonimice (la cascada no borra los
-  archivos del disco ni los correos que otras filas copiaron): foto, y por rol observaciones recibidas, titulo,
+  archivos de R2 o del disco ni los correos que otras filas copiaron): foto, y por rol observaciones recibidas, titulo,
   especializaciones, cuenta bancaria, videos de apoyo (en ellos salen su cara y su voz), carnet.
 
 Para todos los roles: las filas de allauth (correo y datos de Google) se borran; sin eso el correo seguiria guardado.
@@ -25,7 +25,7 @@ from agenda.models import HorarioSemanal
 from alumnos.models import CuentaBancaria, Especializacion, Inscripcion, PaqueteClases, Profesor, SesionClase
 from apoderados.models import Documento, Invitacion, SolicitudAdolescente, Vinculo
 from observaciones.models import Observacion
-from user_profesor import videoteca
+from user_profesor import foto, videoteca
 
 
 def _perfil(user, nombre):
@@ -87,8 +87,7 @@ def _limpiar_apoderado(apoderado):
 
 
 def limpiar(user):
-    if user.foto_perfil:
-        user.foto_perfil.delete(save=False)  # tambien el archivo, no solo la referencia
+    foto.borrar(user)  # la fila se conserva si se seudonimiza: la cascada no alcanza
     EmailAddress.objects.filter(user=user).delete()
     SocialAccount.objects.filter(user=user).delete()
     alumno = _perfil(user, 'perfil_alumno')

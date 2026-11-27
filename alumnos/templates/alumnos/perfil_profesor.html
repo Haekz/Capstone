@@ -22,7 +22,7 @@
     {% endif %}
 
     <header class="perfil-prof__cabecera">
-        {% if profesor.user.foto_perfil %}
+        {% if profesor.user.tiene_foto %}
         <img class="perfil-prof__avatar" src="{% url 'foto_profesor' profesor.id_profesor %}" alt="Foto de {{ profesor.nombre }}">
         {% else %}
         <div class="perfil-prof__avatar" aria-hidden="true">{{ profesor.nombre|slice:":1"|upper }}</div>

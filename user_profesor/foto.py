@@ -1,18 +1,18 @@
-"""Foto de perfil del profesor: validarla y guardarla.
+"""Foto de perfil del profesor: validarla, guardarla, leerla y borrarla.
 
 La foto la ven los alumnos en el perfil profesional, por eso:
 - Se vuelve a codificar con Pillow: quita los metadatos EXIF (las fotos de
   celular traen la ubicacion GPS) y descarta archivos disfrazados de imagen.
-- Se sirve por la vista foto_profesor con la misma regla que el perfil
-  publico. MEDIA_URL sigue sin publicarse: ahi tambien viven los titulos.
+- Se guarda en PostgreSQL (alumnos.FotoPerfil), no en disco, y se sirve por la
+  vista foto_profesor con la misma regla que el perfil publico.
 """
 
-import uuid
 from io import BytesIO
 
 from django.core.exceptions import ValidationError
-from django.core.files.base import ContentFile
 from PIL import Image, ImageOps, UnidentifiedImageError
+
+from alumnos.models import FotoPerfil
 
 MAX_MB = 5
 LADO_MAX = 512  # px: el perfil la muestra a 84-120 px
@@ -46,8 +46,22 @@ def procesar(archivo):
     return salida.getvalue()
 
 
+def _olvidar_si_tiene(user):
+    user.__dict__.pop('tiene_foto', None)  # CustomUser.tiene_foto es cached_property: que no quede la respuesta vieja
+
+
 def guardar(user, jpeg):
-    """Reemplaza la foto del usuario (no guarda el modelo). Nombre al azar: no revela de quien es."""
-    if user.foto_perfil:
-        user.foto_perfil.delete(save=False)
-    user.foto_perfil.save(f'{uuid.uuid4().hex}.jpg', ContentFile(jpeg), save=False)
+    """Reemplaza la foto del usuario por el JPEG que devolvio procesar()."""
+    FotoPerfil.objects.update_or_create(user=user, defaults={'contenido': jpeg})
+    _olvidar_si_tiene(user)
+
+
+def leer(user_id):
+    """Bytes JPEG de la foto, o None si no tiene."""
+    contenido = FotoPerfil.objects.filter(user_id=user_id).values_list('contenido', flat=True).first()
+    return None if contenido is None else bytes(contenido)  # PostgreSQL entrega un memoryview
+
+
+def borrar(user):
+    FotoPerfil.objects.filter(user=user).delete()
+    _olvidar_si_tiene(user)

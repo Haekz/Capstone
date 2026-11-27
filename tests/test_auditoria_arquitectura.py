@@ -256,7 +256,9 @@ class AuditoriaSeguridadYArquitecturaTests(TestCase):
         # 23: el saldo suma 1 consulta fija por los videos compartidos (agregado de videos, fase 4a).
         # 25: Detalle de liquidaciones suma 2 consultas fijas (clases pagables y videos compartidos, con select_related:
         # user_profesor/detalle_liquidaciones.py); siguen siendo O(1), lo comprueba la igualdad de arriba.
-        self.assertLessEqual(despues_prof, 25)
+        # 26: la foto de perfil pasa a su propia tabla (alumnos.FotoPerfil, 26-nov): 1 EXISTS fijo (CustomUser.tiene_foto)
+        # en vez de leerla de la fila del usuario. Asi la foto no viaja en cada request.user.
+        self.assertLessEqual(despues_prof, 26)
         self.assertContains(r_prof, "Cálculo Vectorial")
 
     def test_formato_clp_y_alumnos_reg_dry(self):

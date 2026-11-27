@@ -300,8 +300,8 @@ STORAGES = {
     },
 }
 
-# Archivos subidos (fotos de perfil; titulos antiguos hasta pasarlos a la base, paso 9b).
-# NO se publica MEDIA_URL en urls: se sirven por vistas protegidas.
+# Archivos subidos: solo quedan titulos antiguos hasta pasarlos a la base (paso 9b). Las fotos de perfil ya van en
+# PostgreSQL (alumnos.FotoPerfil). NO se publica MEDIA_URL en urls: se sirven por vistas protegidas.
 # En Railway el disco es efimero: montar un Volume en MEDIA_ROOT.
 MEDIA_ROOT = Path(os.environ.get('MEDIA_ROOT', BASE_DIR / 'media'))
 MEDIA_URL = '/media/'
